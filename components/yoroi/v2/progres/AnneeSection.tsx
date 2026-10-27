@@ -143,8 +143,8 @@ export function AnneeSection() {
               <Ink size={13} color={c.textSecondary}>
                 {traduire("Ton année en quelques écrans, à garder ou à partager.")}</Ink>
             </View>
-            <View style={{ height: 40, paddingHorizontal: 14, borderRadius: 14, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-              <Ink size={14} weight="extraBold" color={c.onAccent}>
+            <View style={{ height: 40, paddingHorizontal: 14, borderRadius: 14, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+              <Ink size={14} weight="extraBold" color={c.onPrimary}>
                 {traduire("Voir")}</Ink>
             </View>
           </View>

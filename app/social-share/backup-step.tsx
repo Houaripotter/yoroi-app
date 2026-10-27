@@ -80,8 +80,8 @@ export default function BackupStepScreen() {
       >
         <Glass style={{ alignItems: 'center', gap: 12, paddingVertical: 26, backgroundColor: 'rgba(255,255,255,0.92)' }}>
           <View style={{ width: 92, height: 92, borderRadius: 46, backgroundColor: P.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
-            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center' }}>
-              <EIcon name="shield" size={32} color="#FFFFFF" stroke={2.4} />
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center' }}>
+              <EIcon name="shield" size={32} color={P.onPrimary} stroke={2.4} />
             </View>
           </View>
           <Ink size={15} weight="bold" color={P.ink2} style={{ textAlign: 'center', paddingHorizontal: 10 }}>
@@ -91,7 +91,7 @@ export default function BackupStepScreen() {
         <Card style={{ gap: 14 }}>
           {STEPS.map((s, i) => (
             <View key={s.title} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-              <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: P.indigoSoft, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                 <EIcon name={s.icon} size={20} color={P.indigo} />
               </View>
               <View style={{ flex: 1 }}>
@@ -112,8 +112,8 @@ export default function BackupStepScreen() {
             <Ink size={14} color={P.ink2} style={{ textAlign: 'center' }}>{traduire("Tes données sont protégées en cas de perte, de vol ou de changement de téléphone.")}</Ink>
             <Ink size={13} weight="bold" color={P.muted} style={{ textAlign: 'center' }}>{traduire("Range le fichier dans ton cloud préféré : iCloud, Google Drive ou Dropbox.")}</Ink>
             <Press onPress={() => { setShowSuccessModal(false); successHaptic(); }} accessibilityRole="button" accessibilityLabel={traduire("Parfait")} style={{ alignSelf: 'stretch' }}>
-              <View style={{ height: 56, borderRadius: 18, backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center' }}>
-                <Ink size={16} weight="extraBold" color="#FFFFFF">{traduire("Parfait")}</Ink>
+              <View style={{ height: 56, borderRadius: 18, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center' }}>
+                <Ink size={16} weight="extraBold" color={P.onPrimary}>{traduire("Parfait")}</Ink>
               </View>
             </Press>
           </View>

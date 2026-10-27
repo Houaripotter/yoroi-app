@@ -64,7 +64,7 @@ export const CustomPopup: React.FC<CustomPopupProps> = memo(({
       case 'destructive':
         return { bg: c.accentTint, fg: c.accent, border: c.accent, weight: 'extraBold' as const };
       case 'primary':
-        return { bg: c.accent, fg: c.onAccent, border: c.accent, weight: 'extraBold' as const };
+        return { bg: c.primary, fg: c.onPrimary, border: c.primary, weight: 'extraBold' as const };
       case 'cancel':
         return { bg: c.surface, fg: c.textSecondary, border: c.border, weight: 'bold' as const };
       default:
@@ -93,7 +93,7 @@ export const CustomPopup: React.FC<CustomPopupProps> = memo(({
             ]}
           >
             {/* Lacet de soie en tete de plaque */}
-            <View style={[styles.lace, { backgroundColor: hasDestructive ? c.accent : c.ink }]}>
+            <View style={[styles.lace, { backgroundColor: hasDestructive ? c.primary : c.ink }]}>
               <View style={[styles.laceDot, { backgroundColor: c.gold, left: 22 }]} />
               <View style={[styles.laceDot, { backgroundColor: c.gold, right: 22 }]} />
             </View>

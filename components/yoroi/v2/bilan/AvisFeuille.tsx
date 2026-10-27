@@ -164,10 +164,10 @@ export function AvisFeuille({ visible, onNoter, onPlusTard }: { visible: boolean
             onPress={onNoter}
             accessibilityRole="button"
             accessibilityLabel={bouton}
-            style={({ pressed }) => ({ alignSelf: 'stretch', marginTop: 22, height: 58, borderRadius: 20, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10, backgroundColor: pressed ? c.accentPressed : c.accent })}
+            style={({ pressed }) => ({ alignSelf: 'stretch', marginTop: 22, height: 58, borderRadius: 20, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10, backgroundColor: pressed ? c.primaryPressed : c.primary })}
           >
             <Etoile fill={c.onAccent} stroke={c.onAccent} size={19} />
-            <Ink size={17} weight="extraBold" color={c.onAccent}>
+            <Ink size={17} weight="extraBold" color={c.onPrimary}>
               {bouton}
             </Ink>
           </Pressable>

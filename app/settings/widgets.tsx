@@ -61,8 +61,8 @@ export default function StyleDesWidgets() {
                     accessibilityIgnoresInvertColors
                   />
                   {actif ? (
-                    <View style={{ position: 'absolute', bottom: -6, right: -6, width: 24, height: 24, borderRadius: 12, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: c.surface }}>
-                      <Icon name="check" size={13} color={c.onAccent} stroke={3} />
+                    <View style={{ position: 'absolute', bottom: -6, right: -6, width: 24, height: 24, borderRadius: 12, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: c.surface }}>
+                      <Icon name="check" size={13} color={c.onPrimary} stroke={3} />
                     </View>
                   ) : null}
                 </View>

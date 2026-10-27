@@ -167,7 +167,7 @@ export function BenchmarkDetail({ visible, benchmark, onClose, onAddEntry, onDel
                     {chips.length > 0 ? (
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                         {chips.map((c) => (
-                          <View key={c} style={{ paddingHorizontal: 9, height: 26, borderRadius: 13, justifyContent: 'center', backgroundColor: isPR ? blancA(0.7) : '#F4F2EC' }}>
+                          <View key={c} style={{ paddingHorizontal: 9, height: 26, borderRadius: 13, justifyContent: 'center', backgroundColor: isPR ? blancA(0.7) : '#F5F6FB' }}>
                             <Ink size={12} weight="bold" color={P.ink2}>{c}</Ink>
                           </View>
                         ))}

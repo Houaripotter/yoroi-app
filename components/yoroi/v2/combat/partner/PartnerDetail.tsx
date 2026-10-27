@@ -188,9 +188,9 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
         <WarriorCard p={p} ins={ins} onPhoto={choosePhoto} />
 
         <Press onPress={() => setBriefing(true)} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Ouvrir le briefing avant le combat")}>
-          <View style={{ height: 60, borderRadius: 20, backgroundColor: P.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, shadowColor: P.accent, shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}>
-            <CIcon name="flag" size={20} color={P.white} />
-            <Ink size={17} weight="extraBold" color={P.white}>
+          <View style={{ height: 60, borderRadius: 20, backgroundColor: P.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, shadowColor: '#1B2A44', shadowOpacity: 0.1, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}>
+            <CIcon name="flag" size={20} color={P.onPrimary} />
+            <Ink size={17} weight="extraBold" color={P.onPrimary}>
               {traduire("Briefing avant le combat")}</Ink>
           </View>
         </Press>
@@ -369,7 +369,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
               accessibilityLabel={traduire("Exporter la fiche en PDF")}
             >
               <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-                <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: P.indigoSoft, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                   <CIcon name="file" size={22} color={P.indigo} />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -387,8 +387,8 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
 
       <View style={{ position: 'absolute', right: 16, bottom: insets.bottom + 18 }}>
         <Press onPress={() => { setNoteDraft(''); setNoteOpen(true); }} haptic="medium" accessibilityRole="button" accessibilityLabel="Note rapide">
-          <View style={{ width: 60, height: 60, borderRadius: 22, backgroundColor: P.ink, alignItems: 'center', justifyContent: 'center', shadowColor: P.ink, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
-            <CIcon name="edit" size={24} color={P.white} />
+          <View style={{ width: 60, height: 60, borderRadius: 22, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center', shadowColor: P.ink, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
+            <CIcon name="edit" size={24} color={P.accentText} />
           </View>
         </Press>
       </View>

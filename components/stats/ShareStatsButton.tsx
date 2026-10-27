@@ -273,14 +273,14 @@ const ShareStatsButtonInner: React.FC<ShareStatsButtonProps> = ({ title = 'Mes s
                 disabled={sharing}
                 accessibilityRole="button"
                 accessibilityLabel="Partager"
-                style={({ pressed }) => [styles.actionBtn, { backgroundColor: pressed ? c.accentPressed : c.accent }]}
+                style={({ pressed }) => [styles.actionBtn, { backgroundColor: pressed ? c.primaryPressed : c.primary }]}
               >
                 {sharing ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color={c.onPrimary} />
                 ) : (
                   <>
-                    <ShareIcon color="#FFFFFF" size={17} />
-                    <Ink size={15} weight="extraBold" color="#FFFFFF">
+                    <ShareIcon color={c.onPrimary} size={17} />
+                    <Ink size={15} weight="extraBold" color={c.onPrimary}>
                       Partager
                     </Ink>
                   </>

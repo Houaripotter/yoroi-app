@@ -37,7 +37,7 @@ export const CONTOURS: { id: ContourRond; nom: string; sub: string }[] = [
 /** Les anneaux de couleur : franche (papier clair et scene) et lumineuse (papier sombre) */
 const ANNEAUX: Partial<Record<ContourRond, { franc: string; nuit: string }>> = {
   noir: { franc: '#1D2029', nuit: '#1D2029' },
-  blanc: { franc: '#FFFFFF', nuit: '#F2F1EC' },
+  blanc: { franc: '#FFFFFF', nuit: '#F5F6FB' },
   rouge: { franc: '#B5352F', nuit: '#E5706A' },
   vert: { franc: '#2E7D5B', nuit: '#5FC596' },
   ciel: { franc: '#2B86C5', nuit: '#7CC4EE' },

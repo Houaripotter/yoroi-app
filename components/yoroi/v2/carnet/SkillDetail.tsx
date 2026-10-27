@@ -92,14 +92,14 @@ export function SkillDetail(p: Props) {
                 <Ink size={13} weight="bold" color={P.ink2}>{traduire("Répétitions")}</Ink>
                 <Ink size={48} weight="black" tight>{String(s.drillCount)}</Ink>
               </View>
-              <Glyph kind="sakura" size={46} color="#ECEAE4" />
+              <Glyph kind="sakura" size={46} color="#EEF0F7" />
             </View>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {[1, 5, 10, 25].map((n) => (
                 <View key={n} style={{ flex: 1 }}>
                   <Press onPress={() => p.onIncrementDrill(n)} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Ajouter {0} répétitions", n)}>
-                    <View style={{ height: 52, borderRadius: 16, backgroundColor: n === 10 ? P.accent : '#ECEAE4', alignItems: 'center', justifyContent: 'center' }}>
-                      <Ink size={16} weight="black" color={n === 10 ? P.white : P.ink}>{`+${n}`}</Ink>
+                    <View style={{ height: 52, borderRadius: 16, backgroundColor: n === 10 ? P.primary : '#EEF0F7', alignItems: 'center', justifyContent: 'center' }}>
+                      <Ink size={16} weight="black" color={n === 10 ? P.onPrimary : P.ink}>{`+${n}`}</Ink>
                     </View>
                   </Press>
                 </View>
@@ -124,7 +124,7 @@ export function SkillDetail(p: Props) {
           </View>
           {[...(s.notes || [])].reverse().map((n) => (
             <View key={n.id} style={{ flexDirection: 'row', gap: 10, padding: 14, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
-              <View style={{ width: 4, borderRadius: 2, backgroundColor: P.accent }} />
+              <View style={{ width: 4, borderRadius: 2, backgroundColor: P.detail }} />
               <View style={{ flex: 1, gap: 4 }}>
                 <Ink size={15} weight="medium">{traduire(n.text)}</Ink>
                 <Ink size={12} weight="bold" color={P.muted}>{shortDate(n.date)}</Ink>

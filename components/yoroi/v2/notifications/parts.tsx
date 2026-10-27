@@ -165,9 +165,9 @@ export function TimeField({ label, value, onChange }: { label: string; value: st
               setOpen(false);
             }}
             accessibilityRole="button"
-            style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}
+            style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}
           >
-            <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Valider {0}", sayTime(toHhmm(draft)))}</Ink>
+            <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Valider {0}", sayTime(toHhmm(draft)))}</Ink>
           </Pressable>
         </Sheet>
       ) : null}
@@ -218,12 +218,12 @@ export function DaysPicker({ value, onChange }: { value: number[]; onChange: (v:
                 borderRadius: 14,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: on ? c.accent : pressed ? c.fillSoft : c.surface,
+                backgroundColor: on ? c.primary : pressed ? c.fillSoft : c.surface,
                 borderWidth: on ? 0 : 1,
                 borderColor: c.border,
               })}
             >
-              <Ink size={15} weight="black" color={on ? c.onAccent : c.textSecondary}>
+              <Ink size={15} weight="black" color={on ? c.onPrimary : c.textSecondary}>
                 {traduire(d.short)}
               </Ink>
             </Pressable>
@@ -291,12 +291,12 @@ export function ChoiceChips<T extends string | number>({ label, options, value, 
                 borderRadius: 14,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: on ? c.accent : pressed ? c.fillSoft : c.surface,
+                backgroundColor: on ? c.primary : pressed ? c.fillSoft : c.surface,
                 borderWidth: on ? 0 : 1,
                 borderColor: c.border,
               })}
             >
-              <Ink size={14} weight="extraBold" color={on ? c.onAccent : c.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+              <Ink size={14} weight="extraBold" color={on ? c.onPrimary : c.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
                 {traduire(o.label)}
               </Ink>
             </Pressable>

@@ -16,7 +16,7 @@
  * meme ecran, est retiree pour ne pas l'avoir deux fois.
  */
 import React, { useCallback, useEffect, useState } from 'react';
-import { DeviceEventEmitter, Platform, Pressable, ScrollView, View } from 'react-native';
+import { DeviceEventEmitter, Image, Platform, Pressable, ScrollView, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, ImpactFeedbackStyle, notificationAsync, NotificationFeedbackType } from 'expo-haptics';
@@ -34,7 +34,8 @@ import { backupAgeDays, backupWhen, useEspaceStatus } from '@/components/yoroi/v
 import { WhatsNewSheet } from '@/components/yoroi/v2/espace/reglages/WhatsNew';
 import { APP_VERSION } from '@/components/yoroi/v2/espace/reglages/version';
 import { syncIdentite } from '@/components/yoroi/v2/espace/identite';
-import { Embleme, Torii } from '@/components/yoroi/v2/accueil/Ornements';
+import { Embleme } from '@/components/yoroi/v2/accueil/Ornements';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import { Groupe, TUILE } from '@/components/yoroi/v2/reglages/kit';
 import { EntreePersonnaliser } from '@/components/yoroi/v2/reglages/EntreePersonnaliser';
 import { resumePersonnaliser, ROUTES_PERSONNALISER } from '@/lib/v2/personnaliser/acces';
@@ -67,6 +68,7 @@ export default function Reglages() {
   const insets = useSafeAreaInsets();
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  const illus = useIllustrations();
   const { espace, update } = useEspace();
   const { profile, armure } = useIdentite();
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -201,29 +203,29 @@ export default function Reglages() {
 
         <Groupe title={traduire("Ton entraînement")} />
         <Card>
-          <ValueRow first tint={TUILE.indigo} icon="dumbbell" label={traduire("Mes sports")} value={nbSports ? traduirePluriel(nbSports, nbSports > 1, "{0} sport", "{0} sports", nbSports) : traduire('À choisir')} valueColor={nbSports ? undefined : c.accent} onPress={() => go('/espace/sports')} />
-          <ValueRow tint={TUILE.bleu} icon="calendar" label={traduire("Calendrier et clubs")} onPress={() => go('/planning?tab=mois')} />
-          <ValueRow tint={TUILE.mousse} icon="target" label={traduire("Objectif de la semaine")} sub={espace.joursSemaine?.length ? joursTexte(espace.joursSemaine).replace(/^./, (x) => x.toUpperCase()) : undefined} value={obj ? traduirePluriel(obj, obj > 1, "{0} séance", "{0} séances", obj) : traduire('À choisir')} valueColor={obj ? undefined : c.accent} onPress={() => setObjectifOpen(true)} />
-          <ValueRow tint={TUILE.or} icon="bell" label={traduire("Rappels")} value={remValue} onPress={() => go('/notifications')} />
-          <ValueRow tint={TUILE.bleu} icon="pulse" label={traduire("Bilan après chaque mesure")} sub={traduire("Pesée, composition, mensurations et séances")} value={bilanAuto ? traduire('Activé') : traduire('Coupé')} valueColor={bilanAuto ? c.successText : undefined} onPress={() => { const n = !bilanAuto; setBilanAuto(n); ecrireBilanAuto(n).catch(() => {}); }} />
+          <ValueRow first tint={TUILE.indigo} icon="dumbbell" sticker="mes_sports" label={traduire("Mes sports")} value={nbSports ? traduirePluriel(nbSports, nbSports > 1, "{0} sport", "{0} sports", nbSports) : traduire('À choisir')} valueColor={nbSports ? undefined : c.accent} onPress={() => go('/espace/sports')} />
+          <ValueRow tint={TUILE.bleu} icon="calendar" sticker="calendrier" label={traduire("Calendrier et clubs")} onPress={() => go('/planning?tab=mois')} />
+          <ValueRow tint={TUILE.mousse} icon="target" sticker="objectif_semaine" label={traduire("Objectif de la semaine")} sub={espace.joursSemaine?.length ? joursTexte(espace.joursSemaine).replace(/^./, (x) => x.toUpperCase()) : undefined} value={obj ? traduirePluriel(obj, obj > 1, "{0} séance", "{0} séances", obj) : traduire('À choisir')} valueColor={obj ? undefined : c.accent} onPress={() => setObjectifOpen(true)} />
+          <ValueRow tint={TUILE.or} icon="bell" sticker="rappels" label={traduire("Rappels")} value={remValue} onPress={() => go('/notifications')} />
+          <ValueRow tint={TUILE.bleu} icon="pulse" sticker="bilan" label={traduire("Bilan après chaque mesure")} sub={traduire("Pesée, composition, mensurations et séances")} value={bilanAuto ? traduire('Activé') : traduire('Coupé')} valueColor={bilanAuto ? c.successText : undefined} onPress={() => { const n = !bilanAuto; setBilanAuto(n); ecrireBilanAuto(n).catch(() => {}); }} />
         </Card>
 
         {/* 13 octobre, soir : style, appareils et donnees ranges en trois sous-pages, pour une page plus courte.
             Rien n'a ete retire : chaque ligne d'avant est dans sa sous-page. Le bouton Sauvegarder reste ici. */}
         <Groupe title={traduire("Tes réglages")} />
         <Card>
-          <ValueRow first tint={TUILE.mousse} icon="heart" label={traduire("Santé et appareils")} sub={Platform.OS === 'android' ? 'Health Connect, montre, balance' : traduire('Apple Santé, montre, balance')} value={santeValue} valueColor={sante?.mode === 'live' ? c.successText : undefined} onPress={() => go('/settings/appareils')} />
-          <ValueRow tint={TUILE.ardoise} icon="save" label={traduire("Données et sauvegardes")} sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/settings/sauvegardes')} action={<MiniAction label={traduire("Sauvegarder")} onPress={backupNow} busy={backingUp} />} />
-          <ValueRow tint={TUILE.bleu} icon="globe" label={traduire('Langue')} value={langueEnCours()} onPress={() => setLangueOpen(true)} />
+          <ValueRow first tint={TUILE.mousse} icon="heart" sticker="sante_appareils" label={traduire("Santé et appareils")} sub={Platform.OS === 'android' ? 'Health Connect, montre, balance' : traduire('Apple Santé, montre, balance')} value={santeValue} valueColor={sante?.mode === 'live' ? c.successText : undefined} onPress={() => go('/settings/appareils')} />
+          <ValueRow tint={TUILE.ardoise} icon="save" sticker="donnees" label={traduire("Données et sauvegardes")} sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/settings/sauvegardes')} action={<MiniAction label={traduire("Sauvegarder")} onPress={backupNow} busy={backingUp} />} />
+          <ValueRow tint={TUILE.bleu} icon="globe" sticker="langue" label={traduire('Langue')} value={langueEnCours()} onPress={() => setLangueOpen(true)} />
         </Card>
 
         <Groupe title="YOROI" />
         <Card>
-          <ValueRow first tint={TUILE.or} icon="crown" label={traduire("Abonnement")} value={subValue} valueColor={isPremium && !simulateFreeUser ? c.goldDeep : undefined} onPress={isPremium && hasActiveSubscription ? manageSub : () => ouvrirPaywall('reglages')} />
-          <ValueRow tint={TUILE.bleu} icon="info" label={traduire("Aide et questions")} onPress={() => go('/settings/aide')} />
-          <ValueRow tint={TUILE.indigo} icon="spark" label={traduire("Revoir la présentation")} sub={traduire("Personnage, Santé, scène et visite guidée")} onPress={() => go('/nouveautes?revoir=1')} />
-          <ValueRow tint={TUILE.or} icon="star" label={traduire("Noter l’app")} onPress={rate} />
-          <ValueRow tint={TUILE.ardoise} icon="doc" label={traduire("Conditions et confidentialité")} onPress={() => go('/settings/legal')} />
+          <ValueRow first tint={TUILE.or} icon="crown" sticker="abonnement" label={traduire("Abonnement")} value={subValue} valueColor={isPremium && !simulateFreeUser ? c.goldDeep : undefined} onPress={isPremium && hasActiveSubscription ? manageSub : () => ouvrirPaywall('reglages')} />
+          <ValueRow tint={TUILE.bleu} icon="info" sticker="aide" label={traduire("Aide et questions")} onPress={() => go('/settings/aide')} />
+          <ValueRow tint={TUILE.indigo} icon="spark" sticker="presentation" label={traduire("Revoir la présentation")} sub={traduire("Personnage, Santé, scène et visite guidée")} onPress={() => go('/nouveautes?revoir=1')} />
+          <ValueRow tint={TUILE.or} icon="star" sticker="noter" label={traduire("Noter l’app")} onPress={rate} />
+          <ValueRow tint={TUILE.ardoise} icon="doc" sticker="conditions" label={traduire("Conditions et confidentialité")} onPress={() => go('/settings/legal')} />
         </Card>
 
         {/* ============ STUDIO : visible seulement quand le mode createur est actif ============ */}
@@ -232,21 +234,19 @@ export default function Reglages() {
             onPress={() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); go('/creator-mode'); }}
             accessibilityRole="button"
             accessibilityLabel={traduire("Ouvrir le Studio YOROI")}
-            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, marginTop: 10, borderRadius: 22, backgroundColor: c.darkCard, overflow: 'hidden', transform: [{ scale: pressed ? 0.99 : 1 }] })}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, marginTop: 10, borderRadius: 22, backgroundColor: c.carteDouce, overflow: 'hidden', transform: [{ scale: pressed ? 0.99 : 1 }] })}
           >
-            <View pointerEvents="none" style={{ position: 'absolute', right: 8, top: -4 }}>
-              <Torii size={84} color="rgba(255,255,255,0.1)" />
-            </View>
-            <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="wand" size={22} color={c.goldLight} />
+            {/* 27 octobre 2026 soir : le sticker a gauche, plus de torii fantome qui deborde */}
+            <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+              <Image source={illus.img('cle')} style={{ width: 44, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
             </View>
             <View style={{ flex: 1, gap: 2 }}>
-              <Ink size={17} weight="black" color={c.onDark}>{traduire("Studio YOROI")}</Ink>
-              <Ink size={12} weight="bold" color={c.onDarkSecondary} numberOfLines={2}>
+              <Ink size={17} weight="black" color={c.ink}>{traduire("Studio YOROI")}</Ink>
+              <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2}>
                 {demoActive ? traduire('Profil démo chargé, tes vraies données sont de côté') : traduire('Profils démo, captures, outils de test')}
               </Ink>
             </View>
-            <Icon name="chevron" size={16} color={c.onDarkSecondary} stroke={2.4} />
+            <Icon name="chevron" size={16} color={c.textSecondary} stroke={2.4} />
           </Pressable>
         ) : null}
 

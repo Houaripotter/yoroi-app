@@ -47,7 +47,7 @@ function Ligne({ icone, couleur, fond, texte }: { icone: IconName; couleur: stri
   const c = useColors();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-      <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: fond, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
         <Icon name={icone} size={20} color={couleur} />
       </View>
       <Riche size={13} lineHeight={18} color={c.ink} text={texte} style={{ flex: 1 }} />

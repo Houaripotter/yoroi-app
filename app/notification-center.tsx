@@ -251,9 +251,9 @@ export default function CentreNotifications() {
           <Pressable
             onPress={() => router.push('/notifications' as any)}
             accessibilityRole="button"
-            style={({ pressed }) => ({ alignSelf: 'stretch', marginTop: 4, minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}
+            style={({ pressed }) => ({ alignSelf: 'stretch', marginTop: 4, minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}
           >
-            <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Régler mes rappels")}</Ink>
+            <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Régler mes rappels")}</Ink>
           </Pressable>
         </Animated.View>
       ) : null}
@@ -337,9 +337,9 @@ export default function CentreNotifications() {
                       backgroundColor: pressed ? c.fillSoft : n.read ? c.surface : '#FBFAF7',
                     })}
                   >
-                    <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                       <Icon name={l.icon} size={20} color={t.fg} />
-                      {!n.read ? <View style={{ position: 'absolute', top: -2, right: -2, width: 12, height: 12, borderRadius: 6, backgroundColor: c.accent, borderWidth: 2, borderColor: c.surface }} /> : null}
+                      {!n.read ? <View style={{ position: 'absolute', top: -2, right: -2, width: 12, height: 12, borderRadius: 6, backgroundColor: c.detail, borderWidth: 2, borderColor: c.surface }} /> : null}
                     </View>
                     <View style={{ flex: 1, gap: 2 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

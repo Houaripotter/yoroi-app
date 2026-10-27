@@ -36,7 +36,7 @@ function DevicesScene({ connected, peers }: { connected: boolean; peers: number 
   const color = connected ? S.moss : S.muted;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 6 }}>
-      <View style={{ width: 64, height: 64, borderRadius: 22, backgroundColor: S.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 64, height: 64, borderRadius: 22, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
         <SanteIcon name="phone" size={32} color={S.accent} />
       </View>
       <Svg width={110} height={30} viewBox="0 0 110 30">

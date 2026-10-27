@@ -23,7 +23,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { BigButton, Sheet, tap } from '@/components/yoroi/v2/seances/ui';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
@@ -31,8 +30,8 @@ import type { IconName } from '@/components/yoroi/v2/seances/Icon';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { FeuillePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
 import { GrilleModules } from '@/components/yoroi/v2/programmes/GrilleModules';
-import { Cercles, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
-import { BarresNiveau, BoutonIndigo, CarteChoix, CarteProgramme, HerosProgramme, ICONE_OBJECTIF, PointsSemaine, PucesProgramme, RondsNombre, TuileChoix, TypesProgrammes } from '@/components/yoroi/v2/programmes/ChoixVisuels';
+import { usePaletteProgramme, usePastel } from '@/components/yoroi/v2/programmes/Habillage';
+import { BarresNiveau, BoutonIndigo, CarteChoix, CarteProgramme, HerosProgramme, ICONE_OBJECTIF, STICKER_OBJECTIF, PointsSemaine, PucesProgramme, RondsNombre, TuileChoix, TypesProgrammes } from '@/components/yoroi/v2/programmes/ChoixVisuels';
 import { getProfile } from '@/lib/database';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { programmeParId, sportDuProgramme } from '@/lib/v2/programmes/catalogue';
@@ -73,9 +72,9 @@ const LIEUX: { key: Materiel; label: string; icone: IconName }[] = [
 type Quiz = { objectifs: ObjectifChoix[]; niveau?: Niveau; jours?: Reponses['jours']; lieu?: Materiel };
 
 export function Questionnaire({ visible, onClose, onVoir, remplaces, depart = 'accueil', onCommence }: QuestionnaireProps) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
   const pal = usePaletteProgramme();
+  // 27 octobre 2026 (refonte des écrans Coach) : la carte du résultat et les puces en pastel
+  const pa = usePastel();
   const router = useRouter();
   const [etape, setEtape] = useState<EtapeQuestionnaire>(depart);
   const [chemin, setChemin] = useState<'quiz' | 'liste'>('quiz');
@@ -191,6 +190,7 @@ export function Questionnaire({ visible, onClose, onVoir, remplaces, depart = 'a
             role="checkbox"
             on={debuter}
             icone="book"
+            sticker="debuter"
             teinte={0}
             label={traduire('Je n’y connais rien')}
             sous={traduire('YOROI te guide pas à pas')}
@@ -199,7 +199,7 @@ export function Questionnaire({ visible, onClose, onVoir, remplaces, depart = 'a
           <Bloc titre={traduire('Tes objectifs')} sous={traduire('Plusieurs choix possibles')}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {OBJECTIFS_CHOIX.filter((o) => o.key !== 'debuter').map((o, k) => (
-                <TuileChoix key={o.key} icone={ICONE_OBJECTIF[o.key] ?? 'target'} teinte={k} label={traduire(o.label)} on={q.objectifs.includes(o.key)} onPress={() => basculerObjectif(o.key)} />
+                <TuileChoix key={o.key} icone={ICONE_OBJECTIF[o.key] ?? 'target'} sticker={STICKER_OBJECTIF[o.key]} cle={o.key} teinte={k} label={traduire(o.label)} on={q.objectifs.includes(o.key)} onPress={() => basculerObjectif(o.key)} />
               ))}
             </View>
           </Bloc>
@@ -216,7 +216,7 @@ export function Questionnaire({ visible, onClose, onVoir, remplaces, depart = 'a
                     key={n.key}
                     role="radio"
                     teinte={k}
-                    visuel={(on, t) => <BarresNiveau n={k + 1} couleur={on ? '#FFFFFF' : t.encre} vide={on ? 'rgba(255,255,255,0.3)' : pal.carte} />}
+                    visuel={(_on, t) => <BarresNiveau n={k + 1} couleur={t.encre} vide={pa.carte} />}
                     label={traduire(n.label)}
                     on={q.niveau === n.key}
                     onPress={() => { tap(); setQ((x) => ({ ...x, niveau: n.key })); }}
@@ -263,22 +263,20 @@ export function Questionnaire({ visible, onClose, onVoir, remplaces, depart = 'a
 
       {etape === 'resultat' && prog ? (
         <View style={{ gap: 18, paddingHorizontal: 4 }}>
-          <View style={{ borderRadius: 28, backgroundColor: pal.indigo, overflow: 'hidden', padding: 20, gap: 10, minHeight: 220 }}>
-            <Cercles />
+          <View style={{ borderRadius: 28, backgroundColor: pa.bleu.fond, overflow: 'hidden', padding: 18, gap: 10, minHeight: 220 }}>
+            <View pointerEvents="none" style={{ position: 'absolute', right: -30, bottom: -40, width: 190, height: 190, borderRadius: 95, backgroundColor: pa.carte, opacity: 0.55 }} />
             {imgResultat ? <Image source={imgResultat} style={{ position: 'absolute', right: -6, bottom: 0, width: 130, height: 176 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
             <View style={{ maxWidth: imgResultat ? '64%' : '100%', gap: 8 }}>
-              <View style={{ alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999 }}>
-                <Ink size={12} weight="extraBold" color={c.onDark}>{chemin === 'quiz' && conseil ? traduire('Conseillé pour toi') : traduire('Ton programme')}</Ink>
-              </View>
-              <Ink size={24} weight="black" tight color={c.onDark} numberOfLines={3} accessibilityRole="header">{traduire(prog.titre)}</Ink>
-              <Ink size={13} weight="bold" color={c.onDarkSecondary} numberOfLines={4} style={{ lineHeight: 18 }}>{chemin === 'quiz' && conseil ? traduire(conseil.pourquoi) : traduire(prog.accroche)}</Ink>
+              <Ink size={11} weight="black" color={pa.bleu.titre} style={{ letterSpacing: 1.3 }}>{(chemin === 'quiz' && conseil ? traduire('Conseillé pour toi') : traduire('Ton programme')).toLocaleUpperCase()}</Ink>
+              <Ink size={23} weight="black" tight color={pa.bleu.encre} numberOfLines={3} accessibilityRole="header">{traduire(prog.titre)}</Ink>
+              <Ink size={13} weight="bold" color={pa.texte2} numberOfLines={4} style={{ lineHeight: 18 }}>{chemin === 'quiz' && conseil ? traduire(conseil.pourquoi) : traduire(prog.accroche)}</Ink>
               {remplaces && remplaces(prog) > 0 ? (
-                <Ink size={12} weight="extraBold" color={c.onDark}>
+                <Ink size={12} weight="extraBold" color={pa.bleu.encre}>
                   {traduirePluriel(remplaces(prog), remplaces(prog) > 1, 'Adapté à ta salle : {0} exercice remplacé', 'Adapté à ta salle : {0} exercices remplacés', remplaces(prog))}
                 </Ink>
               ) : null}
               <View style={{ marginTop: 2 }}>
-                <PointsSemaine jours={joursConseilles(prog.joursParSemaine)} plein="#FFFFFF" vide="rgba(255,255,255,0.2)" taille={20} />
+                <PointsSemaine jours={joursConseilles(prog.joursParSemaine)} plein={pa.bleu.barre} vide={pa.carte} taille={18} />
               </View>
             </View>
             <View style={{ maxWidth: imgResultat ? '68%' : '100%' }} accessible accessibilityLabel={traduire('{0} j par semaine, {1} min', prog.joursParSemaine, prog.dureeMin)}>
@@ -346,19 +344,19 @@ function Bloc({ titre, sous, ligne, children }: { titre: string; sous?: string; 
   );
 }
 
-/** Puce des choix courts (durée du cardio, séances de marche) : indigo pleine quand elle est choisie, blanche sinon */
+/** Puce des choix courts (durée du cardio, séances de marche) : bleu très pâle quand elle est choisie, blanche sinon */
 function Puce({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
   const pal = usePaletteProgramme();
+  // 27 octobre 2026 : choisie, bleu très pâle avec un bord doux (plus d'indigo plein)
+  const pa = usePastel();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
-      style={({ pressed }) => ({ minHeight: 46, paddingHorizontal: 18, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? pal.indigo : pressed ? pal.teinte : pal.carte })}
+      style={({ pressed }) => ({ minHeight: 46, paddingHorizontal: 18, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? pa.choisi : pressed ? pal.teinte : pal.carte, borderWidth: 1.5, borderColor: on ? pa.bordChoisi : 'transparent' })}
     >
-      <Ink size={14} weight="extraBold" color={on ? c.onDark : pal.texte}>{label}</Ink>
+      <Ink size={14} weight="extraBold" color={on ? pa.bleu.encre : pal.texte}>{label}</Ink>
     </Pressable>
   );
 }

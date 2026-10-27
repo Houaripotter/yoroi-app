@@ -26,6 +26,7 @@ import { PictoCarnet, PictoTableur, PictoTroisApps } from './PictosEvolution';
 import { MainButton, Riche, Shell, useColors } from './ui';
 import type { Nav } from './types';
 import { traduire } from '@/lib/i18n/tr';
+import { illustration, type NomSticker } from '@/components/yoroi/v2/stickers';
 
 /** Rythme du recit (26 octobre 2026) : un etage toutes les 0,9 s, fondu de 0,45 s */
 export const ETAGE_MS = 900;
@@ -46,13 +47,13 @@ const AVANT: { cle: string; quand: string; titre: string; sous: string; Picto: R
  * 17 octobre 2026 : les six domaines de l'accueil, chacun dans sa couleur (accueil/domaines.ts), comme les tuiles
  * de ton accueil : poids violet, seances indigo, sante vert d'eau, eau bleu lagon, competitions prune, mensurations ocre.
  */
-const TUILES: { src: ImageSourcePropType; titre: string; domaine: Domaine }[] = [
-  { src: require('@/assets/avatars/app/sceaux/decouverte/balance.webp'), titre: 'Poids', domaine: 'poids' },
-  { src: require('@/assets/avatars/app/carnet/musculation.webp'), titre: traduire('Séances'), domaine: 'seances' },
-  { src: require('@/assets/avatars/app/sceaux/regularite/lune_soleil.webp'), titre: traduire('Ta santé'), domaine: 'forme' },
-  { src: require('@/assets/avatars/app/ornements/vague.webp'), titre: 'Eau', domaine: 'eau' },
-  { src: require('@/assets/avatars/app/ornements/kabuto.webp'), titre: traduire('Compétitions'), domaine: 'competition' },
-  { src: require('@/assets/avatars/app/sceaux/decouverte/metre_ruban.webp'), titre: traduire('Mensurations'), domaine: 'mensurations' },
+const TUILES: { sticker: NomSticker; src: ImageSourcePropType; titre: string; domaine: Domaine }[] = [
+  { sticker: 'balance', src: require('@/assets/avatars/app/sceaux/decouverte/balance.webp'), titre: 'Poids', domaine: 'poids' },
+  { sticker: 'musculation', src: require('@/assets/avatars/app/carnet/musculation.webp'), titre: traduire('Séances'), domaine: 'seances' },
+  { sticker: 'lune_soleil', src: require('@/assets/avatars/app/sceaux/regularite/lune_soleil.webp'), titre: traduire('Ta santé'), domaine: 'forme' },
+  { sticker: 'vague', src: require('@/assets/avatars/app/ornements/vague.webp'), titre: 'Eau', domaine: 'eau' },
+  { sticker: 'kabuto', src: require('@/assets/avatars/app/ornements/kabuto.webp'), titre: traduire('Compétitions'), domaine: 'competition' },
+  { sticker: 'metre_ruban', src: require('@/assets/avatars/app/sceaux/decouverte/metre_ruban.webp'), titre: traduire('Mensurations'), domaine: 'mensurations' },
 ];
 
 /** Le petit trait qui relie deux etages */
@@ -82,7 +83,7 @@ function Etage({ quand, titre, sous, Picto, eteint, calme, picto }: { quand: str
       accessibilityLabel={`${quand} : ${titre}. ${sous}`}
       style={[{ flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingVertical: picto < 56 ? 8 : 12, paddingHorizontal: 12 }, anim]}
     >
-      <View style={{ width: picto + 12, height: picto + 12, borderRadius: 18, backgroundColor: '#F2F1EC', alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: picto + 12, height: picto + 12, borderRadius: 18, backgroundColor: '#F5F6FB', alignItems: 'center', justifyContent: 'center' }}>
         <Picto size={picto} />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
@@ -148,7 +149,7 @@ export function Comparaison({ nav, genre = 'h', univers = 'japon', onNext }: { n
         >
           <View accessible accessibilityRole="header" accessibilityLabel={traduire("Aujourd’hui : tout est dans YOROI. Tout ton suivi, une seule app.")} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <View style={{ width: picto + 12, height: picto + 12, borderRadius: 18, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              <Image source={perso ?? KABUTO} style={{ width: picto + 4, height: picto + 4 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+              <Image source={perso ?? illustration('kabuto', KABUTO)} style={{ width: picto + 4, height: picto + 4 }} resizeMode="contain" accessibilityIgnoresInvertColors />
             </View>
             <View style={{ flex: 1, gap: 2 }}>
               <Ink size={12} weight="extraBold" color={ENCRES.indigo.ink} style={{ textTransform: 'uppercase', letterSpacing: 1 }}>{traduire("Aujourd’hui")}</Ink>
@@ -160,7 +161,7 @@ export function Comparaison({ nav, genre = 'h', univers = 'japon', onNext }: { n
             <Animated.View entering={calme ? undefined : FadeIn.duration(FONDU_MS)} style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8 }}>
               {TUILES.map((t) => (
                 <View key={t.titre} style={{ width: '31.5%', borderRadius: 14, backgroundColor: teinte(t.domaine).fond, borderWidth: 1, borderColor: teinte(t.domaine).bord, paddingVertical: 8, paddingHorizontal: 4, alignItems: 'center', gap: 4 }}>
-                  <Image source={t.src} style={{ width: petit ? 30 : 36, height: petit ? 30 : 36 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+                  <Image source={illustration(t.sticker, t.src)} style={{ width: petit ? 30 : 36, height: petit ? 30 : 36 }} resizeMode="contain" accessibilityIgnoresInvertColors />
                   <Ink size={11} weight="extraBold" color={teinte(t.domaine).texte} numberOfLines={1} style={{ textAlign: 'center' }}>{traduire(t.titre)}</Ink>
                 </View>
               ))}

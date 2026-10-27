@@ -11,6 +11,7 @@ import Svg, { Circle, Defs, Path, RadialGradient, Stop } from 'react-native-svg'
 import * as Haptics from 'expo-haptics';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { illustration } from '@/components/yoroi/v2/stickers';
 
 export const COFFRE_IMAGES: Record<'ferme' | 'ouvert' | 'grandFerme' | 'grandOuvert', ImageSourcePropType> = {
   ferme: require('@/assets/avatars/app/coffre/coffre_ferme.webp'),
@@ -19,8 +20,10 @@ export const COFFRE_IMAGES: Record<'ferme' | 'ouvert' | 'grandFerme' | 'grandOuv
   grandOuvert: require('@/assets/avatars/app/coffre/grand_coffre_ouvert.webp'),
 };
 
+/** 27 octobre 2026 : le sticker du coffre, ou en Encre japonaise le coffre d'avant (reglage Illustrations) */
 export function imageCoffre(grand: boolean, ouvert: boolean): ImageSourcePropType {
-  return grand ? (ouvert ? COFFRE_IMAGES.grandOuvert : COFFRE_IMAGES.grandFerme) : ouvert ? COFFRE_IMAGES.ouvert : COFFRE_IMAGES.ferme;
+  const ancien = grand ? (ouvert ? COFFRE_IMAGES.grandOuvert : COFFRE_IMAGES.grandFerme) : ouvert ? COFFRE_IMAGES.ouvert : COFFRE_IMAGES.ferme;
+  return illustration(grand ? (ouvert ? 'grand_coffre_ouvert' : 'grand_coffre_ferme') : ouvert ? 'coffre_ouvert' : 'coffre_ferme', ancien);
 }
 
 const OR = '#F2C14E';

@@ -30,7 +30,7 @@ export function Ceinture({ color, width = 220, bar = false, empty = false }: {
   const H = width * 0.46;
   const isWhite = color.toUpperCase() === '#FFFFFF';
   const isBlack = color.toUpperCase() === '#1D2029';
-  const base = empty ? '#F2F1EC' : color;
+  const base = empty ? '#F5F6FB' : color;
   const dark = isWhite ? '#DCD7CC' : shade(base, -0.28);
   const light = isWhite ? '#FFFFFF' : shade(base, 0.18);
   const edge = empty ? '#C9C4B8' : isWhite ? '#C9C4B8' : shade(base, -0.4);

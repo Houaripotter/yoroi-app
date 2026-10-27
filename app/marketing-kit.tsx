@@ -117,9 +117,9 @@ function MarketingKitInner() {
                   onPress={() => open(step)}
                   accessibilityRole="button"
                   accessibilityLabel={`Ouvrir ${step.title}`}
-                  style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 14, backgroundColor: pressed ? P.accentDark : P.accent, alignItems: 'center', justifyContent: 'center' })}
+                  style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 14, backgroundColor: pressed ? P.primaryPressed : P.primary, alignItems: 'center', justifyContent: 'center' })}
                 >
-                  <Ink size={14} weight="extraBold" color={P.white}>{traduire("Ouvrir")}</Ink>
+                  <Ink size={14} weight="extraBold" color={P.onPrimary}>{traduire("Ouvrir")}</Ink>
                 </Pressable>
                 <Pressable
                   onPress={() => toggleStep(step.id)}

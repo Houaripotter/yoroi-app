@@ -17,6 +17,7 @@
  * Valeurs d'origine : sommet 0,5, lanternes_ryokan 0,19, nature_mer_nuit 0,12 (jardin et port inchanges).
  */
 import { LISIBILITE_VIE } from '@/lib/v2/espace/packsScenes';
+import { LISIBILITE_VOYAGES } from '@/lib/v2/espace/voyages';
 
 export type LisibiliteScene = { lum: number; voile: number };
 
@@ -95,6 +96,8 @@ export const LISIBILITE: Record<string, LisibiliteScene> = {
   village: { lum: 0.091, voile: 0.18 },
   // 16 octobre 2026 : scenes des packs Vie reelle, meme methode (scratchpad packs/lis.py, valeurs dans packsScenes.ts)
   ...LISIBILITE_VIE,
+  // 27 octobre 2026 : scenes de Marseille et aurores boreales, mesure du bandeau (valeurs et methode dans voyages.ts)
+  ...LISIBILITE_VOYAGES,
 };
 
 /** Voile par defaut pour une scene pas encore mesuree (une nouvelle image) : assez fort pour une scene claire */

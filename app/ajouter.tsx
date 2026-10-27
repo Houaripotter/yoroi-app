@@ -10,13 +10,20 @@
  * Le reste a sa vraie place (Sommeil et Eau dans « Ta forme du jour » de l'Accueil, Videos dans le
  * Carnet, Combat et Competition dans l'outil Combat et competition) et reste joignable ici dans
  * « Autre chose », replie.
+ * 27 octobre 2026 (maquette choisie « Plus A, action principale ») : en haut le programme du jour en grande carte
+ * lilas (ton personnage, ta semaine en mini barres, Démarrer) ; dessous trois tuiles pastel avec sticker (Séance,
+ * Poids, Mensurations, les memes onglets qu'avant) ; puis « Note ta séance du jour » en pastilles avec sticker,
+ * « Dicte ta séance » et « En direct », et « Autres façons » en liste fine. Sans programme : la meme carte propose
+ * le creneau prevu aujourd'hui, sinon de choisir un programme. Memes actions, memes donnees, memes ancres de visite.
+ * Ancienne version : _archive_ancien_design_2026-10-09/maquettes_choisies_2026-10-27/app/ajouter.tsx.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Image, PanResponder, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
 import { impactAsync, ImpactFeedbackStyle, notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -28,7 +35,7 @@ import { fmtClock } from '@/lib/v2/seance/format';
 import { loadDraft } from '@/lib/v2/seance/model';
 import type { SeanceDraft } from '@/lib/v2/seance/model';
 import { draftRoute, draftTitle } from '@/lib/v2/seance/resume';
-import { DEFAULT_SPORTS, seanceRoute, sportImage, sportShortName, sportTint } from '@/lib/v2/seance/sportVisuals';
+import { DEFAULT_SPORTS, seanceRoute, sportImage, sportShortName } from '@/lib/v2/seance/sportVisuals';
 import { mainSport, shortcutSports } from '@/lib/v2/seances/weekSummary';
 import { firstSport, sessionTitle } from '@/lib/v2/seances/sessionData';
 import { localISO } from '@/lib/v2/accueil/hydration';
@@ -40,10 +47,14 @@ import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
 import { ecouterOngletPlus } from '@/lib/v2/visite/ongletPlus';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
-import { chargerProgrammeActif, prochainJour, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { chargerProgrammeActif, joursDuProgramme, prochainJour, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import { routeDuCreneau } from '@/lib/v2/programmes/agenda';
-import { routeDuJour } from '@/lib/v2/programmes/lancer';
+import { resumeDuJour, routeDuJour } from '@/lib/v2/programmes/lancer';
 import { chargerMesSeances } from '@/lib/v2/seance/mesSeances';
+import { LETTRES_JOURS, semaineDe } from '@/lib/v2/sante/anneauxJours';
+import { personnageImage } from '@/components/yoroi/v2/espace/assets';
+import { useIdentite } from '@/lib/v2/espace/useIdentite';
+import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 
 // 26 octobre 2026 : illustrations des cartes Poids et Mensurations (Gemini) ; le personnage en attendant
 const IMG_PESEE: ImageSourcePropType | null = null;
@@ -51,9 +62,22 @@ const IMG_MESURES: ImageSourcePropType | null = null;
 
 type Other = { key: string; title: string; sub: string; href: string; params?: Record<string, string> };
 
+/** Un jour de la semaine du programme, pour les mini barres */
+type JourSemaine = { lettre: string; etat: 'fait' | 'jour' | 'prevu' | 'repos'; aujourdhui: boolean };
+
+/** Le sticker de chaque sport des pastilles « Note ta séance » (repli : force) */
+const STICKER_SPORT: Record<string, NomSticker> = {
+  musculation: 'musculation', powerlifting: 'barre', halterophilie: 'barre', street_workout: 'barre',
+  jjb: 'jjb', grappling: 'jjb', judo: 'kimono', lutte: 'combat', mma: 'combat', sparring: 'sparring',
+  boxe: 'gants', muay_thai: 'gants', kickboxing: 'gants', karate: 'kimono',
+  running: 'course', marche: 'sport_marche', velo: 'sport_velo', cycling: 'sport_velo', natation: 'sport_nage', rameur: 'sport_pagaie',
+  fitness: 'kettlebell', crossfit: 'kettlebell', hiit: 'energie', yoga: 'mobilite',
+  football: 'sport_football', basketball: 'sport_ballon', volleyball: 'sport_volley', tennis: 'sport_raquette',
+};
+const stickerDuSport = (s: string): NomSticker => STICKER_SPORT[s] ?? 'force';
+
 export default function Ajouter() {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
+  useYoroiTheme(); // se redessine quand le theme change (la palette P est vivante)
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
@@ -94,7 +118,10 @@ export default function Ajouter() {
     }),
   ).current;
   // 24 octobre 2026 : seance du programme en cours (lib/v2/programmes)
-  const [prog, setProg] = useState<{ route: { pathname: string; params: Record<string, string> }; titre: string } | null>(null);
+  const [prog, setProg] = useState<{ route: { pathname: string; params: Record<string, string> }; titre: string; resume: string; semaine: JourSemaine[] } | null>(null);
+  const { armure } = useIdentite();
+  const [personnage, setPersonnage] = useState<string | null>(null);
+  const illus = useIllustrations();
   // 25 octobre 2026 : tes seances enregistrees (lib/v2/seance/mesSeances.ts)
   const [mesNoms, setMesNoms] = useState<string[]>([]);
 
@@ -110,6 +137,7 @@ export default function Ajouter() {
         ]);
         setDraft(d);
         setFemme(espace?.personnage?.startsWith('guerrier_f') || profile?.avatar_gender === 'femme');
+        setPersonnage(espace?.personnage ?? null);
         const list = trainings ?? [];
         // sport principal : le premier favori, sinon le plus pratique
         setMain(mainSport(espace.sportsFavoris, list));
@@ -127,7 +155,20 @@ export default function Ajouter() {
     chargerProgrammeActif()
       .then((a) => {
         const s = a ? prochainJour(a) : null;
-        setProg(s ? { route: routeDuJour(s.programme, s.jour, semaineDuProgramme(a!)), titre: traduire('Jour {0}, {1}', s.index + 1, traduire(s.jour.titre)) } : null);
+        if (!a || !s) {
+          setProg(null);
+          return;
+        }
+        const sem = semaineDuProgramme(a);
+        // la semaine en mini barres : faite, aujourd'hui, prevue, repos (lundi a dimanche)
+        const auj = localISO();
+        const jours = joursDuProgramme(a, s.programme);
+        const semaine: JourSemaine[] = semaineDe(auj).map((iso, i) => {
+          const fait = a.faits.some((f) => f.date === iso);
+          const prevu = jours.includes(i);
+          return { lettre: LETTRES_JOURS[i], aujourdhui: iso === auj, etat: fait ? 'fait' : iso === auj && prevu ? 'jour' : prevu ? 'prevu' : 'repos' };
+        });
+        setProg({ route: routeDuJour(s.programme, s.jour, sem), titre: traduire('Jour {0}, {1}', s.index + 1, traduire(s.jour.titre)), resume: resumeDuJour(s.jour, sem), semaine });
       })
       .catch(() => setProg(null));
     chargerMesSeances()
@@ -138,9 +179,6 @@ export default function Ajouter() {
       .then((s) => setProvider(s.mode === 'live' ? s.provider : null))
       .catch(() => setProvider(null));
   }, []);
-
-  const stroke = { stroke: c.ink, strokeWidth: 2.2, fill: 'none' as const, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
-  const accentStroke = { ...stroke, stroke: c.accent };
 
   // 15 octobre 2026 (navigation directe) : la feuille est REMPLACEE par l'ecran choisi, en un seul geste.
   // Avant : router.back() puis router.push() 120 ms plus tard, on voyait l'Accueil revenir avant la page.
@@ -206,43 +244,60 @@ export default function Ajouter() {
   ];
 
   const heroImg = sportImage(main, femme, 1);
-  // Puces de sport : jamais sous le personnage (130 de large, cale a droite de la carte).
-  const chipsRoom = width - 44 - 18 - (heroImg ? 124 : 18);
-  const chipWidth = (s: string) => 28 + sportShortName(s).length * 8.2;
-  const heroChips = favs.slice(0, 3).reduce<{ list: string[]; used: number }>((acc, s) => {
-    const w = chipWidth(s) + (acc.list.length ? 6 : 0);
-    if (acc.list.length === 0 || acc.used + w <= chipsRoom) return { list: [...acc.list, s], used: acc.used + w };
-    return acc;
-  }, { list: [], used: 0 }).list;
+  // 27 octobre 2026 : ton personnage (celui de ton accueil), sinon l'illustration de ton sport principal
+  const perso = personnage ? personnageImage(personnage, armure?.rank.index ?? 0, femme ? 'f' : 'h') : heroImg;
   const slotTitle = slot ? slot.slot.label || getSportName(slot.slot.sport) : '';
   const slotTime = slot?.slot.time ? traduire(" à {0}", slot.slot.time.slice(0, 5).replace(':', ' h ')) : '';
+  const pastilles = favs.slice(0, 3);
 
-  const card = { borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, overflow: 'hidden' as const };
+  // la grande carte du haut : ton programme, sinon le creneau prevu aujourd'hui, sinon choisir un programme
+  const carte = prog
+    ? { label: traduire('Ton programme, aujourd’hui'), titre: prog.titre, sous: prog.resume, bouton: traduire('Démarrer'), semaine: prog.semaine, onPress: () => open(prog.route.pathname, prog.route.params) }
+    : slot
+      ? { label: traduire('Prévu aujourd’hui'), titre: `${slotTitle}${slotTime}`, sous: traduire('ton créneau de la semaine'), bouton: traduire('Démarrer'), semaine: null, onPress: startSlot }
+      : { label: traduire('Ton programme'), titre: traduire('Suis un programme'), sous: traduire('PPL, Upper Lower...'), bouton: traduire('Choisir'), semaine: null, onPress: () => open('/programmes') };
+
+  const autres: { key: string; titre: string; sous: string; sticker: NomSticker; onPress: () => void }[] = [
+    ...(prog && slot ? [{ key: 'slot', titre: traduire('Prévu aujourd’hui'), sous: `${slotTitle}${slotTime}`, sticker: 'calendrier' as NomSticker, onPress: startSlot }] : []),
+    ...(last ? [{ key: 'refaire', titre: traduire('Refaire ta dernière'), sous: sessionTitle(last), sticker: 'repeter' as NomSticker, onPress: repeatLast }] : []),
+    { key: 'mes', titre: traduire('Mes séances'), sous: mesNoms.length === 0 ? traduire('à refaire en un appui') : mesNoms.slice(0, 2).join(', '), sticker: 'carnet', onPress: () => open('/mes-seances') },
+    { key: 'passee', titre: traduire('Séance passée'), sous: traduire('un autre jour'), sticker: 'calendrier', onPress: () => open('/seance/deja-faite') },
+    { key: 'importer', titre: traduire('Importer'), sous: traduire('tes notes, une autre app'), sticker: 'donnees', onPress: () => open('/importer-carnet') },
+    { key: 'quoi', titre: traduire('Quoi faire ?'), sous: traduire('YOROI fait ta séance'), sticker: 'zones_corps', onPress: () => open('/programmes/zones') },
+    ...(provider
+      ? [{ key: 'montre', titre: traduire('Ta montre'), sous: sync === 'idle' ? traduire('récupérer tes séances') : sync === 'busy' ? traduire('synchro en cours') : sync, sticker: 'sante_appareils' as NomSticker, onPress: syncWatch }]
+      : []),
+  ];
+
+  const ombre = { shadowColor: '#1D2033', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 1 };
 
   return (
     <Pressable onPress={() => router.back()} style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.45)', justifyContent: 'flex-end' }} accessibilityLabel={traduire("Fermer")}>
       <Animated.View {...geste.panHandlers} style={{ transform: [{ translateX: glisse.x }, { translateY: glisse.y }] }}>
-      <Pressable onPress={() => {}} style={{ backgroundColor: c.background, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingTop: 12, maxHeight: height * 0.92 }}>
-        <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: c.border, marginBottom: 8 }} accessibilityLabel={traduire('Glisse vers le bas pour fermer')} />
-        <ScrollView bounces={false} showsVerticalScrollIndicator={false} scrollEventThrottle={16} onScroll={(e) => { enHaut.current = e.nativeEvent.contentOffset.y <= 2; }} contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: insets.bottom + 24, gap: 10 }}>
-          <Ink size={24} weight="black" tight style={{ paddingHorizontal: 4, marginBottom: 2 }} accessibilityRole="header">{traduire("Enregistrer")}</Ink>
+      <Pressable onPress={() => {}} style={{ backgroundColor: P.paper, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingTop: 10, maxHeight: height * 0.92 }}>
+        <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: P.pastelEteint, marginBottom: 14 }} accessibilityLabel={traduire('Glisse vers le bas pour fermer')} />
+        <ScrollView bounces={false} showsVerticalScrollIndicator={false} scrollEventThrottle={16} onScroll={(e) => { enHaut.current = e.nativeEvent.contentOffset.y <= 2; }} contentContainerStyle={{ paddingHorizontal: MARGE, paddingBottom: insets.bottom + 24 }}>
+          <Ink size={26} weight="black" tight style={{ marginBottom: 14 }} accessibilityRole="header">{traduire("Enregistrer")}</Ink>
 
           {draft ? (
-            <Pressable onPress={() => open(draftRoute(draft), { resume: '1' })} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 60, borderRadius: 20, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.accentPressed : c.accent })}>
-              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.onAccent }} />
+            <Pressable onPress={() => open(draftRoute(draft), { resume: '1' })} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 60, borderRadius: 22, paddingHorizontal: 16, marginBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? P.primaryPressed : P.primary })}>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: P.onPrimary }} />
               <View style={{ flex: 1 }}>
-                <Ink size={13} weight="bold" color={c.onAccent} style={{ opacity: 0.8 }}>{traduire("Séance en cours, {0}", fmtClock((Date.now() - draft.startedAt) / 1000))}</Ink>
-                <Ink size={17} weight="black" color={c.onAccent} numberOfLines={2}>{traduire("Reprendre : {0}", draftTitle(draft))}</Ink>
+                <Ink size={13} weight="bold" color={P.onPrimary} style={{ opacity: 0.8 }}>{traduire("Séance en cours, {0}", fmtClock((Date.now() - draft.startedAt) / 1000))}</Ink>
+                <Ink size={17} weight="black" color={P.onPrimary} numberOfLines={2}>{traduire("Reprendre : {0}", draftTitle(draft))}</Ink>
               </View>
             </Pressable>
           ) : null}
 
-          {/* 26 octobre 2026 : les trois entrees, dans l'ordre voulu par Houari : seance, mensurations, poids */}
-          <TourAnchor id="ajouter.onglets" style={{ flexDirection: 'row', gap: 8 }} accessibilityRole="tablist">
+          {/* 1. L'action principale : ton programme du jour, en grande carte lilas */}
+          <CarteDuJour {...carte} image={perso} largeur={width - 2 * MARGE} />
+
+          {/* 2. Les trois onglets, en tuiles pastel avec sticker (memes onglets qu'avant, ordre de la maquette) */}
+          <TourAnchor id="ajouter.onglets" style={{ flexDirection: 'row', gap: 10, marginTop: 14 }} accessibilityRole="tablist">
             {([
-              { k: 'seance' as const, t: traduire('Séance'), d: 'M6.5 7v10M17.5 7v10M4 9.5v5M20 9.5v5M6.5 12h11' },
-              { k: 'mesures' as const, t: traduire('Mensurations'), d: 'M3 9h18v6H3zM7 9v3M11 9v4M15 9v3M19 9v2' },
-              { k: 'poids' as const, t: traduire('Poids'), d: 'M6 3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3zM7.5 10a4.5 4.5 0 0 1 9 0z' },
+              { k: 'seance' as const, t: traduire('Séance'), st: 'musculation' as NomSticker, fond: P.primary, texte: P.onPrimary },
+              { k: 'poids' as const, t: traduire('Poids'), st: 'balance' as NomSticker, fond: P.tuileMentheFond, texte: P.tuileMentheTexte },
+              { k: 'mesures' as const, t: traduire('Mensurations'), st: 'metre_ruban' as NomSticker, fond: P.tuileSableFond, texte: P.tuileSableTexte },
             ]).map((o) => {
               const on = onglet === o.k;
               return (
@@ -252,158 +307,120 @@ export default function Ajouter() {
                   accessibilityRole="tab"
                   accessibilityState={{ selected: on }}
                   accessibilityLabel={o.t}
-                  style={({ pressed }) => ({ flex: 1, minHeight: 74, borderRadius: 20, paddingVertical: 10, alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: on ? c.accent : pressed ? c.fillSubtle : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border })}
+                  style={({ pressed }) => ({ flex: 1, height: 92, borderRadius: 22, alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: o.fond, borderWidth: 2, borderColor: on ? o.texte : 'transparent', opacity: pressed ? 0.85 : 1 })}
                 >
-                  <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: on ? 'rgba(255,255,255,0.18)' : c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-                    <Svg width={16} height={16} viewBox="0 0 24 24"><Path d={o.d} {...stroke} stroke={on ? c.onAccent : c.accent} /></Svg>
-                  </View>
-                  <Ink size={14} weight="black" color={on ? c.onAccent : c.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{o.t}</Ink>
+                  <Image source={illus.img(o.st)} style={{ width: 38, height: 38 }} resizeMode="contain" />
+                  <Ink size={13.5} weight="black" color={o.texte} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ paddingHorizontal: 6 }}>{o.t}</Ink>
                 </Pressable>
               );
             })}
           </TourAnchor>
 
           {onglet === 'seance' ? (<>
-          {/* 1. LA SEANCE : une seance faite en quelques touchers */}
-          <TourAnchor id="ajouter.seance" style={{ height: 132, borderRadius: 24, backgroundColor: c.darkCard, overflow: 'hidden' }}>
-            <Pressable onPress={() => open('/seance')} accessibilityRole="button" accessibilityLabel={traduire("Noter une séance faite, choisir le sport")} style={({ pressed }) => ({ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, opacity: pressed ? 0.9 : 1 })}>
-              {heroImg ? <Image source={heroImg} style={{ position: 'absolute', right: -6, bottom: -56, width: 130, height: 176 }} resizeMode="contain" /> : null}
-              <View style={{ position: 'absolute', left: 18, top: 18, gap: 3, maxWidth: '62%' }}>
-                <Ink size={22} weight="black" tight color={c.onDark}>{traduire("Note ta séance")}</Ink>
-                <Ink size={13} color={c.onDarkSecondary} numberOfLines={1}>{traduire("faite aujourd’hui, touche ton sport")}</Ink>
-              </View>
-            </Pressable>
-            <View style={{ position: 'absolute', left: 18, bottom: 14, right: heroImg ? 124 : 18, flexDirection: 'row', gap: 6, overflow: 'hidden' }}>
-              {heroChips.map((s) => (
-                <Pressable key={s} onPress={() => noteSport(s)} accessibilityRole="button" accessibilityLabel={traduire("Noter une séance de {0} faite aujourd’hui", sportShortName(s))} hitSlop={4} style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, borderRadius: 12, justifyContent: 'center', backgroundColor: pressed ? P.white : sportTint(s) })}>
-                  <Ink size={13} weight="extraBold" color={c.ink}>{sportShortName(s)}</Ink>
+          {/* 3. Note ta seance du jour : tes sports en pastilles avec sticker */}
+          <TourAnchor id="ajouter.seance" style={{ marginTop: 18 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Ink size={15} weight="black" accessibilityRole="header">{traduire("Note ta séance du jour")}</Ink>
+              <Pressable onPress={() => open('/seance')} accessibilityRole="button" accessibilityLabel={traduire("Noter une séance faite, choisir le sport")} hitSlop={10}>
+                <Ink size={13} weight="extraBold" color={P.accentText}>{traduire("Autre sport")}</Ink>
+              </Pressable>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+              {pastilles.map((s) => (
+                <Pressable
+                  key={s}
+                  onPress={() => noteSport(s)}
+                  accessibilityRole="button"
+                  accessibilityLabel={traduire("Noter une séance de {0} faite aujourd’hui", sportShortName(s))}
+                  style={({ pressed }) => ({ flex: 1, height: 46, borderRadius: 23, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 8, backgroundColor: pressed ? P.line2 : P.white, ...ombre })}
+                >
+                  <Image source={illus.img(stickerDuSport(s))} style={{ width: 22, height: 22 }} resizeMode="contain" />
+                  <Ink size={14} weight="black" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ flexShrink: 1 }}>{sportShortName(s)}</Ink>
                 </Pressable>
               ))}
             </View>
           </TourAnchor>
 
-          {/* 26 octobre 2026 (Houari : « revois le design, je veux la qualite ») : deux grandes entrees,
-              ce qui est prevu aujourd'hui, puis les autres facons en grille, aeree */}
-          <TourAnchor id="ajouter.facons" style={{ flexDirection: 'row', gap: 10 }}>
-            <Pressable
-              onPress={() => open('/quick-log')}
-              accessibilityRole="button"
-              accessibilityLabel={traduire("Dicte ta séance en une phrase")}
-              style={({ pressed }) => ({ flex: 1, minHeight: 112, borderRadius: 22, padding: 14, justifyContent: 'space-between', backgroundColor: pressed ? c.fillSubtle : c.accentTint })}
-            >
-              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-                <Svg width={17} height={17} viewBox="0 0 24 24"><Path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z" {...stroke} stroke={c.onAccent} /><Path d="M6 11a6 6 0 0 0 12 0M12 17v4" {...stroke} stroke={c.onAccent} /></Svg>
-              </View>
-              <View style={{ gap: 2 }}>
-                <Ink size={17} weight="black" tight>{traduire("Dicte ta séance")}</Ink>
-                <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2}>{traduire("ou colle tes notes")}</Ink>
-              </View>
-            </Pressable>
-            <Pressable
-              onPress={() => open('/seance', { live: '1' })}
-              accessibilityRole="button"
-              accessibilityLabel={traduire("En direct, démarrer avec le chrono")}
-              style={({ pressed }) => ({ flex: 1, minHeight: 112, borderRadius: 22, padding: 14, justifyContent: 'space-between', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
-            >
-              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-                <Svg width={17} height={17} viewBox="0 0 24 24"><Circle cx={12} cy={13} r={8} {...accentStroke} /><Path d="M12 9v4l2.5 1.5M10 2.5h4" {...accentStroke} /></Svg>
-              </View>
-              <View style={{ gap: 2 }}>
-                <Ink size={17} weight="black" tight>{traduire("En direct")}</Ink>
-                <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2}>{traduire("avec le chrono et le repos")}</Ink>
-              </View>
-            </Pressable>
+          {/* 4. Dicte ta seance et En direct */}
+          <TourAnchor id="ajouter.facons" style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+            <Facon titre={traduire("Dicte ta séance")} sous={traduire("ou colle tes notes")} sticker={illus.img('noter')} a11y={traduire("Dicte ta séance en une phrase")} onPress={() => open('/quick-log')} />
+            <Facon titre={traduire("En direct")} sous={traduire("avec le chrono et le repos")} sticker={illus.img('chrono')} a11y={traduire("En direct, démarrer avec le chrono")} onPress={() => open('/seance', { live: '1' })} />
           </TourAnchor>
 
-          {prog || slot ? (
-            <>
-              <Label>{traduire("Aujourd’hui")}</Label>
-              {prog ? (
-                <CarteDuJour label={traduire("Ton programme")} titre={prog.titre} onPress={() => open(prog.route.pathname, prog.route.params)} />
-              ) : null}
-              {slot ? (
-                <CarteDuJour label={traduire("Prévu aujourd’hui")} titre={`${slotTitle}${slotTime}`} onPress={startSlot} />
-              ) : null}
-            </>
-          ) : null}
-
-          <Label>{traduire("Autres façons")}</Label>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-            {last ? (
-              <Tuile titre={traduire("Refaire ta dernière")} sous={sessionTitle(last)} onPress={repeatLast} icone={<Path d="M4 12a8 8 0 0 1 13.7-5.6L20 9M20 4v5h-5M20 12a8 8 0 0 1-13.7 5.6L4 15M4 20v-5h5" {...accentStroke} />} />
-            ) : null}
-            <Tuile
-              titre={traduire("Mes séances")}
-              sous={mesNoms.length === 0 ? traduire("à refaire en un appui") : mesNoms.slice(0, 2).join(', ')}
-              onPress={() => open('/mes-seances')}
-              icone={<Path d="M7 3.5h10a1 1 0 0 1 1 1v16l-6-4-6 4v-16a1 1 0 0 1 1-1z" {...accentStroke} />}
-            />
-            <Tuile titre={traduire("Séance passée")} sous={traduire("un autre jour")} onPress={() => open('/seance/deja-faite')} icone={<><Rect x={4} y={5.5} width={16} height={15} rx={3} {...accentStroke} /><Path d="M4 10h16M9 3.5v4M15 3.5v4" {...accentStroke} /></>} />
-            <Tuile titre={traduire("Importer")} sous={traduire("tes notes, une autre app")} onPress={() => open('/importer-carnet')} icone={<Path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14" {...accentStroke} />} />
-            <Tuile titre={traduire("Quoi faire ?")} sous={traduire("YOROI fait ta séance")} onPress={() => open('/programmes/zones')} icone={<Path d="M12 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM8 10h8l-1 5h-1.5l-.5 6h-2l-.5-6H9z" {...accentStroke} />} />
-            {!prog ? (
-              <Tuile titre={traduire("Programmes")} sous={traduire("PPL, Upper Lower...")} onPress={() => open('/programmes')} icone={<Path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11" {...accentStroke} />} />
-            ) : null}
-            {provider ? (
-              <Tuile
-                titre={traduire("Ta montre")}
-                sous={sync === 'idle' ? traduire('récupérer tes séances') : sync === 'busy' ? traduire('synchro en cours') : sync}
-                onPress={syncWatch}
-                icone={<><Rect x={6.5} y={6} width={11} height={12} rx={3} {...accentStroke} /><Path d="M9 6l.6-3h4.8l.6 3M9 18l.6 3h4.8l.6-3M12 10v2.5l1.5 1" {...accentStroke} /></>}
-              />
-            ) : null}
+          {/* 5. Autres facons : une liste fine, petit sticker, titre, detail, chevron */}
+          <Ink size={15} weight="black" style={{ marginTop: 18 }} accessibilityRole="header">{traduire("Autres façons")}</Ink>
+          <View style={{ marginTop: 8, backgroundColor: P.white, borderRadius: 22, paddingHorizontal: 14, ...ombre }}>
+            {autres.map((o, i) => (
+              <Pressable
+                key={o.key}
+                onPress={o.onPress}
+                accessibilityRole="button"
+                accessibilityLabel={`${o.titre}, ${o.sous}`}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 9, borderBottomWidth: i < autres.length - 1 ? 1 : 0, borderColor: P.line2, opacity: pressed ? 0.7 : 1 })}
+              >
+                <Image source={illus.img(o.sticker)} style={{ width: 26, height: 26 }} resizeMode="contain" />
+                <View style={{ flex: 1 }}>
+                  <Ink size={14.5} weight="black" numberOfLines={1}>{o.titre}</Ink>
+                  <Ink size={12} weight="bold" color={P.ink2} numberOfLines={1}>{o.sous}</Ink>
+                </View>
+                {o.key === 'montre' && sync === 'busy' ? <ActivityIndicator size="small" color={P.chevron} /> : <Chevron />}
+              </Pressable>
+            ))}
           </View>
-
           </>) : null}
 
-          {/* 2. MENSURATIONS (26 octobre 2026 : meme style que « Note ta seance », que Houari adore) */}
+          {/* MENSURATIONS (meme style de grande carte, en sable) */}
           {onglet === 'mesures' ? (
-            <TourAnchor id="ajouter.detail">
+            <TourAnchor id="ajouter.detail" style={{ marginTop: 14 }}>
             <Hero
               titre={traduire('Tes mensurations')}
               sous={traduire('taille, bras, cuisses, au ruban')}
-              image={IMG_MESURES ?? heroImg}
+              image={IMG_MESURES ?? illus.img('metre_ruban')}
+              fond={P.tuileSableFond}
+              texte={P.tuileSableTexte}
               onPress={() => open('/add-measurement')}
               a11y={traduire('Ajouter mes mensurations')}
               puces={[
-                { t: traduire('Mesurer'), on: () => open('/add-measurement'), fond: '#E3E9F3' },
-                { t: traduire('Évolution'), on: () => open('/measurements-detail'), fond: '#E9E4D6' },
-                { t: traduire('Photo'), on: () => open('/photos'), fond: '#E2EADB' },
+                { t: traduire('Mesurer'), on: () => open('/add-measurement') },
+                { t: traduire('Évolution'), on: () => open('/measurements-detail') },
+                { t: traduire('Photo'), on: () => open('/photos') },
               ]}
             />
             </TourAnchor>
           ) : null}
 
-          {/* 3. POIDS : a la main, par photo de la balance, composition (meme style que « Note ta seance ») */}
+          {/* POIDS : a la main, par photo de la balance, composition (en menthe) */}
           {onglet === 'poids' ? (
-            <TourAnchor id="ajouter.detail">
+            <TourAnchor id="ajouter.detail" style={{ marginTop: 14 }}>
             <Hero
               titre={traduire('Ta pesée')}
               sous={traduire('ton poids du jour, ta composition')}
-              image={IMG_PESEE ?? heroImg}
+              image={IMG_PESEE ?? illus.img('balance')}
+              fond={P.tuileMentheFond}
+              texte={P.tuileMentheTexte}
               onPress={() => open('/pesee')}
               a11y={traduire('Pesée, ton poids du jour')}
               puces={[
-                { t: traduire('Poids'), on: () => open('/pesee'), fond: '#E3E9F3' },
-                { t: traduire('Par photo'), on: () => open('/balance-photo'), fond: '#E9E4D6' },
-                { t: traduire('Composition'), on: () => open('/body-composition'), fond: '#E2EADB' },
+                { t: traduire('Poids'), on: () => open('/pesee') },
+                { t: traduire('Par photo'), on: () => open('/balance-photo') },
+                { t: traduire('Composition'), on: () => open('/body-composition') },
               ]}
             />
             </TourAnchor>
           ) : null}
 
-          {/* 26 octobre 2026 (Houari : « Autre chose en bas, c'est moche ») : de petites puces, toujours visibles */}
-          <Label>{traduire("Autre chose")}</Label>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {/* Autre chose : de petites pilules blanches, toujours visibles */}
+          <Ink size={15} weight="black" style={{ marginTop: 18 }} accessibilityRole="header">{traduire("Autre chose")}</Ink>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
             {others.map((o) => (
               <Pressable
                 key={o.key}
                 onPress={() => open(o.href, o.params)}
                 accessibilityRole="button"
                 accessibilityLabel={`${o.title}, ${o.sub}`}
-                style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
+                style={({ pressed }) => ({ height: 40, paddingHorizontal: 16, borderRadius: 20, justifyContent: 'center', backgroundColor: pressed ? P.line2 : P.white, ...ombre })}
               >
-                <Ink size={14} weight="bold">{traduire(o.title)}</Ink>
+                <Ink size={14} weight="extraBold">{traduire(o.title)}</Ink>
               </Pressable>
             ))}
           </View>
@@ -414,81 +431,95 @@ export default function Ajouter() {
   );
 }
 
-function Label({ children }: { children: string }) {
-  const { theme } = useYoroiTheme();
-  return <Ink size={13} weight="extraBold" color={theme.colors.textSecondary} style={{ paddingHorizontal: 4, marginTop: 6, letterSpacing: 0.3 }}>{children}</Ink>;
+/** Marge laterale de la feuille (maquette : 18) */
+const MARGE = 18;
+
+function Chevron() {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24">
+      <Path d="M9 6l6 6-6 6" stroke={P.chevron} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </Svg>
+  );
 }
 
 /**
- * Grande carte illustree, dans le style de « Note ta seance » (Houari : « ca, c'est magnifique, ca donne envie ») :
- * fond indigo, titre, une ligne, des puces, l'illustration a droite.
+ * La grande carte du haut (maquette Plus A) : degrade lilas, etiquette prune, titre, detail, la semaine en mini
+ * barres, le bouton blanc Démarrer, et ton personnage en bas a droite.
  */
-function Hero({ titre, sous, image, onPress, a11y, puces }: { titre: string; sous: string; image: ImageSourcePropType | null; onPress: () => void; a11y: string; puces: { t: string; on: () => void; fond: string }[] }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
+function CarteDuJour({ label, titre, sous, bouton, semaine, onPress, image, largeur }: { label: string; titre: string; sous: string; bouton: string; semaine: JourSemaine[] | null; onPress: () => void; image: ImageSourcePropType | null; largeur: number }) {
+  const couleur = (e: JourSemaine['etat']) => (e === 'fait' ? P.semaineFaite : e === 'jour' ? P.semaineJour : e === 'prevu' ? P.semainePrevue : P.semaineRepos);
   return (
-    <View style={{ height: 150, borderRadius: 24, backgroundColor: c.darkCard, overflow: 'hidden' }}>
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={a11y} style={({ pressed }) => ({ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, opacity: pressed ? 0.9 : 1 })}>
-        {image ? <Image source={image} style={{ position: 'absolute', right: -6, bottom: -40, width: 136, height: 180 }} resizeMode="contain" /> : null}
-        <View style={{ position: 'absolute', left: 18, top: 18, gap: 3, maxWidth: '62%' }}>
-          <Ink size={22} weight="black" tight color={c.onDark}>{titre}</Ink>
-          <Ink size={13} color={c.onDarkSecondary} numberOfLines={1}>{sous}</Ink>
+    <LinearGradient colors={[P.programmeFond, P.programmeFond2]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 26, padding: 16, overflow: 'hidden' }}>
+      {image ? <Image source={image} style={{ position: 'absolute', right: -6, bottom: -20, width: 120, height: 150 }} resizeMode="contain" accessible={false} /> : null}
+      <View style={{ maxWidth: Math.min(220, largeur - 32 - 110) }}>
+        <Ink size={11} weight="black" color={P.etiquettePrune} style={{ letterSpacing: 1.6 }}>{label.toLocaleUpperCase()}</Ink>
+        <Ink size={19} weight="black" style={{ marginTop: 6, lineHeight: 24 }} numberOfLines={2}>{titre}</Ink>
+        <Ink size={12.5} weight="bold" color={P.ink2} style={{ marginTop: 4 }} numberOfLines={2}>{sous}</Ink>
+      </View>
+      {semaine ? (
+        <View style={{ flexDirection: 'row', gap: 5, marginTop: 12, alignItems: 'flex-end' }} accessible accessibilityLabel={traduire('Ta semaine : {0} séances faites sur {1} prévues', semaine.filter((j) => j.etat === 'fait').length, semaine.filter((j) => j.etat !== 'repos').length)}>
+          {semaine.map((j, i) => (
+            <View key={i} style={{ alignItems: 'center', gap: 3 }}>
+              <View style={{ height: 22, justifyContent: 'flex-end' }}>
+                <View style={{ width: 22, height: j.etat === 'repos' ? 6 : 22, borderRadius: 6, backgroundColor: j.aujourdhui && j.etat === 'repos' ? P.semainePrevue : couleur(j.etat) }} />
+              </View>
+              <Ink size={9.5} weight="black" color={j.aujourdhui ? P.ink : P.ink2}>{j.lettre}</Ink>
+            </View>
+          ))}
         </View>
+      ) : null}
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${bouton}, ${titre}`}
+        style={({ pressed }) => ({ alignSelf: 'flex-start', marginTop: 14, height: 48, paddingHorizontal: 22, borderRadius: 24, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: pressed ? P.line2 : P.white, shadowColor: '#1D2033', shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 2 })}
+      >
+        <Svg width={14} height={14} viewBox="0 0 24 24"><Path d="M7 4l13 8-13 8z" fill={P.accentText} /></Svg>
+        <Ink size={15} weight="black" color={P.accentText}>{bouton}</Ink>
       </Pressable>
-      <View style={{ position: 'absolute', left: 18, bottom: 14, right: image ? 124 : 18, flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+    </LinearGradient>
+  );
+}
+
+/** Dicte ta seance, En direct : une carte blanche, sticker, titre, une ligne */
+function Facon({ titre, sous, sticker, a11y, onPress }: { titre: string; sous: string; sticker: ImageSourcePropType; a11y: string; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={a11y}
+      style={({ pressed }) => ({ flex: 1, minHeight: 104, borderRadius: 22, padding: 14, justifyContent: 'space-between', backgroundColor: pressed ? P.line2 : P.white, shadowColor: '#1D2033', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 1 })}
+    >
+      <Image source={sticker} style={{ width: 34, height: 34 }} resizeMode="contain" />
+      <View style={{ gap: 2, marginTop: 8 }}>
+        <Ink size={15.5} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{titre}</Ink>
+        <Ink size={12} weight="bold" color={P.ink2} numberOfLines={2}>{sous}</Ink>
+      </View>
+    </Pressable>
+  );
+}
+
+/**
+ * Grande carte des onglets Poids et Mensurations : l'aplat pastel de sa tuile, titre, une ligne, des pilules
+ * blanches, et le sticker a droite.
+ */
+function Hero({ titre, sous, image, fond, texte, onPress, a11y, puces }: { titre: string; sous: string; image: ImageSourcePropType | null; fond: string; texte: string; onPress: () => void; a11y: string; puces: { t: string; on: () => void }[] }) {
+  return (
+    <View style={{ minHeight: 150, borderRadius: 26, backgroundColor: fond, overflow: 'hidden', padding: 16 }}>
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={a11y} style={({ pressed }) => ({ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, opacity: pressed ? 0.9 : 1 })}>
+        {image ? <Image source={image} style={{ position: 'absolute', right: 14, top: 16, width: 92, height: 92 }} resizeMode="contain" /> : null}
+      </Pressable>
+      <View pointerEvents="none" style={{ gap: 4, maxWidth: '62%' }}>
+        <Ink size={19} weight="black" tight color={texte}>{titre}</Ink>
+        <Ink size={12.5} weight="bold" color={P.ink2} numberOfLines={2}>{sous}</Ink>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 'auto', paddingTop: 16 }}>
         {puces.map((p) => (
-          <Pressable key={p.t} onPress={p.on} accessibilityRole="button" hitSlop={4} style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 12, borderRadius: 12, justifyContent: 'center', backgroundColor: pressed ? '#FFFFFF' : p.fond })}>
-            <Ink size={13} weight="extraBold" color={c.ink}>{p.t}</Ink>
+          <Pressable key={p.t} onPress={p.on} accessibilityRole="button" hitSlop={4} style={({ pressed }) => ({ height: 40, paddingHorizontal: 16, borderRadius: 20, justifyContent: 'center', backgroundColor: pressed ? P.line2 : P.white })}>
+            <Ink size={13.5} weight="black" color={texte}>{p.t}</Ink>
           </Pressable>
         ))}
       </View>
     </View>
   );
 }
-
-/** Une entree de la grille « Autres facons » : icone, titre, une ligne de detail */
-function Tuile({ titre, sous, onPress, icone }: { titre: string; sous: string; onPress: () => void; icone: React.ReactNode }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
-  const { width } = useWindowDimensions();
-  const w = (width - 44 - 10) / 2;
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${titre}, ${sous}`}
-      style={({ pressed }) => ({ width: w, minHeight: 92, borderRadius: 20, padding: 13, gap: 8, justifyContent: 'space-between', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
-    >
-      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-        <Svg width={15} height={15} viewBox="0 0 24 24">{icone}</Svg>
-      </View>
-      <View style={{ gap: 2 }}>
-        <Ink size={15} weight="extraBold" tight numberOfLines={1}>{titre}</Ink>
-        <Ink size={12} weight="medium" color={c.textSecondary} numberOfLines={1}>{sous}</Ink>
-      </View>
-    </Pressable>
-  );
-}
-
-/** Ce qui est prevu aujourd'hui : une grande ligne, un bouton lecture a droite */
-function CarteDuJour({ label, titre, onPress }: { label: string; titre: string; onPress: () => void }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${label} : ${titre}`}
-      style={({ pressed }) => ({ minHeight: 72, borderRadius: 22, paddingLeft: 16, paddingRight: 12, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : c.accentTint })}
-    >
-      <View style={{ flex: 1, gap: 2 }}>
-        <Ink size={12} weight="black" color={c.accent} style={{ letterSpacing: 0.4 }}>{label.toLocaleUpperCase()}</Ink>
-        <Ink size={17} weight="black" tight numberOfLines={2}>{titre}</Ink>
-      </View>
-      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-        <Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M8 5v14l11-7z" fill={c.onAccent} /></Svg>
-      </View>
-    </Pressable>
-  );
-}
-

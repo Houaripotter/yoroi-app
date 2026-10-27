@@ -142,8 +142,8 @@ export default function LogoSelectionScreen() {
                       <Image source={o.image} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
                     </View>
                     {on ? (
-                      <View style={{ position: 'absolute', top: -6, right: -6, width: 22, height: 22, borderRadius: 11, backgroundColor: accent, borderWidth: 2, borderColor: P.white, alignItems: 'center', justifyContent: 'center' }}>
-                        <Icon name="check" size={12} color={P.white} width={3} />
+                      <View style={{ position: 'absolute', top: -6, right: -6, width: 22, height: 22, borderRadius: 11, backgroundColor: P.primary, borderWidth: 2, borderColor: P.white, alignItems: 'center', justifyContent: 'center' }}>
+                        <Icon name="check" size={12} color={P.onPrimary} width={3} />
                       </View>
                     ) : null}
                   </View>

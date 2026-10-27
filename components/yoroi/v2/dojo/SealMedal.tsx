@@ -7,6 +7,25 @@ import type { ImageSourcePropType } from 'react-native';
 import { Hanko } from './Hanko';
 
 import { universCourant } from '@/lib/v2/dojo/univers';
+import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+
+/**
+ * 27 octobre 2026 : le sticker de chaque sceau (reglage Illustrations sur Stickers, les deux univers).
+ * Meme nom sauf cerisier (sakura), haltere (musculation), carte (carte_tresor) ; dans l'univers classique,
+ * le torii est la cle doree (cle).
+ */
+export const SEAL_STICKERS: Record<string, NomSticker> = {
+  bambou: 'bambou', cerisier: 'sakura', flamme: 'flamme', fuji: 'fuji', lanterne: 'lanterne', lune_soleil: 'lune_soleil', pont: 'pont', sablier: 'sablier', sentier: 'sentier',
+  barre: 'barre', bras: 'bras', chaine: 'chaine', enclume: 'enclume', haltere: 'musculation', kettlebell: 'kettlebell', marteau: 'marteau', poing: 'poing', rocher: 'rocher',
+  bandes: 'bandes', ceinture_nouee: 'ceinture_nouee', eventail: 'eventail', gants: 'gants', gong: 'gong', kabuto: 'kabuto', katanas: 'katanas', kimono: 'kimono', oni: 'oni',
+  appareil_photo: 'appareil_photo', balance: 'balance', boussole: 'boussole', carte: 'carte_tresor', chaussure: 'chaussure', lanterne_papier: 'lanterne_papier', metre_ruban: 'metre_ruban', tapis: 'tapis', torii: 'torii',
+};
+
+/** Le sticker d'un sceau dans l'univers donne (null : pas de sticker, l'illustration d'avant) */
+export function stickerDuSceau(id: string, classique: boolean): NomSticker | null {
+  if (classique && id === 'torii') return 'cle';
+  return SEAL_STICKERS[id] ?? null;
+}
 
 export const SEAL_IMAGES: Record<string, ImageSourcePropType> = {
   bambou: require('@/assets/avatars/app/sceaux/regularite/bambou.webp'),
@@ -63,7 +82,11 @@ type Props = { id: string; kanji?: string; color?: string; size?: number; earned
 
 /** Sceau illustre ; non gagne : estompe. Sans image, le tampon dessine. */
 export function SealMedal({ id, color, size = 62, earned = true }: Props) {
-  const src = (universCourant() === 'classique' ? SEAL_IMAGES_CLASSIQUE[id] : undefined) ?? SEAL_IMAGES[id];
+  const illus = useIllustrations();
+  const classique = universCourant() === 'classique';
+  const ancien = (classique ? SEAL_IMAGES_CLASSIQUE[id] : undefined) ?? SEAL_IMAGES[id];
+  const st = illus.stickers ? stickerDuSceau(id, classique) : null;
+  const src = st ? illus.img(st) : ancien;
   if (!src) return <Hanko glyph="etoile" color={color} size={size} earned={earned} shape="rond" />;
   return (
     <View style={{ width: size, height: size, opacity: earned ? 1 : 0.28 }} accessibilityIgnoresInvertColors>

@@ -104,10 +104,10 @@ export function Briefing({ visible, onClose, p, ins }: { visible: boolean; onClo
           </Glass>
 
           {p.activeGoal?.text ? (
-            <View style={{ borderRadius: 24, padding: 18, backgroundColor: P.accent, gap: 6 }}>
+            <View style={{ borderRadius: 24, padding: 18, backgroundColor: P.primary, gap: 6 }}>
               <Ink size={13} weight="extraBold" color="rgba(255,255,255,0.85)">
                 {traduire("Objectif du jour")}</Ink>
-              <Ink size={20} weight="black" tight color={P.white}>
+              <Ink size={20} weight="black" tight color={P.onPrimary}>
                 {traduire(p.activeGoal.text)}
               </Ink>
             </View>

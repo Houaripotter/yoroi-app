@@ -118,10 +118,10 @@ export default function MesSeances() {
                   disabled={s.exos.length === 0}
                   accessibilityRole="button"
                   accessibilityLabel={traduire('Commencer {0}', s.nom)}
-                  style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 18, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: s.exos.length === 0 ? c.fillSoft : pressed ? c.accentPressed : c.accent })}
+                  style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 18, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: s.exos.length === 0 ? c.fillSoft : pressed ? c.primaryPressed : c.primary })}
                 >
-                  <Icon name="play" size={16} color={c.onAccent} />
-                  <Ink size={15} weight="extraBold" color={c.onAccent}>{traduire('Commencer')}</Ink>
+                  <Icon name="play" size={16} color={c.onPrimary} />
+                  <Ink size={15} weight="extraBold" color={c.onPrimary}>{traduire('Commencer')}</Ink>
                 </Pressable>
               </View>
             </View>

@@ -29,6 +29,7 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { useSessionRecords } from '@/lib/v2/seances/useSessionRecords';
 import { SeanceRecords } from './SeanceRecords';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 
 export type RecordsFilter = 'all' | RecordFamily | 'escalade';
 
@@ -259,6 +260,7 @@ function PremiumLine({ text, onPress }: { text: string; onPress: () => void }) {
 }
 
 export function RecordCard({ b, onOpen, onAdd, onDelete }: { b: Benchmark; onOpen: (b: Benchmark) => void; onAdd: (b: Benchmark) => void; onDelete: (b: Benchmark) => void }) {
+  const illus = useIllustrations();
   const { accent } = useAccent();
   const { width } = useWindowDimensions();
   const s = summarize(b);
@@ -285,8 +287,8 @@ export function RecordCard({ b, onOpen, onAdd, onDelete }: { b: Benchmark; onOpe
     >
       <View style={{ padding: 16, borderRadius: 24, backgroundColor: P.white, borderWidth: 1, borderColor: s.lastIsBest ? 'rgba(176,40,46,0.28)' : P.line2, gap: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-          <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center' }}>
-            <Illus name={FAMILY_ILLUS[fam]} size={40} />
+          <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: illus.stickers ? 'transparent' : P.paper, alignItems: 'center', justifyContent: 'center' }}>
+            <Illus name={FAMILY_ILLUS[fam]} size={illus.stickers ? 46 : 40} />
           </View>
           <View style={{ flex: 1, gap: 1, paddingTop: 2 }}>
             <Ink size={16} weight="extraBold" numberOfLines={2}>{name}</Ink>

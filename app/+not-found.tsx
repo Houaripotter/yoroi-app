@@ -73,12 +73,12 @@ export default function NotFoundScreen() {
             onPress={goHome}
             accessibilityRole="button"
             accessibilityLabel="Retour à l'accueil"
-            style={({ pressed }) => [styles.primary, { backgroundColor: pressed ? c.accentPressed : c.accent, shadowColor: c.accent }]}
+            style={({ pressed }) => [styles.primary, { backgroundColor: pressed ? c.primaryPressed : c.primary, shadowColor: '#1B2A44' }]}
           >
             <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
               <Path d="M4 11l8-7 8 7M6 9.5V20h12V9.5" stroke={c.onAccent} strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
-            <Ink size={17} weight="extraBold" color={c.onAccent}>
+            <Ink size={17} weight="extraBold" color={c.onPrimary}>
               Retour à l’accueil
             </Ink>
           </Pressable>

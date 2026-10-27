@@ -21,7 +21,7 @@ export function MessageDiscipline() {
   const c = useColors();
   return (
     <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center', borderRadius: 22, backgroundColor: c.accentTint, padding: 16 }}>
-      <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
         <Icon name="target" size={24} color={c.accent} />
       </View>
       <View style={{ flex: 1, gap: 4 }}>

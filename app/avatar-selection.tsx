@@ -67,10 +67,10 @@ export default function TonPersonnage() {
         style={{ flex: 1, height: 250, borderRadius: 22, overflow: 'hidden', borderWidth: on ? 3 : 1, borderColor: on ? c.accent : c.border, backgroundColor: on ? c.accentTint : c.fillSoft, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 12 }}
       >
         <Image source={classiqueImage(g, rankIndex)} style={{ position: 'absolute', top: 6, width: '100%', height: 206 }} resizeMode="contain" />
-        <View style={{ backgroundColor: on ? c.accent : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 }}>
-          <Ink size={14} weight="extraBold" color={on ? '#FFFFFF' : c.ink}>{label}</Ink>
+        <View style={{ backgroundColor: on ? c.primary : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 }}>
+          <Ink size={14} weight="extraBold" color={on ? c.onPrimary : c.ink}>{label}</Ink>
         </View>
-        {on ? <View style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: 13, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}><Icon name="check" size={14} color="#FFFFFF" stroke={3} /></View> : null}
+        {on ? <View style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: 13, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}><Icon name="check" size={14} color={c.onPrimary} stroke={3} /></View> : null}
       </Pressable>
     );
   };
@@ -101,11 +101,11 @@ export default function TonPersonnage() {
       >
         <Image source={sceneMeta('classique_salle_jour').image} style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
         <View style={{ position: 'absolute', left: 12, bottom: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <View style={{ backgroundColor: aucunOn ? c.accent : c.surface, borderWidth: aucunOn ? 0 : 1, borderColor: c.border, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 }}>
-            <Ink size={14} weight="extraBold" color={aucunOn ? '#FFFFFF' : c.ink}>{traduire("Sans personnage")}</Ink>
+          <View style={{ backgroundColor: aucunOn ? c.primary : c.surface, borderWidth: aucunOn ? 0 : 1, borderColor: c.border, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 }}>
+            <Ink size={14} weight="extraBold" color={aucunOn ? c.onPrimary : c.ink}>{traduire("Sans personnage")}</Ink>
           </View>
         </View>
-        {aucunOn ? <View style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: 13, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}><Icon name="check" size={14} color="#FFFFFF" stroke={3} /></View> : null}
+        {aucunOn ? <View style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: 13, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}><Icon name="check" size={14} color={c.onPrimary} stroke={3} /></View> : null}
       </Pressable>
       <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4, marginTop: -4 }}>{phraseUnivers('aucun')}</Ink>
 

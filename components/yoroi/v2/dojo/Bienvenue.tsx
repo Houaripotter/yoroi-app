@@ -110,9 +110,9 @@ export function Bienvenue({ visible, summary, image, scene, onClose }: Props) {
             onPress={onClose}
             accessibilityRole="button"
             accessibilityLabel={traduire("Entrer dans le Dojo")}
-            style={({ pressed }) => ({ height: 56, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}
+            style={({ pressed }) => ({ height: 56, borderRadius: 18, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}
           >
-            <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Entrer dans le Dojo")}</Ink>
+            <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Entrer dans le Dojo")}</Ink>
           </Pressable>
         </View>
       </View>

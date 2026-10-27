@@ -118,7 +118,7 @@ export function ChronoPicto({ mode, size = 1 }: { mode: TimerMode | 'sparring'; 
   }
   return (
     <Svg width={W * size} height={H * size} viewBox={`0 0 ${W} ${H}`}>
-      <Line x1={4} y1={BASE + 0.5} x2={W - 4} y2={BASE + 0.5} stroke="#D5D2CA" strokeWidth={1.2} strokeLinecap="round" />
+      <Line x1={4} y1={BASE + 0.5} x2={W - 4} y2={BASE + 0.5} stroke="#C9CEDF" strokeWidth={1.2} strokeLinecap="round" />
       {body}
     </Svg>
   );

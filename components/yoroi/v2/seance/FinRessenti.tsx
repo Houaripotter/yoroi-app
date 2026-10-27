@@ -105,14 +105,14 @@ export function FinRessenti({ trainingId, combat }: { trainingId: number; combat
                 accessibilityRole="button"
                 accessibilityLabel={traduire(m.label)}
                 accessibilityState={{ selected: on }}
-                style={({ pressed }) => ({ flex: 1, minHeight: 72, borderRadius: 16, alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: on ? c.accent : pressed ? c.fillSubtle : c.fillSoft, borderWidth: 1, borderColor: on ? c.accent : 'transparent' })}
+                style={({ pressed }) => ({ flex: 1, minHeight: 72, borderRadius: 16, alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: on ? c.primary : pressed ? c.fillSubtle : c.fillSoft, borderWidth: 1, borderColor: on ? c.primary : 'transparent' })}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 2, height: 22 }} accessibilityElementsHidden importantForAccessibility="no">
                   {[0, 1, 2, 3, 4].map((b) => (
                     <View key={b} style={{ width: 4, height: 6 + b * 4, borderRadius: 2, backgroundColor: b < level ? (on ? c.onAccent : c.ink) : on ? 'rgba(255,255,255,0.3)' : c.border }} />
                   ))}
                 </View>
-                <Ink size={11} weight="bold" color={on ? c.onAccent : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{traduire(m.label)}</Ink>
+                <Ink size={11} weight="bold" color={on ? c.onPrimary : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{traduire(m.label)}</Ink>
               </Pressable>
             );
           })}

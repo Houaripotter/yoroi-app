@@ -95,20 +95,20 @@ export default function GamePlanScreen() {
 
           {!empty ? (
             <Enter i={0}>
-              <View style={{ borderRadius: 28, padding: 20, backgroundColor: P.ink, gap: 12, overflow: 'hidden' }}>
+              <View style={{ borderRadius: 28, padding: 20, backgroundColor: P.poidsFond, gap: 12, overflow: 'hidden' }}>
                 <View style={{ position: 'absolute', right: -30, bottom: -30 }} pointerEvents="none">
-                  <Glyph kind="sakura" size={170} color={(paletteSombre() ? 'rgba(29,32,41,0.06)' : 'rgba(255,255,255,0.06)')} />
+                  <Glyph kind="sakura" size={170} color={paletteSombre() ? 'rgba(255,255,255,0.05)' : 'rgba(35,53,143,0.06)'} />
                 </View>
-                <Ink size={13} weight="extraBold" color={P.goldLight}>
+                <Ink size={13} weight="extraBold" color={P.goldDark}>
                   {traduire("Prochaine séance")}</Ink>
-                <Ink size={28} weight="black" tight color={P.white}>
+                <Ink size={28} weight="black" tight color={P.ink}>
                   {hint}
                 </Ink>
-                <Ink size={14} color={(paletteSombre() ? 'rgba(29,32,41,0.82)' : 'rgba(255,255,255,0.82)')}>
+                <Ink size={14} color={P.ink2}>
                   {pending > 0 ? traduire("{0} en attente. Coche quand c'est travaillé.", plural(pending, 'objectif')) : data.checklist.length > 0 ? traduire('Checklist complète. Ajoute de nouveaux objectifs dans tes rounds.') : traduire('Remplis tes analyses de rounds pour générer ta checklist.')}
                 </Ink>
                 {data.checklist.length > 0 ? (
-                  <ProgressBar progress={data.checklist.filter((c) => checked.has(c.id)).length / data.checklist.length} color={P.white} track={(paletteSombre() ? 'rgba(29,32,41,0.22)' : 'rgba(255,255,255,0.22)')} accessibilityLabel={traduire("Ta checklist")} />
+                  <ProgressBar progress={data.checklist.filter((c) => checked.has(c.id)).length / data.checklist.length} color={P.detail} track={P.pointInactif} accessibilityLabel={traduire("Ta checklist")} />
                 ) : null}
                 {data.totalPlans > 0 ? (
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
@@ -117,11 +117,11 @@ export default function GamePlanScreen() {
                       { v: String(data.executed), l: traduire('exécutés') },
                       { v: `${data.executionRate}%`, l: traduire('réussite'), gold: true },
                     ].map((x) => (
-                      <View key={x.l} style={{ flex: 1, padding: 12, borderRadius: 16, backgroundColor: x.gold ? 'rgba(227,196,123,0.18)' : (paletteSombre() ? 'rgba(29,32,41,0.1)' : 'rgba(255,255,255,0.1)') }}>
-                        <Ink size={24} weight="black" tight color={x.gold ? P.goldLight : P.white}>
+                      <View key={x.l} style={{ flex: 1, padding: 12, borderRadius: 16, backgroundColor: x.gold ? P.goldSoft : P.white }}>
+                        <Ink size={24} weight="black" tight color={x.gold ? P.goldDark : P.ink}>
                           {x.v}
                         </Ink>
-                        <Ink size={12} weight="bold" color={x.gold ? P.goldLight : (paletteSombre() ? 'rgba(29,32,41,0.75)' : 'rgba(255,255,255,0.75)')}>
+                        <Ink size={12} weight="bold" color={x.gold ? P.goldDark : P.ink2}>
                           {x.l}
                         </Ink>
                       </View>

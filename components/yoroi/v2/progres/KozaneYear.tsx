@@ -15,7 +15,7 @@ import { monthShortIdx } from '@/lib/v2/progres/format';
 import { traduire } from '@/lib/i18n/tr';
 
 /** Ancienne rampe des plaques, gardee pour compatibilite (plus utilisee par la grille) */
-export const KOZANE_RAMP = ['#E2DFD8', '#AFC0DE', '#6A86BE', '#2C4A84', '#172A52'];
+export const KOZANE_RAMP = ['#E4E7F1', '#AFC0DE', '#6A86BE', '#2C4A84', '#172A52'];
 
 const CW = 12;
 const CH = 14;
@@ -58,7 +58,7 @@ export function KozaneYear({ weeks, monthMarks, selected, onSelect }: Props) {
                       cx={x * (CW + GAP_X) + CW / 2}
                       cy={y * (CH + GAP_Y) + CH / 2}
                       r={cell.level > 0 ? CW / 2 - 0.75 : CW / 2 - 1.25}
-                      fill={cell.level > 0 ? c.accent : 'none'}
+                      fill={cell.level > 0 ? c.detail : 'none'}
                       stroke={cell.date === selected ? c.ink : cell.afterPause ? c.gold : cell.level > 0 ? 'none' : c.border}
                       strokeWidth={cell.date === selected ? 2 : cell.afterPause ? 1.6 : cell.level > 0 ? 0 : 1.2}
                     />
@@ -102,7 +102,7 @@ export function KozaneLegend() {
       <Ink size={12} weight="bold" color={c.textSecondary}>
         rien
       </Ink>
-      <View style={{ width: 11, height: 11, borderRadius: 6, backgroundColor: c.accent, marginLeft: 10 }} />
+      <View style={{ width: 11, height: 11, borderRadius: 6, backgroundColor: c.detail, marginLeft: 10 }} />
       <Ink size={12} weight="bold" color={c.textSecondary}>
         {traduire("séance")}</Ink>
       <View style={{ width: 11, height: 11, borderRadius: 6, borderWidth: 1.6, borderColor: c.gold, marginLeft: 10 }} />

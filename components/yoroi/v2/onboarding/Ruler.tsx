@@ -152,7 +152,7 @@ export function Ruler({
           </View>
         </ScrollView>
       ) : null}
-      <View pointerEvents="none" style={{ position: 'absolute', left: width / 2 - 3, top: 2, width: 6, height: 54, borderRadius: 3, backgroundColor: c.accent }} />
+      <View pointerEvents="none" style={{ position: 'absolute', left: width / 2 - 3, top: 2, width: 6, height: 54, borderRadius: 3, backgroundColor: c.detail }} />
     </View>
   );
 }

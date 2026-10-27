@@ -227,8 +227,8 @@ export default function ImportWorkoutsScreen() {
 
 function CheckDot({ on }: { on: boolean }) {
   return (
-    <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: on ? P.accent : 'transparent', borderWidth: on ? 0 : 2, borderColor: P.dashed, alignItems: 'center', justifyContent: 'center' }}>
-      {on ? <EIcon name="check" size={14} color={P.white} stroke={3} /> : null}
+    <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: on ? P.primary : 'transparent', borderWidth: on ? 0 : 2, borderColor: P.dashed, alignItems: 'center', justifyContent: 'center' }}>
+      {on ? <EIcon name="check" size={14} color={P.onPrimary} stroke={3} /> : null}
     </View>
   );
 }

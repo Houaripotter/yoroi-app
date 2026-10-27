@@ -81,7 +81,7 @@ function StepPlates({ n }: { n: number }) {
   return (
     <View style={{ flexDirection: 'row', gap: 3 }}>
       {Array.from({ length: STEPS }).map((_, i) => (
-        <View key={i} style={{ width: 10, height: 13, borderTopLeftRadius: 4, borderTopRightRadius: 4, borderBottomLeftRadius: 2, borderBottomRightRadius: 2, backgroundColor: i < n ? P.accent : P.line2 }} />
+        <View key={i} style={{ width: 10, height: 13, borderTopLeftRadius: 4, borderTopRightRadius: 4, borderBottomLeftRadius: 2, borderBottomRightRadius: 2, backgroundColor: i < n ? P.detail : P.line2 }} />
       ))}
     </View>
   );
@@ -137,8 +137,8 @@ function DrillCard({ t, onAdd, onEdit }: { t: DrillTechnique; onAdd: (n: number)
         </Press>
         {[1, 5, 10, 20].map((n, i) => (
           <Press key={n} onPress={() => onAdd(n)} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={traduire("Ajouter {0} répétitions de {1}", n, traduire(t.name))}>
-            <View style={{ height: 52, borderRadius: 16, backgroundColor: i === 3 ? P.accent : P.ink, alignItems: 'center', justifyContent: 'center' }}>
-              <Ink size={17} weight="black" color={P.white}>
+            <View style={{ height: 52, borderRadius: 16, backgroundColor: i === 3 ? P.primary : P.ink, alignItems: 'center', justifyContent: 'center' }}>
+              <Ink size={17} weight="black" color={i === 3 ? P.onPrimary : P.paper}>
                 {`+${n}`}
               </Ink>
             </View>

@@ -37,7 +37,7 @@ export function SettingRow({ label, value, onMinus, onPlus, hint, accent = P.ink
       accessibilityRole="button"
       accessibilityLabel={`${name} ${label}`}
       hitSlop={4}
-      style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 16, backgroundColor: pressed ? (paletteSombre() ? P.line : '#E2DFD8') : paletteSombre() ? P.line2 : '#F0EEE8', alignItems: 'center', justifyContent: 'center' })}
+      style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 16, backgroundColor: pressed ? (paletteSombre() ? P.line : '#E4E7F1') : paletteSombre() ? P.line2 : '#EEF0F7', alignItems: 'center', justifyContent: 'center' })}
     >
       <CIcon name={icon} size={20} color={P.ink} width={2.6} />
     </Pressable>
@@ -63,7 +63,7 @@ export function SettingRow({ label, value, onMinus, onPlus, hint, accent = P.ink
 
 /** Interrupteur sur une ligne */
 export function ToggleRow({ label, hint, value, onChange }: { label: string; hint?: string; value: boolean; onChange: (v: boolean) => void }) {
-  const { accent } = useAccent();
+  useAccent(); // se redessine quand le theme change
   return (
     <Press onPress={() => onChange(!value)} accessibilityRole="switch" accessibilityState={{ checked: value }} accessibilityLabel={label}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56 }}>
@@ -71,7 +71,7 @@ export function ToggleRow({ label, hint, value, onChange }: { label: string; hin
           <Ink size={15} weight="bold">{label}</Ink>
           {hint ? <Ink size={12} weight="medium" color={P.muted}>{hint}</Ink> : null}
         </View>
-        <View style={{ width: 50, height: 30, borderRadius: 15, backgroundColor: value ? accent : paletteSombre() ? P.dashed : '#D5D2CA', padding: 3, alignItems: value ? 'flex-end' : 'flex-start' }}>
+        <View style={{ width: 50, height: 30, borderRadius: 15, backgroundColor: value ? P.detail : paletteSombre() ? P.dashed : '#C9CEDF', padding: 3, alignItems: value ? 'flex-end' : 'flex-start' }}>
           <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: P.white }} />
         </View>
       </View>
@@ -85,7 +85,7 @@ export function ToggleRow({ label, hint, value, onChange }: { label: string; hin
  */
 export function PresetStrip<T extends string | number>({ items, value, onPick, columns = 3 }: { items: { key: T; title: string; sub?: string }[]; value: T | null; onPick: (k: T) => void; columns?: number }) {
   const basis = `${Math.floor(100 / columns) - 3}%` as const;
-  const { accent } = useAccent();
+  useAccent(); // se redessine quand le theme change
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
       {items.map((it) => {
@@ -93,9 +93,9 @@ export function PresetStrip<T extends string | number>({ items, value, onPick, c
         return (
           <View key={String(it.key)} style={{ flexBasis: basis, flexGrow: 1 }}>
             <Press onPress={() => onPick(it.key)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={it.sub ? `${it.title}, ${it.sub}` : it.title}>
-              <View style={{ minHeight: it.sub ? 60 : 48, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 16, backgroundColor: on ? accent : P.white, borderWidth: 1, borderColor: on ? accent : P.line2, justifyContent: 'center' }}>
-                <Ink size={15} weight="black" tight color={on ? P.white : P.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{traduire(it.title)}</Ink>
-                {it.sub ? <Ink size={12} weight="bold" color={on ? (paletteSombre() ? P.white : 'rgba(255,255,255,0.78)') : P.muted} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{traduire(it.sub)}</Ink> : null}
+              <View style={{ minHeight: it.sub ? 60 : 48, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 16, backgroundColor: on ? P.primary : P.white, borderWidth: 1, borderColor: on ? P.primary : P.line2, justifyContent: 'center' }}>
+                <Ink size={15} weight="black" tight color={on ? P.onPrimary : P.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{traduire(it.title)}</Ink>
+                {it.sub ? <Ink size={12} weight="bold" color={on ? P.onPrimary : P.muted} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{traduire(it.sub)}</Ink> : null}
               </View>
             </Press>
           </View>
@@ -119,27 +119,30 @@ export function TimelineBand({ parts, height = 12 }: { parts: { seconds: number;
 }
 
 /** Commandes pendant le chrono : arreter, pause ou reprise, passer. Bien separees et legendees. */
-export function ControlBar({ running, onToggle, onStop, onSkip, onReset, color, skipLabel = traduire('Passer') }: { running: boolean; onToggle: () => void; onStop: () => void; onSkip?: () => void; onReset?: () => void; color: string; skipLabel?: string }) {
+export function ControlBar({ running, onToggle, onStop, onSkip, onReset, color: _color, skipLabel = traduire('Passer') }: { running: boolean; onToggle: () => void; onStop: () => void; onSkip?: () => void; onReset?: () => void; color: string; skipLabel?: string }) {
+  // 27 octobre 2026 (maquette Pastel-Chrono) : Arreter dans un carre arrondi peche, Passer dans un carre bleu pastel,
+  // Pause au centre, plus grand, en pastel avec l'icone bleu nuit
+  const sombre = paletteSombre();
   const side = (name: 'stop' | 'skip' | 'reset', label: string, fn: () => void) => (
     <View style={{ alignItems: 'center', gap: 6, width: 84 }}>
       <Press onPress={fn} accessibilityRole="button" accessibilityLabel={label} haptic="medium">
-        <View style={{ width: 62, height: 62, borderRadius: 31, backgroundColor: blancA(0.94), borderWidth: 1, borderColor: P.white, alignItems: 'center', justifyContent: 'center', shadowColor: P.ink, shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 }}>
-          <CIcon name={name} size={24} color={name === 'stop' ? P.danger : P.ink} />
+        <View style={{ width: 66, height: 66, borderRadius: 22, backgroundColor: name === 'stop' ? (sombre ? '#3A2622' : '#FFE1D6') : sombre ? '#212B42' : '#DCE9FF', alignItems: 'center', justifyContent: 'center' }}>
+          <CIcon name={name} size={24} color={name === 'stop' ? (sombre ? '#F0A58C' : '#B4471E') : P.ink} />
         </View>
       </Press>
-      <Ink size={12} weight="bold" color={P.ink2} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Ink>
+      <Ink size={13} weight="extraBold" color={P.ink2} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Ink>
     </View>
   );
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingHorizontal: 4 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: 4 }}>
       {side('stop', traduire('Arrêter'), onStop)}
       <View style={{ alignItems: 'center', gap: 6 }}>
         <Press onPress={onToggle} haptic="medium" accessibilityRole="button" accessibilityLabel={running ? traduire('Pause') : traduire('Reprendre')}>
-          <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: color, alignItems: 'center', justifyContent: 'center', shadowColor: color, shadowOpacity: 0.32, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 }}>
-            <CIcon name={running ? 'pause' : 'play'} size={36} color={P.white} />
+          <View style={{ width: 92, height: 92, borderRadius: 32, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center', shadowColor: '#1B2A44', shadowOpacity: 0.1, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}>
+            <CIcon name={running ? 'pause' : 'play'} size={36} color={P.onPrimary} />
           </View>
         </Press>
-        <Ink size={12} weight="bold" color={P.ink2}>{running ? traduire('Pause') : traduire('Reprendre')}</Ink>
+        <Ink size={14} weight="black" color={P.ink}>{running ? traduire('Pause') : traduire('Reprendre')}</Ink>
       </View>
       {onSkip ? side('skip', skipLabel, onSkip) : onReset ? side('reset', traduire('Phase à zéro'), onReset) : <View style={{ width: 84 }} />}
     </View>
@@ -149,9 +152,9 @@ export function ControlBar({ running, onToggle, onStop, onSkip, onReset, color, 
 /** Pastille de phase : son nom en clair, dans sa couleur */
 export function PhasePill({ text, color, soft }: { text: string; color: string; soft: string }) {
   return (
-    <View style={{ alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, height: 34, borderRadius: 17, backgroundColor: soft }}>
-      <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: color }} />
-      <Ink size={14} weight="extraBold" color={color} numberOfLines={1}>{text}</Ink>
+    <View style={{ alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 14, height: 34, borderRadius: 14, backgroundColor: soft }}>
+      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color }} />
+      <Ink size={14} weight="black" color={color} numberOfLines={1}>{text}</Ink>
     </View>
   );
 }
@@ -160,8 +163,8 @@ export function PhasePill({ text, color, soft }: { text: string; color: string; 
 export function PhaseHeader({ kind, title, sub, color, deep }: { kind: string; title: string; sub?: string; color: string; deep: string }) {
   return (
     <View style={{ alignItems: 'center', gap: 6, paddingHorizontal: 16 }}>
-      <PhasePill text={kind} color={color} soft="rgba(255,255,255,0.8)" />
-      <Ink size={30} weight="black" tight color={deep} style={{ textAlign: 'center' }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+      <PhasePill text={kind} color={color} soft={blancA(0.9)} />
+      <Ink size={32} weight="black" tight color={deep} style={{ textAlign: 'center' }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         {title}
       </Ink>
       {sub ? <Ink size={16} weight="bold" color={P.ink2} style={{ textAlign: 'center' }} numberOfLines={2}>{sub}</Ink> : null}
@@ -172,10 +175,11 @@ export function PhaseHeader({ kind, title, sub, color, deep }: { kind: string; t
 /** Ce qui vient ensuite */
 export function NextUp({ text, color }: { text: string; color: string }) {
   return (
-    <View style={{ alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, minHeight: 40, borderRadius: 20, backgroundColor: blancA(0.7), borderWidth: 1, borderColor: P.white, maxWidth: '92%' }}>
-      <Ink size={13} weight="bold" color={P.muted}>{traduire("Ensuite")}</Ink>
+    // 27 octobre 2026 (maquette Pastel-Chrono) : une pastille menthe, « Ensuite » en vert, la suite en encre
+    <View style={{ alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, minHeight: 40, borderRadius: 16, backgroundColor: paletteSombre() ? '#1F2B24' : '#D7F5E6', maxWidth: '92%' }}>
+      <Ink size={15} weight="extraBold" color={paletteSombre() ? '#93C9A8' : '#1C6B45'}>{traduire("Ensuite")}</Ink>
       <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color }} />
-      <Ink size={15} weight="extraBold" color={P.ink} numberOfLines={1} style={{ flexShrink: 1 }}>{text}</Ink>
+      <Ink size={15} weight="black" color={P.ink} numberOfLines={1} style={{ flexShrink: 1 }}>{text}</Ink>
     </View>
   );
 }
@@ -185,7 +189,7 @@ export function SessionTrack({ done, total, color, current }: { done: number; to
   if (total <= 1 || total > 40) return null;
   const gap = total > 16 ? 3 : 5;
   // segments horizontaux : une barre de rounds sur toute la largeur, lisible de loin
-  const seg = Math.max(5, Math.min(38, Math.floor((300 - gap * (total - 1)) / total)));
+  const seg = Math.max(5, Math.min(40, Math.floor((300 - gap * (total - 1)) / total)));
   return (
     <View style={{ alignItems: 'center', gap: 8 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap }}>
@@ -197,9 +201,9 @@ export function SessionTrack({ done, total, color, current }: { done: number; to
               key={i}
               style={{
                 width: seg,
-                height: 12,
-                borderRadius: 6,
-                backgroundColor: isDone ? color : isCur ? P.white : 'rgba(29,32,41,0.10)',
+                height: 10,
+                borderRadius: 5,
+                backgroundColor: isDone ? color : isCur ? P.white : P.primary,
                 borderWidth: isCur ? 2.5 : 0,
                 borderColor: color,
               }}

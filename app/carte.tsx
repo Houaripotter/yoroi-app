@@ -74,7 +74,7 @@ type Couleurs = ReturnType<typeof useYoroiTheme>['theme']['colors'];
 function Titre({ c, icon, children, sous }: { c: Couleurs; icon: IconName; children: string; sous?: string }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14 }}>
-      <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
         <Icon name={icon} size={17} color={c.accent} />
       </View>
       <View style={{ flex: 1, gap: 1 }}>
@@ -92,10 +92,10 @@ function Pastille({ c, on, label, onPress, sous, icon }: { c: Couleurs; on: bool
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
       accessibilityLabel={label}
-      style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 15, borderRadius: 22, justifyContent: 'center', backgroundColor: on ? c.accent : pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: on ? c.accent : c.border, flexDirection: 'row', alignItems: 'center', gap: 7 })}
+      style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 15, borderRadius: 22, justifyContent: 'center', backgroundColor: on ? c.primary : pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: on ? c.primary : c.border, flexDirection: 'row', alignItems: 'center', gap: 7 })}
     >
-      {on && !sous ? <Icon name="check" size={15} color={c.onAccent} stroke={2.6} /> : icon ? <Icon name={icon} size={16} color={c.ink} /> : null}
-      <Ink size={14} weight="extraBold" color={on ? c.onAccent : c.ink}>{label}</Ink>
+      {on && !sous ? <Icon name="check" size={15} color={c.onPrimary} stroke={2.6} /> : icon ? <Icon name={icon} size={16} color={c.ink} /> : null}
+      <Ink size={14} weight="extraBold" color={on ? c.onPrimary : c.ink}>{label}</Ink>
       {sous ? (
         <View style={{ minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, backgroundColor: c.onAccent, alignItems: 'center', justifyContent: 'center' }}>
           <Ink size={12} weight="black" color={c.accent}>{sous}</Ink>
@@ -108,7 +108,7 @@ function Pastille({ c, on, label, onPress, sous, icon }: { c: Couleurs; on: bool
 function LigneInterrupteur({ c, icon, titre, sous, on, onPress }: { c: Couleurs; icon: IconName; titre: string; sous?: string; on: boolean; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="switch" accessibilityState={{ checked: on }} accessibilityLabel={titre} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 62, borderRadius: 18, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: on ? c.accent : c.border, paddingHorizontal: 14, paddingVertical: 10 })}>
-      <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
         <Icon name={icon} size={17} color={c.accent} />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
@@ -161,9 +161,9 @@ function Onglets({ c, liste, actif, onChange }: { c: Couleurs; liste: { id: Ongl
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
             accessibilityLabel={traduire(x.nom)}
-            style={({ pressed }) => ({ flex: 1, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.accent : pressed ? c.fillSubtle : 'transparent' })}
+            style={({ pressed }) => ({ flex: 1, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.primary : pressed ? c.fillSubtle : 'transparent' })}
           >
-            <Ink size={13.5} weight="extraBold" color={on ? c.onAccent : c.ink} numberOfLines={1}>{traduire(x.nom)}</Ink>
+            <Ink size={13.5} weight="extraBold" color={on ? c.onPrimary : c.ink} numberOfLines={1}>{traduire(x.nom)}</Ink>
           </Pressable>
         );
       })}
@@ -327,8 +327,8 @@ export default function CarteEditeur() {
         <RoundButton icon="back" label={traduire("Retour")} onPress={() => router.back()} />
         <Ink size={26} weight="black" tight>{traduire("Pas de carte ici")}</Ink>
         <Ink size={15} color={c.textSecondary}>{aa ? traduire('Il te faut au moins 2 photos de corps pour faire ta carte Avant après. Ajoute-les dans tes photos de forme.') : traduire('Ce moment n’a pas encore de chiffres à montrer. Retrouve tes séances, tes pesées et tes semaines dans Mes cartes.')}</Ink>
-        <Pressable onPress={() => router.replace('/mes-cartes' as never)} accessibilityRole="button" style={{ height: 54, borderRadius: 18, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-          <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Mes cartes")}</Ink>
+        <Pressable onPress={() => router.replace('/mes-cartes' as never)} accessibilityRole="button" style={{ height: 54, borderRadius: 18, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+          <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Mes cartes")}</Ink>
         </Pressable>
       </View>
     );
@@ -358,7 +358,7 @@ export default function CarteEditeur() {
                     accessibilityLabel={traduire("{0}, pour {1}", f.nom, f.apps)}
                     style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 62, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: on ? c.accentTint : pressed ? c.fillSubtle : c.surface, borderWidth: on ? 2 : 1, borderColor: on ? c.accent : c.border })}
                   >
-                    <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: on ? c.accent : c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: on ? c.primary : c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
                       <View style={{ width: f.forme.w, height: f.forme.h, borderRadius: 3, borderWidth: 2, borderColor: on ? c.onAccent : c.textSecondary }} />
                     </View>
                     <View style={{ flex: 1, gap: 1 }}>
@@ -369,8 +369,8 @@ export default function CarteEditeur() {
                       <Ink size={13} color={c.textSecondary}>{f.apps}</Ink>
                     </View>
                     {on ? (
-                      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-                        <Icon name="check" size={13} color={c.onAccent} stroke={3} />
+                      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+                        <Icon name="check" size={13} color={c.onPrimary} stroke={3} />
                       </View>
                     ) : (
                       <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: c.border }} />
@@ -406,8 +406,8 @@ export default function CarteEditeur() {
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                             <Ink size={15} weight="extraBold" color={on ? c.accent : c.ink} style={{ flex: 1 }} numberOfLines={1}>{traduire(m.nom)}</Ink>
                             {on ? (
-                              <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-                                <Icon name="check" size={12} color={c.onAccent} stroke={3} />
+                              <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+                                <Icon name="check" size={12} color={c.onPrimary} stroke={3} />
                               </View>
                             ) : null}
                           </View>
@@ -442,12 +442,12 @@ export default function CarteEditeur() {
                   >
                     <View style={{ width: tuile, height: tuile, borderRadius: 14, padding: on ? 3 : 0, borderWidth: on ? 2.5 : f.id === 'photo' ? 1.5 : 1, borderColor: on || f.id === 'photo' ? c.accent : c.border, backgroundColor: c.surface }}>
                       <View style={{ flex: 1, borderRadius: on ? 9 : 13, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: f.id === 'photo' && !k.photo ? c.accentTint : c.surface }}>
-                        {img ? <Image source={img} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }} resizeMode="cover" /> : f.degrade ? <LinearGradient colors={f.degrade} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} /> : f.id === 'uni' ? <LinearGradient colors={o.sombre ? ['#2A2E39', '#121318'] : ['#F6F5F0', '#E2DFD6']} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} /> : null}
+                        {img ? <Image source={img} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }} resizeMode="cover" /> : f.degrade ? <LinearGradient colors={f.degrade} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} /> : f.id === 'uni' ? <LinearGradient colors={o.sombre ? ['#2A2E39', '#121318'] : ['#F6F5F0', '#E4E7F1']} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} /> : null}
                         {f.id === 'photo' && !k.photo ? <Icon name="camera" size={26} color={c.accent} /> : null}
                       </View>
                       {on ? (
-                        <View style={{ position: 'absolute', right: -6, top: -6, width: 20, height: 20, borderRadius: 10, backgroundColor: c.accent, borderWidth: 2, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
-                          <Icon name="check" size={11} color={c.onAccent} stroke={3.2} />
+                        <View style={{ position: 'absolute', right: -6, top: -6, width: 20, height: 20, borderRadius: 10, backgroundColor: c.primary, borderWidth: 2, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
+                          <Icon name="check" size={11} color={c.onPrimary} stroke={3.2} />
                         </View>
                       ) : null}
                       {/* 24 octobre 2026 : la petite croix rouge enleve ta photo, la carte revient sur ta scene */}
@@ -498,8 +498,8 @@ export default function CarteEditeur() {
                                 <ExpoImage source={sceneForNow(sid, devNow()) as never} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={0} cachePolicy="memory-disk" recyclingKey={sid} />
                               </View>
                               {on ? (
-                                <View style={{ position: 'absolute', right: -6, top: -6, width: 20, height: 20, borderRadius: 10, backgroundColor: c.accent, borderWidth: 2, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
-                                  <Icon name="check" size={11} color={c.onAccent} stroke={3.2} />
+                                <View style={{ position: 'absolute', right: -6, top: -6, width: 20, height: 20, borderRadius: 10, backgroundColor: c.primary, borderWidth: 2, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
+                                  <Icon name="check" size={11} color={c.onPrimary} stroke={3.2} />
                                 </View>
                               ) : null}
                             </View>
@@ -592,9 +592,9 @@ export default function CarteEditeur() {
           <Icon name={k.saved ? 'check' : 'download'} size={19} color={k.saved ? c.successText : c.ink} />
           <Ink size={16} weight="extraBold" color={k.saved ? c.successText : c.ink}>{k.busy === 'save' ? traduire('Un instant') : k.saved ? traduire('Enregistrée') : traduire('Enregistrer')}</Ink>
         </Pressable>
-        <Pressable onPress={() => void partager()} disabled={!data || !!k.busy} accessibilityRole="button" accessibilityLabel={traduire("Partager la carte")} style={({ pressed }) => ({ flex: 1.2, height: 56, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-          <Icon name="share" size={19} color={c.onAccent} />
-          <Ink size={16} weight="extraBold" color={c.onAccent}>{k.busy === 'share' ? traduire('Un instant') : traduire('Partager')}</Ink>
+        <Pressable onPress={() => void partager()} disabled={!data || !!k.busy} accessibilityRole="button" accessibilityLabel={traduire("Partager la carte")} style={({ pressed }) => ({ flex: 1.2, height: 56, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
+          <Icon name="share" size={19} color={c.onPrimary} />
+          <Ink size={16} weight="extraBold" color={c.onPrimary}>{k.busy === 'share' ? traduire('Un instant') : traduire('Partager')}</Ink>
         </Pressable>
       </View>
     </View>

@@ -496,7 +496,7 @@ function Field({ icon, label, unit, hint, first, wide, inputMin = 80, ...input }
   const c = theme.colors;
   return (
     <View style={{ minHeight: 60, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderTopWidth: first ? 0 : 1, borderColor: c.divider }}>
-      <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
         <Icon name={icon} size={19} />
       </View>
       <View style={{ flex: wide ? 0 : 1, gap: 1 }}>

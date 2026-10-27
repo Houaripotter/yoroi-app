@@ -24,7 +24,8 @@ type Props = {
   highlight?: AccueilBloc | null;
 };
 
-const ACCENT = '#2C4A84';
+// 27 octobre 2026 (refonte Pastel) : le bleu nuit de la refonte
+const ACCENT = '#23358F';
 
 function Bar({ w, h, color, k }: { w: number; h: number; color: string; k: number }) {
   return <View style={{ width: w * k, height: h * k, borderRadius: (h * k) / 2, backgroundColor: color }} />;

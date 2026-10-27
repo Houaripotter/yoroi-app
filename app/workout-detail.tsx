@@ -802,7 +802,7 @@ export default function WorkoutDetailScreen() {
                         <Ink size={13} weight="extraBold" color={c.textSecondary} style={{ minWidth: 44, textAlign: 'right' }}>{zoneClock(z.seconds)}</Ink>
                       </View>
                       <View style={{ height: 8, borderRadius: 4, backgroundColor: c.fillSubtle, overflow: 'hidden' }}>
-                        <View style={{ width: `${Math.round((z.seconds / tot) * 100)}%`, height: '100%', borderRadius: 4, backgroundColor: c.accent }} />
+                        <View style={{ width: `${Math.round((z.seconds / tot) * 100)}%`, height: '100%', borderRadius: 4, backgroundColor: c.detail }} />
                       </View>
                     </View>
                   );
@@ -958,7 +958,7 @@ export default function WorkoutDetailScreen() {
                   </View>
                   <View style={{ flexDirection: 'row', gap: 3 }}>
                     {Array.from({ length: 10 }, (_, i) => (
-                      <View key={i} style={{ flex: 1, height: 10, borderRadius: 3, backgroundColor: i < effort ? (effort >= 8 ? c.accent : effort >= 5 ? c.gold : c.success) : c.fillSubtle }} />
+                      <View key={i} style={{ flex: 1, height: 10, borderRadius: 3, backgroundColor: i < effort ? (effort >= 8 ? c.detail : effort >= 5 ? c.gold : c.success) : c.fillSubtle }} />
                     ))}
                   </View>
                 </View>

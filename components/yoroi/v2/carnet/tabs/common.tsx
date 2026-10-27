@@ -30,7 +30,7 @@ export function SessionLine({ t, title, chips, tone = P.ink }: { t: Training; ti
   const d = dayDate(t.date);
   return (
     <View style={{ flexDirection: 'row', gap: 12, padding: 12, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
-      <View style={{ width: 50, borderRadius: 14, backgroundColor: '#F4F2EC', alignItems: 'center', justifyContent: 'center', paddingVertical: 6 }}>
+      <View style={{ width: 50, borderRadius: 14, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center', paddingVertical: 6 }}>
         <Ink size={20} weight="black" tight color={tone}>{isFinite(d.getTime()) ? String(d.getDate()) : ''}</Ink>
         <Ink size={11} weight="bold" color={P.ink2}>{isFinite(d.getTime()) ? d.toLocaleDateString(LOCALE, { month: 'short' }).replace('.', '') : ''}</Ink>
       </View>
@@ -39,7 +39,7 @@ export function SessionLine({ t, title, chips, tone = P.ink }: { t: Training; ti
         {chips.length > 0 ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {chips.map((c) => (
-              <View key={c} style={{ paddingHorizontal: 9, height: 24, borderRadius: 12, justifyContent: 'center', backgroundColor: '#F4F2EC' }}>
+              <View key={c} style={{ paddingHorizontal: 9, height: 24, borderRadius: 12, justifyContent: 'center', backgroundColor: P.paper }}>
                 <Ink size={12} weight="bold" color={P.ink2}>{c}</Ink>
               </View>
             ))}

@@ -92,16 +92,16 @@ export function CIcon({ name, size = 22, color = P.ink, width = 2.2, fill }: { n
 /** Bouton rond avec icone (44 points minimum) */
 export function IconBtn({ name, label, onPress, tone = 'glass', size = 44, badge, disabled }: { name: CIconName; label: string; onPress: () => void; tone?: 'glass' | 'ink' | 'red' | 'soft'; size?: number; badge?: number; disabled?: boolean }) {
   // vague 45 : en sombre, le verre est la carte sombre (le blanc a 86 % faisait une pastille claire sans icone lisible)
-  const bg = tone === 'ink' ? P.ink : tone === 'red' ? P.accent : tone === 'soft' ? (paletteSombre() ? P.line : '#ECEAE4') : paletteSombre() ? P.white : 'rgba(255,255,255,0.86)';
+  const bg = tone === 'ink' ? P.ink : tone === 'red' ? P.primary : tone === 'soft' ? (paletteSombre() ? P.line : '#EEF0F7') : paletteSombre() ? P.white : 'rgba(255,255,255,0.86)';
   const sombre = paletteSombre();
-  const fg = tone === 'ink' || tone === 'red' ? P.white : P.ink;
+  const fg = tone === 'ink' ? P.white : tone === 'red' ? P.onPrimary : P.ink;
   return (
     <Press onPress={disabled ? undefined : onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={6} disabled={disabled}>
       <View style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', borderWidth: tone === 'glass' ? 1 : 0, borderColor: tone === 'glass' && sombre ? P.line : P.white, opacity: disabled ? 0.4 : 1 }, tone === 'glass' ? { shadowColor: '#1D2029', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 } : null]}>
         <CIcon name={name} size={Math.round(size * 0.44)} color={fg} />
         {badge && badge > 0 ? (
-          <View style={{ position: 'absolute', top: -3, right: -3, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
-            <Ink size={10} weight="black" color={P.white}>{badge > 9 ? '9+' : String(badge)}</Ink>
+          <View style={{ position: 'absolute', top: -3, right: -3, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
+            <Ink size={10} weight="black" color={P.onPrimary}>{badge > 9 ? '9+' : String(badge)}</Ink>
           </View>
         ) : null}
       </View>
@@ -160,7 +160,7 @@ export function Sheet2({ children, style, onPress, label, tint }: { children: Re
 // ─── Barres et graphiques ──────────────────────────────────────────────────
 
 /** Barre horizontale au pinceau, value de 0 a 1 */
-export function BrushBar({ value, color = P.ink, height = 10, track = '#ECEAE4' }: { value: number; color?: string; height?: number; track?: string }) {
+export function BrushBar({ value, color = P.ink, height = 10, track = '#EEF0F7' }: { value: number; color?: string; height?: number; track?: string }) {
   const v = Math.max(0, Math.min(1, value));
   return (
     <View style={{ height, borderRadius: height / 2, backgroundColor: track, overflow: 'hidden' }}>
@@ -173,7 +173,7 @@ export function BrushBar({ value, color = P.ink, height = 10, track = '#ECEAE4' 
 export function SplitBar({ parts, height = 10 }: { parts: { value: number; color: string }[]; height?: number }) {
   const total = parts.reduce((s, p) => s + p.value, 0) || 1;
   return (
-    <View style={{ height, borderRadius: height / 2, backgroundColor: '#ECEAE4', overflow: 'hidden', flexDirection: 'row' }}>
+    <View style={{ height, borderRadius: height / 2, backgroundColor: '#EEF0F7', overflow: 'hidden', flexDirection: 'row' }}>
       {parts.map((p, i) => (p.value > 0 ? <View key={i} style={{ width: `${(p.value / total) * 100}%`, backgroundColor: p.color }} /> : null))}
     </View>
   );
@@ -198,7 +198,7 @@ export function Columns({ items, height = 120, color = CHART_COLORS.blue, highli
             {it.value > 0 ? (
               <Ink size={10} weight="extraBold" color={last ? P.accent : P.ink2} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{it.display ?? String(Math.round(it.value))}</Ink>
             ) : null}
-            <View style={{ width: '56%', maxWidth: 22, height: h, borderTopLeftRadius: 6, borderTopRightRadius: 6, borderBottomLeftRadius: 2, borderBottomRightRadius: 2, backgroundColor: it.value > 0 ? c : '#ECEAE4', marginTop: 3 }} />
+            <View style={{ width: '56%', maxWidth: 22, height: h, borderTopLeftRadius: 6, borderTopRightRadius: 6, borderBottomLeftRadius: 2, borderBottomRightRadius: 2, backgroundColor: it.value > 0 ? c : '#EEF0F7', marginTop: 3 }} />
             <Ink size={10} weight="bold" color={P.muted} style={{ marginTop: 4 }} numberOfLines={1}>{traduire(it.label)}</Ink>
           </View>
         );
@@ -214,7 +214,7 @@ export function RankRow({ rank, title, value, sub, ratio, color = P.ink }: { ran
     <View style={{ gap: 6 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         {rank ? (
-          <View style={{ width: 26, height: 26, borderRadius: 9, backgroundColor: medal ?? '#ECEAE4', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 26, height: 26, borderRadius: 9, backgroundColor: medal ?? '#EEF0F7', alignItems: 'center', justifyContent: 'center' }}>
             <Ink size={12} weight="black" color={medal ? P.white : P.ink2}>{String(rank)}</Ink>
           </View>
         ) : null}
@@ -246,7 +246,7 @@ export function BigStats({ items }: { items: { value: string; unit?: string; lab
 
 /** Tuile de record (encadre colore doux) */
 export function RecordTile({ label, value, sub, tone = 'ink' }: { label: string; value: string; sub?: string; tone?: 'ink' | 'red' | 'indigo' | 'gold' | 'moss' }) {
-  const map = { ink: ['#ECEAE4', P.ink], red: [P.accentSoft, P.accent], indigo: [P.indigoSoft, P.indigo], gold: [P.goldSoft, P.goldDark], moss: [P.mossSoft, P.mossText] } as const;
+  const map = { ink: ['#EEF0F7', P.ink], red: [P.accentSoft, P.accent], indigo: [P.indigoSoft, P.indigo], gold: [P.goldSoft, P.goldDark], moss: [P.mossSoft, P.mossText] } as const;
   const [bg, fg] = map[tone];
   return (
     <View style={{ flex: 1, minWidth: 130, borderRadius: 18, backgroundColor: bg, padding: 14, gap: 2 }}>
@@ -294,7 +294,7 @@ export function TabChips<T extends string>({ items, value, onChange }: { items: 
             {it.locked ? <CIcon name="lock" size={13} color={on ? P.goldLight : P.gold} width={2.4} /> : null}
             <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? P.white : P.ink2}>{traduire(it.label)}</Ink>
             {it.count ? (
-              <View style={{ minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? 'rgba(255,255,255,0.18)' : '#ECEAE4' }}>
+              <View style={{ minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? 'rgba(255,255,255,0.18)' : '#EEF0F7' }}>
                 <Ink size={11} weight="black" color={on ? P.white : P.ink2}>{it.count > 99 ? '99+' : String(it.count)}</Ink>
               </View>
             ) : null}
@@ -312,7 +312,7 @@ export function MiniChips<T extends string | null>({ items, value, onChange }: {
       {items.map((it) => {
         const on = it.key === value;
         return (
-          <Pressable key={String(it.key)} onPress={() => { tap(); onChange(it.key); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ minHeight: 38, justifyContent: 'center', paddingHorizontal: 13, borderRadius: 12, backgroundColor: on ? P.ink : 'transparent', borderWidth: on ? 0 : 1.5, borderColor: '#D5D2CA' }}>
+          <Pressable key={String(it.key)} onPress={() => { tap(); onChange(it.key); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ minHeight: 38, justifyContent: 'center', paddingHorizontal: 13, borderRadius: 12, backgroundColor: on ? P.ink : 'transparent', borderWidth: on ? 0 : 1.5, borderColor: '#C9CEDF' }}>
             <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? P.white : P.ink2}>{traduire(it.label)}</Ink>
           </Pressable>
         );
@@ -359,7 +359,7 @@ export function initialsOf(name: string): string {
 export function Avatar({ name, uri, size = 46, ring, onError }: { name: string; uri?: string; size?: number; ring?: string; onError?: () => void }) {
   const tone = toneFor(name);
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: uri ? '#ECEAE4' : tone, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderWidth: ring ? 2.5 : 0, borderColor: ring }}>
+    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: uri ? '#EEF0F7' : tone, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderWidth: ring ? 2.5 : 0, borderColor: ring }}>
       {uri ? <Image source={{ uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" onError={onError} /> : <Ink size={size * 0.36} weight="black" color={P.white}>{initialsOf(name)}</Ink>}
     </View>
   );
@@ -449,8 +449,8 @@ export function Fab({ onPress, label }: { onPress: () => void; label: string }) 
   return (
     <View style={{ position: 'absolute', right: 18, bottom: insets.bottom + 20 }}>
       <Press onPress={onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={label}>
-        <View style={{ width: 62, height: 62, borderRadius: 31, backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center', shadowColor: P.accent, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 6 }}>
-          <CIcon name="plus" size={28} color={P.white} width={2.8} />
+        <View style={{ width: 62, height: 62, borderRadius: 31, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center', shadowColor: '#1B2A44', shadowOpacity: 0.1, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 6 }}>
+          <CIcon name="plus" size={28} color={P.onPrimary} width={2.8} />
         </View>
       </Press>
     </View>
@@ -462,7 +462,7 @@ export function ChoiceLine({ title, sub, icon, onPress, danger, right }: { title
   const content = (
     <>
       {icon ? (
-        <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: danger ? P.dangerSoft : '#ECEAE4', alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: danger ? P.dangerSoft : '#EEF0F7', alignItems: 'center', justifyContent: 'center' }}>
           <CIcon name={icon} size={20} color={danger ? P.danger : P.ink} />
         </View>
       ) : null}

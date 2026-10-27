@@ -1,17 +1,19 @@
 /**
- * Barre de navigation v2 : pilule en verre depoli, 4 onglets avec leur nom ecrit sous l'icone
- * (Accueil, Seances, Progres, Dojo) et le bouton + au centre.
+ * Barre de navigation v2 : 4 onglets (Accueil, Seances, Progres, Dojo) et le bouton + au centre.
+ * 27 octobre 2026 (refonte Ciel, choisie par Houari) : pilule blanche flottante. L'onglet ouvert devient une pilule
+ * etiree, icone et nom affiches ; les autres montrent seulement leur icone. Correction du meme jour (Houari : « le bleu
+ * plein est trop fort ») : la pilule active est pastel (#DCE3FF) avec icone et nom bleu nuit (#23358F), les autres
+ * icones en gris bleute (#646985) sans rond colore, le bouton + aussi en pastel. Ancienne barre (verre depoli, noms sous les icones) : _archive_ancien_design_2026-10-09/refonte_ciel_2026-10-27.
  */
 import React from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, { LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { selectionAsync, impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useYoroiTheme } from '../YoroiThemeProvider';
 import { Ink } from './Ink';
-import { blancA } from '@/components/yoroi/livePalette';
 import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -46,47 +48,45 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
       if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
     };
     return (
-      <TourAnchor key={name} id={`onglet.${name}`} style={styles.ancre}>
+      <Animated.View key={name} layout={LinearTransition.duration(220)} style={focused ? styles.slotActif : styles.slot}>
+      <TourAnchor id={`onglet.${name}`} style={styles.ancre}>
       <Pressable
         onPress={onPress}
         accessibilityRole="tab"
         accessibilityLabel={traduire(icon.label)}
         accessibilityState={{ selected: focused }}
-        style={styles.tab}
-        hitSlop={6}
+        style={[styles.tab, focused ? { backgroundColor: c.primary } : null]}
+        hitSlop={4}
       >
-        <View style={[styles.tile, focused && { backgroundColor: c.accentTint }]}>
-          <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-            {icon.d.map((d) => (
-              <Path
-                key={d}
-                d={d}
-                stroke={focused ? c.accent : c.textSecondary}
-                strokeWidth={focused ? 2.2 : 2}
-                strokeLinecap="round"
-                strokeLinejoin={icon.join ? 'round' : undefined}
-              />
-            ))}
-          </Svg>
-        </View>
-        <Ink size={11} weight={focused ? 'extraBold' : 'bold'} color={focused ? c.accent : c.textSecondary} numberOfLines={1}>
-          {traduire(icon.label)}
-        </Ink>
+        <Svg width={focused ? 19 : 20} height={focused ? 19 : 20} viewBox="0 0 24 24" fill="none">
+          {icon.d.map((d) => (
+            <Path
+              key={d}
+              d={d}
+              stroke={focused ? c.onPrimary : c.textSecondary}
+              strokeWidth={2.2}
+              strokeLinecap="round"
+              strokeLinejoin={icon.join ? 'round' : undefined}
+            />
+          ))}
+        </Svg>
+        {focused ? (
+          <Ink size={14} weight="black" color={c.onPrimary} numberOfLines={1} style={{ flexShrink: 1 }}>
+            {traduire(icon.label)}
+          </Ink>
+        ) : null}
       </Pressable>
       </TourAnchor>
+      </Animated.View>
     );
   };
 
   return (
     <View pointerEvents="box-none" style={[styles.outer, { bottom }]}>
       <View style={[styles.shadow, { shadowColor: c.shadow }]}>
-      <View style={[styles.pill, { borderColor: isDark ? c.border : 'rgba(255,255,255,0.9)' }]}>
-        {Platform.OS === 'ios' ? (
-          <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-        ) : null}
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? (Platform.OS === 'ios' ? 'rgba(26,30,41,0.72)' : 'rgba(26,30,41,0.97)') : Platform.OS === 'ios' ? blancA(0.62) : blancA(0.96) }]} />
+      <View style={[styles.pill, { backgroundColor: c.surface, borderColor: isDark ? c.border : 'rgba(255,255,255,0.9)' }]}>
         {LEFT.map(renderTab)}
-        <TourAnchor id="onglet.plus" style={styles.tab}>
+        <TourAnchor id="onglet.plus" style={styles.slotPlus}>
           <Pressable
             onPress={() => {
               impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
@@ -96,11 +96,12 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
             accessibilityLabel={traduire("Enregistrer une séance, une pesée ou une mesure")}
             style={({ pressed }) => [
               styles.add,
-              { backgroundColor: pressed ? c.accentPressed : c.accent, shadowColor: c.accent, transform: [{ scale: pressed ? 0.94 : 1 }] },
+              // 27 octobre 2026 soir (maquette Pastel-Final-Accueil) : rond pastel tres clair de 48, plus fin
+              { backgroundColor: pressed ? c.primary : c.accentTint, transform: [{ scale: pressed ? 0.94 : 1 }] },
             ]}
           >
-            <Svg width={26} height={26} viewBox="0 0 24 24" fill="none">
-              <Path d="M12 5v14M5 12h14" stroke={c.onAccent} strokeWidth={2.6} strokeLinecap="round" />
+            <Svg width={19} height={19} viewBox="0 0 24 24" fill="none">
+              <Path d="M12 5v14M5 12h14" stroke={c.onPrimary} strokeWidth={2.6} strokeLinecap="round" />
             </Svg>
           </Pressable>
         </TourAnchor>
@@ -112,35 +113,36 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
 }
 
 const styles = StyleSheet.create({
-  outer: { position: 'absolute', left: 14, right: 14 },
+  // 27 octobre 2026 soir (maquette Pastel-Final-Accueil) : 16 des bords, 64 de haut, rayon 32
+  outer: { position: 'absolute', left: 16, right: 16 },
   pill: {
     height: 64,
-    borderRadius: 26,
+    borderRadius: 32,
     borderWidth: 1,
-    overflow: 'hidden',
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+    gap: 4,
   },
   shadow: {
-    borderRadius: 26,
+    borderRadius: 32,
     backgroundColor: 'transparent',
     shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.14,
+    shadowOpacity: 0.12,
     shadowRadius: 30,
     elevation: 12,
   },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', height: '100%', gap: 2 },
-  ancre: { flex: 1, height: '100%' },
-  tile: { width: 48, height: 30, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  slot: { width: 48, height: 48 },
+  slotActif: { flex: 1, height: 48 },
+  slotPlus: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  ancre: { flex: 1 },
+  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 24, paddingHorizontal: 16 },
   add: {
-    width: 56,
-    height: 56,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    elevation: 8,
   },
 });

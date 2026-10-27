@@ -31,7 +31,7 @@ export function LimitNotice({ limit, count, style }: { limit: FreeLimitKey; coun
   return (
     <View style={[{ borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 10 }, style]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="crown" size={17} color={c.accent} />
         </View>
         <Ink size={15} weight="extraBold" style={{ flex: 1 }}>{traduire(n.title)}</Ink>

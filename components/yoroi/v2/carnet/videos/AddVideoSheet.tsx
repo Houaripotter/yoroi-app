@@ -37,8 +37,8 @@ type Props = {
 function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
   return (
     <Press onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={label}>
-      <View style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 22, justifyContent: 'center', backgroundColor: on ? P.accent : P.white, borderWidth: 1, borderColor: on ? P.accent : P.line2 }}>
-        <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? P.white : P.ink}>{label}</Ink>
+      <View style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 22, justifyContent: 'center', backgroundColor: on ? P.primary : P.white, borderWidth: 1, borderColor: on ? P.primary : P.line2 }}>
+        <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? P.onPrimary : P.ink}>{label}</Ink>
       </View>
     </Press>
   );
@@ -175,15 +175,15 @@ export function AddVideoSheet({ visible, onClose, onSaved, preset, editing }: Pr
           <Ink size={14} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>
             {traduire("Une vidéo TikTok ou Instagram enregistrée sur ton téléphone, ou que tu as filmée : importe-la, elle reste dans YOROI.")}</Ink>
           <Press onPress={pickFromGallery} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Importer depuis ta galerie")}>
-            <View style={{ minHeight: 96, borderRadius: 22, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: P.accent }}>
+            <View style={{ minHeight: 96, borderRadius: 22, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: P.primary }}>
               <View style={{ width: 60, height: 60, borderRadius: 18, backgroundColor: blancA(0.92), alignItems: 'center', justifyContent: 'center' }}>
                 <Illus name="videos" size={48} />
               </View>
               <View style={{ flex: 1, gap: 2 }}>
-                <Ink size={18} weight="black" color={P.white}>{traduire("Depuis ta galerie")}</Ink>
+                <Ink size={18} weight="black" color={P.onPrimary}>{traduire("Depuis ta galerie")}</Ink>
                 <Ink size={13} weight="bold" color="rgba(255,255,255,0.8)">{traduire("Choisis la vidéo, donne-lui un titre")}</Ink>
               </View>
-              <CIcon name="chevron" size={18} color={P.white} />
+              <CIcon name="chevron" size={18} color={P.onPrimary} />
             </View>
           </Press>
           <ChoiceLine title={traduire("Un lien")} sub={traduire("YouTube, Instagram, TikTok...")} icon="link" onPress={() => setStep('link')} />

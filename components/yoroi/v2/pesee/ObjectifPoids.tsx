@@ -80,9 +80,9 @@ function Bouton({ libelle, onPress, plein = true }: { libelle: string; onPress: 
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      style={({ pressed }) => ({ height: plein ? 56 : 44, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: plein ? (pressed ? c.accentPressed : c.accent) : 'transparent' })}
+      style={({ pressed }) => ({ height: plein ? 56 : 44, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: plein ? (pressed ? c.primaryPressed : c.primary) : 'transparent' })}
     >
-      <Ink size={plein ? 16 : 14} weight={plein ? 'extraBold' : 'bold'} color={plein ? c.onAccent : c.textSecondary}>
+      <Ink size={plein ? 16 : 14} weight={plein ? 'extraBold' : 'bold'} color={plein ? c.onPrimary : c.textSecondary}>
         {libelle}
       </Ink>
     </Pressable>

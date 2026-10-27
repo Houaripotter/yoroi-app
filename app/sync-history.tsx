@@ -149,7 +149,7 @@ export default function SyncHistoryScreen() {
                     if (event.sizeBytes !== undefined) details.push(formatSize(event.sizeBytes));
                     return (
                       <View key={`${event.timestamp}_${i}`} style={{ flexDirection: 'row', gap: 12, paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: S.line2 }}>
-                        <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: look.tint, alignItems: 'center', justifyContent: 'center' }}>
+                        <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                           <SanteIcon name={look.icon} size={20} color={look.color} />
                         </View>
                         <View style={{ flex: 1, gap: 2 }}>

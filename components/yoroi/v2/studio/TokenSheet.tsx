@@ -89,7 +89,7 @@ export function TokenSheet({ visible, onClose, onUnlocked }: { visible: boolean;
         <Pressable style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} onPress={onClose} accessibilityLabel={traduire("Fermer")} />
         <View style={{ backgroundColor: c.background, borderRadius: 28, padding: 20, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="lock" size={22} color={c.accent} />
             </View>
             <View style={{ flex: 1, gap: 2 }}>

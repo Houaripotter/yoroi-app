@@ -24,6 +24,7 @@ import { ExoDemo } from '@/components/yoroi/v2/seance/ExoDemo';
 import { Stepper } from '@/components/yoroi/v2/seance/Stepper';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P } from '@/components/yoroi/livePalette';
+import { fondAjouter, PlusPastille } from '@/components/yoroi/v2/accueil/kit';
 import { getTrainings } from '@/lib/database';
 import { logger } from '@/lib/security/logger';
 import { demoDe } from '@/lib/v2/programmes/demos';
@@ -218,10 +219,10 @@ export default function ModifierMaSeance() {
           <Pressable
             onPress={() => { tap(); setPicker(true); }}
             accessibilityRole="button"
-            style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.accent, backgroundColor: pressed ? c.accentTint : 'transparent' })}
+            style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: fondAjouter(pressed) })}
           >
-            <Icon name="plus" size={18} color={c.accent} />
-            <Ink size={15} weight="extraBold" color={c.accent}>{traduire('Ajouter un exercice')}</Ink>
+            <PlusPastille />
+            <Ink size={15} weight="extraBold" color={c.accentText}>{traduire('Ajouter un exercice')}</Ink>
           </Pressable>
         ) : null}
       </ScrollView>
@@ -232,9 +233,9 @@ export default function ModifierMaSeance() {
           disabled={lignes.length === 0}
           accessibilityRole="button"
           accessibilityState={{ disabled: lignes.length === 0 }}
-          style={({ pressed }) => ({ height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: lignes.length === 0 ? c.fillSoft : pressed ? c.accentPressed : c.accent })}
+          style={({ pressed }) => ({ height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: lignes.length === 0 ? c.fillSoft : pressed ? c.primaryPressed : c.primary })}
         >
-          <Ink size={16} weight="extraBold" color={lignes.length === 0 ? c.textMuted : c.onAccent}>{traduire('Enregistrer')}</Ink>
+          <Ink size={16} weight="extraBold" color={lignes.length === 0 ? c.textMuted : c.onPrimary}>{traduire('Enregistrer')}</Ink>
         </Pressable>
       </View>
 

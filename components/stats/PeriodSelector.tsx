@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#E2DFD8',
+    backgroundColor: '#E4E7F1',
     marginBottom: 12,
   },
   sheetTitle: {

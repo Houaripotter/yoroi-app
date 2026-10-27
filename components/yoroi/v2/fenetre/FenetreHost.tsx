@@ -166,7 +166,7 @@ function Fenetre({ req }: { req: FenetreRequest }) {
   const toneStyle = (tone: Tone, pressed: boolean) => {
     switch (tone) {
       case 'main':
-        return { bg: pressed ? c.accentPressed : c.accent, fg: c.onAccent, border: 'transparent', weight: 'extraBold' as const };
+        return { bg: pressed ? c.primaryPressed : c.primary, fg: c.onPrimary, border: 'transparent', weight: 'extraBold' as const };
       case 'danger':
         if (isChoices) return { bg: pressed ? c.dangerTint : c.surface, fg: c.danger, border: c.border, weight: 'bold' as const };
         return { bg: pressed ? c.dangerPressed : c.danger, fg: '#FFFFFF', border: 'transparent', weight: 'extraBold' as const };

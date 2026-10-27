@@ -197,7 +197,7 @@ export function LevelPlate({ color, edge, size = 22 }: { color: string; edge: st
 }
 
 /** Barre de progression a bout arrondi. */
-export function Bar({ progress, color, track = '#ECEAE4', height = 8 }: { progress: number; color: string; track?: string; height?: number }) {
+export function Bar({ progress, color, track = '#EEF0F7', height = 8 }: { progress: number; color: string; track?: string; height?: number }) {
   const pct = Math.max(0, Math.min(1, progress));
   return (
     <View style={{ height, borderRadius: height / 2, backgroundColor: track, overflow: 'hidden' }}>
@@ -267,7 +267,7 @@ export function CheckBox({ checked, size = 28 }: { checked: boolean; size?: numb
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
-    <View style={{ width: size, height: size, borderRadius: 8, borderWidth: 2, borderColor: checked ? c.accent : c.border, backgroundColor: checked ? c.accent : c.surface, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: size, height: size, borderRadius: 8, borderWidth: 2, borderColor: checked ? c.primary : c.border, backgroundColor: checked ? c.primary : c.surface, alignItems: 'center', justifyContent: 'center' }}>
       {checked ? (
         <Svg width={size * 0.62} height={size * 0.62} viewBox="0 0 24 24" fill="none">
           <Path d="M5 12.5l4.5 4.5L19 7.5" stroke={c.onAccent} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />

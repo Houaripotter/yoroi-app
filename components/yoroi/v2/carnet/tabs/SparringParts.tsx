@@ -39,7 +39,7 @@ export function Podium({ partners, photos, metric, onSelect }: { partners: Partn
                 <Avatar name={p.name} uri={photos[p.name.trim().toLowerCase()]} size={i === 1 ? 58 : 48} ring={tones[i]} />
                 <Ink size={13} weight="extraBold" numberOfLines={1} style={{ textAlign: 'center' }}>{traduire(p.name)}</Ink>
                 <Ink size={11} weight="bold" color={P.ink2} numberOfLines={1}>{metric(p)}</Ink>
-                <View style={{ alignSelf: 'stretch', height: heights[i], borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: i === 1 ? P.ink : '#ECEAE4', alignItems: 'center', paddingTop: 10, borderTopWidth: 4, borderTopColor: tones[i] }}>
+                <View style={{ alignSelf: 'stretch', height: heights[i], borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: i === 1 ? P.ink : '#EEF0F7', alignItems: 'center', paddingTop: 10, borderTopWidth: 4, borderTopColor: tones[i] }}>
                   <Ink size={26} weight="black" color={i === 1 ? P.goldLight : P.ink2}>{ranks[i]}</Ink>
                 </View>
               </View>
@@ -98,7 +98,7 @@ export function PartnerRow({ p, top, photo, hasFiche, maxRounds, onOpen, onEdit,
 
 function Tag({ text, color }: { text: string; color: string }) {
   return (
-    <View style={{ paddingHorizontal: 8, height: 24, borderRadius: 12, justifyContent: 'center', backgroundColor: '#F4F2EC' }}>
+    <View style={{ paddingHorizontal: 8, height: 24, borderRadius: 12, justifyContent: 'center', backgroundColor: '#F5F6FB' }}>
       <Ink size={11} weight="extraBold" color={color}>{text}</Ink>
     </View>
   );
@@ -185,7 +185,7 @@ export function PartnerSheet({ partner, onClose }: { partner: PartnerStats | nul
           <Ink size={14} weight="bold" color={P.ink2}>{traduire("Finitions entre vous")}</Ink>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {topSubs.map((s) => (
-              <View key={s.name} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: s.given > s.taken ? P.mossSoft : s.taken > s.given ? P.dangerSoft : '#F4F2EC' }}>
+              <View key={s.name} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: s.given > s.taken ? P.mossSoft : s.taken > s.given ? P.dangerSoft : '#F5F6FB' }}>
                 <Ink size={13} weight="extraBold">{traduire(s.name)}</Ink>
                 <Ink size={11} weight="bold" color={P.ink2}>{[s.given > 0 ? `${s.given} donnée${s.given > 1 ? 's' : ''}` : '', s.taken > 0 ? `${s.taken} subie${s.taken > 1 ? 's' : ''}` : ''].filter(Boolean).join(', ')}</Ink>
               </View>
@@ -234,7 +234,7 @@ export function EditPartnerSheet({ name, onClose, editName, setEditName, editPho
         </Press>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <Press onPress={onPickPhoto} accessibilityRole="button" accessibilityLabel={editPhoto ? traduire('Changer la photo') : traduire('Ajouter une photo')}>
-            <View style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: '#ECEAE4' }}>
+            <View style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: '#EEF0F7' }}>
               <Ink size={13} weight="extraBold">{editPhoto ? traduire('Changer la photo') : traduire('Ajouter une photo')}</Ink>
             </View>
           </Press>

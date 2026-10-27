@@ -162,8 +162,8 @@ export function ProfilHero({ top, scene, photo, personnage, onPhoto, name, onNam
               <BusteRond source={personnage} />
             )}
           </View>
-          <View style={{ position: 'absolute', right: 2, bottom: 2, width: 40, height: 40, borderRadius: 20, backgroundColor: c.accent, borderWidth: 3, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="camera" size={18} color={c.onAccent} stroke={2.4} />
+          <View style={{ position: 'absolute', right: 2, bottom: 2, width: 40, height: 40, borderRadius: 20, backgroundColor: c.primary, borderWidth: 3, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="camera" size={18} color={c.onPrimary} stroke={2.4} />
           </View>
         </Pressable>
 

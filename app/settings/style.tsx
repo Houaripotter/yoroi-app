@@ -49,6 +49,13 @@ import type { YoroiMode } from '@/components/yoroi/tokens';
 import { useDecorationsSaison } from '@/lib/v2/saisons/reglage';
 import { CarteDecorations } from '@/components/yoroi/v2/saisons/CarteDecorations';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { STYLES_ILLUSTRATIONS, illustration, useIllustrations, type StyleIllustrations } from '@/components/yoroi/v2/stickers';
+
+/** 27 octobre 2026 : les deux styles d'illustrations (components/yoroi/v2/stickers.ts) */
+const NOMS_ILLUSTRATIONS: Record<StyleIllustrations, string> = {
+  stickers: traduire('Stickers'),
+  encre: traduire('Encre japonaise'),
+};
 
 const FONT_LABELS = [traduire('Petite'), traduire('Normale'), traduire('Grande'), traduire('Très grande')];
 const MODES_THEME: { key: YoroiMode; label: string }[] = [
@@ -61,7 +68,7 @@ const WIDGETS: Record<StyleWidgets, { clair: number; sombre: number }> = {
   B: { clair: require('@/assets/widgets/apercu_b_clair.jpg'), sombre: require('@/assets/widgets/apercu_b_sombre.jpg') },
   C: { clair: require('@/assets/widgets/apercu_c_clair.jpg'), sombre: require('@/assets/widgets/apercu_c_sombre.jpg') },
 };
-const PAPIER = { clair: { fond: '#F2F1EC', carte: '#FFFFFF', encre: '#1D2029', trait: '#D9D6CE' }, sombre: { fond: '#14161F', carte: '#1A1E29', encre: '#F2F1EC', trait: '#343A48' } };
+const PAPIER = { clair: { fond: '#F5F6FB', carte: '#FFFFFF', encre: '#1D2033', trait: '#E4E7F1' }, sombre: { fond: '#14161F', carte: '#1A1E29', encre: '#F5F6FB', trait: '#343A48' } };
 
 /** Une grande tuile : l'apercu en haut, le nom et ton choix dessous, un chevron */
 function Tuile({ titre, valeur, onPress, apercu, largeur, a11y, chevron = true }: { titre: string; valeur?: string; onPress: () => void; apercu: React.ReactNode; largeur: number; a11y?: string; chevron?: boolean }) {
@@ -95,10 +102,10 @@ function MiniEcran({ mode, largeur, hauteur }: { mode: 'clair' | 'sombre'; large
   return (
     <View style={{ width: largeur, height: hauteur, backgroundColor: p.fond, padding: 8, gap: 5 }}>
       <View style={{ width: '46%', height: 6, borderRadius: 3, backgroundColor: p.encre, opacity: 0.85 }} />
-      <View style={{ flex: 1, borderRadius: 8, backgroundColor: p.carte, padding: 6, gap: 4, borderWidth: mode === 'clair' ? 1 : 0, borderColor: '#E8E5DE' }}>
+      <View style={{ flex: 1, borderRadius: 8, backgroundColor: p.carte, padding: 6, gap: 4, borderWidth: mode === 'clair' ? 1 : 0, borderColor: '#E4E7F1' }}>
         <View style={{ width: '38%', height: 5, borderRadius: 3, backgroundColor: p.encre, opacity: 0.7 }} />
         <View style={{ width: '70%', height: 4, borderRadius: 2, backgroundColor: p.trait }} />
-        <View style={{ width: '56%', height: 4, borderRadius: 2, backgroundColor: mode === 'clair' ? '#2C4A84' : '#8FA8DE' }} />
+        <View style={{ width: '56%', height: 4, borderRadius: 2, backgroundColor: mode === 'clair' ? '#23358F' : '#8FA8DE' }} />
       </View>
     </View>
   );
@@ -120,6 +127,13 @@ export default function Personnaliser() {
   const styleSante = useStyleSante();
   // 18 octobre 2026 : Décorations de saison (Halloween, Noël sur ton accueil), activees par defaut
   const decorations = useDecorationsSaison();
+  // 27 octobre 2026 : Illustrations, Stickers (par defaut) ou Encre japonaise (les dessins d'avant)
+  const illus = useIllustrations();
+  const choisirIllustrations = (s: StyleIllustrations) => {
+    if (s === illus.style) return;
+    impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+    illus.changer(s);
+  };
   const { width } = useWindowDimensions();
   const [logo, setLogo] = useState<string | null>(null);
 
@@ -210,8 +224,8 @@ export default function Personnaliser() {
                     <MiniEcran mode={m.key as 'clair' | 'sombre'} largeur={themeL} hauteur={82} />
                   )}
                   {actif ? (
-                    <View style={{ position: 'absolute', right: 5, bottom: 5, width: 20, height: 20, borderRadius: 10, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon name="check" size={12} color={c.onAccent} stroke={3} />
+                    <View style={{ position: 'absolute', right: 5, bottom: 5, width: 20, height: 20, borderRadius: 10, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon name="check" size={12} color={c.onPrimary} stroke={3} />
                     </View>
                   ) : null}
                 </View>
@@ -229,6 +243,42 @@ export default function Personnaliser() {
 
       {/* 19 octobre 2026 : Décorations de saison, une vraie carte (citrouille et sapin, gros interrupteur), juste sous le theme */}
       <CarteDecorations active={decorations.active} onChange={decorations.changer} date={devNow()} />
+
+      {/* 27 octobre 2026 : Illustrations, deux styles en vrai apercu (chrono, carnet, objectifs), un toucher suffit */}
+      <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 8, gap: 8 }}>
+        <View style={{ paddingHorizontal: 8, paddingTop: 6, gap: 1 }}>
+          <Ink size={15} weight="black" accessibilityRole="header">{traduire('Illustrations')}</Ink>
+          <Ink size={12.5} weight="bold" color={c.textSecondary}>{traduire('Le style des dessins de toute l’app. Les tampons ne changent pas.')}</Ink>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {STYLES_ILLUSTRATIONS.map((s) => {
+            const actif = s.id === illus.style;
+            const nom = NOMS_ILLUSTRATIONS[s.id];
+            return (
+              <Pressable
+                key={s.id}
+                onPress={() => choisirIllustrations(s.id)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: actif }}
+                accessibilityLabel={traduire('Illustrations, style {0}', nom)}
+                style={({ pressed }) => ({ flex: 1, gap: 6, alignItems: 'center', opacity: pressed ? 0.85 : 1 })}
+              >
+                <View style={{ alignSelf: 'stretch', height: 76, borderRadius: 14, borderWidth: 2.5, borderColor: actif ? c.accent : c.divider, backgroundColor: c.background, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly', paddingHorizontal: 4 }}>
+                  {s.apercu.map((n) => (
+                    <Image key={n} source={illustration(n, undefined, s.id)} style={{ width: 40, height: 40 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+                  ))}
+                  {actif ? (
+                    <View style={{ position: 'absolute', right: 5, bottom: 5, width: 18, height: 18, borderRadius: 9, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon name="check" size={11} color={c.onPrimary} stroke={3} />
+                    </View>
+                  ) : null}
+                </View>
+                <Ink size={12.5} weight={actif ? 'black' : 'bold'} color={actif ? c.ink : c.textSecondary} numberOfLines={1}>{nom}</Ink>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
 
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <Tuile
@@ -275,7 +325,7 @@ export default function Personnaliser() {
             <Image source={scene.image} style={{ position: 'absolute', width: '100%', height: '100%', opacity: 0.45 }} resizeMode="cover" accessibilityIgnoresInvertColors />
             {CONTOURS.map((o) => (
               <View key={o.id} style={{ opacity: o.id === contour ? 1 : 0.55, transform: [{ scale: o.id === contour ? 1.08 : 0.9 }] }}>
-                <RondCadre size={58} contour={o.id} fond="scene" fill="#F2F1EC">
+                <RondCadre size={58} contour={o.id} fond="scene" fill="#F5F6FB">
                   {montrePhoto ? (
                     <Image source={{ uri: profile!.profile_photo! }} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
                   ) : avecPerso ? (
@@ -345,8 +395,8 @@ export default function Personnaliser() {
                 <CitationDuJour texte={citation} style={s.id} />
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                   {actif ? (
-                    <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon name="check" size={11} color={c.onAccent} stroke={3} />
+                    <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon name="check" size={11} color={c.onPrimary} stroke={3} />
                     </View>
                   ) : null}
                   <Ink size={12.5} weight={actif ? 'black' : 'bold'} color={actif ? c.accent : c.textSecondary} numberOfLines={1}>{traduire(s.nom)}</Ink>
@@ -422,8 +472,8 @@ export default function Personnaliser() {
                     </View>
                   )}
                   {actif ? (
-                    <View style={{ position: 'absolute', right: 5, bottom: 5, width: 18, height: 18, borderRadius: 9, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon name="check" size={11} color={c.onAccent} stroke={3} />
+                    <View style={{ position: 'absolute', right: 5, bottom: 5, width: 18, height: 18, borderRadius: 9, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon name="check" size={11} color={c.onPrimary} stroke={3} />
                     </View>
                   ) : null}
                 </View>

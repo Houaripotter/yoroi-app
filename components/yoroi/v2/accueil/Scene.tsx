@@ -38,6 +38,13 @@
  * Les pieds du personnage restent 8 points au dessus du bord de la fenetre (lib/v2/espace/sol.ts, PLANCHER_FENETRE).
  * L'ancienne mise en page : _archive_ancien_design_2026-10-09/accueil_2026-10-19/ ; l'autre proposition (salut sous la
  * scene) : _propositions/accueil_2026-10-19/.
+ * 27 octobre 2026 (refonte Pastel, maquette Pastel-Final-Accueil) : sur l'accueil, la scene devient une CARTE (prop
+ * carte) : 16 points des bords, coins arrondis de 28 partout, ombre douce, environ 168 de haut. Plus de salut ni de
+ * voile dessus (ta photo, la date et ton salut sont au dessus, sur le fond de la page : EnTeteAccueil.tsx), plus de
+ * lanterne ni de cloche dedans (ils sont dans des ronds blancs a cote de ton salut). L'image est remontee juste ce
+ * qu'il faut pour que son sol tombe dans la carte (lib/v2/saisons/geometrie.ts, remonteeScene), le personnage reste
+ * pose dessus (lib/v2/espace/sol.ts). La video et le son restent, le petit bouton du son passe en bas a gauche.
+ * L'apercu de Ta scene et la galerie du Studio gardent l'ancienne fenetre pleine largeur.
  */
 import React from 'react';
 import { Image, Pressable, View, useWindowDimensions } from 'react-native';
@@ -45,7 +52,8 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
 import { voileTexte } from '@/lib/v2/espace/lisibilite';
-import { PLANCHER_FENETRE, placerPersonnage } from '@/lib/v2/espace/sol';
+import { PLANCHER_FENETRE, placerPersonnage, solDeScene } from '@/lib/v2/espace/sol';
+import { SCENE_CARTE, hauteurSceneCarte, remonteeScene } from '@/lib/v2/saisons/geometrie';
 import { decalageScene, estEnMiroir, imageMiroir } from '@/lib/v2/espace/miroir';
 import Animated, { FadeIn, FadeOut, type SharedValue } from 'react-native-reanimated';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -76,11 +84,16 @@ import { traduire } from '@/lib/i18n/tr';
 const DAYS = [traduire('Dimanche'), traduire('Lundi'), traduire('Mardi'), traduire('Mercredi'), traduire('Jeudi'), traduire('Vendredi'), traduire('Samedi')];
 const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
-function greeting(): string {
+export function greeting(): string {
   const h = devNow().getHours();
   if (h < 5) return traduire('Bonne nuit');
   if (h < 18) return traduire('Bonjour');
   return traduire('Bonsoir');
+}
+
+/** La date du jour, « Mardi 27 octobre » (l'en-tete de l'accueil) */
+export function dateDuJour(now: Date = devNow()): string {
+  return `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`;
 }
 
 /**
@@ -147,9 +160,18 @@ type Props = {
   largeur?: number;
   /** 15 octobre : image fixe seulement (bandeau compact de Ta scene, une seule video a la fois) */
   sansVideo?: boolean;
+  /** 27 octobre 2026 (refonte Pastel) : la scene en carte arrondie de l'accueil, largeur = largeur de la carte */
+  carte?: boolean;
+  /** dans la carte : le decor de saison, pose par dessus la scene et coupe par ses coins */
+  decor?: React.ReactNode;
 };
 
-export function SceneHero({ top, scene, name, personnage, rankIndex, photo, scrollY, apercu = false, largeur, sansVideo = false }: Props) {
+export function SceneHero(props: Props) {
+  if (props.carte) return <SceneCarte {...props} />;
+  return <SceneFenetre {...props} />;
+}
+
+function SceneFenetre({ top, scene, name, personnage, rankIndex, photo, scrollY, apercu = false, largeur, sansVideo = false }: Props) {
   const { width: ecran } = useWindowDimensions();
   const router = useRouter();
   const width = largeur ?? ecran;
@@ -312,6 +334,85 @@ export function SceneHero({ top, scene, name, personnage, rankIndex, photo, scro
   );
 }
 
+/**
+ * 27 octobre 2026 (refonte Pastel) : la scene de l'accueil en carte arrondie. Meme image, meme video, meme son, meme
+ * personnage pose sur le sol, memes touchers (Ta scene, appui long sur ton personnage) ; ni salut, ni lanterne, ni cloche.
+ */
+function SceneCarte({ scene, personnage, rankIndex, largeur, decor }: Props) {
+  const router = useRouter();
+  const { width: ecran } = useWindowDimensions();
+  const width = largeur ?? ecran - 32;
+  const now = devNow();
+  const dark = sceneIsDark(scene, now);
+  const H = hauteurSceneCarte(width);
+  const imgH = Math.max(H, width / SCENE_RATIO);
+  const imgW = imgH * SCENE_RATIO;
+  const focus = SCENE_FOCUS[scene] ?? 0.5;
+  const miroir = estEnMiroir(scene);
+  const shift = decalageScene({ imgW, largeur: width, focus, miroir });
+  // l'image remonte juste assez pour que son sol tombe dans la carte
+  const dy = remonteeScene({ H, imgH, sol: solDeScene(scene, now).sol });
+  const videoScene = useVideoDeScene(scene);
+  const { visible } = useEcranVisible();
+  const animCode = animationDeScene(scene);
+  // dans le repere de l'image : la carte va de dy a dy + H ; la tete reste 12 points sous le haut de la carte
+  const place = placerPersonnage({ H: H + dy, imgH, top: dy - 28, scene, personnage, date: now, plancher: PLANCHER_FENETRE });
+  const { charH, charW } = place;
+  const charRight = -charW * 0.12;
+  return (
+    <View style={{ height: H, borderRadius: SCENE_CARTE.rayon, backgroundColor: dark ? '#1E2336' : P.white, shadowColor: '#1D2033', shadowOpacity: 0.1, shadowRadius: 24, shadowOffset: { width: 0, height: 10 }, elevation: 5 }}>
+      <View style={{ flex: 1, borderRadius: SCENE_CARTE.rayon, overflow: 'hidden' }}>
+        {animCode != null ? (
+          <SceneAnimeeCode key={scene} source={sceneForNow(scene, now)} scene={animCode} width={imgW} height={imgH} actif={visible} style={{ position: 'absolute', top: -dy, left: -shift }} />
+        ) : (
+          <Image source={imageMiroir(scene) ?? sceneForNow(scene, now)} style={{ position: 'absolute', top: -dy, left: -shift, width: imgW, height: imgH }} resizeMode="cover" accessibilityIgnoresInvertColors />
+        )}
+        {videoScene != null ? <VideoScene key={scene} source={videoScene} joue={visible} style={{ position: 'absolute', top: -dy, left: -shift, width: imgW, height: imgH, ...(miroir ? { transform: [{ scaleX: -1 }] } : null) }} /> : null}
+        <Pressable
+          onPress={() => router.push(ROUTES_PERSONNALISER.scene as any)}
+          onLongPress={() => {
+            impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+            router.push(ROUTES_PERSONNALISER.scene as any);
+          }}
+          delayLongPress={450}
+          accessibilityRole="button"
+          accessibilityLabel={traduire("Changer ta scène")}
+          style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+        />
+        {decor ? <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width, height: H }}>{decor}</View> : null}
+        {aUnPersonnage(personnage) ? (
+          <Animated.View entering={ENTREE} pointerEvents="none" style={{ position: 'absolute', right: charRight, bottom: place.bas - OMBRE_MARGE, width: charW, height: charH + OMBRE_MARGE }}>
+            {place.compromis ? <OmbrePieds largeur={charW} y={charH - (H + dy - place.pieds - place.bas)} sombre={dark} /> : null}
+            <Image source={personnageImage(personnage, rankIndex)} style={{ position: 'absolute', left: 0, top: 0, width: charW, height: charH }} resizeMode="contain" accessibilityLabel={traduire("Ton personnage")} />
+          </Animated.View>
+        ) : null}
+        {aUnPersonnage(personnage) ? (
+          <Pressable
+            onPress={() => router.push(ROUTES_PERSONNALISER.scene as any)}
+            onLongPress={() => {
+              impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+              router.push(ROUTES_PERSONNALISER.personnage as any);
+            }}
+            delayLongPress={450}
+            accessibilityRole="button"
+            accessibilityLabel={traduire("Ton personnage. Appui long pour le changer")}
+            accessibilityActions={[{ name: 'longpress', label: traduire('Changer ton personnage') }]}
+            onAccessibilityAction={(e) => {
+              if (e.nativeEvent.actionName === 'longpress') router.push(ROUTES_PERSONNALISER.personnage as any);
+            }}
+            style={{ position: 'absolute', right: charRight + charW * 0.17, bottom: place.bas, width: charW * 0.62, height: charH * 0.92 }}
+          />
+        ) : null}
+        {/* le son de la scene (coupe par defaut) et son petit bouton, en bas a gauche de la carte */}
+        <SonDeScene scene={scene} />
+        <View style={{ position: 'absolute', left: 12, bottom: 12 }}>
+          <BoutonSon scene={scene} sceneSombre={dark} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
 /** Place laissee sous l'image du personnage pour son ombre */
 const OMBRE_MARGE = 12;
 
@@ -389,18 +490,20 @@ function BandeauVoile({ H, alpha }: { H: number; alpha: number }) {
  * Sans photo choisie, le personnage choisi (jamais une icone vide).
  * Vague 45 : « Sans personnage » et pas de photo, les initiales du prenom (ou une icone de personne sobre).
  */
-function RondProfil({ photo: initialPhoto, personnage: initialPerso, rankIndex, apercu = false, nom }: { photo: string | null; personnage: string; rankIndex: number; apercu?: boolean; nom?: string | null }) {
+export function RondProfil({ photo: initialPhoto, personnage: initialPerso, rankIndex, apercu = false, nom, taille }: { photo: string | null; personnage: string; rankIndex: number; apercu?: boolean; nom?: string | null; taille?: number }) {
   const router = useRouter();
   const { photo, personnage, contour } = useRondProfil({ photo: initialPhoto, personnage: initialPerso });
   const [broken, setBroken] = React.useState(false);
   React.useEffect(() => setBroken(false), [photo]);
   const shown = photo && !broken ? photo : null;
   // 19 octobre : 50 points (58 avec le contour), au lieu de 64 (72) : un bandeau compact
-  const S = 50;
+  // 27 octobre 2026 (refonte Pastel) : taille donnee (48 dans l'en-tete de l'accueil), fond bleu pastel, ombre douce
+  const S = taille ? taille - 8 : 50;
+  const ombre = taille ? { shadowColor: '#1D2033', shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 3 } : shadow;
   return (
     <Press disabled={apercu} onPress={() => router.push('/settings' as any)} accessibilityRole={apercu ? undefined : 'button'} accessibilityLabel={apercu ? traduire('Ton rond de profil') : traduire('Ton profil et tes réglages')} hitSlop={6}>
-      <View style={[{ width: S + 8, height: S + 8, borderRadius: (S + 8) / 2 }, shadow]}>
-        <RondCadre size={S + 8} contour={contour} fond="scene" fill={P.paper}>
+      <View style={[{ width: S + 8, height: S + 8, borderRadius: (S + 8) / 2 }, ombre]}>
+        <RondCadre size={S + 8} contour={contour} fond="scene" fill={taille ? P.tuileIndigo : P.paper}>
           {shown ? (
             <Image source={{ uri: shown }} style={{ width: '100%', height: '100%' }} resizeMode="cover" onError={() => setBroken(true)} accessibilityIgnoresInvertColors />
           ) : !aUnPersonnage(personnage || initialPerso) ? (

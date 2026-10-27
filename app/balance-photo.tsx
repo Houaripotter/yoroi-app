@@ -522,7 +522,7 @@ export default function BalancePhotoScreen() {
   const stroke = { stroke: c.ink, strokeWidth: 2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
 
   const Check = ({ on, size = 28 }: { on: boolean; size?: number }) => (
-    <View style={{ width: size, height: size, borderRadius: size / 3, borderWidth: 2, borderColor: on ? c.accent : c.border, backgroundColor: on ? c.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: size, height: size, borderRadius: size / 3, borderWidth: 2, borderColor: on ? c.primary : c.border, backgroundColor: on ? c.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
       {on ? (
         <Svg width={size * 0.57} height={size * 0.57} viewBox="0 0 24 24">
           <Path d="M5 12.5l4.5 4.5L19 7.5" stroke={c.onAccent} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
@@ -622,9 +622,9 @@ export default function BalancePhotoScreen() {
       accessibilityRole="button"
       accessibilityLabel={a11y ?? label}
       hitSlop={4}
-      style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 16, borderRadius: 12, justifyContent: 'center', backgroundColor: primary ? (pressed ? c.accentPressed : c.accent) : pressed ? c.fillSubtle : c.surface, borderWidth: primary ? 0 : 1.5, borderColor: c.border })}
+      style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 16, borderRadius: 12, justifyContent: 'center', backgroundColor: primary ? (pressed ? c.primaryPressed : c.primary) : pressed ? c.fillSubtle : c.surface, borderWidth: primary ? 0 : 1.5, borderColor: c.border })}
     >
-      <Ink size={14} weight="extraBold" color={primary ? c.onAccent : c.ink}>{label}</Ink>
+      <Ink size={14} weight="extraBold" color={primary ? c.onPrimary : c.ink}>{label}</Ink>
     </Pressable>
   );
 
@@ -859,8 +859,8 @@ export default function BalancePhotoScreen() {
             const done = i === 0 ? copied || photos.length > 0 || !!sendNotice : i === 1 ? !!sendNotice || !!text.trim() : blocks.length > 0;
             return (
               <View key={t} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 8, borderRadius: 12, backgroundColor: done ? c.accentTint : c.fillSubtle }}>
-                <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: done ? c.accent : c.surface, borderWidth: done ? 0 : 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
-                  <Ink size={12} weight="black" color={done ? c.onAccent : c.ink}>{String(i + 1)}</Ink>
+                <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: done ? c.primary : c.surface, borderWidth: done ? 0 : 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ink size={12} weight="black" color={done ? c.onPrimary : c.ink}>{String(i + 1)}</Ink>
                 </View>
                 <Ink size={11} weight="bold" color={c.ink} numberOfLines={2} style={{ flex: 1 }}>{t}</Ink>
               </View>
@@ -1107,8 +1107,8 @@ function StepTitle({ n, title }: { n: number; title: string }) {
   const c = theme.colors;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }} accessibilityRole="header">
-      <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-        <Ink size={15} weight="black" color={c.onAccent}>{String(n)}</Ink>
+      <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+        <Ink size={15} weight="black" color={c.onPrimary}>{String(n)}</Ink>
       </View>
       <Ink size={17} weight="black" tight style={{ flex: 1 }}>{title}</Ink>
     </View>

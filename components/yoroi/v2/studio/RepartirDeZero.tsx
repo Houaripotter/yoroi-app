@@ -73,11 +73,14 @@ export function demanderRepartirDeZero(demoActive: boolean, suite: () => void) {
   ]);
 }
 
-/** La grande carte rouge du haut du Studio */
+/**
+ * Le bouton « Tout effacer et repartir de zéro », tout en bas du Studio (maquette A, 27 octobre 2026) :
+ * rose très doux, contour fin, icône et libellé centrés. Le détail de ce qui part est dans la première fenêtre.
+ */
 export function CarteRepartirDeZero({ onPress }: { onPress: () => void }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const pal = usePaletteProgramme();
+  const encre = theme.isDark ? c.danger : '#B0282E';
   return (
     <Pressable
       onPress={() => {
@@ -86,16 +89,10 @@ export function CarteRepartirDeZero({ onPress }: { onPress: () => void }) {
       }}
       accessibilityRole="button"
       accessibilityLabel={traduire('Tout effacer et repartir de zéro. Efface toutes les données de l’app et redémarre sur l’onboarding.')}
-      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 24, backgroundColor: pal.carte, borderWidth: 1.5, borderColor: c.danger, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] })}
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 52, paddingHorizontal: 16, borderRadius: 18, backgroundColor: theme.isDark ? 'rgba(236,122,112,0.10)' : '#FCEDEE', borderWidth: 1, borderColor: theme.isDark ? 'rgba(236,122,112,0.32)' : '#F3C9CC', opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] })}
     >
-      <View style={{ width: 52, height: 52, borderRadius: 18, backgroundColor: c.dangerTint, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name="trash" size={24} color={c.danger} />
-      </View>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Ink size={16} weight="black" tight color={c.danger}>{traduire('Tout effacer et repartir de zéro')}</Ink>
-        <Ink size={12} weight="bold" color={pal.texte2} style={{ lineHeight: 16 }}>{traduire('Toutes les données, le jeton compris. L’app redémarre sur l’onboarding.')}</Ink>
-      </View>
-      <Icon name="chevron" size={16} color={c.danger} />
+      <Icon name="trash" size={16} color={encre} />
+      <Ink size={14} weight="extraBold" color={encre}>{traduire('Tout effacer et repartir de zéro')}</Ink>
     </Pressable>
   );
 }
@@ -154,7 +151,7 @@ export function FenetreRepartirDeZero({ visible, onClose }: { visible: boolean; 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <Pressable onPress={fermer} accessibilityLabel={traduire('Fermer')} style={{ flex: 1, backgroundColor: 'rgba(24,32,58,0.5)', justifyContent: 'center', paddingHorizontal: 20 }}>
           <Pressable onPress={() => {}} style={{ backgroundColor: pal.carte, borderRadius: 26, padding: 20, gap: 14 }}>
-            <View style={{ width: 56, height: 56, borderRadius: 20, backgroundColor: c.dangerTint, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 56, height: 56, borderRadius: 20, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="trash" size={26} color={c.danger} />
             </View>
             <View style={{ gap: 6 }}>

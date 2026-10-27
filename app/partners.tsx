@@ -218,7 +218,7 @@ export default function PartnersScreen() {
                     <Card style={{ gap: 8 }}>
                       {selected.trainers.map((t) => (
                         <View key={t} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: P.accent }} />
+                          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: P.detail }} />
                           <Ink size={15} weight="bold">
                             {t}
                           </Ink>

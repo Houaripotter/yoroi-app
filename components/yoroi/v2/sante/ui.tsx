@@ -13,7 +13,7 @@ import { relativeSync } from '@/lib/v2/sante/stats';
 import type { SanteSource } from '@/lib/v2/sante/data';
 import { SanteIcon } from './SanteIcon';
 import type { SanteIconName } from './SanteIcon';
-import { P, P_SOMBRE, paletteSombre } from '@/components/yoroi/livePalette';
+import { P, P_CLAIR, P_SOMBRE, paletteSombre } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
 
 /**
@@ -21,23 +21,24 @@ import { traduire } from '@/lib/i18n/tr';
  * celles de la palette de nuit en sombre), lue a chaque rendu.
  */
 export const S = {
-  get paper() { return paletteSombre() ? P_SOMBRE.paper : '#F2F1EC'; },
-  get ink() { return paletteSombre() ? P_SOMBRE.ink : '#1D2029'; },
-  get ink2() { return paletteSombre() ? P_SOMBRE.ink2 : '#4A4E5A'; },
-  get muted() { return paletteSombre() ? P_SOMBRE.muted : '#8B8D96'; },
-  get line() { return paletteSombre() ? P_SOMBRE.line : '#E2DFD8'; },
-  get line2() { return paletteSombre() ? P_SOMBRE.line2 : '#E8E5DE'; },
-  get accent() { return paletteSombre() ? P_SOMBRE.accent : '#2C4A84'; },
-  get accentDark() { return paletteSombre() ? P_SOMBRE.accentDark : '#213A6B'; },
-  get accentSoft() { return paletteSombre() ? P_SOMBRE.accentSoft : '#E4E9F3'; },
+  get paper() { return paletteSombre() ? P_SOMBRE.paper : P_CLAIR.paper; },
+  get ink() { return paletteSombre() ? P_SOMBRE.ink : P_CLAIR.ink; },
+  get ink2() { return paletteSombre() ? P_SOMBRE.ink2 : P_CLAIR.ink2; },
+  get muted() { return paletteSombre() ? P_SOMBRE.muted : P_CLAIR.muted; },
+  get line() { return paletteSombre() ? P_SOMBRE.line : P_CLAIR.line; },
+  get line2() { return paletteSombre() ? P_SOMBRE.line2 : P_CLAIR.line2; },
+  get accent() { return paletteSombre() ? P_SOMBRE.accent : P_CLAIR.accent; },
+  get accentDark() { return paletteSombre() ? P_SOMBRE.accentDark : P_CLAIR.accentDark; },
+  get accentSoft() { return paletteSombre() ? P_SOMBRE.accentSoft : P_CLAIR.accentSoft; },
+  get accentText() { return paletteSombre() ? P_SOMBRE.accentText : P_CLAIR.accentText; },
   get danger() { return paletteSombre() ? P_SOMBRE.danger : '#B0282E'; },
   get dangerSoft() { return paletteSombre() ? P_SOMBRE.dangerSoft : '#F6E3E1'; },
   get record() { return paletteSombre() ? P_SOMBRE.record : '#B0282E'; },
   get heart() { return paletteSombre() ? P_SOMBRE.heart : '#7B3B63'; },
   get red() { return paletteSombre() ? P_SOMBRE.red : '#B0282E'; },
   get redSoft() { return paletteSombre() ? P_SOMBRE.redSoft : '#F6E3E1'; },
-  get indigo() { return paletteSombre() ? P_SOMBRE.indigo : '#2C4A84'; },
-  get indigoSoft() { return paletteSombre() ? P_SOMBRE.indigoSoft : '#E4E9F3'; },
+  get indigo() { return paletteSombre() ? P_SOMBRE.indigo : P_CLAIR.indigo; },
+  get indigoSoft() { return paletteSombre() ? P_SOMBRE.indigoSoft : P_CLAIR.indigoSoft; },
   get gold() { return paletteSombre() ? P_SOMBRE.gold : '#A8832F'; },
   get goldSoft() { return paletteSombre() ? P_SOMBRE.goldSoft : '#F5ECD6'; },
   get moss() { return paletteSombre() ? P_SOMBRE.moss : '#6E8C3A'; },
@@ -67,8 +68,9 @@ export function Label({ children, aside }: { children: string; aside?: string })
 
 /** Bouton compact (44 points mini) */
 export function SmallButton({ label, onPress, tone = 'ink', icon, busy, disabled }: { label: string; onPress: () => void; tone?: 'ink' | 'red' | 'light'; icon?: SanteIconName; busy?: boolean; disabled?: boolean }) {
-  const bg = tone === 'red' ? S.accent : tone === 'ink' ? S.ink : P.white;
-  const fg = tone === 'light' ? S.ink : paletteSombre() ? P_SOMBRE.paper : '#FFFFFF';
+  // 27 octobre 2026 (refonte Pastel) : le bouton principal en pastel, texte bleu nuit
+  const bg = tone === 'red' ? P.primary : tone === 'ink' ? S.ink : P.white;
+  const fg = tone === 'light' ? S.ink : tone === 'red' ? P.onPrimary : paletteSombre() ? P_SOMBRE.paper : '#FFFFFF';
   return (
     <Press onPress={busy || disabled ? undefined : onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={label} disabled={busy || disabled}>
       <View style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 16, backgroundColor: bg, borderWidth: tone === 'light' ? 1 : 0, borderColor: S.line2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: disabled ? 0.45 : 1 }}>
@@ -89,7 +91,7 @@ export function SourceCard({ source, onConnect, onSync, syncing, connecting }: {
     return (
       <GlassBox style={{ gap: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: S.indigoSoft, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
             <SanteIcon name="phone" size={24} color={S.indigo} />
           </View>
           <View style={{ flex: 1 }}>
@@ -117,7 +119,7 @@ export function SourceCard({ source, onConnect, onSync, syncing, connecting }: {
     return (
       <GlassBox style={{ gap: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: S.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
             <SanteIcon name="link" size={24} color={S.accent} />
           </View>
           <View style={{ flex: 1 }}>
@@ -183,7 +185,7 @@ export function InfoBlock({ icon, title, color = S.ink, tint = S.line2, children
   return (
     <View style={{ borderRadius: 24, backgroundColor: P.white, borderWidth: 1, borderColor: S.line2, padding: 16, gap: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: tint, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
           <SanteIcon name={icon} size={18} color={color} />
         </View>
         <Ink size={16} weight="black" tight style={{ flex: 1 }}>
@@ -210,7 +212,7 @@ export function InfoBlock({ icon, title, color = S.ink, tint = S.line2, children
 export function ActionRow({ icon, title, sub, onPress, color = S.ink, tint = S.line2, busy, right, first }: { icon: SanteIconName; title: string; sub?: string; onPress?: () => void; color?: string; tint?: string; busy?: boolean; right?: React.ReactNode; first?: boolean }) {
   const body = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingVertical: 10, borderTopWidth: first ? 0 : 1, borderTopColor: S.line2 }}>
-      <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: tint, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
         <SanteIcon name={icon} size={20} color={color} />
       </View>
       <View style={{ flex: 1, gap: 1 }}>

@@ -226,7 +226,7 @@ export function RecordShareSheet({ data, onClose, source = 'record_mouvement' }:
             })}
             <Press onPress={pickPhoto} accessibilityRole="button" accessibilityState={{ selected: fond === 'photo' }} accessibilityLabel={traduire("Ta photo en fond")}>
               <View style={{ alignItems: 'center', gap: 4 }}>
-                <View style={{ width: 58, height: 58, borderRadius: 18, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: P.white, borderWidth: fond === 'photo' ? 3 : 1, borderColor: fond === 'photo' ? P.accent : P.line2 }}>
+                <View style={{ width: 58, height: 58, borderRadius: 18, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', borderWidth: fond === 'photo' ? 3 : 1, borderColor: fond === 'photo' ? P.accent : P.line2 }}>
                   {photo ? <Image source={{ uri: photo }} style={{ width: '100%', height: '100%' }} resizeMode="cover" /> : <CIcon name="image" size={24} color={P.ink2} />}
                 </View>
                 <Ink size={12} weight={fond === 'photo' ? 'extraBold' : 'bold'} color={fond === 'photo' ? P.accent : P.ink2}>{traduire("Ta photo")}</Ink>

@@ -139,7 +139,7 @@ export default function CombatDetailScreen() {
 
           {competition ? (
             <Glass onPress={() => router.push(`/competition-detail?id=${competition.id}` as any)} label={traduire("Compétition {0}", competition.nom)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: c.goldTint, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                 <Icon name="trophy" size={22} color={c.goldDeep} />
               </View>
               <View style={{ flex: 1 }}>

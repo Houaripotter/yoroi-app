@@ -13,7 +13,7 @@ import { traduire } from '@/lib/i18n/tr';
 function Node({ icon, title, sub, color, tint }: { icon: SanteIconName; title: string; sub: string; color: string; tint: string }) {
   return (
     <View style={{ flex: 1, alignItems: 'center', gap: 6 }}>
-      <View style={{ width: 54, height: 54, borderRadius: 18, backgroundColor: tint, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 54, height: 54, borderRadius: 18, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
         <SanteIcon name={icon} size={26} color={color} />
       </View>
       <Ink size={13} weight="black" style={{ textAlign: 'center' }} numberOfLines={2}>
@@ -45,7 +45,7 @@ export function DataBridge() {
         <Arrow />
         <Node icon="heart" title={android ? 'Health Connect' : 'Apple Santé'} sub={android ? traduire('Le coffre santé de Google') : traduire("Le coffre santé de l'iPhone")} color={S.indigo} tint={S.indigoSoft} />
         <Arrow />
-        <Node icon="shield" title="YOROI" sub={traduire("Lit, range et dessine tes courbes")} color={S.ink} tint="#E8E5DE" />
+        <Node icon="shield" title="YOROI" sub={traduire("Lit, range et dessine tes courbes")} color={S.ink} tint="#E4E7F1" />
       </View>
       <Ink size={13} weight="medium" color={S.ink2}>
         {android

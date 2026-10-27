@@ -30,6 +30,11 @@
  * et au centre, ton salut en bandeau compact en bas ; tes outils commencent 8 points sous elle (ECART_SOUS_SCENE),
  * sur le fond de la page, et ne la recouvrent plus. Rien ne bouge entre tes outils, la citation et Ton poids : les
  * decorations de saison (lib/v2/saisons/geometrie.ts) restent a leur place, seuls leurs seuils de defilement suivent.
+ * 27 octobre 2026 (refonte Pastel, maquette Pastel-Final-Accueil choisie par Houari) : de haut en bas, sur le fond de la
+ * page, ta photo, la date et ton salut, la lanterne et la cloche dans des ronds blancs (EnTeteAccueil) ; la scene dans
+ * une carte arrondie (SceneHero carte, son decor de saison dedans) ; Ton poids ; tes outils ; Ta semaine (CarteSemaine,
+ * elle remplace la demi tuile Ta semaine de la grille) ; puis le reste, comme avant. Tout a 16 points des bords.
+ * Avant : _archive_ancien_design_2026-10-09/refonte_phase2_2026-10-27/app/(tabs)/index.tsx.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
@@ -50,7 +55,10 @@ import { localISO } from '@/lib/v2/accueil/hydration';
 import { Enter, P } from '@/components/yoroi/v2/accueil/kit';
 import { paperA } from '@/components/yoroi/livePalette';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
-import { ECART_SOUS_SCENE, SceneHero, sceneHeight } from '@/components/yoroi/v2/accueil/Scene';
+import { SceneHero } from '@/components/yoroi/v2/accueil/Scene';
+import { EnTeteAccueil } from '@/components/yoroi/v2/accueil/EnTeteAccueil';
+import { CarteSemaine } from '@/components/yoroi/v2/accueil/CarteSemaine';
+import { ENTETE_PASTEL, HAUT_VOL_CARTE, hauteurSceneCarte, hautSceneCarte } from '@/lib/v2/saisons/geometrie';
 import { CartePoids } from '@/components/yoroi/v2/accueil/CartePoids';
 import { RaccourcisDuJour } from '@/components/yoroi/v2/accueil/Raccourcis';
 import {
@@ -79,7 +87,6 @@ import {
   TuileMois,
   TuileProchaine,
   TuileRecup,
-  TuileSemaine,
   TuileSommeil,
   derniereSeance,
 } from '@/components/yoroi/v2/accueil/Grille';
@@ -138,7 +145,9 @@ export default function Accueil() {
   );
 
   const { espace, armure } = data;
-  const hauteurScene = sceneHeight(insets.top);
+  // 27 octobre 2026 : la scene en carte, a 16 points des bords
+  const largeurCarte = largeurEcran - 32;
+  const hauteurScene = hauteurSceneCarte(largeurCarte);
   const rankIndex = Math.max(0, Math.min(4, armure?.rank.index ?? 0));
   // 0 tant que l'utilisateur n'a pas choisi son objectif : on montre alors le nombre de seances seul
   const goal = objectifVise(espace);
@@ -189,7 +198,7 @@ export default function Accueil() {
       case 'semaine':
         return [
           { cle: 'prochaine', taille: 'pleine', contenu: <TuileProchaine next={data.next} trainings={data.trainings} /> },
-          { cle: 'semaine', taille: 'demi', contenu: <TuileSemaine trainings={data.trainings} goal={goal} /> },
+          // 27 octobre 2026 : Ta semaine a sa propre carte sous tes outils (CarteSemaine) ; la grille garde la suite
           ...(derniere ? [{ cle: 'derniere', taille: 'demi' as const, contenu: <TuileDerniere last={derniere} /> }] : []),
         ];
       case 'forme':
@@ -233,6 +242,8 @@ export default function Accueil() {
   // 17 octobre nuit : proposition A (grille), B (sections) ou C (tableau du jour), lib/v2/accueil/proposition.ts
   const proposition = useProposition();
   const [eauOuverte, setEauOuverte] = useState(false);
+  // 27 octobre 2026 : la page du carrousel de la carte poids (le decor de saison ne va que sur la page 1)
+  const [pagePoids, setPagePoids] = useState(0);
   const rendreProposition = () => {
     if (proposition === 'B') {
       const ordre: ('jour' | 'entrainement' | 'corps' | 'mois')[] = [];
@@ -298,34 +309,50 @@ export default function Accueil() {
 
   return (
     <View style={{ flex: 1, backgroundColor: P.paper }}>
-      <Animated.ScrollView ref={scrollRef} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: bottomSpace + 4 }} showsVerticalScrollIndicator={false}>
-        <TourAnchor id="accueil.scene" style={{ zIndex: 0 }}>
-          <SceneHero scrollY={scrollY} top={insets.top} scene={espace.scene} name={data.name} personnage={espace.personnage} rankIndex={rankIndex} photo={espace.identite === 'photo' ? data.photo : null} />
-        </TourAnchor>
+      <Animated.ScrollView ref={scrollRef} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + ENTETE_PASTEL.haut, paddingBottom: bottomSpace + 4 }} showsVerticalScrollIndicator={false}>
+        {/* 27 octobre 2026 : ta photo, la date, ton salut, la lanterne et la cloche, sur le fond de la page */}
+        <View style={{ paddingHorizontal: 16, zIndex: 2 }}>
+          <EnTeteAccueil name={data.name} photo={espace.identite === 'photo' ? data.photo : null} personnage={espace.personnage} rankIndex={rankIndex} />
+        </View>
 
-        <View style={{ paddingHorizontal: 22, gap: 12 }}>
-          {/* vague 37 : tes outils, en un toucher. 19 octobre : sous la fenetre de la scene, sur le fond de la page */}
-          <View style={{ marginHorizontal: -22, paddingHorizontal: 22, marginTop: ECART_SOUS_SCENE }}>
-            {/* le fond de la page cache le bas de la scene quand elle suit la page plus lentement (parallaxe) */}
-            <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: -ECART_SOUS_SCENE, height: 420 + ECART_SOUS_SCENE, backgroundColor: P.paper }} />
-            {/* 24 octobre 2026 : la tombe et le kadomatsu vivaient au bout de la ligne de citation, retiree avec elle */}
-            <Enter i={0}>
-              <TourAnchor id="accueil.outils">
-                <RaccourcisDuJour />
-              </TourAnchor>
-            </Enter>
-          </View>
+        <View style={{ paddingHorizontal: 16, gap: 12, marginTop: ENTETE_PASTEL.ecart }}>
+          {/* la scene dans une carte arrondie ; les vols de saison restent dans la carte */}
+          <TourAnchor id="accueil.scene">
+            <SceneHero
+              carte
+              largeur={largeurCarte}
+              top={insets.top}
+              scene={espace.scene}
+              name={data.name}
+              personnage={espace.personnage}
+              rankIndex={rankIndex}
+              photo={espace.identite === 'photo' ? data.photo : null}
+              decor={saison ? <DecorScene saison={saison} largeur={largeurCarte} hauteur={hauteurScene} haut={HAUT_VOL_CARTE} scrollY={scrollY} dansCarte /> : null}
+            />
+          </TourAnchor>
 
-          {/* 24 octobre 2026 (Houari) : plus de citation sur l'accueil, elle reste seulement dans la notification du matin */}
-
-          {/* Ton poids, inchange */}
+          {/* Ton poids */}
           <Enter i={0}>
             <TourAnchor id="accueil.poids">
-              <CartePoids series={series} targetWeight={data.targetWeight} startWeight={data.startWeight} rankIndex={rankIndex} />
-              {/* 18 octobre 2026 v4 : decor de saison pose par dessus la carte (position absolue, aucun calcul touche) : citrouilles ou sapins de chaque cote du chiffre, toiles et araignees ou guirlande */}
-              {saison && series.length ? <DecorCarte saison={saison} largeur={largeurEcran - 44} scrollY={scrollY} seuil={hauteurScene + ECART_SOUS_SCENE + 480} /> : null}
+              <CartePoids series={series} targetWeight={data.targetWeight} startWeight={data.startWeight} rankIndex={rankIndex} onPage={setPagePoids} />
+              {/* 18 octobre 2026 v4 : decor de saison pose par dessus la carte (position absolue, aucun calcul touche) : citrouilles ou sapins entre le chiffre et l'anneau, toiles et araignees ou guirlande */}
+              {saison && series.length && pagePoids === 0 ? <DecorCarte saison={saison} largeur={largeurCarte} scrollY={scrollY} seuil={hautSceneCarte(insets.top) + hauteurScene + 480} /> : null}
             </TourAnchor>
           </Enter>
+
+          {/* vague 37 : tes outils, en un toucher. 27 octobre 2026 : sous Ton poids, comme la maquette */}
+          <Enter i={0}>
+            <TourAnchor id="accueil.outils">
+              <RaccourcisDuJour record={record} />
+            </TourAnchor>
+          </Enter>
+
+          {/* 27 octobre 2026 : Ta semaine, les 7 jours en double anneau (exercice et pas) */}
+          {semaineVisible ? (
+            <Enter i={1}>
+              <CarteSemaine trainings={data.trainings} goal={goal} series={sante.series} objectifs={objectifsSante} jour={jour} />
+            </Enter>
+          ) : null}
 
           <BackupNotice />
 
@@ -346,8 +373,10 @@ export default function Accueil() {
         </View>
       </Animated.ScrollView>
 
-      {/* 18 octobre 2026 v3 : sur la scene, les chauves souris et le fantome d'un bord a l'autre (ou la neige) */}
-      {saison ? <DecorScene saison={saison} largeur={largeurEcran} hauteur={hauteurScene} haut={insets.top} scrollY={scrollY} /> : null}
+      {/* 18 octobre 2026 v3 : les chauves souris, le fantome ou la neige ; 27 octobre 2026 : dans la carte de la scene (plus haut) */}
+
+      {/* 27 octobre 2026 : sous la barre d'etat, le fond de la page (le contenu qui defile ne passe pas sous l'heure) */}
+      <LinearGradient pointerEvents="none" colors={[P.paper, paperA(0.94), paperA(0)]} locations={[0, 0.7, 1]} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: insets.top + 10 }} />
 
       {/* fondu sous la barre d'onglets : rien de coupe ne depasse */}
       <LinearGradient

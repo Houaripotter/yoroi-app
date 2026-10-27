@@ -293,7 +293,7 @@ export default function Dojo() {
   const nextSeal = seals.filter((s) => !s.earned && s.target > 1).sort((a, b) => b.current / b.target - a.current / a.target)[0];
 
   // Mesures de la scene
-  const W = width - 44;
+  const W = width - 32;
   // vague 47 : scene un peu plus basse pour que ta serie et ton coffre se voient sans defiler
   const heroH = Math.round(Math.min(370, Math.max(320, W * 1.0)));
   const figH = heroH - 112;
@@ -308,14 +308,14 @@ export default function Dojo() {
           scrollY.current = ev.nativeEvent.contentOffset.y;
         }}
         scrollEventThrottle={32}
-        contentContainerStyle={{ paddingTop: insets.top + 10, paddingHorizontal: 22, paddingBottom: insets.bottom + INK_TAB_BAR_SPACE, gap: 14 }}
+        contentContainerStyle={{ paddingTop: insets.top + 10, paddingHorizontal: 16, paddingBottom: insets.bottom + INK_TAB_BAR_SPACE, gap: 14 }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.accent} />}
       >
         {/* En-tete */}
         <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, gap: 10 }}>
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
-            <Ink size={32} weight="black" tight accessibilityRole="header">{traduire("Dojo")}</Ink>
+            <Ink size={30} weight="black" tight accessibilityRole="header" style={{ letterSpacing: -0.5 }}>{traduire("Dojo")}</Ink>
           </View>
           {/* vague 48 : la visite du Dojo, a revoir quand on veut */}
           <Pressable
@@ -328,9 +328,9 @@ export default function Dojo() {
             }}
             accessibilityRole="button"
             accessibilityLabel={traduire("Comment marche le Dojo, la visite avec la voix")}
-            style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: 1, borderColor: c.border })}
+            style={({ pressed }) => ({ width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSoft : c.surface, shadowColor: '#1B2A44', shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 })}
           >
-            <Ink size={18} weight="black" color={c.accent}>?</Ink>
+            <Ink size={18} weight="black" color={c.accentText}>?</Ink>
             {visiteEtat !== 'faite' ? <View style={{ position: 'absolute', top: 6, right: 6, width: 9, height: 9, borderRadius: 5, backgroundColor: '#E8551E' }} /> : null}
           </Pressable>
           <Pressable
@@ -340,9 +340,9 @@ export default function Dojo() {
             }}
             accessibilityRole="button"
             accessibilityLabel={traduire("Personnages et scènes")}
-            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, paddingHorizontal: 14, borderRadius: 22, backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: 1, borderColor: c.border })}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, height: 46, paddingHorizontal: 16, borderRadius: 23, backgroundColor: pressed ? c.fillSoft : c.surface, shadowColor: '#1B2A44', shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 })}
           >
-            <PersonIcon color={c.accent} />
+            <PersonIcon color={c.accentText} />
             <Ink size={14} weight="extraBold">{traduire("Personnages")}</Ink>
           </Pressable>
         </View>
@@ -364,7 +364,7 @@ export default function Dojo() {
                 <GlassTag style={{ flexShrink: 1, maxWidth: '86%' }}>
                   <Ink size={12} weight="extraBold" color={c.goldDeep}>{rank.dan ? (rank.dan === 1 ? traduire("Rang {0} sur {1}, 1er dan", RANKS.length, RANKS.length) : traduire("Rang {0} sur {1}, {2}e dan", RANKS.length, RANKS.length, rank.dan)) : traduire("Rang {0} sur {1}", rank.index + 1, RANKS.length)}</Ink>
                   <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-                    <Ink size={30} weight="black" tight numberOfLines={1} style={{ flexShrink: 1 }}>
+                    <Ink size={20} weight="black" tight numberOfLines={1} style={{ flexShrink: 1 }}>
                       {rangNom(rank.index, u)}
                     </Ink>
                   </View>
@@ -667,8 +667,8 @@ function WeekTile({ w }: { w: WeekStatus }) {
   let label = traduire("{0} sur {1}", w.count, w.goal);
   let dashed = false;
   if (w.status === 'tenue') {
-    bg = c.accent;
-    color = c.onAccent;
+    bg = c.primary;
+    color = c.onPrimary;
   } else if (w.status === 'pause') {
     bg = c.goldTint;
     color = c.goldDeep;

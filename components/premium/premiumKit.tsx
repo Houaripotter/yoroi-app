@@ -137,7 +137,7 @@ export function PremiumButton({ label, sub, onPress }: { label: string; sub?: st
       style={({ pressed }) => ({
         minHeight: 60,
         borderRadius: 20,
-        backgroundColor: pressed ? c.accentPressed : c.accent,
+        backgroundColor: pressed ? c.primaryPressed : c.primary,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',

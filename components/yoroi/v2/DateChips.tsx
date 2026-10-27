@@ -206,9 +206,9 @@ export function DatePickerSheet({ visible, value, onClose, onPick, maxDate, minD
           onClose();
         }}
         accessibilityRole="button"
-        style={({ pressed }) => ({ height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}
+        style={({ pressed }) => ({ height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}
       >
-        <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Choisir {0}", shortDayLabel(isoLocalDay(draft)))}</Ink>
+        <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Choisir {0}", shortDayLabel(isoLocalDay(draft)))}</Ink>
       </Pressable>
       {inline ? (
         <Pressable onPress={onClose} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>

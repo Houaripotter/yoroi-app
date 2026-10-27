@@ -30,6 +30,7 @@ import type { Encre } from './couleurs';
 import { MainButton, Riche, Shell, useColors } from './ui';
 import type { Nav } from './types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { illustration } from '@/components/yoroi/v2/stickers';
 
 const CHRONO = require('@/assets/avatars/app/ornements/chrono.webp');
 
@@ -169,8 +170,8 @@ function Rond({ label, sous, on, onPress, a11y, role = 'button' }: { label: stri
     >
       {({ pressed }) => (
         <>
-          <View style={{ width: '100%', maxWidth: 40, aspectRatio: 1, borderRadius: 999, backgroundColor: on ? c.accent : pressed ? c.fillSubtle : c.fillSoft, alignItems: 'center', justifyContent: 'center', transform: [{ scale: on ? 1.06 : 1 }] }}>
-            <Ink size={15.5} weight="black" color={on ? c.onAccent : c.ink}>{label}</Ink>
+          <View style={{ width: '100%', maxWidth: 40, aspectRatio: 1, borderRadius: 999, backgroundColor: on ? c.primary : pressed ? c.fillSubtle : c.fillSoft, alignItems: 'center', justifyContent: 'center', transform: [{ scale: on ? 1.06 : 1 }] }}>
+            <Ink size={15.5} weight="black" color={on ? c.onPrimary : c.ink}>{label}</Ink>
           </View>
           {sous ? <Ink size={10} weight="bold" color={on ? c.accent : c.textMuted}>{sous}</Ink> : null}
         </>
@@ -275,7 +276,7 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
                     {m.tampon ? (
                       <Tampon name={m.tampon} size={40} rotate={-6} ink={m.encre.ink} accessibilityLabel={null} />
                     ) : (
-                      <Image source={CHRONO} style={{ width: 40, height: 40 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+                      <Image source={illustration('chrono', CHRONO)} style={{ width: 40, height: 40 }} resizeMode="contain" accessibilityIgnoresInvertColors />
                     )}
                     <Ink size={14} weight="black" color={on ? m.encre.ink : c.ink} style={{ flex: 1, lineHeight: 18 }} numberOfLines={2}>{traduire(m.label)}</Ink>
                     {on ? (

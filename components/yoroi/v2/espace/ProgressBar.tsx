@@ -27,7 +27,7 @@ export function ProgressBar({ progress, height = 10, color, track, style, access
       accessibilityValue={{ min: 0, max: 100, now: Math.round(p * 100) }}
       style={[{ height, borderRadius: height / 2, backgroundColor: track ?? c.fillSubtle, overflow: 'hidden' }, style]}
     >
-      <View style={{ width: `${p * 100}%`, height: '100%', borderRadius: height / 2, backgroundColor: color ?? c.accent }} />
+      <View style={{ width: `${p * 100}%`, height: '100%', borderRadius: height / 2, backgroundColor: color ?? c.detail }} />
     </View>
   );
 }

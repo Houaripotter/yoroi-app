@@ -90,6 +90,7 @@ const TITRES: Partial<Record<PackGalerie, string>> = {
 };
 
 const PHRASES: Record<PackGalerie, string> = {
+  marseille: traduire('La Corniche, la calanque et le paddle au coucher du soleil'),
   voyages: traduire('Tokyo, Paris, désert, neige et ciel étoilé, animés'),
   vie: traduire('Caserne, chantier, stade, château et station spatiale'),
   classique: traduire('Salle, parc, ville, mer et désert, sans le Japon'),

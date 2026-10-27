@@ -127,7 +127,7 @@ export function PreviewBar({ enabled = true, page, onGo, onClose, children }: { 
           accessibilityRole="button"
           accessibilityLabel={traduire("Montrer la barre d’aperçu")}
           hitSlop={14}
-          style={{ position: 'absolute', right: 6, top: insets.top + 64, width: 14, height: 14, borderRadius: 7, backgroundColor: c.accent, opacity: 0.75 }}
+          style={{ position: 'absolute', right: 6, top: insets.top + 64, width: 14, height: 14, borderRadius: 7, backgroundColor: c.detail, opacity: 0.75 }}
         />
       ) : claims === 0 ? (
         <View pointerEvents="box-none" style={{ position: 'absolute', left: 60, right: 108, top: insets.top + 8, alignItems: 'center' }}>
@@ -156,10 +156,10 @@ export function PreviewBar({ enabled = true, page, onGo, onClose, children }: { 
                     })}
                     accessibilityRole="button"
                     accessibilityState={{ selected: on }}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48, paddingHorizontal: 14, borderRadius: 14, backgroundColor: on ? c.accent : c.surface, borderWidth: 1, borderColor: on ? c.accent : c.border }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48, paddingHorizontal: 14, borderRadius: 14, backgroundColor: on ? c.primary : c.surface, borderWidth: 1, borderColor: on ? c.primary : c.border }}
                   >
-                    <Ink size={14} weight="black" color={on ? '#FFFFFF' : c.textMuted} style={{ width: 22 }}>{String(i + 1)}</Ink>
-                    <Ink size={15} weight="bold" color={on ? '#FFFFFF' : c.ink}>{label}</Ink>
+                    <Ink size={14} weight="black" color={on ? c.onPrimary : c.textMuted} style={{ width: 22 }}>{String(i + 1)}</Ink>
+                    <Ink size={15} weight="bold" color={on ? c.onPrimary : c.ink}>{label}</Ink>
                   </Pressable>
                 );
               })}

@@ -4,7 +4,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
-import { P_CLAIR, paletteSombre } from '@/components/yoroi/livePalette';
+import { paletteSombre } from '@/components/yoroi/livePalette';
 import { DeviceEventEmitter, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -117,19 +117,20 @@ export function CompetitionsView({ refreshKey }: { refreshKey: number }) {
 
       {next && daysLeft !== null ? (
         <Press onPress={() => router.push('/competitions' as any)} accessibilityRole="button" accessibilityLabel={traduire("Prochaine compétition : {0}", next.nom)}>
-          <View style={{ borderRadius: 28, backgroundColor: P.ink, padding: 20, gap: 6, overflow: 'hidden' }}>
+          {/* 27 octobre 2026 (refonte Pastel) : la grande carte passe en pastel, texte encre */}
+          <View style={{ borderRadius: 28, backgroundColor: P.poidsFond, padding: 20, gap: 6, overflow: 'hidden' }}>
             <View pointerEvents="none" style={{ position: 'absolute', right: -8, top: -22 }}>
-              <Glyph kind="sakura" size={140} color="rgba(255,255,255,0.05)" />
+              <Glyph kind="sakura" size={140} color={paletteSombre() ? 'rgba(255,255,255,0.05)' : 'rgba(35,53,143,0.06)'} />
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Ink size={13} weight="bold" color={paletteSombre() ? P_CLAIR.goldDark : P.goldLight}>{traduire("Prochaine compétition")}</Ink>
-              <View style={{ paddingHorizontal: 12, height: 30, borderRadius: 15, justifyContent: 'center', backgroundColor: daysLeft <= 7 ? P.accent : daysLeft <= 30 ? P.gold : P.moss }}>
-                <Ink size={13} weight="black" color={P.white}>{daysLeft <= 0 ? traduire("Aujourd'hui") : traduire("J moins {0}", daysLeft)}</Ink>
+              <Ink size={13} weight="bold" color={P.goldDark}>{traduire("Prochaine compétition")}</Ink>
+              <View style={{ paddingHorizontal: 12, height: 30, borderRadius: 15, justifyContent: 'center', backgroundColor: daysLeft <= 7 ? P.primary : daysLeft <= 30 ? P.gold : P.moss }}>
+                <Ink size={13} weight="black" color={daysLeft <= 7 ? P.onPrimary : P.pureWhite}>{daysLeft <= 0 ? traduire("Aujourd'hui") : traduire("J moins {0}", daysLeft)}</Ink>
               </View>
             </View>
-            <Ink size={24} weight="black" tight color={P.white} numberOfLines={2}>{traduire(next.nom)}</Ink>
-            <Ink size={13} weight="medium" color={paletteSombre() ? 'rgba(29,32,41,0.75)' : 'rgba(255,255,255,0.75)'}>{`${longDate(next.date)}${next.lieu ? `, ${next.lieu}` : ''}`}</Ink>
-            {next.categorie_poids ? <Ink size={13} weight="extraBold" color={paletteSombre() ? P_CLAIR.goldDark : P.goldLight}>{traduire("Catégorie {0}", next.categorie_poids)}</Ink> : null}
+            <Ink size={24} weight="black" tight color={P.ink} numberOfLines={2}>{traduire(next.nom)}</Ink>
+            <Ink size={13} weight="medium" color={P.ink2}>{`${longDate(next.date)}${next.lieu ? `, ${next.lieu}` : ''}`}</Ink>
+            {next.categorie_poids ? <Ink size={13} weight="extraBold" color={P.goldDark}>{traduire("Catégorie {0}", next.categorie_poids)}</Ink> : null}
           </View>
         </Press>
       ) : null}

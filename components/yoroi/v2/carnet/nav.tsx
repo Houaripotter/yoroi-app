@@ -10,6 +10,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { useAccent } from '@/components/yoroi/v2/accueil/kit';
 import { carnetImage } from './images';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import type { CarnetIllus } from './images';
 import { P, Press, CIcon, tap } from './ui';
 import { blancA } from '@/components/yoroi/livePalette';
@@ -26,6 +27,8 @@ export const SECTION_META: Record<CarnetSection, { label: string; illus: CarnetI
 
 /** Illustration du carnet, decorative */
 export function Illus({ name, size = 48, style }: { name: CarnetIllus; size?: number; style?: StyleProp<ViewStyle> }) {
+  // 27 octobre 2026 : se redessine quand le reglage Illustrations change (carnetImage lit le reglage)
+  useIllustrations();
   return (
     <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[{ width: size, height: size }, style]}>
       <Image source={carnetImage(name)} style={{ width: size, height: size }} resizeMode="contain" accessibilityIgnoresInvertColors />
@@ -66,7 +69,7 @@ export function SectionTabs({ items, value, onChange }: { items: CarnetSection[]
 
 /** Niveau 2 : filtre par sport (ou par partie pour Combat). Rien n'est affiche s'il n'y a qu'un choix. */
 export function FilterChips<T extends string>({ items, value, onChange }: { items: { key: T; label: string; count?: number }[]; value: T; onChange: (k: T) => void }) {
-  const { accent } = useAccent();
+  useAccent(); // se redessine quand le theme change
   if (items.length < 2) return null;
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 22 }} style={{ marginHorizontal: -22 }}>
@@ -82,13 +85,13 @@ export function FilterChips<T extends string>({ items, value, onChange }: { item
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
             accessibilityLabel={it.count !== undefined ? `${it.label}, ${it.count}` : it.label}
-            style={{ minHeight: 44, paddingHorizontal: 15, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: on ? accent : P.white, borderWidth: 1, borderColor: on ? accent : P.line2 }}
+            style={{ minHeight: 44, paddingHorizontal: 15, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: on ? P.primary : P.white, borderWidth: 1, borderColor: on ? P.primary : P.line2 }}
           >
-            <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? P.white : P.ink2}>
+            <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? P.onPrimary : P.ink2}>
               {traduire(it.label)}
             </Ink>
             {it.count !== undefined && it.count > 0 ? (
-              <Ink size={12} weight="black" color={on ? 'rgba(255,255,255,0.75)' : P.muted}>
+              <Ink size={12} weight="black" color={on ? P.onPrimary : P.muted}>
                 {String(it.count)}
               </Ink>
             ) : null}
@@ -101,12 +104,12 @@ export function FilterChips<T extends string>({ items, value, onChange }: { item
 
 /** Le bouton d'action principal du carnet, dans le contexte de la section ouverte */
 export function AddPill({ label, onPress }: { label: string; onPress: () => void }) {
-  const { accent } = useAccent();
+  useAccent(); // se redessine quand le theme change
   return (
     <Press onPress={onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Ajouter : {0}", label)} hitSlop={4}>
-      <View style={{ minHeight: 44, paddingLeft: 12, paddingRight: 16, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: accent, shadowColor: accent, shadowOpacity: 0.25, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 3 }}>
-        <CIcon name="plus" size={18} color={P.white} width={2.8} />
-        <Ink size={15} weight="extraBold" color={P.white}>
+      <View style={{ minHeight: 44, paddingLeft: 12, paddingRight: 16, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: P.primary, shadowColor: '#1B2A44', shadowOpacity: 0.1, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 3 }}>
+        <CIcon name="plus" size={18} color={P.onPrimary} width={2.8} />
+        <Ink size={15} weight="extraBold" color={P.onPrimary}>
           {label}
         </Ink>
       </View>
@@ -138,7 +141,7 @@ export function Summary({ illus, items, children }: { illus: CarnetIllus; items:
 
 /** Bel etat vide illustre : une phrase qui dit quoi faire, une action */
 export function CarnetEmpty({ illus, title, text, action, onAction, compact }: { illus: CarnetIllus; title: string; text: string; action?: string; onAction?: () => void; compact?: boolean }) {
-  const { accent } = useAccent();
+  useAccent(); // se redessine quand le theme change
   return (
     <View style={{ borderRadius: 26, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingVertical: compact ? 18 : 26, paddingHorizontal: 18, alignItems: 'center', gap: 10 }}>
       <Illus name={illus} size={compact ? 84 : 132} />
@@ -150,9 +153,9 @@ export function CarnetEmpty({ illus, title, text, action, onAction, compact }: {
       </Ink>
       {action && onAction ? (
         <Press onPress={onAction} haptic="medium" accessibilityRole="button" accessibilityLabel={action} style={{ alignSelf: 'stretch', marginTop: 4 }}>
-          <View style={{ minHeight: 56, borderRadius: 18, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, paddingHorizontal: 16 }}>
-            <CIcon name="plus" size={20} color={P.white} width={2.6} />
-            <Ink size={16} weight="extraBold" color={P.white} numberOfLines={1} style={{ flexShrink: 1 }}>
+          <View style={{ minHeight: 56, borderRadius: 18, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, paddingHorizontal: 16 }}>
+            <CIcon name="plus" size={20} color={P.onPrimary} width={2.6} />
+            <Ink size={16} weight="extraBold" color={P.onPrimary} numberOfLines={1} style={{ flexShrink: 1 }}>
               {action}
             </Ink>
           </View>

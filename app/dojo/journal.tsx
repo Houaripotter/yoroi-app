@@ -110,9 +110,9 @@ export default function Journal() {
                 router.push('/ajouter' as any);
               }}
               accessibilityRole="button"
-              style={({ pressed }) => ({ alignSelf: 'stretch', marginTop: 6, minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.98 : 1 }] })}
+              style={({ pressed }) => ({ alignSelf: 'stretch', marginTop: 6, minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.98 : 1 }] })}
             >
-              <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Enregistrer une séance")}</Ink>
+              <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Enregistrer une séance")}</Ink>
             </Pressable>
           </View>
         }

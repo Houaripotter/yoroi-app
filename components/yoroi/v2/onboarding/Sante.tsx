@@ -21,7 +21,7 @@ function Bloc({ icon, titre, texte, ink, fond }: { icon: IconName; titre: string
   const c = useColors();
   return (
     <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', backgroundColor: c.surface, borderRadius: 20, borderWidth: 1, borderColor: c.border, padding: 14 }}>
-      <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: fond, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
         <Icon name={icon} size={20} color={ink} />
       </View>
       <View style={{ flex: 1, gap: 3 }}>

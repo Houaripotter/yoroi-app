@@ -79,7 +79,7 @@ function LigneSon({ son, first, stopAll }: { son: Son; first: boolean; stopAll: 
           }}
           accessibilityRole="button"
           accessibilityLabel={st.playing ? traduire("Arrêter {0}", son.nom) : traduire("Écouter {0}", son.nom)}
-          style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, backgroundColor: st.playing ? c.accent : pressed ? c.fillSubtle : c.accentTint, alignItems: 'center', justifyContent: 'center' })}
+          style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, backgroundColor: st.playing ? c.primary : pressed ? c.fillSubtle : c.accentTint, alignItems: 'center', justifyContent: 'center' })}
         >
           {st.playing ? (
             <View style={{ width: 14, height: 14, borderRadius: 3, backgroundColor: P.white }} />
@@ -95,7 +95,7 @@ function LigneSon({ son, first, stopAll }: { son: Son; first: boolean; stopAll: 
         <Ink size={14} weight="black" color={c.ink}>{secondes(dur)}</Ink>
       </View>
       <View style={{ height: 4, borderRadius: 2, backgroundColor: c.fillSoft, overflow: 'hidden', marginLeft: 60 }}>
-        <View style={{ width: `${Math.round(prog * 100)}%`, height: 4, backgroundColor: c.accent }} />
+        <View style={{ width: `${Math.round(prog * 100)}%`, height: 4, backgroundColor: c.detail }} />
       </View>
     </View>
   );
@@ -163,8 +163,8 @@ function SequenceFinDeRound({ stopAll }: { stopAll: number }) {
         {pas.map((p) => {
           const on = etape === p.k;
           return (
-            <View key={p.k} style={{ flex: 1, borderRadius: 16, padding: 12, gap: 2, backgroundColor: on ? c.accent : c.fillSoft }}>
-              <Ink size={14} weight="extraBold" color={on ? '#FFFFFF' : c.ink}>{traduire(p.label)}</Ink>
+            <View key={p.k} style={{ flex: 1, borderRadius: 16, padding: 12, gap: 2, backgroundColor: on ? c.primary : c.fillSoft }}>
+              <Ink size={14} weight="extraBold" color={on ? c.onPrimary : c.ink}>{traduire(p.label)}</Ink>
               <Ink size={11} color={on ? 'rgba(255,255,255,0.85)' : c.textMuted} numberOfLines={2}>{p.sub}</Ink>
             </View>
           );

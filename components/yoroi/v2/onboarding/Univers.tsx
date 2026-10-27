@@ -116,8 +116,8 @@ function Carte({ choix, nom, phrase, genre, genreConnu, index, selected, onPress
             accessibilityIgnoresInvertColors
           />
         ) : null}
-        <View style={{ position: 'absolute', left: 12, bottom: 12, backgroundColor: selected ? c.accent : c.surface, borderWidth: selected ? 0 : 1, borderColor: c.border, borderRadius: 999, paddingHorizontal: 16, minHeight: 36, justifyContent: 'center' }}>
-          <Ink size={15} weight="extraBold" color={selected ? c.onAccent : c.ink}>{nom}</Ink>
+        <View style={{ position: 'absolute', left: 12, bottom: 12, backgroundColor: selected ? c.primary : c.surface, borderWidth: selected ? 0 : 1, borderColor: c.border, borderRadius: 999, paddingHorizontal: 16, minHeight: 36, justifyContent: 'center' }}>
+          <Ink size={15} weight="extraBold" color={selected ? c.onPrimary : c.ink}>{nom}</Ink>
         </View>
       </ChoiceCard>
       <Ink size={13} weight={selected ? 'bold' : 'medium'} color={selected ? c.ink : c.textSecondary} style={{ paddingHorizontal: 4, lineHeight: 18 }}>{phrase}</Ink>

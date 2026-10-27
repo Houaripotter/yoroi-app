@@ -9,6 +9,7 @@
  */
 import type { ImageSourcePropType } from 'react-native';
 import { traduire } from '@/lib/i18n/tr';
+import { illustration, type NomSticker } from '@/components/yoroi/v2/stickers';
 
 export type CarnetImageId =
   | 'force'
@@ -67,9 +68,26 @@ export const CARNET_IMAGE_DEDIEE: Record<CarnetImageId, boolean> = {
   partage_sakura: true,
 };
 
-/** L illustration du carnet pour cet id (dediee si elle existe, sinon le repli) */
+/** 27 octobre 2026 : le sticker de chaque illustration du carnet (reglage Illustrations, voir components/yoroi/v2/stickers.ts) */
+const STICKER: Partial<Record<CarnetImageId, NomSticker>> = {
+  force: 'force',
+  endurance: 'endurance',
+  combat: 'batons',
+  records: 'records_parchemin',
+  techniques: 'techniques',
+  videos: 'videos',
+  sparring: 'sparring',
+  musculation: 'musculation',
+  course: 'course',
+  jjb: 'jjb',
+  boxe: 'gants',
+  carnet_vide: 'carnet_vide',
+};
+
+/** L illustration du carnet pour cet id : son sticker, ou en Encre japonaise l illustration d avant (les fonds de partage ne changent pas) */
 export function carnetImage(id: CarnetImageId): ImageSourcePropType {
-  return TABLE[id];
+  const st = STICKER[id];
+  return st ? illustration(st, TABLE[id]) : TABLE[id];
 }
 
 /** Les illustrations de contenu (hors fonds de partage) */

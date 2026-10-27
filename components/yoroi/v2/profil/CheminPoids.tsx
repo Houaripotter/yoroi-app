@@ -11,6 +11,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Card } from '@/components/yoroi/v2/espace/ui';
 import { ORNEMENTS } from './Ornement';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import { traduire } from '@/lib/i18n/tr';
 
 type Pt = { x: number; y: number };
@@ -65,6 +66,7 @@ export function CheminPoids({ start, current, target, progress, fmt }: {
   progress: number | null;
   fmt: (n: number | null | undefined) => string;
 }) {
+  useIllustrations();
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const [w, setW] = useState(0);

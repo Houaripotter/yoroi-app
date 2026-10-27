@@ -96,7 +96,7 @@ function CheminApercu({ start, target, sessions, recompo, calme }: { start: numb
   return (
     <View style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: '#ECE6FA', alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="scale" size={22} color="#7A5BC7" />
         </View>
         <View style={{ flex: 1 }}>
@@ -190,7 +190,7 @@ function DojoApercu({ rankIndex, rankName, nextName, image, imageSuivante, sessi
               <Image source={imageSuivante} style={{ width: 38, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
             </View>
           ) : (
-            <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: OR, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="star" size={20} color="#3A2A08" />
             </View>
           )}

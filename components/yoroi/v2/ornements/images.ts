@@ -3,8 +3,10 @@
  * Table unique de require() statiques, a utiliser partout a la place des anciens kanji decoratifs.
  */
 import type { ImageSourcePropType } from 'react-native';
+import { illustration } from '@/components/yoroi/v2/stickers';
 
-export const ORNEMENTS = {
+/** Les ornements d'avant, a l'encre (reglage « Encre japonaise ») */
+const ENCRE = {
   torii: require('@/assets/avatars/app/ornements/torii.webp'),
   lanterne: require('@/assets/avatars/app/ornements/lanterne.webp'),
   eventail: require('@/assets/avatars/app/ornements/eventail.webp'),
@@ -20,6 +22,55 @@ export const ORNEMENTS = {
   cible: require('@/assets/avatars/app/ornements/cible.webp'),
   combat: require('@/assets/avatars/app/ornements/combat.webp'),
 } satisfies Record<string, ImageSourcePropType>;
+
+/**
+ * 27 octobre 2026 : chaque ornement lit le reglage Illustrations au moment ou il est affiche : le sticker du meme
+ * nom (la cible devient le sticker objectifs), ou l'ornement a l'encre d'avant. Voir components/yoroi/v2/stickers.ts.
+ */
+export const ORNEMENTS = {
+  get torii() {
+    return illustration('torii', ENCRE.torii);
+  },
+  get lanterne() {
+    return illustration('lanterne', ENCRE.lanterne);
+  },
+  get eventail() {
+    return illustration('eventail', ENCRE.eventail);
+  },
+  get sakura() {
+    return illustration('sakura', ENCRE.sakura);
+  },
+  get vague() {
+    return illustration('vague', ENCRE.vague);
+  },
+  get fuji() {
+    return illustration('fuji', ENCRE.fuji);
+  },
+  get koi() {
+    return illustration('koi', ENCRE.koi);
+  },
+  get katanas() {
+    return illustration('katanas', ENCRE.katanas);
+  },
+  get kabuto() {
+    return illustration('kabuto', ENCRE.kabuto);
+  },
+  get bonsai() {
+    return illustration('bonsai', ENCRE.bonsai);
+  },
+  get chrono() {
+    return illustration('chrono', ENCRE.chrono);
+  },
+  get carnet() {
+    return illustration('carnet', ENCRE.carnet);
+  },
+  get cible() {
+    return illustration('objectifs', ENCRE.cible);
+  },
+  get combat() {
+    return illustration('combat', ENCRE.combat);
+  },
+} satisfies Record<keyof typeof ENCRE, ImageSourcePropType>;
 
 export type OrnementKey = keyof typeof ORNEMENTS;
 

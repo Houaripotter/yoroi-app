@@ -1,6 +1,6 @@
 /**
  * Couleurs d'encre de l'onboarding (vague 29) : une teinte par tampon d'objectif et de frein,
- * en harmonie avec la charte (papier #F2F1EC, encre #1D2029). Le rouge vif reste reserve aux records.
+ * en harmonie avec la charte (papier #F5F6FB, encre #1D2029). Le rouge vif reste reserve aux records.
  * ink : l'encre du tampon, la bordure et la coche quand la carte est choisie ; fond : la carte choisie.
  * 17 octobre 2026 (revue de l'onboarding) : ENCRES_THEME suit le mode clair ou sombre au moment ou l'encre est lue
  * (accesseurs), comme les domaines de l'accueil (accueil/domaines.ts). En sombre, les fonds pastel clairs rendaient
@@ -20,7 +20,7 @@ export const ENCRES = {
 
 export type EncreId = keyof typeof ENCRES;
 
-/** Sombre : encre claire sur un fond sombre teinte (texte papier #F2F1EC lisible, AA) */
+/** Sombre : encre claire sur un fond sombre teinte (texte papier #F5F6FB lisible, AA) */
 export const ENCRES_SOMBRE: Record<EncreId, Encre> = {
   vermillon: { ink: '#E9A07F', fond: '#33231D' },
   or: { ink: '#D8B562', fond: '#2F2A1C' },

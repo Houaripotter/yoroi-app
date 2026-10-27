@@ -57,14 +57,14 @@ export function Onglets<T extends string>({ items, value, onChange, largeur }: {
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
-              backgroundColor: on ? c.accent : c.surface,
+              backgroundColor: on ? c.primary : c.surface,
               borderWidth: 1,
               borderColor: on ? c.accent : c.border,
               transform: [{ scale: pressed ? 0.97 : 1 }],
             })}
           >
-            <Ink size={13.5} weight={on ? 'extraBold' : 'bold'} color={on ? c.onAccent : c.ink} numberOfLines={1} style={{ flexShrink: 1 }}>{traduire(it.label)}</Ink>
-            <Ink size={12} weight="bold" color={on ? c.onAccent : c.textMuted} style={{ opacity: on ? 0.8 : 1 }}>{String(it.count)}</Ink>
+            <Ink size={13.5} weight={on ? 'extraBold' : 'bold'} color={on ? c.onPrimary : c.ink} numberOfLines={1} style={{ flexShrink: 1 }}>{traduire(it.label)}</Ink>
+            <Ink size={12} weight="bold" color={on ? c.onPrimary : c.textMuted} style={{ opacity: on ? 0.8 : 1 }}>{String(it.count)}</Ink>
           </Pressable>
         );
       })}
@@ -213,8 +213,8 @@ export function Vignette({
             </View>
           ) : null}
           {etat.equipe ? (
-            <View style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: 12, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-              <CheckIcon size={15} color={c.onAccent} />
+            <View style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: 12, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+              <CheckIcon size={15} color={c.onPrimary} />
             </View>
           ) : null}
         </View>
@@ -253,8 +253,8 @@ export function VignetteScene({ width, source, nom, etat, onPress, label }: { wi
             </View>
           ) : null}
           {etat.equipe ? (
-            <View style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: 12, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-              <CheckIcon size={15} color={c.onAccent} />
+            <View style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: 12, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+              <CheckIcon size={15} color={c.onPrimary} />
             </View>
           ) : null}
         </View>

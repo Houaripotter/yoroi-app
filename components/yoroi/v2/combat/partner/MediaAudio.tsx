@@ -324,7 +324,7 @@ export function FaceoffShare({ p, wins, losses, draws }: { p: Partner; wins: num
     <>
       <Press onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={traduire("Créer la carte face à face")}>
         <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: P.ink, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
             <CIcon name="swords" size={24} color={P.goldLight} />
           </View>
           <View style={{ flex: 1 }}>
@@ -357,8 +357,8 @@ export function FaceoffShare({ p, wins, losses, draws }: { p: Partner; wins: num
                       Moi
                     </Ink>
                   </View>
-                  <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-8deg' }] }}>
-                    <Ink weight="black" size={20} color={P.white} allowFontScaling={false}>
+                  <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-8deg' }] }}>
+                    <Ink weight="black" size={20} color={P.onPrimary} allowFontScaling={false}>
                       VS
                     </Ink>
                   </View>

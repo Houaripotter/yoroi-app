@@ -168,10 +168,10 @@ function Apercu({ data, retour, personnaliser }: { data: CarteData; retour: () =
           disabled={!!k.busy}
           accessibilityRole="button"
           accessibilityLabel={traduire("Partager la carte")}
-          style={({ pressed }) => ({ flex: 1.2, height: 54, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}
+          style={({ pressed }) => ({ flex: 1.2, height: 54, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}
         >
-          <Icon name="share" size={19} color={c.onAccent} />
-          <Ink size={16} weight="extraBold" color={c.onAccent}>{k.busy === 'share' ? traduire('Un instant') : traduire('Partager')}</Ink>
+          <Icon name="share" size={19} color={c.onPrimary} />
+          <Ink size={16} weight="extraBold" color={c.onPrimary}>{k.busy === 'share' ? traduire('Un instant') : traduire('Partager')}</Ink>
         </Pressable>
       </View>
       {erreur ? <Ink size={13} weight="bold" color={c.danger}>{erreur}</Ink> : null}

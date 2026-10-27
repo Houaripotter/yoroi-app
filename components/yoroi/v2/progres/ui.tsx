@@ -19,7 +19,8 @@ import type { TamponId } from '@/components/yoroi/v2/tampons/table';
 import { P } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
 
-export const GUTTER = 22;
+// 27 octobre 2026 (maquettes Pastel) : 16 points des bords, comme l'accueil
+export const GUTTER = 16;
 export const GLASS = 'rgba(255,255,255,0.78)';
 
 export function tapLight() {
@@ -132,7 +133,7 @@ export function Pills<T extends string | number | null>({ items, value, onChange
             }}
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
-            style={{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 13, borderRadius: 12, backgroundColor: on ? c.ink : 'transparent', borderWidth: 1.5, borderColor: on ? c.ink : '#D5D2CA' }}
+            style={{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 13, borderRadius: 12, backgroundColor: on ? c.ink : 'transparent', borderWidth: 1.5, borderColor: on ? c.ink : '#C9CEDF' }}
           >
             <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? P.paper : c.textSecondary} numberOfLines={1}>
               {traduire(p.label)}
@@ -152,8 +153,9 @@ export function Hanko({ size = 38, tampon }: { size?: number; char?: string; tam
 export function PrimaryButton({ label, onPress, disabled, tone = 'accent', style }: { label: string; onPress: () => void; disabled?: boolean; tone?: 'accent' | 'ink'; style?: StyleProp<ViewStyle> }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const bg = tone === 'accent' ? c.accent : c.ink;
-  const pressedBg = tone === 'accent' ? c.accentPressed : '#000000';
+  // 27 octobre 2026 (refonte Pastel) : le bouton principal en pastel, texte bleu nuit
+  const bg = tone === 'accent' ? c.primary : c.ink;
+  const pressedBg = tone === 'accent' ? c.primaryPressed : '#000000';
   return (
     <Pressable
       onPress={() => {
@@ -164,7 +166,7 @@ export function PrimaryButton({ label, onPress, disabled, tone = 'accent', style
       accessibilityRole="button"
       style={({ pressed }) => [{ height: 56, borderRadius: 18, backgroundColor: pressed ? pressedBg : bg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, opacity: disabled ? 0.5 : 1 }, style]}
     >
-      <Ink size={16} weight="extraBold" color={tone === 'accent' ? c.onAccent : c.background}>
+      <Ink size={16} weight="extraBold" color={tone === 'accent' ? c.onPrimary : c.background}>
         {label}
       </Ink>
     </Pressable>
@@ -274,14 +276,14 @@ export function StampButton({ label, onPress, disabled, dim }: { label: string; 
       disabled={disabled}
       accessibilityRole="button"
       accessibilityState={{ disabled: !!disabled }}
-      style={({ pressed }) => ({ height: 60, borderRadius: 20, backgroundColor: pressed ? c.accentPressed : c.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, opacity: dim ? 0.45 : 1 })}
+      style={({ pressed }) => ({ height: 60, borderRadius: 20, backgroundColor: pressed ? c.primaryPressed : c.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, opacity: dim ? 0.45 : 1 })}
     >
       <View style={{ width: 30, height: 30, borderRadius: 7, borderWidth: 2.5, borderColor: P.white, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-6deg' }] }}>
         <Svg width={16} height={16} viewBox="0 0 24 24">
           <Path d="M5 12.5l4.5 4.5L19 7.5" stroke={c.onAccent} strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
         </Svg>
       </View>
-      <Ink size={17} weight="extraBold" color={c.onAccent}>
+      <Ink size={17} weight="extraBold" color={c.onPrimary}>
         {label}
       </Ink>
     </Pressable>

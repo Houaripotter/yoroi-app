@@ -16,6 +16,7 @@ import { P } from '@/components/yoroi/livePalette';
 import { todayIso, shiftDays } from '@/lib/v2/progres/format';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { traduire } from '@/lib/i18n/tr';
+import { ombreCarte } from '@/components/yoroi/v2/accueil/kit';
 
 export function RecordsCard({ trainings, femme }: { trainings: Training[]; femme: boolean }) {
   const { theme } = useYoroiTheme();
@@ -34,7 +35,7 @@ export function RecordsCard({ trainings, femme }: { trainings: Training[]; femme
         }}
         accessibilityRole="button"
         accessibilityLabel={traduire("Tes records")}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider }}
+        style={[{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 22, backgroundColor: P.white }, ombreCarte]}
       >
         <Hanko size={28} color={c.textMuted} />
         <View style={{ flex: 1, gap: 2 }}>
@@ -46,7 +47,7 @@ export function RecordsCard({ trainings, femme }: { trainings: Training[]; femme
   }
   const fromIso = shiftDays(today, -14);
   return (
-    <View style={{ borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider, paddingHorizontal: 14 }}>
+    <View style={[{ borderRadius: 22, backgroundColor: P.white, paddingHorizontal: 14, paddingVertical: 2 }, ombreCarte]}>
       {highlights.slice(0, 3).map((l, i) => {
         const v = formatRecordValue(l, undefined, unite);
         const fresh = l.stamps > 0 && l.date >= fromIso;
@@ -59,7 +60,7 @@ export function RecordsCard({ trainings, femme }: { trainings: Training[]; femme
             }}
             accessibilityRole="button"
             accessibilityLabel={`${recordShortTitle(l)}, ${v.main}`}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider }}
           >
             <SportThumb sport={l.sport} femme={femme} size={40} />
             <View style={{ flex: 1, gap: 1 }}>
@@ -67,7 +68,7 @@ export function RecordsCard({ trainings, femme }: { trainings: Training[]; femme
               <Ink size={12} color={c.textSecondary} numberOfLines={2}>{`${relativeDay(l.date, today)}, ${v.sub}`}</Ink>
             </View>
             <View style={{ alignItems: 'flex-end', gap: 2, maxWidth: '40%' }}>
-              <Ink size={17} weight="black" tight numberOfLines={1}>{v.main}</Ink>
+              <Ink size={15} weight="black" tight numberOfLines={1} color={c.accentText}>{v.main}</Ink>
               {fresh ? <Hanko size={16} /> : null}
             </View>
           </Pressable>

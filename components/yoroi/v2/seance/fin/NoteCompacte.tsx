@@ -116,9 +116,9 @@ export function NoteCompacte({ trainingId, combat }: { trainingId: number; comba
               accessibilityRole="button"
               accessibilityLabel={traduire(m.label)}
               accessibilityState={{ selected: on }}
-              style={({ pressed }) => ({ flex: 1, minHeight: 44, paddingHorizontal: 4, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.accent : pressed ? c.fillSubtle : c.fillSoft })}
+              style={({ pressed }) => ({ flex: 1, minHeight: 44, paddingHorizontal: 4, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.primary : pressed ? c.fillSubtle : c.fillSoft })}
             >
-              <Ink size={12} weight="extraBold" color={on ? c.onAccent : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{traduire(m.label)}</Ink>
+              <Ink size={12} weight="extraBold" color={on ? c.onPrimary : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{traduire(m.label)}</Ink>
             </Pressable>
           );
         })}

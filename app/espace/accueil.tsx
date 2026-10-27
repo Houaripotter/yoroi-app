@@ -24,7 +24,7 @@ export default function TonAccueil() {
     }, []),
   );
   return (
-    <EspaceScreen title={traduire("Ton accueil")} subtitle={traduire("Les raccourcis et Ton poids restent en haut. Coche ce que tu veux voir dessous, range-le avec les flèches.")}>
+    <EspaceScreen title={traduire("Ton accueil")} subtitle={traduire("Les raccourcis et Ton poids restent en haut. Affiche ce que tu veux voir dessous, glisse une ligne pour la ranger.")}>
       <DispositionEditor />
       <Groupe title={traduire("Citations")} />
       <Card>

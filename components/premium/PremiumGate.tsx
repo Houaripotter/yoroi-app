@@ -125,7 +125,7 @@ export function PremiumPreview({ children, source, compteur = null, apercu = 'ec
                 {traduire(info.libelle)}
               </Ink>
             </View>
-            <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: fond, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
               <Icon name={info.icone} size={24} color={encre} />
             </View>
           </View>
@@ -160,9 +160,9 @@ export function PremiumPreview({ children, source, compteur = null, apercu = 'ec
             }}
             accessibilityRole="button"
             accessibilityLabel={traduire("Débloquer avec Premium, {0}", info.libelle)}
-            style={({ pressed }) => [styles.redBtn, { backgroundColor: pressed ? c.accentPressed : c.accent, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+            style={({ pressed }) => [styles.redBtn, { backgroundColor: pressed ? c.primaryPressed : c.primary, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
           >
-            <Ink size={16} weight="extraBold" color={c.onAccent}>
+            <Ink size={16} weight="extraBold" color={c.onPrimary}>
               {traduire("Débloquer avec Premium")}</Ink>
           </Pressable>
           <Pressable onPress={goBack} accessibilityRole="button" style={styles.backLink} hitSlop={6}>

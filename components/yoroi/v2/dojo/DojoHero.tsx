@@ -90,12 +90,11 @@ export function GlassTag({ children, style }: { children: React.ReactNode; style
     <View
       style={[
         {
-          backgroundColor: P.carte,
-          borderWidth: 1,
-          borderColor: P.white,
-          borderRadius: 20,
-          paddingHorizontal: 14,
-          paddingVertical: 10,
+          // 27 octobre 2026 (maquette Pastel-Dojo) : etiquette blanche, rayon 16
+          backgroundColor: P.white,
+          borderRadius: 16,
+          paddingHorizontal: 12,
+          paddingVertical: 8,
           shadowColor: '#1D2029',
           shadowOpacity: 0.12,
           shadowRadius: 16,

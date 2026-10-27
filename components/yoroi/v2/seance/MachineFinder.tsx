@@ -31,7 +31,7 @@ type Props = {
   nommer?: (name: string) => string;
 };
 
-const PAPIER = '#F2F1EC';
+const PAPIER = '#F5F6FB';
 const GAP = 10;
 
 /** groupe musculaire de l'exercice dans la bibliotheque de l'app, sinon celui de la machine */
@@ -357,13 +357,13 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
         columnWrapperStyle={{ gap: GAP }}
         contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: insets.bottom + 30, gap: 16 }}
         ListHeaderComponent={
-          <Pressable onPress={() => setPhoto(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 60, borderRadius: 18, paddingHorizontal: 16, marginBottom: 2, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.accentPressed : c.accent })}>
-            <CameraGlyph color={c.onAccent} />
+          <Pressable onPress={() => setPhoto(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 60, borderRadius: 18, paddingHorizontal: 16, marginBottom: 2, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.primaryPressed : c.primary })}>
+            <CameraGlyph color={c.onPrimary} />
             <View style={{ flex: 1 }}>
-              <Ink size={16} weight="extraBold" color={c.onAccent} numberOfLines={1}>{traduire("Prendre la machine en photo")}</Ink>
-              <Ink size={12} color={c.onAccent} numberOfLines={1} style={{ opacity: 0.85 }}>{traduire("Ton IA la reconnaît pour toi")}</Ink>
+              <Ink size={16} weight="extraBold" color={c.onPrimary} numberOfLines={1}>{traduire("Prendre la machine en photo")}</Ink>
+              <Ink size={12} color={c.onPrimary} numberOfLines={1} style={{ opacity: 0.85 }}>{traduire("Ton IA la reconnaît pour toi")}</Ink>
             </View>
-            <Icon name="chevron" size={18} color={c.onAccent} />
+            <Icon name="chevron" size={18} color={c.onPrimary} />
           </Pressable>
         }
         ListEmptyComponent={

@@ -523,7 +523,7 @@ function CutForm({ current, initial, competition, onSaved, onCancel }: { current
                   }}
                 />
               ) : (
-                <View key={c.name} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: '#ECEAE4' }}>
+                <View key={c.name} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: '#EEF0F7' }}>
                   <Ink size={13} weight="bold" color={P.ink2}>
                     {traduire("{0} sans limite", c.name)}
                   </Ink>
@@ -646,8 +646,8 @@ function Simulator({ defaultCurrent, defaultTarget, defaultDays }: { defaultCurr
               {plan.phases.map((ph, i) => (
                 <View key={ph.name} style={{ flexDirection: 'row', gap: 12 }}>
                   <View style={{ width: 30, alignItems: 'center' }}>
-                    <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: i === plan.phases.length - 1 ? P.accent : P.ink, alignItems: 'center', justifyContent: 'center' }}>
-                      <Ink size={13} weight="black" color={P.white}>
+                    <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: i === plan.phases.length - 1 ? P.primary : P.ink, alignItems: 'center', justifyContent: 'center' }}>
+                      <Ink size={13} weight="black" color={i === plan.phases.length - 1 ? P.onPrimary : P.paper}>
                         {String(i + 1)}
                       </Ink>
                     </View>

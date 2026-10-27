@@ -140,11 +140,19 @@ export type SceneAnimeeId =
   | 'bivouac_desert'
   | 'voie_lactee_nuages'
   | 'lampadaire_hiver'
-  | 'voie_lactee_cote';
+  | 'voie_lactee_cote'
+  // 27 octobre 2026 : Marseille et les aurores (lib/v2/espace/voyages.ts, sc13 a sc19)
+  | 'calanque_couchant'
+  | 'paddle_couchant'
+  | 'corniche_monument'
+  | 'corniche_moto'
+  | 'aurores_boreales'
+  | 'corniche_guidon'
+  | 'corniche_heure_bleue';
 
 export type ConfigScene = {
   id: SceneAnimeeId;
-  /** numero dans le brief */
+  /** numero dans le brief (13 a 19 : scenes de Marseille du 27 octobre 2026, hors brief du 18 octobre) */
   numero: number;
   /** nom du fichier image dans _propositions/scenes_2026-10-18/ */
   fichier: string;
@@ -256,6 +264,15 @@ type MouvementScene = Pick<ConfigScene, 'mouvement' | 'calques' | 'masquesAvecVi
 const ETOILE_FILANTE = { l: 18.333, h: 13.433 };
 
 const MOUVEMENT_SCENE: Record<SceneAnimeeId, MouvementScene> = {
+  // 27 octobre 2026 : scenes de Marseille et aurores. Le mouvement vient de la video en boucle quand elle existe
+  // (lib/v2/scenes/medias.ts), sinon des effets en code ci-dessous (reflets, nuages, etoiles, lueurs).
+  calanque_couchant: { mouvement: traduire('Les vagues roulent contre les rochers, le soleil scintille sur la mer.'), masquesAvecVideo: ['reflets'] },
+  paddle_couchant: { mouvement: traduire('La mer ondule sous la planche, les reflets du couchant dansent.'), masquesAvecVideo: ['reflets'] },
+  corniche_monument: { mouvement: traduire('La mer scintille au pied de la Corniche, les nuages glissent.'), masquesAvecVideo: ['reflets'] },
+  corniche_moto: { mouvement: traduire('La mer scintille derrière la moto, les nuages glissent doucement.'), masquesAvecVideo: ['reflets'] },
+  aurores_boreales: { mouvement: traduire('Les aurores ondulent dans le ciel, les étoiles scintillent.'), masquesAvecVideo: ['brume'] },
+  corniche_guidon: { mouvement: traduire('La mer scintille devant le guidon, les nuages glissent.'), masquesAvecVideo: ['reflets'] },
+  corniche_heure_bleue: { mouvement: traduire('Les lampadaires brillent, la mer reflète les lumières.'), masquesAvecVideo: ['reflets'] },
   yatai_pont: {
     mouvement: traduire('Les deux lanternes se balancent au vent, le train lumineux passe sur le pont.'),
     calques: [
@@ -542,6 +559,95 @@ export const SCENES_ANIMEES_CODE: ConfigScene[] = [
       // la ville lointaine au bout de la cote
       { type: 'lueur', points: [{ x: 63, y: 61, r: 9 }], mode: 'respire', periode: 9, intensite: 0.3, couleur: '#FFB070' },
       { type: 'reflets', zone: { x: 52, y: 62, l: 48, h: 36 }, nombre: 12, opacite: 0.35, couleur: '#B8C8FF' },
+    ],
+  },
+  // 27 octobre 2026 : Marseille et les aurores, zones mesurees sur la planche (_propositions/scenes_marseille_2026-10-27/planche_grille.jpg)
+  {
+    id: 'calanque_couchant',
+    numero: 13,
+    fichier: 'sc13_calanque_couchant.webp',
+    nom: traduire('Calanque au couchant'),
+    ...MOUVEMENT_SCENE.calanque_couchant,
+    fond: ['#E9A89A', '#D99A78', '#6E6A78'],
+    effets: [
+      { type: 'brume', zone: { x: 0, y: 4, l: 100, h: 34 }, nappes: 2, duree: 90, sens: 1, opacite: 0.22, couleur: '#FFE3D0' },
+      { type: 'lueur', points: [{ x: 62, y: 38, r: 9 }], mode: 'respire', periode: 8, intensite: 0.35, couleur: '#FFE0A8' },
+      { type: 'reflets', zone: { x: 4, y: 48, l: 58, h: 44 }, nombre: 16, opacite: 0.45, couleur: '#FFE6C0' },
+    ],
+  },
+  {
+    id: 'paddle_couchant',
+    numero: 14,
+    fichier: 'sc14_paddle_couchant.webp',
+    nom: traduire('Paddle au couchant'),
+    ...MOUVEMENT_SCENE.paddle_couchant,
+    fond: ['#E58B5A', '#A07A78', '#3E4A62'],
+    effets: [
+      { type: 'brume', zone: { x: 40, y: 4, l: 60, h: 34 }, nappes: 2, duree: 85, sens: -1, opacite: 0.2, couleur: '#E8EEF8' },
+      { type: 'reflets', zone: { x: 0, y: 46, l: 60, h: 42 }, nombre: 18, opacite: 0.5, couleur: '#FFC890' },
+    ],
+  },
+  {
+    id: 'corniche_monument',
+    numero: 15,
+    fichier: 'sc15_corniche_monument.webp',
+    nom: traduire('Corniche, le monument'),
+    ...MOUVEMENT_SCENE.corniche_monument,
+    fond: ['#9DB0C8', '#E8B88A', '#9A8678'],
+    effets: [
+      { type: 'brume', zone: { x: 30, y: 4, l: 70, h: 30 }, nappes: 2, duree: 90, sens: 1, opacite: 0.22, couleur: '#FFE8D8' },
+      { type: 'lueur', points: [{ x: 62, y: 37, r: 8 }], mode: 'respire', periode: 8, intensite: 0.3, couleur: '#FFE7B0' },
+      { type: 'reflets', zone: { x: 40, y: 44, l: 58, h: 8 }, nombre: 10, opacite: 0.5, couleur: '#FFF0D0' },
+    ],
+  },
+  {
+    id: 'corniche_moto',
+    numero: 16,
+    fichier: 'sc16_corniche_moto.webp',
+    nom: traduire('Corniche à moto'),
+    ...MOUVEMENT_SCENE.corniche_moto,
+    fond: ['#F2C27A', '#D8A878', '#A08A80'],
+    effets: [
+      { type: 'brume', zone: { x: 0, y: 2, l: 60, h: 26 }, nappes: 2, duree: 90, sens: 1, opacite: 0.18, couleur: '#FFF0D8' },
+      { type: 'reflets', zone: { x: 0, y: 34, l: 42, h: 18 }, nombre: 12, opacite: 0.5, couleur: '#FFE8B8' },
+    ],
+  },
+  {
+    id: 'aurores_boreales',
+    numero: 17,
+    fichier: 'sc17_aurores_boreales.webp',
+    nom: traduire('Aurores boréales'),
+    ...MOUVEMENT_SCENE.aurores_boreales,
+    fond: ['#1E2A50', '#2E4A6A', '#5A6A8A'],
+    effets: [
+      { type: 'etoiles', zone: { x: 0, y: 0, l: 100, h: 45 }, nombre: 30, taille: [0.8, 2], scintillement: 0.8, couleur: '#FFFFFF' },
+      { type: 'brume', zone: { x: 10, y: 10, l: 80, h: 50 }, nappes: 3, duree: 40, sens: 1, opacite: 0.22, couleur: '#7FFFC8' },
+      { type: 'lueur', points: [{ x: 45, y: 42, r: 18 }, { x: 75, y: 25, r: 14 }], mode: 'respire', periode: 7, intensite: 0.3, couleur: '#7AF5B8' },
+    ],
+  },
+  {
+    id: 'corniche_guidon',
+    numero: 18,
+    fichier: 'sc18_corniche_guidon.webp',
+    nom: traduire('Corniche, vue du guidon'),
+    ...MOUVEMENT_SCENE.corniche_guidon,
+    fond: ['#E8A878', '#D8A878', '#A08A80'],
+    effets: [
+      { type: 'brume', zone: { x: 0, y: 2, l: 70, h: 26 }, nappes: 2, duree: 90, sens: 1, opacite: 0.2, couleur: '#FFE8D0' },
+      { type: 'reflets', zone: { x: 0, y: 34, l: 45, h: 16 }, nombre: 12, opacite: 0.5, couleur: '#FFE8B8' },
+    ],
+  },
+  {
+    id: 'corniche_heure_bleue',
+    numero: 19,
+    fichier: 'sc19_corniche_heure_bleue.webp',
+    nom: traduire('Corniche à l’heure bleue'),
+    ...MOUVEMENT_SCENE.corniche_heure_bleue,
+    fond: ['#2A3260', '#5A5A80', '#8A8098'],
+    effets: [
+      { type: 'etoiles', zone: { x: 0, y: 0, l: 100, h: 18 }, nombre: 12, taille: [0.8, 1.8], scintillement: 0.7, couleur: '#FFFFFF' },
+      { type: 'lueur', points: [{ x: 80, y: 21, r: 4 }, { x: 85, y: 26, r: 3 }, { x: 89, y: 28, r: 2.5 }], mode: 'vacille', periode: 1, intensite: 0.5, couleur: '#FFD890' },
+      { type: 'reflets', zone: { x: 0, y: 30, l: 50, h: 16 }, nombre: 12, opacite: 0.45, couleur: '#FFD8A0' },
     ],
   },
 ];

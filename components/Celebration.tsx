@@ -205,9 +205,9 @@ export const Celebration: React.FC<CelebrationProps> = ({
             onPress={handleClose}
             accessibilityRole="button"
             accessibilityLabel={traduire("Continuer")}
-            style={({ pressed }) => [styles.continueButton, { backgroundColor: pressed ? c.accentPressed : c.accent }]}
+            style={({ pressed }) => [styles.continueButton, { backgroundColor: pressed ? c.primaryPressed : c.primary }]}
           >
-            <Ink size={16} weight="extraBold" color={c.onAccent}>
+            <Ink size={16} weight="extraBold" color={c.onPrimary}>
               {traduire("Continuer")}</Ink>
           </Pressable>
         </Animated.View>

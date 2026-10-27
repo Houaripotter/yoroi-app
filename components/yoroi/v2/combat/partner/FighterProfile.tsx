@@ -123,7 +123,7 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
                     hitSlop={4}
                     style={{ flex: 1, height: 36, borderRadius: 10, backgroundColor: n <= v ? color : P.line2, alignItems: 'center', justifyContent: 'center' }}
                   >
-                    <View style={{ position: 'absolute', left: 0, right: 0, top: 20, height: 3, backgroundColor: n <= v ? P.accent : P.line }} />
+                    <View style={{ position: 'absolute', left: 0, right: 0, top: 20, height: 3, backgroundColor: n <= v ? P.detail : P.line }} />
                   </Pressable>
                 ))}
               </View>

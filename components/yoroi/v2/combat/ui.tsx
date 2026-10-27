@@ -58,8 +58,8 @@ export const N = RESULT_COLOR.draw;
 
 /** Bouton rond avec icone (44 points) */
 export function IconBtn({ icon, label, onPress, tone = 'light', size = 44 }: { icon: CIconName; label: string; onPress: () => void; tone?: 'light' | 'ink' | 'red'; size?: number }) {
-  const bg = tone === 'ink' ? P.ink : tone === 'red' ? P.accent : 'rgba(255,255,255,0.86)';
-  const fg = tone === 'light' ? P.ink : P.white;
+  const bg = tone === 'ink' ? P.ink : tone === 'red' ? P.primary : 'rgba(255,255,255,0.86)';
+  const fg = tone === 'light' ? P.ink : tone === 'red' ? P.onPrimary : P.white;
   return (
     <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={6}>
       <View style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg, borderWidth: tone === 'light' ? 1 : 0, borderColor: P.white, alignItems: 'center', justifyContent: 'center' }, tone === 'light' ? { shadowColor: '#1D2029', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 } : null]}>

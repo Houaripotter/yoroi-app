@@ -24,7 +24,7 @@ export const StatsSection: React.FC<StatsSectionProps> = React.memo(({ title, ch
       {title ? (
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <View style={[styles.lace, { backgroundColor: c.accent }]} />
+            <View style={[styles.lace, { backgroundColor: c.primary }]} />
             <Ink size={20} weight="black" tight style={{ flex: 1 }}>
               {title}
             </Ink>

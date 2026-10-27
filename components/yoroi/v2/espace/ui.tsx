@@ -383,9 +383,10 @@ export function Button({ label, onPress, tone = 'ink', loading, disabled, icon, 
 }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const bg = tone === 'ink' ? c.ink : tone === 'accent' ? c.accent : tone === 'danger' ? c.danger : tone === 'gold' ? c.goldLight : c.fillSoft;
+  // 27 octobre 2026 (refonte Pastel) : le bouton principal en pastel, texte bleu nuit
+  const bg = tone === 'ink' ? c.ink : tone === 'accent' ? c.primary : tone === 'danger' ? c.danger : tone === 'gold' ? c.goldLight : c.fillSoft;
   // vague 45 : en sombre, l'accent et le rouge sont eclaircis : texte encre dessus (c.onAccent), plus de blanc delave
-  const fg = tone === 'ink' ? c.background : tone === 'accent' || tone === 'danger' ? c.onAccent : c.ink;
+  const fg = tone === 'ink' ? c.background : tone === 'accent' ? c.onPrimary : tone === 'danger' ? c.onAccent : c.ink;
   return (
     <Pressable
       onPress={() => {
@@ -490,8 +491,8 @@ export function Hanko({ size = 46 }: { char?: string; size?: number }) {
 export function Check({ size = 26 }: { size?: number }) {
   const { theme } = useYoroiTheme();
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: theme.colors.accent, alignItems: 'center', justifyContent: 'center' }}>
-      <Icon name="check" size={size * 0.55} color={theme.colors.onAccent} stroke={3} />
+    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+      <Icon name="check" size={size * 0.55} color={theme.colors.onPrimary} stroke={3} />
     </View>
   );
 }

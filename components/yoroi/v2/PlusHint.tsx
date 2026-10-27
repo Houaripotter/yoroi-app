@@ -23,9 +23,9 @@ export function PlusHint({ text, align = 'left', color, arrow = true, style }: {
       accessibilityLabel={traduire("{0}. Le bouton plus est au centre de la barre d’onglets.", text)}
       style={[{ flexDirection: 'row', alignItems: 'center', gap: 10, alignSelf: align === 'center' ? 'center' : 'flex-start' }, style]}
     >
-      <View style={{ width: 28, height: 28, borderRadius: 10, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 28, height: 28, borderRadius: 10, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
         <Svg width={14} height={14} viewBox="0 0 24 24">
-          <Path d="M12 4v16M4 12h16" stroke={c.onAccent ?? '#FFFFFF'} strokeWidth={3.4} strokeLinecap="round" />
+          <Path d="M12 4v16M4 12h16" stroke={c.onPrimary} strokeWidth={3.4} strokeLinecap="round" />
         </Svg>
       </View>
       <Ink size={14} weight="bold" color={textColor} style={{ flexShrink: 1, textAlign: align === 'center' ? 'center' : 'left' }}>

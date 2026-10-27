@@ -91,9 +91,9 @@ function Jours({ value, auto, autoTexte, onChange }: { value: number[]; auto: bo
               accessibilityRole="checkbox"
               accessibilityState={{ checked: on }}
               accessibilityLabel={traduire(d.nom)}
-              style={({ pressed }) => ({ flex: 1, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.accent : pressed ? c.fillSoft : c.background, borderWidth: on ? 0 : 1, borderColor: c.border })}
+              style={({ pressed }) => ({ flex: 1, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.primary : pressed ? c.fillSoft : c.background, borderWidth: on ? 0 : 1, borderColor: c.border })}
             >
-              <Ink size={15} weight="black" color={on ? c.onAccent : c.textSecondary}>{traduire(d.court)}</Ink>
+              <Ink size={15} weight="black" color={on ? c.onPrimary : c.textSecondary}>{traduire(d.court)}</Ink>
             </Pressable>
           );
         })}
@@ -153,8 +153,8 @@ export function RappelsDiscipline({
               {traduire("Les notifications de YOROI sont coupées sur ton téléphone. Pour recevoir tes rappels, autorise-les dans Réglages{0}: tu pourras revenir ici ensuite.", NB)}
             </Ink>
           </View>
-          <Pressable onPress={ouvrirReglagesSysteme} accessibilityRole="link" style={({ pressed }) => ({ minHeight: 44, borderRadius: 14, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}>
-            <Ink size={14.5} weight="extraBold" color={c.onAccent}>{traduire("Ouvrir les Réglages")}</Ink>
+          <Pressable onPress={ouvrirReglagesSysteme} accessibilityRole="link" style={({ pressed }) => ({ minHeight: 44, borderRadius: 14, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}>
+            <Ink size={14.5} weight="extraBold" color={c.onPrimary}>{traduire("Ouvrir les Réglages")}</Ink>
           </Pressable>
         </Animated.View>
       ) : null}

@@ -101,8 +101,74 @@ export function Glass({ children, style }: { children: React.ReactNode; style?: 
   return <View style={[{ borderRadius: 26, backgroundColor: P.glass, borderWidth: 1, borderColor: P.white, padding: 18 }, shadow, style]}>{children}</View>;
 }
 
+/** 27 octobre 2026 (refonte Pastel) : l'ombre douce des cartes blanches, rgba(29,32,51,0.06) */
+export const ombreCarte = {
+  shadowColor: '#1D2033',
+  shadowOpacity: 0.06,
+  shadowRadius: 18,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 2,
+};
+
+/**
+ * Bouton rond blanc en relief (refonte Ciel) : ombre 0 8 18 rgba(27,42,68,0.10) et un leger lisere interieur en bas.
+ * En sombre, la surface des cartes avec un lisere clair tres discret.
+ */
+export function RondRelief({ taille = 58, children, style }: { taille?: number; children?: React.ReactNode; style?: StyleProp<ViewStyle> }) {
+  return (
+    <View
+      style={[
+        {
+          width: taille,
+          height: taille,
+          borderRadius: taille / 2,
+          backgroundColor: P.white,
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: '#1B2A44',
+          shadowOpacity: 0.1,
+          shadowRadius: 18,
+          shadowOffset: { width: 0, height: 8 },
+          elevation: 4,
+        },
+        style,
+      ]}
+    >
+      {/* le lisere interieur bas : un anneau a peine plus sombre, decale vers le bas */}
+      <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: taille / 2, borderBottomWidth: 2, borderColor: 'rgba(27,42,68,0.06)' }} />
+      {children}
+    </View>
+  );
+}
+
+/** 27 octobre 2026 (refonte Ciel) : l'ombre des boutons blancs en relief, 0 8 18 rgba(27,42,68,0.10) */
+export const ombreBouton = {
+  shadowColor: '#1B2A44',
+  shadowOpacity: 0.1,
+  shadowRadius: 18,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 3,
+};
+
+/**
+ * Le petit plus (16 points, bleu nuit) des boutons « Ajouter », a la place des bordures en pointilles.
+ * Correction du 27 octobre (Houari : « les grosses icônes sont moches ») : plus de pastille autour, taille gardee pour les appels.
+ */
+export function PlusPastille(_props: { taille?: number } = {}) {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 5v14M5 12h14" stroke={P.accentText} strokeWidth={2.6} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+/** Fond pastel des boutons « Ajouter » (#EEF1FF), un cran plus soutenu a l'appui */
+export function fondAjouter(pressed = false): string {
+  return pressed ? P.primary : P.accentSoft;
+}
+
 export function Card({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
-  return <View style={[{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, padding: 18 }, style]}>{children}</View>;
+  return <View style={[{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, padding: 18 }, ombreCarte, style]}>{children}</View>;
 }
 
 /** Vague 45 : pastilles de séance à la place des plaques kozane. Pastille ronde : pleine et cochée quand elle est faite, vide sinon, contour épais si partielle. */
@@ -321,12 +387,12 @@ export function SectionTitle({ children, action, onAction }: { children: string;
 
 /** Gros bouton d'action */
 export function BigButton({ label, onPress, tone = 'red', icon, disabled, compact }: { label: string; onPress: () => void; tone?: 'red' | 'ink' | 'light'; icon?: IconName; disabled?: boolean; compact?: boolean }) {
-  const { accent } = useAccent();
-  const bg = tone === 'red' ? accent : tone === 'ink' ? P.ink : P.white;
-  const fg = tone === 'light' ? P.ink : P.white;
+  // 27 octobre 2026 (Houari : « le bleu plein est trop fort ») : le bouton principal passe en pastel, texte bleu nuit
+  const bg = tone === 'red' ? P.primary : tone === 'ink' ? P.ink : P.white;
+  const fg = tone === 'light' ? P.ink : tone === 'red' ? P.onPrimary : P.white;
   return (
     <Press onPress={disabled ? undefined : onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={label} disabled={disabled}>
-      <View style={[{ minHeight: 56, paddingHorizontal: compact ? 12 : 18, borderRadius: 18, backgroundColor: bg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: compact ? 7 : 10, opacity: disabled ? 0.5 : 1, borderWidth: tone === 'light' ? 1 : 0, borderColor: P.line2 }, tone === 'red' ? { shadowColor: accent, shadowOpacity: 0.24, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 4 } : null]}>
+      <View style={[{ minHeight: 56, paddingHorizontal: compact ? 12 : 18, borderRadius: 18, backgroundColor: bg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: compact ? 7 : 10, opacity: disabled ? 0.5 : 1, borderWidth: tone === 'light' ? 1 : 0, borderColor: P.line2 }, tone === 'red' ? ombreBouton : null]}>
         {icon ? <Icon name={icon} size={compact ? 18 : 20} color={fg} /> : null}
         <Ink size={16} weight="extraBold" color={fg} numberOfLines={1} style={{ flexShrink: 1, textAlign: 'center' }}>
           {label}
@@ -340,8 +406,8 @@ export function BigButton({ label, onPress, tone = 'red', icon, disabled, compac
 export function Pill({ label, active, onPress, accent = P.ink }: { label: string; active?: boolean; onPress: () => void; accent?: string }) {
   return (
     <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!active }}>
-      <View style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? accent : P.white, borderWidth: 1, borderColor: active ? accent : P.line2 }}>
-        <Ink size={14} weight="bold" color={active ? P.white : P.ink2}>
+      <View style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? (accent === P.ink ? P.primary : accent) : P.white, borderWidth: 1, borderColor: active ? (accent === P.ink ? P.primary : accent) : P.line2 }}>
+        <Ink size={14} weight="bold" color={active ? (accent === P.ink ? P.onPrimary : P.white) : P.ink2}>
           {label}
         </Ink>
       </View>

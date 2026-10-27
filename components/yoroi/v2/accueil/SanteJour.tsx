@@ -59,7 +59,7 @@ const VIF: Record<CleSanteJour, string> = {
   debout: '#FFD36E',
 };
 
-const NUIT = { fond: ['#1E2639', '#121725'] as const, bord: '#2A3248', texte: '#F2F1EC', doux: '#A3ABBE', piste: 'rgba(255,255,255,0.12)' };
+const NUIT = { fond: ['#1E2639', '#121725'] as const, bord: '#2A3248', texte: '#F5F6FB', doux: '#A3ABBE', piste: 'rgba(255,255,255,0.12)' };
 
 function Picto({ cle, couleur, taille = 13 }: { cle: CleSanteJour; couleur: string; taille?: number }) {
   return (

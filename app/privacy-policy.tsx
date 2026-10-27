@@ -39,10 +39,10 @@ export default function PrivacyPolicyScreen() {
 
   return (
     <EspaceScreen title={isFR ? traduire('Confidentialité') : 'Privacy'}>
-      <View style={{ borderRadius: 22, backgroundColor: c.darkCard, padding: 20, gap: 8, overflow: 'hidden' }}>
-        <Glyph kind="sakura" size={150} color="rgba(255,255,255,0.08)" style={{ position: 'absolute', right: -24, top: -34 }} />
-        <Ink size={26} weight="black" tight color={c.onDark}>{isFR ? traduire('Politique de confidentialité') : 'Privacy policy'}</Ink>
-        <Ink size={13} color={c.onDarkSecondary}>{`${isFR ? traduire('Dernière mise à jour') : 'Last updated'} : ${LAST_UPDATE}`}</Ink>
+      <View style={{ borderRadius: 22, backgroundColor: c.carteDouce, padding: 20, gap: 8, overflow: 'hidden' }}>
+        <Glyph kind="sakura" size={150} color={'rgba(35,53,143,0.07)'} style={{ position: 'absolute', right: -24, top: -34 }} />
+        <Ink size={26} weight="black" tight color={c.ink}>{isFR ? traduire('Politique de confidentialité') : 'Privacy policy'}</Ink>
+        <Ink size={13} color={c.textSecondary}>{`${isFR ? traduire('Dernière mise à jour') : 'Last updated'} : ${LAST_UPDATE}`}</Ink>
         <View style={{ alignSelf: 'flex-start', marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.goldLight, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }}>
           <Icon name="check" size={14} color={c.ink} stroke={3} />
           <Ink size={13} weight="extraBold">{isFR ? traduire('Tes données de santé restent sur ton téléphone') : 'Your health data stays on your phone'}</Ink>
@@ -52,7 +52,7 @@ export default function PrivacyPolicyScreen() {
       {SECTIONS.map((section) => (
         <Card key={section.number} style={{ padding: 16, gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 2 }}>
-            <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
               <Icon name={section.icon} size={18} color={c.accent} />
             </View>
             <Ink size={17} weight="black" tight style={{ flex: 1 }}>{`${section.number}. ${section.title}`}</Ink>
@@ -60,7 +60,7 @@ export default function PrivacyPolicyScreen() {
           {section.content.map((line, idx) =>
             line.startsWith('• ') ? (
               <View key={idx} style={{ flexDirection: 'row', gap: 10, paddingLeft: 4 }}>
-                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: c.accent, marginTop: 8 }} />
+                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: c.detail, marginTop: 8 }} />
                 <Ink size={14} color={c.textSecondary} style={{ flex: 1 }}>{line.slice(2)}</Ink>
               </View>
             ) : (

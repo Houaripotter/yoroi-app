@@ -52,6 +52,7 @@ import { P } from '@/components/yoroi/livePalette';
 import { LiensLegaux } from '@/components/yoroi/v2/premium/LiensLegaux';
 import { traduire, LOCALE, DECIMAL } from '@/lib/i18n/tr';
 import { BoutonLangue } from '@/components/yoroi/v2/langue/ChoixLangue';
+import { illustration } from '@/components/yoroi/v2/stickers';
 
 
 /** Compteur reel du contenu (null s'il manque : la carte ne s'affiche pas) */
@@ -126,13 +127,32 @@ function origines(g: 'h' | 'f'): Tile[] {
   return out;
 }
 
-const ILLU = {
+const ILLU_ENCRE = {
   chrono: require('@/assets/avatars/app/ornements/chrono.webp'),
   jjb: require('@/assets/avatars/app/carnet/jjb.webp'),
   ruban: require('@/assets/avatars/app/sceaux/decouverte/metre_ruban.webp'),
   musculation: require('@/assets/avatars/app/carnet/musculation.webp'),
   balance: require('@/assets/avatars/app/sceaux/decouverte/balance.webp'),
 } satisfies Record<string, ImageSourcePropType>;
+
+/** 27 octobre 2026 : les stickers (ou l'encre d'avant, reglage Illustrations) */
+const ILLU = {
+  get chrono(): ImageSourcePropType {
+    return illustration('chrono', ILLU_ENCRE.chrono);
+  },
+  get jjb(): ImageSourcePropType {
+    return illustration('jjb', ILLU_ENCRE.jjb);
+  },
+  get ruban(): ImageSourcePropType {
+    return illustration('metre_ruban', ILLU_ENCRE.ruban);
+  },
+  get musculation(): ImageSourcePropType {
+    return illustration('musculation', ILLU_ENCRE.musculation);
+  },
+  get balance(): ImageSourcePropType {
+    return illustration('balance', ILLU_ENCRE.balance);
+  },
+};
 
 /**
  * Vague 30 : les meilleures cartes de l'app (« celles qui donnent enormement envie ») :
@@ -263,11 +283,12 @@ function TileView({ t, h }: { t: Tile; h: number }) {
     }
     case 'couleur': {
       // 17 octobre 2026 : indigo de la charte fixe (en sombre, l'accent clair rendait le texte blanc illisible)
-      const bg = t.bg === 'indigo' ? '#2C4A84' : t.bg === 'ink' ? '#1D2029' : '#F3EBDA';
-      const onBg = t.bg === 'gold' ? '#1D2029' : '#FFFFFF';
-      const soft = t.bg === 'gold' ? 'rgba(29,32,41,0.66)' : 'rgba(255,255,255,0.74)';
-      const iconBg = t.bg === 'gold' ? '#FFFFFF' : 'rgba(255,255,255,0.16)';
-      const iconCol = t.bg === 'gold' ? c.goldDeep : t.bg === 'ink' ? '#E3C47B' : '#FFFFFF';
+      // 27 octobre 2026 (refonte Pastel) : l'indigo devient le pastel bleu (texte bleu nuit), plus de carre autour de l'icone
+      const bg = t.bg === 'indigo' ? '#DCE3FF' : t.bg === 'ink' ? '#1D2033' : '#F3EBDA';
+      const onBg = t.bg === 'gold' ? '#1D2033' : t.bg === 'indigo' ? '#23358F' : '#FFFFFF';
+      const soft = t.bg === 'gold' ? 'rgba(29,32,41,0.66)' : t.bg === 'indigo' ? 'rgba(35,53,143,0.72)' : 'rgba(255,255,255,0.74)';
+      const iconBg = 'transparent';
+      const iconCol = t.bg === 'gold' ? c.goldDeep : t.bg === 'ink' ? '#E3C47B' : '#23358F';
       return (
         <View style={[card, { backgroundColor: bg, padding: h < 84 ? 10 : 12, justifyContent: 'space-between' }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -329,7 +350,7 @@ function Pastille({ label, tinte = false, blanche = false }: { label: string; ti
   const c = theme.colors;
   return (
     <View style={{ backgroundColor: tinte ? c.accentTint : blanche ? '#FFFFFF' : P.white, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
-      <Ink size={9.5} weight="black" color={tinte ? c.accent : '#2C4A84'} style={{ letterSpacing: 0.8 }}>{label.toUpperCase()}</Ink>
+      <Ink size={9.5} weight="black" color={tinte ? c.accentText : '#23358F'} style={{ letterSpacing: 0.8 }}>{label.toUpperCase()}</Ink>
     </View>
   );
 }
@@ -834,7 +855,7 @@ export function Accroche({
             hitSlop={{ top: 10, bottom: 10, left: 2, right: 2 }}
             style={{ paddingHorizontal: 4, paddingVertical: 8 }}
           >
-            <View style={{ width: k === i ? 20 : 7, height: 7, borderRadius: 3.5, backgroundColor: k === i ? c.accent : c.border }} />
+            <View style={{ width: k === i ? 20 : 7, height: 7, borderRadius: 3.5, backgroundColor: k === i ? c.detail : c.border }} />
           </Pressable>
         ))}
       </View>
@@ -888,8 +909,8 @@ function Atout({ icon, label, tiny, large }: { icon: IconName; label: string; ti
   const c = theme.colors;
   return (
     <View style={{ flex: large ? 1.3 : 1, alignItems: 'center', gap: tiny ? 3 : 5 }} accessible accessibilityLabel={label}>
-      <View style={{ width: tiny ? 28 : 34, height: tiny ? 28 : 34, borderRadius: 17, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name={icon} size={tiny ? 14 : 16} color={c.onAccent} stroke={2.6} />
+      <View style={{ width: tiny ? 28 : 34, height: tiny ? 28 : 34, borderRadius: 17, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name={icon} size={tiny ? 14 : 16} color={c.onPrimary} stroke={2.6} />
       </View>
       <Ink size={tiny ? 11 : 12} weight="black" color={c.ink} numberOfLines={2} style={{ textAlign: 'center', lineHeight: tiny ? 13 : 15 }}>{label}</Ink>
     </View>

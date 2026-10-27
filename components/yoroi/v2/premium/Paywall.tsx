@@ -1080,7 +1080,7 @@ function ApercuSource({ libelle, phrase, encre, fond, icone, children }: { libel
   return (
     <View style={{ borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 10, overflow: 'hidden' }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: fond, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
           <Icon name={icone} size={18} color={encre} />
         </View>
         <Ink size={16} weight="black" style={{ flex: 1 }} numberOfLines={2}>{libelle}</Ink>
@@ -1223,11 +1223,11 @@ function BottomButton({ label, onPress, loading, disabled, vif }: { label: strin
     >
       {({ pressed }) => (
         <>
-          <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: pressed ? c.accentPressed : c.accent }, couleur]} />
+          <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: pressed ? c.primaryPressed : c.primary }, couleur]} />
           {loading ? (
             <View>
               <Animated.View style={couleur}>
-                <ActivityIndicator color={c.onAccent} />
+                <ActivityIndicator color={c.onPrimary} />
               </Animated.View>
               <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }, gris]}>
                 <ActivityIndicator color={c.textSecondary} />

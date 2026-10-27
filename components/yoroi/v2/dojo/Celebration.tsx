@@ -101,7 +101,7 @@ export function Celebration({ visible, rankUp, seals, recap, plate, xp = 0, imag
               )}
               <Ink size={16} weight="bold" color="#B9BBC4">{isDan ? traduire('Nouveau dan') : traduire('Nouveau rang')}</Ink>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 12 }}>
-                <Ink size={38} weight="black" tight color="#F2F1EC" numberOfLines={2} style={{ flexShrink: 1, textAlign: 'center' }}>{isDan ? nomRang : traduire("Tu passes {0}", nomRang)}</Ink>
+                <Ink size={38} weight="black" tight color="#F5F6FB" numberOfLines={2} style={{ flexShrink: 1, textAlign: 'center' }}>{isDan ? nomRang : traduire("Tu passes {0}", nomRang)}</Ink>
               </View>
               {isDan ? (
                 <Ink size={22} weight="black" color={DOJO.goldLight}>{danLabel(rankUp!.dan ?? 1)}</Ink>
@@ -124,7 +124,7 @@ export function Celebration({ visible, rankUp, seals, recap, plate, xp = 0, imag
                 <View style={{ height: 40 }} />
               )}
               <Ink size={16} weight="bold" color="#B9BBC4">{libelleConstruction(u)}</Ink>
-              <Ink size={30} weight="black" tight color="#F2F1EC" style={{ textAlign: 'center' }}>{`${nomEtape.charAt(0).toUpperCase()}${nomEtape.slice(1)}`}</Ink>
+              <Ink size={30} weight="black" tight color="#F5F6FB" style={{ textAlign: 'center' }}>{`${nomEtape.charAt(0).toUpperCase()}${nomEtape.slice(1)}`}</Ink>
               <Ink size={16} color="#D9D6CC" style={{ textAlign: 'center' }}>{traduire("{0}, {1} sur 3.", cons.titre, etapeFaite)}</Ink>
               <ArmureEnConstruction piece={cons.piece} progres={etapeFaite / 3} taille={110} ton="sombre" eclat={visible} style={{ marginTop: 12 }} accessibilityLabel={traduire("{0}, {1} étapes sur 3", cons.titre, etapeFaite)} />
               <EtapesPiece faites={etapeFaite} ton="sombre" />
@@ -136,14 +136,14 @@ export function Celebration({ visible, rankUp, seals, recap, plate, xp = 0, imag
           {seals.length ? (
             <View style={{ alignSelf: 'stretch', marginTop: showRank || showPlate ? 22 : 0, borderRadius: 22, paddingVertical: 16, paddingHorizontal: 10, backgroundColor: 'rgba(20,22,30,0.72)', gap: 14 }}>
               <View style={{ paddingHorizontal: 6, gap: 6 }}>
-                <Ink size={20} weight="black" color="#F2F1EC">{sealTitle}</Ink>
+                <Ink size={20} weight="black" color="#F5F6FB">{sealTitle}</Ink>
                 {recap ? <Ink size={14} color="#B9BBC4">{traduire("Calculés à partir de tout ton historique. Chacun t’a rapporté {0} XP.", XP_VALUES.sceau)}</Ink> : null}
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 14 }}>
                 {seals.map((s) => (
                   <View key={s.id} style={{ width: '33.333%', alignItems: 'center', gap: 6, paddingHorizontal: 4 }} accessible accessibilityLabel={`Sceau ${nomSceau(s, u)}`}>
                     <SealMedal id={s.id} color={familyOf(s.family).ink} size={72} />
-                    <Ink size={12} weight="bold" color="#F2F1EC" style={{ textAlign: 'center' }} numberOfLines={2}>{nomSceau(s, u)}</Ink>
+                    <Ink size={12} weight="bold" color="#F5F6FB" style={{ textAlign: 'center' }} numberOfLines={2}>{nomSceau(s, u)}</Ink>
                   </View>
                 ))}
               </View>
@@ -155,9 +155,9 @@ export function Celebration({ visible, rankUp, seals, recap, plate, xp = 0, imag
             onPress={onClose}
             accessibilityRole="button"
             accessibilityLabel={traduire("Continuer")}
-            style={({ pressed }) => ({ height: 56, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}
+            style={({ pressed }) => ({ height: 56, borderRadius: 18, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}
           >
-            <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Continuer")}</Ink>
+            <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Continuer")}</Ink>
           </Pressable>
         </View>
       </View>

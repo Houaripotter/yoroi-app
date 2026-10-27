@@ -14,7 +14,8 @@ export type Phase = 'effort' | 'repos' | 'prepa' | 'fini' | 'pret' | 'final';
  * soft : fond plein ecran de la phase, deep : chiffres et titres.
  */
 export const PHASE_COLORS: Record<Phase, { main: string; soft: string; deep: string; label: string }> = {
-  effort: { main: '#2C4A84', soft: '#E4E9F3', deep: '#1F3766', label: traduire('Effort') },
+  // 27 octobre 2026 (maquette Pastel-Chrono) : l'effort sur le fond de la page, en bleu vif, titre bleu nuit
+  effort: { main: '#4C6EF5', soft: '#F5F6FB', deep: '#23358F', label: traduire('Effort') },
   repos: { main: '#6E8C3A', soft: '#E8EEDC', deep: '#4F6B28', label: traduire('Repos') },
   prepa: { main: '#C59D45', soft: '#F5ECD6', deep: '#8A6A22', label: traduire('Préparation') },
   final: { main: '#B0282E', soft: '#F6E3E1', deep: '#8C1E23', label: traduire('10 dernières secondes') },

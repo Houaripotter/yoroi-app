@@ -24,7 +24,7 @@ export function LastSessionCard({ vm, onRepeat, onOpen }: { vm: LastSessionVM; o
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
-    <View style={{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: c.divider, overflow: 'hidden' }}>
+    <View style={{ borderRadius: 24, backgroundColor: P.white, overflow: 'hidden' }}>
       <View style={{ height: 116, backgroundColor: vm.tint, overflow: 'hidden', padding: 16, justifyContent: 'flex-end' }}>
         {vm.art ? <Image source={vm.art} style={{ position: 'absolute', right: 0, top: 8, width: 118, height: 158 }} resizeMode="contain" /> : null}
         <View style={{ maxWidth: '68%', gap: 2 }}>

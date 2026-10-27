@@ -11,10 +11,12 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import type { Competition } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
 import { P } from '@/components/yoroi/livePalette';
+import { ombreBouton } from '@/components/yoroi/v2/accueil/kit';
 import { IllusImage } from './Decor';
 import type { Illus } from './Decor';
 import { Icon } from './Icon';
 import { tap } from './ui';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 
@@ -87,11 +89,11 @@ export function CompetitionsAVenir({ competitions, today }: { competitions: Comp
           router.push('/planning?tab=competitions' as any);
         }}
         accessibilityRole="button"
-        accessibilityLabel="Aucune compétition prévue, ouvrir tes compétitions"
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 22, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderStyle: 'dashed', borderColor: P.dashed })}
+        accessibilityLabel={traduire("Aucune compétition prévue, ouvrir tes compétitions")}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 22, backgroundColor: pressed ? P.bande : P.white, ...ombreBouton })}
       >
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={15} weight="extraBold">Aucune compétition prévue</Ink>
+          <Ink size={15} weight="extraBold">{traduire("Aucune compétition prévue")}</Ink>
           <Ink size={13} color={c.textSecondary}>Ajoute ta prochaine échéance : son compte à rebours s’affichera ici.</Ink>
         </View>
         <Icon name="chevron" size={16} color={c.textMuted} />
@@ -114,16 +116,16 @@ export function CompetitionsAVenir({ competitions, today }: { competitions: Comp
               router.push((cp.id ? `/competition-detail?id=${cp.id}` : '/planning?tab=competitions') as any);
             }}
             accessibilityRole="button"
-            accessibilityLabel={`${cp.nom}, le ${when}, ${d === 0 ? 'aujourd’hui' : `dans ${d} jours`}`}
+            accessibilityLabel={d === 0 ? traduire('{0}, le {1}, aujourd’hui', cp.nom, when) : traduirePluriel(d, d > 1, '{0}, le {1}, dans {2} jour', '{0}, le {1}, dans {2} jours', cp.nom, when, d)}
             style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider }}
           >
-            <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: i === 0 ? c.accent : P.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: i === 0 ? c.primary : P.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
               {d === 0 ? (
-                <Ink size={14} weight="black" color={i === 0 ? '#FFFFFF' : c.accent}>Jour J</Ink>
+                <Ink size={14} weight="black" color={i === 0 ? P.onPrimary : c.accentText}>{traduire('Jour J')}</Ink>
               ) : (
                 <>
-                  <Ink size={20} weight="black" tight color={i === 0 ? '#FFFFFF' : c.accent}>{String(d)}</Ink>
-                  <Ink size={11} weight="bold" color={i === 0 ? 'rgba(255,255,255,0.85)' : c.accent} style={{ marginTop: -2 }}>{d > 1 ? 'jours' : 'jour'}</Ink>
+                  <Ink size={20} weight="black" tight color={i === 0 ? P.onPrimary : c.accentText}>{String(d)}</Ink>
+                  <Ink size={11} weight="bold" color={i === 0 ? P.onPrimary : c.accentText} style={{ marginTop: -2 }}>{d > 1 ? traduire('jours') : traduire('jour')}</Ink>
                 </>
               )}
             </View>

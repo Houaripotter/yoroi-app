@@ -21,6 +21,7 @@ import { BusteRond } from '@/components/yoroi/v2/espace/BusteRond';
 import { Icon, RoundButton } from '../ui';
 import type { IconName } from '../ui';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 
 // ============================================
 // EN-TETE DU PROFIL (haut des Reglages)
@@ -47,7 +48,7 @@ export function ProfileHeader({ profile, espace, rankIndex, onPress, onEditPhoto
   const details = [taille, cible].filter(Boolean).join(', ');
 
   const rond = (
-    <RondCadre size={72} contour={contourDe(espace)} fond="papier" fill="#F2F1EC">
+    <RondCadre size={72} contour={contourDe(espace)} fond="papier" fill="#F5F6FB">
       {showPhoto ? (
         <Image source={{ uri: profile!.profile_photo! }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
       ) : sansPerso ? (
@@ -95,8 +96,8 @@ export function ProfileHeader({ profile, espace, rankIndex, onPress, onEditPhoto
         style={({ pressed }) => ({ paddingLeft: 14, paddingVertical: 14, paddingRight: 4, transform: [{ scale: pressed ? 0.96 : 1 }] })}
       >
         {rond}
-        <View pointerEvents="none" style={{ position: 'absolute', right: -2, bottom: 10, width: 30, height: 30, borderRadius: 15, backgroundColor: c.accent, borderWidth: 2.5, borderColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="pencil" size={14} color={c.onAccent} stroke={2.4} />
+        <View pointerEvents="none" style={{ position: 'absolute', right: -2, bottom: 10, width: 30, height: 30, borderRadius: 15, backgroundColor: c.primary, borderWidth: 2.5, borderColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="pencil" size={14} color={c.onPrimary} stroke={2.4} />
         </View>
       </Pressable>
       <Pressable
@@ -138,7 +139,7 @@ export function StatusRow({ icon, title, detail, tone = 'neutral', first, onPres
       accessibilityLabel={detail ? `${title}, ${detail}` : title}
       style={({ pressed }) => ({ minHeight: 62, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSoft : 'transparent', borderTopWidth: first ? 0 : 1, borderColor: c.divider })}
     >
-      <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
         <Icon name={icon} size={19} color={c.ink} />
         <View style={{ position: 'absolute', right: -3, top: -3, width: 12, height: 12, borderRadius: 6, backgroundColor: dot, borderWidth: 2, borderColor: c.surface }} />
       </View>
@@ -161,16 +162,18 @@ export function MiniAction({ label, onPress, busy }: { label: string; onPress: (
       disabled={busy}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.6 : 1 })}
+      style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.6 : 1 })}
     >
-      <Ink size={13} weight="extraBold" color={c.onAccent} numberOfLines={1}>{busy ? traduire('En cours') : label}</Ink>
+      <Ink size={13} weight="extraBold" color={c.onPrimary} numberOfLines={1}>{busy ? traduire('En cours') : label}</Ink>
     </Pressable>
   );
 }
 
 /** Ligne de reglage : la valeur actuelle s'affiche a droite */
-export function ValueRow({ icon, label, value, sub, thumb, thumbFull, onPress, first, danger, valueColor, action, tint }: {
+export function ValueRow({ icon, label, value, sub, thumb, thumbFull, onPress, first, danger, valueColor, action, tint, sticker }: {
   icon: IconName;
+  /** 27 octobre 2026 : le sticker a la place de la petite tuile de couleur (reglage Illustrations) */
+  sticker?: NomSticker;
   /** vague 41 : petite tuile de couleur sous l'icone (blanche), comme les Reglages d'iOS */
   tint?: string;
   /** vignette entiere (personnage en pied), jamais rognee */
@@ -188,14 +191,20 @@ export function ValueRow({ icon, label, value, sub, thumb, thumbFull, onPress, f
 }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  const illus = useIllustrations();
+  const avecSticker = !!sticker && illus.stickers && !danger;
   // audit 43 : avec un petit bouton a droite, la ligne n'est plus un bouton qui en contient un autre :
   // la zone de gauche s'appuie, le bouton est pose a cote
   const rowStyle = { minHeight: tint ? 50 : 56, paddingHorizontal: 14, paddingVertical: tint ? 6 : 8, flexDirection: 'row' as const, alignItems: 'center' as const, gap: 12 };
   const content = (
     <>
-      <View style={{ width: tint ? 32 : 34, height: tint ? 32 : 34, borderRadius: tint ? 9 : 11, backgroundColor: danger ? c.dangerTint : tint ?? c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name={icon} size={tint ? 17 : 18} color={danger ? c.danger : tint ? '#FFFFFF' : c.ink} stroke={tint ? 2.4 : undefined} />
-      </View>
+      {avecSticker ? (
+        <Image source={illus.img(sticker!)} style={{ width: 36, height: 36, marginVertical: -2 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+      ) : (
+        <View style={{ width: tint ? 32 : 34, height: tint ? 32 : 34, borderRadius: tint ? 9 : 11, backgroundColor: danger ? c.dangerTint : tint ?? c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={icon} size={tint ? 17 : 18} color={danger ? c.danger : tint ? '#FFFFFF' : c.ink} stroke={tint ? 2.4 : undefined} />
+        </View>
+      )}
       <View style={{ flex: 1, gap: 1 }}>
         <Ink size={15} weight="bold" color={danger ? c.danger : c.ink} numberOfLines={2}>{label}</Ink>
         {sub ? <Ink size={12} color={c.textMuted} numberOfLines={2}>{sub}</Ink> : null}
@@ -306,8 +315,8 @@ export function ChoiceSheet<T extends string | number>({ visible, onClose, title
                 <Ink size={16} weight={on ? 'extraBold' : 'bold'}>{traduire(o.label)}</Ink>
                 {o.sub ? <Ink size={12} color={c.textMuted}>{traduire(o.sub)}</Ink> : null}
               </View>
-              <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: on ? 0 : 2, borderColor: c.border, backgroundColor: on ? c.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                {on ? <Icon name="check" size={15} color={c.onAccent} stroke={3} /> : null}
+              <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: on ? 0 : 2, borderColor: c.border, backgroundColor: on ? c.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                {on ? <Icon name="check" size={15} color={c.onPrimary} stroke={3} /> : null}
               </View>
             </Pressable>
           );

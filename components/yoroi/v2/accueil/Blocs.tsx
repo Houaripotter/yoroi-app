@@ -18,7 +18,7 @@ import { formatLiters, localISO, saveHydrationAmount } from '@/lib/v2/accueil/hy
 import type { LastRecord, NextCompetition, NextSession } from '@/lib/v2/accueil/home';
 import { longDate, relativeDay } from '@/lib/v2/accueil/home';
 import { PlusHint } from '@/components/yoroi/v2/PlusHint';
-import { BrushLine, BrushRing, Card, Hanko, Icon, P, Press, shadow, tap, useAccent } from './kit';
+import { BrushLine, BrushRing, Card, Hanko, Icon, P, Press, tap, useAccent } from './kit';
 import { Torii } from './Ornements';
 import { devNow } from '@/lib/v2/creator/devClock';
 import { paletteSombre } from '@/components/yoroi/livePalette';
@@ -498,7 +498,7 @@ export function BlocRecords({ record }: { record: LastRecord | null }) {
 
 /* Prochaine competition */
 export function BlocCompetition({ competition }: { competition: NextCompetition | null }) {
-  const { accent } = useAccent();
+  useAccent(); // se redessine quand le theme change
   const router = useRouter();
   if (!competition) {
     return (
@@ -507,11 +507,11 @@ export function BlocCompetition({ competition }: { competition: NextCompetition 
           <EmptyHead title={traduire("Ta prochaine compétition")} />
           <Filigree>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-              <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
-                <Ink size={24} weight="black" tight color={P.white}>
+              <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center' }}>
+                <Ink size={24} weight="black" tight color={P.onPrimary}>
                   21
                 </Ink>
-                <Ink size={11} weight="bold" color={paletteSombre() ? 'rgba(29,32,41,0.75)' : '#F3C9C5'} style={{ marginTop: -3 }}>
+                <Ink size={11} weight="bold" color={P.onPrimary} style={{ marginTop: -3 }}>
                   jours
                 </Ink>
               </View>
@@ -532,17 +532,17 @@ export function BlocCompetition({ competition }: { competition: NextCompetition 
   return (
     <Press onPress={() => router.push((c.id ? { pathname: '/competition-detail', params: { id: String(c.id) } } : '/competitions') as any)} accessibilityRole="button" accessibilityLabel={traduire("{0}, dans {1} jours", c.name, c.days)}>
       <View style={[{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 16 }]}>
-        <View style={[{ width: 84, height: 84, borderRadius: 22, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }, shadow]}>
+        <View style={{ width: 84, height: 84, borderRadius: 22, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center' }}>
           {c.days === 0 ? (
-            <Ink size={17} weight="black" color={P.white}>
+            <Ink size={17} weight="black" color={P.onPrimary}>
               {traduire('Jour J')}
             </Ink>
           ) : (
             <>
-              <Ink size={34} weight="black" tight color={P.white}>
+              <Ink size={34} weight="black" tight color={P.onPrimary}>
                 {String(c.days)}
               </Ink>
-              <Ink size={12} weight="bold" color={paletteSombre() ? 'rgba(29,32,41,0.75)' : '#F3C9C5'} style={{ marginTop: -4 }}>
+              <Ink size={12} weight="bold" color={P.onPrimary} style={{ marginTop: -4 }}>
                 {c.days > 1 ? 'jours' : 'jour'}
               </Ink>
             </>

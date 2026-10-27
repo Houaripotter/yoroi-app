@@ -41,7 +41,7 @@ const TONE: Record<string, { bg: string; fg: string }> = {
   celebration: { bg: P.mossSoft, fg: P.mossText },
   positive: { bg: P.mossSoft, fg: P.mossText },
   warning: { bg: P.goldSoft, fg: P.goldDark },
-  neutral: { bg: '#F4F2EC', fg: P.ink2 },
+  neutral: { bg: '#F5F6FB', fg: P.ink2 },
 };
 
 export function SparringView({ refreshKey }: { refreshKey: number }) {
@@ -290,7 +290,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
               ]}
             />
             {streak.current > 0 || streak.best > 1 ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 18, backgroundColor: '#F4F2EC' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 18, backgroundColor: '#F5F6FB' }}>
                 <Kozane on={streak.current > 0} w={24} h={30} />
                 <Ink size={14} weight="extraBold" style={{ flex: 1 }}>{streak.current > 0 ? traduirePluriel(streak.current, streak.current > 1, "{0} semaine d’affilée au tatami", "{0} semaines d’affilée au tatami", streak.current) : traduire('Reviens cette semaine pour relancer ta série')}</Ink>
                 <Ink size={12} weight="bold" color={P.muted}>{`record ${streak.best}`}</Ink>
@@ -342,11 +342,11 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
 
           {/* Les badges de combat (gamification) sont dans le Dojo, section Combat et partage */}
           <Press onPress={() => router.push('/game-plan' as any)} accessibilityRole="button" accessibilityLabel={traduire("Mon plan de jeu")}>
-            <View style={{ padding: 16, borderRadius: 22, backgroundColor: P.ink, flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 80 }}>
-              <Glyph kind="eventail" size={34} color={P.goldLight} />
+            <View style={{ padding: 16, borderRadius: 22, backgroundColor: P.poidsFond, flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 80 }}>
+              <Glyph kind="eventail" size={34} color={P.goldDark} />
               <View style={{ flex: 1, gap: 2 }}>
-                <Ink size={16} weight="extraBold" color={P.white}>{traduire("Mon plan de jeu")}</Ink>
-                <Ink size={12} weight="medium" color={paletteSombre() ? 'rgba(29,32,41,0.7)' : 'rgba(255,255,255,0.7)'}>{traduire("Checklist et journal")}</Ink>
+                <Ink size={16} weight="extraBold" color={P.ink}>{traduire("Mon plan de jeu")}</Ink>
+                <Ink size={12} weight="medium" color={P.ink2}>{traduire("Checklist et journal")}</Ink>
               </View>
             </View>
           </Press>
@@ -355,7 +355,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Ink size={18} weight="black" tight>{traduire("Objectif de la semaine")}</Ink>
               <Press onPress={() => { setGoalDraft(goal); setGoalOpen(true); }} accessibilityRole="button" accessibilityLabel={traduire("Modifier l’objectif")}>
-                <View style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 18, justifyContent: 'center', backgroundColor: '#F4F2EC' }}>
+                <View style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 18, justifyContent: 'center', backgroundColor: '#F5F6FB' }}>
                   <Ink size={12} weight="extraBold" color={P.ink2}>{traduire("Modifier")}</Ink>
                 </View>
               </Press>
@@ -377,7 +377,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
               <BlockTitle title={traduire("Séances récentes")} />
               {recent.map((s, i) => (
                 <View key={s.id ?? i} style={{ flexDirection: 'row', gap: 12, padding: 12, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
-                  <View style={{ width: 50, borderRadius: 14, backgroundColor: '#F4F2EC', alignItems: 'center', justifyContent: 'center', paddingVertical: 6 }}>
+                  <View style={{ width: 50, borderRadius: 14, backgroundColor: '#F5F6FB', alignItems: 'center', justifyContent: 'center', paddingVertical: 6 }}>
                     <Ink size={20} weight="black" tight color={P.accent}>{String(dayDate(s.date).getDate())}</Ink>
                     <Ink size={11} weight="bold" color={P.ink2}>{dayDate(s.date).toLocaleDateString(LOCALE, { month: 'short' }).replace('.', '')}</Ink>
                   </View>

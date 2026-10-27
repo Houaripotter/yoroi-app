@@ -115,12 +115,12 @@ export function Pastille({ label, on, onPress, count }: { label: string; on?: bo
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: on ? c.accent : pressed ? c.fillSubtle : c.surface,
+        backgroundColor: on ? c.primary : pressed ? c.fillSubtle : c.surface,
         borderWidth: 1,
         borderColor: on ? c.accent : c.border,
       })}
     >
-      <Ink size={14} weight="extraBold" color={on ? '#FFFFFF' : c.ink}>{label}</Ink>
+      <Ink size={14} weight="extraBold" color={on ? c.onPrimary : c.ink}>{label}</Ink>
       {count !== undefined ? <Ink size={12} weight="bold" color={on ? 'rgba(255,255,255,0.8)' : c.textMuted}>{String(count)}</Ink> : null}
     </Pressable>
   );
@@ -219,13 +219,13 @@ export function Bouton({ label, icon, onPress, light, disabled }: { label: strin
         justifyContent: 'center',
         gap: 8,
         opacity: disabled ? 0.5 : 1,
-        backgroundColor: light ? (pressed ? c.fillSubtle : c.surface) : pressed ? c.accentPressed : c.accent,
+        backgroundColor: light ? (pressed ? c.fillSubtle : c.surface) : pressed ? c.primaryPressed : c.primary,
         borderWidth: light ? 1 : 0,
         borderColor: c.border,
       })}
     >
-      {icon ? <Icon name={icon} size={18} color={light ? c.ink : '#FFFFFF'} stroke={2.4} /> : null}
-      <Ink size={15} weight="extraBold" color={light ? c.ink : '#FFFFFF'}>{label}</Ink>
+      {icon ? <Icon name={icon} size={18} color={light ? c.ink : c.onPrimary} stroke={2.4} /> : null}
+      <Ink size={15} weight="extraBold" color={light ? c.ink : c.onPrimary}>{label}</Ink>
     </Pressable>
   );
 }

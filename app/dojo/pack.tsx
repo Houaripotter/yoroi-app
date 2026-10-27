@@ -194,9 +194,9 @@ export default function Pack() {
             onPress={equip}
             disabled={equipped}
             accessibilityRole="button"
-            style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, backgroundColor: equipped ? c.fillSubtle : pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}
+            style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, backgroundColor: equipped ? c.fillSubtle : pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}
           >
-            <Ink size={16} weight="extraBold" color={equipped ? c.textSecondary : c.onAccent}>{equipped ? traduire('Équipé') : traduire('Équiper ce personnage')}</Ink>
+            <Ink size={16} weight="extraBold" color={equipped ? c.textSecondary : c.onPrimary}>{equipped ? traduire('Équipé') : traduire('Équiper ce personnage')}</Ink>
           </Pressable>
         ) : (
           <Pressable
@@ -206,10 +206,10 @@ export default function Pack() {
             }}
             accessibilityRole="button"
             accessibilityLabel={monde ? traduire("Débloquer avec Premium, ou atteins le rang {0}", unlockRankName(pack)) : traduire('Débloquer avec Premium')}
-            style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10 })}
+            style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10 })}
           >
-            <LockIcon size={18} color={c.onAccent} />
-            <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Débloquer avec Premium")}</Ink>
+            <LockIcon size={18} color={c.onPrimary} />
+            <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Débloquer avec Premium")}</Ink>
           </Pressable>
         )}
       </View>

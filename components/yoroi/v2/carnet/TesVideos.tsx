@@ -8,7 +8,7 @@ import { DeviceEventEmitter, ScrollView, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Section } from '@/components/yoroi/v2/accueil/Sections';
-import { useAccent } from '@/components/yoroi/v2/accueil/kit';
+import { fondAjouter, PlusPastille, useAccent } from '@/components/yoroi/v2/accueil/kit';
 import { usePremium } from '@/context/PremiumContext';
 import { VIDEOS_CHANGED_EVENT, listVideos } from '@/lib/v2/carnet/videos';
 import type { CarnetVideo } from '@/lib/v2/carnet/videos';
@@ -17,8 +17,8 @@ import { Illus } from './nav';
 import { VideoTile } from './videos/Thumb';
 import { PlayerModal } from './videos/PlayerModal';
 import { openVideo } from './VideosView';
-import { blancA } from '@/components/yoroi/livePalette';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
+import { traduire } from '@/lib/i18n/tr';
 
 const ALL = '/training-journal?tab=videos';
 const IMPORT = '/training-journal?tab=videos&add=1';
@@ -68,14 +68,14 @@ export function TesVideos() {
     <View style={{ gap: 10 }}>
       <Section title="Tes vidéos" action={videos.length > 0 ? 'Tout voir' : undefined} onAction={() => router.push(ALL as any)} />
       {videos.length === 0 ? (
-        <Press onPress={() => router.push(IMPORT as any)} accessibilityRole="button" accessibilityLabel="Importer une vidéo">
+        <Press onPress={() => router.push(IMPORT as any)} accessibilityRole="button" accessibilityLabel={traduire("Importer une vidéo")}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: 22, backgroundColor: '#EFE7D6', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)' }}>
             <Illus name="videos" size={76} />
             <View style={{ flex: 1, gap: 6 }}>
               <Ink size={14} weight="bold" color={P.ink}>Garde ici les vidéos qui t’inspirent : un exercice, une technique.</Ink>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <CIcon name="plus" size={16} color={accent} width={2.8} />
-                <Ink size={14} weight="extraBold" color={accent}>Importer une vidéo</Ink>
+                <Ink size={14} weight="extraBold" color={accent}>{traduire("Importer une vidéo")}</Ink>
               </View>
             </View>
           </View>
@@ -85,12 +85,10 @@ export function TesVideos() {
           {videos.map((v) => (
             <VideoTile key={v.id} v={v} width={132} onPress={() => openVideo(v, setPlaying)} />
           ))}
-          <Press onPress={() => router.push(IMPORT as any)} accessibilityRole="button" accessibilityLabel="Importer une vidéo">
-            <View style={{ width: 112, height: Math.round(132 * 1.3), borderRadius: 20, borderWidth: 1.5, borderStyle: 'dashed', borderColor: accent, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: blancA(0.6) }}>
-              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: P.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
-                <CIcon name="plus" size={22} color={accent} width={2.8} />
-              </View>
-              <Ink size={13} weight="extraBold" color={accent} style={{ textAlign: 'center' }}>Importer</Ink>
+          <Press onPress={() => router.push(IMPORT as any)} accessibilityRole="button" accessibilityLabel={traduire("Importer une vidéo")}>
+            <View style={{ width: 112, height: Math.round(132 * 1.3), borderRadius: 20, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: fondAjouter() }}>
+              <PlusPastille taille={44} />
+              <Ink size={13} weight="extraBold" color={P.accentText} style={{ textAlign: 'center' }}>{traduire("Importer")}</Ink>
             </View>
           </Press>
         </ScrollView>

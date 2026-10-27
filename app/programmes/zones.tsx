@@ -30,6 +30,7 @@ import { RACCOURCIS_ZONES, ZONES, raccourciActif, seanceZones, titreZones, zoneP
 import type { ZoneId } from '@/lib/v2/programmes/zones';
 import { dureeEstimee } from '@/lib/v2/programmes/express';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { illustration } from '@/components/yoroi/v2/stickers';
 
 // la carte programme : le torii, le chemin (meme image que le tampon « Quoi faire »)
 const TORII: ImageSourcePropType = require('@/assets/avatars/app/ornements/torii.webp');
@@ -175,7 +176,7 @@ export default function ZonesScreen() {
                   ))}
                 </View>
               </View>
-              <Image source={TORII} style={{ width: 78, height: 78 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+              <Image source={illustration('torii', TORII)} style={{ width: 78, height: 78 }} resizeMode="contain" accessibilityIgnoresInvertColors />
               <Icon name="chevron" size={18} color={c.accent} />
             </Pressable>
 

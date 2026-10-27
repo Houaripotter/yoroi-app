@@ -70,7 +70,7 @@ export function TileAccess({ a }: { a: Access }) {
       ) : a.art ? (
         <Image source={a.art} style={{ position: 'absolute', right: 6, top: 6, width: 58, height: 70 }} resizeMode="contain" />
       ) : null}
-      <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: P.carte, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
         {a.icon ? <Icon name={a.icon} size={21} color={c.ink} /> : null}
       </View>
       <View style={{ gap: 1 }}>

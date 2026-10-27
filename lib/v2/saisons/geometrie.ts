@@ -197,3 +197,60 @@ export const ZOMBIE_V5 = { h: 23, w: (26 * 23) / 30, pieds: ORIGINE_OUTILS + LIG
 export function hautAuDessus(b: Boite): number {
   return ORIGINE_OUTILS - b.y;
 }
+
+// ── 27 octobre 2026 : refonte Pastel (maquette Pastel-Final-Accueil, choisie par Houari) ───────────────────
+// En haut, sur le fond de la page : ta photo, la date et ton salut, la lanterne et la cloche dans des ronds blancs.
+// Dessous, la scene dans une carte arrondie (16 points des bords, rayon 28, ombre douce), puis Ton poids, tes outils
+// et Ta semaine, tous a 16 points des bords. Les vols de saison restent dans la carte de la scene, la carte Ton poids
+// garde ses toiles, araignees, guirlande, et ses citrouilles ou sapins entre le chiffre et l'anneau.
+
+/** L'accueil Pastel : marge laterale 16, ecart entre les blocs 12 (app/(tabs)/index.tsx) */
+export const ACCUEIL_PASTEL = { marge: 16, ecart: 12 };
+/** La rangee du haut : 8 points sous l'encoche, ta photo de 48, 12 points avant la carte de la scene */
+export const ENTETE_PASTEL = { haut: 8, rangee: 48, ecart: 12 };
+/** La carte de la scene : 168 de haut pour 358 de large (maquette), bornee entre 150 et 200 */
+export const SCENE_CARTE = { rayon: 28, ratio: 168 / 358, hMin: 150, hMax: 200, solBas: 12 };
+
+/** Hauteur de la carte de la scene pour une largeur de carte */
+export function hauteurSceneCarte(largeurCarte: number): number {
+  return Math.max(SCENE_CARTE.hMin, Math.min(SCENE_CARTE.hMax, Math.round(largeurCarte * SCENE_CARTE.ratio)));
+}
+
+/** Le haut de la carte de la scene, depuis le haut de l'ecran */
+export function hautSceneCarte(top: number): number {
+  return top + ENTETE_PASTEL.haut + ENTETE_PASTEL.rangee + ENTETE_PASTEL.ecart;
+}
+
+/**
+ * Recadrage vertical de la scene dans la carte : l'image garde sa largeur, on la remonte au plus de (imgH - H) pour que
+ * son sol arrive au plus SCENE_CARTE.solBas points au dessus du bas de la carte (le personnage reste pose dessus).
+ */
+export function remonteeScene(o: { H: number; imgH: number; sol: number }): number {
+  const solY = o.sol * o.imgH;
+  return Math.floor(Math.max(0, Math.min(o.imgH - o.H, solY - (o.H - SCENE_CARTE.solBas))));
+}
+
+/** Dans la carte, ni lanterne ni cloche : les vols commencent 14 points sous son haut (haut passe a zoneDeVol) */
+export const HAUT_VOL_CARTE = 14 - 42;
+
+/** Carte Ton poids Pastel : marge 16, haut 16, petit titre de 15, le chiffre de 40 (ligne de 44), l'anneau de 62 */
+export const CARTE_PASTEL = { marge: 16, haut: 16, titre: 15, ecartTitre: 2, ligneChiffre: 44, anneau: 62, rayon: 28 };
+/** « 100,0 » en 40 points (environ 24 par chiffre, 9 pour la virgule) et « kg » en 15 : 142, arrondi a 146 */
+export const CHIFFRE_PASTEL_MAX = 146;
+/** Une citrouille ou un sapin de 40, entre le chiffre et l'anneau */
+export const DECOR_PASTEL = { w: 40, h: 40, ecart: 6 };
+
+export function boitesCartePastel(largeurCarte: number): { chiffre: Boite; anneau: Boite; cotes: Boite[]; hauteur: number } {
+  const c = CARTE_PASTEL;
+  const chiffre: Boite = { x: c.marge, y: c.haut + c.titre + c.ecartTitre, w: CHIFFRE_PASTEL_MAX, h: c.ligneChiffre };
+  const anneau: Boite = { x: largeurCarte - c.marge - c.anneau, y: c.haut, w: c.anneau, h: c.anneau };
+  const debut = chiffre.x + chiffre.w + DECOR_PASTEL.ecart;
+  const fin = anneau.x - DECOR_PASTEL.ecart;
+  const place = fin - debut;
+  const n = place >= 2 * DECOR_PASTEL.w + DECOR_PASTEL.ecart ? 2 : place >= DECOR_PASTEL.w ? 1 : 0;
+  const total = n * DECOR_PASTEL.w + Math.max(0, n - 1) * DECOR_PASTEL.ecart;
+  const x0 = debut + (place - total) / 2;
+  const y = anneau.y + anneau.h - DECOR_PASTEL.h;
+  const cotes: Boite[] = Array.from({ length: n }, (_, i) => ({ x: x0 + i * (DECOR_PASTEL.w + DECOR_PASTEL.ecart), y, w: DECOR_PASTEL.w, h: DECOR_PASTEL.h }));
+  return { chiffre, anneau, cotes, hauteur: anneau.y + anneau.h + 2 };
+}

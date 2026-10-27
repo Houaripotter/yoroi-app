@@ -31,7 +31,7 @@ function Swatch({ k }: { k: StudioStyle }) {
   }
   return (
     <View style={{ width: 30, height: 30, borderRadius: 10, backgroundColor: k === 'papier' ? '#F2F1EC' : '#1D2029', borderWidth: 1, borderColor: k === 'papier' ? P.line : '#1D2029', overflow: 'hidden' }}>
-      <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: P.accent }} />
+      <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: P.detail }} />
       <Glyph kind="sakura" size={16} color={k === 'papier' ? '#D9D5CB' : 'rgba(255,255,255,0.3)'} style={{ position: 'absolute', right: 2, top: 3 }} />
     </View>
   );

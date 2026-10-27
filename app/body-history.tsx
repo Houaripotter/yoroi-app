@@ -172,8 +172,8 @@ export default function CorpsParMesure() {
               <View style={{ padding: 22, borderRadius: 26, backgroundColor: blancA(0.8), borderWidth: 1, borderColor: P.white, gap: 8 }}>
                 <Ink size={22} weight="black" tight>{traduire("{0} : rien pour l’instant", metric.label)}</Ink>
                 <Ink size={14} color={c.textSecondary}>{metric.group === 'measurements' ? traduire('Un mètre ruban, une minute, et tu suis ce qui change vraiment.') : traduire('Une balance à impédance ou une saisie à la main, et la courbe démarre.')}</Ink>
-                <Pressable onPress={() => setEdit('new')} accessibilityRole="button" style={({ pressed }) => ({ marginTop: 6, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-                  <Ink size={15} weight="extraBold" color={c.onAccent}>{traduire("Ajouter une valeur")}</Ink>
+                <Pressable onPress={() => setEdit('new')} accessibilityRole="button" style={({ pressed }) => ({ marginTop: 6, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
+                  <Ink size={15} weight="extraBold" color={c.onPrimary}>{traduire("Ajouter une valeur")}</Ink>
                 </Pressable>
               </View>
             ) : (

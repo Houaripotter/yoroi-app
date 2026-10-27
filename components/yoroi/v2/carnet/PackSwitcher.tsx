@@ -33,12 +33,12 @@ export function PackSwitcher() {
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
             accessibilityLabel={`Pack ${meta?.label ?? k}`}
-            style={{ minHeight: 56, paddingLeft: 8, paddingRight: 14, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: on ? P.accent : blancA(0.85), borderWidth: 1, borderColor: on ? P.accent : P.line2 }}
+            style={{ minHeight: 56, paddingLeft: 8, paddingRight: 14, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: on ? P.primary : blancA(0.85), borderWidth: 1, borderColor: on ? P.primary : P.line2 }}
           >
             <View style={{ width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? 'rgba(255,255,255,0.16)' : '#F1EFE9' }}>
-              <Glyph kind={PACK_GLYPH[k] ?? 'sakura'} size={22} color={on ? P.white : P.ink2} />
+              <Glyph kind={PACK_GLYPH[k] ?? 'sakura'} size={22} color={on ? P.onPrimary : P.ink2} />
             </View>
-            <Ink size={14} weight="extraBold" color={on ? P.white : P.ink}>{meta?.label ?? k}</Ink>
+            <Ink size={14} weight="extraBold" color={on ? P.onPrimary : P.ink}>{meta?.label ?? k}</Ink>
           </Pressable>
         );
       })}

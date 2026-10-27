@@ -68,9 +68,9 @@ export function NomSeanceSheet({
         disabled={!ok}
         accessibilityRole="button"
         accessibilityState={{ disabled: !ok }}
-        style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: !ok ? c.fillSoft : pressed ? c.accentPressed : c.accent })}
+        style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: !ok ? c.fillSoft : pressed ? c.primaryPressed : c.primary })}
       >
-        <Ink size={16} weight="extraBold" color={ok ? c.onAccent : c.textMuted}>{action}</Ink>
+        <Ink size={16} weight="extraBold" color={ok ? c.onPrimary : c.textMuted}>{action}</Ink>
       </Pressable>
     </Sheet>
   );

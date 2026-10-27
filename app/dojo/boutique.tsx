@@ -415,8 +415,8 @@ export default function Boutique() {
                   accessibilityLabel={traduire("Avec sa scène, {0}", themeById(sceneAssortie).name)}
                   style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 34, paddingHorizontal: 10, borderRadius: 999, backgroundColor: blancA(0.9), borderWidth: 1, borderColor: P.white, transform: [{ scale: pressed ? 0.97 : 1 }] })}
                 >
-                  <View style={{ width: 18, height: 18, borderRadius: 6, borderWidth: 1.5, borderColor: avecSceneAssortie ? c.accent : c.textMuted, backgroundColor: avecSceneAssortie ? c.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                    {avecSceneAssortie ? <CheckIcon size={13} color={c.onAccent} /> : null}
+                  <View style={{ width: 18, height: 18, borderRadius: 6, borderWidth: 1.5, borderColor: avecSceneAssortie ? c.primary : c.textMuted, backgroundColor: avecSceneAssortie ? c.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                    {avecSceneAssortie ? <CheckIcon size={13} color={c.onPrimary} /> : null}
                   </View>
                   <Ink size={12} weight="extraBold">{traduire("Avec sa scène")}</Ink>
                 </Pressable>
@@ -428,9 +428,9 @@ export default function Boutique() {
                   onPress={valider}
                   accessibilityRole="button"
                   accessibilityLabel={bouton === 'Débloquer' ? traduire('Débloquer avec Premium') : bouton}
-                  style={({ pressed }) => ({ minHeight: 42, borderRadius: 14, paddingHorizontal: 16, justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent, transform: [{ scale: pressed ? 0.97 : 1 }] })}
+                  style={({ pressed }) => ({ minHeight: 42, borderRadius: 14, paddingHorizontal: 16, justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary, transform: [{ scale: pressed ? 0.97 : 1 }] })}
                 >
-                  <Ink size={14} weight="extraBold" color={c.onAccent}>{bouton}</Ink>
+                  <Ink size={14} weight="extraBold" color={c.onPrimary}>{bouton}</Ink>
                 </Pressable>
                 <Pressable
                   onPress={() => {

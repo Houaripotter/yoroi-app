@@ -103,7 +103,7 @@ export function RecordPicker({ visible, onClose, busy, onPickTemplate, onCreateC
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         {step !== 'sport' ? (
           <Press onPress={back} accessibilityRole="button" accessibilityLabel={traduire("Étape précédente")}>
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#ECEAE4', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#EEF0F7', alignItems: 'center', justifyContent: 'center' }}>
               <CIcon name="back" size={20} />
             </View>
           </Press>

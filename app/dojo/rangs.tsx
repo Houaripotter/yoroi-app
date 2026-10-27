@@ -167,8 +167,8 @@ export default function Rangs() {
                   </View>
                   <Ink size={13} color={done || here ? c.textSecondary : c.textMuted}>{gainDuRang(k.index)}</Ink>
                   {here ? (
-                    <View style={{ alignSelf: 'flex-start', marginTop: 4, borderRadius: 999, backgroundColor: c.accent, paddingHorizontal: 10, paddingVertical: 4 }}>
-                      <Ink size={12} weight="extraBold" color={c.onAccent}>{traduire("Tu es ici")}</Ink>
+                    <View style={{ alignSelf: 'flex-start', marginTop: 4, borderRadius: 999, backgroundColor: c.primary, paddingHorizontal: 10, paddingVertical: 4 }}>
+                      <Ink size={12} weight="extraBold" color={c.onPrimary}>{traduire("Tu es ici")}</Ink>
                     </View>
                   ) : (
                     <Ink size={12} weight="bold" color={c.textMuted}>

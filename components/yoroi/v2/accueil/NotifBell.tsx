@@ -6,16 +6,18 @@
  * jamais sur le personnage ; un simple point de couleur remplace la pastille avec le chiffre.
  * 16 octobre nuit (Houari) : le point est rouge (alerte, usage autorise du rouge), plus bleu ni dore,
  * avec un fin liseré clair pour rester visible sur une scene sombre.
+ * 27 octobre 2026 (refonte Pastel, maquette Pastel-Final-Accueil) : prop relief, la cloche dans un rond blanc de 46 en
+ * relief (ombre 0 6 16, leger lisere bas), a droite de ton salut ; le point rouge des non lues en haut a droite.
  */
 import React, { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { getUnreadCount } from '@/lib/notificationHistoryService';
 import { useYoroiTheme } from '@/components/yoroi';
-import { Icon, Press } from './kit';
+import { Icon, P, Press, RondRelief } from './kit';
 import { traduirePluriel, traduire } from '@/lib/i18n/tr';
 
-export function NotifBell({ sceneSombre = false }: { sceneSombre?: boolean }) {
+export function NotifBell({ sceneSombre = false, relief = false }: { sceneSombre?: boolean; relief?: boolean }) {
   const router = useRouter();
   const [unread, setUnread] = useState(0);
   const { theme } = useYoroiTheme();
@@ -34,9 +36,19 @@ export function NotifBell({ sceneSombre = false }: { sceneSombre?: boolean }) {
     }, []),
   );
 
+  const label = unread > 0 ? traduirePluriel(unread, unread > 1, "Notifications, {0} non lue", "Notifications, {0} non lues", unread) : traduire('Notifications');
+  if (relief) {
+    return (
+      <Press onPress={() => router.push('/notification-center' as any)} accessibilityRole="button" accessibilityLabel={label}>
+        <RondRelief taille={46}>
+          <Icon name="bell" size={19} color={P.ink} width={2} />
+        </RondRelief>
+        {unread > 0 ? <View pointerEvents="none" style={{ position: 'absolute', right: 11, top: 10, width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.record, borderWidth: 2, borderColor: P.white }} /> : null}
+      </Press>
+    );
+  }
   // vague 35 (21 h 11) : toute petite, presque cachee. Un rond de 24 tres translucide, un point de couleur s'il y a du nouveau
   const S = 24;
-  const label = unread > 0 ? traduirePluriel(unread, unread > 1, "Notifications, {0} non lue", "Notifications, {0} non lues", unread) : traduire('Notifications');
   return (
     <Press onPress={() => router.push('/notification-center' as any)} accessibilityRole="button" accessibilityLabel={label} hitSlop={(44 - S) / 2}>
       <View style={{ width: S, height: S, borderRadius: S / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: sceneSombre ? 'rgba(14,17,26,0.22)' : 'rgba(255,255,255,0.32)' }}>

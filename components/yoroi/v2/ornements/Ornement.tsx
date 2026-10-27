@@ -8,8 +8,11 @@ import { Image, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { ORNEMENTS } from './images';
 import type { OrnementKey } from './images';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 
 export function Ornement({ name, size = 64, opacity = 1, style }: { name: OrnementKey; size?: number; opacity?: number; style?: StyleProp<ViewStyle> }) {
+  // 27 octobre 2026 : se redessine quand le reglage Illustrations change (sticker ou encre, lu par ORNEMENTS)
+  useIllustrations();
   return (
     <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[{ width: size, height: size, opacity }, style]}>
       <Image source={ORNEMENTS[name]} style={{ width: size, height: size }} resizeMode="contain" accessibilityIgnoresInvertColors />

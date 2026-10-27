@@ -24,7 +24,15 @@ export type YoroiColors = {
   accent: string;
   accentPressed: string;
   accentTint: string;
+  /** l'accent en texte sur un fond clair (un cran plus fonce, lisible en petit) */
+  accentText: string;
   onAccent: string;
+  /** 27 octobre 2026 : fond pastel des boutons principaux et de l'onglet actif, et son texte */
+  primary: string;
+  primaryPressed: string;
+  onPrimary: string;
+  /** le bleu vif des petits details (traits de courbe, coches, anneaux) */
+  detail: string;
   /** Erreurs, suppressions, alertes (blessure, recuperation basse) */
   danger: string;
   dangerPressed: string;
@@ -41,6 +49,8 @@ export type YoroiColors = {
   successText: string;
   successTint: string;
   darkCard: string;
+  /** 27 octobre 2026 : le fond pastel des grandes cartes (a la place du bleu nuit plein), texte encre dessus */
+  carteDouce: string;
   onDark: string;
   onDarkSecondary: string;
   shadow: string;
@@ -49,30 +59,39 @@ export type YoroiColors = {
 
 export type ColorToken = keyof YoroiColors;
 
+// 27 octobre 2026, refonte « Pastel et Ciel » (choisie par Houari) : fond gris bleute tres clair, cartes blanches,
+// ombres douces. Correction du meme jour (Houari : « le bleu plein est trop fort ») : plus aucun grand fond bleu sature.
+// Les boutons principaux et l'onglet actif sont pastel (primary) avec un texte bleu nuit (onPrimary) ; l'accent devient
+// ce bleu nuit, lisible en texte ; le bleu vif (detail) ne sert qu'aux petits details (traits de courbe, coches, anneaux)
 const dojo: YoroiColors = {
-  background: '#F2F1EC',
+  background: '#F5F6FB',
   surface: '#FFFFFF',
-  border: '#E2DFD8',
-  divider: '#E8E5DE',
-  fillSubtle: '#E6E4DD',
-  fillSoft: '#ECEAE4',
+  border: '#E4E7F1',
+  divider: '#ECEEF5',
+  fillSubtle: '#E8EBF4',
+  fillSoft: '#EEF0F7',
   pill: '#FFFFFF',
-  ink: '#1D2029',
-  textSecondary: '#4A4E5A',
-  textMuted: '#8B8D96',
-  // Indigo profond ai-iro : couleur d'action (texte blanc dessus : contraste 8,6:1)
-  accent: '#2C4A84',
-  accentPressed: '#213A6B',
-  accentTint: '#E4E9F3',
+  ink: '#1D2033',
+  textSecondary: '#646985',
+  textMuted: '#8F94AC',
+  // Bleu ciel : couleur d'action ; accentText, le meme bleu un cran plus fonce pour un texte sur fond clair
+  accent: '#23358F',
+  accentPressed: '#1A2870',
+  accentTint: '#EEF1FF',
+  accentText: '#23358F',
   onAccent: '#FFFFFF',
+  primary: '#DCE3FF',
+  primaryPressed: '#C9D3FB',
+  onPrimary: '#23358F',
+  detail: '#4C6EF5',
   // Le rouge soie ne sert plus qu'aux erreurs, suppressions et alertes
   danger: '#B0282E',
   dangerPressed: '#8C1E23',
   dangerTint: '#F6E3E1',
   // et aux tampons de record hanko
   record: '#B0282E',
-  indigo: '#2C4A84',
-  indigoTint: '#E3E6EE',
+  indigo: '#3557D9',
+  indigoTint: '#EEF1FF',
   gold: '#C59D45',
   goldDeep: '#A8832F',
   goldTint: '#F3EBDA',
@@ -80,12 +99,12 @@ const dojo: YoroiColors = {
   success: '#6E8C3A',
   successText: '#4F6B28',
   successTint: '#E4EADB',
-  // 25 octobre 2026 (Houari : « en noir c'est moche, ca donne pas envie ») : les grandes cartes passent
-  // du noir a l'indigo de l'app, comme « Je cree ma seance ». Texte blanc dessus : contraste 8,6:1
-  darkCard: '#2C4A84',
+  // les grandes cartes pleines : bleu nuit (onDark sert aussi sur les photos, il reste blanc)
+  darkCard: '#23358F',
+  carteDouce: '#E8ECFF',
   onDark: '#FFFFFF',
-  onDarkSecondary: '#D3DBEC',
-  shadow: '#1D2029',
+  onDarkSecondary: '#D5DCF5',
+  shadow: '#1D2033',
   transparent: 'transparent',
 };
 
@@ -105,7 +124,12 @@ const nuit: YoroiColors = {
   accent: '#8FA8DE',
   accentPressed: '#7A94CC',
   accentTint: '#212B42',
+  accentText: '#8FA8DE',
   onAccent: '#10131B',
+  primary: '#2A3557',
+  primaryPressed: '#33406A',
+  onPrimary: '#DCE3FF',
+  detail: '#8FA8DE',
   danger: '#EC7A70',
   dangerPressed: '#D45F55',
   dangerTint: '#3A2326',
@@ -120,6 +144,7 @@ const nuit: YoroiColors = {
   successText: '#A8C77A',
   successTint: '#222B1D',
   darkCard: '#232838',
+  carteDouce: '#1E2540',
   onDark: '#ECEAE3',
   onDarkSecondary: '#B8BBC6',
   shadow: '#000000',
@@ -137,6 +162,11 @@ const sakura: YoroiColors = {
   accent: '#C23B6B',
   accentPressed: '#9A2D54',
   accentTint: '#F7DCE5',
+  accentText: '#9A2D54',
+  primary: '#F7DCE5',
+  primaryPressed: '#F0CAD7',
+  onPrimary: '#9A2D54',
+  detail: '#C23B6B',
   shadow: '#3C1424',
 };
 
@@ -151,6 +181,11 @@ const matcha: YoroiColors = {
   accent: '#3E6A3B',
   accentPressed: '#2F512D',
   accentTint: '#DDE7DA',
+  accentText: '#2F512D',
+  primary: '#DDE7DA',
+  primaryPressed: '#CBDAC7',
+  onPrimary: '#2F512D',
+  detail: '#3E6A3B',
   shadow: '#1E2814',
 };
 

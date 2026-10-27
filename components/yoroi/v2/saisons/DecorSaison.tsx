@@ -49,12 +49,13 @@ import type { SaisonId } from '@/lib/v2/saisons/calendrier';
 import {
   ARAIGNEE_CARTE,
   BAS_CALQUE,
-  DECOR_CARTE,
+  DECOR_PASTEL,
   GUIRLANDE_CARTE,
   HAUT_CALQUE,
   TOILE_CARTE,
   ZOMBIE_V5,
-  boitesCarte,
+  boitesCartePastel,
+  CARTE_PASTEL,
   decorGaucheHalloween,
   decorGaucheNoel,
   type Boite,
@@ -111,6 +112,9 @@ import {
 import { Echelle } from './inro/echelle';
 import { ampouleAllumee, vaEtVient } from './inro/mouvements';
 import { traduire } from '@/lib/i18n/tr';
+
+/** Retrait des toiles et araignees depuis les coins arrondis de la carte Ton poids (rayon 28 : l'arrondi rentre de 8,2 a 45 degres) */
+const RETRAIT_COIN = 9;
 
 /** Les deux stickers de ce qu'INRO n'a pas (generes, detoures, 18 octobre 2026) */
 const KADOMATSU = require('@/assets/saisons/noel/kadomatsu.webp');
@@ -274,6 +278,8 @@ export type DecorSceneProps = {
   haut: number;
   /** defilement de l'accueil : le decor suit et s'efface ; absent dans un apercu */
   scrollY?: SharedValue<number>;
+  /** 27 octobre 2026 (refonte Pastel) : pose dans la carte de la scene, il defile deja avec elle (pas de decalage) */
+  dansCarte?: boolean;
 };
 
 /** La toile de la scene : dans le coin gauche, juste sous la lanterne et la cloche, au dessus de ta photo */
@@ -288,10 +294,11 @@ export function toileScene(hauteur: number, haut: number) {
 /** L'araignee d'INRO sur la scene : un peu plus grande que la place de la v4, remontee d'autant */
 const ARAIGNEE_SCENE = 18;
 
-export function DecorScene({ saison, largeur, hauteur, haut, scrollY }: DecorSceneProps) {
+export function DecorScene({ saison, largeur, hauteur, haut, scrollY, dansCarte = false }: DecorSceneProps) {
   const { pret, reduire, temps, defile } = useCalque(saison, scrollY, hauteur * 0.5);
   const style = useAnimatedStyle(() => {
     const y = defile.value;
+    if (dansCarte) return { opacity: 1, transform: [{ translateY: 0 }] };
     return { opacity: interpolate(y, [0, hauteur * 0.45], [1, 0], Extrapolation.CLAMP), transform: [{ translateY: -Math.max(0, y) }] };
   });
   const hChauve = CHAUVE.h * 30 * ECHELLE_CHAUVES + VAGUE_CHAUVES;
@@ -613,29 +620,33 @@ export function DecorCarte({ saison, largeur, scrollY, seuil = 100000 }: DecorCa
   const { pret, reduire, temps } = useCalque(saison, scrollY, seuil);
   const gerbe = useGerbe(saison, reduire);
   if (!pret || largeur <= 0) return null;
-  const b = boitesCarte(largeur);
-  const cotes = [b.gauche, b.droite];
+  // 27 octobre 2026 (refonte Pastel) : la carte Ton poids a le chiffre a gauche et l'anneau a droite ;
+  // les citrouilles ou les sapins vont entre les deux (un seul sur un petit ecran)
+  const b = boitesCartePastel(largeur);
+  const cotes = b.cotes;
   const a = ARAIGNEE_CARTE;
   const sombre = paletteSombre();
   // les couleurs d'INRO : fil et toile selon le theme, encre de l'araignee
   const toile = sombre ? 'rgba(232,239,245,0.35)' : 'rgba(26,43,61,0.3)';
   const soie = sombre ? 'rgba(232,239,245,0.6)' : 'rgba(120,130,140,0.75)';
   const encre = sombre ? '#0B0710' : '#231A2B';
-  const hSapin = DECOR_CARTE.h;
+  const hSapin = DECOR_PASTEL.h;
   const wSapin = (hSapin * 54) / 70;
   return (
-    <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, top: 0, width: largeur, height: b.chiffre.y + b.chiffre.h }}>
-      <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: largeur, height: b.chiffre.y + b.chiffre.h }} {...cache}>
+    <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, top: 0, width: largeur, height: b.hauteur }}>
+      {/* 27 octobre 2026 soir (Houari : « les toiles sortent de la carte ») : le decor est coupe aux coins arrondis
+          de la carte, et les toiles et araignees rentrent du retrait de l'arrondi pour rester entieres */}
+      <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: largeur, height: b.hauteur, borderTopLeftRadius: CARTE_PASTEL.rayon, borderTopRightRadius: CARTE_PASTEL.rayon, overflow: 'hidden' }} {...cache}>
         {saison === 'halloween' ? (
           <>
-            <View style={{ position: 'absolute', left: 0, top: 0 }}>
+            <View style={{ position: 'absolute', left: RETRAIT_COIN, top: RETRAIT_COIN }}>
               <ToileInro taille={TOILE_CARTE} couleur={toile} />
             </View>
-            <View style={{ position: 'absolute', left: largeur - TOILE_CARTE, top: 0 }}>
+            <View style={{ position: 'absolute', left: largeur - TOILE_CARTE - RETRAIT_COIN, top: RETRAIT_COIN }}>
               <ToileInro taille={TOILE_CARTE} couleur={toile} miroir />
             </View>
-            <AraigneeInro x={a.x + a.taille / 2} fil={a.fil} haut={a.haut} bas={a.bas} taille={a.taille} duree={2.6} pause={1.8} decalage={0} temps={temps} encre={encre} soie={soie} />
-            <AraigneeInro x={largeur - a.x - a.taille / 2} fil={a.fil} haut={a.haut} bas={a.bas} taille={a.taille} duree={3.2} pause={2.6} decalage={2.1} temps={temps} encre={encre} soie={soie} />
+            <AraigneeInro x={RETRAIT_COIN + a.x + a.taille / 2} fil={a.fil} haut={a.haut} bas={a.bas} taille={a.taille} duree={2.6} pause={1.8} decalage={0} temps={temps} encre={encre} soie={soie} />
+            <AraigneeInro x={largeur - RETRAIT_COIN - a.x - a.taille / 2} fil={a.fil} haut={a.haut} bas={a.bas} taille={a.taille} duree={3.2} pause={2.6} decalage={2.1} temps={temps} encre={encre} soie={soie} />
             {cotes.map((c, i) => (
               <View key={i} style={{ position: 'absolute', left: c.x, top: c.y + c.h - c.w * 0.9 }}>
                 <CitrouilleInro w={c.w} temps={temps} phase={i * 1.3} />

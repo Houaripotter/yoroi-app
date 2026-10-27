@@ -11,7 +11,7 @@ import { P } from '@/components/yoroi/livePalette';
 
 /** Tuiles d'icone : indigo, bleu, mousse, or, ardoise */
 export const TUILE = {
-  indigo: '#2C4A84',
+  indigo: '#4C6EF5',
   bleu: '#3D5D9E',
   mousse: '#6E8C3A',
   or: '#A8832F',
@@ -34,7 +34,7 @@ export function Interrupteur({ on }: { on: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
-    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 46, height: 28, borderRadius: 14, backgroundColor: on ? c.accent : c.fillSubtle, padding: 3, alignItems: on ? 'flex-end' : 'flex-start' }}>
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 46, height: 28, borderRadius: 14, backgroundColor: on ? c.detail : c.fillSubtle, padding: 3, alignItems: on ? 'flex-end' : 'flex-start' }}>
       <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: P.white }} />
     </View>
   );

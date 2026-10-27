@@ -62,7 +62,7 @@ const StatsEmptyStateInner: React.FC<StatsEmptyStateProps> = ({
       </View>
       <View style={[styles.iconTile, { backgroundColor: c.background, borderColor: c.divider }]}>
         {icon}
-        <View style={[styles.iconLace, { backgroundColor: accentColor ?? c.accent }]} />
+        <View style={[styles.iconLace, { backgroundColor: accentColor ?? c.primary }]} />
       </View>
       <Ink size={21} weight="black" tight style={styles.title}>
         {title}
@@ -76,10 +76,10 @@ const StatsEmptyStateInner: React.FC<StatsEmptyStateProps> = ({
         accessibilityLabel={ctaLabel}
         style={({ pressed }) => [
           styles.cta,
-          { backgroundColor: pressed ? c.accentPressed : c.accent, shadowColor: c.accent, transform: [{ scale: pressed ? 0.98 : 1 }] },
+          { backgroundColor: pressed ? c.primaryPressed : c.primary, shadowColor: '#1B2A44', transform: [{ scale: pressed ? 0.98 : 1 }] },
         ]}
       >
-        <Ink size={16} weight="extraBold" color={c.onAccent}>
+        <Ink size={16} weight="extraBold" color={c.onPrimary}>
           {ctaLabel}
         </Ink>
       </Pressable>

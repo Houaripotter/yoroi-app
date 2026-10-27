@@ -3,6 +3,10 @@
  * de ton evolution (poids, composition, mensurations, forme, force, endurance). Chaque tuile ouvre
  * l'onglet qui la detaille. Les chiffres viennent des sources uniques de lib/ (tendance du poids,
  * composition, mensurations, forme du jour, maximum estime, seances du mois).
+ * 27 octobre 2026 (maquette Pastel-Progres) : plus de rouleau washi. Ton poids dans une carte blanche (le chiffre, le
+ * rythme dans une pastille menthe, tes 10 dernieres semaines en barres), puis les autres facettes en cartes pastel
+ * deux par deux (composition creme, mensurations bleu, forme menthe, force peche, endurance lilas).
+ * Avant : _archive_ancien_design_2026-10-09/refonte_phase2_2026-10-27.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
@@ -10,7 +14,8 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { useYoroiTheme } from '../../YoroiThemeProvider';
 import { Ink } from '../Ink';
 import { tapLight } from './ui';
-import { Rouleau } from '../seances/Decor';
+import { couleursTuile } from '../seances/WeekHero';
+import { ombreCarte } from '../accueil/kit';
 import type { Training } from '@/lib/database';
 import type { DayWeight } from '@/lib/v2/weightStats';
 import { formatKg, weeklyRate } from '@/lib/v2/weightStats';
@@ -22,7 +27,7 @@ import { durationOf, formatDuration } from '@/lib/v2/trainingWeek';
 import { monthLong, num, sinceText, todayIso } from '@/lib/v2/progres/format';
 import { safeComputeForme } from '@/lib/v2/accueil/forme';
 import type { FormeResult } from '@/lib/v2/accueil/forme';
-import { P } from '@/components/yoroi/livePalette';
+import { P, paletteSombre } from '@/components/yoroi/livePalette';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { versUnitePoids } from '@/lib/v2/unitePoids';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
@@ -30,10 +35,18 @@ import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 export type EnsembleCible = 'corps' | 'force' | 'cardio' | 'sante';
 
 type Tuile = { key: string; label: string; value: string; unit?: string; sub: string; cible: EnsembleCible; dot: string };
+type TeinteVue = 'creme' | 'bleu' | 'peche' | 'menthe' | 'lilas';
+const TEINTE_DE: Record<string, TeinteVue> = { compo: 'creme', mesures: 'bleu', forme: 'menthe', force: 'peche', endurance: 'lilas' };
+function couleursVue(t: TeinteVue): { fond: string; texte: string } {
+  if (t === 'lilas') return paletteSombre() ? { fond: '#2E2433', texte: '#D9A3CC' } : { fond: '#EFE6F3', texte: '#8A3F78' };
+  return couleursTuile(t);
+}
 
-function TuileVue({ t, onPress, left, top }: { t: Tuile; onPress: () => void; left: boolean; top: boolean }) {
+/** Une facette en carte pastel (maquette) : son nom en couleur, le chiffre en grand, la phrase dessous */
+function TuileVue({ t, onPress }: { t: Tuile; onPress: () => void }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  const col = couleursVue(TEINTE_DE[t.key] ?? 'bleu');
   return (
     <Pressable
       onPress={() => {
@@ -42,36 +55,48 @@ function TuileVue({ t, onPress, left, top }: { t: Tuile; onPress: () => void; le
       }}
       accessibilityRole="button"
       accessibilityLabel={`${traduire(t.label)}, ${t.value}${t.unit ? ` ${t.unit}` : ''}, ${traduire(t.sub)}`}
-      style={({ pressed }) => ({
-        flex: 1,
-        minHeight: 92,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        gap: 2,
-        borderLeftWidth: left ? 1 : 0,
-        borderTopWidth: top ? 1 : 0,
-        borderColor: P.washiBord,
-        backgroundColor: pressed ? c.fillSoft : 'transparent',
-      })}
+      style={({ pressed }) => ({ flex: 1, minHeight: 92, paddingHorizontal: 14, paddingVertical: 12, gap: 1, borderRadius: 22, backgroundColor: col.fond, opacity: pressed ? 0.85 : 1 })}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: t.dot }} />
-        <Ink size={12.5} weight="extraBold" color={c.textSecondary} numberOfLines={1} style={{ flexShrink: 1 }}>
-          {traduire(t.label)}
-        </Ink>
-      </View>
-      <Ink size={24} weight="black" tight numberOfLines={1}>
+      <Ink size={12.5} weight="extraBold" color={col.texte} numberOfLines={1}>
+        {traduire(t.label)}
+      </Ink>
+      <Ink size={24} weight="black" tight color={c.ink} numberOfLines={1} style={{ letterSpacing: -0.5 }}>
         {t.value}
         {t.unit ? (
-          <Ink size={13} weight="black" color={c.textSecondary}>
+          <Ink size={13} weight="black" color={c.ink}>
             {` ${t.unit}`}
           </Ink>
         ) : null}
       </Ink>
-      <Ink size={12} color={c.textSecondary} numberOfLines={2}>
+      <Ink size={11.5} weight="bold" color={col.texte} numberOfLines={2} style={{ lineHeight: 15 }}>
         {traduire(t.sub)}
       </Ink>
     </Pressable>
+  );
+}
+
+/** Tes 10 dernieres semaines de poids (tendance de fin de semaine), en barres ; la derniere en bleu vif */
+function BarresPoids({ series }: { series: DayWeight[] }) {
+  const semaines = useMemo(() => {
+    const parSemaine = new Map<string, number>();
+    for (const p of series) {
+      const d = new Date(`${p.date.slice(0, 10)}T12:00:00`);
+      const lundi = new Date(d);
+      lundi.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+      parSemaine.set(lundi.toISOString().slice(0, 10), p.trend);
+    }
+    return [...parSemaine.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)).slice(-10).map((e) => e[1]);
+  }, [series]);
+  if (semaines.length < 2) return null;
+  const min = Math.min(...semaines);
+  const max = Math.max(...semaines);
+  const ecart = Math.max(0.3, max - min);
+  return (
+    <View style={{ height: 64, flexDirection: 'row', alignItems: 'flex-end', gap: 6, marginTop: 8 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      {semaines.map((v, i) => (
+        <View key={i} style={{ flex: 1, height: `${Math.round(30 + (70 * (v - min)) / ecart)}%`, borderRadius: 8, backgroundColor: i === semaines.length - 1 ? P.detail : P.primary }} />
+      ))}
+    </View>
   );
 }
 
@@ -184,18 +209,43 @@ export function VueEnsemble({
     return out;
   }, [series, compo, measures, trainings, forme, today, c.accent, unite]);
 
-  const rows = [tuiles.slice(0, 2), tuiles.slice(2, 4), tuiles.slice(4, 6)];
+  const poids = tuiles[0];
+  const autres = tuiles.slice(1);
+  const rows: Tuile[][] = [];
+  for (let k = 0; k < autres.length; k += 2) rows.push(autres.slice(k, k + 2));
+  const menthe = couleursTuile('menthe');
   return (
-    <Rouleau style={style}>
-      <View style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
-        {rows.map((r, i) => (
-          <View key={i} style={{ flexDirection: 'row' }}>
-            {r.map((t, j) => (
-              <TuileVue key={t.key} t={t} left={j === 1} top={i > 0} onPress={() => onOpen(t.cible)} />
-            ))}
+    <View style={[{ gap: 10 }, style]}>
+      <Pressable
+        onPress={() => {
+          tapLight();
+          onOpen(poids.cible);
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`${traduire(poids.label)}, ${poids.value}${poids.unit ? ` ${poids.unit}` : ''}, ${traduire(poids.sub)}`}
+        style={({ pressed }) => [{ borderRadius: 24, backgroundColor: P.white, paddingTop: 14, paddingHorizontal: 16, paddingBottom: 10, opacity: pressed ? 0.92 : 1 }, ombreCarte]}
+      >
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10 }}>
+          <View style={{ flexShrink: 1 }}>
+            <Ink size={12.5} weight="extraBold" color={c.accentText}>{traduire(poids.label)}</Ink>
+            <Ink size={30} weight="black" tight numberOfLines={1} style={{ letterSpacing: -0.8 }}>
+              {poids.value}
+              {poids.unit ? <Ink size={14} weight="black">{` ${poids.unit}`}</Ink> : null}
+            </Ink>
           </View>
-        ))}
-      </View>
-    </Rouleau>
+          <View style={{ flexShrink: 1, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 12, backgroundColor: menthe.fond, marginBottom: 4 }}>
+            <Ink size={12} weight="black" color={menthe.texte} numberOfLines={2}>{traduire(poids.sub)}</Ink>
+          </View>
+        </View>
+        <BarresPoids series={series} />
+      </Pressable>
+      {rows.map((r, i) => (
+        <View key={i} style={{ flexDirection: 'row', gap: 10 }}>
+          {r.map((t) => (
+            <TuileVue key={t.key} t={t} onPress={() => onOpen(t.cible)} />
+          ))}
+        </View>
+      ))}
+    </View>
   );
 }

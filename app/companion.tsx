@@ -222,8 +222,8 @@ export default function TableauCorps() {
               <Glyph kind="sakura" size={44} color={c.indigo} />
               <Ink size={22} weight="black" tight>{traduire("Ton tableau est vide")}</Ink>
               <Ink size={14} color={c.textSecondary}>{traduire("Ajoute une ligne à la main, ou importe ton historique depuis un fichier CSV.")}</Ink>
-              <Pressable onPress={() => setAdding(true)} accessibilityRole="button" style={({ pressed }) => ({ marginTop: 6, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-                <Ink size={15} weight="extraBold" color={c.onAccent}>{traduire("Ajouter une ligne")}</Ink>
+              <Pressable onPress={() => setAdding(true)} accessibilityRole="button" style={({ pressed }) => ({ marginTop: 6, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
+                <Ink size={15} weight="extraBold" color={c.onPrimary}>{traduire("Ajouter une ligne")}</Ink>
               </Pressable>
             </View>
           ) : tab === 'table' ? (
@@ -342,8 +342,8 @@ function AddRowSheet({ visible, onClose, onSave }: { visible: boolean; onClose: 
         ))}
       </View>
       {error ? <Ink size={13} weight="bold" color={c.danger} style={{ paddingHorizontal: 4 }}>{error}</Ink> : null}
-      <Pressable onPress={submit} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-        <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Ajouter")}</Ink>
+      <Pressable onPress={submit} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
+        <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Ajouter")}</Ink>
       </Pressable>
     </Sheet>
   );

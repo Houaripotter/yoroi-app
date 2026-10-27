@@ -25,6 +25,7 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P } from '@/components/yoroi/livePalette';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 
 type Props = {
   trainings: Training[];
@@ -38,6 +39,7 @@ type Props = {
 export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrainings, onChanged }: Props) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  const illus = useIllustrations();
   const router = useRouter();
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
@@ -152,7 +154,7 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
                 >
                   <View style={{ width: 42, height: 54, borderRadius: 14, alignItems: 'center', paddingTop: 5, gap: 3, backgroundColor: list.length ? c.fillSoft : 'transparent', borderWidth: isToday || comp ? 2 : 0, borderColor: isToday ? c.accent : c.gold }}>
                     <Ink size={13} weight={list.length || isToday ? 'black' : 'bold'} color={isToday ? c.accent : iso > today ? c.textMuted : list.length ? c.ink : c.textSecondary}>{String(dnum)}</Ink>
-                    {list.length ? <DayMarks list={list} size={22} ring={c.fillSoft} /> : null}
+                    {list.length ? <DayMarks list={list} size={22} ring={c.fillSoft} sticker /> : null}
                     {rest && !list.length ? <View style={{ width: 12, height: 3, borderRadius: 2, backgroundColor: c.textMuted, marginTop: 8 }} /> : null}
                   </View>
                 </Pressable>
@@ -161,7 +163,7 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
           </View>
         ))}
       </View>
-      <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire("Logo ou initiales : ton club. Icône : ton sport. Contour or : compétition. Petit trait : jour de repos.")}</Ink>
+      <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{illus.stickers ? traduire("Logo : ton club. Sticker : ton sport. Contour or : compétition. Petit trait : jour de repos.") : traduire("Logo ou initiales : ton club. Icône : ton sport. Contour or : compétition. Petit trait : jour de repos.")}</Ink>
 
       {groups.length ? (
         <View style={{ gap: 8 }}>

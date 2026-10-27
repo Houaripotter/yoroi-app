@@ -99,7 +99,7 @@ export function Glyph({ kind = 'etoile', size = 24, color = '#B0282E', style }: 
 /** Ornement doux pour un etat vide ou un emplacement decoratif : fleur de cerisier dans un rond pale */
 export function Ornament({ kind = 'sakura', size = 56, color = '#D9D5CB', style }: { kind?: GlyphKind; size?: number; color?: string; style?: StyleProp<ViewStyle> }) {
   return (
-    <View style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#F2F1EC', alignItems: 'center', justifyContent: 'center' }, style]} pointerEvents="none">
+    <View style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#F5F6FB', alignItems: 'center', justifyContent: 'center' }, style]} pointerEvents="none">
       <Glyph kind={kind} size={size * 0.58} color={color} />
     </View>
   );

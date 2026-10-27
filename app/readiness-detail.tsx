@@ -156,7 +156,7 @@ export default function TaForme() {
           <Card style={{ gap: 16 }}>
             {forme.factors.map((f) => (
               <View key={f.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                   <Icon name={FACTOR_ICON[f.key]} size={20} color={colorFor(f.score)} />
                 </View>
                 <View style={{ flex: 1, gap: 5 }}>
@@ -232,7 +232,7 @@ export default function TaForme() {
             {recent.map((t, i) => (
               <Press key={`${t.id ?? i}`} onPress={() => router.push('/seances' as any)} accessibilityRole="button" accessibilityLabel={getSportName(t.sport)}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: P.line2 }}>
-                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: P.accent }} />
+                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: P.detail }} />
                   <Ink size={15} weight="extraBold" style={{ flex: 1 }} numberOfLines={1}>
                     {getSportName(t.sport)}
                   </Ink>

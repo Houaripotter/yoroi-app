@@ -108,8 +108,8 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
               </Ink>
               {draft.categorieId !== advised.id ? (
                 <Press onPress={() => set({ categorieId: advised.id })} accessibilityRole="button" accessibilityLabel={traduire("Choisir {0}", advised.name)}>
-                  <View style={{ minHeight: 44, paddingHorizontal: 12, borderRadius: 14, backgroundColor: P.accent, justifyContent: 'center' }}>
-                    <Ink size={13} weight="extraBold" color={P.white}>
+                  <View style={{ minHeight: 44, paddingHorizontal: 12, borderRadius: 14, backgroundColor: P.primary, justifyContent: 'center' }}>
+                    <Ink size={13} weight="extraBold" color={P.onPrimary}>
                       {traduire("Choisir")}</Ink>
                   </View>
                 </Press>
@@ -160,7 +160,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
       </View>
 
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}>
-        <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: P.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="bell" size={21} color={P.accent} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>

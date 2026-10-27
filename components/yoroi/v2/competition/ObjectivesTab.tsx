@@ -209,7 +209,7 @@ export function ObjectivesTab() {
             return (
               <Card key={o.id} style={{ gap: 10, padding: 14 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: t.soft, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                     <Glyph kind={t.glyph} size={24} color={t.color} />
                   </View>
                   <View style={{ flex: 1, gap: 1 }}>
@@ -314,7 +314,7 @@ export function ObjectivesTab() {
               return (
                 <Press key={o.type} onPress={() => setType(o.type)} accessibilityRole="button" accessibilityLabel={traduire(t.label)}>
                   <View style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 14, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
-                    <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: t.soft, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                       <Glyph kind={t.glyph} size={22} color={t.color} />
                     </View>
                     <View style={{ flex: 1 }}>

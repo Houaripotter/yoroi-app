@@ -135,10 +135,10 @@ export default function TermsScreen() {
 
   return (
     <EspaceScreen title={traduire("Conditions")}>
-      <View style={{ borderRadius: 22, backgroundColor: c.darkCard, padding: 20, gap: 8, overflow: 'hidden' }}>
-        <Glyph kind="sakura" size={150} color="rgba(255,255,255,0.08)" style={{ position: 'absolute', right: -24, top: -34 }} />
-        <Ink size={26} weight="black" tight color={c.onDark}>{traduire("Conditions d’utilisation (EULA)")}</Ink>
-        <Ink size={13} color={c.onDarkSecondary}>{traduire("Dernière mise à jour : {0}", LAST_UPDATE)}</Ink>
+      <View style={{ borderRadius: 22, backgroundColor: c.carteDouce, padding: 20, gap: 8, overflow: 'hidden' }}>
+        <Glyph kind="sakura" size={150} color={'rgba(35,53,143,0.07)'} style={{ position: 'absolute', right: -24, top: -34 }} />
+        <Ink size={26} weight="black" tight color={c.ink}>{traduire("Conditions d’utilisation (EULA)")}</Ink>
+        <Ink size={13} color={c.textSecondary}>{traduire("Dernière mise à jour : {0}", LAST_UPDATE)}</Ink>
         <View style={{ alignSelf: 'flex-start', marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.goldLight, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }}>
           <Icon name="check" size={14} color={c.ink} stroke={3} />
           <Ink size={13} weight="extraBold">{traduire("Simples et sans piège")}</Ink>
@@ -148,7 +148,7 @@ export default function TermsScreen() {
       {sections().map((section, i) => (
         <Card key={section.title} style={{ padding: 16, gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 2 }}>
-            <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
               <Icon name={section.icon} size={18} color={c.accent} />
             </View>
             <Ink size={17} weight="black" tight style={{ flex: 1 }}>{`${i + 1}. ${section.title}`}</Ink>

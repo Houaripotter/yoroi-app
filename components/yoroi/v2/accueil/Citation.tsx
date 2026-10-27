@@ -28,7 +28,7 @@ function orCitation(): string {
   return paletteSombre() ? '#D8B562' : '#9A7424';
 }
 function indigoCitation(): string {
-  return paletteSombre() ? '#8FA8DE' : '#2C4A84';
+  return paletteSombre() ? '#8FA8DE' : '#23358F';
 }
 function ardoiseCitation(): string {
   return paletteSombre() ? '#8D9CC2' : '#5D6D94';

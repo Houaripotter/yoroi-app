@@ -6,18 +6,20 @@
  * Plus aucun accordeon : chaque rubrique est une tuile qui ouvre sa page d'un toucher.
  */
 import React, { createContext, useContext, useState } from 'react';
-import { Pressable, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, TextInput, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { selectionAsync } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { ENTREE } from '@/components/yoroi/v2/accueil/kit';
-import { Icon } from '@/components/yoroi/v2/espace/ui';
+import { GUTTER, Icon } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { traduire } from '@/lib/i18n/tr';
+import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+import { paletteSombre } from '@/components/yoroi/livePalette';
 
 // ===== Contexte du Studio =====
 
@@ -114,14 +116,14 @@ export function Tile({ icon, label, sub, onPress, on }: { icon: IconName; label:
         borderRadius: 22,
         padding: 14,
         gap: 8,
-        backgroundColor: on ? c.accent : pressed ? c.fillSubtle : c.surface,
+        backgroundColor: on ? c.primary : pressed ? c.fillSubtle : c.surface,
         borderWidth: 1,
         borderColor: on ? c.accent : c.border,
         transform: [{ scale: pressed ? 0.98 : 1 }],
       })}
     >
       <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: on ? 'rgba(255,255,255,0.18)' : c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name={icon} size={20} color={on ? '#FFFFFF' : c.accent} />
+        <Icon name={icon} size={20} color={on ? c.onPrimary : c.accent} />
       </View>
       <View style={{ gap: 1 }}>
         <Ink size={15} weight="extraBold" color={on ? '#FFFFFF' : c.ink} numberOfLines={2}>{label}</Ink>
@@ -136,12 +138,39 @@ export function TileGrid({ children }: { children: React.ReactNode }) {
 }
 
 /** Les trois teintes des tuiles, prises a la palette des pages Programmes et Coach */
-export type TonTuile = 'indigo' | 'orange' | 'vert' | 'rouge';
+export type TonTuile = 'indigo' | 'orange' | 'vert' | 'rouge' | 'creme' | 'bleu' | 'lilas' | 'menthe' | 'peche';
+
+/**
+ * 27 octobre 2026 soir (Houari : « plus de grandes cartes bleu nuit pleines ») : les pastels de l'accueil (creme,
+ * bleu, lilas, menthe, peche), fonds fixes et encre foncee fixe, un peu plus sourds en theme sombre.
+ */
+const PASTELS: Record<'creme' | 'bleu' | 'lilas' | 'menthe' | 'peche', { fond: string; fondSombre: string; encre: string; piste: string }> = {
+  creme: { fond: '#F6EEDD', fondSombre: '#3A3428', encre: '#A57A1C', piste: '#E3CC93' },
+  bleu: { fond: '#E6ECF8', fondSombre: '#26304A', encre: '#3557D9', piste: '#A9BEF0' },
+  lilas: { fond: '#EFE6F3', fondSombre: '#352B3D', encre: '#8A3F78', piste: '#D6B6CE' },
+  menthe: { fond: '#E3F2EA', fondSombre: '#22362D', encre: '#1C6B45', piste: '#9FD3B4' },
+  peche: { fond: '#FBE6D9', fondSombre: '#3D2C24', encre: '#B4552A', piste: '#F2BFA3' },
+};
+
+/** Fond et encre d'un pastel : encre foncee fixe sur le fond clair, encre claire du theme sur le fond sombre */
+export function pastelTuile(ton: keyof typeof PASTELS): { fond: string; titre: string; texte: string; texte2: string; piste: string } {
+  const p = PASTELS[ton];
+  const sombre = paletteSombre();
+  return { fond: sombre ? p.fondSombre : p.fond, titre: p.encre, texte: sombre ? '#F2F3F8' : '#1D2033', texte2: sombre ? 'rgba(242,243,248,0.72)' : 'rgba(29,32,51,0.62)', piste: p.piste };
+}
+
+export type TonPastel = keyof typeof PASTELS;
+
+const estPastel = (ton: TonTuile): ton is keyof typeof PASTELS => ton in PASTELS;
 
 function useTeinte(ton: TonTuile) {
   const pal = usePaletteProgramme();
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  if (estPastel(ton)) {
+    const p = pastelTuile(ton);
+    return { fond: p.fond, encre: p.titre };
+  }
   if (ton === 'orange') return { fond: pal.orangeTint, encre: pal.orange };
   if (ton === 'vert') return { fond: pal.vertTint, encre: pal.vert };
   if (ton === 'rouge') return { fond: c.dangerTint, encre: c.danger };
@@ -155,10 +184,15 @@ const ombre = (couleur: string): ViewStyle => ({ shadowColor: couleur, shadowOpa
  * en dessous (« Halloween forcé », « Chargée »...). Allumee, elle prend l'indigo (ou sa couleur propre :
  * orange d'Halloween, vert de Noël).
  */
-export function ActionTile({ icon, label, state, onPress, on, color, busy, disabled, ton = 'indigo' }: { icon: IconName; label: string; state: string; onPress: () => void; on?: boolean; color?: string; busy?: boolean; disabled?: boolean; ton?: TonTuile }) {
+export function ActionTile({ icon, label, state, onPress, on, color, busy, disabled, ton = 'indigo', sticker }: { icon: IconName; label: string; state: string; onPress: () => void; on?: boolean; color?: string; busy?: boolean; disabled?: boolean; ton?: TonTuile; sticker?: NomSticker }) {
   const pal = usePaletteProgramme();
   const t = useTeinte(ton);
+  const illus = useIllustrations();
   const fill = color ?? pal.indigo;
+  // 27 octobre 2026 soir : avec un sticker, la tuile reste claire (pastel), allumee elle prend juste un contour
+  const doux = !!sticker && illus.stickers;
+  const p = doux && estPastel(ton) ? pastelTuile(ton) : null;
+  const plein = on && !doux;
   const gridWidth = useContext(GridWidth);
   const w = gridWidth > 0 ? Math.floor((gridWidth - GRID_GAP * 2) / 3) : undefined;
   return (
@@ -180,17 +214,26 @@ export function ActionTile({ icon, label, state, onPress, on, color, busy, disab
           paddingVertical: 13,
           gap: 8,
           opacity: disabled ? 0.5 : pressed ? 0.9 : 1,
-          backgroundColor: on ? fill : pal.carte,
+          backgroundColor: plein ? fill : p ? p.fond : pal.carte,
+          borderWidth: doux ? 2 : 0,
+          borderColor: doux && on ? color ?? t.encre : 'transparent',
           transform: [{ scale: pressed ? 0.97 : 1 }],
         },
-        ombre(pal.indigo),
+        p ? null : ombre(pal.indigo),
       ]}
     >
-      <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: on ? 'rgba(255,255,255,0.2)' : t.fond, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name={busy ? 'sync' : icon} size={20} color={on ? '#FFFFFF' : color ?? t.encre} />
-      </View>
-      <Ink size={14} weight="black" tight color={on ? '#FFFFFF' : pal.texte} numberOfLines={2} style={{ lineHeight: 17 }}>{label}</Ink>
-      <Ink size={11.5} weight="bold" color={on ? 'rgba(255,255,255,0.9)' : pal.texte3} numberOfLines={2} style={{ lineHeight: 14 }}>{busy ? traduire('Un instant') : state}</Ink>
+      {doux ? (
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <Image source={illus.img(sticker!)} style={{ width: 46, height: 46, opacity: busy ? 0.5 : 1 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+          {on ? <View style={{ width: 10, height: 10, borderRadius: 5, marginTop: 2, backgroundColor: color ?? t.encre }} /> : null}
+        </View>
+      ) : (
+        <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: plein ? 'rgba(255,255,255,0.2)' : t.fond, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={busy ? 'sync' : icon} size={20} color={plein ? '#FFFFFF' : color ?? t.encre} />
+        </View>
+      )}
+      <Ink size={14} weight="black" tight color={plein ? '#FFFFFF' : p ? p.texte : pal.texte} numberOfLines={2} style={{ lineHeight: 17 }}>{label}</Ink>
+      <Ink size={11.5} weight="bold" color={plein ? 'rgba(255,255,255,0.9)' : p ? p.texte2 : pal.texte3} numberOfLines={2} style={{ lineHeight: 14 }}>{busy ? traduire('Un instant') : state}</Ink>
     </Pressable>
   );
 }
@@ -199,9 +242,53 @@ export function ActionTile({ icon, label, state, onPress, on, color, busy, disab
  * Grande tuile coloree des raccourcis (deux par ligne), comme les choix de la page Coach : fond teinte,
  * rond blanc pour l'icone, grand libelle et etat. Allumee, elle passe en indigo.
  */
-export function TuileRaccourci({ icon, label, state, onPress, on, busy, ton = 'indigo' }: { icon: IconName; label: string; state: string; onPress: () => void; on?: boolean; busy?: boolean; ton?: TonTuile }) {
+export function TuileRaccourci({ icon, label, state, onPress, on, busy, ton = 'indigo', sticker }: { icon: IconName; label: string; state: string; onPress: () => void; on?: boolean; busy?: boolean; ton?: TonTuile; sticker?: NomSticker }) {
   const pal = usePaletteProgramme();
   const t = useTeinte(ton);
+  const illus = useIllustrations();
+  // 27 octobre 2026 soir : carte pastel, sticker en haut a gauche, texte fonce ; allumee : un contour et une pastille, plus de bleu nuit plein
+  if (sticker && illus.stickers) {
+    const p = estPastel(ton) ? pastelTuile(ton) : { fond: t.fond, titre: t.encre, texte: pal.texte, texte2: pal.texte2 };
+    return (
+      <Pressable
+        onPress={() => {
+          selectionAsync().catch(() => {});
+          onPress();
+        }}
+        disabled={busy}
+        accessibilityRole="button"
+        accessibilityState={{ selected: !!on, busy: !!busy }}
+        accessibilityLabel={`${label}, ${state}`}
+        style={({ pressed }) => ({
+          width: '48.5%',
+          minHeight: 148,
+          padding: 16,
+          borderRadius: 26,
+          backgroundColor: p.fond,
+          borderWidth: 2,
+          borderColor: on ? p.titre : 'transparent',
+          gap: 10,
+          justifyContent: 'space-between',
+          overflow: 'hidden',
+          opacity: pressed ? 0.9 : 1,
+          transform: [{ scale: pressed ? 0.98 : 1 }],
+        })}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <Image source={illus.img(sticker)} style={{ width: 60, height: 60, opacity: busy ? 0.5 : 1 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+          {on ? (
+            <View style={{ height: 22, paddingHorizontal: 9, borderRadius: 11, backgroundColor: p.titre, justifyContent: 'center' }}>
+              <Ink size={10.5} weight="black" color="#FFFFFF" style={{ letterSpacing: 0.4 }}>{traduire('ACTIF')}</Ink>
+            </View>
+          ) : null}
+        </View>
+        <View style={{ gap: 3 }}>
+          <Ink size={16} weight="black" tight color={p.texte} numberOfLines={2}>{label}</Ink>
+          <Ink size={12} weight="bold" color={p.texte2} numberOfLines={2}>{busy ? traduire('Un instant') : state}</Ink>
+        </View>
+      </Pressable>
+    );
+  }
   return (
     <Pressable
       onPress={() => {
@@ -238,9 +325,11 @@ export function TuileRaccourci({ icon, label, state, onPress, on, busy, ton = 'i
 }
 
 /** Tuile d'une rubrique (deux par ligne) : carte blanche, carre d'icone teinte, titre, ce qu'on y trouve, fleche */
-export function TuileRubrique({ icon, title, sub, onPress, ton = 'indigo' }: { icon: IconName; title: string; sub: string; onPress: () => void; ton?: TonTuile }) {
+export function TuileRubrique({ icon, title, sub, onPress, ton = 'indigo', sticker }: { icon: IconName; title: string; sub: string; onPress: () => void; ton?: TonTuile; sticker?: NomSticker }) {
   const pal = usePaletteProgramme();
   const t = useTeinte(ton);
+  const illus = useIllustrations();
+  const avecSticker = !!sticker && illus.stickers;
   return (
     <Pressable
       onPress={() => {
@@ -255,9 +344,13 @@ export function TuileRubrique({ icon, title, sub, onPress, ton = 'indigo' }: { i
       ]}
     >
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: t.fond, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name={icon} size={22} color={t.encre} />
-        </View>
+        {avecSticker ? (
+          <Image source={illus.img(sticker!)} style={{ width: 50, height: 50 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+        ) : (
+          <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name={icon} size={22} color={t.encre} />
+          </View>
+        )}
         <Icon name="chevron" size={16} color={pal.texte3} />
       </View>
       <View style={{ gap: 2 }}>
@@ -299,6 +392,115 @@ export function ActionGrid({ children }: { children: React.ReactNode }) {
   );
 }
 
+// ===== Maquette A, tableau de bord (27 octobre 2026) =====
+
+/** Taille unique des stickers des cartes de carrousel, et des tuiles d'interrupteur */
+export const TAILLE_STICKER_CARTE = 34;
+export const TAILLE_STICKER_BASCULE = 30;
+const LARGEUR_CARTE = 108;
+const HAUTEUR_CARTE = 92;
+
+/** Interrupteur pastel, purement visuel : la tuile entiere porte le toucher et l'etat */
+export function Interrupteur({ on, piste }: { on: boolean; piste: string }) {
+  const eteint = paletteSombre() ? 'rgba(255,255,255,0.18)' : '#D6DAE6';
+  return (
+    <View pointerEvents="none" style={{ width: 38, height: 22, borderRadius: 11, backgroundColor: on ? piste : eteint, justifyContent: 'center' }}>
+      <View style={{ position: 'absolute', top: 3, left: on ? 19 : 3, width: 16, height: 16, borderRadius: 8, backgroundColor: '#FFFFFF', shadowColor: '#000000', shadowOpacity: 0.15, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 }} />
+    </View>
+  );
+}
+
+/** Tuile pastel a interrupteur (trois par ligne) : sticker, interrupteur, nom, etat court */
+export function TuileBascule({ label, state, on, ton, sticker, busy, accessibilityHint, onPress }: { label: string; state: string; on: boolean; ton: TonPastel; sticker: NomSticker; busy?: boolean; accessibilityHint?: string; onPress: () => void }) {
+  const p = pastelTuile(ton);
+  const illus = useIllustrations();
+  return (
+    <Pressable
+      onPress={() => {
+        selectionAsync().catch(() => {});
+        onPress();
+      }}
+      disabled={busy}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: on, busy: !!busy }}
+      accessibilityLabel={`${label}, ${accessibilityHint ?? state}`}
+      style={({ pressed }) => ({ flex: 1, minHeight: 108, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 12, gap: 8, backgroundColor: p.fond, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Image source={illus.img(sticker)} style={{ width: TAILLE_STICKER_BASCULE, height: TAILLE_STICKER_BASCULE, opacity: busy ? 0.5 : 1 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+        <Interrupteur on={on} piste={p.piste} />
+      </View>
+      <Ink size={13} weight="black" tight color={p.texte} numberOfLines={2} style={{ lineHeight: 16 }}>{label}</Ink>
+      <Ink size={11} weight="bold" color={p.texte2} numberOfLines={2} style={{ lineHeight: 14 }}>{busy ? traduire('Un instant') : state}</Ink>
+    </Pressable>
+  );
+}
+
+/** Rangee des trois tuiles a interrupteur, marges egales */
+export function RangeeBascules({ children }: { children: React.ReactNode }) {
+  return <View style={{ flexDirection: 'row', alignItems: 'stretch', gap: 8 }}>{children}</View>;
+}
+
+/** Carte blanche d'un carrousel : sticker en haut, nom en bas ; allumee, un contour et une pastille de la couleur de la section */
+export function CarteOutil({ label, state, sticker, icon, on, busy, couleur, onPress }: { label: string; state?: string; sticker?: NomSticker; icon: IconName; on?: boolean; busy?: boolean; couleur: string; onPress: () => void }) {
+  const pal = usePaletteProgramme();
+  const illus = useIllustrations();
+  return (
+    <Pressable
+      onPress={() => {
+        selectionAsync().catch(() => {});
+        onPress();
+      }}
+      disabled={busy}
+      accessibilityRole="button"
+      accessibilityState={{ selected: !!on, busy: !!busy }}
+      accessibilityLabel={state ? `${label}, ${state}` : label}
+      style={({ pressed }) => [
+        { width: LARGEUR_CARTE, height: HAUTEUR_CARTE, borderRadius: 18, padding: 10, backgroundColor: pal.carte, justifyContent: 'space-between', borderWidth: 2, borderColor: on ? couleur : 'transparent', opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
+        ombre(pal.indigo),
+      ]}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        {sticker ? (
+          <Image source={illus.img(sticker)} style={{ width: TAILLE_STICKER_CARTE, height: TAILLE_STICKER_CARTE, opacity: busy ? 0.5 : 1 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+        ) : (
+          <View style={{ width: TAILLE_STICKER_CARTE, height: TAILLE_STICKER_CARTE, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name={busy ? 'sync' : icon} size={22} color={couleur} />
+          </View>
+        )}
+        {on ? <View style={{ width: 8, height: 8, borderRadius: 4, marginTop: 2, backgroundColor: couleur }} /> : null}
+      </View>
+      <Ink size={12.5} weight="black" tight color={pal.texte} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85} style={{ lineHeight: 15 }}>{busy ? traduire('Un instant') : label}</Ink>
+    </Pressable>
+  );
+}
+
+/** Une section du tableau de bord : petit titre en capitales de couleur, « Tout voir » a droite, carrousel horizontal qui deborde jusqu'au bord */
+export function SectionCarrousel({ titre, couleur, onToutVoir, children }: { titre: string; couleur: string; onToutVoir: () => void; children: React.ReactNode }) {
+  const pal = usePaletteProgramme();
+  return (
+    <View style={{ gap: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 24 }}>
+        <Ink size={11.5} weight="black" color={couleur} style={{ letterSpacing: 1.4 }} accessibilityRole="header">{titre.toLocaleUpperCase()}</Ink>
+        <Pressable
+          onPress={() => {
+            selectionAsync().catch(() => {});
+            onToutVoir();
+          }}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={`${traduire('Tout voir')}, ${titre}`}
+        >
+          <Ink size={12} weight="extraBold" color={pal.accent}>{traduire('Tout voir')}</Ink>
+        </Pressable>
+      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -GUTTER, overflow: 'visible' }} contentContainerStyle={{ paddingHorizontal: GUTTER, paddingTop: 2, paddingBottom: 12, gap: 8 }}>
+        {children}
+      </ScrollView>
+    </View>
+  );
+}
+
 // ===== Pastilles =====
 
 /** Pastille de choix (44 points de haut) */
@@ -315,9 +517,9 @@ export function Chip({ label, on, onPress, accessibilityLabel, disabled }: { lab
       accessibilityRole="button"
       accessibilityState={{ selected: !!on, disabled: !!disabled }}
       accessibilityLabel={accessibilityLabel ?? label}
-      style={({ pressed }) => ({ minHeight: 44, minWidth: 44, paddingHorizontal: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.45 : 1, backgroundColor: on ? c.accent : pressed ? c.fillSubtle : c.fillSoft })}
+      style={({ pressed }) => ({ minHeight: 44, minWidth: 44, paddingHorizontal: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.45 : 1, backgroundColor: on ? c.primary : pressed ? c.fillSubtle : c.fillSoft })}
     >
-      <Ink size={14} weight="extraBold" color={on ? '#FFFFFF' : c.ink}>{label}</Ink>
+      <Ink size={14} weight="extraBold" color={on ? c.onPrimary : c.ink}>{label}</Ink>
     </Pressable>
   );
 }
@@ -376,8 +578,9 @@ export function SearchField({ value, onChange, placeholder, label }: { value: st
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, borderRadius: 20, borderWidth: 1, borderColor: c.divider, backgroundColor: c.surface, paddingHorizontal: 14 }}>
-      <Icon name="search" size={18} color={c.textMuted} />
+    // 27 octobre 2026, maquette A : champ en pilule blanche, ombre douce, sans contour
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 46, borderRadius: 23, backgroundColor: c.surface, paddingHorizontal: 16, shadowColor: '#1D2033', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 2 }, elevation: 1 }}>
+      <Icon name="search" size={17} color={c.textMuted} />
       <TextInput
         value={value}
         onChangeText={onChange}
@@ -387,7 +590,7 @@ export function SearchField({ value, onChange, placeholder, label }: { value: st
         autoCorrect={false}
         clearButtonMode="while-editing"
         accessibilityLabel={label}
-        style={{ flex: 1, fontSize: 16, color: c.ink, paddingVertical: 12 }}
+        style={{ flex: 1, fontSize: 15, color: c.ink, paddingVertical: 11 }}
       />
       {value ? (
         <Pressable onPress={() => onChange('')} accessibilityRole="button" accessibilityLabel={traduire("Effacer la recherche")} hitSlop={8} style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center' }}>

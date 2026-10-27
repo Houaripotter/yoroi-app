@@ -11,21 +11,26 @@
  *  4. « Une question ? » : quatre tuiles, poids de départ, séries et répétitions, quand monter la charge, quand
  *     j'atteins mon but (app/objectif.tsx). Les textes viennent de charge.ts et du catalogue.
  * Les réglages (fin de séance, jours, modules) restent sur la page du programme.
+ * 27 octobre 2026, refonte (maquette Coach-Accueil, « aperçus vivants ») : grand titre sur la page claire, « Trouve mon
+ * programme » en carte bleu pastel avec sa petite semaine, « Je sais ce que je veux » en lilas avec les étiquettes,
+ * « Juste une séance » en crème avec ses barres, les questions en cartes blanches avec un petit visuel chacune.
+ * Aucune navigation ni donnée ne change. Ancien rendu : _archive_ancien_design_2026-10-09/coach_2026-10-27/.
  */
 import React, { useCallback, useRef, useState } from 'react';
-import { DeviceEventEmitter, Pressable, ScrollView, View } from 'react-native';
+import { DeviceEventEmitter, Image, Pressable, ScrollView, View } from 'react-native';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Sheet, tap } from '@/components/yoroi/v2/seances/ui';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
-import type { IconName } from '@/components/yoroi/v2/seances/Icon';
-import { CarteIllustree, EnTeteRond, nomCourt, salutation, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
+import { Capitales, EnTeteRond, nomCourt, ombrePastel, salutation, usePastel } from '@/components/yoroi/v2/programmes/Habillage';
+import { PuceConseil } from '@/components/yoroi/v2/programmes/ChoixVisuels';
 import { FeuillePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
 import { TesJoursEnCours } from '@/components/yoroi/v2/programmes/TesJours';
 import { getProfile } from '@/lib/database';
-import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { PROGRESSION } from '@/lib/v2/programmes/catalogue';
 import { sourceParId } from '@/lib/v2/programmes/sources';
 import { safeOpenURL } from '@/lib/security/validators';
@@ -40,10 +45,14 @@ export default function CoachScreen() {
   const c = theme.colors;
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const pal = usePaletteProgramme();
+  // 27 octobre 2026 : les couleurs pastel des maquettes Coach (Habillage.tsx, usePastel)
+  const pa = usePastel();
+  // 27 octobre 2026 : stickers a la place des pictos (ou l'ancien rendu, reglage Illustrations)
+  const illus = useIllustrations();
   const [actif, setActif] = useState<ProgrammeActif | null>(null);
   const [, setCharge] = useState(false);
-  const [femme, setFemme] = useState(false);
+  // 27 octobre 2026 : le personnage n'est plus affiché ici (maquette Coach-Accueil), le profil est toujours lu
+  const [, setFemme] = useState(false);
   const [nom, setNom] = useState<string | null>(null);
   const [poidsOuvert, setPoidsOuvert] = useState(false);
   const [seriesOuvert, setSeriesOuvert] = useState(false);
@@ -81,73 +90,123 @@ export default function CoachScreen() {
   const suite = actif ? prochainJour(actif) : null;
   const p = suite?.programme ?? null;
   const jour = suite?.jour ?? null;
-  const BLANC = c.onDark;
 
   const depart = (chemin?: 'liste') => {
     tap();
     router.push({ pathname: '/coach-depart' as any, params: chemin ? { chemin } : {} });
   };
 
-  const tuiles: { cle: string; chiffre?: string; icone?: IconName; couleur: string; titre: string; action: () => void }[] = [
-    { cle: 'poids', chiffre: 'kg ?', couleur: pal.indigo, titre: traduire('Quel poids je prends'), action: () => { tap(); setPoidsOuvert(true); } },
-    { cle: 'series', chiffre: '3 × 10', couleur: pal.indigo, titre: traduire('Séries et répétitions'), action: () => { tap(); setSeriesOuvert(true); } },
-    { cle: 'monter', chiffre: '+5 %', couleur: pal.vert, titre: traduire('Quand monter la charge'), action: () => { tap(); setMonterOuvert(true); } },
-    { cle: 'but', icone: 'calendar', couleur: pal.orange, titre: traduire('Quand j’atteins mon but'), action: () => { tap(); router.push('/objectif' as any); } },
+  // 27 octobre 2026 (maquette Coach-Accueil, « aperçus vivants ») : chaque question montre un petit visuel
+  const tuiles: { cle: 'poids' | 'series' | 'monter' | 'but'; titre: string; action: () => void }[] = [
+    { cle: 'poids', titre: traduire('Quel poids je prends'), action: () => { tap(); setPoidsOuvert(true); } },
+    { cle: 'series', titre: traduire('Séries et répétitions'), action: () => { tap(); setSeriesOuvert(true); } },
+    { cle: 'monter', titre: traduire('Quand monter la charge'), action: () => { tap(); setMonterOuvert(true); } },
+    { cle: 'but', titre: traduire('Quand j’atteins mon but'), action: () => { tap(); router.push('/objectif' as any); } },
   ];
+  // la petite semaine de la carte « Trouve mon programme » : un exemple dessiné, deux séances en alternance
+  const lettres = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'].map((j) => traduire(j).charAt(0).toLocaleUpperCase());
+  const exemple: ('a' | 'b' | null)[] = ['a', 'b', null, 'a', null, 'b', null];
 
   return (
-    <View style={{ flex: 1, backgroundColor: pal.page }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 18, paddingBottom: insets.bottom + 40, gap: 16 }} showsVerticalScrollIndicator={false}>
+    <View style={{ flex: 1, backgroundColor: pa.page }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 40, gap: 10 }} showsVerticalScrollIndicator={false}>
         <EnTeteRond salut={traduire('Ton coach')} titre={salutation(nom)} repli="/(tabs)" />
 
-        {/* 26 octobre 2026 (Houari : « la présentation, tu devrais mieux faire ») : la carte indigo illustrée en tête,
-            puis les trois choix en tuiles colorées, le programme en cours dans la carte */}
-        <CarteIllustree
-          surtitre={traduire('Ton coach')}
-          titre={traduire('On fait quoi aujourd’hui ?')}
-          texte={traduire('Choisis, je m’occupe du reste.')}
-          image={sportImage('musculation', femme, 1)}
-          style={{ minHeight: 200 }}
-        >
-          {p && jour ? (
-            <Pressable
-              onPress={() => { tap(); router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } }); }}
-              accessibilityRole="button"
-              accessibilityLabel={`${traduire('Continuer')}, ${traduire(p.titre)}`}
-              style={({ pressed }) => ({ alignSelf: 'flex-start', maxWidth: '68%', minHeight: 48, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: BLANC, opacity: pressed ? 0.9 : 1, justifyContent: 'center' })}
-            >
-              <Ink size={12} weight="bold" color={pal.texte2} numberOfLines={1}>{traduire('Continuer')}</Ink>
-              <Ink size={14} weight="black" color={pal.indigo} numberOfLines={1}>{nomCourt(traduire(p.titre))}</Ink>
-            </Pressable>
-          ) : null}
-        </CarteIllustree>
+        {/* 27 octobre 2026 : le grand titre sur la page claire, plus de grande carte indigo (« le bleu plein est trop fort ») */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6 }}>
+          <View style={{ flex: 1, gap: 4 }}>
+            <Ink size={28} weight="black" tight color={pa.texte} accessibilityRole="header" style={{ lineHeight: 32 }}>{traduire('On fait quoi aujourd’hui ?')}</Ink>
+            <Ink size={15} weight="bold" color={pa.texte2}>{traduire('Choisis, je m’occupe du reste.')}</Ink>
+          </View>
+          {illus.stickers ? <Image source={illus.img('coach')} style={{ width: 48, height: 48 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
+        </View>
+
+        {p && jour ? (
+          <Pressable
+            onPress={() => { tap(); router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } }); }}
+            accessibilityRole="button"
+            accessibilityLabel={`${traduire('Continuer')}, ${traduire(p.titre)}`}
+            style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 22, backgroundColor: pressed ? pa.boutonAppui : pa.bouton }, ombrePastel(pa.ombre)]}
+          >
+            <View style={{ flex: 1, gap: 2 }}>
+              <Ink size={12} weight="bold" color={pa.surBouton} numberOfLines={1}>{traduire('Continuer')}</Ink>
+              <Ink size={16} weight="black" color={pa.surBouton} numberOfLines={1}>{nomCourt(traduire(p.titre))}</Ink>
+            </View>
+            <Icon name="chevron" size={16} color={pa.surBouton} />
+          </Pressable>
+        ) : null}
 
         {/* 27 octobre 2026 : tes jours, séance par séance, modifiables d'ici aussi (TesJours.tsx) */}
         {p ? <TesJoursEnCours programme={p} /> : null}
 
+        {/* TROUVE MON PROGRAMME : la carte bleu pastel, conseillée, avec sa petite semaine */}
         <Pressable
-          onPress={() => depart('liste')}
+          onPress={() => depart()}
           accessibilityRole="button"
-          accessibilityLabel={`${traduire('Je sais ce que je veux')}, ${traduire('PPL, Upper Lower, Push Pull...')}`}
-          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 104, padding: 18, borderRadius: 26, backgroundColor: pal.teinte, opacity: pressed ? 0.9 : 1 })}
+          accessibilityLabel={`${traduire('Trouve mon programme')}, ${traduire('Quelques questions')}`}
+          style={({ pressed }) => ({ marginTop: 6, borderRadius: 24, paddingVertical: 14, paddingHorizontal: 16, gap: 4, backgroundColor: pa.bleu.fond, transform: [{ scale: pressed ? 0.98 : 1 }] })}
         >
-          <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: pal.carte, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="list" size={28} color={pal.indigo} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <Capitales texte={traduire('Trouve mon programme')} couleur={pa.bleu.titre} />
+            <PuceConseil texte={traduire('Conseillé')} />
           </View>
-          <View style={{ flex: 1, gap: 4 }}>
-            <Ink size={19} weight="black" tight color={pal.texte}>{traduire('Je sais ce que je veux')}</Ink>
-            <Ink size={13} weight="bold" color={pal.texte2}>{traduire('PPL, Upper Lower, Push Pull...')}</Ink>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Ink size={17} weight="black" tight color={pa.texte} style={{ flex: 1 }}>{traduire('Quelques questions')}</Ink>
+            {illus.stickers ? <Image source={illus.img('recherche')} style={{ width: 40, height: 40 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
           </View>
-          <Icon name="chevron" size={18} color={pal.indigo} />
+          <View style={{ flexDirection: 'row', gap: 4, marginTop: 6 }} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+            {exemple.map((x, k) => (
+              <View key={k} style={{ flex: 1, alignItems: 'center', gap: 3 }}>
+                <View style={{ alignSelf: 'stretch', height: 30, borderRadius: 9, backgroundColor: x === 'a' ? pa.bleu.barre2 : x === 'b' ? pa.menthe.barre2 : pa.carte }} />
+                <Ink size={10} weight="bold" color={pa.texte2}>{lettres[k]}</Ink>
+              </View>
+            ))}
+          </View>
         </Pressable>
 
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <TuileChoix icone="search" fond={pal.orangeTint} encre={pal.orange} titre={traduire('Trouve mon programme')} sous={traduire('Quelques questions')} onPress={() => depart()} />
-          <TuileChoix icone="bolt" fond={pal.vertTint} encre={pal.vert} titre={traduire('Juste une séance')} sous={traduire('Tout de suite')} onPress={() => { tap(); router.push('/programmes/zones' as any); }} />
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          {/* JE SAIS CE QUE JE VEUX : lilas, les étiquettes des programmes */}
+          <Pressable
+            onPress={() => depart('liste')}
+            accessibilityRole="button"
+            accessibilityLabel={`${traduire('Je sais ce que je veux')}, ${traduire('PPL, Upper Lower, Push Pull...')}`}
+            style={({ pressed }) => ({ flex: 1, minHeight: 120, borderRadius: 22, paddingVertical: 12, paddingHorizontal: 14, gap: 8, backgroundColor: pa.lilas.fond, transform: [{ scale: pressed ? 0.97 : 1 }] })}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+              <View style={{ flex: 1 }}><Capitales texte={traduire('Je sais ce que je veux')} couleur={pa.lilas.titre} taille={10.5} /></View>
+              {illus.stickers ? <Image source={illus.img('seance_rapide')} style={{ width: 36, height: 36, marginTop: -4, marginRight: -4 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
+            </View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5 }} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+              {['PPL', 'Upper Lower', 'Full body'].map((e) => (
+                <View key={e} style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 9, backgroundColor: pa.carte }}>
+                  <Ink size={11.5} weight="extraBold" color={pa.texte}>{e}</Ink>
+                </View>
+              ))}
+            </View>
+          </Pressable>
+
+          {/* JUSTE UNE SÉANCE : crème, quatre barres qui se remplissent */}
+          <Pressable
+            onPress={() => { tap(); router.push('/programmes/zones' as any); }}
+            accessibilityRole="button"
+            accessibilityLabel={`${traduire('Juste une séance')}, ${traduire('Tout de suite')}`}
+            style={({ pressed }) => ({ flex: 1, minHeight: 120, borderRadius: 22, paddingVertical: 12, paddingHorizontal: 14, gap: 8, justifyContent: 'space-between', backgroundColor: pa.creme.fond, transform: [{ scale: pressed ? 0.97 : 1 }] })}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+              <View style={{ flex: 1 }}><Capitales texte={traduire('Juste une séance')} couleur={pa.creme.titre} taille={10.5} /></View>
+              {illus.stickers ? <Image source={illus.img('force_eclair')} style={{ width: 36, height: 36, marginTop: -4, marginRight: -4 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
+            </View>
+            <Ink size={15} weight="black" color={pa.texte}>{traduire('Tout de suite')}</Ink>
+            <View style={{ flexDirection: 'row', gap: 4, height: 22 }} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+              {[pa.creme.barre, pa.creme.barre, pa.creme.barre2, pa.carte].map((b, k) => (
+                <View key={k} style={{ flex: 1, borderRadius: 5, backgroundColor: b }} />
+              ))}
+            </View>
+          </Pressable>
         </View>
 
         {/* 3. UNE QUESTION ? */}
-        <Ink size={18} weight="black" tight color={pal.texte} accessibilityRole="header" style={{ marginTop: 4 }}>{traduire('Une question ?')}</Ink>
+        <Ink size={16} weight="black" tight color={pa.texte} accessibilityRole="header" style={{ marginTop: 10, marginHorizontal: 2 }}>{traduire('Une question ?')}</Ink>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           {tuiles.map((t) => (
             <Pressable
@@ -155,10 +214,10 @@ export default function CoachScreen() {
               onPress={t.action}
               accessibilityRole="button"
               accessibilityLabel={t.titre}
-              style={({ pressed }) => ({ width: '47%', flexGrow: 1, minHeight: 104, borderRadius: 22, padding: 16, gap: 10, backgroundColor: pal.carte, opacity: pressed ? 0.85 : 1 })}
+              style={({ pressed }) => [{ width: '47%', flexGrow: 1, minHeight: 92, borderRadius: 20, padding: 12, gap: 8, backgroundColor: pressed ? pa.choisi : pa.carte }, ombrePastel(pa.ombre)]}
             >
-              {t.icone ? <Icon name={t.icone} size={26} color={t.couleur} /> : <Ink size={22} weight="black" color={t.couleur}>{t.chiffre}</Ink>}
-              <Ink size={13} weight="extraBold" color={pal.texte}>{t.titre}</Ink>
+              <ApercuQuestion cle={t.cle} />
+              <Ink size={13} weight="extraBold" color={pa.texte} style={{ lineHeight: 17 }}>{t.titre}</Ink>
             </Pressable>
           ))}
         </View>
@@ -208,24 +267,44 @@ export default function CoachScreen() {
   );
 }
 
-/** Une tuile de choix carrée, colorée */
-function TuileChoix({ icone, fond, encre, titre, sous, onPress }: { icone: IconName; fond: string; encre: string; titre: string; sous: string; onPress: () => void }) {
-  const pal = usePaletteProgramme();
+/** Le petit visuel de chaque question (maquette Coach-Accueil) : la barre chargée, 3 × 10, la courbe qui monte, l'anneau rempli */
+function ApercuQuestion({ cle }: { cle: 'poids' | 'series' | 'monter' | 'but' }) {
+  const pa = usePastel();
+  const illus = useIllustrations();
+  if (cle === 'series') {
+    return (
+      <View style={{ height: 30, flexDirection: 'row', alignItems: 'center', gap: 6 }} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+        <Ink size={22} weight="black" color={pa.menthe.titre}>3</Ink>
+        <Ink size={14} weight="black" color={pa.texte2}>×</Ink>
+        <Ink size={22} weight="black" color={pa.menthe.titre}>10</Ink>
+      </View>
+    );
+  }
+  if (cle === 'but' && illus.stickers) {
+    return <Image source={illus.img('calendrier')} style={{ width: 34, height: 34 }} resizeMode="contain" accessibilityIgnoresInvertColors />;
+  }
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${titre}, ${sous}`}
-      style={({ pressed }) => ({ flex: 1, minHeight: 150, padding: 16, borderRadius: 26, backgroundColor: fond, gap: 10, justifyContent: 'space-between', opacity: pressed ? 0.9 : 1 })}
-    >
-      <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: pal.carte, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name={icone} size={24} color={encre} />
-      </View>
-      <View style={{ gap: 2 }}>
-        <Ink size={16} weight="black" tight color={pal.texte}>{titre}</Ink>
-        <Ink size={12} weight="bold" color={pal.texte2}>{sous}</Ink>
-      </View>
-    </Pressable>
+    <View style={{ height: 30 }} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+      {cle === 'poids' ? (
+        <Svg width="100%" height={30} viewBox="0 0 140 30" preserveAspectRatio="none">
+          <Rect x={0} y={13} width={140} height={4} rx={2} fill={pa.bleu.fond} />
+          <Rect x={18} y={4} width={10} height={22} rx={3} fill={pa.bleu.barre} />
+          <Rect x={30} y={7} width={8} height={16} rx={3} fill={pa.bleu.barre2} />
+          <Rect x={112} y={4} width={10} height={22} rx={3} fill={pa.bleu.barre} />
+          <Rect x={102} y={7} width={8} height={16} rx={3} fill={pa.bleu.barre2} />
+        </Svg>
+      ) : cle === 'monter' ? (
+        <Svg width="100%" height={30} viewBox="0 0 140 30" preserveAspectRatio="none">
+          <Path d="M4 26 C30 24, 40 18, 60 18 S 100 10, 132 4" fill="none" stroke={pa.creme.titre} strokeWidth={3} strokeLinecap="round" />
+          <Circle cx={132} cy={4} r={3.5} fill={pa.carte} stroke={pa.creme.titre} strokeWidth={2.5} />
+        </Svg>
+      ) : (
+        <Svg width={30} height={30} viewBox="0 0 36 36">
+          <Circle cx={18} cy={18} r={14} fill="none" stroke={pa.lilas.fond} strokeWidth={5} />
+          <Circle cx={18} cy={18} r={14} fill="none" stroke={pa.lilas.barre} strokeWidth={5} />
+          <Path d="M12 18l4 4 8-8" fill="none" stroke={pa.lilas.titre} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
+        </Svg>
+      )}
+    </View>
   );
 }
-

@@ -33,6 +33,7 @@ import { sportImage, sportTint } from '@/lib/v2/seance/sportVisuals';
 import { Icon } from './Icon';
 import { Stepper } from './Stepper';
 import { blancA, paletteSombre } from '@/components/yoroi/livePalette';
+import { fondAjouter, PlusPastille } from '@/components/yoroi/v2/accueil/kit';
 import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 const DURATIONS = [30, 45, 60, 90, 120];
@@ -250,9 +251,9 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
             <Pressable onPress={() => pickClub(null)} accessibilityRole="button" accessibilityState={{ selected: value.clubId === null }} style={{ ...chosen(value.clubId === null), minHeight: 48, paddingHorizontal: 14, borderRadius: 16, justifyContent: 'center' }}>
               <Ink size={14} weight="extraBold" color={value.clubId === null ? d.texte : c.ink}>{traduire("Sans club")}</Ink>
             </Pressable>
-            <Pressable onPress={() => router.push('/add-club' as any)} accessibilityRole="button" accessibilityLabel={traduire("Ajouter un club")} style={{ minHeight: 48, paddingHorizontal: 12, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: c.border }}>
-              <Icon name="plus" size={14} strokeWidth={2.8} color={c.textSecondary} />
-              <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Un club")}</Ink>
+            <Pressable onPress={() => router.push('/add-club' as any)} accessibilityRole="button" accessibilityLabel={traduire("Ajouter un club")} style={{ minHeight: 48, paddingHorizontal: 12, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: fondAjouter() }}>
+              <PlusPastille taille={24} />
+              <Ink size={13} weight="extraBold" color={c.accentText}>{traduire("Un club")}</Ink>
             </Pressable>
           </View>
         ) : null}

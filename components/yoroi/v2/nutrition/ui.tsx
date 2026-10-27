@@ -36,9 +36,9 @@ export function toneColor(t: Tone): { fg: string; soft: string } {
     case 'moss':
       return { fg: P.mossText, soft: P.mossSoft };
     case 'ink':
-      return { fg: P.ink, soft: '#ECEAE4' };
+      return { fg: P.ink, soft: '#EEF0F7' };
     default:
-      return { fg: P.ink2, soft: '#ECEAE4' };
+      return { fg: P.ink2, soft: '#EEF0F7' };
   }
 }
 
@@ -401,8 +401,8 @@ export function HRow({ children, gap = 8 }: { children: React.ReactNode; gap?: n
 export function Chip({ label, active, onPress, accent = P.ink }: { label: string; active?: boolean; onPress: () => void; accent?: string }) {
   return (
     <Press onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: !!active }} accessibilityLabel={label}>
-      <View style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? accent : P.white, borderWidth: 1, borderColor: active ? accent : P.line2 }}>
-        <Ink size={14} weight={active ? 'extraBold' : 'bold'} color={active ? P.white : P.ink2}>
+      <View style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? (accent === P.ink ? P.primary : accent) : P.white, borderWidth: 1, borderColor: active ? (accent === P.ink ? P.primary : accent) : P.line2 }}>
+        <Ink size={14} weight={active ? 'extraBold' : 'bold'} color={active ? (accent === P.ink ? P.onPrimary : P.white) : P.ink2}>
           {label}
         </Ink>
       </View>
@@ -428,7 +428,7 @@ export function GenderSwitch({ value, onChange }: { value: 'male' | 'female'; on
 export function Stepper({ value, onChange, min = 1, max = 365, unit }: { value: number; onChange: (v: number) => void; min?: number; max?: number; unit: string }) {
   const btn = (icon: 'minus' | 'plus', next: number, label: string) => (
     <Press onPress={() => onChange(Math.max(min, Math.min(max, next)))} accessibilityRole="button" accessibilityLabel={label}>
-      <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: 'transparent',  alignItems: 'center', justifyContent: 'center' }}>
         <NIcon name={icon} size={22} />
       </View>
     </Press>

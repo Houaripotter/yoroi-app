@@ -19,6 +19,11 @@ export const VIDEOS_SCENES: Partial<Record<SceneAnimeeId, number>> = {
   balancoire_plage: require('@/assets/avatars/app/scenes_voyages/video/sc08.mp4'),
   toit_train: require('@/assets/avatars/app/scenes_voyages/video/sc05.mp4'),
   passage_niveau_mer: require('@/assets/avatars/app/scenes_voyages/video/sc04.mp4'),
+  // 27 octobre 2026 : scenes de Marseille (Veo dans Gemini, boucle de 8 s avec fondu de 1 s, 1200 x 670, sans son).
+  // L'image fixe (sc13...) est la premiere image de la video. Brut et controle : _propositions/scenes_marseille_2026-10-27/.
+  calanque_couchant: require('@/assets/avatars/app/scenes_voyages/video/sc13.mp4'),
+  // sc16 : la video de Veo enchaine sur une autre scene apres 7 s, la boucle (5 s) est prise avant
+  corniche_moto: require('@/assets/avatars/app/scenes_voyages/video/sc16.mp4'),
 };
 
 

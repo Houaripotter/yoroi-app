@@ -29,8 +29,8 @@ export function RoundBtn({ icon, label, onPress, tone }: { icon: IconName; label
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: tone === 'accent' ? (pressed ? c.accentPressed : c.accent) : pressed ? P.white : blancA(0.86), borderWidth: tone === 'accent' ? 0 : 1, borderColor: P.white, shadowColor: '#1D2029', shadowOpacity: tone === 'accent' ? 0 : 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: tone === 'accent' ? 0 : 2 })}>
-      <Icon name={icon} size={20} color={tone === 'accent' ? '#FFFFFF' : c.ink} strokeWidth={2.4} />
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: tone === 'accent' ? (pressed ? c.primaryPressed : c.primary) : pressed ? P.white : blancA(0.86), borderWidth: tone === 'accent' ? 0 : 1, borderColor: P.white, shadowColor: '#1D2029', shadowOpacity: tone === 'accent' ? 0 : 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: tone === 'accent' ? 0 : 2 })}>
+      <Icon name={icon} size={20} color={tone === 'accent' ? P.onPrimary : c.ink} strokeWidth={2.4} />
     </Pressable>
   );
 }
@@ -106,8 +106,8 @@ export function ValueSheet({
         />
       </View>
       {error ? <Ink size={13} weight="bold" color={c.danger} style={{ paddingHorizontal: 4 }}>{error}</Ink> : null}
-      <Pressable onPress={submit} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-        <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Enregistrer")}</Ink>
+      <Pressable onPress={submit} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
+        <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Enregistrer")}</Ink>
       </Pressable>
       {onDelete ? (
         <Pressable onPress={onDelete} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>

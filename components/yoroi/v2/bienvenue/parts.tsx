@@ -88,8 +88,8 @@ export function StepScreen({
 
 /** Gros bouton encre (style maquette Bienvenue) */
 export function InkButton({ label, onPress, disabled, tone = 'red', loading }: { label: string; onPress: () => void; disabled?: boolean; tone?: 'ink' | 'red' | 'light'; loading?: boolean }) {
-  const bg = tone === 'ink' ? P.ink : tone === 'red' ? P.accent : P.white;
-  const fg = tone === 'light' ? P.ink : P.white;
+  const bg = tone === 'ink' ? P.ink : tone === 'red' ? P.primary : P.white;
+  const fg = tone === 'light' ? P.ink : tone === 'red' ? P.onPrimary : P.white;
   return (
     <Press onPress={disabled || loading ? undefined : onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: !!disabled }}>
       <View style={{ minHeight: 56, borderRadius: 18, backgroundColor: bg, borderWidth: tone === 'light' ? 1 : 0, borderColor: P.line2, alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.35 : 1 }}>
@@ -113,8 +113,8 @@ export function CheckRow({ checked, onToggle, label }: { checked: boolean; onTog
   return (
     <Press onPress={onToggle} accessibilityRole="checkbox" accessibilityState={{ checked }} accessibilityLabel={label}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: P.white, borderRadius: 18, borderWidth: checked ? 2 : 1, borderColor: checked ? P.ink : P.line2, padding: 14 }}>
-        <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: checked ? P.accent : 'transparent', borderWidth: checked ? 0 : 2, borderColor: '#D5D2CA', alignItems: 'center', justifyContent: 'center' }}>
-          {checked ? <EIcon name="check" size={15} color={P.white} stroke={3} /> : null}
+        <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: checked ? P.primary : 'transparent', borderWidth: checked ? 0 : 2, borderColor: '#C9CEDF', alignItems: 'center', justifyContent: 'center' }}>
+          {checked ? <EIcon name="check" size={15} color={P.onPrimary} stroke={3} /> : null}
         </View>
         <Ink size={14} weight="bold" style={{ flex: 1 }}>{label}</Ink>
       </View>
@@ -144,8 +144,8 @@ export function IlluTile({ image, label, sub, selected, onPress, height = 200, s
           {sub ? <Ink size={12} weight="bold" color={P.ink2} numberOfLines={1}>{sub}</Ink> : null}
         </View>
         {selected ? (
-          <View style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: 13, backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center' }}>
-            <EIcon name="check" size={14} color={P.white} stroke={3} />
+          <View style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: 13, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center' }}>
+            <EIcon name="check" size={14} color={P.onPrimary} stroke={3} />
           </View>
         ) : null}
       </View>

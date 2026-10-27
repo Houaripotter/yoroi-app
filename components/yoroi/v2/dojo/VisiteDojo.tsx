@@ -245,9 +245,9 @@ export function VisiteDojo({ visible, mesurer, onClose }: Props) {
                 else setI(i + 1);
               }}
               accessibilityRole="button"
-              style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}
+              style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}
             >
-              <Ink size={15} weight="black" color={c.onAccent}>{premiere ? traduire('C’est parti') : derniere ? traduire('Terminer') : traduire('Suivant')}</Ink>
+              <Ink size={15} weight="black" color={c.onPrimary}>{premiere ? traduire('C’est parti') : derniere ? traduire('Terminer') : traduire('Suivant')}</Ink>
             </Pressable>
           </View>
           {premiere ? <Ink size={12} color={c.textMuted} style={{ textAlign: 'center' }}>{traduire("Tu pourras la revoir avec le bouton « ? » en haut du Dojo.")}</Ink> : null}

@@ -66,8 +66,8 @@ export default function ShareHubScreen() {
         return (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Image source={fig} style={{ width: tileW * 0.3, height: tileW * 0.42 }} resizeMode="contain" />
-            <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center' }}>
-              <Ink size={11} weight="black" color={P.white}>VS</Ink>
+            <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center' }}>
+              <Ink size={11} weight="black" color={P.onPrimary}>VS</Ink>
             </View>
             <Image source={fig} style={{ width: tileW * 0.3, height: tileW * 0.42, transform: [{ scaleX: -1 }], opacity: 0.55 }} resizeMode="contain" />
           </View>
@@ -101,7 +101,7 @@ export default function ShareHubScreen() {
             <Enter key={t.id} i={i + 1}>
               <Press onPress={() => router.push(t.route as any)} accessibilityRole="button" accessibilityLabel={traduire(t.title)}>
                 <View style={{ width: tileW, height: tileW * 1.2, borderRadius: 22, overflow: 'hidden', backgroundColor: t.dark ? '#1D2029' : P.white, borderWidth: 1, borderColor: t.dark ? '#1D2029' : P.line2, padding: 14, justifyContent: 'space-between' }}>
-                  <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: P.accent }} />
+                  <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: P.detail }} />
                   <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>{visual(t)}</View>
                   <View style={{ gap: 1 }}>
                     <Ink size={15} weight="black" tight color={p.ink} numberOfLines={2}>{traduire(t.title)}</Ink>

@@ -201,7 +201,7 @@ export function VideoLibrarySheet({ visible, onClose, muscleGroup, muscleGroupLa
               {videos.map((v) => (
                 <View key={v.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
                   <Press onPress={() => play(v)} accessibilityRole="button" accessibilityLabel={traduire("Lire {0}", v.title)}>
-                    <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: P.ink, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                       <CIcon name={v.isUrl ? 'link' : 'play'} size={24} color={P.goldLight} />
                     </View>
                   </Press>

@@ -68,7 +68,7 @@ export function AddSkillSheet(p: Props) {
       <Label>{traduire("Vidéo")}</Label>
       {p.videoUri ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
-          <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: P.ink, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
             <CIcon name="play" size={20} color={P.goldLight} />
           </View>
           <Ink size={15} weight="bold" style={{ flex: 1 }}>{traduire("Vidéo prête")}</Ink>

@@ -297,7 +297,7 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
                 <Ink size={15} weight="extraBold" style={{ paddingHorizontal: 4 }}>{traduire("Pourquoi tu l’annules ?")}</Ink>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                   {REASONS.map((r) => (
-                    <Pressable key={r} onPress={() => { tap(); setReason(r); }} accessibilityRole="button" accessibilityState={{ selected: reason === r }} style={{ minHeight: 40, paddingHorizontal: 13, justifyContent: 'center', borderRadius: 12, backgroundColor: reason === r ? c.ink : 'transparent', borderWidth: reason === r ? 0 : 1.5, borderColor: '#D5D2CA' }}>
+                    <Pressable key={r} onPress={() => { tap(); setReason(r); }} accessibilityRole="button" accessibilityState={{ selected: reason === r }} style={{ minHeight: 40, paddingHorizontal: 13, justifyContent: 'center', borderRadius: 12, backgroundColor: reason === r ? c.ink : 'transparent', borderWidth: reason === r ? 0 : 1.5, borderColor: '#C9CEDF' }}>
                       <Ink size={13} weight="bold" color={reason === r ? c.background : c.textSecondary}>{traduire(r)}</Ink>
                     </Pressable>
                   ))}

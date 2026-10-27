@@ -7,15 +7,16 @@
  * grille discrete, couleurs de series dans l'ordre de la palette validee.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { PanResponder, View } from 'react-native';
+import { Image, PanResponder, View } from 'react-native';
 import type { GestureResponderEvent, LayoutChangeEvent } from 'react-native';
-import Svg, { Circle, ClipPath, Defs, G, Line, LinearGradient, Path, Rect, Stop, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, ClipPath, Defs, G, Image as SvgImage, Line, LinearGradient, Path, Rect, Stop, Text as SvgText } from 'react-native-svg';
 import Animated, { Easing, useAnimatedProps, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { selectionAsync } from 'expo-haptics';
 import { useYoroiTheme } from '../../YoroiThemeProvider';
 import { fontFamilies } from '../../fonts';
 import { Ink } from '../Ink';
 import { traduire } from '@/lib/i18n/tr';
+import { STICKERS, useIllustrations } from '@/components/yoroi/v2/stickers';
 
 /** Mousse : teinte d'une courbe seule (eau du corps) */
 export const CHART_MOSS = '#4D6F2A';
@@ -440,7 +441,13 @@ function TropheeG({ size, color }: { size: number; color: string }) {
 export function SealMark({ x, y, size = 22 }: { x: number; y: number; size?: number }) {
   const k = useChartInk();
   const g = useRecordGold();
+  const { stickers } = useIllustrations();
   const h = size / 2;
+  // reglage Stickers : le petit sticker trophee a la place de la coupe doree dessinee
+  if (stickers) {
+    const t = Math.round(size * 1.25);
+    return <SvgImage x={x - t / 2} y={y - t / 2} width={t} height={t} href={STICKERS.trophee} preserveAspectRatio="xMidYMid meet" />;
+  }
   return (
     <G transform={`translate(${x.toFixed(1)} ${y.toFixed(1)})`}>
       <Circle cx={0} cy={0} r={h + 1} fill={k.card} />
@@ -453,7 +460,17 @@ export function SealMark({ x, y, size = 22 }: { x: number; y: number; size?: num
 /** Le meme trophee hors graphique (legende, listes, bulle) */
 export function TropheeRecord({ size = 18, couleurs }: { size?: number; couleurs?: { fond: string; trophee: string } }) {
   const theme = useRecordGold();
+  const { stickers } = useIllustrations();
   const g = couleurs ?? theme;
+  if (stickers) {
+    // le sticker deborde un peu du rond d'avant (contour blanc), meme encombrement
+    const t = Math.round(size * 1.2);
+    return (
+      <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+        <Image source={STICKERS.trophee} style={{ width: t, height: t }} resizeMode="contain" accessibilityIgnoresInvertColors />
+      </View>
+    );
+  }
   return (
     <Svg width={size} height={size} viewBox={`${-size / 2} ${-size / 2} ${size} ${size}`}>
       <Circle cx={0} cy={0} r={size / 2} fill={g.fond} />

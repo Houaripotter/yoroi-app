@@ -91,7 +91,7 @@ export function SeanceEnCours() {
           flexDirection: 'row',
           alignItems: 'center',
           gap: 12,
-          backgroundColor: pressed ? c.accentPressed : c.accent,
+          backgroundColor: pressed ? c.primaryPressed : c.primary,
           shadowColor: c.accent,
           shadowOpacity: 0.35,
           shadowRadius: 16,

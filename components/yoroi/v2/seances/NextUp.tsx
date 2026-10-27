@@ -16,6 +16,7 @@ import { SportThumb } from './SessionRow';
 import { Icon } from './Icon';
 import { tap } from './ui';
 import { P } from '@/components/yoroi/livePalette';
+import { ombreBouton } from '@/components/yoroi/v2/accueil/kit';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export type NextSlot = { slot: WeeklyPlan; dayOffset: number };
@@ -72,8 +73,8 @@ export function NextUp({
       hitSlop={6}
       style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 12, borderRadius: 14, backgroundColor: pressed ? c.fillSubtle : c.fillSoft, alignSelf: 'flex-start' })}
     >
-      <Icon name="calendar" size={17} color={c.accent} />
-      <Ink size={14} weight="extraBold" color={c.accent}>{traduire("Calendrier")}</Ink>
+      <Icon name="calendar" size={17} color={c.accentText} />
+      <Ink size={14} weight="extraBold" color={c.accentText}>{traduire("Calendrier")}</Ink>
     </Pressable>
   ) : null;
 
@@ -83,10 +84,10 @@ export function NextUp({
         onPress={() => { tap(); slotsCount === 0 ? onCreate() : onPlanning(); }}
         accessibilityRole="button"
         accessibilityLabel={slotsCount === 0 ? traduire('Créer ta semaine type') : traduire('Ouvrir le planning')}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 22, borderWidth: 1.5, borderStyle: 'dashed', borderColor: P.dashed, backgroundColor: pressed ? P.white : P.carte })}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 22, backgroundColor: pressed ? P.bande : P.white, ...ombreBouton })}
       >
-        <View style={{ width: 48, height: 48, borderRadius: 15, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="calendar" size={22} color={c.indigo} />
+        <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="calendar" size={18} color={c.accentText} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={15} weight="extraBold">{slotsCount === 0 ? traduire('Pose ta semaine type') : traduire('Rien de prévu cette semaine')}</Ink>
@@ -111,13 +112,13 @@ export function NextUp({
   const sub = [s.duration_minutes ? formatDuration(s.duration_minutes) : '', s.club_name].filter(Boolean).join(', ');
 
   return (
-    <View style={{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: c.divider, padding: 14, gap: 12 }}>
+    <View style={{ borderRadius: 24, backgroundColor: P.white, padding: 12, gap: 12, shadowColor: '#1D2033', shadowOpacity: 0.05, shadowRadius: 14, shadowOffset: { width: 0, height: 4 }, elevation: 2 }}>
       <Pressable onPress={() => { tap(); onPlanning(); }} accessibilityRole="button" accessibilityLabel={traduire("Prochain entraînement, {0}, {1}. Ouvrir le planning", title, whenText(next))} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <SportThumb sport={s.sport} femme={femme} size={56} />
         <View style={{ flex: 1, gap: 1 }}>
-          <Ink size={12} weight="bold" color={c.indigo}>{traduire("Prochain entraînement")}</Ink>
-          <Ink size={17} weight="black" tight numberOfLines={2}>{title}</Ink>
-          <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={2}>{[whenText(next), sub].filter(Boolean).join(', ')}</Ink>
+          <Ink size={12} weight="extraBold" color={c.accentText}>{traduire("Prochain entraînement")}</Ink>
+          <Ink size={15.5} weight="black" tight numberOfLines={2}>{title}</Ink>
+          <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={2}>{[whenText(next), sub].filter(Boolean).join(', ')}</Ink>
         </View>
         <Icon name="chevron" size={18} color={c.textMuted} />
       </Pressable>
@@ -127,10 +128,10 @@ export function NextUp({
             onPress={() => { tap(); onStart(next); }}
             accessibilityRole="button"
             accessibilityLabel={traduire("Commencer {0}", title)}
-            style={({ pressed }) => ({ flex: 1, minHeight: 48, borderRadius: 15, backgroundColor: pressed ? c.fillSoft : P.white, borderWidth: 1.5, borderColor: c.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 14 })}
+            style={({ pressed }) => ({ flex: 1, minHeight: 48, borderRadius: 15, backgroundColor: pressed ? c.primaryPressed : c.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 14 })}
           >
-            <Icon name="play" size={16} color={c.accent} fill={c.accent} />
-            <Ink size={15} weight="extraBold" color={c.accent} numberOfLines={1}>{traduire("Lancer ce créneau")}</Ink>
+            <Icon name="play" size={16} color={c.onPrimary} fill={c.onPrimary} />
+            <Ink size={15} weight="extraBold" color={c.onPrimary} numberOfLines={1}>{traduire("Lancer ce créneau")}</Ink>
           </Pressable>
         ) : (
           <View style={{ flex: 1 }}>{calendarLink}</View>

@@ -334,8 +334,8 @@ export default function TransformationScreen() {
                 <View>
                   <Image source={{ uri: p.file_uri }} style={{ width: thumbW, height: thumbW * 1.33, borderRadius: 12, borderWidth: isA || isB ? 3 : 0, borderColor: c.accent, opacity: isA || isB ? 1 : 0.85 }} resizeMode="cover" />
                   {isA || isB ? (
-                    <View style={{ position: 'absolute', left: 4, bottom: 4, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 7, backgroundColor: c.accent }}>
-                      <Ink size={10} weight="extraBold" color={c.onAccent}>{isA ? traduire('Avant') : traduire('Après')}</Ink>
+                    <View style={{ position: 'absolute', left: 4, bottom: 4, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 7, backgroundColor: c.primary }}>
+                      <Ink size={10} weight="extraBold" color={c.onPrimary}>{isA ? traduire('Avant') : traduire('Après')}</Ink>
                     </View>
                   ) : null}
                 </View>

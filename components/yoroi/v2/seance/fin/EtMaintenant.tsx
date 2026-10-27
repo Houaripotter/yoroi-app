@@ -108,8 +108,8 @@ export function EtMaintenant({
       <Animated.View entering={entree} style={{ marginHorizontal: 22, marginTop: 18, gap: 8 }}>
         {titreBloc}
         {suite.cri ? (
-          <View style={{ borderRadius: 18, padding: 14, backgroundColor: c.darkCard }}>
-            <Ink size={15} weight="extraBold" color={c.onDark} style={{ lineHeight: 21 }}>{suite.cri}</Ink>
+          <View style={{ borderRadius: 18, padding: 14, backgroundColor: c.carteDouce }}>
+            <Ink size={15} weight="extraBold" color={c.onPrimary} style={{ lineHeight: 21 }}>{suite.cri}</Ink>
           </View>
         ) : null}
         <Pressable

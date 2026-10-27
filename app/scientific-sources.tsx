@@ -64,7 +64,7 @@ const SOURCES: { category: string; color: string; soft: string; items: { title: 
   {
     category: traduire("Charge d'entraînement"),
     color: P.lacquer,
-    soft: '#ECEAE4',
+    soft: '#EEF0F7',
     items: [
       { title: traduire('Bompa et Haff (2009)'), description: traduire('Periodization: Theory and Methodology of Training'), url: 'https://www.abebooks.com/9780736074834/Periodization-Theory-Methodology-Training-Bompa-073607483X/plp' },
     ],
@@ -111,7 +111,7 @@ export default function ScientificSourcesScreen() {
       {SOURCES.map((s, si) => (
         <Enter key={s.category} i={si + 1} style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4, marginTop: 4 }}>
-            <View style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: s.soft, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
               <Glyph kind="sakura" size={18} color={s.color} />
             </View>
             <Ink size={18} weight="black" tight>

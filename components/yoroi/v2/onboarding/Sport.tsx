@@ -39,12 +39,12 @@ export function Sport({ nav, genre, sports, onToggle, combat, category, onCatego
             <ChoiceCard key={s.id} selected={on} onPress={() => onToggle(s.id)} label={getSportName(s.id)} height={150} style={{ width: '48%' }}>
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 10 }}>
                 <Image source={genre === 'f' ? s.f : s.h} resizeMode="contain" style={{ position: 'absolute', top: 6, width: '100%', height: 104 }} />
-                <View style={{ backgroundColor: on ? c.accent : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border, borderRadius: 999, paddingHorizontal: 12, minHeight: 30, maxWidth: '94%', justifyContent: 'center' }}>
-                  <Ink size={13} weight="extraBold" color={on ? c.onAccent : c.ink} numberOfLines={2}>{getSportName(s.id)}</Ink>
+                <View style={{ backgroundColor: on ? c.primary : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border, borderRadius: 999, paddingHorizontal: 12, minHeight: 30, maxWidth: '94%', justifyContent: 'center' }}>
+                  <Ink size={13} weight="extraBold" color={on ? c.onPrimary : c.ink} numberOfLines={2}>{getSportName(s.id)}</Ink>
                 </View>
                 {on ? (
-                  <View style={{ position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: 13, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon name="check" size={14} color={c.onAccent} stroke={3} />
+                  <View style={{ position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: 13, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="check" size={14} color={c.onPrimary} stroke={3} />
                   </View>
                 ) : null}
               </View>

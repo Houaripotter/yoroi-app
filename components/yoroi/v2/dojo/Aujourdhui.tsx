@@ -17,6 +17,7 @@ import type { ArmureState } from '@/lib/v2/armure';
 import { OuvertureCoffre, imageCoffre, type ResultatCoffre } from '@/components/yoroi/v2/dojo/OuvertureCoffre';
 import { rappelCoffreActif, setRappelCoffre } from '@/lib/v2/dojo/rappelCoffre';
 import { traduire } from '@/lib/i18n/tr';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 
 const NB = ' ';
 const JOURS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
@@ -53,6 +54,7 @@ type Props = {
 };
 
 export function Aujourdhui({ serie, coffre, onOuvrir, onVerre, suite, onCadeau, palier }: Props) {
+  useIllustrations(); // 27 octobre 2026 : le coffre suit le reglage Illustrations
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const [busy, setBusy] = useState(false);
@@ -120,8 +122,10 @@ export function Aujourdhui({ serie, coffre, onOuvrir, onVerre, suite, onCadeau, 
   const tourne = secoue.interpolate({ inputRange: [-1, 1], outputRange: ['-6deg', '6deg'] });
   const grandTexte = coffre.grandDans === 0 ? traduire('C’est le grand coffre aujourd’hui') : coffre.grandDans === 1 ? traduire('Grand coffre demain') : traduire("Grand coffre dans {0} jours", coffre.grandDans);
 
+  // 27 octobre 2026 (maquette Pastel-Dojo) : ta serie dans une carte blanche, ton coffre dans une carte creme
   return (
-    <View style={{ backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 14 }}>
+    <View style={{ gap: 10 }}>
+    <View style={{ backgroundColor: c.surface, borderRadius: 24, padding: 14, gap: 14, shadowColor: '#1D2033', shadowOpacity: 0.05, shadowRadius: 14, shadowOffset: { width: 0, height: 4 }, elevation: 2 }}>
       {/* ta serie */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }} accessible accessibilityLabel={traduire("{0} {1}. Ton record : {2}. {3}", serie.jours, titreSerie, serie.record, sousSerie)}>
         <Flamme size={44} vive={vive} />
@@ -140,8 +144,37 @@ export function Aujourdhui({ serie, coffre, onOuvrir, onVerre, suite, onCadeau, 
         ) : null}
       </View>
 
+      {/* les 7 jours de la semaine */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        {serie.semaine.map((j, i) => (
+          <View key={j.date} style={{ alignItems: 'center', gap: 4 }}>
+            <Pastille
+              etat={j.etat === 'fait' ? 'fait' : j.etat === 'aujourdhui' ? 'partiel' : 'vide'}
+              signe={j.etat === 'repos' ? 'repos' : undefined}
+              taille={30}
+            />
+            <Ink size={11} weight={j.etat === 'aujourdhui' ? 'black' : 'bold'} color={j.etat === 'aujourdhui' ? c.accentText : c.textMuted}>{JOURS[i]}</Ink>
+          </View>
+        ))}
+      </View>
+      {palier ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: 14, backgroundColor: c.goldTint }}>
+          <Flamme size={18} vive />
+          <Ink size={13} weight="bold" color={c.ink} style={{ flex: 1 }}>{palier}</Ink>
+        </View>
+      ) : null}
+      <Ink size={12} color={c.textMuted}>{traduire("Un jour sans geste par semaine est pardonné, ta série ne casse pas.")}</Ink>
+
+      <Pressable onPress={basculerRappel} accessibilityRole="switch" accessibilityState={{ checked: rappel }} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 32 }}>
+        <View style={{ width: 34, height: 20, borderRadius: 10, padding: 2, backgroundColor: rappel ? c.detail : c.fillSubtle, alignItems: rappel ? 'flex-end' : 'flex-start' }}>
+          <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#FFFFFF' }} />
+        </View>
+        <Ink size={12} color={c.textSecondary} style={{ flex: 1 }}>{rappel ? traduire('Petit rappel à 19 h si ton coffre t’attend encore') : traduire('Rappel du soir coupé')}</Ink>
+      </Pressable>
+    </View>
+    <View style={{ backgroundColor: c.goldTint, borderRadius: 24, padding: 14, gap: 12 }}>
       {/* ton coffre du jour */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: coffre.etat === 'pret' ? c.goldTint : c.fillSoft, borderRadius: 18, padding: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Animated.View style={{ transform: [{ rotate: tourne }] }}>
           <Image source={imageCoffre(coffre.grand, coffre.etat === 'ouvert')} style={{ width: 78, height: 78 }} resizeMode="contain" />
         </Animated.View>
@@ -171,9 +204,9 @@ export function Aujourdhui({ serie, coffre, onOuvrir, onVerre, suite, onCadeau, 
           disabled={busy}
           accessibilityRole="button"
           accessibilityLabel={traduire("Ouvrir ton coffre")}
-          style={({ pressed }) => ({ minHeight: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.goldDeep : c.gold })}
+          style={({ pressed }) => ({ minHeight: 50, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: c.ink, opacity: pressed ? 0.88 : 1 })}
         >
-          <Ink size={16} weight="black" color="#1D2029">{traduire("Ouvrir mon coffre")}</Ink>
+          <Ink size={15.5} weight="black" color={c.background}>{traduire("Ouvrir mon coffre")}</Ink>
         </Pressable>
       ) : coffre.etat === 'verrouille' ? (
         <Pressable
@@ -181,38 +214,12 @@ export function Aujourdhui({ serie, coffre, onOuvrir, onVerre, suite, onCadeau, 
           disabled={busy}
           accessibilityRole="button"
           accessibilityLabel={traduire("Noter un verre d’eau, 25 centilitres")}
-          style={({ pressed }) => ({ minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentTint : c.surface, borderWidth: 1.5, borderColor: c.accent })}
+          style={({ pressed }) => ({ minHeight: 48, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}
         >
-          <Ink size={15} weight="extraBold" color={c.accent}>{traduire("Noter un verre d’eau")}</Ink>
+          <Ink size={15} weight="extraBold" color={c.onPrimary}>{traduire("Noter un verre d’eau")}</Ink>
         </Pressable>
       ) : null}
-      {/* les 7 jours de la semaine */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        {serie.semaine.map((j, i) => (
-          <View key={j.date} style={{ alignItems: 'center', gap: 4 }}>
-            <Pastille
-              etat={j.etat === 'fait' ? 'fait' : j.etat === 'aujourdhui' ? 'partiel' : 'vide'}
-              signe={j.etat === 'repos' ? 'repos' : undefined}
-              taille={30}
-            />
-            <Ink size={11} weight={j.etat === 'aujourdhui' ? 'black' : 'bold'} color={j.etat === 'aujourdhui' ? c.accent : c.textMuted}>{JOURS[i]}</Ink>
-          </View>
-        ))}
-      </View>
-      {palier ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: 14, backgroundColor: c.goldTint }}>
-          <Flamme size={18} vive />
-          <Ink size={13} weight="bold" color={c.ink} style={{ flex: 1 }}>{palier}</Ink>
-        </View>
-      ) : null}
-      <Ink size={12} color={c.textMuted}>{traduire("Un jour sans geste par semaine est pardonné, ta série ne casse pas.")}</Ink>
-
-      <Pressable onPress={basculerRappel} accessibilityRole="switch" accessibilityState={{ checked: rappel }} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 32 }}>
-        <View style={{ width: 34, height: 20, borderRadius: 10, padding: 2, backgroundColor: rappel ? c.accent : c.fillSoft, alignItems: rappel ? 'flex-end' : 'flex-start' }}>
-          <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#FFFFFF' }} />
-        </View>
-        <Ink size={12} color={c.textSecondary} style={{ flex: 1 }}>{rappel ? traduire('Petit rappel à 19 h si ton coffre t’attend encore') : traduire('Rappel du soir coupé')}</Ink>
-      </Pressable>
+    </View>
       <OuvertureCoffre visible={ouverture} grand={coffre.grand} serie={serie.jours} ouvrir={ouvrirVraiment} suite={suite} onCadeau={onCadeau} onClose={() => setOuverture(false)} />
     </View>
   );

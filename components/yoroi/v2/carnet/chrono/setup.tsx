@@ -126,7 +126,7 @@ export function ModeCard({ mode, title, tag, text, onPress, dark, vive }: { mode
   return (
     <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={`${title}. ${text}`}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, paddingRight: 12, borderRadius: 24, backgroundColor: dark ? darkBg : P.white, borderWidth: 1, borderColor: dark ? darkBg : P.line2 }}>
-        <View style={{ width: 84, height: 70, borderRadius: 18, backgroundColor: dark ? blancA(0.94) : paletteSombre() ? P.line2 : '#F5F4EF', alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 84, height: 70, borderRadius: 18, backgroundColor: dark ? blancA(0.94) : paletteSombre() ? P.line2 : '#EEF0F7', alignItems: 'center', justifyContent: 'center' }}>
           <ChronoPicto mode={mode} size={0.86} />
         </View>
         <View style={{ flex: 1, gap: 4 }}>
@@ -194,7 +194,7 @@ export function SetupBlock({ title, hint, children }: { title?: string; hint?: s
  * columns : nombre de puces par ligne.
  */
 export function ChoiceGrid<T extends string | number>({ items, value, onPick, columns = 3, big }: { items: { key: T; title: string; sub?: string }[]; value: T | null; onPick: (k: T) => void; columns?: number; big?: boolean }) {
-  const { accent } = useAccent();
+  useAccent(); // se redessine quand le theme change
   const rows: { key: T; title: string; sub?: string }[][] = [];
   for (let i = 0; i < items.length; i += columns) rows.push(items.slice(i, i + columns));
   return (
@@ -206,9 +206,9 @@ export function ChoiceGrid<T extends string | number>({ items, value, onPick, co
             return (
               <View key={String(it.key)} style={{ flex: 1 }}>
                 <Press onPress={() => onPick(it.key)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={it.sub ? `${it.title}, ${it.sub}` : it.title}>
-                  <View style={{ minHeight: big ? 72 : it.sub ? 62 : 52, paddingHorizontal: 6, paddingVertical: 8, borderRadius: 18, backgroundColor: on ? accent : paletteSombre() ? P.line2 : '#F5F4EF', borderWidth: 1.5, borderColor: on ? accent : 'transparent', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-                    <Ink size={big ? 19 : columns >= 3 ? 14 : 15} weight="black" tight color={on ? P.white : P.ink} style={{ textAlign: 'center' }} numberOfLines={2}>{traduire(it.title)}</Ink>
-                    {it.sub ? <Ink size={12} weight="bold" color={on ? (paletteSombre() ? P.white : 'rgba(255,255,255,0.8)') : P.muted} style={{ textAlign: 'center' }} numberOfLines={1}>{traduire(it.sub)}</Ink> : null}
+                  <View style={{ minHeight: big ? 72 : it.sub ? 62 : 52, paddingHorizontal: 6, paddingVertical: 8, borderRadius: 18, backgroundColor: on ? P.primary : paletteSombre() ? P.line2 : '#EEF0F7', borderWidth: 1.5, borderColor: on ? P.primary : 'transparent', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+                    <Ink size={big ? 19 : columns >= 3 ? 14 : 15} weight="black" tight color={on ? P.onPrimary : P.ink} style={{ textAlign: 'center' }} numberOfLines={2}>{traduire(it.title)}</Ink>
+                    {it.sub ? <Ink size={12} weight="bold" color={on ? P.onPrimary : P.muted} style={{ textAlign: 'center' }} numberOfLines={1}>{traduire(it.sub)}</Ink> : null}
                   </View>
                 </Press>
               </View>
@@ -256,7 +256,7 @@ export function BigAdjust({ value, label, onMinus, onPlus, stepLabel = '15\u00a0
   const btn = (icon: 'minus' | 'plus', fn: () => void, name: string) => (
     <View style={{ flex: 1 }}>
       <Press onPress={fn} haptic="light" accessibilityRole="button" accessibilityLabel={`${name} ${stepLabel}`}>
-        <View style={{ height: 56, borderRadius: 18, backgroundColor: paletteSombre() ? P.line2 : '#F0EEE8', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <View style={{ height: 56, borderRadius: 18, backgroundColor: paletteSombre() ? P.line2 : '#EEF0F7', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <CIcon name={icon} size={22} color={P.ink} width={2.8} />
           <Ink size={17} weight="black" tight>{stepLabel}</Ink>
         </View>

@@ -344,11 +344,11 @@ export default function BackupHistoryScreen() {
       >
         <EspaceHeader title={traduire("Mes sauvegardes")} />
 
-        <View style={{ borderRadius: 22, backgroundColor: c.darkCard, padding: 18, gap: 14, overflow: 'hidden' }}>
-          <Glyph kind="sakura" size={150} color="rgba(255,255,255,0.08)" style={{ position: 'absolute', right: -24, top: -34 }} />
+        <View style={{ borderRadius: 22, backgroundColor: c.carteDouce, padding: 18, gap: 14, overflow: 'hidden' }}>
+          <Glyph kind="sakura" size={150} color={'rgba(35,53,143,0.07)'} style={{ position: 'absolute', right: -24, top: -34 }} />
           <View style={{ gap: 4 }}>
-            <Ink size={44} weight="black" tight color={c.onDark}>{loading ? ' ' : String(backups.length)}</Ink>
-            <Ink size={14} color={c.onDarkSecondary}>
+            <Ink size={44} weight="black" tight color={c.ink}>{loading ? ' ' : String(backups.length)}</Ink>
+            <Ink size={14} color={c.textSecondary}>
               {loading ? traduire('Recherche de tes sauvegardes') : latest ? traduirePluriel(backups.length, backups.length > 1, "sauvegarde sur ce téléphone, la dernière {0}", "sauvegardes sur ce téléphone, la dernière {0}", ageDays === 0 ? traduire('aujourd’hui') : ageDays === 1 ? traduire('hier') : traduire("il y a {0} jours", ageDays)) : traduire('Aucune sauvegarde pour l’instant')}
             </Ink>
           </View>

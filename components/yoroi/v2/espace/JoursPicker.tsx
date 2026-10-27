@@ -56,9 +56,9 @@ export function JoursPicker({ value, onToggle, label = traduire('Jour'), couleur
             style={{ flex: 1 }}
           >
             {({ pressed }) => (
-              <View style={{ height: 64, borderRadius: 16, backgroundColor: on ? couleurs?.[j] ?? c.accent : pressed ? c.fillSoft : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                <Ink size={20} weight="black" color={on ? '#FFFFFF' : c.ink}>{l}</Ink>
-                <Ink size={10} weight="bold" color={on ? '#FFFFFF' : c.textMuted}>{JOURS_COURTS[j].slice(0, 3)}</Ink>
+              <View style={{ height: 64, borderRadius: 16, backgroundColor: on ? couleurs?.[j] ?? c.primary : pressed ? c.fillSoft : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                <Ink size={20} weight="black" color={on ? (couleurs?.[j] ? '#FFFFFF' : c.onPrimary) : c.ink}>{l}</Ink>
+                <Ink size={10} weight="bold" color={on ? (couleurs?.[j] ? '#FFFFFF' : c.onPrimary) : c.textMuted}>{JOURS_COURTS[j].slice(0, 3)}</Ink>
               </View>
             )}
           </Pressable>

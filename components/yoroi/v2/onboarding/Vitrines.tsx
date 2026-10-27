@@ -367,7 +367,7 @@ export function vitrinesNouveautes(genre: 'h' | 'f'): Vitrine[] {
 /** Point de pagination cliquable, le point actif s'allonge */
 function Point({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) {
   const c = useColors();
-  const style = useAnimatedStyle(() => ({ width: withTiming(on ? 22 : 8, { duration: 200 }), backgroundColor: on ? c.accent : c.border }), [on, c.accent, c.border]);
+  const style = useAnimatedStyle(() => ({ width: withTiming(on ? 22 : 8, { duration: 200 }), backgroundColor: on ? c.primary : c.border }), [on, c.accent, c.border]);
   return (
     <Pressable onPress={onPress} hitSlop={6} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: on }} style={{ minWidth: 26, height: 40, alignItems: 'center', justifyContent: 'center' }}>
       <Animated.View style={[{ height: 8, borderRadius: 4 }, style]} />

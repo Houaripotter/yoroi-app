@@ -121,7 +121,7 @@ export function RangeeSemaine({ jours, choisi, aujourdhui, objectifs, onChoisir,
             </Ink>
             <MiniAnneaux parts={partsAnneaux(a, objectifs)} taille={28} futur={a.futur} />
             {/* le numero du jour en tout petit ; aujourd'hui sur une pastille indigo (remplace l'ancien point) */}
-            <View style={{ minWidth: 18, height: 14, paddingHorizontal: 3, borderRadius: 7, alignItems: 'center', justifyContent: 'center', backgroundColor: auj ? P.accent : 'transparent' }}>
+            <View style={{ minWidth: 18, height: 14, paddingHorizontal: 3, borderRadius: 7, alignItems: 'center', justifyContent: 'center', backgroundColor: auj ? P.detail : 'transparent' }}>
               <Ink size={9.5} weight={auj || sel ? 'black' : 'bold'} color={auj ? '#FFFFFF' : sel ? P.accent : P.ink2} style={{ lineHeight: 12, fontVariant: ['tabular-nums'] }}>
                 {numeroJour(a.date)}
               </Ink>

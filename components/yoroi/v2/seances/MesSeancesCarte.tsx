@@ -40,7 +40,7 @@ export function MesSeancesCarte() {
       <>
         <SectionTitle title={traduire('Mes séances')} />
         <Pressable onPress={ouvrir} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 72, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}>
-          <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="bookmark" size={22} color={c.accent} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
@@ -75,9 +75,9 @@ export function MesSeancesCarte() {
               }}
               accessibilityRole="button"
               accessibilityLabel={traduire('Commencer {0}', s.nom)}
-              style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}
+              style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}
             >
-              <Icon name="play" size={18} color={c.onAccent} />
+              <Icon name="play" size={18} color={c.onPrimary} />
             </Pressable>
           </View>
         ))}

@@ -135,8 +135,8 @@ export default function ImporterCarnet() {
             </View>
 
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Pressable onPress={() => void coller()} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-                <Ink size={15} weight="extraBold" color={c.onAccent}>{traduire('Coller mes notes')}</Ink>
+              <Pressable onPress={() => void coller()} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
+                <Ink size={15} weight="extraBold" color={c.onPrimary}>{traduire('Coller mes notes')}</Ink>
               </Pressable>
               <Pressable onPress={() => void fichier()} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: c.accent, backgroundColor: pressed ? c.accentTint : 'transparent' })}>
                 <Ink size={15} weight="extraBold" color={c.accent}>{traduire('Fichier CSV')}</Ink>
@@ -230,9 +230,9 @@ export default function ImporterCarnet() {
       {etat !== 'fini' && lu && lu.seances.length > 0 ? (
         <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 16 }}>
           {etat === 'enregistrement' ? (
-            <View style={{ minHeight: 56, borderRadius: 18, backgroundColor: c.accent, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center' }}>
-              <ActivityIndicator color={c.onAccent} />
-              <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire('{0} sur {1}', progres.fait, progres.total)}</Ink>
+            <View style={{ minHeight: 56, borderRadius: 18, backgroundColor: c.primary, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center' }}>
+              <ActivityIndicator color={c.onPrimary} />
+              <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire('{0} sur {1}', progres.fait, progres.total)}</Ink>
             </View>
           ) : (
             <BigButton label={traduirePluriel(lu.seances.length, lu.seances.length > 1, 'Importer {0} séance', 'Importer {0} séances', lu.seances.length)} icon="check" onPress={() => void importer()} />

@@ -69,7 +69,7 @@ function ApercuSaison() {
           <DecorScene saison={saison} largeur={L - 28} hauteur={H} haut={8} />
           {saison ? null : (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <Ink size={13} weight="bold" color="#F2F1EC">{active ? traduire('Aucune saison aujourd’hui') : traduire('Décorations coupées dans Personnaliser')}</Ink>
+              <Ink size={13} weight="bold" color="#F5F6FB">{active ? traduire('Aucune saison aujourd’hui') : traduire('Décorations coupées dans Personnaliser')}</Ink>
             </View>
           )}
         </View>

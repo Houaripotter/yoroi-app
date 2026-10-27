@@ -411,9 +411,9 @@ export default function Pesee() {
               disabled={importing}
               accessibilityRole="button"
               accessibilityLabel={traduire("Importer depuis {0}", provider)}
-              style={({ pressed }) => ({ height: 48, borderRadius: 16, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center', opacity: importing ? 0.5 : 1 })}
+              style={({ pressed }) => ({ height: 48, borderRadius: 16, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center', opacity: importing ? 0.5 : 1 })}
             >
-              <Ink size={15} weight="extraBold" color={c.onAccent}>{importing ? traduire('Import en cours') : traduire("Importer depuis {0}", provider)}</Ink>
+              <Ink size={15} weight="extraBold" color={c.onPrimary}>{importing ? traduire('Import en cours') : traduire("Importer depuis {0}", provider)}</Ink>
             </Pressable>
           </View>
         ) : null}
@@ -467,7 +467,7 @@ export default function Pesee() {
               </View>
             </ScrollView>
           ) : null}
-          <View pointerEvents="none" style={{ position: 'absolute', left: width / 2 - 3, top: 2, width: 6, height: 54, borderRadius: 3, backgroundColor: c.accent }} />
+          <View pointerEvents="none" style={{ position: 'absolute', left: width / 2 - 3, top: 2, width: 6, height: 54, borderRadius: 3, backgroundColor: c.detail }} />
         </View>
 
         <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12, marginTop: 6 }}>

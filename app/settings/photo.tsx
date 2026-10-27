@@ -48,15 +48,15 @@ function BoutonPhoto({ icon, label, onPress, disabled, principal }: { icon: Icon
         justifyContent: 'center',
         gap: 8,
         paddingHorizontal: 10,
-        backgroundColor: principal ? (pressed ? c.accentPressed : c.accent) : c.surface,
+        backgroundColor: principal ? (pressed ? c.primaryPressed : c.primary) : c.surface,
         borderWidth: principal ? 0 : 1,
         borderColor: c.border,
         opacity: disabled ? 0.5 : 1,
         transform: [{ scale: pressed ? 0.97 : 1 }],
       })}
     >
-      <Icon name={icon} size={18} color={principal ? c.onAccent : c.ink} />
-      <Ink size={14} weight="extraBold" color={principal ? c.onAccent : c.ink} numberOfLines={1}>{label}</Ink>
+      <Icon name={icon} size={18} color={principal ? c.onPrimary : c.ink} />
+      <Ink size={14} weight="extraBold" color={principal ? c.onPrimary : c.ink} numberOfLines={1}>{label}</Ink>
     </Pressable>
   );
 }
@@ -145,10 +145,10 @@ export default function PhotoEtContour() {
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <View style={{ flex: 1.15, height: 160, borderRadius: 22, overflow: 'hidden', backgroundColor: c.fillSoft, borderWidth: 1, borderColor: c.border, justifyContent: 'flex-end', padding: 14 }}>
           <Image source={scene.image} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
-          <RondCadre size={84} contour={contour} fond="scene" fill="#F2F1EC">{contenu(84)}</RondCadre>
+          <RondCadre size={84} contour={contour} fond="scene" fill="#F5F6FB">{contenu(84)}</RondCadre>
         </View>
         <View style={{ flex: 1, height: 160, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 10 }}>
-          <RondCadre size={84} contour={contour} fond="papier" fill="#F2F1EC">{contenu(84)}</RondCadre>
+          <RondCadre size={84} contour={contour} fond="papier" fill="#F5F6FB">{contenu(84)}</RondCadre>
           <Ink size={14} weight="black" numberOfLines={1}>{prenom}</Ink>
         </View>
       </View>
@@ -205,7 +205,7 @@ export default function PhotoEtContour() {
               >
                 <View style={{ width: 60, height: 60, borderRadius: 30, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
                   <Image source={scene.image} style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
-                  <RondCadre size={50} contour={o.id as ContourRond} fond="scene" fill="#F2F1EC">{contenu(44)}</RondCadre>
+                  <RondCadre size={50} contour={o.id as ContourRond} fond="scene" fill="#F5F6FB">{contenu(44)}</RondCadre>
                 </View>
                 <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? c.accent : c.textSecondary} numberOfLines={1}>{traduire(o.nom)}</Ink>
               </Pressable>

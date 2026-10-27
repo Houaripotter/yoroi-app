@@ -112,7 +112,7 @@ export function PlanClubs({ trainings, onChanged }: { trainings: Training[]; onC
 
       {outdoor.length ? (
         <Glass style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: c.successTint, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="mountain" size={24} color={c.successText} />
           </View>
           <View style={{ flex: 1 }}>
@@ -140,7 +140,7 @@ export function PlanClubs({ trainings, onChanged }: { trainings: Training[]; onC
             </View>
             <View style={{ flexDirection: 'row', gap: 4 }}>
               {Array.from({ length: Math.max(1, g.weekTarget) }, (_, i) => (
-                <View key={i} style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: i < g.weekCount ? c.accent : c.fillSubtle }} />
+                <View key={i} style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: i < g.weekCount ? c.detail : c.fillSubtle }} />
               ))}
             </View>
             <Ink size={12} color={c.textMuted}>{g.weekCount >= g.weekTarget ? traduire('Objectif de la semaine tenu') : traduirePluriel(g.sessionsNeeded, g.sessionsNeeded > 1, "Encore {0} séance cette semaine", "Encore {0} séances cette semaine", g.sessionsNeeded)}</Ink>

@@ -213,8 +213,8 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
           <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ton Dojo, dès maintenant")}</Ink>
           <ApercuProgres {...apercuProps} partie="dojo" />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 22, backgroundColor: pal.teinte, padding: 14 }}>
-            <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: pal.indigo, alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="list" size={22} color="#FFFFFF" />
+            <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="list" size={22} color={c.accentText}/>
             </View>
             <Riche size={13} lineHeight={18} color={c.ink} style={{ flex: 1 }} text={traduire('Après la visite de l’app, **ton coach** pourra te proposer un programme sur ces jours, avec tes réponses.')} />
           </View>

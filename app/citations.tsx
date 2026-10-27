@@ -119,15 +119,15 @@ export default function Citations() {
           </Ink>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <Press onPress={another} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("Une autre citation")}>
-              <View style={{ height: 46, paddingHorizontal: 16, borderRadius: 23, backgroundColor: P.accent, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Icon name="refresh" size={17} color={P.white} />
-                <Ink size={14} weight="extraBold" color={P.white}>
+              <View style={{ height: 46, paddingHorizontal: 16, borderRadius: 23, backgroundColor: P.primary, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Icon name="refresh" size={17} color={P.onPrimary} />
+                <Ink size={14} weight="extraBold" color={P.onPrimary}>
                   {traduire("Une autre")}</Ink>
               </View>
             </Press>
             <Press onPress={share} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("Partager la citation")}>
               <View style={{ height: 46, paddingHorizontal: 16, borderRadius: 23, backgroundColor: '#30343F', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Icon name="share" size={17} color={P.white} />
+                <Icon name="share" size={17} color={P.onPrimary} />
                 <Ink size={14} weight="extraBold" color={P.white}>
                   {traduire("Partager")}</Ink>
               </View>

@@ -147,7 +147,7 @@ export function Demo() {
         <View style={{ gap: 4 }}>
           {HENY_LINES.map((l) => (
             <View key={l} style={{ flexDirection: 'row', gap: 8 }}>
-              <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: c.accent, marginTop: 7 }} />
+              <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: c.detail, marginTop: 7 }} />
               <Ink size={13} color={c.ink} style={{ flex: 1, lineHeight: 19 }}>{l}</Ink>
             </View>
           ))}

@@ -211,17 +211,17 @@ export default function Seances() {
               accessibilityLabel={traduire("Importer mes séances")}
               accessibilityHint={traduire("Choisis d’où viennent tes séances")}
               hitSlop={6}
-              style={({ pressed }) => ({ height: 44, borderRadius: 22, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}
+              style={({ pressed }) => ({ height: 44, borderRadius: 22, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: pressed ? c.fillSoft : P.white, borderWidth: 1, borderColor: 'transparent', shadowColor: '#1B2A44', shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 })}
             >
-              <Icon name="download" size={18} color={c.accent} strokeWidth={2.6} />
-              <Ink size={14} weight="extraBold" color={c.accent}>{traduire("Importer")}</Ink>
+              <Icon name="download" size={18} color={c.accentText} strokeWidth={2.6} />
+              <Ink size={14} weight="extraBold" color={c.accentText}>{traduire("Importer")}</Ink>
             </Pressable>
           <Pressable
             onPress={() => { tap(); setMenuOpen(true); }}
             accessibilityRole="button"
             accessibilityLabel={traduire("Menu des séances")}
             hitSlop={6}
-            style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}
+            style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSoft : P.white, borderWidth: 1, borderColor: 'transparent', shadowColor: '#1B2A44', shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 })}
           >
             <Icon name="more" size={22} color={c.ink} strokeWidth={3.4} />
           </Pressable>

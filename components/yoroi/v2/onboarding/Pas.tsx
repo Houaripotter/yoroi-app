@@ -69,7 +69,7 @@ function Bouton({ pas, fort, onStep }: { pas: PasDef; fort: boolean; onStep: (d:
           style={{
             height: 58,
             borderRadius: 18,
-            backgroundColor: pressed ? (fort ? c.accent : c.fillSubtle) : fort ? c.accentTint : c.surface,
+            backgroundColor: pressed ? (fort ? c.primary : c.fillSubtle) : fort ? c.accentTint : c.surface,
             borderWidth: fort ? 0 : 1,
             borderColor: c.border,
             flexDirection: 'row',

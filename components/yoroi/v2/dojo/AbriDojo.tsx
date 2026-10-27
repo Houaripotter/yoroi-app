@@ -73,9 +73,9 @@ export function AbriDojo({ rang, xp, serie }: { rang: string; xp: number; serie:
           lancerCopieAuto(() => void charger());
         }}
         accessibilityRole="button"
-        style={({ pressed }) => ({ minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentTint : c.accent })}
+        style={({ pressed }) => ({ minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentTint : c.primary })}
       >
-        <Ink size={15} weight="extraBold" color={c.onAccent}>{etat === 'en_panne' ? traduire('Choisir le dossier') : traduire('Activer la copie automatique')}</Ink>
+        <Ink size={15} weight="extraBold" color={c.onPrimary}>{etat === 'en_panne' ? traduire('Choisir le dossier') : traduire('Activer la copie automatique')}</Ink>
       </Pressable>
       <Pressable onPress={plusTard} accessibilityRole="button" hitSlop={6} style={{ alignSelf: 'center', minHeight: 32, justifyContent: 'center' }}>
         <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Plus tard")}</Ink>

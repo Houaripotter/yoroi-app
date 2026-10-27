@@ -6,6 +6,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, Image } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { TAMPONS } from './table';
+import { tamponEnSticker, tamponPour, useIllustrations } from '@/components/yoroi/v2/stickers';
 import type { TamponId } from './table';
 
 export type TamponProps = {
@@ -25,7 +26,12 @@ export type TamponProps = {
 };
 
 export function Tampon({ name, size = 56, rotate = -6, animate = false, ink, earned = true, style, accessibilityLabel }: TamponProps) {
-  const def = TAMPONS[name] ?? TAMPONS.record;
+  const id: TamponId = TAMPONS[name] ? name : 'record';
+  const def = TAMPONS[id];
+  // univers classique + reglage Stickers : le badge sticker, en couleurs (pas de teinte d'encre)
+  const { style: illus } = useIllustrations();
+  const enSticker = tamponEnSticker(id, undefined, illus);
+  const src = tamponPour(id, undefined, illus);
   const scale = useRef(new Animated.Value(animate ? 1.35 : 1)).current;
   const opacity = useRef(new Animated.Value(animate ? 0 : 1)).current;
 
@@ -47,7 +53,7 @@ export function Tampon({ name, size = 56, rotate = -6, animate = false, ink, ear
       accessibilityElementsHidden={!label}
       style={[{ width: size, height: size, opacity: earned ? opacity : 0.22, transform: [{ scale }, { rotate: `${earned ? rotate : 0}deg` }] }, style]}
     >
-      <Image source={def.src} style={[{ width: size, height: size }, ink ? { tintColor: ink } : null]} resizeMode="contain" accessibilityIgnoresInvertColors />
+      <Image source={src} style={[{ width: size, height: size }, ink && !enSticker ? { tintColor: ink } : null]} resizeMode="contain" accessibilityIgnoresInvertColors />
     </Animated.View>
   );
 }

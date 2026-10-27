@@ -139,8 +139,8 @@ export default function CompetitorProfileScreen() {
                 <Field value={weightInput} onChangeText={setWeightInput} placeholder={traduire("Ex : 75,5")} keyboardType="decimal-pad" suffix="kg" icon="scale" onSubmit={() => saveWeight()} />
               </View>
               <Press onPress={() => saveWeight()} accessibilityRole="button" accessibilityLabel={traduire("Enregistrer le poids")}>
-                <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: savedFlash ? P.moss : P.accent, alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name="check" size={24} color={P.white} width={3} />
+                <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: savedFlash ? P.moss : P.primary, alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="check" size={24} color={savedFlash ? P.pureWhite : P.onPrimary} width={3} />
                 </View>
               </Press>
             </View>

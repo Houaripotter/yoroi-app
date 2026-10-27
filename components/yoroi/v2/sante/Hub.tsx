@@ -4,12 +4,12 @@
  * autorisation des nouvelles mesures, sections avec graphique vedette au doigt.
  */
 import React, { useMemo, useState } from 'react';
-import { FamilyIcon } from '@/components/yoroi/v2/sante/familyIcon';
+import { FamilyBadge } from '@/components/yoroi/v2/sante/familyIcon';
 import { ActivityIndicator, Platform, ScrollView, View } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { Press, shadow } from '@/components/yoroi/v2/accueil/kit';
+import { fondAjouter, PlusPastille, Press, shadow } from '@/components/yoroi/v2/accueil/kit';
 import { InkLineChart } from '@/components/yoroi/v2/progres/InkLineChart';
 import { InkBarChart } from '@/components/yoroi/v2/progres/InkBarChart';
 import { FAMILY, METRIC, SECTIONS, availableOn } from '@/lib/v2/sante/metrics';
@@ -160,8 +160,8 @@ export function ConnectSteps({ provider, mode, connecting, onConnect, onPickBran
   const brands = WATCHES.filter((w) => (ANDROID ? w.android.ok : w.ios.ok));
   const step = (n: number, title: string, children?: React.ReactNode) => (
     <View style={{ flexDirection: 'row', gap: 12 }}>
-      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: S.accent, alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
-        <Ink size={13} weight="black" color={ON()}>
+      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
+        <Ink size={13} weight="black" color={P.onPrimary}>
           {String(n)}
         </Ink>
       </View>
@@ -254,13 +254,9 @@ export function BrandStrip({ detected, onOpen, onAdd }: { detected: Detected[]; 
         </Press>
       ))}
       <Press onPress={onAdd} accessibilityRole="button" accessibilityLabel={traduire("Ajouter une montre ou une balance")}>
-        <View style={{ width: 132, minHeight: 124, borderRadius: 22, borderWidth: 1.5, borderStyle: 'dashed', borderColor: TONE.none.color, padding: 12, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: S.ink, alignItems: 'center', justifyContent: 'center' }}>
-            <Ink size={22} weight="black" color={ON()} style={{ marginTop: -2 }}>
-              +
-            </Ink>
-          </View>
-          <Ink size={12} weight="extraBold" style={{ textAlign: 'center' }}>
+        <View style={{ width: 132, minHeight: 124, borderRadius: 22, backgroundColor: fondAjouter(), padding: 12, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <PlusPastille taille={38} />
+          <Ink size={12} weight="extraBold" color={S.accentText} style={{ textAlign: 'center' }}>
             {items.length ? traduire('Une autre montre') : traduire('Ajouter ma montre')}
           </Ink>
         </View>
@@ -410,9 +406,7 @@ export function SectionBlock({ section, series, onOpen }: { section: (typeof SEC
   return (
     <View style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4, marginTop: 14 }}>
-        <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: fam.tint, alignItems: 'center', justifyContent: 'center' }}>
-          <FamilyIcon family={famKey} size={22} color={fam.color} />
-        </View>
+        <FamilyBadge family={famKey} box={40} radius={14} iconSize={22} tint={fam.tint} color={fam.color} />
         <View style={{ flex: 1 }}>
           <Ink size={21} weight="black" tight>
             {traduire(fam.label)}

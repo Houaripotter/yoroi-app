@@ -5,7 +5,7 @@
  * seule zone pour ajouter, et un appui ouvre l'onglet concerne.
  */
 import React, { useMemo } from 'react';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import type { Training } from '@/lib/database';
@@ -16,6 +16,23 @@ import { Card, P, Press, useAccent } from './kit';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { devNow } from '@/lib/v2/creator/devClock';
 import { traduire } from '@/lib/i18n/tr';
+import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+
+/** 27 octobre 2026 : le sticker le plus proche de chaque picto du conseil, pose sans carre colore */
+const STICKER_PICTO: Record<string, NomSticker> = {
+  steps: 'activite',
+  bolt: 'force_eclair',
+  calendar: 'calendrier',
+  check: 'objectif_semaine',
+  flame: 'flamme',
+  moon: 'sommeil',
+  mountain: 'montagne_drapeau',
+  play: 'play',
+  refresh: 'refresh',
+  repeat: 'repeter',
+  scale: 'poids',
+  target: 'objectifs',
+};
 
 const TONES = {
   red: { ink: P.accent, soft: P.accentSoft },
@@ -32,6 +49,8 @@ export function ConseilDuJour({ trainings, lastWeighIso, goal, freins }: { train
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const c = useMemo(() => conseilDuJour({ trainings, lastWeighIso, goal, now: devNow(), freins }), [trainings, lastWeighIso, goal, today, freinsKey]);
   const { accent, accentTint } = useAccent();
+  const illus = useIllustrations();
+  const stickerPicto = illus.stickers ? STICKER_PICTO[c.picto] : undefined;
   const tone = c.tone === 'red' ? { ink: accent, soft: accentTint } : TONES[c.tone];
   // ajout : repere vers le +, et l'appui ouvre l'onglet qui montre le resultat
   const addHint = c.href === '/pesee' ? traduire('Touche + pour te peser') : c.href === '/seance' ? traduire('Touche + pour t’entraîner') : null;
@@ -39,9 +58,13 @@ export function ConseilDuJour({ trainings, lastWeighIso, goal, freins }: { train
 
   const body = (
     <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 16 }}>
-      <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: tone.soft, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-        <Icon name={c.picto} size={26} color={tone.ink} strokeWidth={2.4} />
-      </View>
+      {stickerPicto ? (
+        <Image source={illus.img(stickerPicto)} style={{ width: 58, height: 58 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+      ) : (
+        <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          <Icon name={c.picto} size={26} color={tone.ink} strokeWidth={2.4} />
+        </View>
+      )}
       <View style={{ flex: 1, gap: 3 }}>
         <Ink size={12} weight="bold" color={P.muted}>
           {traduire("Le conseil du jour")}</Ink>

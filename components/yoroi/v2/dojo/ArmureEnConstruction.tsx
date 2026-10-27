@@ -46,7 +46,7 @@ export function ArmureEnConstruction({ piece, progres, taille = 96, ton = 'auto'
     ]).start();
   }, [eclat, halo]);
   const hauteur = reveal.interpolate({ inputRange: [0, 1], outputRange: [0, h] });
-  const ombre = nuit ? '#F2F1EC' : '#1D2029';
+  const ombre = nuit ? '#F5F6FB' : '#1D2029';
   const box = Math.round(Math.max(w, h) * 1.18);
   return (
     <View

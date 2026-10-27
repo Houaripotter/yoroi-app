@@ -28,6 +28,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { paletteSombre } from '@/components/yoroi/livePalette';
+import { STICKERS, useIllustrations } from '@/components/yoroi/v2/stickers';
 import { deleteCompetition, getPhotos, getWeeklyPlan } from '@/lib/database';
 import type { Photo, Training, WeeklyPlan } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
@@ -59,7 +60,7 @@ import { FeuilleEau } from './EauFeuille';
 import { Apparition, ArcJauge, Barres7, ChiffreAnime, Courbe, RangeeSemaines, Trophee, Verre } from './Visus';
 import { CitationDuJour } from './Citation';
 import { FeuilleConseil } from './FeuilleConseil';
-import { Icon, P, Press } from './kit';
+import { fondAjouter, Icon, P, PlusPastille, Press } from './kit';
 import { carteNeutre, teinte, domaineDuLien } from './domaines';
 import type { Domaine } from './domaines';
 import { traduire, traduirePluriel, DECIMAL, LOCALE } from '@/lib/i18n/tr';
@@ -584,12 +585,10 @@ export function TuileMensurationsDefile() {
           onPress={() => router.push('/add-measurement' as any)}
           accessibilityRole="button"
           accessibilityLabel={traduire("Ajouter une mesure")}
-          style={({ pressed }) => ({ width: L, minHeight: 124, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.texte, backgroundColor: pressed ? P.paper : 'transparent', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 10 })}
+          style={({ pressed }) => ({ width: L, minHeight: 124, borderRadius: 16, backgroundColor: fondAjouter(pressed), alignItems: 'center', justifyContent: 'center', gap: 6, padding: 10 })}
         >
-          <View style={{ width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, borderColor: t.texte, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="plus" size={18} color={t.texte} width={3} />
-          </View>
-          <Ink size={12.5} weight="extraBold" color={t.texte} style={{ textAlign: 'center' }}>
+          <PlusPastille taille={34} />
+          <Ink size={12.5} weight="extraBold" color={P.accentText} style={{ textAlign: 'center' }}>
             {traduire("Ajouter une mesure")}</Ink>
         </Pressable>
       </ScrollView>
@@ -886,17 +885,17 @@ export function TuileMois({ trainings, plannedDays, competitionDate }: { trainin
                     </View>
                     <View style={{ width: logo + 4, height: logo + 4, alignItems: 'center', justifyContent: 'center' }}>
                       {liste.length ? (
-                        <DayMarks list={liste} size={liste.length > 1 ? Math.round(logo * 0.82) : logo} ring={P.white} />
+                        <DayMarks list={liste} size={liste.length > 1 ? Math.round(logo * 0.82) : logo} ring={P.white} sticker />
                       ) : prevu || jourCompet || aujourdhui ? (
+                        // 27 octobre 2026 soir : un jour prevu devient un rond pastel plein et leger (plus de pointilles)
                         <View
                           style={{
                             width: logo,
                             height: logo,
                             borderRadius: logo / 2,
-                            borderWidth: jourCompet ? 2 : 1.5,
-                            borderStyle: prevu && !jourCompet ? 'dashed' : 'solid',
+                            borderWidth: jourCompet ? 2 : prevu ? 0 : 1.5,
                             borderColor: jourCompet ? tc.plein : t.texte,
-                            backgroundColor: jourCompet ? tc.fond : 'transparent',
+                            backgroundColor: jourCompet ? tc.fond : prevu ? ROND_PREVU() : 'transparent',
                           }}
                         />
                       ) : null}
@@ -913,15 +912,17 @@ export function TuileMois({ trainings, plannedDays, competitionDate }: { trainin
   );
 }
 
+/** Le rond pastel plein et leger d'un jour prevu (clair et sombre) */
+const ROND_PREVU = () => (paletteSombre() ? 'rgba(143,168,222,0.22)' : '#DCE3FF');
+
 /** Une ligne pour lire le calendrier : seulement ce qui y est dessine */
 function Legende({ prevu, compet }: { prevu: boolean; compet: boolean }) {
-  const t = teinte('seances');
   const tc = teinte('competition');
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 14, rowGap: 4 }}>
       {prevu ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <View style={{ width: 14, height: 14, borderRadius: 7, borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.texte }} />
+          <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: ROND_PREVU() }} />
           <Ink size={12} weight="bold" color={P.ink2}>
             {traduire("prévu dans ton planning")}</Ink>
         </View>
@@ -1065,12 +1066,20 @@ export function usePeseePrevue(derniereIso: string | null): ReturnType<typeof pr
 export function TuilePesee({ prevue }: { prevue: NonNullable<ReturnType<typeof prochainePesee>> }) {
   const router = useRouter();
   const t = teinte('poids');
+  const illus = useIllustrations();
   const quand = `${prevue.quand}${prevue.heure ? `, ${prevue.heure}` : ''}`;
   return (
     <Cadre domaine="poids" onPress={() => router.push('/notifications' as any)} a11y={traduire("Ta prochaine pesée : {0}. Régler tes jours de pesée", quand)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-      <View style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1.5, borderColor: t.texte, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name="scale" size={20} color={t.texte} width={2.4} />
-      </View>
+      {illus.stickers ? (
+        // 27 octobre 2026 soir : le sticker balance a la place de l'icone au trait, centre sur les deux lignes de texte
+        <View style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
+          <Image source={STICKERS.balance} style={{ width: 48, height: 48 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+        </View>
+      ) : (
+        <View style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1.5, borderColor: t.texte, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="scale" size={20} color={t.texte} width={2.4} />
+        </View>
+      )}
       <View style={{ flex: 1, minWidth: 0 }}>
         <Ink size={13} weight="extraBold" color={t.texte} numberOfLines={1}>
           {traduire("Ta prochaine pesée")}</Ink>

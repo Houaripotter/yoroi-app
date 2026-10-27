@@ -49,8 +49,8 @@ function Card({ genre, label, selected, onPress, height, index }: { genre: 'h' |
             <Ink size={11} weight="bold" color={c.textSecondary}>{traduire(tenue.nom)}</Ink>
           </View>
         </Animated.View>
-        <View style={{ backgroundColor: selected ? c.accent : c.surface, borderWidth: selected ? 0 : 1, borderColor: c.border, borderRadius: 999, paddingHorizontal: 18, minHeight: 36, justifyContent: 'center' }}>
-          <Ink size={15} weight="extraBold" color={selected ? c.onAccent : c.ink}>{label}</Ink>
+        <View style={{ backgroundColor: selected ? c.primary : c.surface, borderWidth: selected ? 0 : 1, borderColor: c.border, borderRadius: 999, paddingHorizontal: 18, minHeight: 36, justifyContent: 'center' }}>
+          <Ink size={15} weight="extraBold" color={selected ? c.onPrimary : c.ink}>{label}</Ink>
         </View>
       </View>
     </ChoiceCard>
@@ -83,8 +83,8 @@ function CarteAutre({ selected, onPress }: { selected: boolean; onPress: () => v
   return (
     <ChoiceCard selected={selected} onPress={onPress} label={label} height={58}>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <View style={{ backgroundColor: selected ? c.accent : c.surface, borderWidth: selected ? 0 : 1, borderColor: c.border, borderRadius: 999, paddingHorizontal: 18, minHeight: 36, justifyContent: 'center' }}>
-          <Ink size={15} weight="extraBold" color={selected ? c.onAccent : c.ink}>{label}</Ink>
+        <View style={{ backgroundColor: selected ? c.primary : c.surface, borderWidth: selected ? 0 : 1, borderColor: c.border, borderRadius: 999, paddingHorizontal: 18, minHeight: 36, justifyContent: 'center' }}>
+          <Ink size={15} weight="extraBold" color={selected ? c.onPrimary : c.ink}>{label}</Ink>
         </View>
       </View>
     </ChoiceCard>

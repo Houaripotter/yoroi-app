@@ -1592,24 +1592,26 @@ export const themes: Record<string, Theme> = {
     icon: '',
     kanji: '白',
     colors: createThemeColors({
-      // Page légèrement gris clair → cards blanches se détachent naturellement
-      background: '#F2F1EC',
+      // 27 octobre 2026 (refonte Pastel) : les anciens ecrans prennent le fond gris bleute, les cartes blanches,
+      // l'encre et les lignes de la refonte (components/yoroi/tokens.ts) ; l'accent reste une encre foncee
+      // (icones et boutons lisibles), jamais un grand bleu sature
+      background: '#F5F6FB',
       backgroundCard: '#FFFFFF',
-      backgroundElevated: '#F7F6F2',
-      backgroundLight: '#ECEAE4',
-      // accent noir/dark → icônes et éléments visibles sur fond blanc
+      backgroundElevated: '#F8F9FD',
+      backgroundLight: '#EEF0F7',
+      // accent encre → icônes et éléments visibles sur fond blanc
       // La pill tab bar est forcée blanche dans _layout.tsx (indépendant de accent)
-      accent: '#1D2029',
+      accent: '#1D2033',
       accentDark: '#000000',
-      accentLight: '#3A3A3A',
-      accentText: '#1D2029',
-      companion: '#444444',
-      textPrimary: '#1D2029',
-      textSecondary: '#4A4E5A',
-      textMuted: '#8B8D96',
+      accentLight: '#3A3F58',
+      accentText: '#23358F',
+      companion: '#646985',
+      textPrimary: '#1D2033',
+      textSecondary: '#646985',
+      textMuted: '#8F94AC',
       textOnAccent: '#FFFFFF',
-      border: '#E2DFD8',
-      borderLight: '#E8E5DE',
+      border: '#E4E7F1',
+      borderLight: '#ECEEF5',
       glow: 'rgba(0, 0, 0, 0.06)',
       glowStrong: 'rgba(0, 0, 0, 0.14)',
     }, false),

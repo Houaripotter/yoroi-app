@@ -19,6 +19,7 @@ import { niceGroup, relativeDay } from '@/lib/v2/seance/format';
 import { Icon } from './Icon';
 import { MachineFinder, MachineFinderButton } from './MachineFinder';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { fondAjouter, PlusPastille } from '@/components/yoroi/v2/accueil/kit';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { traduire } from '@/lib/i18n/tr';
 import { noterRecherche } from '@/lib/v2/seance/recherchesIntrouvables';
@@ -220,9 +221,9 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
                   <Ink size={16} weight="extraBold" style={{ textAlign: 'center' }}>{traduire("Aucun exercice pour « {0} »", query.trim())}</Ink>
                   <Ink size={13} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire("Essaie un autre mot, en français ou en anglais, ou crée-le tel quel.")}</Ink>
                 </View>
-                <Pressable onPress={ajouterPerso} accessibilityRole="button" accessibilityLabel={traduire("Créer l’exercice {0}", query.trim())} style={({ pressed }) => ({ alignSelf: 'stretch', minHeight: 56, borderRadius: 18, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: pressed ? c.accentPressed : c.accent })}>
-                  <Icon name="plus" size={20} color={c.onAccent} strokeWidth={2.8} />
-                  <Ink size={16} weight="extraBold" color={c.onAccent} numberOfLines={1} style={{ flexShrink: 1 }}>{traduire("Ajouter « {0} » comme exercice", query.trim())}</Ink>
+                <Pressable onPress={ajouterPerso} accessibilityRole="button" accessibilityLabel={traduire("Créer l’exercice {0}", query.trim())} style={({ pressed }) => ({ alignSelf: 'stretch', minHeight: 56, borderRadius: 18, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: pressed ? c.primaryPressed : c.primary })}>
+                  <Icon name="plus" size={20} color={c.onPrimary} strokeWidth={2.8} />
+                  <Ink size={16} weight="extraBold" color={c.onPrimary} numberOfLines={1} style={{ flexShrink: 1 }}>{traduire("Ajouter « {0} » comme exercice", query.trim())}</Ink>
                 </Pressable>
               </View>
             ) : (
@@ -233,10 +234,10 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
           }
           ListHeaderComponent={
             query.trim() ? null : (
-              <Pressable onPress={() => { setCreation(true); champ.current?.focus(); }} accessibilityRole="button" accessibilityLabel={traduire('Créer mon exercice')} style={({ pressed }) => ({ minHeight: 54, borderRadius: 18, paddingHorizontal: 16, marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : 'transparent', borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.accent })}>
-                <Icon name="plus" size={18} color={c.accent} strokeWidth={2.6} />
+              <Pressable onPress={() => { setCreation(true); champ.current?.focus(); }} accessibilityRole="button" accessibilityLabel={traduire('Créer mon exercice')} style={({ pressed }) => ({ minHeight: 54, borderRadius: 18, paddingHorizontal: 16, marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: fondAjouter(pressed) })}>
+                <PlusPastille />
                 <View style={{ flex: 1 }}>
-                  <Ink size={15} weight="extraBold" color={c.accent}>{traduire('Créer mon exercice')}</Ink>
+                  <Ink size={15} weight="extraBold" color={c.accentText}>{traduire('Créer mon exercice')}</Ink>
                   <Ink size={12} color={c.textSecondary}>{creation ? traduire('Tape son nom en haut, puis touche Ajouter') : traduire('Il n’est pas dans la liste ? Ajoute le tien')}</Ink>
                 </View>
               </Pressable>
@@ -244,9 +245,9 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
           }
           ListFooterComponent={
             query.trim() && !exact && list.length > 0 ? (
-              <Pressable onPress={ajouterPerso} accessibilityRole="button" accessibilityLabel={traduire("Créer l’exercice {0}", query.trim())} style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, paddingHorizontal: 16, marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : 'transparent', borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.border })}>
-                <Icon name="plus" size={18} color={c.textSecondary} strokeWidth={2.6} />
-                <Ink size={15} weight="bold" color={c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>{traduire("Pas dans la liste ? Ajouter « {0} » comme exercice", query.trim())}</Ink>
+              <Pressable onPress={ajouterPerso} accessibilityRole="button" accessibilityLabel={traduire("Créer l’exercice {0}", query.trim())} style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, paddingHorizontal: 16, marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: fondAjouter(pressed) })}>
+                <PlusPastille />
+                <Ink size={15} weight="extraBold" color={c.accentText} style={{ flex: 1 }} numberOfLines={1}>{traduire("Pas dans la liste ? Ajouter « {0} » comme exercice", query.trim())}</Ink>
               </Pressable>
             ) : null
           }

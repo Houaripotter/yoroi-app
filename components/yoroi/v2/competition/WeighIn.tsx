@@ -25,7 +25,7 @@ export function WeighInCard({ categorie, poidsMax, weight, weightDate, daysLeft,
   return (
     <Card style={{ gap: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: P.indigoSoft, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="scale" size={22} color={P.indigo} />
         </View>
         <View style={{ flex: 1 }}>

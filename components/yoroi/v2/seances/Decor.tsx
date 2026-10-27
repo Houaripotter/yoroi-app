@@ -15,8 +15,8 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { P, paperA } from '@/components/yoroi/livePalette';
 import { ORNEMENTS } from '@/components/yoroi/v2/ornements/images';
 import type { OrnementKey } from '@/components/yoroi/v2/ornements/images';
-import { TAMPONS } from '@/components/yoroi/v2/tampons/table';
 import type { TamponId } from '@/components/yoroi/v2/tampons/table';
+import { tamponPour, useIllustrations } from '@/components/yoroi/v2/stickers';
 import { tap } from './ui';
 import Animated, { type SharedValue } from 'react-native-reanimated';
 import { fonduPapier, useParallaxe } from '@/components/yoroi/v2/accueil/parallaxe';
@@ -38,10 +38,12 @@ const FOCUS: Record<keyof typeof BANDEAUX, number> = { seances: 0.62, progres: 0
 export type Illus = { ornement: OrnementKey } | { tampon: TamponId };
 
 export function illusSource(i: Illus): ImageSourcePropType {
-  return 'ornement' in i ? ORNEMENTS[i.ornement] : TAMPONS[i.tampon].src;
+  // 27 octobre 2026 : l'ornement suit le reglage Illustrations (sticker ou encre) ; le tampon reste le tampon
+  return 'ornement' in i ? ORNEMENTS[i.ornement] : tamponPour(i.tampon);
 }
 
 export function IllusImage({ illus, size = 44, rotate = 0 }: { illus: Illus; size?: number; rotate?: number }) {
+  useIllustrations();
   return (
     <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: size, height: size, transform: rotate ? [{ rotate: `${rotate}deg` }] : undefined }}>
       <Image source={illusSource(illus)} style={{ width: size, height: size }} resizeMode="contain" accessibilityIgnoresInvertColors />

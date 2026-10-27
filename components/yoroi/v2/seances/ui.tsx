@@ -132,7 +132,7 @@ export function Chip({ label, on, onPress }: { label: string; on: boolean; onPre
       }}
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
-      style={{ minHeight: 38, justifyContent: 'center', paddingHorizontal: 13, borderRadius: 12, backgroundColor: on ? c.ink : 'transparent', borderWidth: on ? 0 : 1.5, borderColor: '#D5D2CA' }}
+      style={{ minHeight: 38, justifyContent: 'center', paddingHorizontal: 13, borderRadius: 12, backgroundColor: on ? c.ink : 'transparent', borderWidth: on ? 0 : 1.5, borderColor: '#C9CEDF' }}
     >
       <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? P.paper : c.textSecondary}>{label}</Ink>
     </Pressable>
@@ -178,8 +178,9 @@ export function Segments<T extends string>({ items, value, onChange }: { items: 
 export function BigButton({ label, onPress, tone = 'accent', icon, style }: { label: string; onPress: () => void; tone?: 'accent' | 'ink' | 'soft' | 'danger'; icon?: IconName; style?: StyleProp<ViewStyle> }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const bg = tone === 'accent' ? c.accent : tone === 'ink' ? c.ink : tone === 'danger' ? c.dangerTint : c.fillSubtle;
-  const fg = tone === 'accent' || tone === 'ink' ? '#FFFFFF' : tone === 'danger' ? c.danger : c.ink;
+  // 27 octobre 2026 (refonte Pastel) : le bouton principal en pastel, texte bleu nuit
+  const bg = tone === 'accent' ? c.primary : tone === 'ink' ? c.ink : tone === 'danger' ? c.dangerTint : c.fillSubtle;
+  const fg = tone === 'accent' ? c.onPrimary : tone === 'ink' ? c.background : tone === 'danger' ? c.danger : c.ink;
   return (
     <Pressable
       onPress={() => {
@@ -189,7 +190,7 @@ export function BigButton({ label, onPress, tone = 'accent', icon, style }: { la
       accessibilityRole="button"
       style={({ pressed }) => [
         { minHeight: 56, borderRadius: 18, backgroundColor: bg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 18, opacity: pressed ? 0.88 : 1 },
-        tone === 'accent' ? { shadowColor: c.accent, shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 4 } : null,
+        tone === 'accent' ? { shadowColor: '#1B2A44', shadowOpacity: 0.1, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 3 } : null,
         style,
       ]}
     >
@@ -251,7 +252,7 @@ export function EmptyState({ title, text, action, onAction, ornement }: { title:
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
-    <View style={{ alignItems: 'center', gap: 10, paddingVertical: 26, paddingHorizontal: 16, borderRadius: 24, backgroundColor: P.carte, borderWidth: 1.5, borderColor: '#D5D2CA', borderStyle: 'dashed' }}>
+    <View style={{ alignItems: 'center', gap: 10, paddingVertical: 26, paddingHorizontal: 16, borderRadius: 24, backgroundColor: P.carte, borderWidth: 1.5, borderColor: '#C9CEDF', borderStyle: 'dashed' }}>
       <Ornement name={ornement ?? ornementPour(title, text)} size={88} />
       <Ink size={19} weight="black" tight style={{ textAlign: 'center' }}>{title}</Ink>
       <Ink size={14} color={c.textSecondary} style={{ textAlign: 'center' }}>{text}</Ink>

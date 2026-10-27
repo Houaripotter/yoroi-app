@@ -30,23 +30,27 @@
  * (lib/v2/programmes/preselection.ts) : combien de jours par semaine, puis ton temps, ton niveau ou ton lieu s'ils
  * manquent ; tout est connu : « Ton profil » seul. La liste montre d'abord les programmes à ton nombre de jours,
  * classés par niveau, lieu et durée ; la puce « N jours » en haut ramène au choix des jours.
+ * 27 octobre 2026, refonte (maquettes Coach-Objectif, Jours, Choix, Programme, « aperçus vivants ») : cartes pastel
+ * (usePastel, Habillage.tsx), barre d'étapes fine avec « Étape N sur M », plus aucune grande carte indigo, boutons
+ * pastel au texte bleu nuit. Style seulement : étapes, calculs et navigation inchangés.
+ * Ancien rendu : _archive_ancien_design_2026-10-09/coach_2026-10-27/.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { tap } from '@/components/yoroi/v2/seances/ui';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import type { IconName } from '@/components/yoroi/v2/seances/Icon';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
-import { Cercles, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
+import { Capitales, ombrePastel, usePastel } from '@/components/yoroi/v2/programmes/Habillage';
+import { LinearGradient } from 'expo-linear-gradient';
 import { GrilleModules } from '@/components/yoroi/v2/programmes/GrilleModules';
 import { CarteConseilObjectif, FeuillePourquoi } from '@/components/yoroi/v2/programmes/Pourquoi';
 import { POURQUOI_MODULE, conseilsDesObjectifs } from '@/lib/v2/programmes/pourquoi';
 import type { Explication } from '@/lib/v2/programmes/pourquoi';
-import { BarresNiveau, CarteChoix, CarteProgramme, HerosProgramme, ICONE_OBJECTIF, ICONE_SPORT, PointsSemaine, PucesProgramme, RangeeJours, TuileChoix, TuilesJours, TuilesTemps, TypesProgrammes } from '@/components/yoroi/v2/programmes/ChoixVisuels';
+import { BarresNiveau, CarteChoix, CarteProgramme, HerosProgramme, ICONE_OBJECTIF, STICKER_OBJECTIF, ICONE_SPORT, MiniProgres, MiniSemaine, PuceConseil, PucesProgramme, RangeeJours, TuileChoix, TuilesJours, TuilesTemps, TypesProgrammes } from '@/components/yoroi/v2/programmes/ChoixVisuels';
 import { FeuillePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
 import { getProfile } from '@/lib/database';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
@@ -89,9 +93,8 @@ const LIEUX: { key: Materiel; label: string; icone: IconName }[] = [
 ];
 
 export default function CoachDepart() {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
-  const pal = usePaletteProgramme();
+  // 27 octobre 2026 : les couleurs pastel des maquettes Coach (Habillage.tsx, usePastel)
+  const pa = usePastel();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ depuis?: string; chemin?: string }>();
@@ -388,11 +391,11 @@ export default function CoachDepart() {
   /* ------------------------------------------------ rendu ------------------------------------------------ */
   const titreEcran = (titre: string, pourquoi?: string) => (
     <View style={{ gap: 6, marginBottom: 4 }}>
-      <Ink size={28} weight="black" tight color={pal.texte} accessibilityRole="header">{titre}</Ink>
-      {pourquoi ? <Ink size={14} weight="bold" color={pal.texte2}>{pourquoi}</Ink> : null}
+      <Ink size={28} weight="black" tight color={pa.texte} accessibilityRole="header" style={{ lineHeight: 32 }}>{titre}</Ink>
+      {pourquoi ? <Ink size={15} weight="bold" color={pa.texte2}>{pourquoi}</Ink> : null}
     </View>
   );
-  const titreSection = (t: string) => <Ink size={18} weight="black" tight color={pal.texte} accessibilityRole="header">{t}</Ink>;
+  const titreSection = (t: string) => <Ink size={16} weight="black" tight color={pa.texte} accessibilityRole="header" style={{ marginHorizontal: 2 }}>{t}</Ink>;
 
   let corps: React.ReactNode = null;
   let bas: React.ReactNode = null;
@@ -403,10 +406,10 @@ export default function CoachDepart() {
     const sportLabel = sport !== 'non' ? AUTRES_SPORTS.find((s) => s.key === sport)?.label : null;
     const deja: { icone: IconName; teinte: string; fond: string; t: string }[] = [];
     if (profil?.objectifs.length) {
-      deja.push({ icone: ICONE_OBJECTIF[profil.objectifs[0]] ?? 'target', teinte: pal.indigo, fond: pal.teinte, t: profil.objectifs.map((o) => traduire(OBJECTIFS_CHOIX.find((x) => x.key === o)?.label ?? '')).filter(Boolean).join(', ') });
+      deja.push({ icone: ICONE_OBJECTIF[profil.objectifs[0]] ?? 'target', teinte: pa.bleu.titre, fond: pa.bleu.fond, t: profil.objectifs.map((o) => traduire(OBJECTIFS_CHOIX.find((x) => x.key === o)?.label ?? '')).filter(Boolean).join(', ') });
     }
-    if (connues.jours) deja.push({ icone: 'calendar', teinte: pal.orange, fond: pal.orangeTint, t: joursTexte(jours).replace(/^./, (x) => x.toUpperCase()) });
-    if (connues.sport && sportLabel) deja.push({ icone: ICONE_SPORT[sport] ?? 'medal', teinte: pal.vert, fond: pal.vertTint, t: traduire(sportLabel) });
+    if (connues.jours) deja.push({ icone: 'calendar', teinte: pa.creme.titre, fond: pa.creme.fond, t: joursTexte(jours).replace(/^./, (x) => x.toUpperCase()) });
+    if (connues.sport && sportLabel) deja.push({ icone: ICONE_SPORT[sport] ?? 'medal', teinte: pa.menthe.titre, fond: pa.menthe.fond, t: traduire(sportLabel) });
     corps = (
       <View style={{ gap: 16 }}>
         <Heros
@@ -415,18 +418,18 @@ export default function CoachDepart() {
           texte={deja.length ? traduirePluriel(restantes, restantes > 1, 'Il reprend tes réponses. Encore {0} question.', 'Il reprend tes réponses. Encore {0} questions.', restantes) : traduire('Quelques questions, moins d’une minute')}
         />
         {deja.length ? (
-          <View style={{ backgroundColor: pal.carte, borderRadius: 24, padding: 16, gap: 12 }}>
+          <View style={[{ backgroundColor: pa.carte, borderRadius: 22, padding: 16, gap: 12 }, ombrePastel(pa.ombre)]}>
             {titreSection(traduire('Tu nous l’as déjà dit'))}
             {deja.map((x) => (
               <View key={x.t} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: x.fond, alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name={x.icone} size={20} color={x.teinte} />
+                <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: x.fond, alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name={x.icone} size={17} color={x.teinte} />
                 </View>
-                <Ink size={14} weight="extraBold" color={pal.texte} style={{ flex: 1 }} numberOfLines={2}>{x.t}</Ink>
-                <Icon name="check" size={18} color={pal.vert} />
+                <Ink size={14} weight="extraBold" color={pa.texte} style={{ flex: 1 }} numberOfLines={2}>{x.t}</Ink>
+                <Icon name="check" size={17} color={pa.menthe.titre} strokeWidth={3} />
               </View>
             ))}
-            {connues.jours ? <PointsSemaine jours={jours} plein={pal.indigo} vide={pal.anneau} taille={16} /> : null}
+            {connues.jours ? <MiniSemaine jours={jours} couleur={pa.bleu.barre} couleur2={pa.menthe.barre} vide={pa.ligne} hauteur={30} /> : null}
           </View>
         ) : null}
       </View>
@@ -442,13 +445,13 @@ export default function CoachDepart() {
   if (etape === 'objectifs') {
     corps = (
       <View style={{ gap: 12 }}>
-        <Heros image={img} titre={traduire('Ton objectif ?')} texte={prerempli ? traduire('Repris de tes réponses, ajuste si tu veux') : traduire('Plusieurs choix possibles')} />
-        <CarteChoix grand role="checkbox" icone="book" teinte={0} label={traduire('Je n’y connais rien')} sous={traduire('YOROI te guide pas à pas')} on={debuter} onPress={() => basculerObjectif('debuter')} />
+        {titreEcran(traduire('Ton objectif ?'), prerempli ? traduire('Repris de tes réponses, ajuste si tu veux') : traduire('Plusieurs choix possibles'))}
+        <CarteChoix grand role="checkbox" icone="book" sticker="debuter" teinte={0} label={traduire('Je n’y connais rien')} sous={traduire('YOROI te guide pas à pas')} on={debuter} onPress={() => basculerObjectif('debuter')} />
         <CarteChoix icone="list" teinte={1} label={traduire('Je sais déjà quel programme je veux')} on={false} fleche onPress={() => { tap(); ouvrirListe(); }} />
         <View style={{ marginTop: 8 }}>{titreSection(traduire('Tes objectifs'))}</View>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           {OBJECTIFS_CHOIX.filter((o) => o.key !== 'debuter').map((o, k) => (
-            <TuileChoix key={o.key} icone={ICONE_OBJECTIF[o.key] ?? 'target'} teinte={k} label={traduire(o.label)} on={objectifs.includes(o.key)} onPress={() => basculerObjectif(o.key)} />
+            <TuileChoix key={o.key} icone={ICONE_OBJECTIF[o.key] ?? 'target'} sticker={STICKER_OBJECTIF[o.key]} cle={o.key} teinte={k} label={traduire(o.label)} on={objectifs.includes(o.key)} onPress={() => basculerObjectif(o.key)} />
           ))}
         </View>
       </View>
@@ -470,7 +473,7 @@ export default function CoachDepart() {
             grand
             teinte={courseSeule ? (k === 0 ? 1 : 2) : k}
             icone={courseSeule ? (k === 0 ? 'close' : 'check') : undefined}
-            visuel={courseSeule ? undefined : (on, t) => <BarresNiveau n={k + 1} couleur={on ? '#FFFFFF' : t.encre} vide={on ? 'rgba(255,255,255,0.3)' : pal.carte} />}
+            visuel={courseSeule ? undefined : (_on, t) => <BarresNiveau n={k + 1} couleur={t.encre} vide={pa.carte} />}
             label={traduire(n.label)}
             on={niveau === n.key}
             onPress={() => { tap(); setNiveau(n.key); setTimeout(() => suivante('niveau'), 160); }}
@@ -484,12 +487,20 @@ export default function CoachDepart() {
     corps = (
       <View style={{ gap: 14 }}>
         {titreEcran(traduire('Tes jours disponibles'), traduire('Pour placer tes séances sur ta semaine'))}
-        <View style={{ backgroundColor: pal.carte, borderRadius: 24, paddingHorizontal: 12, paddingVertical: 18 }}>
-          <RangeeJours jours={jours} onBasculer={(d) => basculerJour(d, jours, setJours, false)} />
+        <RangeeJours jours={jours} onBasculer={(d) => basculerJour(d, jours, setJours, false)} />
+        {/* TA SEMAINE : l'aperçu vivant des jours choisis (maquette Coach-Jours) */}
+        <View style={{ backgroundColor: pa.bleu.fond, borderRadius: 22, paddingVertical: 14, paddingHorizontal: 16, gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <Capitales texte={traduire('Ta semaine')} couleur={pa.bleu.titre} />
+            {jours.length ? <Ink size={13} weight="extraBold" color={pa.bleu.encre}>{traduire('{0} jours par semaine', jours.length)}</Ink> : null}
+          </View>
+          <MiniSemaine jours={jours} couleur={pa.bleu.barre} couleur2={pa.menthe.barre} vide={pa.carte} hauteur={60} gap={6} />
         </View>
-        {jours.length === 1 ? <Ink size={13} weight="bold" color={pal.texte2}>{traduire(DEBUTANT)}</Ink> : null}
-        {jours.length === 7 ? <Ink size={13} weight="bold" color={pal.texte2}>{traduire('Sept jours : garde au moins un jour de repos, le repos fait aussi le muscle.')}</Ink> : null}
-        <CarteChoix icone="calendar" teinte={2} label={traduire('Je ne sais pas, choisis pour moi')} on={false} fleche onPress={() => { tap(); setJours([]); suivante('jours'); }} />
+        {jours.length === 1 ? <Ink size={13} weight="bold" color={pa.texte2}>{traduire(DEBUTANT)}</Ink> : null}
+        {jours.length === 7 ? <Ink size={13} weight="bold" color={pa.texte2}>{traduire('Sept jours : garde au moins un jour de repos, le repos fait aussi le muscle.')}</Ink> : null}
+        <Pressable onPress={() => { tap(); setJours([]); suivante('jours'); }} accessibilityRole="button" hitSlop={6} style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+          <Ink size={14} weight="bold" color={pa.bleu.encre} style={{ textDecorationLine: 'underline' }}>{traduire('Je ne sais pas, choisis pour moi')}</Ink>
+        </Pressable>
       </View>
     );
     bas = jours.length ? <BoutonPlein label={traduire('Suivant')} onPress={() => { tap(); suivante('jours'); }} /> : null;
@@ -569,7 +580,7 @@ export default function CoachDepart() {
             role="radio"
             grand
             teinte={k}
-            visuel={(on, t) => <BarresNiveau n={k + 1} couleur={on ? '#FFFFFF' : t.encre} vide={on ? 'rgba(255,255,255,0.3)' : pal.carte} />}
+            visuel={(_on, t) => <BarresNiveau n={k + 1} couleur={t.encre} vide={pa.carte} />}
             label={traduire(libelleNiveau(n.key))}
             sous={traduire(n.label)}
             on={niveauSu === n.key}
@@ -603,30 +614,32 @@ export default function CoachDepart() {
   if (etape === 'profil') {
     const lieuVu = repondu.includes('lieu') ? lieu : lieuSauve;
     const lignes: { cle: string; icone: IconName; teinte: string; fond: string; t: string; vers: Etape }[] = [
-      { cle: 'jours', icone: 'calendar', teinte: pal.indigo, fond: pal.teinte, t: traduire('{0} jours par semaine', nJours ?? 0), vers: 'pjours' },
-      { cle: 'temps', icone: 'clock', teinte: pal.orange, fond: pal.orangeTint, t: traduire(TEMPS_SEANCE.find((x) => x.key === temps)?.label ?? ''), vers: 'ptemps' },
-      { cle: 'niveau', icone: 'gauge', teinte: pal.vert, fond: pal.vertTint, t: niveauSu ? traduire(libelleNiveau(niveauSu)) : '', vers: 'pniveau' },
+      { cle: 'jours', icone: 'calendar', teinte: pa.bleu.titre, fond: pa.bleu.fond, t: traduire('{0} jours par semaine', nJours ?? 0), vers: 'pjours' },
+      { cle: 'temps', icone: 'clock', teinte: pa.creme.titre, fond: pa.creme.fond, t: traduire(TEMPS_SEANCE.find((x) => x.key === temps)?.label ?? ''), vers: 'ptemps' },
+      { cle: 'niveau', icone: 'gauge', teinte: pa.menthe.titre, fond: pa.menthe.fond, t: niveauSu ? traduire(libelleNiveau(niveauSu)) : '', vers: 'pniveau' },
     ];
     if (lieuVu) {
       const l = LIEUX.find((x) => x.key === lieuVu);
-      if (l) lignes.push({ cle: 'lieu', icone: l.icone, teinte: pal.indigo, fond: pal.teinte, t: traduire(l.label), vers: 'plieu' });
+      if (l) lignes.push({ cle: 'lieu', icone: l.icone, teinte: pa.lilas.titre, fond: pa.lilas.fond, t: traduire(l.label), vers: 'plieu' });
     }
     corps = (
       <View style={{ gap: 14 }}>
         {titreEcran(traduire('Ton profil'), traduire('Repris de tes réponses, ajuste si tu veux'))}
-        <View style={{ backgroundColor: pal.carte, borderRadius: 24, padding: 16, gap: 14 }}>
+        <View style={[{ backgroundColor: pa.carte, borderRadius: 22, padding: 16, gap: 14 }, ombrePastel(pa.ombre)]}>
           {lignes.map((x) => (
             <View key={x.cle} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: x.fond, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name={x.icone} size={20} color={x.teinte} />
+              <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: x.fond, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name={x.icone} size={17} color={x.teinte} />
               </View>
-              <Ink size={15} weight="extraBold" color={pal.texte} style={{ flex: 1 }} numberOfLines={2}>{x.t}</Ink>
-              <Pressable onPress={() => modifier(x.vers)} accessibilityRole="button" accessibilityLabel={`${traduire('Modifier')}, ${x.t}`} hitSlop={6} style={({ pressed }) => ({ minHeight: 36, paddingHorizontal: 14, borderRadius: 18, justifyContent: 'center', backgroundColor: pressed ? pal.anneau : pal.teinte })}>
-                <Ink size={13} weight="extraBold" color={pal.accent}>{traduire('Modifier')}</Ink>
+              <Ink size={15} weight="extraBold" color={pa.texte} style={{ flex: 1 }} numberOfLines={2}>{x.t}</Ink>
+              <Pressable onPress={() => modifier(x.vers)} accessibilityRole="button" accessibilityLabel={`${traduire('Modifier')}, ${x.t}`} hitSlop={6} style={({ pressed }) => ({ minHeight: 36, paddingHorizontal: 14, borderRadius: 18, justifyContent: 'center', backgroundColor: pressed ? pa.boutonAppui : pa.bouton })}>
+                <Ink size={13} weight="extraBold" color={pa.surBouton}>{traduire('Modifier')}</Ink>
               </Pressable>
             </View>
           ))}
-          <PointsSemaine jours={joursConseilles(nJours ?? 0)} plein={pal.indigo} vide={pal.anneau} taille={16} />
+          <View style={{ backgroundColor: pa.bleu.fond, borderRadius: 16, padding: 10 }}>
+            <MiniSemaine jours={joursConseilles(nJours ?? 0)} couleur={pa.bleu.barre} couleur2={pa.menthe.barre} vide={pa.carte} hauteur={34} gap={4} />
+          </View>
         </View>
       </View>
     );
@@ -649,18 +662,18 @@ export default function CoachDepart() {
             accessibilityRole="button"
             accessibilityLabel={traduire('{0} jours par semaine', env.jours) + ', ' + traduire('Modifier')}
             hitSlop={6}
-            style={({ pressed }) => ({ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: pressed ? pal.anneau : pal.teinte })}
+            style={({ pressed }) => ({ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: pressed ? pa.boutonAppui : pa.bouton })}
           >
-            <Icon name="calendar" size={16} color={pal.accent} />
-            <Ink size={14} weight="extraBold" color={pal.accent}>{traduire('{0} jours', env.jours)}</Ink>
-            <Icon name="chevron" size={14} color={pal.accent} />
+            <Icon name="calendar" size={15} color={pa.surBouton} />
+            <Ink size={14} weight="extraBold" color={pa.surBouton}>{traduire('{0} jours', env.jours)}</Ink>
+            <Ink size={13} weight="bold" color={pa.surBouton}>{traduire('Modifier')}</Ink>
           </Pressable>
         ) : null}
         <TypesProgrammes groupes={GROUPES_PROGRAMMES} groupe={groupe} onChoisir={(id) => { tap(); setGroupe(id); setVoirAutres(false); }} />
         {!tri.exact ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 20, backgroundColor: pal.orangeTint }}>
-            <Icon name="target" size={18} color={pal.orange} />
-            <Ink size={13} weight="extraBold" color={pal.texte} style={{ flex: 1 }}>{traduire('Le plus proche de ce que tu veux')}</Ink>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 18, backgroundColor: pa.creme.fond }}>
+            <Icon name="target" size={16} color={pa.creme.titre} />
+            <Ink size={13} weight="extraBold" color={pa.texte} style={{ flex: 1 }}>{traduire('Le plus proche de ce que tu veux')}</Ink>
           </View>
         ) : null}
         {premier ? (
@@ -679,8 +692,8 @@ export default function CoachDepart() {
             </View>
           ) : (
             <Pressable onPress={() => { tap(); setVoirAutres(true); }} accessibilityRole="button" hitSlop={6} style={({ pressed }) => ({ alignSelf: 'center', minHeight: 44, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: pressed ? 0.7 : 1 })}>
-              <Ink size={14} weight="extraBold" color={pal.texte2}>{traduire('Voir les autres programmes')}</Ink>
-              <Icon name="chevron" size={14} color={pal.texte2} />
+              <Ink size={14} weight="extraBold" color={pa.bleu.encre}>{traduire('Voir les autres programmes')}</Ink>
+              <Icon name="chevron" size={14} color={pa.bleu.encre} />
             </Pressable>
           )
         ) : null}
@@ -704,21 +717,10 @@ export default function CoachDepart() {
               const px = programmeParId(x.id);
               if (!px) return null;
               return x.id === prog.id ? (
-                <View key={x.id} style={{ borderRadius: 28, backgroundColor: pal.indigo, overflow: 'hidden', padding: 20, gap: 10, minHeight: 230 }}>
-                  <Cercles />
-                  {img ? <Image source={img} style={{ position: 'absolute', right: -6, bottom: 0, width: 128, height: 176 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
-                  <View style={{ maxWidth: img ? '66%' : '100%', gap: 8 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999 }}>
-                      <Icon name="check" size={13} color="#FFFFFF" strokeWidth={3} />
-                      <Ink size={12} weight="extraBold" color={c.onDark}>{x.conseille ? traduire('Conseillé pour toi') : traduire('Ton choix')}</Ink>
-                    </View>
-                    <Ink size={24} weight="black" tight color={c.onDark} numberOfLines={3} accessibilityRole="header">{traduire(px.titre)}</Ink>
-                    <Ink size={13} weight="bold" color={c.onDarkSecondary} numberOfLines={3} style={{ lineHeight: 18 }}>{traduire(x.pourquoi)}</Ink>
-                    <PointsSemaine jours={joursEff} plein="#FFFFFF" vide="rgba(255,255,255,0.2)" taille={20} />
-                  </View>
+                <CarteResultat key={x.id} image={img} badge={x.conseille ? traduire('Conseillé pour toi') : traduire('Ton choix')} coche titre={traduire(px.titre)} texte={traduire(x.pourquoi)} jours={joursEff}>
                   <PucesCouvre couvre={x.couvre} surIndigo />
                   <View style={{ maxWidth: img ? '68%' : '100%' }}><PucesProgramme p={px} /></View>
-                </View>
+                </CarteResultat>
               ) : (
                 <CarteProposition key={x.id} p={px} x={x} onPress={() => choisirProposition(x)} />
               );
@@ -726,34 +728,22 @@ export default function CoachDepart() {
             <CarteChoix icone="list" teinte={1} label={traduire('Voir tous les programmes')} on={false} fleche onPress={() => { tap(); ouvrirListe(); }} />
           </View>
         ) : (
-        <View style={{ borderRadius: 28, backgroundColor: pal.indigo, overflow: 'hidden', padding: 20, gap: 10, minHeight: 230 }}>
-          <Cercles />
-          {img ? <Image source={img} style={{ position: 'absolute', right: -6, bottom: 0, width: 136, height: 184 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
-          <View style={{ maxWidth: img ? '64%' : '100%', gap: 8 }}>
-            <View style={{ alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999 }}>
-              <Ink size={12} weight="extraBold" color={c.onDark}>{duConseil ? traduire('Conseillé pour toi') : traduire('Ton programme')}</Ink>
-            </View>
-            <Ink size={24} weight="black" tight color={c.onDark} numberOfLines={3} accessibilityRole="header">{traduire(prog.titre)}</Ink>
-            <Ink size={13} weight="bold" color={c.onDarkSecondary} numberOfLines={4} style={{ lineHeight: 18 }}>{traduire(duConseil ? conseil!.pourquoi : prog.accroche)}</Ink>
-            <View style={{ marginTop: 2 }}>
-              <PointsSemaine jours={joursEff} plein="#FFFFFF" vide="rgba(255,255,255,0.2)" taille={20} />
-            </View>
-          </View>
+        <CarteResultat image={img} badge={duConseil ? traduire('Conseillé pour toi') : traduire('Ton programme')} titre={traduire(prog.titre)} texte={traduire(duConseil ? conseil!.pourquoi : prog.accroche)} jours={joursEff}>
           <View style={{ maxWidth: img ? '68%' : '100%' }} accessible accessibilityLabel={traduire('{0} j par semaine, {1} min', prog.joursParSemaine, prog.dureeMin)}>
             <PucesProgramme p={prog} />
           </View>
-        </View>
+        </CarteResultat>
         )}
 
         {duConseil && conseil!.dureeTropLongue ? (
-          <Ink size={13} weight="bold" color={pal.texte2}>{traduire('Moins de temps un jour ? La page du programme propose une séance express.')}</Ink>
+          <Ink size={13} weight="bold" color={pa.texte2}>{traduire('Moins de temps un jour ? La page du programme propose une séance express.')}</Ink>
         ) : null}
         {duConseil && conseil!.principeSport ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 22, backgroundColor: pal.carte }}>
-            <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: pal.orangeTint, alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="target" size={22} color={pal.orange} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 22, backgroundColor: pa.creme.fond }}>
+            <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: pa.carte, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="target" size={17} color={pa.creme.titre} />
             </View>
-            <Ink size={13} weight="bold" color={pal.texte} style={{ flex: 1, lineHeight: 18 }}>{traduire(conseil!.principeSport!)}</Ink>
+            <Ink size={13} weight="bold" color={pa.texte} style={{ flex: 1, lineHeight: 18 }}>{traduire(conseil!.principeSport!)}</Ink>
           </View>
         ) : null}
 
@@ -786,9 +776,9 @@ export default function CoachDepart() {
         {aDesJoursMarche(prog) ? (
           <View style={{ gap: 10 }}>
             {titreSection(traduire('Les séances de marche du programme'))}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              <Puce label={traduire('Je les garde')} on={!sansMarche} onPress={() => { tap(); setSansMarche(false); }} />
-              <Puce label={traduire('Je les retire')} on={sansMarche} onPress={() => { tap(); setSansMarche(true); }} />
+            <View style={{ flexDirection: 'row', gap: 4, padding: 4, borderRadius: 16, backgroundColor: pa.ligne }}>
+              <Segment label={traduire('Je les garde')} on={!sansMarche} onPress={() => { tap(); setSansMarche(false); }} />
+              <Segment label={traduire('Je les retire')} on={sansMarche} onPress={() => { tap(); setSansMarche(true); }} />
             </View>
           </View>
         ) : null}
@@ -801,7 +791,7 @@ export default function CoachDepart() {
           <View style={{ gap: 10 }}>
             <View style={{ gap: 2 }}>
               {titreSection(traduire('Les conseils du coach'))}
-              <Ink size={13} weight="bold" color={pal.texte2}>{traduire('Pour chacun de tes objectifs, ce qui marche vraiment')}</Ink>
+              <Ink size={13} weight="bold" color={pa.texte2} style={{ marginHorizontal: 2 }}>{traduire('Pour chacun de tes objectifs, ce qui marche vraiment')}</Ink>
             </View>
             {conseils.map((x, k) => {
               const m = x.modules.find((id) => possibles.some((pm) => pm.id === id));
@@ -837,29 +827,34 @@ export default function CoachDepart() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: pal.page }}>
+    <View style={{ flex: 1, backgroundColor: pa.page }}>
       {/* en-tête : retour, progression, Plus tard */}
-      <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 18, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <Pressable onPress={retour} accessibilityRole="button" accessibilityLabel={traduire('Retour')} style={({ pressed }) => ({ width: 46, height: 46, borderRadius: 23, backgroundColor: pal.carte, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.94 : 1 }] })}>
-          <Icon name="chevronLeft" size={20} color={pal.texte} />
+      <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Pressable onPress={retour} accessibilityRole="button" accessibilityLabel={traduire('Retour')} style={({ pressed }) => [{ width: 44, height: 44, borderRadius: 22, backgroundColor: pa.carte, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.94 : 1 }] }, ombrePastel(pa.ombre)]}>
+          <Icon name="chevronLeft" size={18} color={pa.texte} />
         </Pressable>
-        <View style={{ flex: 1, flexDirection: 'row', gap: 5, justifyContent: 'center' }} accessible accessibilityLabel={traduire('Étape {0} sur {1}', rang + 1, suiteVue.length)}>
-          {etape === 'intro' || etape === 'attente'
-            ? null
-            : suiteVue.map((e, k) => (
-                <View key={e} style={{ height: 6, flex: 1, maxWidth: 34, borderRadius: 3, backgroundColor: k <= rang ? pal.indigo : pal.anneau }} />
-              ))}
+        <View style={{ flex: 1, gap: 6 }} accessible accessibilityLabel={traduire('Étape {0} sur {1}', rang + 1, suiteVue.length)}>
+          {etape === 'intro' || etape === 'attente' ? null : (
+            <>
+              <View style={{ flexDirection: 'row', gap: 4 }}>
+                {suiteVue.map((e, k) => (
+                  <View key={e} style={{ height: 5, flex: 1, borderRadius: 3, backgroundColor: k <= rang ? pa.etape : pa.etapeVide }} />
+                ))}
+              </View>
+              <Ink size={12} weight="bold" color={pa.texte2}>{traduire('Étape {0} sur {1}', rang + 1, suiteVue.length)}</Ink>
+            </>
+          )}
         </View>
-        <Pressable onPress={plusTard} accessibilityRole="button" hitSlop={8} style={{ minHeight: 46, paddingHorizontal: 6, justifyContent: 'center' }}>
-          <Ink size={14} weight="extraBold" color={pal.texte2}>{traduire('Plus tard')}</Ink>
+        <Pressable onPress={plusTard} accessibilityRole="button" hitSlop={8} style={{ minHeight: 44, paddingHorizontal: 4, justifyContent: 'center' }}>
+          <Ink size={14} weight="bold" color={pa.texte2}>{traduire('Plus tard')}</Ink>
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 8, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
         {corps}
       </ScrollView>
 
-      {bas ? <View style={{ paddingHorizontal: 18, paddingTop: 10, paddingBottom: insets.bottom + 14, backgroundColor: pal.page }}>{bas}</View> : null}
+      {bas ? <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: insets.bottom + 14, backgroundColor: pa.page }}>{bas}</View> : null}
 
       <FeuillePoidsDeDepart visible={guide} onClose={() => setGuide(false)} />
       <FeuillePourquoi explication={pourquoi} onClose={() => setPourquoi(null)} />
@@ -869,27 +864,62 @@ export default function CoachDepart() {
 
 /* ------------------------------------------------ morceaux ------------------------------------------------ */
 
-/** La carte indigo du premier écran, le personnage à droite */
-function Heros({ image, titre, texte }: { image: ReturnType<typeof sportImage>; titre: string; texte?: string }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
-  const pal = usePaletteProgramme();
+/**
+ * La carte pastel du haut (maquette Coach-Programme) : dégradé très léger, un grand rond blanc, le personnage à
+ * droite. Remplace la carte indigo du 26 octobre (archivée dans _archive_ancien_design_2026-10-09/coach_2026-10-27/).
+ */
+function CartePastel({ image, children, minHeight = 170 }: { image: ReturnType<typeof sportImage>; children: React.ReactNode; minHeight?: number }) {
+  const pa = usePastel();
   return (
-    <View style={{ borderRadius: 28, backgroundColor: pal.indigo, overflow: 'hidden', padding: 20, minHeight: 170, justifyContent: 'center' }}>
-      <Cercles />
-      {image ? <Image source={image} style={{ position: 'absolute', right: 0, bottom: 0, width: 128, height: 170 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
+    <LinearGradient colors={pa.degrade} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 28, overflow: 'hidden', padding: 18, gap: 10, minHeight, justifyContent: 'center' }}>
+      <View pointerEvents="none" style={{ position: 'absolute', right: -30, bottom: -40, width: 190, height: 190, borderRadius: 95, backgroundColor: pa.carte, opacity: 0.55 }} />
+      {image ? <Image source={image} style={{ position: 'absolute', right: 6, bottom: 0, width: 124, height: Math.min(190, minHeight + 10) }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
+      {children}
+    </LinearGradient>
+  );
+}
+
+/** Le premier écran : « Ton coach » en petites capitales, la question, le personnage */
+function Heros({ image, titre, texte }: { image: ReturnType<typeof sportImage>; titre: string; texte?: string }) {
+  const pa = usePastel();
+  return (
+    <CartePastel image={image}>
       <View style={{ maxWidth: image ? '62%' : '100%', gap: 6 }}>
-        <Ink size={12} weight="extraBold" color={c.onDarkSecondary}>{traduire('Ton coach')}</Ink>
-        <Ink size={24} weight="black" tight color={c.onDark} accessibilityRole="header">{titre}</Ink>
-        {texte ? <Ink size={13} weight="bold" color={c.onDarkSecondary}>{texte}</Ink> : null}
+        <Capitales texte={traduire('Ton coach')} couleur={pa.bleu.titre} />
+        <Ink size={24} weight="black" tight color={pa.bleu.encre} accessibilityRole="header">{titre}</Ink>
+        {texte ? <Ink size={13} weight="bold" color={pa.texte2}>{texte}</Ink> : null}
       </View>
-    </View>
+    </CartePastel>
+  );
+}
+
+/** Le programme du résultat : « Conseillé pour toi » ou « Ton programme », le nom, pourquoi, la semaine, la courbe */
+function CarteResultat({ image, badge, coche, titre, texte, jours, children }: { image: ReturnType<typeof sportImage>; badge: string; coche?: boolean; titre: string; texte: string; jours: readonly number[]; children?: React.ReactNode }) {
+  const pa = usePastel();
+  return (
+    <CartePastel image={image} minHeight={220}>
+      <View style={{ maxWidth: image ? '64%' : '100%', gap: 7 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          {coche ? <Icon name="check" size={13} color={pa.bleu.titre} strokeWidth={3} /> : null}
+          <View style={{ flexShrink: 1 }}><Capitales texte={badge} couleur={pa.bleu.titre} /></View>
+        </View>
+        <Ink size={23} weight="black" tight color={pa.bleu.encre} numberOfLines={3} accessibilityRole="header" style={{ lineHeight: 27 }}>{titre}</Ink>
+        <Ink size={13} weight="bold" color={pa.texte2} numberOfLines={4} style={{ lineHeight: 18 }}>{texte}</Ink>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, marginTop: 2 }}>
+          <View style={{ width: 84 }}>
+            <MiniSemaine jours={jours} couleur={pa.bleu.barre} couleur2={pa.menthe.barre} vide={pa.carte} hauteur={30} gap={3} />
+          </View>
+          <MiniProgres largeur={84} hauteur={34} couleur={pa.bleu.titre} aire={pa.carte} point={pa.carte} />
+        </View>
+      </View>
+      {children}
+    </CartePastel>
   );
 }
 
 /** Les objectifs que couvre un programme : coche s'il le fait lui même, plus s'il passe par un module */
 function PucesCouvre({ couvre, surIndigo }: { couvre: Proposition['couvre']; surIndigo?: boolean }) {
-  const pal = usePaletteProgramme();
+  const pa = usePastel();
   if (!couvre.length) return null;
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -897,10 +927,11 @@ function PucesCouvre({ couvre, surIndigo }: { couvre: Proposition['couvre']; sur
         const label = traduire(OBJECTIFS_CHOIX.find((o) => o.key === x.objectif)?.label ?? '');
         const mod = x.via === 'module' ? moduleParId(x.module!) : undefined;
         const texte = mod ? traduire('{0}, module {1}', label, traduire(mod.label)) : label;
-        const fond = surIndigo ? 'rgba(255,255,255,0.16)' : x.via === 'programme' ? pal.vertTint : pal.teinte;
-        const encre = surIndigo ? '#FFFFFF' : x.via === 'programme' ? pal.vert : pal.accent;
+        // sur la carte pastel du haut (surIndigo, nom gardé) : puces blanches ; sur une carte blanche : puces pastel
+        const fond = surIndigo ? pa.carte : x.via === 'programme' ? pa.menthe.fond : pa.bleu.fond;
+        const encre = x.via === 'programme' ? pa.menthe.titre : pa.bleu.encre;
         return (
-          <View key={x.objectif} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: fond }}>
+          <View key={x.objectif} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, backgroundColor: fond }}>
             <Icon name={x.via === 'programme' ? 'check' : 'plus'} size={12} color={encre} strokeWidth={3} />
             <Ink size={12} weight="extraBold" color={encre}>{texte}</Ink>
           </View>
@@ -910,9 +941,9 @@ function PucesCouvre({ couvre, surIndigo }: { couvre: Proposition['couvre']; sur
   );
 }
 
-/** Une proposition « Pour toi » non choisie : carte blanche, ses jours, ce qu'elle couvre ; toucher la choisit */
+/** Une proposition « Pour toi » non choisie : carte blanche, sa semaine en barres, ce qu'elle couvre ; toucher la choisit */
 function CarteProposition({ p, x, onPress }: { p: Programme; x: Proposition; onPress: () => void }) {
-  const pal = usePaletteProgramme();
+  const pa = usePastel();
   const titre = traduire(p.titre);
   return (
     <Pressable
@@ -920,64 +951,75 @@ function CarteProposition({ p, x, onPress }: { p: Programme; x: Proposition; onP
       accessibilityRole="radio"
       accessibilityState={{ selected: false }}
       accessibilityLabel={[x.conseille ? traduire('Conseillé pour toi') : '', titre, traduire('{0} jours', p.joursParSemaine), traduire('{0} min', p.dureeMin)].filter(Boolean).join(', ')}
-      style={({ pressed }) => ({ borderRadius: 24, padding: 16, gap: 12, backgroundColor: pressed ? pal.teinte : pal.carte })}
+      style={({ pressed }) => [{ borderRadius: 22, padding: 16, gap: 12, backgroundColor: pressed ? pa.choisi : pa.carte }, ombrePastel(pa.ombre)]}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <View style={{ width: 58, height: 58, borderRadius: 19, backgroundColor: pal.teinte, alignItems: 'center', justifyContent: 'center' }}>
-          <Ink size={22} weight="black" tight color={pal.accent}>{String(p.joursParSemaine)}</Ink>
-          <Ink size={10} weight="extraBold" color={pal.accent}>{traduire('jours')}</Ink>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View style={{ width: 70 }}>
+          <MiniSemaine jours={joursConseilles(p.joursParSemaine)} couleur={pa.peche.barre} vide={pa.ligne} hauteur={34} gap={2} />
         </View>
         <View style={{ flex: 1, gap: 3 }}>
-          {x.conseille ? <Ink size={11} weight="extraBold" color={pal.accent}>{traduire('Conseillé pour toi')}</Ink> : null}
-          <Ink size={16} weight="black" tight color={pal.texte} numberOfLines={2}>{titre}</Ink>
-          <Ink size={12} weight="bold" color={pal.texte2}>{traduire('{0} min', p.dureeMin)}</Ink>
+          {x.conseille ? <PuceConseil texte={traduire('Conseillé pour toi')} /> : null}
+          <Ink size={15} weight="black" tight color={pa.texte} numberOfLines={2}>{titre}</Ink>
+          <Ink size={12} weight="bold" color={pa.texte2}>{traduire('{0} j par semaine, {1} min', p.joursParSemaine, p.dureeMin)}</Ink>
         </View>
-        <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: pal.anneau }} />
+        <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: pa.bordChoisi }} />
       </View>
       <PucesCouvre couvre={x.couvre} />
     </Pressable>
   );
 }
 
-/** Puce de choix court (groupe de programmes, durée du cardio) */
+/** Puce de choix court (durée du cardio) : choisie, bleu très pâle avec un bord doux */
 function Puce({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
-  const pal = usePaletteProgramme();
+  const pa = usePastel();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
-      style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? pal.indigo : pressed ? pal.teinte : pal.carte })}
+      style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? pa.choisi : pressed ? pa.bleu.fond : pa.carte, borderWidth: 1.5, borderColor: on ? pa.bordChoisi : pa.ligne })}
     >
-      <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? c.onDark : pal.texte}>{label}</Ink>
+      <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? pa.bleu.encre : pa.texte}>{label}</Ink>
     </Pressable>
   );
 }
 
+/** Une moitié du contrôle segmenté (séances de marche, maquette Coach-Programme) */
+function Segment({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
+  const pa = usePastel();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: on }}
+      style={({ pressed }) => [{ flex: 1, minHeight: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? pa.carte : 'transparent', opacity: pressed ? 0.8 : 1 }, on ? ombrePastel(pa.ombre) : null]}
+    >
+      <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? pa.bleu.encre : pa.texte2}>{label}</Ink>
+    </Pressable>
+  );
+}
+
+/** Le bouton principal du bas : pastel, texte bleu nuit (27 octobre 2026, « le bleu plein est trop fort ») */
 function BoutonPlein({ label, onPress, grand, icone }: { label: string; onPress: () => void; grand?: boolean; icone?: IconName }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
-  const pal = usePaletteProgramme();
+  const pa = usePastel();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => ({ minHeight: grand ? 62 : 56, borderRadius: 999, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: pal.indigo, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: pal.indigo, shadowOpacity: 0.28, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 4 })}
+      style={({ pressed }) => [{ minHeight: grand ? 58 : 56, borderRadius: 999, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? pa.boutonAppui : pa.bouton, transform: [{ scale: pressed ? 0.98 : 1 }] }, ombrePastel(pa.ombre)]}
     >
-      {icone ? <Icon name={icone} size={18} color={c.onDark} /> : null}
-      <Ink size={grand ? 18 : 16} weight="black" color={c.onDark}>{label}</Ink>
+      {icone ? <Icon name={icone} size={17} color={pa.surBouton} /> : null}
+      <Ink size={grand ? 17 : 16} weight="black" color={pa.surBouton}>{label}</Ink>
     </Pressable>
   );
 }
 
 function BoutonDoux({ label, onPress }: { label: string; onPress: () => void }) {
-  const pal = usePaletteProgramme();
+  const pa = usePastel();
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 52, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? pal.teinte : pal.carte })}>
-      <Ink size={15} weight="extraBold" color={pal.indigo}>{label}</Ink>
+    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 50, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? pa.bleu.fond : pa.carte, borderWidth: 1, borderColor: pa.ligne })}>
+      <Ink size={15} weight="extraBold" color={pa.bleu.encre}>{label}</Ink>
     </Pressable>
   );
 }

@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { fontStyle } from '@/components/yoroi/fonts';
 import { SPORTS, getSportName } from '@/lib/sports';
-import { BigButton, Card, Enter, Icon, P, Press, SectionTitle, tap, useAccent } from '@/components/yoroi/v2/accueil/kit';
+import { BigButton, Card, Enter, Icon, fondAjouter, P, PlusPastille, Press, SectionTitle, tap, useAccent } from '@/components/yoroi/v2/accueil/kit';
 import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
 import { ChoiceRow } from '@/components/yoroi/v2/seance/Sheet';
 import { Stepper } from '@/components/yoroi/v2/seance/Stepper';
@@ -417,8 +417,8 @@ export default function DicteSeance() {
             <Enter i={0}>
               <Card style={{ gap: 12, padding: 14 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon name="mic" size={22} color={P.white} />
+                  <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="mic" size={22} color={P.onPrimary} />
                   </View>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Ink size={15} weight="extraBold">{traduire("Touche le micro du clavier")}</Ink>
@@ -630,10 +630,10 @@ export default function DicteSeance() {
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={traduire("Ajouter un partenaire")}
-                  style={{ minHeight: 48, borderRadius: 16, borderWidth: 1, borderColor: P.line2, borderStyle: 'dashed', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                  style={{ minHeight: 48, borderRadius: 16, backgroundColor: fondAjouter(), flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                 >
-                  <Icon name="plus" size={16} color={accent} />
-                  <Ink size={14} weight="extraBold" color={accent}>{traduire("Ajouter un partenaire")}</Ink>
+                  <PlusPastille taille={26} />
+                  <Ink size={14} weight="extraBold" color={P.accentText}>{traduire("Ajouter un partenaire")}</Ink>
                 </Pressable>
               </View>
             ) : null}
@@ -981,9 +981,9 @@ function GuessCard({ g, onAnswer }: { g: DicteeGuess; onAnswer: (name: string | 
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {g.guess ? (
-          <Pressable onPress={() => onAnswer(null)} accessibilityRole="button" accessibilityLabel={traduire("Oui, {0}", g.guess)} style={{ minHeight: 44, paddingHorizontal: 18, borderRadius: 14, backgroundColor: accent, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Icon name="check" size={16} color={P.white} />
-            <Ink size={14} weight="extraBold" color={P.white}>{traduire("Oui")}</Ink>
+          <Pressable onPress={() => onAnswer(null)} accessibilityRole="button" accessibilityLabel={traduire("Oui, {0}", g.guess)} style={{ minHeight: 44, paddingHorizontal: 18, borderRadius: 14, backgroundColor: P.primary, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Icon name="check" size={16} color={P.onPrimary} />
+            <Ink size={14} weight="extraBold" color={P.onPrimary}>{traduire("Oui")}</Ink>
           </Pressable>
         ) : null}
         {g.options.map((o) => (
@@ -1026,9 +1026,9 @@ function TwinCard({ twin, linked, open, onLink, onNew, onUndo }: { twin: Trainin
         </Pressable>
       ) : (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          <Pressable onPress={onLink} accessibilityRole="button" accessibilityLabel={traduire("Relier à cette séance")} style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, backgroundColor: accent, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Icon name="check" size={16} color={P.white} />
-            <Ink size={14} weight="extraBold" color={P.white}>Relier</Ink>
+          <Pressable onPress={onLink} accessibilityRole="button" accessibilityLabel={traduire("Relier à cette séance")} style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, backgroundColor: P.primary, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Icon name="check" size={16} color={P.onPrimary} />
+            <Ink size={14} weight="extraBold" color={P.onPrimary}>Relier</Ink>
           </Pressable>
           <Pressable onPress={onNew} accessibilityRole="button" accessibilityLabel={traduire("Créer une autre séance")} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: P.line2, backgroundColor: P.paper, justifyContent: 'center' }}>
             <Ink size={14} weight="bold">{traduire("C’est une autre séance")}</Ink>

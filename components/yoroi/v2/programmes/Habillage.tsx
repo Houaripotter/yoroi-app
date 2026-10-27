@@ -421,6 +421,124 @@ export function usePaletteProgramme(): PaletteProgramme {
   };
 }
 
+/* ------------------------------------------------------------------------------------------------
+ * 27 octobre 2026, refonte des écrans Coach (maquettes « aperçus vivants », Coach-Accueil, Objectif, Jours,
+ * Choix, Programme). Cartes pastel crème, bleu, lilas, menthe ; titres en petites capitales colorées ;
+ * boutons pastel (theme.colors.primary) ; jamais de bleu saturé en grand fond. Les valeurs de usePaletteProgramme
+ * ne changent pas (elle sert aussi aux pages Programmes, à l'onboarding et au paywall) : ces couleurs ne servent
+ * qu'aux écrans du Coach. En sombre et sur les autres thèmes : les couleurs du thème (tokens.ts).
+ * ---------------------------------------------------------------------------------------------- */
+
+/** Une famille pastel : le fond de la carte, son titre en capitales, ses barres (pleine et douce), son texte fort */
+export type FamillePastel = { fond: string; titre: string; barre: string; barre2: string; encre: string };
+
+export type PastelCoach = {
+  creme: FamillePastel;
+  bleu: FamillePastel;
+  lilas: FamillePastel;
+  menthe: FamillePastel;
+  peche: FamillePastel;
+  page: string;
+  carte: string;
+  texte: string;
+  texte2: string;
+  texte3: string;
+  ligne: string;
+  /** une réponse choisie : fond bleu très pâle, bord bleu doux, pastille de coche bleu nuit */
+  choisi: string;
+  bordChoisi: string;
+  coche: string;
+  surCoche: string;
+  /** le bouton principal pastel et son texte bleu nuit */
+  bouton: string;
+  boutonAppui: string;
+  surBouton: string;
+  /** la puce « Conseillé » */
+  badge: string;
+  surBadge: string;
+  /** les traits de la barre d'étapes */
+  etape: string;
+  etapeVide: string;
+  /** le dégradé très léger de la carte « Ton programme » */
+  degrade: [string, string];
+  ombre: string;
+};
+
+export function usePastel(): PastelCoach {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  if (theme.name === 'dojo' && !theme.isDark) {
+    return {
+      creme: { fond: '#F6EEDD', titre: '#A57A1C', barre: '#D9B866', barre2: '#E8D3A0', encre: '#7A5200' },
+      bleu: { fond: '#E6ECF8', titre: '#3557D9', barre: '#8FA6F8', barre2: '#B9C6F7', encre: c.accent },
+      lilas: { fond: '#EFE6F3', titre: '#8A3F78', barre: '#B35A9E', barre2: '#DCC3E3', encre: '#6E2F60' },
+      menthe: { fond: '#E3F2EA', titre: '#1C6B45', barre: '#9ED3B6', barre2: '#C8E6D5', encre: '#1C6B45' },
+      peche: { fond: '#FBE7DE', titre: '#B4471E', barre: '#E7A98F', barre2: '#F3CDBE', encre: '#8E3412' },
+      page: c.background,
+      carte: c.surface,
+      texte: c.ink,
+      texte2: c.textSecondary,
+      texte3: '#9AA0B8',
+      ligne: c.divider,
+      choisi: c.accentTint,
+      bordChoisi: '#AEBBF5',
+      coche: c.accent,
+      surCoche: c.onAccent,
+      bouton: c.primary,
+      boutonAppui: c.primaryPressed,
+      surBouton: c.onPrimary,
+      badge: '#FFF1C7',
+      surBadge: '#7A5200',
+      etape: c.detail,
+      etapeVide: '#DDE3F2',
+      degrade: ['#E8ECFF', '#F1ECFF'],
+      ombre: c.shadow,
+    };
+  }
+  return {
+    creme: { fond: c.goldTint, titre: c.goldDeep, barre: c.gold, barre2: c.goldLight, encre: c.ink },
+    bleu: { fond: c.accentTint, titre: c.accentText, barre: c.detail, barre2: c.border, encre: c.accentText },
+    lilas: { fond: c.fillSoft, titre: c.indigo, barre: c.indigo, barre2: c.border, encre: c.ink },
+    menthe: { fond: c.successTint, titre: c.successText, barre: c.success, barre2: c.border, encre: c.successText },
+    peche: { fond: c.dangerTint, titre: c.danger, barre: c.danger, barre2: c.border, encre: c.ink },
+    page: c.background,
+    carte: c.surface,
+    texte: c.ink,
+    texte2: c.textSecondary,
+    texte3: c.textMuted,
+    ligne: c.divider,
+    choisi: c.accentTint,
+    bordChoisi: c.accent,
+    coche: c.accent,
+    surCoche: c.onAccent,
+    bouton: c.primary,
+    boutonAppui: c.primaryPressed,
+    surBouton: c.onPrimary,
+    badge: c.goldTint,
+    surBadge: c.goldDeep,
+    etape: c.detail,
+    etapeVide: c.fillSubtle,
+    degrade: [c.accentTint, c.fillSoft],
+    ombre: c.shadow,
+  };
+}
+
+/** Les familles dans l'ordre des cartes : bleu, crème, menthe, lilas */
+export function famillePastel(pa: PastelCoach, k: number): FamillePastel {
+  const l = [pa.bleu, pa.creme, pa.menthe, pa.lilas];
+  return l[((k % 4) + 4) % 4];
+}
+
+/** L'ombre très douce des cartes blanches des maquettes */
+export function ombrePastel(couleur: string): ViewStyle {
+  return { shadowColor: couleur, shadowOpacity: 0.05, shadowRadius: 14, shadowOffset: { width: 0, height: 4 }, elevation: 1 };
+}
+
+/** Le titre en petites capitales colorées des cartes pastel */
+export function Capitales({ texte, couleur, taille = 11 }: { texte: string; couleur: string; taille?: number }) {
+  return <Ink size={taille} weight="black" color={couleur} style={{ letterSpacing: 1.3 }} numberOfLines={2}>{texte.toLocaleUpperCase()}</Ink>;
+}
+
 /** Les cercles décoratifs de la carte indigo : un grand plus clair en bas, un voile en haut */
 export function Cercles() {
   const pal = usePaletteProgramme();

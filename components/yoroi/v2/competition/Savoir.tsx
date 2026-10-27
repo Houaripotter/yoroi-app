@@ -22,7 +22,7 @@ import { traduire } from '@/lib/i18n/tr';
  * Vague 47 : couleurs des categories lues au moment du rendu (la palette P change avec le mode sombre ;
  * figees au chargement du fichier, les encadres restaient pastel clair en sombre).
  */
-const neutreDoux = () => (paletteSombre() ? '#242935' : '#ECEAE4');
+const neutreDoux = () => (paletteSombre() ? '#242935' : '#EEF0F7');
 export function categories(): Record<string, { color: string; soft: string; glyph: GlyphKind }> {
   return {
     Cardio: { color: P.indigo, soft: P.indigoSoft, glyph: 'vague' },
@@ -112,7 +112,7 @@ export function Reader({ content, read, onClose, onToggleRead, onSource }: { con
         <View style={{ gap: 18, paddingBottom: 8 }}>
           <View style={{ gap: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: m.soft, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                 <Glyph kind={m.glyph} size={22} color={m.color} />
               </View>
               <Ink size={13} weight="extraBold" color={m.color} style={{ flex: 1 }}>

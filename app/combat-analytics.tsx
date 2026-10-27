@@ -55,8 +55,8 @@ export default function CombatAnalyticsScreen() {
               </View>
               <View style={{ padding: 16, paddingTop: 0 }}>
                 <Press onPress={() => router.push('/seance/combat' as any)} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Nouvelle séance de combat")}>
-                  <View style={{ height: 58, borderRadius: 20, backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center' }}>
-                    <Ink size={17} weight="extraBold" color={P.white}>
+                  <View style={{ height: 58, borderRadius: 20, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center' }}>
+                    <Ink size={17} weight="extraBold" color={P.onPrimary}>
                       {traduire("Nouvelle séance de combat")}</Ink>
                   </View>
                 </Press>
@@ -97,7 +97,7 @@ export default function CombatAnalyticsScreen() {
           {LINKS.map((l) => (
             <Press key={l.route} onPress={() => router.push(l.route as any)} style={{ width: '47%', flexGrow: 1 }} accessibilityRole="button" accessibilityLabel={traduire(l.label)}>
               <Card style={{ padding: 14, gap: 10, minHeight: 112 }}>
-                <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: P.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                   <CIcon name={l.icon} size={21} color={P.accent} />
                 </View>
                 <View style={{ gap: 2 }}>

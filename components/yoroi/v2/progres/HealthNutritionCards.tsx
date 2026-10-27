@@ -165,7 +165,7 @@ function SanteCard({ steps7 }: { steps7?: number[] }) {
   return (
     <GlassCard onPress={() => router.push('/sante' as any)} label={traduire("Santé, aucune donnée aujourd’hui")} style={{ padding: 16, gap: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
           <SanteIcon name="watch" size={26} color={RING_COLORS.move} width={2.2} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
@@ -183,9 +183,9 @@ function SanteCard({ steps7 }: { steps7?: number[] }) {
         }}
         accessibilityRole="button"
         accessibilityLabel={traduire("Relie ta montre")}
-        style={({ pressed }) => ({ height: 48, borderRadius: 16, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}
+        style={({ pressed }) => ({ height: 48, borderRadius: 16, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}
       >
-        <Ink size={15} weight="extraBold" color={c.onAccent}>
+        <Ink size={15} weight="extraBold" color={c.onPrimary}>
           {traduire("Relie ta montre")}</Ink>
       </Pressable>
     </GlassCard>

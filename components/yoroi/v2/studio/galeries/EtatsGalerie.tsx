@@ -284,8 +284,8 @@ function Chargements() {
           <ChargementPetit size={20} />
           <ChargementPetit />
           <ChargementPetit size={44} />
-          <View style={{ padding: 10, borderRadius: 14, backgroundColor: c.accent }}>
-            <ChargementPetit size={24} color="#FFFFFF" />
+          <View style={{ padding: 10, borderRadius: 14, backgroundColor: c.primary }}>
+            <ChargementPetit size={24} color={c.onPrimary} />
           </View>
         </View>
       </Bloc>

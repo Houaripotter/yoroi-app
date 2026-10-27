@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
 import { fontStyle } from '@/components/yoroi/fonts';
 import { Ink } from '@/components/yoroi/v2/Ink';
+import { P } from '@/components/yoroi/livePalette';
 import { DetailHeader, EmptyInvite, GlassCard, GUTTER, Pills, PrimaryButton, SectionHead, tapLight } from '@/components/yoroi/v2/progres/ui';
 import { CourbeObjectif } from '@/components/yoroi/v2/objectifs/CourbeObjectif';
 import { couleurTraitDomaine } from '@/components/yoroi/v2/charts/couleurDomaine';
@@ -24,8 +25,6 @@ import { chargerProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { programmeParId } from '@/lib/v2/programmes/catalogue';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
-const INDIGO = '#2C4A84';
-const INDIGO_SOMBRE = '#3A5BA0';
 
 function lireNombre(s: string): number {
   const v = Number(s.replace(',', '.').replace(/[^0-9.]/g, ''));
@@ -96,7 +95,7 @@ export default function ObjectifScreen() {
   }, []);
 
   const trait = couleurTraitDomaine('seances');
-  const indigo = theme.isDark ? INDIGO_SOMBRE : INDIGO;
+  const indigo = theme.colors.carteDouce;
   const passe = useMemo(() => (serie ? serie.points.slice(-30).map((p) => ({ date: p.date, valeur: versUniteObjectif(serie.mesure, p.valeur, repsCible) })) : []), [serie, repsCible]);
   const projection = est && 'projection' in est ? est.projection : [];
 
@@ -233,8 +232,9 @@ export default function ObjectifScreen() {
 }
 
 function Resultat({ est, indigo, affiche }: { est: Estimation; indigo: string; affiche: (v: number) => string }) {
-  const blanc = '#FFFFFF';
-  const doux = 'rgba(255,255,255,0.78)';
+  // 27 octobre 2026 (refonte Pastel) : la carte du resultat en pastel, texte encre
+  const blanc = P.ink;
+  const doux = P.ink2;
   let titre = '';
   let lignes: string[] = [];
   if (est.etat === 'manque') {

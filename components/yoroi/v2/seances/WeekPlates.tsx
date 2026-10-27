@@ -43,11 +43,22 @@ export function computeWeekPlates(trainings: Training[], plan: WeeklyPlan[], occ
   return out;
 }
 
-/** Pastille d'un jour : pleine si seance faite, pointillee si prevue */
-export function DayDot({ state, count, size }: { state: PlateState; count: number; size: number }) {
+/**
+ * Pastille d'un jour : pleine si seance faite, pointillee si prevue.
+ * 27 octobre 2026 (maquette Pastel-Seances) : carre, en carre arrondi de 36 (rayon 13), la seance faite en pastel
+ * (primary) avec son nombre en bleu nuit.
+ */
+export function DayDot({ state, count, size, carre = false }: { state: PlateState; count: number; size: number; carre?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const r = size / 2;
+  const r = carre ? Math.round(size * 0.36) : size / 2;
+  if (carre && state === 'done') {
+    return (
+      <View style={{ width: size, height: size, borderRadius: r, alignItems: 'center', justifyContent: 'center', backgroundColor: c.primary }}>
+        <Ink size={14} weight="black" color={c.onPrimary}>{String(Math.max(1, count))}</Ink>
+      </View>
+    );
+  }
   const base = { width: size, height: size, borderRadius: r, alignItems: 'center' as const, justifyContent: 'center' as const };
   if (state === 'done') {
     return (
@@ -62,7 +73,7 @@ export function DayDot({ state, count, size }: { state: PlateState; count: numbe
       </View>
     );
   }
-  if (state === 'planned') return <View style={[base, { borderWidth: 2, borderStyle: 'dashed', borderColor: c.ink, backgroundColor: P.carte }]} />;
+  if (state === 'planned') return <View style={[base, { borderWidth: 2, borderStyle: 'dashed', borderColor: carre ? c.accentText : c.ink, backgroundColor: P.carte }]} />;
   if (state === 'missed') return <View style={[base, { borderWidth: 2, borderColor: c.border, backgroundColor: c.fillSubtle }]} />;
   if (state === 'rest') {
     return (
@@ -82,9 +93,9 @@ export function WeekPlates({ plates, size = 1 }: { plates: DayPlate[]; size?: nu
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
       {plates.map((p, i) => (
-        <View key={p.iso} style={{ alignItems: 'center', gap: 6 }} accessibilityLabel={`${PLAN_DAYS_SHORT[i]} ${p.state === 'done' ? 'fait' : p.state === 'planned' ? traduire('prévu') : p.state === 'missed' ? traduire('manqué') : p.state === 'rest' ? 'repos' : 'libre'}`}>
-          <DayDot state={p.state} count={p.count} size={32 * size} />
-          <Ink size={12} weight={p.isToday ? 'black' : 'bold'} color={p.isToday ? c.accent : c.textMuted}>{PLAN_DAYS_SHORT[i]}</Ink>
+        <View key={p.iso} style={{ alignItems: 'center', gap: 5 }} accessibilityLabel={`${PLAN_DAYS_SHORT[i]} ${p.state === 'done' ? 'fait' : p.state === 'planned' ? traduire('prévu') : p.state === 'missed' ? traduire('manqué') : p.state === 'rest' ? 'repos' : 'libre'}`}>
+          <DayDot state={p.state} count={p.count} size={36 * size} carre />
+          <Ink size={11} weight="black" color={p.isToday ? c.accentText : c.textSecondary}>{PLAN_DAYS_SHORT[i]}</Ink>
         </View>
       ))}
     </View>

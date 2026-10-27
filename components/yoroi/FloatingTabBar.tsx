@@ -105,7 +105,7 @@ export function FloatingTabBarView({
             height: addSize,
             borderRadius: addSize / 2,
             marginTop: -addSize / 2,
-            backgroundColor: pressed ? colors.accentPressed : colors.accent,
+            backgroundColor: pressed ? colors.primaryPressed : colors.primary,
             borderWidth: sizes.tabBarAddBorder,
             borderColor: colors.background,
             alignItems: 'center',

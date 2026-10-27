@@ -35,7 +35,7 @@ export function WeekDots({ count, days, size = 36 }: { count: number; days?: num
         return (
           <View key={JOURS_NOMS[i]} style={{ alignItems: 'center', gap: 4 }}>
             <View style={{ width: size, height: size, borderRadius: size / 2, borderWidth: 2, borderColor: on ? c.accent : c.border, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface }}>
-              {on ? <Animated.View entering={ZoomIn.delay(i * 50).duration(260)} style={{ width: size - 10, height: size - 10, borderRadius: (size - 10) / 2, backgroundColor: c.accent }} /> : null}
+              {on ? <Animated.View entering={ZoomIn.delay(i * 50).duration(260)} style={{ width: size - 10, height: size - 10, borderRadius: (size - 10) / 2, backgroundColor: c.primary }} /> : null}
             </View>
             <Ink size={12} weight="bold" color={c.textSecondary}>{d}</Ink>
           </View>

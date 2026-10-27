@@ -820,7 +820,7 @@ function SeriesCard({ count, history, onReset }: { count: number; history: Serie
   return (
     <SetupBlock>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <View style={{ width: 76, height: 76, borderRadius: 22, backgroundColor: count > 0 ? P.ink : (paletteSombre() ? P.line2 : '#F0EEE8'), alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 76, height: 76, borderRadius: 22, backgroundColor: count > 0 ? P.ink : (paletteSombre() ? P.line2 : '#EEF0F7'), alignItems: 'center', justifyContent: 'center' }}>
           <Ink size={38} weight="black" tight color={count > 0 ? P.white : P.ink}>{String(count)}</Ink>
         </View>
         <View style={{ flex: 1, gap: 2 }}>
@@ -832,7 +832,7 @@ function SeriesCard({ count, history, onReset }: { count: number; history: Serie
         <View>
           {history.slice(-5).reverse().map((s, i) => (
             <View key={`${s.seriesNumber}-${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, borderTopWidth: 1, borderTopColor: P.line2 }}>
-              <View style={{ width: 30, height: 30, borderRadius: 10, backgroundColor: (paletteSombre() ? P.line2 : '#F0EEE8'), alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 30, height: 30, borderRadius: 10, backgroundColor: (paletteSombre() ? P.line2 : '#EEF0F7'), alignItems: 'center', justifyContent: 'center' }}>
                 <Ink size={13} weight="black">{String(s.seriesNumber)}</Ink>
               </View>
               <Ink size={15} weight="bold" style={{ flex: 1 }}>{s.reps || s.weight ? [s.weight ? `${String(s.weight).replace('.', DECIMAL)} kg` : '', s.reps ? traduire("{0} répétitions", s.reps) : ''].filter(Boolean).join(', ') : traduire("Série {0}", s.seriesNumber)}</Ink>
@@ -863,7 +863,7 @@ function ExerciseList({ title, hint, items, numbered, onEdit }: { title: string;
           {hint ? <Ink size={13} weight="medium" color={P.muted}>{hint}</Ink> : null}
         </View>
         <Press onPress={onEdit} accessibilityRole="button" accessibilityLabel={traduire("Modifier : {0}", title)}>
-          <View style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: (paletteSombre() ? P.line2 : '#F0EEE8'), flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: (paletteSombre() ? P.line2 : '#EEF0F7'), flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <CIcon name="edit" size={15} color={P.ink} />
             <Ink size={13} weight="extraBold">{traduire("Modifier")}</Ink>
           </View>
@@ -872,7 +872,7 @@ function ExerciseList({ title, hint, items, numbered, onEdit }: { title: string;
       {items.length === 0 ? <Ink size={14} weight="medium" color={P.ink2}>{traduire("Ajoute tes exercices pour les voir pendant le chrono.")}</Ink> : null}
       {items.map((it, i) => (
         <View key={`${it}-${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: (paletteSombre() ? P.line2 : '#F0EEE8'), alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: (paletteSombre() ? P.line2 : '#EEF0F7'), alignItems: 'center', justifyContent: 'center' }}>
             {numbered ? <Ink size={12} weight="black" color={P.ink2}>{String(i + 1)}</Ink> : <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: PHASE_COLORS.effort.main }} />}
           </View>
           <Ink size={15} weight="bold" style={{ flex: 1 }}>{it}</Ink>

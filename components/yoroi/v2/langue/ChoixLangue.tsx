@@ -54,8 +54,8 @@ export function FeuilleLangue({ visible, onClose }: { visible: boolean; onClose:
               <Ink size={24}>{info.drapeau}</Ink>
               <Ink size={16} weight={on ? 'extraBold' : 'bold'} style={{ flex: 1 }}>{info.nom}</Ink>
               <Ink size={13} weight="extraBold" color={c.textMuted}>{info.code}</Ink>
-              <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: on ? 0 : 2, borderColor: c.border, backgroundColor: on ? c.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                {enCours === l ? <ActivityIndicator size="small" color={c.accent} /> : on ? <Icon name="check" size={15} color={c.onAccent} stroke={3} /> : null}
+              <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: on ? 0 : 2, borderColor: c.border, backgroundColor: on ? c.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                {enCours === l ? <ActivityIndicator size="small" color={c.accent} /> : on ? <Icon name="check" size={15} color={c.onPrimary} stroke={3} /> : null}
               </View>
             </Pressable>
           );

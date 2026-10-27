@@ -58,7 +58,7 @@ export function ResultSheet({ result, onShare, onClose }: { result: ResultInfo |
             <Pressable onPress={() => {}} style={{ backgroundColor: P.paper, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingTop: 12, paddingHorizontal: 22, paddingBottom: insets.bottom + 18, gap: 14 }}>
               <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: P.line, marginBottom: 2 }} />
 
-              <View style={{ height: 196, borderRadius: 28, backgroundColor: result.isPR ? P.redSoft : '#ECEAE4', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ height: 196, borderRadius: 28, backgroundColor: result.isPR ? P.redSoft : '#EEF0F7', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
                 <Animated.View entering={ENTREE}>
                   <Illus name={result.illus ?? 'records'} size={168} />
                 </Animated.View>

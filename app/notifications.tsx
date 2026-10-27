@@ -341,9 +341,9 @@ export default function TesNotifications() {
               else Linking.openSettings().catch(() => {});
             }}
             accessibilityRole="button"
-            style={({ pressed }) => ({ minHeight: 48, borderRadius: 14, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}
+            style={({ pressed }) => ({ minHeight: 48, borderRadius: 14, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}
           >
-            <Ink size={15} weight="extraBold" color={c.onAccent}>{traduire("Autoriser les notifications")}</Ink>
+            <Ink size={15} weight="extraBold" color={c.onPrimary}>{traduire("Autoriser les notifications")}</Ink>
           </Pressable>
         </Animated.View>
       ) : null}
@@ -359,7 +359,7 @@ export default function TesNotifications() {
         </View>
         {upcoming && upcoming.at ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, backgroundColor: c.accentTint, padding: 12 }}>
-            <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
               <Icon name={upcoming.icon} size={19} color={c.accent} />
             </View>
             <View style={{ flex: 1 }}>
@@ -420,8 +420,8 @@ export default function TesNotifications() {
           {(['reveil', 'douche', 'midi', 'soir', 'heure'] as const).map((m) => {
             const sel = hab.moment === m;
             return (
-              <Pressable key={m} onPress={() => void pickHabMoment(m)} accessibilityRole="button" accessibilityState={{ selected: sel }} accessibilityLabel={MOMENT_LABEL[m]} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 14, backgroundColor: sel ? c.accent : c.surface, borderWidth: 1, borderColor: sel ? c.accent : c.border }}>
-                <Ink size={13} weight="bold" color={sel ? '#FFFFFF' : c.ink}>{MOMENT_LABEL[m]}</Ink>
+              <Pressable key={m} onPress={() => void pickHabMoment(m)} accessibilityRole="button" accessibilityState={{ selected: sel }} accessibilityLabel={MOMENT_LABEL[m]} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 14, backgroundColor: sel ? c.primary : c.surface, borderWidth: 1, borderColor: sel ? c.primary : c.border }}>
+                <Ink size={13} weight="bold" color={sel ? c.onPrimary : c.ink}>{MOMENT_LABEL[m]}</Ink>
               </Pressable>
             );
           })}

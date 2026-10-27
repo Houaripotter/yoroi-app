@@ -59,7 +59,7 @@ export function ProgressBar({ value }: { value: number }) {
       accessibilityLabel={traduire("Progression")}
       accessibilityValue={{ min: 0, max: 100, now: Math.round(value * 100) }}
     >
-      <Animated.View style={[{ height: 6, borderRadius: 3, backgroundColor: c.accent }, style]} />
+      <Animated.View style={[{ height: 6, borderRadius: 3, backgroundColor: c.detail }, style]} />
     </View>
   );
 }
@@ -106,11 +106,11 @@ export function MainButton({ label, onPress, disabled, loading, tone = 'accent',
     >
       <Animated.View
         style={[
-          { minHeight: 56, borderRadius: 18, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: light ? c.surface : c.accent, borderWidth: light ? 1 : 0, borderColor: c.border, opacity: disabled ? 0.38 : 1 },
+          { minHeight: 56, borderRadius: 18, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: light ? c.surface : c.primary, borderWidth: light ? 1 : 0, borderColor: c.border, opacity: disabled ? 0.38 : 1 },
           anim,
         ]}
       >
-        {loading ? <ActivityIndicator color={light ? c.ink : c.onAccent} /> : <Ink size={16} weight="extraBold" color={light ? c.ink : c.onAccent} style={{ textAlign: 'center' }}>{label}</Ink>}
+        {loading ? <ActivityIndicator color={light ? c.ink : c.onPrimary} /> : <Ink size={16} weight="extraBold" color={light ? c.ink : c.onPrimary} style={{ textAlign: 'center' }}>{label}</Ink>}
       </Animated.View>
     </Pressable>
   );
@@ -338,9 +338,9 @@ export function Chip({ label, on, onPress }: { label: string; on: boolean; onPre
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected: on }}
-      style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 14, backgroundColor: on ? c.accent : c.surface, borderWidth: 1, borderColor: on ? c.accent : c.border }}
+      style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 14, backgroundColor: on ? c.primary : c.surface, borderWidth: 1, borderColor: on ? c.primary : c.border }}
     >
-      <Ink size={14} weight="bold" color={on ? c.onAccent : c.ink}>{label}</Ink>
+      <Ink size={14} weight="bold" color={on ? c.onPrimary : c.ink}>{label}</Ink>
     </Pressable>
   );
 }

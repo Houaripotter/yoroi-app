@@ -765,14 +765,14 @@ export function VisiteGuidee() {
       {/* l'onde de l'appui, puis le doigt */}
       <Animated.View pointerEvents="none" style={[s.ripple, rippleStyle]} />
       <Animated.View pointerEvents="none" style={[s.finger, fingerStyle]}>
-        <View style={[s.fingerCore, { backgroundColor: isDark ? '#FFFFFF' : c.accent }]} />
+        <View style={[s.fingerCore, { backgroundColor: isDark ? '#FFFFFF' : c.detail }]} />
       </Animated.View>
 
       {/* 18 octobre : tout ce que montre la visite est un exemple, jamais tes donnees */}
       {pastille ? (
         <View pointerEvents="none" style={[s.pastilleWrap, { top: insets.top + 6 }]}>
           <View style={[s.pastille, { backgroundColor: c.surface, borderColor: c.border }]} accessibilityRole="text" accessibilityLabel={exemple === 'oui' ? traduire('Exemple : profil de démo. Ce ne sont pas tes données') : traduire('Préparation de l’exemple')}>
-            <View style={[s.pastillePoint, { backgroundColor: c.accent }]} />
+            <View style={[s.pastillePoint, { backgroundColor: c.detail }]} />
             <Ink size={12.5} weight="extraBold" color={c.ink}>{exemple === 'oui' ? traduire('Exemple : profil de démo') : traduire('Préparation de l’exemple…')}</Ink>
           </View>
         </View>
@@ -787,7 +787,7 @@ export function VisiteGuidee() {
           <View style={s.head}>
             <Ink size={12.5} weight="extraBold" color={c.accent}>{traduire("{0} sur {1}", index + 1, ETAPES.length)}</Ink>
             <View style={[s.track, { backgroundColor: c.accentTint }]}>
-              <View style={{ width: `${((index + 1) / ETAPES.length) * 100}%`, height: '100%', borderRadius: 2, backgroundColor: c.accent }} />
+              <View style={{ width: `${((index + 1) / ETAPES.length) * 100}%`, height: '100%', borderRadius: 2, backgroundColor: c.detail }} />
             </View>
             <Pressable onPress={toggleVoix} hitSlop={10} style={[s.voixBtn, { backgroundColor: c.accentTint }]} accessibilityRole="button" accessibilityLabel={voix ? traduire('Couper la voix') : traduire('Remettre la voix')}>
               <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
@@ -829,11 +829,11 @@ export function VisiteGuidee() {
             <View style={{ flex: 1 }} />
             <Pressable
               onPress={() => (last ? finish() : go(index + 1))}
-              style={({ pressed }) => [s.cta, { backgroundColor: pressed ? c.accentPressed : c.accent }]}
+              style={({ pressed }) => [s.cta, { backgroundColor: pressed ? c.primaryPressed : c.primary }]}
               accessibilityRole="button"
               accessibilityLabel={last ? traduire('Terminer la visite') : traduire('Étape suivante')}
             >
-              <Ink size={15.5} weight="black" color={c.onAccent}>{last ? traduire('C’est parti') : first ? 'On y va' : traduire('Suivant')}</Ink>
+              <Ink size={15.5} weight="black" color={c.onPrimary}>{last ? traduire('C’est parti') : first ? 'On y va' : traduire('Suivant')}</Ink>
               <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
                 <Path d="M5 12h13M13 6l6 6-6 6" stroke={c.onAccent} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
               </Svg>

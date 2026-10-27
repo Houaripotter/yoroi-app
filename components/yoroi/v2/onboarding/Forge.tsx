@@ -194,11 +194,11 @@ export function Forge({ nav, genre, univers = 'japon', lignes, run, onDone, onSo
           <Ink size={width < 380 ? 27 : 30} weight="black" tight color="#E3C47B">{titreOr}</Ink>
         </Ink>
         {fini ? (
-          <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="check" size={16} color={c.onAccent} stroke={3} />
+          <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="check" size={16} color={c.onPrimary} stroke={3} />
           </View>
         ) : (
-          <ChargementPetit size={30} color={c.onAccent} />
+          <ChargementPetit size={30} color={c.onPrimary} />
         )}
       </View>
 
@@ -207,10 +207,10 @@ export function Forge({ nav, genre, univers = 'japon', lignes, run, onDone, onSo
           const on = i < checked;
           return (
             <View key={l} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 32 }}>
-              <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: on ? 0 : 2, borderColor: 'rgba(255,255,255,0.45)', backgroundColor: on ? c.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                {on ? <Icon name="check" size={15} color={c.onAccent} stroke={3} /> : null}
+              <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: on ? 0 : 2, borderColor: 'rgba(255,255,255,0.45)', backgroundColor: on ? c.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                {on ? <Icon name="check" size={15} color={c.onPrimary} stroke={3} /> : null}
               </View>
-              <Ink size={16} weight={on ? 'extraBold' : 'medium'} color={on ? '#FFFFFF' : 'rgba(255,255,255,0.72)'}>{l}</Ink>
+              <Ink size={16} weight={on ? 'extraBold' : 'medium'} color={on ? c.onPrimary : 'rgba(255,255,255,0.72)'}>{l}</Ink>
             </View>
           );
         })}

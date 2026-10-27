@@ -86,8 +86,8 @@ export function VitrineBoutique({ vignettes, total, onOuvrir }: { vignettes: Vig
       {/* Vague 45 : la derniere vignette ouvre toute la boutique */}
       <Carte label={traduire("Tout voir, {0}", total)} onPress={onOuvrir}>
         <View style={[cadre, { flex: 1, minHeight: 180, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accentTint, borderColor: c.accentTint }]}>
-          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-            <ChevronIcon size={18} color={c.onAccent} />
+          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+            <ChevronIcon size={18} color={c.onPrimary} />
           </View>
           <Ink size={14} weight="extraBold" color={c.accent} style={{ textAlign: 'center' }}>{traduire("Tout voir")}</Ink>
           <Ink size={11} weight="bold" color={c.textSecondary} style={{ textAlign: 'center' }} numberOfLines={3}>{total}</Ink>

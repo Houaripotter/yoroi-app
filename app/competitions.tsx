@@ -206,7 +206,7 @@ export default function CompetitionsScreen() {
               <SectionTitle title={traduire("Ton résultat à noter")} />
               {toNote.map((x) => (
                 <Pressable key={x.id} onPress={() => go(x)} accessibilityRole="button" accessibilityLabel={traduire("Noter ton résultat de {0}", x.nom)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 20, backgroundColor: pressed ? c.accentTint : P.white, borderWidth: 1.5, borderColor: c.accent })}>
-                  <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                     <Icon name="trophy" size={22} color={c.accent} />
                   </View>
                   <View style={{ flex: 1, gap: 2 }}>

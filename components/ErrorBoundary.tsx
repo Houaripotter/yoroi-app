@@ -53,10 +53,10 @@ function ErrorScreen({ error, onRetry, onHome }: { error: Error | null; onRetry:
             onPress={onRetry}
             accessibilityRole="button"
             accessibilityLabel={traduire("Réessayer")}
-            style={({ pressed }) => ({ height: 56, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 })}
+            style={({ pressed }) => ({ height: 56, borderRadius: 18, backgroundColor: pressed ? c.primaryPressed : c.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 })}
           >
-            <RefreshCw size={20} color="#FFFFFF" strokeWidth={2.4} />
-            <Ink size={16} weight="extraBold" color="#FFFFFF">{traduire("Réessayer")}</Ink>
+            <RefreshCw size={20} color={c.onPrimary} strokeWidth={2.4} />
+            <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Réessayer")}</Ink>
           </Pressable>
           <Pressable
             onPress={onHome}

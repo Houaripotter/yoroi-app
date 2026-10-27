@@ -73,9 +73,9 @@ export default function Ceintures() {
                 router.push('/ajouter' as any);
               }}
               accessibilityRole="button"
-              style={({ pressed }) => ({ alignSelf: 'stretch', minHeight: 56, paddingHorizontal: 20, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.98 : 1 }] })}
+              style={({ pressed }) => ({ alignSelf: 'stretch', minHeight: 56, paddingHorizontal: 20, borderRadius: 18, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.98 : 1 }] })}
             >
-              <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Enregistrer une séance")}</Ink>
+              <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Enregistrer une séance")}</Ink>
             </Pressable>
           </View>
         ) : null}
@@ -92,7 +92,7 @@ export default function Ceintures() {
                     <Image source={pack.images[gender][lvl - 1]} style={{ width: 72, height: 90 }} resizeMode="contain" />
                   </View>
                 ) : (
-                  <View style={{ width: 72, height: 92, borderRadius: 16, backgroundColor: '#ECEAE4', alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 72, height: 92, borderRadius: 16, backgroundColor: '#EEF0F7', alignItems: 'center', justifyContent: 'center' }}>
                     <LevelPlate color={b.belt.color} edge={b.belt.edge} size={30} />
                   </View>
                 )}

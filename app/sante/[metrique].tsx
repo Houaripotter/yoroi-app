@@ -600,11 +600,11 @@ export default function MetriqueScreen() {
 
       {m.more ? (
         <Press onPress={() => router.push(m.more!.href as any)} accessibilityRole="button" accessibilityLabel={traduire(m.more.label)}>
-          <View style={{ minHeight: 56, borderRadius: 18, backgroundColor: S.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <Ink size={15} weight="extraBold" color={P.white}>
+          <View style={{ minHeight: 56, borderRadius: 18, backgroundColor: P.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <Ink size={15} weight="extraBold" color={P.onPrimary}>
               {traduire(m.more.label)}
             </Ink>
-            <SanteIcon name="chevron" size={16} color={P.white} />
+            <SanteIcon name="chevron" size={16} color={P.onPrimary} />
           </View>
         </Press>
       ) : null}

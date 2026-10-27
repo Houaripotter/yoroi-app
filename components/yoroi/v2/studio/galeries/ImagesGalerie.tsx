@@ -90,8 +90,8 @@ function Damier({ w, h }: { w: number; h: number }) {
       <Defs>
         <Pattern id="damier" width={16} height={16} patternUnits="userSpaceOnUse">
           <Rect x={0} y={0} width={16} height={16} fill="#FFFFFF" />
-          <Rect x={0} y={0} width={8} height={8} fill="#D9D6CE" />
-          <Rect x={8} y={8} width={8} height={8} fill="#D9D6CE" />
+          <Rect x={0} y={0} width={8} height={8} fill="#E4E7F1" />
+          <Rect x={8} y={8} width={8} height={8} fill="#E4E7F1" />
         </Pattern>
       </Defs>
       <Rect x={0} y={0} width={w} height={h} fill="url(#damier)" />
@@ -110,9 +110,9 @@ function Panneau({ entree, fond, label, maxW, ratio }: { entree: ImageEntree; fo
     h = maxH;
     w = h * ratio;
   }
-  const bg = fond === 'sombre' ? '#14161E' : fond === 'clair' ? '#F2F1EC' : '#FFFFFF';
+  const bg = fond === 'sombre' ? '#14161E' : fond === 'clair' ? '#F5F6FB' : '#FFFFFF';
   const trait = fond === 'sombre' ? 'rgba(242,241,236,0.75)' : c.accent;
-  const coin = fond === 'sombre' ? '#F2F1EC' : c.accent;
+  const coin = fond === 'sombre' ? '#F5F6FB' : c.accent;
   const C = 12;
   return (
     <View style={{ gap: 8 }}>

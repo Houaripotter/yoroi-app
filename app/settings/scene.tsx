@@ -22,21 +22,29 @@
  *   _archive_ancien_design_2026-10-09/scene_reglage_2026-10-19/scene.tsx. Memes donnees, memes regles.
  * Toutes les donnees viennent des registres (lib/v2/espace/presentation.ts). La logique (choix, Premium, rotation)
  * est celle de la vague 44. Remplace aussi l'ancienne page /themes (app/themes.tsx renvoie ici).
+ * 27 octobre 2026 (maquette choisie « Ta scène C, grille magazine ») : en haut un mini telephone qui montre ton
+ * accueil reel (la scene, ton personnage, ta salutation) avec, a cote, le nom de la scene et un mini lecteur du son
+ * (musique et bruitage actuels, lecture, Changer ouvre le choix des sons d'avant dans une feuille) ; dessous les
+ * filtres en pilules pastel avec leur nombre ; puis une seule grille de deux colonnes de vignettes hautes (badge
+ * Animée, cadenas, coche et contour sur ta scene). Toucher une vignette la choisit (verrouillee : l'offre Premium,
+ * comme l'ancien bouton du bas, retire). La rotation (Change a chaque ouverture) et l'animation restent en bas.
+ * Ancienne version : _archive_ancien_design_2026-10-09/maquettes_choisies_2026-10-27/app/settings/scene.tsx.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { Modal, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, SlideInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAudioPlayer } from 'expo-audio';
 import Svg, { Path } from 'react-native-svg';
 import { notificationAsync, NotificationFeedbackType, selectionAsync } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { Button, Card, EspaceScreen, Icon, Segmented, ToggleRow } from '@/components/yoroi/v2/espace/ui';
+import { Card, EspaceScreen, Icon, Segmented, ToggleRow } from '@/components/yoroi/v2/espace/ui';
 import { isSceneLocked } from '@/components/yoroi/v2/espace/Pickers';
 import { SceneHero } from '@/components/yoroi/v2/accueil/Scene';
-import { P } from '@/components/yoroi/livePalette';
+import { P, P_CLAIR } from '@/components/yoroi/livePalette';
 import { useEspace } from '@/lib/v2/espace/useEspace';
 import { useIdentite } from '@/lib/v2/espace/useIdentite';
 import { usePremium } from '@/context/PremiumContext';
@@ -49,7 +57,6 @@ import { VideoScene, useEcranVisible, useReduireAnimations, useVideoDeScene } fr
 import {
   ficheScene,
   filtresGalerie,
-  sectionDuPack,
   sectionsGalerie,
   scenesQuiTournent,
   sonConseille,
@@ -62,8 +69,6 @@ const MARGE = 22;
 const ECART = 12;
 /** fond translucide des badges poses sur l'image */
 const VOILE_BADGE = 'rgba(20,23,32,0.72)';
-/** 19 octobre : bandeau du bas d'une vignette verrouillee */
-const VOILE_VERROU = 'rgba(15,17,24,0.82)';
 
 /** Comment debloquer une scene, en court pour une vignette (le texte vient de themeCondition) */
 function conditionCourte(id: SceneId): string {
@@ -129,8 +134,8 @@ function Coche({ size = 26 }: { size?: number }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF' }}>
-      <Icon name="check" size={Math.round(size * 0.52)} color={c.onAccent} stroke={3.2} />
+    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF' }}>
+      <Icon name="check" size={Math.round(size * 0.52)} color={c.onPrimary} stroke={3.2} />
     </View>
   );
 }
@@ -194,13 +199,16 @@ export default function TaScene() {
 
   const [filtre, setFiltre] = useState<FiltreGalerie>('toutes');
   const filtres = useMemo(() => filtresGalerie(), []);
-  const sections = useMemo(() => sectionsGalerie(filtre), [filtre]);
+  // 27 octobre 2026 (grille magazine) : une seule grille, sans doublon, dans l'ordre des univers
+  const scenes = useMemo(() => Array.from(new Set(sectionsGalerie(filtre).flatMap((s) => s.scenes))), [filtre]);
+  // l'univers de chaque scene : le titre de sa section dans la galerie complete
+  const universDe = useMemo(() => new Map(sectionsGalerie('toutes').flatMap((s) => s.scenes.map((id) => [id, s.titre] as const))), []);
   const [focus, setFocus] = useState<SceneId>(choisie);
   // ta scene change (choix fait ici ou ailleurs) : l'apercu la suit
   useEffect(() => setFocus(choisie), [choisie]);
+  const [feuilleSon, setFeuilleSon] = useState(false);
 
   const scrollRef = useRef<ScrollView>(null);
-  const yRotation = useRef(0);
   // 15 octobre : le bandeau d'apercu compact apparait des que l'apercu du haut sort a moitie de l'ecran
   const insets = useSafeAreaInsets();
   const seuilBandeau = useRef(Number.POSITIVE_INFINITY);
@@ -266,17 +274,19 @@ export default function TaScene() {
   mesurerRef.current = mesurer;
   const joueVignette = ecranVisible ? vignetteQuiJoue({ focus, visibles, apercuJoue, reduire }) : null;
 
-  const viser = (id: SceneId) => {
+  /**
+   * 27 octobre 2026 (grille magazine) : toucher une vignette la choisit. Meme logique que l'ancien bouton
+   * « Choisir cette scène » : verrouillee, l'offre Premium s'ouvre (la scene reste montree en apercu en haut).
+   */
+  const toucher = (id: SceneId) => {
     selectionAsync().catch(() => {});
     setFocus(id);
-  };
-
-  const choisir = () => {
-    if (verrou) {
+    if (isSceneLocked(id, rankIndex, isPremium, isAnnualPremium)) {
       ouvrirPaywall('scenes');
       return;
     }
-    update({ scene: focus }).catch(() => {});
+    if (id === choisie && rotation === 'fixe') return;
+    update({ scene: id }).catch(() => {});
     notificationAsync(NotificationFeedbackType.Success).catch(() => {});
   };
 
@@ -300,169 +310,104 @@ export default function TaScene() {
 
   const apercuW = ecran - 2 * MARGE;
   const carteW = Math.floor((ecran - 2 * MARGE - ECART) / 2);
-  const imageH = Math.round(carteW * 0.62);
+  const vignetteH = Math.round(carteW * 0.9);
   const photo = espace.identite === 'photo' ? profile?.profile_photo ?? null : null;
   const prenom = profile?.name?.trim().split(' ')[0] || null;
-  const packTourne = rotation === 'fixe' ? null : sectionDuPack(rotation);
-  const libelleRotation = ROTATIONS.find((r) => r.key === rotation)?.label ?? traduire('Non');
 
-  const etatFocus =
-    verrou && condition
-      ? condition
-      : estChoisie
-        ? traduire('Sur ton accueil en ce moment')
-        : focus === choisie
-          ? traduire('Ta scène, la rotation est active')
-          : fiche.animee
-            ? traduire('Scène animée, pas encore choisie')
-            : traduire('Pas encore choisie');
-
-  const footer = (
-    <View style={{ gap: 10 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <Pressable onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })} accessibilityRole="button" accessibilityLabel={traduire("Revoir l’aperçu en haut")} hitSlop={6}>
-          <Image source={fiche.image} style={{ width: 64, height: 40, borderRadius: 10, backgroundColor: c.fillSoft }} contentFit="cover" />
-        </Pressable>
-        <View style={{ flex: 1, gap: 1 }}>
-          <Ink size={15} weight="extraBold" numberOfLines={1}>
-            {traduire(fiche.nom)}
-          </Ink>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            {verrou ? <Icon name="lock" size={12} color={c.goldDeep} stroke={2.6} /> : null}
-            <Ink size={12} weight="bold" color={c.textSecondary} style={{ flexShrink: 1 }}>
-              {etatFocus}
-            </Ink>
-          </View>
-        </View>
-      </View>
-      {estChoisie ? (
-        <Button tone="ghost" label={traduire("C’est ta scène")} icon="check" disabled onPress={() => {}} />
-      ) : (
-        <Button tone="accent" label={verrou ? (fiche.annuel ? traduire('Voir l’abonnement annuel') : traduire('Débloquer avec Premium')) : traduire('Choisir cette scène')} onPress={choisir} />
-      )}
-    </View>
-  );
+  const etiquette =
+    focus !== choisie && verrou
+      ? traduire('Aperçu, à débloquer')
+      : focus === choisie && rotation !== 'fixe'
+        ? traduire('Ta scène, elle change à chaque ouverture')
+        : traduire('Sur ton accueil');
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
-    <EspaceScreen title={traduire("Ta scène")} subtitle={traduire("Le décor et le son de ton accueil")} gap={16} footer={footer} scrollRef={scrollRef} onScrollY={surDefilement}>
-      {/* apercu fidele de ton en-tete d'accueil, et les reperes de la scene selectionnee */}
-      <View onLayout={(e) => (seuilBandeau.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height * 0.55)} style={{ height: 268, borderRadius: 26, overflow: 'hidden', backgroundColor: P.paper, borderWidth: 1, borderColor: c.border }} accessibilityLabel={traduire("Aperçu de ton accueil avec la scène {0}", fiche.nom)}>
-        <SceneHero apercu largeur={apercuW} top={14} scene={focus} name={prenom} personnage={espace.personnage} rankIndex={rankIndex} photo={photo} />
-        <View pointerEvents="none" style={{ position: 'absolute', top: 12, right: 12, flexDirection: 'row', gap: 6 }}>
-          {fiche.animee ? <Badge type="animee" /> : null}
-          {fiche.son ? <Badge type="son" /> : null}
-          {verrou ? <Badge type={fiche.annuel ? 'annuel' : 'premium'} /> : null}
+    <EspaceScreen title={traduire("Ta scène")} gap={0} scrollRef={scrollRef} onScrollY={surDefilement}>
+      {/* 1. en haut : le mini telephone (ton accueil reel, en reduction), le nom de la scene et le mini lecteur du son */}
+      <LinearGradient
+        colors={[P.poidsFond, P.poidsFond2]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        onLayout={(e) => (seuilBandeau.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height * 0.55)}
+        style={{ marginTop: 8, borderRadius: 28, padding: 16, flexDirection: 'row', gap: 16, alignItems: 'center' }}
+      >
+        <MiniTelephone ecran={ecran} scene={focus} prenom={prenom} personnage={espace.personnage} rankIndex={rankIndex} photo={photo} />
+        <View style={{ flex: 1, gap: 6 }}>
+          <Ink size={11.5} weight="black" color={P.accentText} style={{ letterSpacing: 1.6 }} numberOfLines={2}>
+            {etiquette.toLocaleUpperCase()}
+          </Ink>
+          <Ink size={20} weight="black" style={{ lineHeight: 23 }} numberOfLines={3}>
+            {traduire(fiche.nom)}
+          </Ink>
+          <Ink size={12.5} weight="bold" color={P.ink2} numberOfLines={3}>
+            {verrou && condition ? condition : traduire(fiche.phrase)}
+          </Ink>
+          {verrou && focus !== choisie ? (
+            <Pressable onPress={() => ouvrirPaywall('scenes')} accessibilityRole="button" style={({ pressed }) => ({ alignSelf: 'flex-start', marginTop: 2, height: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: pressed ? P.primaryPressed : P.primary })}>
+              <Icon name="lock" size={12} color={P.onPrimary} stroke={2.6} />
+              <Ink size={12.5} weight="black" color={P.onPrimary}>
+                {fiche.annuel ? traduire('Voir l’abonnement annuel') : traduire('Débloquer')}
+              </Ink>
+            </Pressable>
+          ) : null}
+          <MiniLecteur scene={focus} coupe={feuilleSon} onChanger={() => setFeuilleSon(true)} />
         </View>
-      </View>
+      </LinearGradient>
 
-      {/* la scene selectionnee : nom et phrase */}
-      <View style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 8, rowGap: 2, marginTop: -4, paddingHorizontal: 2 }}>
-        <Ink size={19} weight="black" tight>
-          {traduire(fiche.nom)}
-        </Ink>
-        <Ink size={13} color={c.textSecondary}>
-          {traduire(fiche.phrase)}
-        </Ink>
-      </View>
-
-      {/* 19 octobre : le son, juste sous l'apercu, visible sans defiler */}
-      <AmbianceSonore scene={focus} />
-
-      {/* filtres rapides puis packs */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -MARGE }} contentContainerStyle={{ paddingHorizontal: MARGE, gap: 8 }}>
-        {filtres.map((f, i) => {
+      {/* 2. les filtres en pilules pastel, avec le nombre de scenes */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -MARGE, marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: MARGE, paddingVertical: 6, gap: 8 }}>
+        {filtres.map((f) => {
           const on = f.key === filtre;
           return (
-            <React.Fragment key={f.key}>
-              {i === 3 ? <View style={{ width: 1, height: 24, alignSelf: 'center', backgroundColor: c.border, marginHorizontal: 2 }} /> : null}
-              <Pressable
-                onPress={() => changerFiltre(f.key)}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: on }}
-                accessibilityLabel={traduire("{0}, {1} scènes", f.label, f.nombre)}
-                style={({ pressed }) => ({ height: 40, paddingHorizontal: 14, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: on ? c.accent : pressed ? c.fillSoft : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border })}
-              >
-                {f.key === 'animees' ? <PictoLecture size={10} color={on ? c.onAccent : c.ink} /> : null}
-                <Ink size={14} weight="extraBold" color={on ? c.onAccent : c.ink}>
-                  {traduire(f.label)}
-                </Ink>
-                <Ink size={12} weight="bold" color={on ? c.onAccent : c.textMuted}>
-                  {f.nombre}
-                </Ink>
-              </Pressable>
-            </React.Fragment>
+            <Pressable
+              key={f.key}
+              onPress={() => changerFiltre(f.key)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: on }}
+              accessibilityLabel={traduire("{0}, {1} scènes", f.label, f.nombre)}
+              style={({ pressed }) => ({ height: 36, paddingHorizontal: 14, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: on ? P.primary : pressed ? P.line2 : P.white, ...(on ? {} : OMBRE_PILULE) })}
+            >
+              <Ink size={13} weight="black" color={on ? P.onPrimary : P.ink2}>
+                {traduire(f.label)}
+              </Ink>
+              <Ink size={13} weight="black" color={on ? P.onPrimary : P.muted}>
+                {f.nombre}
+              </Ink>
+            </Pressable>
           );
         })}
       </ScrollView>
 
-      {/* la galerie, rangee par pack */}
-      {sections.map((s) => {
-        const lignes: SceneId[][] = [];
-        for (let i = 0; i < s.scenes.length; i += 2) lignes.push(s.scenes.slice(i, i + 2));
-        return (
-          <View key={s.key} style={{ gap: 12, marginTop: 4 }}>
-            <View style={{ gap: 2 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: 8, rowGap: 4, flexWrap: 'wrap' }}>
-                <Ink size={18} weight="black" tight accessibilityRole="header">
-                  {traduire(s.titre)}
-                </Ink>
-                <Ink size={13} weight="bold" color={c.textMuted}>
-                  {`${s.scenes.length} ${s.scenes.length > 1 ? traduire('scènes') : traduire('scène')}`}
-                </Ink>
-                {packTourne === s.key ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 22, paddingHorizontal: 8, borderRadius: 11, backgroundColor: c.fillSoft }}>
-                    <Icon name="sync" size={11} color={c.accent} stroke={2.6} />
-                    <Ink size={11} weight="extraBold" color={c.accent}>
-                      {traduire("Tourne")}</Ink>
-                  </View>
-                ) : null}
-              </View>
-              <Ink size={13} color={c.textSecondary}>
-                {traduire(s.phrase)}
-              </Ink>
-            </View>
-            {/* 19 octobre : la rotation du pack, sous son titre (meme choix que la carte du bas) */}
-            {ROTATIONS.some((r) => r.key === s.key) ? (
-              <TournePack
-                titre={s.titre}
-                on={rotation === s.key}
-                isPremium={isPremium}
-                onPress={() => choisirRotation(rotation === s.key ? 'fixe' : (s.key as SceneRotation))}
-              />
-            ) : null}
-            {lignes.map((ligne) => (
-              <View key={ligne.join()} style={{ flexDirection: 'row', gap: ECART, alignItems: 'flex-start' }}>
-                {ligne.map((id) => (
-                  <Vignette
-                    key={id}
-                    id={id}
-                    largeur={carteW}
-                    hauteurImage={imageH}
-                    on={id === focus}
-                    tienne={id === choisie}
-                    locked={isSceneLocked(id, rankIndex, isPremium, isAnnualPremium)}
-                    joue={joueVignette === id}
-                    onPress={() => viser(id)}
-                    refAnimee={
-                      aUneVersionAnimee(id)
-                        ? (v) => {
-                            if (v) refsAnimees.current.set(id, v);
-                            else refsAnimees.current.delete(id);
-                          }
-                        : undefined
-                    }
-                    onLayoutAnimee={aUneVersionAnimee(id) ? mesurer : undefined}
-                  />
-                ))}
-              </View>
-            ))}
-          </View>
-        );
-      })}
+      {/* 3. la grille magazine : deux colonnes de vignettes hautes */}
+      <View style={{ marginTop: 8, flexDirection: 'row', flexWrap: 'wrap', columnGap: ECART, rowGap: 16 }}>
+        {scenes.map((id) => (
+          <Vignette
+            key={id}
+            id={id}
+            univers={universDe.get(id) ?? ''}
+            largeur={carteW}
+            hauteur={vignetteH}
+            tienne={id === choisie}
+            vue={id === focus && id !== choisie}
+            locked={isSceneLocked(id, rankIndex, isPremium, isAnnualPremium)}
+            joue={joueVignette === id}
+            onPress={() => toucher(id)}
+            refAnimee={
+              aUneVersionAnimee(id)
+                ? (v) => {
+                    if (v) refsAnimees.current.set(id, v);
+                    else refsAnimees.current.delete(id);
+                  }
+                : undefined
+            }
+            onLayoutAnimee={aUneVersionAnimee(id) ? mesurer : undefined}
+          />
+        ))}
+      </View>
 
       {/* la scene qui change a chaque ouverture (Premium) */}
-      <View onLayout={(e) => (yRotation.current = e.nativeEvent.layout.y)} style={{ marginTop: 8 }}>
+      <View style={{ marginTop: 24 }}>
         <Card>
           <View style={{ padding: 16, gap: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
@@ -473,9 +418,9 @@ export default function TaScene() {
                   {traduire("Une scène du pack au hasard à chaque ouverture, et quand tu reviens après 30 minutes. Jamais deux fois de suite.")}</Ink>
               </View>
               {!isPremium ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 24, paddingHorizontal: 9, borderRadius: 12, backgroundColor: c.fillSoft }}>
-                  <Icon name="lock" size={11} color={c.goldDeep} stroke={2.6} />
-                  <Ink size={11} weight="extraBold" color={c.textSecondary}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 24, paddingHorizontal: 9, borderRadius: 12, backgroundColor: P.tuileSableFond }}>
+                  <Icon name="lock" size={11} color={P.tuileSableTexte} stroke={2.6} />
+                  <Ink size={11} weight="extraBold" color={P.tuileSableTexte}>
                     {traduire("Premium")}</Ink>
                 </View>
               ) : null}
@@ -510,8 +455,10 @@ export default function TaScene() {
         </Card>
       </View>
 
-      {/* 13 octobre : la scene animee (le son est monte sous l'apercu le 19 octobre) */}
-      <Animation scene={focus} />
+      {/* 13 octobre : la scene animee */}
+      <View style={{ marginTop: 16 }}>
+        <Animation scene={focus} />
+      </View>
     </EspaceScreen>
 
       {/* 15 octobre : l'apercu reste visible quand tu descends, en bandeau compact colle en haut */}
@@ -531,6 +478,118 @@ export default function TaScene() {
           </Pressable>
         </Animated.View>
       ) : null}
+
+      {/* « Changer » du mini lecteur : le choix des sons d'avant (bruitage, musique, volume), dans une feuille */}
+      <Modal visible={feuilleSon} transparent animationType="fade" onRequestClose={() => setFeuilleSon(false)}>
+        <Pressable onPress={() => setFeuilleSon(false)} style={{ flex: 1, backgroundColor: 'rgba(16,19,27,0.45)', justifyContent: 'flex-end' }} accessibilityLabel={traduire("Fermer")}>
+          <Animated.View entering={SlideInDown.duration(260)}>
+            <Pressable onPress={() => {}} style={{ backgroundColor: P.paper, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingTop: 10, paddingHorizontal: MARGE, paddingBottom: insets.bottom + 18 }}>
+              <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: P.pastelEteint }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, marginBottom: 14 }}>
+                <Ink size={24} weight="black" tight accessibilityRole="header">
+                  {traduire("Ambiance sonore")}</Ink>
+                <Pressable onPress={() => setFeuilleSon(false)} accessibilityRole="button" accessibilityLabel={traduire("Fermer")} hitSlop={6} style={({ pressed }) => ({ height: 40, paddingHorizontal: 18, borderRadius: 20, backgroundColor: pressed ? P.primaryPressed : P.primary, alignItems: 'center', justifyContent: 'center' })}>
+                  <Ink size={15} weight="black" color={P.onPrimary}>
+                    OK
+                  </Ink>
+                </Pressable>
+              </View>
+              <AmbianceSonore scene={focus} sansTitre />
+            </Pressable>
+          </Animated.View>
+        </Pressable>
+      </Modal>
+    </View>
+  );
+}
+
+/** Ombre douce des pilules blanches (maquette : 0 4 12 rgba(29,32,51,0.05)) */
+const OMBRE_PILULE = { shadowColor: '#1D2033', shadowOpacity: 0.05, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 1 };
+
+/** Hauteur de la scene de l'accueil reproduite dans le mini telephone (meme cadrage que le bandeau) */
+const HAUTEUR_SCENE_MINI = 236;
+
+/**
+ * 27 octobre 2026 (maquette Ta scene C) : le mini telephone. Dedans, l'en tete de ton accueil reel en reduction
+ * (la scene, ton personnage, ta salutation, anime si la scene l'est), puis Ton poids et tes outils, esquisses.
+ */
+function MiniTelephone({ ecran, scene, prenom, personnage, rankIndex, photo }: { ecran: number; scene: SceneId; prenom: string | null; personnage: string; rankIndex: number; photo: string | null }) {
+  const interieur = 112 - 8 - 12;
+  const s = interieur / ecran;
+  return (
+    <View style={{ width: 112, height: 188, borderRadius: 22, backgroundColor: P.cadre, padding: 4, shadowColor: '#1D2033', shadowOpacity: 0.18, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 6 }} accessible accessibilityLabel={traduire("Aperçu de ton accueil avec la scène {0}", ficheScene(scene).nom)}>
+      <View style={{ flex: 1, borderRadius: 18, overflow: 'hidden', backgroundColor: P.paper, paddingTop: 10, paddingHorizontal: 6, gap: 4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: P.primary }} />
+          <View style={{ width: 40, height: 5, borderRadius: 3, backgroundColor: P.ink }} />
+        </View>
+        <View style={{ height: Math.round(HAUTEUR_SCENE_MINI * s), borderRadius: 10, overflow: 'hidden', backgroundColor: P.line2 }}>
+          <View style={{ position: 'absolute', left: 0, top: 0, width: ecran, height: HAUTEUR_SCENE_MINI, transform: [{ scale: s }], transformOrigin: 'top left' } as object}>
+            <SceneHero apercu largeur={ecran} top={14} scene={scene} name={prenom} personnage={personnage} rankIndex={rankIndex} photo={photo} />
+          </View>
+        </View>
+        <LinearGradient colors={[P.poidsFond, P.poidsFond2]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 40, borderRadius: 10 }} />
+        <View style={{ flexDirection: 'row', gap: 4 }}>
+          <View style={{ flex: 1, height: 30, borderRadius: 8, backgroundColor: P.tuileOr }} />
+          <View style={{ flex: 1, height: 30, borderRadius: 8, backgroundColor: P.tuileMentheFond }} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/** Le nom d'un reglage de son, pour le mini lecteur */
+function nomBruitage(id: string): string {
+  if (id === 'aucune') return traduire('Sans bruitage');
+  if (id === 'scene') return traduire('Selon la scène');
+  return traduire(AMBIANCES.find((a) => a.id === id)?.nom ?? id);
+}
+function nomMusique(id: string): string {
+  if (id === 'aucune') return traduire('Sans musique');
+  return traduire(MUSIQUES.find((m) => m.id === id)?.nom ?? id);
+}
+
+/**
+ * Le mini lecteur (maquette Ta scene C) : la musique et le bruitage de ton accueil, un rond lecture pour les
+ * ecouter ici, et « Changer » qui ouvre le choix des sons. Il se tait quand la feuille des sons est ouverte.
+ */
+function MiniLecteur({ scene, coupe, onChanger }: { scene: SceneId; coupe: boolean; onChanger: () => void }) {
+  const [r] = useReglagesSon();
+  const ecoute = useEcoute(scene);
+  const cle = r.musique !== 'aucune' ? `mus:${r.musique}` : r.ambiance !== 'aucune' ? `amb:${r.ambiance}` : null;
+  const joue = !!cle && ecoute.enCours === cle;
+  useEffect(() => {
+    if (coupe && ecoute.enCours) ecoute.basculer(ecoute.enCours);
+  }, [coupe, ecoute]);
+  return (
+    <View style={{ marginTop: 6, backgroundColor: P.white, borderRadius: 16, paddingVertical: 8, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <Pressable
+        onPress={() => {
+          if (!cle) return onChanger();
+          selectionAsync().catch(() => {});
+          ecoute.basculer(cle);
+        }}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityState={{ selected: joue }}
+        accessibilityLabel={!cle ? traduire('Choisir un son') : joue ? traduire('Arrêter l’ambiance') : traduire('Écouter l’ambiance')}
+        style={({ pressed }) => ({ width: 30, height: 30, borderRadius: 15, backgroundColor: pressed ? P.primaryPressed : P.primary, alignItems: 'center', justifyContent: 'center' })}
+      >
+        {joue ? <View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: P.onPrimary }} /> : <PictoLecture size={11} color={P.onPrimary} />}
+      </Pressable>
+      <View style={{ flex: 1 }}>
+        <Ink size={12} weight="black" numberOfLines={1}>
+          {nomMusique(r.musique)}
+        </Ink>
+        <Ink size={11} weight="bold" color={P.ink2} numberOfLines={1}>
+          {nomBruitage(r.ambiance)}
+        </Ink>
+      </View>
+      <Pressable onPress={onChanger} hitSlop={10} accessibilityRole="button" accessibilityLabel={traduire('Changer le son de ton accueil')}>
+        <Ink size={12} weight="black" color={P.accentText}>
+          {traduire('Changer')}
+        </Ink>
+      </Pressable>
     </View>
   );
 }
@@ -556,13 +615,17 @@ function ApercuCompact({ largeur, scene, prenom, personnage, rankIndex, photo }:
   );
 }
 
-/** Une vignette de la galerie : image (ou sa video), badges, nom et phrase en entier */
+/**
+ * Une vignette de la grille magazine (27 octobre 2026) : image haute (ou sa video), badge Animée, cadenas pour
+ * une scene a debloquer, coche et contour sur ta scene ; dessous le nom et l'univers (ou la facon de la debloquer).
+ */
 function Vignette({
   id,
+  univers,
   largeur,
-  hauteurImage,
-  on,
+  hauteur,
   tienne,
+  vue,
   locked,
   joue,
   onPress,
@@ -570,18 +633,19 @@ function Vignette({
   onLayoutAnimee,
 }: {
   id: SceneId;
+  /** le titre de l'univers (la section de la galerie) */
+  univers: string;
   largeur: number;
-  hauteurImage: number;
-  on: boolean;
+  hauteur: number;
   tienne: boolean;
+  /** montree en apercu en haut sans etre ta scene (une scene a debloquer touchee) */
+  vue: boolean;
   locked: boolean;
   joue: boolean;
   onPress: () => void;
   refAnimee?: (v: View | null) => void;
   onLayoutAnimee?: () => void;
 }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
   const s = ficheScene(id);
   const video = joue ? sceneAnimee(id)?.video ?? null : null;
   const reperes = [s.animee ? 'animée' : '', s.son ? 'avec son' : '', locked ? (s.annuel ? 'avec l’abonnement annuel' : 'avec Premium') : '', s.nouveau ? 'nouvelle' : '', tienne ? 'ta scène' : '']
@@ -592,43 +656,42 @@ function Vignette({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={traduire("Scène {0}{1}", s.nom, reperes ? `, ${reperes}` : '')}
-      accessibilityState={{ selected: on }}
-      style={({ pressed }) => ({ width: largeur, gap: 8, opacity: pressed ? 0.9 : 1 })}
+      accessibilityState={{ selected: tienne }}
+      style={({ pressed }) => ({ width: largeur, opacity: pressed ? 0.9 : 1 })}
     >
-      <View
-        ref={refAnimee}
-        onLayout={onLayoutAnimee}
-        style={{ height: hauteurImage, borderRadius: 18, overflow: 'hidden', borderWidth: on ? 3 : 1, borderColor: on ? c.accent : c.border, backgroundColor: c.fillSoft }}
-      >
+      <View ref={refAnimee} onLayout={onLayoutAnimee} style={{ height: hauteur, borderRadius: 22, overflow: 'hidden', backgroundColor: P.line2 }}>
         <Image source={s.image} style={{ width: '100%', height: '100%' }} contentFit="cover" recyclingKey={id} transition={120} />
         {video != null ? <VideoScene key={id} source={video} joue style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} /> : null}
-        <View pointerEvents="none" style={{ position: 'absolute', left: 6, top: 6 }}>
-          {tienne ? <Coche /> : s.nouveau ? <Badge type="nouveau" /> : null}
-        </View>
-        {s.animee || s.son ? (
-          <View pointerEvents="none" style={{ position: 'absolute', right: 6, top: 6, flexDirection: 'row', gap: 4 }}>
-            {s.animee ? <Badge type="animee" /> : null}
-            {s.son ? <Badge type="son" /> : null}
-          </View>
-        ) : null}
-        {/* 19 octobre : verrouillee, la facon de la debloquer ecrite sur l'image */}
-        {locked ? (
-          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 6, backgroundColor: VOILE_VERROU }}>
-            <Icon name="lock" size={11} color={c.goldLight} stroke={2.8} />
-            <Ink size={11} weight="extraBold" color="#FFFFFF" numberOfLines={2} style={{ flex: 1 }} maxFontSizeMultiplier={1.2}>
-              {conditionCourte(id)}
+        {s.animee ? (
+          <View pointerEvents="none" style={{ position: 'absolute', top: 10, left: 10, height: 24, paddingHorizontal: 8, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.92)', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <PictoLecture size={8} color={P_CLAIR.accent} />
+            <Ink size={11} weight="black" color={P_CLAIR.accent} maxFontSizeMultiplier={1.2}>
+              {traduire('Animée')}
             </Ink>
           </View>
+        ) : s.nouveau ? (
+          <View pointerEvents="none" style={{ position: 'absolute', top: 10, left: 10 }}>
+            <Badge type="nouveau" />
+          </View>
         ) : null}
+        {tienne ? (
+          <View pointerEvents="none" style={{ position: 'absolute', top: 10, right: 10 }}>
+            <Coche size={26} />
+          </View>
+        ) : locked ? (
+          <View pointerEvents="none" style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: 13, backgroundColor: P_CLAIR.tuileSableFond, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="lock" size={12} color={P_CLAIR.tuileSableTexte} stroke={2.6} />
+          </View>
+        ) : null}
+        {/* le contour de ta scene (3 points, bleu nuit), ou plus fin sur la scene montree en apercu */}
+        {tienne || vue ? <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, borderRadius: 22, borderWidth: tienne ? 3 : 2, borderColor: tienne ? P.accent : P.pastelCiel }} /> : null}
       </View>
-      <View style={{ gap: 2, paddingHorizontal: 2 }}>
-        <Ink size={14} weight="extraBold" color={on ? c.accent : c.ink}>
-          {traduire(s.nom)}
-        </Ink>
-        <Ink size={12} color={c.textMuted}>
-          {traduire(s.phrase)}
-        </Ink>
-      </View>
+      <Ink size={13.5} weight="black" style={{ marginTop: 7, paddingHorizontal: 2 }} numberOfLines={1}>
+        {traduire(s.nom)}
+      </Ink>
+      <Ink size={11.5} weight="bold" color={locked ? P.tuileSableTexte : P.ink2} style={{ paddingHorizontal: 2 }} numberOfLines={1}>
+        {locked ? conditionCourte(id) : traduire(univers)}
+      </Ink>
     </Pressable>
   );
 }
@@ -667,8 +730,8 @@ function LignePack({ r, on, choisie, enCours, onPress }: { r: { key: ChoixRotati
             {sub}
           </Ink>
         </View>
-        <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: on ? 0 : 2, borderColor: c.border, backgroundColor: on ? c.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-          {on ? <Icon name="check" size={13} color={c.onAccent} stroke={3.2} /> : null}
+        <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: on ? 0 : 2, borderColor: c.border, backgroundColor: on ? c.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+          {on ? <Icon name="check" size={13} color={c.onPrimary} stroke={3.2} /> : null}
         </View>
       </Pressable>
       {on && r.key !== 'fixe' ? (
@@ -738,7 +801,7 @@ function PictoAmbiance({ id, color, size = 18 }: { id: string; color: string; si
  * Toucher la pastille : la choisir (memes reglages qu'avant, sonScene.ts). Toucher son rond lecture : l'ecouter ici.
  * Le volume apparait des qu'un son est choisi. Memes donnees : AMBIANCES, MUSIQUES, « Selon la scène ».
  */
-function AmbianceSonore({ scene }: { scene: SceneId }) {
+function AmbianceSonore({ scene, sansTitre = false }: { scene: SceneId; sansTitre?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const [r, set] = useReglagesSon();
@@ -763,9 +826,9 @@ function AmbianceSonore({ scene }: { scene: SceneId }) {
         {liste.map((o) => {
           const on = o.id === valeur;
           const joue = ecoute.enCours === o.cle;
-          const fg = on ? c.onAccent : c.ink;
+          const fg = on ? c.onPrimary : c.ink;
           return (
-            <View key={o.cle} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 46, borderRadius: 23, backgroundColor: on ? c.accent : c.surface, borderWidth: 1, borderColor: on ? c.accent : c.border, overflow: 'hidden' }}>
+            <View key={o.cle} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 46, borderRadius: 23, backgroundColor: on ? c.primary : c.surface, borderWidth: 1, borderColor: on ? c.primary : c.border, overflow: 'hidden' }}>
               <Pressable
                 onPress={() => {
                   selectionAsync().catch(() => {});
@@ -782,7 +845,7 @@ function AmbianceSonore({ scene }: { scene: SceneId }) {
                     {traduire(o.nom)}
                   </Ink>
                   {o.sous ? (
-                    <Ink size={11} weight="bold" color={on ? c.onAccent : c.textMuted} maxFontSizeMultiplier={1.2}>
+                    <Ink size={11} weight="bold" color={on ? c.onPrimary : c.textMuted} maxFontSizeMultiplier={1.2}>
                       {o.sous}
                     </Ink>
                   ) : null}
@@ -798,7 +861,7 @@ function AmbianceSonore({ scene }: { scene: SceneId }) {
                   accessibilityRole="button"
                   accessibilityState={{ selected: joue }}
                   accessibilityLabel={joue ? traduire("Arrêter {0}", o.nom) : traduire("Écouter {0}", o.nom)}
-                  style={({ pressed }) => ({ width: 34, height: 34, borderRadius: 17, marginLeft: 4, marginRight: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: joue ? c.goldLight : on ? 'rgba(255,255,255,0.22)' : pressed ? c.border : c.fillSoft })}
+                  style={({ pressed }) => ({ width: 34, height: 34, borderRadius: 17, marginLeft: 4, marginRight: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: joue ? c.goldLight : on ? 'rgba(255,255,255,0.55)' : pressed ? c.border : c.fillSoft })}
                 >
                   {joue ? (
                     <View style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: '#1D2029' }} />
@@ -816,11 +879,13 @@ function AmbianceSonore({ scene }: { scene: SceneId }) {
   return (
     <View style={{ gap: 10 }}>
       <View style={{ gap: 2 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <PictoSon size={18} color={c.accent} />
-          <Ink size={17} weight="black" tight accessibilityRole="header">
-            {traduire("Ambiance sonore")}</Ink>
-        </View>
+        {!sansTitre ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <PictoSon size={18} color={c.accent} />
+            <Ink size={17} weight="black" tight accessibilityRole="header">
+              {traduire("Ambiance sonore")}</Ink>
+          </View>
+        ) : null}
         <Ink size={12} color={c.textSecondary}>
           {son ? traduire('Joue sur ton accueil, sans couper ta musique. Touche le rond pour écouter.') : traduire('Choisis un son pour ton accueil. Touche le rond pour écouter.')}
         </Ink>
@@ -835,40 +900,6 @@ function AmbianceSonore({ scene }: { scene: SceneId }) {
         </View>
       ) : null}
     </View>
-  );
-}
-
-/** 19 octobre : « Change a chaque ouverture » sous le titre d'un pack (Premium, memes regles que la carte du bas) */
-function TournePack({ titre, on, isPremium, onPress }: { titre: string; on: boolean; isPremium: boolean; onPress: () => void }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="switch"
-      accessibilityState={{ checked: on }}
-      accessibilityLabel={traduire("Change à chaque ouverture, pack {0}{1}", titre, isPremium ? '' : traduire(', avec Premium'))}
-      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: on ? 2 : 1, borderColor: on ? c.accent : c.border })}
-    >
-      <Icon name="sync" size={20} color={on ? c.accent : c.textSecondary} stroke={2.4} />
-      <View style={{ flex: 1, gap: 1 }}>
-        <Ink size={14} weight="extraBold">
-          {traduire("Change à chaque ouverture")}</Ink>
-        <Ink size={12} color={c.textSecondary}>
-          {on ? traduire("Actif : une scène {0} au hasard à chaque ouverture", titre) : traduire("Une scène {0} au hasard, jamais deux fois de suite", titre)}
-        </Ink>
-      </View>
-      {!isPremium ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 24, paddingHorizontal: 8, borderRadius: 12, backgroundColor: c.fillSoft }}>
-          <Icon name="lock" size={11} color={c.goldDeep} stroke={2.6} />
-          <Ink size={11} weight="extraBold" color={c.textSecondary}>
-            {traduire("Premium")}</Ink>
-        </View>
-      ) : null}
-      <View style={{ width: 48, height: 28, borderRadius: 14, padding: 3, backgroundColor: on ? c.accent : c.border, alignItems: on ? 'flex-end' : 'flex-start' }}>
-        <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFFFFF' }} />
-      </View>
-    </Pressable>
   );
 }
 

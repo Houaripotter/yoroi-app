@@ -11,6 +11,7 @@ import type { CarnetIllus } from './images';
 import { P, Press, CIcon, Stamp, Field, Enter } from './ui';
 import { BlockHead, CarnetEmpty, FilterChips, Illus, Summary } from './nav';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 
 type SkillFilter = 'all' | 'jjb' | 'lutte' | 'boxe' | 'autre';
 
@@ -131,13 +132,14 @@ export function SkillsView({ skills, onOpen, onCreate }: Props) {
 }
 
 function SkillCard({ s, onOpen }: { s: Skill; onOpen: (s: Skill) => void }) {
+  const illus = useIllustrations();
   const tone = skillTone(s.category);
   const mastered = s.status === 'mastered';
   return (
     <Press onPress={() => onOpen(s)} accessibilityRole="button" accessibilityLabel={`${s.name}, ${STATUS_LABEL[s.status]}`}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
-        <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: '#F4F2EC', alignItems: 'center', justifyContent: 'center' }}>
-          <Illus name={illusOf(s)} size={40} />
+        <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: illus.stickers ? 'transparent' : '#F5F6FB', alignItems: 'center', justifyContent: 'center' }}>
+          <Illus name={illusOf(s)} size={illus.stickers ? 46 : 40} />
         </View>
         <View style={{ flex: 1, gap: 3 }}>
           <Ink size={16} weight="extraBold" numberOfLines={2}>{traduire(s.name)}</Ink>
@@ -151,7 +153,7 @@ function SkillCard({ s, onOpen }: { s: Skill; onOpen: (s: Skill) => void }) {
         {mastered ? (
           <Stamp size={42} label={traduire("Maîtrisée")} />
         ) : (
-          <View style={{ paddingHorizontal: 10, minHeight: 30, borderRadius: 15, justifyContent: 'center', backgroundColor: s.status === 'in_progress' ? P.goldSoft : '#F4F2EC' }}>
+          <View style={{ paddingHorizontal: 10, minHeight: 30, borderRadius: 15, justifyContent: 'center', backgroundColor: s.status === 'in_progress' ? P.goldSoft : '#F5F6FB' }}>
             <Ink size={12} weight="extraBold" color={s.status === 'in_progress' ? P.goldDark : P.ink2}>{STATUS_LABEL[s.status]}</Ink>
           </View>
         )}

@@ -189,7 +189,7 @@ export function InkBar({ value, color = P.ink, track = P.line, height = 10 }: { 
 export function InfoRow({ icon, label, value, color = P.ink, last }: { icon: IconName; label: string; value: string; color?: string; last?: boolean }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, borderBottomWidth: last ? 0 : 1, borderBottomColor: P.line2 }}>
-      <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
         <Icon name={icon} size={19} color={color} />
       </View>
       <View style={{ flex: 1, gap: 1 }}>
@@ -235,12 +235,12 @@ export function Chip({ label, sub, active, onPress, accent = P.ink }: { label: s
       accessibilityLabel={sub ? `${label}, ${sub}` : label}
       accessibilityState={{ selected: !!active }}
     >
-      <View style={{ minHeight: 44, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? accent : P.white, borderWidth: 1, borderColor: active ? accent : P.line2 }}>
-        <Ink size={14} weight="extraBold" color={active ? P.white : P.ink}>
+      <View style={{ minHeight: 44, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? P.primary : P.white, borderWidth: 1, borderColor: active ? P.primary : P.line2 }}>
+        <Ink size={14} weight="extraBold" color={active ? P.onPrimary : P.ink}>
           {label}
         </Ink>
         {sub ? (
-          <Ink size={11} weight="bold" color={active ? (paletteSombre() ? 'rgba(29,32,41,0.8)' : 'rgba(255,255,255,0.8)') : P.muted}>
+          <Ink size={11} weight="bold" color={active ? P.onPrimary : P.muted}>
             {sub}
           </Ink>
         ) : null}
@@ -325,14 +325,15 @@ export function RoundAction({ icon, label, onPress, tint }: { icon: ExtraIcon | 
 
 /** Tuile d'acces riche : fleur de cerisier en filigrane, titre, phrase */
 export function AccessTile({ title, text, onPress, tone = 'light' }: { kanji?: string; title: string; text: string; onPress: () => void; tone?: 'light' | 'ink' | 'red' }) {
-  const bg = tone === 'ink' ? P.ink : tone === 'red' ? P.accent : P.white;
-  const fg = tone === 'light' ? P.ink : P.white;
-  const sub = tone === 'light' ? P.ink2 : paletteSombre() ? 'rgba(29,32,41,0.78)' : 'rgba(255,255,255,0.78)';
+  // 27 octobre 2026 (refonte Pastel) : la tuile rouge devient pastel, texte bleu nuit
+  const bg = tone === 'ink' ? P.ink : tone === 'red' ? P.primary : P.white;
+  const fg = tone === 'light' ? P.ink : tone === 'red' ? P.onPrimary : P.white;
+  const sub = tone === 'light' ? P.ink2 : tone === 'red' ? P.onPrimary : paletteSombre() ? 'rgba(29,32,41,0.78)' : 'rgba(255,255,255,0.78)';
   return (
     <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={`${title}. ${text}`} style={{ flex: 1 }}>
       <View style={{ minHeight: 120, borderRadius: 22, backgroundColor: bg, borderWidth: tone === 'light' ? 1 : 0, borderColor: P.line2, padding: 16, overflow: 'hidden', justifyContent: 'space-between' }}>
         <View pointerEvents="none" style={{ position: 'absolute', right: -10, bottom: -12 }}>
-          <Glyph kind="sakura" size={70} color={tone === 'light' ? '#EFECE5' : 'rgba(255,255,255,0.12)'} />
+          <Glyph kind="sakura" size={70} color={tone === 'light' ? '#EEF0F7' : tone === 'red' ? 'rgba(35,53,143,0.08)' : 'rgba(255,255,255,0.12)'} />
         </View>
         <Ink size={16} weight="black" tight color={fg}>
           {title}

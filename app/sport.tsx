@@ -196,7 +196,7 @@ export default function SportScreen() {
         <Enter i={0}>
           <Glass style={{ gap: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: P.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                 <Icon name="calendar" size={22} color={P.accent} />
               </View>
               <View style={{ flex: 1 }}>

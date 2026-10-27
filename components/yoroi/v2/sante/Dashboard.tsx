@@ -4,7 +4,7 @@
  */
 import React, { useState } from 'react';
 import { formatDuration } from '@/lib/v2/trainingWeek';
-import { FamilyIcon } from '@/components/yoroi/v2/sante/familyIcon';
+import { FamilyBadge } from '@/components/yoroi/v2/sante/familyIcon';
 import { View } from 'react-native';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Press } from '@/components/yoroi/v2/accueil/kit';
@@ -180,9 +180,7 @@ export function WaitingList({ defs, onOpen }: { defs: MetricDef[]; onOpen: (k: M
           <View key={f} style={{ borderTopWidth: 1, borderTopColor: S.line2 }}>
             <Press onPress={() => setOpen(isOpen ? null : f)} accessibilityRole="button" accessibilityState={{ expanded: isOpen }} accessibilityLabel={traduire("{0}, {1} mesures en attente", fam.label, list.length)}>
               <View style={{ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ width: 32, height: 32, borderRadius: 11, backgroundColor: fam.tint, alignItems: 'center', justifyContent: 'center' }}>
-                  <FamilyIcon family={f} size={18} color={fam.color} />
-                </View>
+                <FamilyBadge family={f} box={32} radius={11} iconSize={18} tint={fam.tint} color={fam.color} />
                 <Ink size={14} weight="extraBold" style={{ flex: 1 }}>
                   {traduire(fam.label)}
                 </Ink>

@@ -15,6 +15,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon, type IconName } from '@/components/yoroi/v2/espace/ui';
 import { ToriiImage } from '@/components/yoroi/v2/charts/ToriiImage';
 import { traduire } from '@/lib/i18n/tr';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 
 /** vague 50 (Houari : « la date dans une couleur différente du libellé, bien visible ») : indigo fonce, fixe sur le pied creme (AA 9,4) */
 export const DATE_ARRIVEE = '#22407E';
@@ -61,6 +62,7 @@ export function CarteTonPlan({ name, scene, personnage, lignes, arrivee, compact
   /** 17 octobre 2026 : contenu de la photo fourni par l'appelant (le paywall y fait defiler ses couples Premium) */
   vignette?: React.ReactNode;
 }) {
+  const illus = useIllustrations();
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const rowH = compact ? 19 : 21;
@@ -77,7 +79,7 @@ export function CarteTonPlan({ name, scene, personnage, lignes, arrivee, compact
           ) : (
             <>
               <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(14,17,28,0.35)' }]} />
-              <Image source={LANTERNE} resizeMode="contain" style={{ position: 'absolute', top: '6%', left: 6, width: PHOTO_W - 12, height: '88%' }} />
+              <Image source={illus.img('lanterne_plan', LANTERNE)} resizeMode="contain" style={{ position: 'absolute', top: '6%', left: 6, width: PHOTO_W - 12, height: '88%' }} />
             </>
           )}
         </View>

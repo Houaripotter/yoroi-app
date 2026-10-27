@@ -8,7 +8,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
-import { DeviceEventEmitter, Pressable, RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
+import { DeviceEventEmitter, Image, Pressable, RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -35,6 +35,7 @@ import { blancA } from '@/components/yoroi/livePalette';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { libelleUnite, versUnitePoids } from '@/lib/v2/unitePoids';
 import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
+import { STICKERS, useIllustrations } from '@/components/yoroi/v2/stickers';
 
 const RECORDS_CACHE_KEY = '@yoroi_records_cache_v1';
 const RECORDS_CACHE_TTL = 10 * 60 * 1000;
@@ -73,6 +74,7 @@ type CompCombat = { resultat?: string; methode?: string; technique?: string };
 export default function RecordsScreen() {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  const illus = useIllustrations();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -256,8 +258,12 @@ export default function RecordsScreen() {
         style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider, backgroundColor: on ? blancA(0.6) : 'transparent' }}
       >
         {l.minor ? (
-          <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="glove" size={18} color={c.textSecondary} />
+          <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+            {illus.stickers ? (
+              <Image source={STICKERS.gants} style={{ width: 32, height: 32 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+            ) : (
+              <Icon name="glove" size={18} color={c.textSecondary} />
+            )}
           </View>
         ) : (
           <Hanko size={26} color={fresh ? c.record : '#B9B6AE'} rotate={-7} />

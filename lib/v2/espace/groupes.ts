@@ -8,13 +8,15 @@ import { SAMOURAI_IDS } from '@/lib/v2/espace/samourai';
 import { CLASSIQUE_SCENE_IDS } from '@/lib/v2/espace/classique';
 import { NATURE_SCENE_IDS } from '@/lib/v2/espace/nature';
 import { VIE_SCENE_IDS } from '@/lib/v2/espace/packsScenes';
-import { VOYAGE_SCENE_IDS } from '@/lib/v2/espace/voyages';
+import { MARSEILLE_SCENE_IDS, VOYAGE_SCENE_IDS, estSceneMarseille } from '@/lib/v2/espace/voyages';
 import { traduire } from '@/lib/i18n/tr';
 
-export type GroupeScenes = 'toutes' | 'voyages' | 'vie' | 'classique' | 'nature' | 'samourai' | 'lanternes' | 'jour' | 'saisons' | 'soir';
+export type GroupeScenes = 'toutes' | 'marseille' | 'voyages' | 'vie' | 'classique' | 'nature' | 'samourai' | 'lanternes' | 'jour' | 'saisons' | 'soir';
 
 export const GROUPES: { key: GroupeScenes; label: string }[] = [
   { key: 'toutes', label: traduire('Toutes') },
+  // 27 octobre 2026 : les scenes de Marseille (corniche, calanque, paddle), du pack Voyages (voyages.ts)
+  { key: 'marseille', label: 'Marseille' },
   // 18 octobre 2026 : le pack Voyages, scenes animees (Tokyo, Paris, desert, neige, avion)
   { key: 'voyages', label: traduire('Voyages') },
   // 16 octobre 2026 : les scenes des packs Vie reelle (caserne, chantier, stade, chateau...)
@@ -37,8 +39,10 @@ const SOIR: SceneId[] = ['village', 'machiya_couchant', 'festival', 'pavillon', 
 /** Les scenes d'un groupe, dans l'ordre de la galerie (toutes : l'ordre du catalogue) */
 export function scenesDuGroupe(g: GroupeScenes, toutes: SceneId[]): SceneId[] {
   switch (g) {
+    case 'marseille':
+      return [...MARSEILLE_SCENE_IDS];
     case 'voyages':
-      return [...VOYAGE_SCENE_IDS];
+      return VOYAGE_SCENE_IDS.filter((id) => !estSceneMarseille(id));
     case 'vie':
       return [...VIE_SCENE_IDS];
     case 'classique':
@@ -62,6 +66,7 @@ export function scenesDuGroupe(g: GroupeScenes, toutes: SceneId[]): SceneId[] {
 
 /** Le groupe d'une scene (pour ouvrir la galerie sur le bon onglet) */
 export function groupeDe(id: SceneId): GroupeScenes {
+  if (estSceneMarseille(id)) return 'marseille';
   if ((VOYAGE_SCENE_IDS as readonly string[]).includes(id)) return 'voyages';
   if ((VIE_SCENE_IDS as readonly string[]).includes(id)) return 'vie';
   if ((CLASSIQUE_SCENE_IDS as readonly string[]).includes(id)) return 'classique';

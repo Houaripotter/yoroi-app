@@ -12,7 +12,6 @@ import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
 import { InkBar, Note, XIcon } from '@/components/yoroi/v2/competition/ui';
 import { RadarInk } from '@/components/yoroi/v2/competition/RadarInk';
 import { PremiumGate } from '@/components/premium/PremiumGate';
-import { P_CLAIR, paletteSombre } from '@/components/yoroi/livePalette';
 import { calculateRadarEvolution, calculateRadarScores, getRadarInsight, RADAR_REFERENCES } from '@/lib/radarService';
 import type { RadarEvolution, RadarInsight, RadarScores } from '@/lib/radarService';
 import { traduire } from '@/lib/i18n/tr';
@@ -97,8 +96,8 @@ export default function RadarPerformanceScreen() {
                   : traduire("Tu as déjà {0}. Il faut trois axes renseignés cette semaine pour dessiner ton profil. Note aussi ta technique après tes séances.", withData.map((a) => a.label.toLowerCase()).join(' et '))}
               </Ink>
               <Press onPress={() => router.push('/seance' as any)} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Nouvelle séance")}>
-                <View style={{ height: 56, borderRadius: 18, backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center' }}>
-                  <Ink size={17} weight="extraBold" color={P.white}>
+                <View style={{ height: 56, borderRadius: 18, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ink size={17} weight="extraBold" color={P.onPrimary}>
                     {traduire("Nouvelle séance")}</Ink>
                 </View>
               </Press>
@@ -108,14 +107,14 @@ export default function RadarPerformanceScreen() {
 
         {insight && reliable ? (
           <Enter i={2}>
-            <Card style={{ flexDirection: 'row', gap: 12, backgroundColor: paletteSombre() ? P.ink : '#2C4A84', borderColor: paletteSombre() ? P.ink : '#2C4A84' }}>
-              <Icon name="bolt" size={22} color={paletteSombre() ? P_CLAIR.goldDark : P.goldLight} />
+            <Card style={{ flexDirection: 'row', gap: 12, backgroundColor: P.poidsFond, borderColor: P.poidsFond }}>
+              <Icon name="bolt" size={22} color={P.goldDark} />
               <View style={{ flex: 1, gap: 4 }}>
-                <Ink size={15} weight="bold" color={P.white} style={{ lineHeight: 21 }}>
+                <Ink size={15} weight="bold" color={P.ink} style={{ lineHeight: 21 }}>
                   {traduire(insight.text)}
                 </Ink>
                 {insight.source ? (
-                  <Ink size={11} weight="medium" color={paletteSombre() ? 'rgba(29,32,41,0.6)' : 'rgba(255,255,255,0.6)'}>
+                  <Ink size={11} weight="medium" color={P.ink2}>
                     {insight.source}
                   </Ink>
                 ) : null}
@@ -133,7 +132,7 @@ export default function RadarPerformanceScreen() {
             <Enter key={a.key} i={3 + i}>
               <Card style={{ gap: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                     <Glyph kind="sakura" size={22} color={a.color} />
                   </View>
                   <Ink size={17} weight="black" tight style={{ flex: 1 }}>

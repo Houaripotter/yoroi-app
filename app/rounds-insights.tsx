@@ -125,8 +125,8 @@ export default function RoundsInsightsScreen() {
                   </View>
                   {dominant ? (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: `${dominant.info.color}12` }}>
-                      <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: dominant.info.color, alignItems: 'center', justifyContent: 'center' }}>
-                        <Glyph kind="sakura" size={24} color={P.white} />
+                      <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                        <Glyph kind="sakura" size={24} color={P.accentText} />
                       </View>
                       <View style={{ flex: 1 }}>
                         <Ink size={12} weight="bold" color={P.ink2}>

@@ -17,6 +17,9 @@ import { Icon } from './Icon';
 import type { IconName } from './Icon';
 import { tap } from './ui';
 import { P } from '@/components/yoroi/livePalette';
+import { STICKERS, useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+import { useScreenshotMode } from '@/lib/ScreenshotModeContext';
+import { LOGO_FIRST_JJA } from '@/lib/v2/demo/logoFirstJJA';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const SMALL_WORDS = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'l', 'd', 'et', 'club', 'team', 'the']);
@@ -39,14 +42,64 @@ function sportIcon(sport?: string): IconName {
   return 'bolt';
 }
 
-/** Pastille ronde d'une seance */
-export function SessionMark({ t, size = 18, ring }: { t: Training; size?: number; ring?: string }) {
-  const src = t.club_logo ? getClubLogoSource(t.club_logo) : null;
+/**
+ * 27 octobre 2026 soir (Houari : « les vrais logos de clubs, pas JJ ou BF dans des ronds ») : les logos de club deja
+ * dans l'app (assets/images, assets/clubs), retrouves par le nom du club quand la seance n'a pas de logo enregistre.
+ * Affichage seulement, rien n'est ecrit. En mode capture (captures du store), pas de logo de marque.
+ */
+const LOGOS_PAR_NOM: { re: RegExp; src: () => unknown }[] = [
+  { re: /basic[\s-]*fit/i, src: () => getClubLogoSource('basic-fit') },
+  { re: /gracie[\s-]*barra/i, src: () => getClubLogoSource('gracie-barra') },
+  { re: /first\s*jiu/i, src: () => getClubLogoSource(LOGO_FIRST_JJA) },
+];
+
+export function logoParNom(nom?: string | null): unknown {
+  if (!nom) return null;
+  const l = LOGOS_PAR_NOM.find((x) => x.re.test(nom));
+  return l ? l.src() : null;
+}
+
+/** Le sticker du sport d'une seance (repli quand le club n'a pas de logo) */
+export function stickerDuSport(sport?: string | null, dehors?: boolean | null): NomSticker {
+  const id = String(sport ?? '').split(',')[0].trim().toLowerCase();
+  if (/jjb|bjj|jiu|grappling|judo|lutte|wrestling|sambo|luta/.test(id)) return 'jjb';
+  if (/boxe|box|mma|kick|muay|karate|taekwondo|savate|striking/.test(id)) return 'gants';
+  if (/muscu|fitness|crossfit|halt|force|powerlifting|street/.test(id)) return 'musculation';
+  if (/run|course|trail|jogging|marche/.test(id)) return 'course';
+  if (/foot|soccer|futsal/.test(id)) return 'sport_football';
+  if (/velo|cycl|bike/.test(id)) return 'sport_velo';
+  if (/nata|swim|nage/.test(id)) return 'sport_nage';
+  if (dehors) return 'montagne_drapeau';
+  const f = familyOf(sport ?? undefined);
+  if (f === 'combat_sol') return 'jjb';
+  if (f === 'combat_pied') return 'gants';
+  if (f === 'cardio') return 'course';
+  if (f === 'muscu') return 'musculation';
+  return 'activite';
+}
+
+/**
+ * Pastille ronde d'une seance. sticker (Ton mois et le calendrier, reglage Stickers) : le logo du club s'il existe
+ * (enregistre, ou retrouve par son nom), sinon le sticker de son sport, a la place des initiales.
+ */
+export function SessionMark({ t, size = 18, ring, sticker }: { t: Training; size?: number; ring?: string; sticker?: boolean }) {
+  const illus = useIllustrations();
+  const { isScreenshotMode } = useScreenshotMode();
+  const enSticker = !!sticker && illus.stickers;
+  const enregistre = t.club_logo ? getClubLogoSource(t.club_logo) : null;
+  const src = enregistre ?? (enSticker && !isScreenshotMode ? logoParNom(t.club_name) : null);
   const border = ring ? { borderWidth: Math.max(1.5, size * 0.08), borderColor: ring } : null;
+  if (!src && enSticker) {
+    return (
+      <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+        <Image source={STICKERS[stickerDuSport(t.sport, !!t.is_outdoor)]} style={{ width: size * 1.08, height: size * 1.08 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+      </View>
+    );
+  }
   if (src) {
     return (
       <View style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: P.white, overflow: 'hidden' }, border]}>
-        <Image source={src} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+        <Image source={src as never} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
       </View>
     );
   }
@@ -66,7 +119,7 @@ export function SessionMark({ t, size = 18, ring }: { t: Training; size?: number
 }
 
 /** Les pastilles d'un jour : deux au plus qui se chevauchent, puis « +n » */
-export function DayMarks({ list, size = 18, ring }: { list: Training[]; size?: number; ring: string }) {
+export function DayMarks({ list, size = 18, ring, sticker }: { list: Training[]; size?: number; ring: string; sticker?: boolean }) {
   const { theme } = useYoroiTheme();
   if (!list.length) return null;
   const shown = list.slice(0, 2);
@@ -75,7 +128,7 @@ export function DayMarks({ list, size = 18, ring }: { list: Training[]; size?: n
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       {shown.map((t, i) => (
         <View key={t.id ?? i} style={{ marginLeft: i === 0 ? 0 : -size * 0.32, zIndex: 2 - i }}>
-          <SessionMark t={t} size={size} ring={ring} />
+          <SessionMark t={t} size={size} ring={ring} sticker={sticker} />
         </View>
       ))}
       {more > 0 ? <Ink size={Math.max(9, size * 0.55)} weight="black" color={theme.colors.textSecondary} style={{ marginLeft: 1 }}>{`+${more}`}</Ink> : null}
@@ -163,8 +216,8 @@ export function MonthCard({ trainings, competitions, onOpen }: { trainings: Trai
             const future = iso > today;
             return (
               <View key={k} style={{ flex: 1, height: 44, alignItems: 'center', paddingTop: 2, gap: 2 }}>
-                <View style={{ minWidth: 22, height: 20, paddingHorizontal: 3, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: isToday ? c.accent : 'transparent', borderWidth: comp && !isToday ? 1.5 : 0, borderColor: c.gold }}>
-                  <Ink size={12} weight={isToday || list.length ? 'black' : 'bold'} color={isToday ? c.onAccent : future ? c.textMuted : list.length ? c.ink : c.textSecondary}>{String(dateOf(iso).getDate())}</Ink>
+                <View style={{ minWidth: 22, height: 20, paddingHorizontal: 3, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: isToday ? c.primary : 'transparent', borderWidth: comp && !isToday ? 1.5 : 0, borderColor: c.gold }}>
+                  <Ink size={12} weight={isToday || list.length ? 'black' : 'bold'} color={isToday ? c.onPrimary : future ? c.textMuted : list.length ? c.ink : c.textSecondary}>{String(dateOf(iso).getDate())}</Ink>
                 </View>
                 <DayMarks list={list} size={16} ring="#FFFFFF" />
               </View>

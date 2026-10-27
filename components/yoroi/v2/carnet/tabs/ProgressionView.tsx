@@ -62,13 +62,13 @@ export function ProgressionView({ refreshKey, hideEmpty }: { refreshKey: number;
   return (
     <View style={{ gap: 14 }}>
       {total > 0 ? (
-        <View style={{ borderRadius: 28, backgroundColor: P.ink, padding: 20, gap: 4, overflow: 'hidden' }}>
+        <View style={{ borderRadius: 28, backgroundColor: P.poidsFond, padding: 20, gap: 4, overflow: 'hidden' }}>
           <View pointerEvents="none" style={{ position: 'absolute', right: -6, top: -24 }}>
-            <Glyph kind="sakura" size={140} color="rgba(255,255,255,0.05)" />
+            <Glyph kind="sakura" size={140} color={paletteSombre() ? 'rgba(255,255,255,0.05)' : 'rgba(35,53,143,0.06)'} />
           </View>
-          <Ink size={13} weight="bold" color={P.goldLight}>{traduire("Total des trois mouvements")}</Ink>
-          <Ink size={44} weight="black" tight color={P.white}>{`${String(total).replace('.', DECIMAL)} kg`}</Ink>
-          <Ink size={13} weight="medium" color={paletteSombre() ? 'rgba(29,32,41,0.7)' : 'rgba(255,255,255,0.7)'}>{traduire("Squat {0}, développé couché {1}, soulevé de terre {2}", squat, bench, dl)}</Ink>
+          <Ink size={13} weight="bold" color={P.goldDark}>{traduire("Total des trois mouvements")}</Ink>
+          <Ink size={44} weight="black" tight color={P.accentText}>{`${String(total).replace('.', DECIMAL)} kg`}</Ink>
+          <Ink size={13} weight="medium" color={P.ink2}>{traduire("Squat {0}, développé couché {1}, soulevé de terre {2}", squat, bench, dl)}</Ink>
         </View>
       ) : null}
       {lifts.map((l) => (

@@ -352,7 +352,7 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={traduire("Voir ta transformation, avant et après")}
-                style={({ pressed }) => ({ marginHorizontal: GUTTER, marginTop: 16, borderRadius: 24, overflow: 'hidden', backgroundColor: c.darkCard, opacity: pressed ? 0.92 : 1 })}
+                style={({ pressed }) => ({ marginHorizontal: GUTTER, marginTop: 16, borderRadius: 24, overflow: 'hidden', backgroundColor: c.carteDouce, opacity: pressed ? 0.92 : 1 })}
               >
                 <View style={{ flexDirection: 'row', height: 150 }}>
                   <Image source={{ uri: firstPhoto.file_uri }} blurRadius={veiled ? 22 : 0} style={{ flex: 1 }} resizeMode="cover" />
@@ -361,14 +361,14 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
                 </View>
                 <View style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <View style={{ flex: 1, gap: 2 }}>
-                    <Ink size={17} weight="extraBold" color={c.onAccent}>
+                    <Ink size={17} weight="extraBold" color={c.ink}>
                       {traduire("Ta transformation")}</Ink>
-                    <Ink size={13} color={c.onDarkSecondary}>
+                    <Ink size={13} color={c.textSecondary}>
                       {traduire("{0} et {1}, côte à côte", dayShort(firstPhoto.date.slice(0, 10), true), dayShort(lastPhoto.date.slice(0, 10), true))}
                     </Ink>
                   </View>
-                  <View style={{ height: 40, paddingHorizontal: 14, borderRadius: 14, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
-                    <Ink size={14} weight="extraBold" color={c.accent}>
+                  <View style={{ height: 40, paddingHorizontal: 14, borderRadius: 14, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
+                    <Ink size={14} weight="extraBold" color={c.accentText}>
                       {traduire("Comparer")}</Ink>
                   </View>
                 </View>

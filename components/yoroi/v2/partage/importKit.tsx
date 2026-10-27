@@ -19,7 +19,7 @@ export function NumberedSteps({ steps }: { steps: { title: string; text: string 
       {steps.map((s, i) => (
         <View key={s.title} style={{ flexDirection: 'row', gap: 14 }}>
           <View style={{ width: 36, height: 44, borderRadius: 10, backgroundColor: P.ink, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-            <View style={{ position: 'absolute', left: 0, right: 0, top: 26, height: 4, backgroundColor: P.accent }} />
+            <View style={{ position: 'absolute', left: 0, right: 0, top: 26, height: 4, backgroundColor: P.detail }} />
             <Ink size={17} weight="black" color={P.paper} style={{ marginTop: -8 }}>{i + 1}</Ink>
           </View>
           <View style={{ flex: 1, gap: 2 }}>

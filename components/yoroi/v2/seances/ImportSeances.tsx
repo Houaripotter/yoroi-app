@@ -129,8 +129,8 @@ export function ImportSeancesSheet({ visible, onClose, onFini }: { visible: bool
       ) : vue.k === 'fini' ? (
         <>
           <Glass style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="check" size={22} color="#FFFFFF" strokeWidth={2.6} />
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="check" size={22} color={c.onPrimary} strokeWidth={2.6} />
             </View>
             <View style={{ flex: 1, gap: 3 }}>
               <Ink size={17} weight="black" tight accessibilityLiveRegion="polite">{traduire(vue.titre)}</Ink>
@@ -164,7 +164,7 @@ function Progression({ etape, source }: { etape: EtapeImport | null; source: str
         <Ink size={15} weight="extraBold" style={{ flex: 1 }} accessibilityLiveRegion="polite">{t.ligne}</Ink>
       </View>
       <View style={{ height: 8, borderRadius: 4, backgroundColor: c.fillSubtle, overflow: 'hidden' }}>
-        <View style={{ width: `${Math.round((t.part ?? 0.08) * 100)}%`, height: '100%', borderRadius: 4, backgroundColor: c.accent, opacity: t.part == null ? 0.5 : 1 }} />
+        <View style={{ width: `${Math.round((t.part ?? 0.08) * 100)}%`, height: '100%', borderRadius: 4, backgroundColor: c.detail, opacity: t.part == null ? 0.5 : 1 }} />
       </View>
       <Ink size={12} color={c.textMuted}>{traduire("Garde YOROI ouvert pendant l’import.")}</Ink>
     </Glass>
@@ -178,7 +178,7 @@ export function CarteImportSeances({ onPress }: { onPress: () => void }) {
   const source = nomSourceSante();
   return (
     <Glass onPress={onPress} label={traduire("Importer mes séances depuis {0}", source)} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14 }}>
-      <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: P.white, borderWidth: 1, borderColor: c.divider, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'transparent',  alignItems: 'center', justifyContent: 'center' }}>
         <Icon name="download" size={22} color={c.accent} strokeWidth={2.4} />
       </View>
       <View style={{ flex: 1, gap: 2 }}>

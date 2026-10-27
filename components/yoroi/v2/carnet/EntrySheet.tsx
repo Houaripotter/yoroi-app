@@ -273,7 +273,7 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => (
             <View key={v} style={{ flex: 1 }}>
               <Press onPress={() => setRpe(v)} accessibilityRole="button" accessibilityLabel={`Effort ${v}`} accessibilityState={{ selected: v === rpe }}>
-                <View style={{ height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: v <= rpe ? intensite(niveauRpe(v)).fill : '#ECEAE4' }}>
+                <View style={{ height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: v <= rpe ? intensite(niveauRpe(v)).fill : '#EEF0F7' }}>
                   <Ink size={13} weight="black" color={v <= rpe ? intensite(niveauRpe(v)).onFill : P.ink2}>{String(v)}</Ink>
                 </View>
               </Press>

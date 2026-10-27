@@ -42,8 +42,8 @@ export function Sheet({ visible, onClose, title, text, children, actions }: Prop
           {children}
           <View style={{ gap: 8, marginTop: 6 }}>
             {actions.map((a) => {
-              const bg = a.tone === 'accent' ? c.accent : a.tone === 'ink' ? c.ink : a.tone === 'danger' ? c.dangerTint : 'transparent';
-              const fg = a.tone === 'accent' ? c.onAccent : a.tone === 'ink' ? c.background : a.tone === 'danger' ? c.danger : c.textSecondary;
+              const bg = a.tone === 'accent' ? c.primary : a.tone === 'ink' ? c.ink : a.tone === 'danger' ? c.dangerTint : 'transparent';
+              const fg = a.tone === 'accent' ? c.onPrimary : a.tone === 'ink' ? c.background : a.tone === 'danger' ? c.danger : c.textSecondary;
               return (
                 <Pressable
                   key={a.label}
@@ -52,7 +52,7 @@ export function Sheet({ visible, onClose, title, text, children, actions }: Prop
                     a.onPress();
                   }}
                   accessibilityRole="button"
-                  style={({ pressed }) => ({ height: 54, borderRadius: 18, backgroundColor: bg, borderWidth: a.tone === 'ghost' || !a.tone ? 1.5 : 0, borderColor: '#D5D2CA', alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.85 : 1 })}
+                  style={({ pressed }) => ({ height: 54, borderRadius: 18, backgroundColor: bg, borderWidth: a.tone === 'ghost' || !a.tone ? 1.5 : 0, borderColor: '#C9CEDF', alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.85 : 1 })}
                 >
                   <Ink size={16} weight="extraBold" color={fg}>
                     {traduire(a.label)}

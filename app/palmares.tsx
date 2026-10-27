@@ -210,7 +210,7 @@ export default function PalmaresScreen() {
                     <Ink size={14} weight="black">{String(n)}</Ink>
                   </View>
                   <View style={{ height: 8, borderRadius: 4, backgroundColor: c.fillSubtle }}>
-                    <View style={{ width: `${(n / topTech[0][1]) * 100}%`, height: '100%', borderRadius: 4, backgroundColor: i === 0 ? c.accent : '#3D5D9E' }} />
+                    <View style={{ width: `${(n / topTech[0][1]) * 100}%`, height: '100%', borderRadius: 4, backgroundColor: i === 0 ? c.detail : '#3D5D9E' }} />
                   </View>
                 </View>
               ))}

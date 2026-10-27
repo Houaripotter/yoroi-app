@@ -194,13 +194,11 @@ export default function PrivacyDataScreen() {
 
   return (
     <EspaceScreen title={traduire("Tes données")} subtitle={traduire("Elles t’appartiennent.")}>
-      <View style={{ borderRadius: 22, backgroundColor: c.darkCard, padding: 20, gap: 8, overflow: 'hidden' }}>
-        <Glyph kind="sakura" size={150} color="rgba(255,255,255,0.08)" style={{ position: 'absolute', right: -24, top: -34 }} />
-        <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: c.goldLight, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="lock" size={24} color={c.ink} stroke={2.4} />
-        </View>
-        <Ink size={24} weight="black" tight color={c.onDark}>{traduire("Tes données t’appartiennent")}</Ink>
-        <Ink size={14} color={c.onDarkSecondary}>{traduire("Tes données de santé sont stockées sur ton téléphone. YOROI n’a aucun serveur qui les reçoit.")}</Ink>
+      <View style={{ borderRadius: 22, backgroundColor: c.carteDouce, padding: 20, gap: 8, overflow: 'hidden' }}>
+        <Glyph kind="sakura" size={150} color={'rgba(35,53,143,0.07)'} style={{ position: 'absolute', right: -24, top: -34 }} />
+        <Icon name="lock" size={26} color={c.goldDeep} stroke={2.4} />
+        <Ink size={24} weight="black" tight color={c.ink}>{traduire("Tes données t’appartiennent")}</Ink>
+        <Ink size={14} color={c.textSecondary}>{traduire("Tes données de santé sont stockées sur ton téléphone. YOROI n’a aucun serveur qui les reçoit.")}</Ink>
       </View>
 
       <Card style={{ padding: 16, gap: 8 }}>
@@ -231,7 +229,7 @@ export default function PrivacyDataScreen() {
           const n = counts[cat.id] ?? 0;
           return (
             <View key={cat.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 8, minHeight: 60, borderTopWidth: i ? 1 : 0, borderColor: c.divider }}>
-              <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                 <Icon name={cat.icon} size={18} />
               </View>
               <View style={{ flex: 1, gap: 1 }}>
@@ -243,7 +241,7 @@ export default function PrivacyDataScreen() {
                 disabled={n === 0 || saving}
                 accessibilityRole="button"
                 accessibilityLabel={traduire("Supprimer {0}", cat.label)}
-                style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.dangerTint, alignItems: 'center', justifyContent: 'center', opacity: n === 0 || saving ? 0.3 : 1 }}
+                style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center', opacity: n === 0 || saving ? 0.3 : 1 }}
               >
                 <Icon name="trash" size={18} color={c.danger} />
               </Pressable>

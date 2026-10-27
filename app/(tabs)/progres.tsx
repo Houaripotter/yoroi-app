@@ -13,7 +13,7 @@
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
-import Animated, { useAnimatedRef, useScrollOffset } from 'react-native-reanimated';
+import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -32,7 +32,7 @@ import { ExamplePreview } from '@/components/yoroi/v2/progres/ExamplePreview';
 import { VueEnsemble } from '@/components/yoroi/v2/progres/Ensemble';
 import type { EnsembleCible } from '@/components/yoroi/v2/progres/Ensemble';
 import { RecordsCard } from '@/components/yoroi/v2/progres/RecordsCard';
-import { BandeauScene, EnteteSection } from '@/components/yoroi/v2/seances/Decor';
+import { EnteteSection } from '@/components/yoroi/v2/seances/Decor';
 import type { Illus } from '@/components/yoroi/v2/seances/Decor';
 import { useBiomarkers } from '@/lib/v2/progres/biomarkers';
 import { useMeasuresData } from '@/lib/v2/progres/useProgresData';
@@ -86,7 +86,6 @@ export default function Progres() {
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   // 27 octobre 2026 : la visite guidee remonte l'onglet en haut avant de montrer ta vue d'ensemble
   useEffect(() => registerTourScroller('progres', { scrollBy: () => {}, scrollToTop: () => (scrollRef.current as any)?.scrollTo?.({ y: 0, animated: true }) }), [scrollRef]);
-  const defil = useScrollOffset(scrollRef);
   const scrollY = useRef(0);
   const tabsY = useRef(0);
   const weights = useWeightData();
@@ -127,7 +126,11 @@ export default function Progres() {
         contentContainerStyle={{ paddingBottom: insets.bottom + INK_TAB_BAR_SPACE }}
         showsVerticalScrollIndicator={false}
       >
-        <BandeauScene scrollY={defil} scene="progres" top={insets.top} title={traduire("Progrès")} sub={traduire("Comment tu évolues, en un coup d’œil")} />
+        {/* 27 octobre 2026 (maquette Pastel-Progres) : le titre sur le fond de la page, plus de bandeau de scene */}
+        <View style={{ paddingTop: insets.top + 18, paddingHorizontal: 16, paddingBottom: 12 }}>
+          <Ink size={30} weight="black" tight accessibilityRole="header" style={{ letterSpacing: -0.5 }}>{traduire("Progrès")}</Ink>
+          <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Comment tu évolues, en un coup d’œil")}</Ink>
+        </View>
 
         {/* Vue d'ensemble : une tuile par facette, chacune ouvre son onglet */}
         {hasData ? (
@@ -138,14 +141,14 @@ export default function Progres() {
             measures={measures.points}
             trainings={trainings}
             onOpen={openCible}
-            style={{ marginHorizontal: 22, marginTop: 4 }}
+            style={{ marginHorizontal: 16, marginTop: 0 }}
           />
           </TourAnchor>
         ) : null}
 
         {/* 25 octobre 2026 : ta semaine et ton mois, tout reuni (app/bilan-periode.tsx) */}
         {hasData ? (
-          <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 22, marginTop: 14 }}>
+          <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 16, marginTop: 14 }}>
             {(['semaine', 'mois'] as const).map((t) => (
               <Pressable
                 key={t}
@@ -165,7 +168,7 @@ export default function Progres() {
 
         {/* Tes records, venus de Seances */}
         {trainings.length ? (
-          <View style={{ marginHorizontal: 22, gap: 10 }}>
+          <View style={{ marginHorizontal: 16, gap: 10 }}>
             <EnteteSection title={traduire("Tes records")} sub={traduire("Tes meilleures marques du moment")} illus={{ tampon: 'record' }} action={traduire("Tout voir")} onAction={() => router.push('/records' as any)} style={{ marginTop: 18 }} />
             <RecordsCard trainings={trainings} femme={femme} />
           </View>
@@ -175,7 +178,7 @@ export default function Progres() {
           onLayout={(e) => {
             tabsY.current = e.nativeEvent.layout.y;
           }}
-          style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 18, marginTop: hasData ? 20 : 4, paddingTop: 4 }}
+          style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 12, marginTop: hasData ? 20 : 4, paddingTop: 4 }}
           accessibilityRole="tablist"
         >
           {SECTIONS.map((s) => (
@@ -192,10 +195,10 @@ export default function Progres() {
             </Pressable>
           ))}
         </View>
-        <View style={{ height: 1, backgroundColor: c.divider, marginHorizontal: 22 }} />
+        <View style={{ height: 1, backgroundColor: c.divider, marginHorizontal: 16 }} />
 
         {/* Titre, phrase et illustration de l'onglet */}
-        <EnteteSection title={traduire(intro.title)} sub={traduire(intro.sub)} illus={intro.illus} style={{ marginHorizontal: 18, marginTop: 16 }} />
+        <EnteteSection title={traduire(intro.title)} sub={traduire(intro.sub)} illus={intro.illus} style={{ marginHorizontal: 12, marginTop: 16 }} />
 
         {section === 'Corps' ? (
           <>
@@ -239,11 +242,11 @@ function WeightExample() {
       style={{ marginTop: 18 }}
     >
       <WeightTrendChart points={sample} goal={SAMPLE_GOAL} height={230} plan={false} />
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 22, marginTop: 8, flexWrap: 'wrap' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, marginTop: 8, flexWrap: 'wrap' }}>
         <LegendMark kind="line" color={POIDS.c2} label={traduire("ton poids")} />
         <LegendMark kind="dash" color={POIDS.cap} label={traduire("ton cap")} />
       </View>
-      <View style={{ flexDirection: 'row', marginHorizontal: 22, marginTop: 14, paddingVertical: 12, borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: c.border }}>
+      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginTop: 14, paddingVertical: 12, borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: c.border }}>
         <Stat value={formatKg(last.value)} label={traduire("dernière pesée")} />
         <Stat value={formatKg(last.trend)} label={traduire("tendance lissée")} border />
         <Stat value={rateText(rate)} label={traduire("en moins par semaine")} border />
@@ -312,13 +315,13 @@ function WeightSection() {
 
   return (
     <View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 22, paddingTop: 12, minHeight: 44 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, minHeight: 44 }}>
         <Ink size={14} weight="bold" color={c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>
           {head ? traduire('Ce jour-là') : traduire('Ta courbe de poids')}
         </Ink>
         <DetailCue onPress={openDetail} />
       </View>
-      <View style={{ paddingHorizontal: 22, paddingTop: 2, minHeight: 104, gap: 2 }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 2, minHeight: 104, gap: 2 }}>
         {head ? (
           <>
             <Ink size={15} weight="bold" color={c.textSecondary}>{formatLongDate(head.date)}</Ink>
@@ -348,20 +351,20 @@ function WeightSection() {
         )}
       </View>
 
-      <PeriodSwitch value={period} onChange={setPeriod} options={SHORT_PERIODS} style={{ marginHorizontal: 22, marginTop: 10 }} />
+      <PeriodSwitch value={period} onChange={setPeriod} options={SHORT_PERIODS} style={{ marginHorizontal: 16, marginTop: 10 }} />
 
       <View style={{ marginTop: 12 }}>
         <WeightTrendChart points={shown} series={series} goal={goal} height={300} onScrub={setScrub} onPress={openDetail} />
       </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 22, marginTop: 10, flexWrap: 'wrap' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, marginTop: 10, flexWrap: 'wrap' }}>
         <LegendMark kind="line" color={POIDS.c2} label={traduire("ton poids")} />
         {goal ? <LegendMark kind="dash" color={POIDS.cap} label={traduire("ton rythme prévu, jusqu’à ton cap")} /> : null}
       </View>
 
-      <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: 22, marginTop: 8 }}>{traduire("Touche la courbe pour son détail, glisse ton doigt pour revoir chaque pesée.")}</Ink>
+      <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: 16, marginTop: 8 }}>{traduire("Touche la courbe pour son détail, glisse ton doigt pour revoir chaque pesée.")}</Ink>
 
-      <View style={{ flexDirection: 'row', marginHorizontal: 22, marginTop: 22, paddingVertical: 14, borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: c.border }}>
+      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginTop: 22, paddingVertical: 14, borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: c.border }}>
         <Stat value={formatKg(last.value)} label={traduire("dernière pesée")} />
         <Stat value={formatKg(last.trend)} label={traduire("tendance lissée")} border />
         <Stat value={rateText(rate)} label={rate === null ? traduire('ton rythme, dès 4 pesées') : rate <= 0 ? traduire('en moins par semaine') : traduire('en plus par semaine')} border />
@@ -372,7 +375,7 @@ function WeightSection() {
         onPress={() => router.push('/profile' as any)}
         accessibilityRole="button"
         accessibilityLabel={goal ? traduire("Objectif {0} kilos, modifier", formatKg(goal)) : traduire('Fixer ton objectif de poids')}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 22, marginTop: 14, minHeight: 52, paddingHorizontal: 14, borderRadius: 16, backgroundColor: pressed ? c.fillSoft : blancA(0.78), borderWidth: 1, borderColor: c.divider })}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginTop: 14, minHeight: 52, paddingHorizontal: 14, borderRadius: 16, backgroundColor: pressed ? c.fillSoft : blancA(0.78), borderWidth: 1, borderColor: c.divider })}
       >
         <View style={{ flex: 1, gap: 1 }}>
           <Ink size={13} weight="bold" color={c.textSecondary}>{goal ? traduire("Objectif {0} kg", formatKg(goal)) : traduire('Ton objectif')}</Ink>
@@ -384,7 +387,7 @@ function WeightSection() {
       </Pressable>
 
       {rate !== null && Math.abs(rate) > Math.max(1, last.trend * 0.01) ? (
-        <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 22, marginTop: 14, padding: 14, borderRadius: 18, backgroundColor: 'rgba(197,157,69,0.14)', borderWidth: 1, borderColor: 'rgba(197,157,69,0.35)' }}>
+        <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 16, marginTop: 14, padding: 14, borderRadius: 18, backgroundColor: 'rgba(197,157,69,0.14)', borderWidth: 1, borderColor: 'rgba(197,157,69,0.35)' }}>
           <View style={{ width: 4, borderRadius: 2, backgroundColor: c.gold }} />
           <Ink size={13} weight="bold" color={c.ink} style={{ flex: 1 }}>
             {traduire(`Ton poids bouge de plus d’un kilo par semaine. C’est rapide : vise plutôt un rythme lent et régulier, et parles-en à un professionnel de santé si ça dure.`)}
@@ -394,7 +397,7 @@ function WeightSection() {
 
       <PredictionCard series={series} goal={goal} />
 
-      <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 22, marginTop: 20 }}>
+      <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginTop: 20 }}>
         <GhostButton label={traduire("Toutes tes pesées")} onPress={() => router.push('/pesees' as any)} style={{ flex: 1 }} />
       </View>
     </View>
@@ -428,7 +431,7 @@ function PredictionCard({ series, goal }: { series: DayWeight[]; goal: number | 
       }}
       accessibilityRole="button"
       accessibilityLabel={isPremium ? traduire("Prévisions, {0}, {1}", titre.toLowerCase(), line) : traduire("Prévisions, {0}, {1}, page complète avec Premium", titre.toLowerCase(), line)}
-      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 22, marginTop: 10, minHeight: 52, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, backgroundColor: pressed ? c.fillSoft : blancA(0.78), borderWidth: 1, borderColor: c.divider })}
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginTop: 10, minHeight: 52, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, backgroundColor: pressed ? c.fillSoft : blancA(0.78), borderWidth: 1, borderColor: c.divider })}
     >
       <View style={{ flex: 1, gap: 1, minWidth: 0 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>

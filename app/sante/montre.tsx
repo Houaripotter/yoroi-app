@@ -6,7 +6,7 @@
  * Contenu tiré des pages d'aide officielles (lib/v2/sante/watches.ts).
  */
 import React, { useState } from 'react';
-import { FamilyIcon } from '@/components/yoroi/v2/sante/familyIcon';
+import { FamilyBadge } from '@/components/yoroi/v2/sante/familyIcon';
 import { DeviceEventEmitter, Platform, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -34,8 +34,8 @@ function MetricChip({ k, onPress, dim }: { k: MetricKey; onPress?: () => void; d
   if (!m) return null;
   const fam = FAMILY[m.family];
   const body = (
-    <View style={{ minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 4, paddingRight: 11, borderRadius: 20, backgroundColor: dim ? '#F2F1EC' : P.white, borderWidth: 1, borderColor: dim ? S.line2 : fam.tint, opacity: dim ? 0.75 : 1 }}>
-      <IconDot name={METRIC_ICON[k] ?? 'pulse'} color={dim ? S.muted : fam.color} tint={dim ? '#E8E5DE' : fam.tint} size={30} />
+    <View style={{ minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 4, paddingRight: 11, borderRadius: 20, backgroundColor: dim ? '#F5F6FB' : P.white, borderWidth: 1, borderColor: dim ? S.line2 : fam.tint, opacity: dim ? 0.75 : 1 }}>
+      <IconDot name={METRIC_ICON[k] ?? 'pulse'} color={dim ? S.muted : fam.color} tint={dim ? '#E4E7F1' : fam.tint} size={30} />
       <Ink size={12} weight="extraBold" color={dim ? S.ink2 : S.ink}>
         {traduire(m.label)}
       </Ink>
@@ -197,7 +197,7 @@ function BrandSheet({ w }: { w: Watch }) {
           {(p.missing && p.missing.length > 0) || w.keeps.length > 0 ? (
             <View style={{ borderRadius: 26, backgroundColor: P.white, borderWidth: 1, borderColor: S.line2, padding: 16, gap: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: S.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                   <SanteIcon name="lock" size={17} color={S.accent} />
                 </View>
                 <Ink size={18} weight="black" tight style={{ flex: 1 }}>
@@ -335,9 +335,7 @@ function ReadsCard() {
             badge={String(list.length)}
             color={fam.color}
             mark={
-              <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: fam.tint, alignItems: 'center', justifyContent: 'center' }}>
-                <FamilyIcon family={f} size={21} color={fam.color} />
-              </View>
+              <FamilyBadge family={f} box={40} radius={14} iconSize={21} tint={fam.tint} color={fam.color} />
             }
           >
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>

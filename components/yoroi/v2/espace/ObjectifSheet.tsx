@@ -54,8 +54,8 @@ export function ObjectifSheet({ visible, onClose, espace, onSave }: {
                   accessibilityLabel={traduirePluriel(n, n > 1, "{0} séance par semaine", "{0} séances par semaine", n)}
                   style={{ flex: 1 }}
                 >
-                  <View style={{ height: 52, borderRadius: 14, backgroundColor: on ? c.accent : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
-                    <Ink size={20} weight="black" color={on ? '#FFFFFF' : c.ink}>{String(n)}</Ink>
+                  <View style={{ height: 52, borderRadius: 14, backgroundColor: on ? c.primary : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
+                    <Ink size={20} weight="black" color={on ? c.onPrimary : c.ink}>{String(n)}</Ink>
                   </View>
                 </Pressable>
               );
@@ -78,8 +78,8 @@ export function ObjectifSheet({ visible, onClose, espace, onSave }: {
             {jours.length ? traduire("Prévu : {0}. Ton planning, s’il a des créneaux, passe avant.", joursTexte(jours)) : traduire('Aucun jour imposé. Touche tes jours pour les voir marqués sur Ta semaine.')}
           </Ink>
         </View>
-        <Pressable onPress={onClose} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 52, borderRadius: 16, backgroundColor: pressed ? c.ink : c.accent, alignItems: 'center', justifyContent: 'center' })}>
-          <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("C’est bon")}</Ink>
+        <Pressable onPress={onClose} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 52, borderRadius: 16, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}>
+          <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("C’est bon")}</Ink>
         </Pressable>
       </View>
     </Sheet>
