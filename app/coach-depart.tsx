@@ -25,6 +25,11 @@
  *  - « Les conseils du coach » : une carte par objectif (pourquoi.ts), avec son module à ajouter « si tu veux » ;
  *  - « Pourquoi ? » sur chaque module et chaque conseil : la science en mots simples et les études (Pourquoi.tsx) ;
  *  - « C'est parti » enregistre le programme et ramène au coach : aucune séance ne se lance ici.
+ * 27 octobre 2026 (Houari : « D'abord une page qui demande combien de jours tu veux t'entraîner, et selon ça tu
+ * proposes ») : avant « Choisis ton programme », trois écrans au plus, préréglés avec ce qu'on sait déjà
+ * (lib/v2/programmes/preselection.ts) : combien de jours par semaine, puis ton temps, ton niveau ou ton lieu s'ils
+ * manquent ; tout est connu : « Ton profil » seul. La liste montre d'abord les programmes à ton nombre de jours,
+ * classés par niveau, lieu et durée ; la puce « N jours » en haut ramène au choix des jours.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
@@ -41,11 +46,13 @@ import { GrilleModules } from '@/components/yoroi/v2/programmes/GrilleModules';
 import { CarteConseilObjectif, FeuillePourquoi } from '@/components/yoroi/v2/programmes/Pourquoi';
 import { POURQUOI_MODULE, conseilsDesObjectifs } from '@/lib/v2/programmes/pourquoi';
 import type { Explication } from '@/lib/v2/programmes/pourquoi';
-import { BarresNiveau, CarteChoix, CarteProgramme, HerosProgramme, ICONE_OBJECTIF, ICONE_SPORT, PointsSemaine, PucesProgramme, RangeeJours, TuileChoix, TuilesTemps, TypesProgrammes } from '@/components/yoroi/v2/programmes/ChoixVisuels';
+import { BarresNiveau, CarteChoix, CarteProgramme, HerosProgramme, ICONE_OBJECTIF, ICONE_SPORT, PointsSemaine, PucesProgramme, RangeeJours, TuileChoix, TuilesJours, TuilesTemps, TypesProgrammes } from '@/components/yoroi/v2/programmes/ChoixVisuels';
 import { FeuillePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
 import { getProfile } from '@/lib/database';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
-import { programmeParId, sportDuProgramme } from '@/lib/v2/programmes/catalogue';
+import { libelleNiveau, programmeParId, sportDuProgramme } from '@/lib/v2/programmes/catalogue';
+import { etapesPreselection, joursLePlusProche, joursProposes, lieuDuMateriel, meilleureFamille, nombreDeProgrammes, trierFamille } from '@/lib/v2/programmes/preselection';
+import type { EtapePre, Envies, QuestionPre } from '@/lib/v2/programmes/preselection';
 import { DEBUTANT, OBJECTIFS_CHOIX } from '@/lib/v2/programmes/choix';
 import type { ObjectifChoix } from '@/lib/v2/programmes/choix';
 import { conseilJours } from '@/lib/v2/programmes/coach';
@@ -62,7 +69,12 @@ import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Materiel, Niveau, Programme } from '@/lib/v2/programmes/types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
-type Etape = 'intro' | 'objectifs' | 'niveau' | 'jours' | 'temps' | 'sport' | 'lieu' | 'liste' | 'resultat';
+type Etape = 'attente' | 'intro' | 'objectifs' | 'niveau' | 'jours' | 'temps' | 'sport' | 'lieu' | 'liste' | 'resultat'
+  // 27 octobre 2026 : avant la liste (preselection.ts)
+  | 'pjours' | 'ptemps' | 'pniveau' | 'plieu' | 'profil';
+
+const ETAPE_PRE: Record<EtapePre, Etape> = { jours: 'pjours', temps: 'ptemps', niveau: 'pniveau', lieu: 'plieu', profil: 'profil' };
+const QUIZ: Etape[] = ['intro', 'objectifs', 'niveau', 'jours', 'temps', 'sport', 'lieu'];
 
 const NIVEAUX: { key: Niveau; label: string }[] = [
   { key: 'debutant', label: 'Moins de 6 mois' },
@@ -88,7 +100,8 @@ export default function CoachDepart() {
   const depuisVisite = params.depuis === 'visite';
   const commeOnboarding = depuisOnboarding || depuisVisite;
 
-  const [etape, setEtape] = useState<Etape>(commeOnboarding ? 'intro' : params.chemin === 'liste' ? 'liste' : 'objectifs');
+  // chemin=liste : on attend ce qu'on sait déjà (profil, programme, matériel) pour préparer les écrans avant la liste
+  const [etape, setEtape] = useState<Etape>(commeOnboarding ? 'intro' : params.chemin === 'liste' ? 'attente' : 'objectifs');
   const [historique, setHistorique] = useState<Etape[]>([]);
   const [chemin, setChemin] = useState<'quiz' | 'liste'>(params.chemin === 'liste' ? 'liste' : 'quiz');
   const [objectifs, setObjectifs] = useState<ObjectifChoix[]>([]);
@@ -110,16 +123,27 @@ export default function CoachDepart() {
   const [profil, setProfil] = useState<ProfilCoach | null>(null);
   // « Pourquoi ? » d'un module ou d'un conseil
   const [pourquoi, setPourquoi] = useState<Explication | null>(null);
+  // avant la liste (27 octobre 2026) : les écrans montrés, les réponses données ici ou dans le questionnaire,
+  // le nombre de jours voulu, l'écran où revenir après « Modifier », les autres programmes dépliés
+  const [preSuite, setPreSuite] = useState<Etape[]>([]);
+  const [repondu, setRepondu] = useState<QuestionPre[]>([]);
+  const [nJours, setNJours] = useState<number | undefined>(undefined);
+  const [retourVers, setRetourVers] = useState<Etape | null>(null);
+  const [voirAutres, setVoirAutres] = useState(false);
+  const [lieuSauve, setLieuSauve] = useState<Materiel | undefined>(undefined);
+  const [charge, setCharge] = useState(false);
 
   useEffect(() => {
     getProfile().then((pr) => setFemme(pr?.avatar_gender === 'femme')).catch(() => {});
-    chargerProgrammeActif().then(setActif).catch(() => setActif(null));
-    void lireProfilCoach().then((p) => {
+    const a = chargerProgrammeActif().then((x) => { setActif(x); return x; }).catch(() => { setActif(null); return null; });
+    const m = chargerMateriel().then((x) => setLieuSauve(lieuDuMateriel(x))).catch(() => {});
+    const pc = lireProfilCoach().then((p) => {
       setProfil(p);
       if (p.objectifs.length) setObjectifs((l) => (l.length ? l : p.objectifs));
       if (p.jours.length) setJours((l) => (l.length ? l : p.jours));
       if (p.sport) setSport(p.sport);
     });
+    void Promise.all([a, m, pc]).finally(() => setCharge(true));
   }, []);
   const connues = profil && commeOnboarding ? etapesConnues(profil) : { jours: false, sport: false };
   const prerempli = !!profil?.objectifs.length;
@@ -146,7 +170,7 @@ export default function CoachDepart() {
   const suiteQuiz: Etape[] = (['objectifs', 'niveau', 'jours', 'temps', 'sport', 'lieu', 'resultat'] as Etape[]).filter(
     (e) => !(e === 'niveau' && debuter) && !(e === 'jours' && connues.jours) && !(e === 'sport' && connues.sport),
   );
-  const suiteListe: Etape[] = ['liste', 'resultat'];
+  const suiteListe: Etape[] = [...preSuite, 'liste', 'resultat'];
   const suiteVue = chemin === 'liste' ? suiteListe : suiteQuiz;
   const rang = Math.max(0, suiteVue.indexOf(etape));
 
@@ -161,6 +185,87 @@ export default function CoachDepart() {
     else if (e) aller(e);
   };
 
+  /* ---------------- avant la liste (27 octobre 2026) : ce qu'on sait déjà, puis les écrans qui manquent ---------------- */
+  const proposes = useMemo(() => joursProposes(), []);
+  const marquer = (q: QuestionPre) => setRepondu((l) => (l.includes(q) ? l : [...l, q]));
+  const niveauSu = debuter ? 'debutant' : niveau;
+  /** Le nombre de jours déjà connu, ramené aux nombres du catalogue */
+  const joursSus = (): number | undefined => {
+    if (nJours !== undefined) return nJours;
+    const n = jours.length ? jours.length : actif ? (actif.jours?.length || programmeParId(actif.id)?.joursParSemaine || 0) : 0;
+    return n ? joursLePlusProche(n, proposes) : undefined;
+  };
+  const connus = (): Record<QuestionPre, boolean> => ({
+    // tes jours de l'onboarding ou du questionnaire, ceux de ton programme, ou un nombre déjà choisi ici
+    jours: joursSus() !== undefined,
+    temps: repondu.includes('temps'),
+    niveau: niveauSu !== undefined,
+    lieu: repondu.includes('lieu') || lieuSauve !== undefined,
+  });
+  const envies = (): Envies | null => {
+    if (nJours === undefined) return null;
+    const k = connus();
+    return {
+      jours: nJours,
+      niveau: k.niveau ? niveauSu : undefined,
+      temps: k.temps ? temps : undefined,
+      lieu: repondu.includes('lieu') ? lieu : lieuSauve,
+    };
+  };
+  /** « Je sais déjà quel programme je veux », « Voir tous les programmes », chemin=liste */
+  const ouvrirListe = (remplacer = false) => {
+    const k = connus();
+    const suite = etapesPreselection(k).map((e) => ETAPE_PRE[e]);
+    setNJours(joursSus());
+    // ton niveau, préréglé avec celui de ton programme en cours (la question reste posée)
+    if (!k.niveau && actif) setNiveau(programmeParId(actif.id)?.niveau);
+    if (!repondu.includes('lieu') && lieuSauve) setLieu(lieuSauve);
+    setPreSuite(suite);
+    setChemin('liste');
+    setRetourVers(null);
+    if (remplacer) setEtape(suite[0]);
+    else aller(suite[0]);
+  };
+  useEffect(() => {
+    if (charge && etape === 'attente') ouvrirListe(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [charge]);
+  /** Après un écran avant la liste : le suivant, la liste, ou l'écran d'où « Modifier » est parti */
+  const [familleAuto, setFamilleAuto] = useState(false);
+  // en arrivant sur la liste : la famille du programme le mieux classé pour toi (après le rendu, réponses à jour)
+  useEffect(() => {
+    if (etape !== 'liste' || !familleAuto) return;
+    setFamilleAuto(false);
+    const env = envies();
+    if (env) setGroupe(meilleureFamille(env));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [etape, familleAuto]);
+  const preSuivante = (depuis: Etape) => {
+    if (retourVers) {
+      const vers = retourVers;
+      setRetourVers(null);
+      setHistorique((h) => h.slice(0, -1));
+      setVoirAutres(false);
+      setEtape(vers);
+      return;
+    }
+    const i = preSuite.indexOf(depuis);
+    const e = preSuite[i + 1];
+    if (e) {
+      aller(e);
+      return;
+    }
+    setFamilleAuto(true);
+    setVoirAutres(false);
+    aller('liste');
+  };
+  /** « Modifier » du profil ou la puce des jours de la liste : un écran, puis retour */
+  const modifier = (e: Etape) => {
+    tap();
+    setRetourVers(etape);
+    aller(e);
+  };
+
   /** Le résultat : le programme du questionnaire ou celui de la liste, ses modules cochés, tes jours */
   const ouvrirResultat = (via: 'quiz' | 'liste', id?: string) => {
     const pid = via === 'quiz' ? conseil?.id : id;
@@ -171,7 +276,9 @@ export default function CoachDepart() {
     setSansMarche(false);
     setMinutes(30);
     setModules(via === 'quiz' && conseil ? normaliserModules(conseil.modules) : []);
-    setJoursRes(via === 'quiz' && conseil ? conseil.jours : jours.length ? jours : joursConseilles(p.joursParSemaine));
+    // la liste : tes jours s'ils vont avec le nombre choisi, sinon les jours conseillés du programme
+    const n = nJours ?? jours.length;
+    setJoursRes(via === 'quiz' && conseil ? conseil.jours : jours.length && jours.length === n ? jours : joursConseilles(p.joursParSemaine));
     aller('resultat');
   };
 
@@ -215,7 +322,8 @@ export default function CoachDepart() {
       return;
     }
     setHistorique(h);
-    if (prec !== 'resultat' && prec !== 'liste') setChemin('quiz');
+    if (QUIZ.includes(prec)) setChemin('quiz');
+    setRetourVers(null);
     setEtape(prec);
   };
 
@@ -235,7 +343,8 @@ export default function CoachDepart() {
   };
 
   const garderMateriel = async () => {
-    if (chemin !== 'quiz') return;
+    // le questionnaire, ou ton lieu donné avant la liste
+    if (chemin !== 'quiz' && !repondu.includes('lieu')) return;
     const m = await chargerMateriel().catch(() => null);
     if (m === null) await enregistrerMateriel(materielDuLieu(lieu));
   };
@@ -328,7 +437,7 @@ export default function CoachDepart() {
       <View style={{ gap: 12 }}>
         <Heros image={img} titre={traduire('Ton objectif ?')} texte={prerempli ? traduire('Repris de tes réponses, ajuste si tu veux') : traduire('Plusieurs choix possibles')} />
         <CarteChoix grand role="checkbox" icone="book" teinte={0} label={traduire('Je n’y connais rien')} sous={traduire('YOROI te guide pas à pas')} on={debuter} onPress={() => basculerObjectif('debuter')} />
-        <CarteChoix icone="list" teinte={1} label={traduire('Je sais déjà quel programme je veux')} on={false} fleche onPress={() => { tap(); setChemin('liste'); aller('liste'); }} />
+        <CarteChoix icone="list" teinte={1} label={traduire('Je sais déjà quel programme je veux')} on={false} fleche onPress={() => { tap(); ouvrirListe(); }} />
         <View style={{ marginTop: 8 }}>{titreSection(traduire('Tes objectifs'))}</View>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           {OBJECTIFS_CHOIX.filter((o) => o.key !== 'debuter').map((o, k) => (
@@ -383,10 +492,10 @@ export default function CoachDepart() {
     corps = (
       <View style={{ gap: 14 }}>
         {titreEcran(traduire('Combien de temps par séance ?'), traduire('Pour des séances qui rentrent dans ton temps'))}
-        <TuilesTemps options={TEMPS_SEANCE} valeur={temps} onChoisir={(t) => { tap(); setTemps(t); setTimeout(() => suivante('temps'), 160); }} />
+        <TuilesTemps options={TEMPS_SEANCE} valeur={temps} onChoisir={(t) => { tap(); setTemps(t); marquer('temps'); setTimeout(() => suivante('temps'), 160); }} />
       </View>
     );
-    bas = <BoutonPlein label={traduire('Suivant')} onPress={() => { tap(); suivante('temps'); }} />;
+    bas = <BoutonPlein label={traduire('Suivant')} onPress={() => { tap(); marquer('temps'); suivante('temps'); }} />;
   }
 
   if (etape === 'sport') {
@@ -410,23 +519,164 @@ export default function CoachDepart() {
         ))}
       </View>
     );
-    bas = <BoutonPlein label={traduire('Voir mon programme')} onPress={() => { tap(); ouvrirResultat('quiz'); }} />;
+    bas = <BoutonPlein label={traduire('Voir mon programme')} onPress={() => { tap(); marquer('lieu'); ouvrirResultat('quiz'); }} />;
+  }
+
+  /* ---------------- avant la liste ---------------- */
+  // « Continuer » : la réponse préréglée suffit ; un toucher sur une réponse passe aussi à la suite
+  const continuer = (depuis: Etape, pret: boolean) => (pret ? <BoutonPlein label={traduire('Continuer')} onPress={() => { tap(); preSuivante(depuis); }} /> : null);
+  const sousRepris = (su: boolean) => (su ? traduire('Repris de tes réponses, ajuste si tu veux') : undefined);
+
+  if (etape === 'pjours') {
+    corps = (
+      <View style={{ gap: 14 }}>
+        {titreEcran(traduire('Combien de jours par semaine ?'), sousRepris(joursSus() !== undefined && nJours === joursSus()) ?? traduire('Pour te montrer d’abord les programmes faits pour ta semaine'))}
+        <TuilesJours
+          options={proposes}
+          valeur={nJours}
+          nombre={nombreDeProgrammes}
+          onChoisir={(n) => { tap(); setNJours(n); marquer('jours'); setTimeout(() => preSuivante('pjours'), 160); }}
+        />
+      </View>
+    );
+    bas = continuer('pjours', nJours !== undefined);
+  }
+
+  if (etape === 'ptemps') {
+    corps = (
+      <View style={{ gap: 14 }}>
+        {titreEcran(traduire('Combien de temps par séance ?'), traduire('Pour des séances qui rentrent dans ton temps'))}
+        <TuilesTemps options={TEMPS_SEANCE} valeur={temps} onChoisir={(t) => { tap(); setTemps(t); marquer('temps'); setTimeout(() => preSuivante('ptemps'), 160); }} />
+      </View>
+    );
+    bas = <BoutonPlein label={traduire('Continuer')} onPress={() => { tap(); marquer('temps'); preSuivante('ptemps'); }} />;
+  }
+
+  if (etape === 'pniveau') {
+    corps = (
+      <View style={{ gap: 12 }}>
+        {titreEcran(traduire('Depuis quand tu fais de la muscu ?'), traduire('Pour choisir un programme à ton niveau'))}
+        {NIVEAUX.map((n, k) => (
+          <CarteChoix
+            key={n.key}
+            role="radio"
+            grand
+            teinte={k}
+            visuel={(on, t) => <BarresNiveau n={k + 1} couleur={on ? '#FFFFFF' : t.encre} vide={on ? 'rgba(255,255,255,0.3)' : pal.carte} />}
+            label={traduire(libelleNiveau(n.key))}
+            sous={traduire(n.label)}
+            on={niveauSu === n.key}
+            onPress={() => {
+              tap();
+              setNiveau(n.key);
+              // un niveau choisi ici remplace « Je n'y connais rien »
+              if (n.key !== 'debutant' && debuter) setObjectifs((l) => l.filter((o) => o !== 'debuter'));
+              marquer('niveau');
+              setTimeout(() => preSuivante('pniveau'), 160);
+            }}
+          />
+        ))}
+      </View>
+    );
+    bas = continuer('pniveau', niveauSu !== undefined);
+  }
+
+  if (etape === 'plieu') {
+    corps = (
+      <View style={{ gap: 12 }}>
+        {titreEcran(traduire('Où tu t’entraînes ?'), traduire('Pour des exercices que tu peux vraiment faire'))}
+        {LIEUX.map((l, k) => (
+          <CarteChoix key={l.key} role="radio" grand icone={l.icone} teinte={k} label={traduire(l.label)} on={lieu === l.key} onPress={() => { tap(); setLieu(l.key); marquer('lieu'); setTimeout(() => preSuivante('plieu'), 160); }} />
+        ))}
+      </View>
+    );
+    bas = <BoutonPlein label={traduire('Continuer')} onPress={() => { tap(); marquer('lieu'); preSuivante('plieu'); }} />;
+  }
+
+  if (etape === 'profil') {
+    const lieuVu = repondu.includes('lieu') ? lieu : lieuSauve;
+    const lignes: { cle: string; icone: IconName; teinte: string; fond: string; t: string; vers: Etape }[] = [
+      { cle: 'jours', icone: 'calendar', teinte: pal.indigo, fond: pal.teinte, t: traduire('{0} jours par semaine', nJours ?? 0), vers: 'pjours' },
+      { cle: 'temps', icone: 'clock', teinte: pal.orange, fond: pal.orangeTint, t: traduire(TEMPS_SEANCE.find((x) => x.key === temps)?.label ?? ''), vers: 'ptemps' },
+      { cle: 'niveau', icone: 'gauge', teinte: pal.vert, fond: pal.vertTint, t: niveauSu ? traduire(libelleNiveau(niveauSu)) : '', vers: 'pniveau' },
+    ];
+    if (lieuVu) {
+      const l = LIEUX.find((x) => x.key === lieuVu);
+      if (l) lignes.push({ cle: 'lieu', icone: l.icone, teinte: pal.indigo, fond: pal.teinte, t: traduire(l.label), vers: 'plieu' });
+    }
+    corps = (
+      <View style={{ gap: 14 }}>
+        {titreEcran(traduire('Ton profil'), traduire('Repris de tes réponses, ajuste si tu veux'))}
+        <View style={{ backgroundColor: pal.carte, borderRadius: 24, padding: 16, gap: 14 }}>
+          {lignes.map((x) => (
+            <View key={x.cle} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: x.fond, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name={x.icone} size={20} color={x.teinte} />
+              </View>
+              <Ink size={15} weight="extraBold" color={pal.texte} style={{ flex: 1 }} numberOfLines={2}>{x.t}</Ink>
+              <Pressable onPress={() => modifier(x.vers)} accessibilityRole="button" accessibilityLabel={`${traduire('Modifier')}, ${x.t}`} hitSlop={6} style={({ pressed }) => ({ minHeight: 36, paddingHorizontal: 14, borderRadius: 18, justifyContent: 'center', backgroundColor: pressed ? pal.anneau : pal.teinte })}>
+                <Ink size={13} weight="extraBold" color={pal.accent}>{traduire('Modifier')}</Ink>
+              </Pressable>
+            </View>
+          ))}
+          <PointsSemaine jours={joursConseilles(nJours ?? 0)} plein={pal.indigo} vide={pal.anneau} taille={16} />
+        </View>
+      </View>
+    );
+    bas = <BoutonPlein label={traduire('Continuer')} onPress={() => { tap(); preSuivante('profil'); }} />;
   }
 
   if (etape === 'liste') {
     const ids = (GROUPES_PROGRAMMES.find((g) => g.id === groupe)?.ids ?? []).filter((id) => !!programmeParId(id));
-    const premier = ids.length ? programmeParId(ids[0])! : null;
+    const env = envies();
+    // sans nombre de jours (ne devrait pas arriver) : la liste telle quelle
+    const tri = env ? trierFamille(ids, env) : { premiers: ids.map((id) => programmeParId(id)!), exact: true, autres: [] };
+    const premier = tri.premiers[0] ?? null;
+    const ouvrir = (p: Programme) => { tap(); ouvrirResultat('liste', p.id); };
     corps = (
       <View style={{ gap: 14 }}>
         {titreEcran(traduire('Choisis ton programme'), traduire('Tu ajoutes tes modules juste après'))}
-        <TypesProgrammes groupes={GROUPES_PROGRAMMES} groupe={groupe} onChoisir={(id) => { tap(); setGroupe(id); }} />
-        {premier ? (
-          <HerosProgramme p={premier} image={sportImage(sportDuProgramme(premier), femme, 1)} onPress={() => { tap(); ouvrirResultat('liste', premier.id); }} />
+        {env ? (
+          <Pressable
+            onPress={() => modifier(preSuite[0] === 'profil' ? 'profil' : 'pjours')}
+            accessibilityRole="button"
+            accessibilityLabel={traduire('{0} jours par semaine', env.jours) + ', ' + traduire('Modifier')}
+            hitSlop={6}
+            style={({ pressed }) => ({ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: pressed ? pal.anneau : pal.teinte })}
+          >
+            <Icon name="calendar" size={16} color={pal.accent} />
+            <Ink size={14} weight="extraBold" color={pal.accent}>{traduire('{0} jours', env.jours)}</Ink>
+            <Icon name="chevron" size={14} color={pal.accent} />
+          </Pressable>
         ) : null}
-        {ids.slice(1).map((id, k) => {
-          const p = programmeParId(id)!;
-          return <CarteProgramme key={id} p={p} k={k} onPress={() => { tap(); ouvrirResultat('liste', id); }} />;
-        })}
+        <TypesProgrammes groupes={GROUPES_PROGRAMMES} groupe={groupe} onChoisir={(id) => { tap(); setGroupe(id); setVoirAutres(false); }} />
+        {!tri.exact ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 20, backgroundColor: pal.orangeTint }}>
+            <Icon name="target" size={18} color={pal.orange} />
+            <Ink size={13} weight="extraBold" color={pal.texte} style={{ flex: 1 }}>{traduire('Le plus proche de ce que tu veux')}</Ink>
+          </View>
+        ) : null}
+        {premier ? (
+          <HerosProgramme p={premier} image={sportImage(sportDuProgramme(premier), femme, 1)} onPress={() => ouvrir(premier)} />
+        ) : null}
+        {tri.premiers.slice(1).map((p, k) => (
+          <CarteProgramme key={p.id} p={p} k={k} onPress={() => ouvrir(p)} />
+        ))}
+        {tri.autres.length ? (
+          voirAutres ? (
+            <View style={{ gap: 10, marginTop: 6 }}>
+              {titreSection(traduire('Avec un autre nombre de jours'))}
+              {tri.autres.map((p, k) => (
+                <CarteProgramme key={p.id} p={p} k={k + 1} onPress={() => ouvrir(p)} />
+              ))}
+            </View>
+          ) : (
+            <Pressable onPress={() => { tap(); setVoirAutres(true); }} accessibilityRole="button" hitSlop={6} style={({ pressed }) => ({ alignSelf: 'center', minHeight: 44, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: pressed ? 0.7 : 1 })}>
+              <Ink size={14} weight="extraBold" color={pal.texte2}>{traduire('Voir les autres programmes')}</Ink>
+              <Icon name="chevron" size={14} color={pal.texte2} />
+            </Pressable>
+          )
+        ) : null}
       </View>
     );
   }
@@ -466,7 +716,7 @@ export default function CoachDepart() {
                 <CarteProposition key={x.id} p={px} x={x} onPress={() => choisirProposition(x)} />
               );
             })}
-            <CarteChoix icone="list" teinte={1} label={traduire('Voir tous les programmes')} on={false} fleche onPress={() => { tap(); setChemin('liste'); aller('liste'); }} />
+            <CarteChoix icone="list" teinte={1} label={traduire('Voir tous les programmes')} on={false} fleche onPress={() => { tap(); ouvrirListe(); }} />
           </View>
         ) : (
         <View style={{ borderRadius: 28, backgroundColor: pal.indigo, overflow: 'hidden', padding: 20, gap: 10, minHeight: 230 }}>
@@ -583,7 +833,7 @@ export default function CoachDepart() {
           <Icon name="chevronLeft" size={20} color={pal.texte} />
         </Pressable>
         <View style={{ flex: 1, flexDirection: 'row', gap: 5, justifyContent: 'center' }} accessible accessibilityLabel={traduire('Étape {0} sur {1}', rang + 1, suiteVue.length)}>
-          {etape === 'intro'
+          {etape === 'intro' || etape === 'attente'
             ? null
             : suiteVue.map((e, k) => (
                 <View key={e} style={{ height: 6, flex: 1, maxWidth: 34, borderRadius: 3, backgroundColor: k <= rang ? pal.indigo : pal.anneau }} />

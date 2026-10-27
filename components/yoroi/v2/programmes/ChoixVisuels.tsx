@@ -463,3 +463,55 @@ export function RondsNombre<T extends number>({ options, valeur, onChoisir, libe
     </View>
   );
 }
+
+/**
+ * Combien de jours par semaine (27 octobre 2026, avant la liste du départ) : grandes tuiles, deux par ligne,
+ * le chiffre en grand, la semaine en sept points (jours conseillés, suivi.ts) et le nombre de programmes.
+ */
+export function TuilesJours({ options, valeur, onChoisir, nombre }: { options: readonly number[]; valeur?: number; onChoisir: (n: number) => void; nombre: (n: number) => number }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const pal = usePaletteProgramme();
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+      {options.map((n, k) => {
+        const on = n === valeur;
+        const t = teinteExo(pal, k);
+        const combien = nombre(n);
+        const texteCombien = combien > 1 ? traduire('{0} programmes', combien) : traduire('{0} programme', combien);
+        return (
+          <Pressable
+            key={n}
+            onPress={() => onChoisir(n)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: on }}
+            accessibilityLabel={`${traduire('{0} jours', n)}, ${texteCombien}`}
+            style={({ pressed }) => ({
+              width: '47%',
+              flexGrow: 1,
+              minHeight: 132,
+              borderRadius: 24,
+              padding: 16,
+              gap: 10,
+              justifyContent: 'space-between',
+              backgroundColor: on ? pal.indigo : pal.carte,
+              borderWidth: 2,
+              borderColor: on ? pal.accent : 'transparent',
+              transform: [{ scale: pressed ? 0.97 : 1 }],
+            })}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 5 }}>
+                <Ink size={40} weight="black" tight color={on ? c.onDark : pal.texte} style={{ lineHeight: 44 }}>{String(n)}</Ink>
+                <Ink size={15} weight="extraBold" color={on ? c.onDarkSecondary : pal.texte2} style={{ marginBottom: 6 }}>{traduire('jours')}</Ink>
+              </View>
+              {on ? <Coche /> : null}
+            </View>
+            <PointsSemaine jours={joursConseilles(n)} plein={on ? '#FFFFFF' : t.encre} vide={on ? 'rgba(255,255,255,0.2)' : t.fond} taille={11} />
+            <Ink size={12} weight="extraBold" color={on ? c.onDarkSecondary : pal.texte2}>{texteCombien}</Ink>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
