@@ -16,10 +16,12 @@ import { Button, Card, Row } from '@/components/yoroi/v2/espace/ui';
 import { healthConnect } from '@/lib/healthConnect';
 import { getRandomQuote } from '@/lib/citations';
 import { formatDateTime } from '@/lib/v2/creator/deviceInfo';
-import { Chip, ChipWrap, KV, Note, SmallAction, StudioSection, SubTitle } from './parts';
+import { Chip, ChipWrap, KV, Note, SmallAction, StudioSection, SubTitle, ouvrirPorteEntree } from './parts';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SIMULER_INSTALLATION_KEY } from '@/lib/v2/onboarding/etatOuverture';
+import { DRAFT_KEY } from '@/lib/v2/onboarding/draft';
+import { holdPurchasePreview } from '@/lib/v2/creator/purchasePreview';
 import { ApercuScenes } from './ApercuScenes';
 import { DecorCarte, DecorOutils, DecorScene } from '@/components/yoroi/v2/saisons/DecorSaison';
 import { P as PA } from '@/components/yoroi/v2/accueil/kit';
@@ -33,6 +35,13 @@ import { devNow } from '@/lib/v2/creator/devClock';
 import { imageDeTaScene } from '@/components/yoroi/v2/espace/apercuScene';
 import { useEspace } from '@/lib/v2/espace/useEspace';
 import { traduire } from '@/lib/i18n/tr';
+
+/**
+ * 27 octobre 2026 : reperes qu'un telephone neuf n'a pas, effaces avant la simulation (aucune donnee) : le brouillon
+ * d'un onboarding pas fini (sinon l'onboarding reprend au milieu au lieu du premier ecran) et l'etat de la fenetre
+ * maison des rappels (sinon elle ne se propose plus apres la premiere pesee ou seance).
+ */
+export const REPERES_PREMIERE_INSTALLATION = [DRAFT_KEY, '@yoroi_notif_permission_v1', SIMULER_INSTALLATION_KEY];
 
 /** 18 octobre 2026 : forcer une saison pour voir ses decorations des aujourd'hui (en memoire seulement) */
 const CHOIX_SAISON: { id: ChoixApercu; label: string }[] = [
@@ -172,18 +181,29 @@ async function ensureNotifPermission(): Promise<boolean> {
 /**
  * 18 octobre 2026 : un seul lancement comme une installation neuve (lib/v2/onboarding/etatOuverture.ts), rien n'est efface.
  * 19 octobre 2026 : sortie de Tests pour la grille d'un toucher du Studio (meme confirmation).
+ * 27 octobre 2026 nuit : ouvre l'onboarding directement (ouvrirPorteEntree) ; avant, router.replace('/') tombait sur
+ * l'accueil des onglets et rien ne se passait.
+ * 27 octobre 2026 : repart du premier ecran (brouillon oublie) et reproposera les rappels (REPERES_PREMIERE_INSTALLATION).
+ * Le paywall de la simulation est un apercu (aucun achat reel jusqu'a la fermeture de l'app).
+ * Pour voir aussi l'app vide, le paywall en gratuit et le Dojo de depart : l'outil « Nouvel utilisateur ».
  */
 export function simulerPremiereInstallation(router: ReturnType<typeof useRouter>) {
   appAlert(
     traduire('Simuler une première installation ?'),
-    traduire('Tu repars sur l’onboarding complet puis le paywall, comme après une réinstallation. Rien n’est effacé : ton profil, tes séances et tes pesées restent, tes réponses préremplies sont fusionnées. Tes choix de l’onboarding (univers, rappels, jours, sports) remplaceront ces réglages-là.'),
+    traduire('Tu repars sur l’onboarding complet depuis le premier écran puis le paywall, comme après une réinstallation. Rien n’est effacé : ton profil, tes séances et tes pesées restent, tes réponses préremplies sont fusionnées. Tes choix de l’onboarding (univers, rappels, jours, sports) remplaceront ces réglages. Le paywall reste un aperçu : aucun achat possible jusqu’à la fermeture de l’app. Pour voir aussi l’app vide, utilise « Nouvel utilisateur ».'),
     [
       { text: traduire('Annuler'), style: 'cancel' },
       {
         text: traduire('Simuler'),
         onPress: () => {
-          AsyncStorage.setItem(SIMULER_INSTALLATION_KEY, 'true')
-            .then(() => router.replace('/' as never))
+          AsyncStorage.multiRemove(REPERES_PREMIERE_INSTALLATION)
+            .catch(() => undefined)
+            .then(() => {
+              // le paywall de la simulation reste un apercu : aucun achat reel jusqu'a la fermeture de l'app
+              holdPurchasePreview();
+              // directement l'onboarding, premier ecran (Accroche) : router.replace('/') ouvrait l'accueil des onglets
+              ouvrirPorteEntree(router, '/onboarding');
+            })
             .catch(() => appAlert(traduire('Oups'), traduire('La simulation n’a pas pu démarrer.')));
         },
       },

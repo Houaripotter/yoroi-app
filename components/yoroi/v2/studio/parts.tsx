@@ -20,6 +20,7 @@ import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage'
 import { traduire } from '@/lib/i18n/tr';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import { paletteSombre } from '@/components/yoroi/livePalette';
+import Svg, { Path } from 'react-native-svg';
 
 // ===== Contexte du Studio =====
 
@@ -577,24 +578,25 @@ export function KV({ label, value, first, mono, right }: { label: string; value:
 export function SearchField({ value, onChange, placeholder, label }: { value: string; onChange: (v: string) => void; placeholder: string; label: string }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  const b = couleursListe();
   return (
-    // 27 octobre 2026, maquette A : champ en pilule blanche, ombre douce, sans contour
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 46, borderRadius: 23, backgroundColor: c.surface, paddingHorizontal: 16, shadowColor: '#1D2033', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 2 }, elevation: 1 }}>
-      <Icon name="search" size={17} color={c.textMuted} />
+    // 27 octobre 2026 nuit, maquette B : champ gris, sans ombre ni contour
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 42, borderRadius: 14, backgroundColor: b.recherche, paddingHorizontal: 14 }}>
+      <Icon name="search" size={16} color={b.sous} />
       <TextInput
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
-        placeholderTextColor={c.textMuted}
+        placeholderTextColor={b.sous}
         autoCapitalize="none"
         autoCorrect={false}
         clearButtonMode="while-editing"
         accessibilityLabel={label}
-        style={{ flex: 1, fontSize: 15, color: c.ink, paddingVertical: 11 }}
+        style={{ flex: 1, fontSize: 14, fontWeight: '600', color: c.ink, paddingVertical: 10 }}
       />
       {value ? (
         <Pressable onPress={() => onChange('')} accessibilityRole="button" accessibilityLabel={traduire("Effacer la recherche")} hitSlop={8} style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="close" size={16} color={c.textMuted} />
+          <Icon name="close" size={16} color={b.sous} />
         </Pressable>
       ) : null}
     </View>
@@ -633,4 +635,110 @@ export function SmallAction({ label, onPress, danger, disabled }: { label: strin
       <Ink size={13} weight="extraBold" color={danger ? c.danger : c.accent}>{label}</Ink>
     </Pressable>
   );
+}
+
+// ===== Maquette B, liste elegante (27 octobre 2026 nuit) =====
+/**
+ * Houari trouve la maquette A (carrousels) trop compliquee : chaque section devient une carte blanche groupee,
+ * comme les Reglages d'iOS en plus joli. Chaque ligne : sticker de 32, titre, sous titre court, puis interrupteur
+ * pastel ou chevron, separateurs fins. Memes marges partout : 14 dans la carte, 12 entre sticker et texte.
+ */
+
+/** Couleurs de la liste, claires ou sombres */
+export function couleursListe() {
+  const sombre = paletteSombre();
+  return sombre
+    ? { carte: 'rgba(255,255,255,0.07)', trait: 'rgba(255,255,255,0.09)', titre: 'rgba(242,243,248,0.62)', texte: '#F2F3F8', sous: 'rgba(242,243,248,0.62)', chevron: 'rgba(242,243,248,0.4)', recherche: 'rgba(255,255,255,0.09)', eteint: 'rgba(255,255,255,0.18)' }
+    : { carte: '#FFFFFF', trait: '#ECEEF5', titre: '#646985', texte: '#1D2033', sous: '#646985', chevron: '#A8ADC4', recherche: '#E9EBF3', eteint: '#D6DAE6' };
+}
+
+export const TAILLE_STICKER_LIGNE = 32;
+const PADDING_CARTE_LISTE = 14;
+
+/** Une section : petit titre gris en capitales, puis la carte blanche qui groupe ses lignes */
+export function SectionListe({ titre, children }: { titre: string; children: React.ReactNode }) {
+  const b = couleursListe();
+  const lignes = React.Children.toArray(children).filter(Boolean);
+  if (!lignes.length) return null;
+  return (
+    <View style={{ gap: 6 }}>
+      <Ink size={11.5} weight="extraBold" color={b.titre} style={{ letterSpacing: 1.3, paddingLeft: 6 }} accessibilityRole="header">{titre.toLocaleUpperCase()}</Ink>
+      <View style={{ backgroundColor: b.carte, borderRadius: 20, paddingHorizontal: PADDING_CARTE_LISTE, shadowColor: '#1D2033', shadowOpacity: paletteSombre() ? 0 : 0.05, shadowRadius: 14, shadowOffset: { width: 0, height: 4 }, elevation: 1 }}>
+        {lignes.map((l, i) => (
+          <View key={(l as React.ReactElement).key ?? i} style={i === 0 ? undefined : { borderTopWidth: 1, borderTopColor: b.trait }}>
+            {l}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+/** Interrupteur pastel de la maquette B (46 x 28), purement visuel : la ligne entiere porte le toucher */
+export function InterrupteurListe({ on, piste }: { on: boolean; piste: string }) {
+  const b = couleursListe();
+  return (
+    <View pointerEvents="none" style={{ width: 46, height: 28, borderRadius: 14, backgroundColor: on ? piste : b.eteint }}>
+      <View style={{ position: 'absolute', top: 3, left: on ? 21 : 3, width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFFFFF', shadowColor: '#000000', shadowOpacity: 0.18, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1 }} />
+    </View>
+  );
+}
+
+/**
+ * Une ligne d'outil : sticker, titre, sous titre (l'etat actuel), puis interrupteur ou chevron.
+ * Allumee sans interrupteur (saison forcee, Heny...), un point de couleur se pose avant le chevron.
+ */
+export function LigneOutil({ label, sous, sticker, icon, couleur, on, busy, bascule, onPress }: { label: string; sous?: string; sticker?: NomSticker; icon: IconName; couleur?: string; on?: boolean; busy?: boolean; bascule?: TonPastel; onPress: () => void }) {
+  const b = couleursListe();
+  const illus = useIllustrations();
+  const encre = couleur ?? pastelTuile('bleu').titre;
+  return (
+    <Pressable
+      onPress={() => {
+        selectionAsync().catch(() => {});
+        onPress();
+      }}
+      disabled={busy}
+      accessibilityRole={bascule ? 'switch' : 'button'}
+      accessibilityState={bascule ? { checked: !!on, busy: !!busy } : { selected: !!on, busy: !!busy }}
+      accessibilityLabel={sous ? `${label}, ${sous}` : label}
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 9, opacity: pressed ? 0.6 : 1 })}
+    >
+      {sticker ? (
+        <Image source={illus.img(sticker)} style={{ width: TAILLE_STICKER_LIGNE, height: TAILLE_STICKER_LIGNE, opacity: busy ? 0.5 : 1 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+      ) : (
+        <View style={{ width: TAILLE_STICKER_LIGNE, height: TAILLE_STICKER_LIGNE, borderRadius: 16, backgroundColor: encre, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={icon} size={17} color="#FFFFFF" />
+        </View>
+      )}
+      <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
+        <Ink size={14.5} weight="extraBold" color={b.texte} numberOfLines={1}>{label}</Ink>
+        {sous || busy ? <Ink size={12} weight="bold" color={b.sous} numberOfLines={2} style={{ lineHeight: 16 }}>{busy ? traduire('Un instant') : sous}</Ink> : null}
+      </View>
+      {bascule ? (
+        <InterrupteurListe on={!!on} piste={pastelTuile(bascule).piste} />
+      ) : (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {on ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: encre }} /> : null}
+          <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+            <Path d="M9 6l6 6-6 6" stroke={b.chevron} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+          </Svg>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+/**
+ * 27 octobre 2026 nuit : ouvre la porte d'entree voulue en fermant tout le reste. Jamais router.replace('/') :
+ * l'adresse « / » est aussi celle de l'accueil des onglets (app/(tabs)/index.tsx), qui s'ouvrait a la place de la
+ * decision d'ouverture (app/index.tsx) : « Première installation » et « Tout effacer » tombaient sur l'accueil.
+ */
+export function ouvrirPorteEntree(router: { canDismiss: () => boolean; dismissAll: () => void; replace: (href: never) => void }, cible: '/onboarding' | '/(tabs)'): void {
+  try {
+    if (router.canDismiss()) router.dismissAll();
+  } catch {
+    // rien a fermer
+  }
+  router.replace(cible as never);
 }

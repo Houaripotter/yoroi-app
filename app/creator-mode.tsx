@@ -2,6 +2,12 @@
  * Studio YOROI (outil cache de Houari). Route /creator-mode, hors barre d'onglets.
  * S'ouvre seulement en mode createur verifie (jeton signe Ed25519, voir lib/v2/creator) :
  * sans lui, un cadenas et rien d'autre. Le jeton est reverifie a chaque ouverture.
+ * 27 octobre 2026 nuit, maquette B « Liste élégante » choisie par Houari (la A, carrousels, trop compliquee) :
+ * en tete compact (retour, titre, version, sticker cle), pastilles d'etat, recherche grise, puis des sections en
+ * cartes blanches groupees comme les Reglages d'iOS : Etat (trois interrupteurs pastel), Raccourcis (Nouvel
+ * utilisateur en tete), Saison de l'accueil, Voir, Simuler et tester, Tout le Studio ; chaque ligne avec son
+ * sticker, son titre, son etat, puis interrupteur ou chevron. « Verrouiller le Studio » puis, a part tout en bas,
+ * « Tout effacer et repartir de zéro » en rose doux. Version A : _archive_ancien_design_2026-10-09/studio_A_2026-10-27/version_A_code/.
  * 27 octobre 2026 soir, maquette A « Tableau de bord » choisie par Houari : carte lilas compacte (cle, appareil,
  * validite, version), pastilles d'etat, recherche, trois tuiles pastel a interrupteur (Vue gratuite, Mode capture,
  * Heny), puis chaque section en carrousel horizontal de cartes a sticker avec « Tout voir » (la liste complete de la
@@ -26,9 +32,8 @@ import Svg, { Path } from 'react-native-svg';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Button, GUTTER } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
-import { EnTeteRond, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
+import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
-import { paletteSombre } from '@/components/yoroi/livePalette';
 import { usePremium } from '@/context/PremiumContext';
 import { useScreenshotMode } from '@/lib/ScreenshotModeContext';
 import { isDemoDataActive } from '@/lib/demoDataService';
@@ -47,7 +52,7 @@ import { NOMBRE_GV, choisirSourceDemos, sourceSuivante, useSourceDemos } from '@
 import logger from '@/lib/security/logger';
 import { VISITE_TITRES } from '@/components/yoroi/v2/tour/VisiteGuidee';
 import { StudioGate } from '@/components/yoroi/v2/studio/StudioLock';
-import { ActionGrid, ActionTile, CarteOutil, GrilleDeux, Note, RangeeBascules, SearchField, SectionCarrousel, StudioContext, TitreGroupe, TuileBascule, TuileRubrique, matches, pastelTuile } from '@/components/yoroi/v2/studio/parts';
+import { LigneOutil, Note, SearchField, SectionListe, StudioContext, couleursListe, matches, pastelTuile } from '@/components/yoroi/v2/studio/parts';
 import type { StudioContextValue, StudioOverlay, TonPastel, TonTuile } from '@/components/yoroi/v2/studio/parts';
 import { StudioOverlays } from '@/components/yoroi/v2/studio/Overlays';
 import { ONBOARDING_SCREEN_LABELS } from '@/components/yoroi/v2/studio/PreviewBar';
@@ -65,6 +70,8 @@ import { Ecrans } from '@/components/yoroi/v2/studio/Ecrans';
 import { Diagnostic } from '@/components/yoroi/v2/studio/Diagnostic';
 import { Liens } from '@/components/yoroi/v2/studio/Liens';
 import { CarteRepartirDeZero, FenetreRepartirDeZero, demanderRepartirDeZero } from '@/components/yoroi/v2/studio/RepartirDeZero';
+import { MESSAGE_PENDANT_LA_VUE, useNouvelUtilisateur, vueNouvelUtilisateurActive } from '@/components/yoroi/v2/studio/NouvelUtilisateur';
+import { EVENEMENT_VUE } from '@/lib/v2/creator/nouvelUtilisateur';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -98,6 +105,7 @@ const RUBRIQUES: Rubrique[] = [
 
 /** Les raccourcis, premier carrousel : les outils les plus servis */
 const RACCOURCIS: { id: string; ton: TonTuile }[] = [
+  { id: 'nouvel', ton: 'bleu' },
   { id: 'onboarding', ton: 'bleu' },
   { id: 'paywall', ton: 'bleu' },
   { id: 'animations', ton: 'bleu' },
@@ -113,10 +121,8 @@ const BASCULES: { id: 'gratuit' | 'capture' | 'heny'; ton: TonPastel }[] = [
 ];
 const ID_BASCULES = new Set<string>(BASCULES.map((b) => b.id));
 
-/** La teinte de chaque section du tableau de bord : couleur du titre, du contour allume et des tuiles de « Tout voir » */
+/** La teinte de chaque section : couleur du point d'un outil allume et des icones de secours */
 const TON_SECTION: Record<string, TonPastel> = { raccourcis: 'bleu', saisons: 'creme', voir: 'lilas', tester: 'menthe', rubriques: 'peche' };
-/** Prefixe d'une page « Tout voir » (la rubrique ouverte, sinon une liste complete de section) */
-const LISTE = 'liste:';
 
 /**
  * 27 octobre 2026 soir (Houari : « un sticker par raccourci à la place des icônes dans des ronds ») :
@@ -126,7 +132,7 @@ const STICKER_OUTIL: Record<string, NomSticker> = {
   halloween: 'lanterne', noel: 'montagne_drapeau', aucune: 'lune_soleil',
   onboarding: 'presentation', paywall: 'abonnement', visite: 'torii', nouveautes: 'presentation', animations: 'play', bibliotheques: 'musculation',
   scenes: 'fuji', personnages: 'kimono', images: 'carte_tresor', chargement: 'refresh', rang: 'medaille_or', bienvenue: 'coffre_ouvert', premium: 'abonnement', kit: 'appareil_photo',
-  installation: 'refresh', heny: 'refresh', gratuit: 'cle', capture: 'appareil_photo', notif: 'rappels', notifs: 'rappels', chrono: 'chrono', fenetres: 'noter', sons: 'gong',
+  nouvel: 'debuter', installation: 'refresh', heny: 'refresh', gratuit: 'cle', capture: 'appareil_photo', notif: 'rappels', notifs: 'rappels', chrono: 'chrono', fenetres: 'noter', sons: 'gong',
 };
 const ID_RACCOURCIS = new Set(RACCOURCIS.map((r) => r.id));
 
@@ -166,6 +172,7 @@ function Studio() {
   const [notifEnvoyee, setNotifEnvoyee] = useState(false);
   const [fenetresRearmees, setFenetresRearmees] = useState(false);
   const [saisieEffacement, setSaisieEffacement] = useState(false);
+  const [vueNouvel, setVueNouvel] = useState(false);
 
   const refreshDemo = useCallback(() => {
     isDemoDataActive()
@@ -173,12 +180,25 @@ function Studio() {
       .catch(() => setDemoActive(false));
   }, []);
 
+  const relireVue = useCallback(() => {
+    vueNouvelUtilisateurActive()
+      .then(setVueNouvel)
+      .catch(() => setVueNouvel(false));
+  }, []);
+  const nouvelUtilisateur = useNouvelUtilisateur({ onDemoChange: refreshDemo });
+
   useFocusEffect(
     useCallback(() => {
       refreshDemo();
+      relireVue();
       setClockShifted(isDevClockShifted());
-    }, [refreshDemo]),
+    }, [refreshDemo, relireVue]),
   );
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(EVENEMENT_VUE, (v: boolean) => setVueNouvel(!!v));
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener(DEV_CLOCK_CHANGED, () => setClockShifted(isDevClockShifted()));
@@ -211,9 +231,10 @@ function Studio() {
       demoActive,
       refreshDemo,
       show: setOverlay,
-      repartirDeZero: () => demanderRepartirDeZero(demoActive, () => setSaisieEffacement(true)),
+      // pendant la vue nouvel utilisateur, la copie de tes donnees partirait avec le reste : retour d'abord
+      repartirDeZero: () => (vueNouvel ? appAlert(traduire('Vue nouvel utilisateur en cours'), MESSAGE_PENDANT_LA_VUE()) : demanderRepartirDeZero(demoActive, () => setSaisieEffacement(true))),
     }),
-    [demoActive, refreshDemo, ouvrirPage],
+    [demoActive, refreshDemo, ouvrirPage, vueNouvel],
   );
 
   const run = async (id: string, fn: () => Promise<string>) => {
@@ -233,6 +254,10 @@ function Studio() {
   };
 
   const toggleHeny = () => {
+    if (vueNouvel && !demoActive) {
+      appAlert(traduire('Vue nouvel utilisateur en cours'), MESSAGE_PENDANT_LA_VUE());
+      return;
+    }
     if (!demoActive) {
       void run('heny', loadHeny);
       return;
@@ -301,6 +326,7 @@ function Studio() {
   const pills: { label: string; tone: 'accent' | 'gold' | 'moss' | 'danger' }[] = [];
   if (choixSaison === 'halloween' || choixSaison === 'noel') pills.push({ label: traduire("{0} forcé", NOMS_SAISONS[choixSaison]), tone: 'gold' });
   if (choixSaison === 'aucune') pills.push({ label: traduire('Saisons masquées'), tone: 'gold' });
+  if (vueNouvel) pills.push({ label: traduire('Vue nouvel utilisateur'), tone: 'accent' });
   if (demoActive) pills.push({ label: traduire('Heny chargée'), tone: 'moss' });
   if (clockShifted) pills.push({ label: traduire('Horloge décalée'), tone: 'gold' });
   if (simulateFreeUser) pills.push({ label: traduire('Vue gratuite'), tone: 'accent' });
@@ -346,6 +372,7 @@ function Studio() {
   ];
 
   const tester: Action[] = [
+    { id: 'nouvel', label: traduire('Nouvel utilisateur'), icon: 'user', on: vueNouvel, state: vueNouvel ? traduire('En cours, touche pour revenir') : traduire('App vide, tes données de côté'), keywords: 'nouvel utilisateur installation neuve vide etats vides onboarding paywall gratuit dojo depart', run: () => void nouvelUtilisateur.demander() },
     { id: 'installation', label: traduire('Première installation'), icon: 'restore', state: traduire('Rien n’est effacé'), keywords: 'simuler reinstallation onboarding paywall', run: () => simulerPremiereInstallation(router) },
     { id: 'heny', label: traduire('Heny'), icon: demoActive ? 'restore' : 'dumbbell', on: demoActive, state: demoActive ? traduire('Chargée, touche pour revenir') : traduire('Pas chargée, touche pour charger'), keywords: 'demo profil', run: toggleHeny },
     { id: 'gratuit', label: traduire('Vue gratuite'), icon: 'eye', on: simulateFreeUser, state: simulateFreeUser ? traduire('Active, cadenas visibles') : traduire('Coupée'), keywords: 'premium gratuit cadenas', run: () => setSimulateFreeUser(!simulateFreeUser) },
@@ -366,51 +393,49 @@ function Studio() {
 
   const cherche = query.trim().length > 0;
   const filtre = (list: Action[]) => list.filter((a) => matches(query, a.label, a.state, a.keywords));
-  /**
-   * Les sections en carrousel. Le carrousel ne repete pas ce qui est deja plus haut (raccourcis, interrupteurs) ;
-   * « Tout voir » ouvre la liste complete de la section, avec l'etat de chaque outil.
-   */
+  /** Les sections de la liste. Une section ne repete pas ce qui est deja plus haut (raccourcis, interrupteurs) */
   const avecSticker = (list: Action[]) => list.map((a) => parId.get(a.id) ?? a);
-  const groupes: { id: string; titre: string; sous: string; carrousel: Action[]; complet: Action[] }[] = [
-    { id: 'raccourcis', titre: traduire('Raccourcis'), sous: traduire('Un toucher et c’est lancé'), carrousel: raccourcis, complet: raccourcis },
-    { id: 'saisons', titre: traduire('Saison de l’accueil'), sous: traduire('Un toucher force la saison et ouvre l’accueil'), carrousel: avecSticker(saisons), complet: avecSticker(saisons) },
-    { id: 'voir', titre: traduire('Voir'), sous: traduire('Écrans, fenêtres et galeries, sans rien enregistrer'), carrousel: avecSticker(voir.filter((a) => !ID_RACCOURCIS.has(a.id))), complet: avecSticker(voir) },
-    { id: 'tester', titre: traduire('Simuler et tester'), sous: traduire('Le téléphone comme chez un nouvel utilisateur'), carrousel: avecSticker(tester.filter((a) => !ID_RACCOURCIS.has(a.id) && !ID_BASCULES.has(a.id))), complet: avecSticker(tester) },
+  const groupes: { id: string; titre: string; actions: Action[] }[] = [
+    { id: 'raccourcis', titre: traduire('Raccourcis'), actions: raccourcis },
+    { id: 'saisons', titre: traduire('Saison de l’accueil'), actions: avecSticker(saisons) },
+    { id: 'voir', titre: traduire('Voir'), actions: avecSticker(voir.filter((a) => !ID_RACCOURCIS.has(a.id))) },
+    { id: 'tester', titre: traduire('Simuler et tester'), actions: avecSticker(tester.filter((a) => !ID_RACCOURCIS.has(a.id) && !ID_BASCULES.has(a.id))) },
   ];
   const bascules = BASCULES.flatMap((b) => {
     const a = parId.get(b.id);
     return a ? [{ ...a, ton: b.ton }] : [];
   });
-  /** L'etat court des interrupteurs (le detail reste lu par VoiceOver et dans « Tout voir ») */
+  /** Le sous titre court des interrupteurs (le detail reste lu par VoiceOver) */
   const etatCourt: Record<string, string> = {
-    gratuit: simulateFreeUser ? traduire('Active, cadenas visibles') : traduire('Coupée'),
-    capture: isScreenshotMode ? traduire('Actif') : traduire('Coupé'),
-    heny: demoActive ? traduire('Chargée') : traduire('Pas chargée'),
+    gratuit: simulateFreeUser ? traduire('Active, cadenas visibles') : traduire('Voir l’app sans Premium'),
+    capture: isScreenshotMode ? traduire('Actif, badges et tests masqués') : traduire('Pour les captures du store'),
+    heny: demoActive ? traduire('Profil démo chargé') : traduire('Pas chargée, touche pour charger'),
   };
   const outilsTrouves = cherche ? filtre(tous) : [];
   const rubriquesVisibles = cherche ? RUBRIQUES.filter((r) => matches(query, r.title, r.sub, r.keywords)) : RUBRIQUES;
   const effacerVisible = !cherche || matches(query, traduire('Tout effacer et repartir de zéro'), MOTS_EFFACER);
   const rubrique = page ? RUBRIQUES.find((r) => r.id === page) ?? null : null;
-  const liste = page?.startsWith(LISTE) ? page.slice(LISTE.length) : null;
-  const groupeListe = liste ? groupes.find((g) => g.id === liste) ?? null : null;
   const couleurSection = (id: string) => pastelTuile(TON_SECTION[id] ?? 'bleu').titre;
   const pillCouleur = { accent: pastelTuile('bleu').titre, gold: pastelTuile('creme').titre, moss: pastelTuile('menthe').titre, danger: '#B0282E' } as const;
+  const pillFond = { accent: pastelTuile('bleu').fond, gold: pastelTuile('creme').fond, moss: pastelTuile('menthe').fond, danger: '#FCEDEE' } as const;
+  const liste = couleursListe();
   const ligneAppareil = label && expiresAt
     ? traduire('{0}, jusqu’au {1}', label, formatDate(expiresAt))
     : expiresAt
-      ? traduire('Valable jusqu’au {0}', formatDate(expiresAt))
+      ? traduire('Créateur jusqu’au {0}', formatDate(expiresAt))
       : label || traduire('Mode créateur inactif');
 
-  const tuile = (a: Action) => (
-    <ActionTile key={a.id} icon={a.icon} label={a.label} state={a.state} on={a.on} color={a.color} ton={a.ton} sticker={a.sticker} busy={busy === a.id} onPress={a.run} />
+  const ligne = (a: Action, section: string) => (
+    <LigneOutil key={a.id} label={a.label} sous={a.state} sticker={a.sticker} icon={a.icon} on={a.on} busy={busy === a.id} couleur={a.color ?? couleurSection(section)} onPress={a.run} />
   );
+  const ligneRubrique = (r: Rubrique) => <LigneOutil key={r.id} label={r.title} sous={r.sub} sticker={r.sticker} icon={r.icon} couleur={couleurSection('rubriques')} onPress={() => ouvrirPage(r.id)} />;
 
   return (
     <StudioContext.Provider value={ctx}>
       <View style={{ flex: 1, backgroundColor: pal.page }}>
         <ScrollView
           ref={scroll}
-          contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: GUTTER, paddingBottom: insets.bottom + 28, gap: 14 }}
+          contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: GUTTER, paddingBottom: insets.bottom + 28, gap: 16 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
@@ -420,40 +445,41 @@ function Studio() {
               <EnTetePage titre={rubrique.title} sous={rubrique.sub} onRetour={() => ouvrirPage(null)} />
               <rubrique.Page />
             </>
-          ) : groupeListe ? (
-            <>
-              <EnTetePage titre={groupeListe.titre} sous={groupeListe.sous} onRetour={() => ouvrirPage(null)} />
-              <ActionGrid>{groupeListe.complet.map((a) => tuile({ ...a, ton: TON_SECTION[groupeListe.id] }))}</ActionGrid>
-            </>
-          ) : liste === 'rubriques' ? (
-            <>
-              <EnTetePage titre={traduire('Tout le Studio')} sous={traduire('Chaque rubrique s’ouvre en page entière')} onRetour={() => ouvrirPage(null)} />
-              <GrilleDeux>
-                {RUBRIQUES.map((r) => (
-                  <TuileRubrique key={r.id} icon={r.icon} title={r.title} sub={r.sub} ton={r.ton} sticker={r.sticker} onPress={() => ouvrirPage(r.id)} />
-                ))}
-              </GrilleDeux>
-            </>
           ) : (
             <>
-              <EnTeteRond titre={traduire('Studio YOROI')} repli="/settings" />
-
-              {/* Maquette A : carte lilas compacte, sticker cle, appareil et validite, version */}
-              <View style={{ marginTop: -2, gap: 8 }}>
-                <View style={{ borderRadius: 24, backgroundColor: lilas.fond, paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <Image source={illus.img('cle')} style={{ width: 44, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
-                  <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-                    <Ink size={11} weight="black" color={lilas.titre} style={{ letterSpacing: 1.4 }}>{traduire('MODE CRÉATEUR')}</Ink>
-                    <Ink size={15} weight="black" tight color={lilas.texte} numberOfLines={2}>{ligneAppareil}</Ink>
-                    <Ink size={12} weight="bold" color={lilas.texte2} numberOfLines={2}>{`Version ${info.version}, build ${info.build}, ${info.model}, ${info.os}`}</Ink>
+              {/* Maquette B : en tete compact, retour, titre et version, sticker cle */}
+              <View style={{ gap: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 }}>
+                  <Pressable
+                    onPress={() => {
+                      selectionAsync().catch(() => {});
+                      if (router.canGoBack()) router.back();
+                      else router.replace('/settings' as never);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={traduire('Retour')}
+                    hitSlop={4}
+                    style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: liste.carte, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.94 : 1 }], shadowColor: '#1B2A44', shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 2 })}
+                  >
+                    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                      <Path d="M15 6l-6 6 6 6" stroke={liste.texte} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+                    </Svg>
+                  </Pressable>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Ink size={22} weight="extraBold" tight color={liste.texte} numberOfLines={1} accessibilityRole="header">{traduire('Studio YOROI')}</Ink>
+                    <Ink size={12} weight="bold" color={liste.sous} numberOfLines={1}>{traduire('Version {0}, build {1}', info.version, info.build)}</Ink>
                   </View>
+                  <Image source={illus.img('cle')} style={{ width: 40, height: 40 }} resizeMode="contain" accessibilityIgnoresInvertColors />
                 </View>
 
-                {/* Pastilles d'etat : ce qui est allume en ce moment, et « Tout remettre normal » quand un forcage tourne */}
+                {/* Pastilles d'etat : le mode createur, ce qui est allume, et « Tout remettre normal » quand un forcage tourne */}
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {(pills.length > 0 ? pills : [{ label: traduire('Rien d’allumé, l’app est normale'), tone: 'accent' as const }]).map((pl) => (
-                    <View key={pl.label} style={{ minHeight: 28, paddingHorizontal: 11, borderRadius: 14, backgroundColor: paletteSombre() ? 'rgba(255,255,255,0.1)' : '#FFFFFF', justifyContent: 'center', shadowColor: '#1D2033', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 1 }}>
-                      <Ink size={12} weight="black" color={pillCouleur[pl.tone]}>{pl.label}</Ink>
+                  <View style={{ minHeight: 28, paddingHorizontal: 11, borderRadius: 14, backgroundColor: lilas.fond, justifyContent: 'center', maxWidth: '100%' }}>
+                    <Ink size={12} weight="extraBold" color={lilas.titre} numberOfLines={1}>{ligneAppareil}</Ink>
+                  </View>
+                  {pills.map((pl) => (
+                    <View key={pl.label} style={{ minHeight: 28, paddingHorizontal: 11, borderRadius: 14, backgroundColor: pillFond[pl.tone], justifyContent: 'center' }}>
+                      <Ink size={12} weight="extraBold" color={pillCouleur[pl.tone]}>{pl.label}</Ink>
                     </View>
                   ))}
                   {forcage ? (
@@ -468,59 +494,37 @@ function Studio() {
                       accessibilityLabel={traduire('Tout remettre normal')}
                       style={({ pressed }) => ({ minHeight: 28, paddingHorizontal: 12, borderRadius: 14, backgroundColor: lilas.titre, justifyContent: 'center', opacity: pressed || busy === 'reset' ? 0.85 : 1 })}
                     >
-                      <Ink size={12} weight="black" color="#FFFFFF">{busy === 'reset' ? traduire('Un instant') : traduire('Tout remettre normal')}</Ink>
+                      <Ink size={12} weight="extraBold" color="#FFFFFF">{busy === 'reset' ? traduire('Un instant') : traduire('Tout remettre normal')}</Ink>
                     </Pressable>
                   ) : null}
                 </View>
-              </View>
 
-              <SearchField value={query} onChange={setQuery} placeholder={traduire('Chercher un outil : paywall, Heny, sons...')} label={traduire('Chercher dans le Studio')} />
+                <SearchField value={query} onChange={setQuery} placeholder={traduire('Chercher : paywall, Heny, sons...')} label={traduire('Chercher dans le Studio')} />
+              </View>
 
               {cherche ? (
                 <>
-                  {outilsTrouves.length > 0 ? (
-                    <View style={{ gap: 10 }}>
-                      <TitreGroupe>{traduire('Outils')}</TitreGroupe>
-                      <ActionGrid>{outilsTrouves.map(tuile)}</ActionGrid>
-                    </View>
-                  ) : null}
-                  {rubriquesVisibles.length > 0 ? (
-                    <View style={{ gap: 10 }}>
-                      <TitreGroupe>{traduire('Tout le Studio')}</TitreGroupe>
-                      <GrilleDeux>
-                        {rubriquesVisibles.map((r) => (
-                          <TuileRubrique key={r.id} icon={r.icon} title={r.title} sub={r.sub} ton={r.ton} sticker={r.sticker} onPress={() => ouvrirPage(r.id)} />
-                        ))}
-                      </GrilleDeux>
-                    </View>
-                  ) : null}
+                  <SectionListe titre={traduire('Outils')}>{outilsTrouves.map((a) => ligne(a, 'raccourcis'))}</SectionListe>
+                  <SectionListe titre={traduire('Tout le Studio')}>{rubriquesVisibles.map(ligneRubrique)}</SectionListe>
                   {effacerVisible ? <CarteRepartirDeZero onPress={ctx.repartirDeZero} /> : null}
                   {outilsTrouves.length === 0 && rubriquesVisibles.length === 0 && !effacerVisible ? (
                     <Note>{traduire('Rien ne correspond. Essaie un autre mot : paywall, Heny, notification, saison.')}</Note>
                   ) : null}
+                  <Button tone="ghost" icon="lock" label={traduire('Verrouiller le Studio')} onPress={lockStudio} />
                 </>
               ) : (
                 <>
-                  {/* Les trois interrupteurs pastel */}
-                  <RangeeBascules>
+                  <SectionListe titre={traduire('État')}>
                     {bascules.map((b) => (
-                      <TuileBascule key={b.id} label={b.label} state={etatCourt[b.id] ?? b.state} accessibilityHint={b.state} on={!!b.on} ton={b.ton} sticker={b.sticker ?? 'cle'} busy={busy === b.id} onPress={b.run} />
+                      <LigneOutil key={b.id} label={b.label} sous={etatCourt[b.id] ?? b.state} sticker={b.sticker ?? 'cle'} icon={b.icon} on={!!b.on} busy={busy === b.id} bascule={b.ton} onPress={b.run} />
                     ))}
-                  </RangeeBascules>
+                  </SectionListe>
 
                   {groupes.map((g) => (
-                    <SectionCarrousel key={g.id} titre={g.titre} couleur={couleurSection(g.id)} onToutVoir={() => ouvrirPage(LISTE + g.id)}>
-                      {g.carrousel.map((a) => (
-                        <CarteOutil key={a.id} label={a.label} state={a.state} sticker={a.sticker} icon={a.icon} on={a.on} busy={busy === a.id} couleur={a.color ?? couleurSection(g.id)} onPress={a.run} />
-                      ))}
-                    </SectionCarrousel>
+                    <SectionListe key={g.id} titre={g.titre}>{g.actions.map((a) => ligne(a, g.id))}</SectionListe>
                   ))}
 
-                  <SectionCarrousel titre={traduire('Tout le Studio')} couleur={couleurSection('rubriques')} onToutVoir={() => ouvrirPage(LISTE + 'rubriques')}>
-                    {RUBRIQUES.map((r) => (
-                      <CarteOutil key={r.id} label={r.title} state={r.sub} sticker={r.sticker} icon={r.icon} couleur={couleurSection('rubriques')} onPress={() => ouvrirPage(r.id)} />
-                    ))}
-                  </SectionCarrousel>
+                  <SectionListe titre={traduire('Tout le Studio')}>{RUBRIQUES.map(ligneRubrique)}</SectionListe>
 
                   <View style={{ gap: 6 }}>
                     <Button tone="ghost" icon="lock" label={traduire('Verrouiller le Studio')} onPress={lockStudio} />
@@ -528,17 +532,11 @@ function Studio() {
                   </View>
 
                   {/* Tout en bas, a part : l'effacement complet */}
-                  <View style={{ marginTop: 12 }}>
+                  <View style={{ marginTop: 8 }}>
                     <CarteRepartirDeZero onPress={ctx.repartirDeZero} />
                   </View>
                 </>
               )}
-
-              {cherche ? (
-                <View style={{ gap: 6, marginTop: 10 }}>
-                  <Button tone="ghost" icon="lock" label={traduire('Verrouiller le Studio')} onPress={lockStudio} />
-                </View>
-              ) : null}
             </>
           )}
         </ScrollView>

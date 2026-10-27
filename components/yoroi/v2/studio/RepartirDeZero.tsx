@@ -24,7 +24,7 @@ import { CREATOR_SECURE_KEYS } from '@/lib/v2/creator/creatorStore';
 import { useCreatorMode } from '@/lib/v2/creator/CreatorModeContext';
 import logger from '@/lib/security/logger';
 import { useResetAll } from './Demo';
-import { fold } from './parts';
+import { fold, ouvrirPorteEntree } from './parts';
 import { traduire } from '@/lib/i18n/tr';
 
 /** Le mot a ecrire pour confirmer */
@@ -134,9 +134,8 @@ export function FenetreRepartirDeZero({ visible, onClose }: { visible: boolean; 
         return;
       }
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-      // la porte d'entrée de l'app décide comme au premier lancement : plus rien, donc l'onboarding
-      if (router.canDismiss()) router.dismissAll();
-      router.replace('/' as never);
+      // plus rien sur le téléphone : l'onboarding, comme au premier lancement (pas router.replace('/'), qui ouvrait l'accueil)
+      ouvrirPorteEntree(router, '/onboarding');
       await lock().catch(() => undefined);
     } catch (e) {
       logger.error('[Studio] repartir de zéro', e);

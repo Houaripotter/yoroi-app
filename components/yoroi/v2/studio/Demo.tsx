@@ -23,6 +23,7 @@ import { setApercuSaison } from '@/lib/v2/saisons/apercu';
 import logger from '@/lib/security/logger';
 import { STUDIO_TEST_KEYS } from './CreatorGuard';
 import { KV, Note, StudioSection, SubTitle, useStudio } from './parts';
+import { vueNouvelUtilisateurActive } from './BandeauNouvelUtilisateur';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire, LOCALE } from '@/lib/i18n/tr';
 
@@ -101,7 +102,14 @@ export function Demo() {
     }
   };
 
-  const heny = () => run('heny', loadHeny);
+  const heny = async () => {
+    // pendant la vue nouvel utilisateur, Heny mettrait de cote l'app vide : retour a tes donnees d'abord
+    if (await vueNouvelUtilisateurActive()) {
+      appAlert(traduire('Vue nouvel utilisateur en cours'), traduire('La vue nouvel utilisateur est en cours. Reviens d’abord à tes données avec le bandeau du haut.'));
+      return;
+    }
+    await run('heny', loadHeny);
+  };
 
   const restore = () =>
     appAlert(traduire('Revenir à tes données ?'), traduire('Heny est retirée et tes vraies données reviennent, avec tes vraies XP.'), [
