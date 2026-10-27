@@ -25,12 +25,13 @@ import { traduire } from '@/lib/i18n/tr';
 
 type Choix = { id: string; nom: string; image: ImageSourcePropType; ouverte: boolean; anim: string | null };
 
-const JAPON_OUVERTES = ['dojo', 'machiya_nuit', 'village', 'bambous', 'jardin'];
+const JAPON_OUVERTES = ['samourai_armurerie', 'dojo', 'machiya_nuit', 'village', 'bambous', 'jardin'];
 const PREMIUM_VOYAGES = ['marseille_calanque', 'voyage_moto_tour_eiffel'];
 
 /** La scene posee par l'univers quand rien n'est choisi (lib/v2/dojo/choisirUnivers.ts) */
 export function sceneParDefaut(u: ChoixUnivers): string {
-  return u === 'japon' ? 'dojo' : 'classique_salle_jour';
+  // 27 octobre 2026 (Houari) : la Salle d'armes par defaut au Japon
+  return u === 'japon' ? 'samourai_armurerie' : 'classique_salle_jour';
 }
 
 export function scenesProposees(u: ChoixUnivers): Choix[] {

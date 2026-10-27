@@ -33,7 +33,8 @@ import { MainButton, Shell, useColors } from './ui';
 import type { Nav } from './types';
 import { traduire } from '@/lib/i18n/tr';
 
-const ICONE_APP = require('@/assets/images/icon.png');
+// le logo actuel de l'app (app.json, icon), jamais l'ancienne mascotte
+const ICONE_APP = require("@/assets/logo d'app/yoroi-logo2.png");
 const LILAS = '#8A3F78';
 const BLEU = '#3557D9';
 const MENTHE = '#1C6B45';

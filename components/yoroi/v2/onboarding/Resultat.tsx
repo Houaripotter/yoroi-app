@@ -131,9 +131,9 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
             <Image source={illus.img(STICKER_CHOSE[k.id], k.id === 'coach' ? sticker('coach') : null)} style={{ width: 42, height: 42 }} resizeMode="contain" accessibilityIgnoresInvertColors />
             <View style={{ flex: 1, gap: 3 }}>
               {k.premium ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', backgroundColor: pal.orangeTint, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
-                  <IconEspace name="crown" size={11} color={pal.orange} />
-                  <Ink size={10.5} weight="black" color={pal.orange} style={{ letterSpacing: 0.6 }}>{traduire('PREMIUM')}</Ink>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', backgroundColor: '#F6EEDD', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
+                  <IconEspace name="crown" size={11} color="#A57A1C" />
+                  <Ink size={10.5} weight="black" color="#A57A1C" style={{ letterSpacing: 0.6 }}>{traduire('PREMIUM')}</Ink>
                 </View>
               ) : null}
               <Ink size={14.5} weight="black" color={c.ink} style={{ lineHeight: 19 }}>{k.titre}</Ink>
@@ -197,7 +197,7 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
     {
       cle: 'semaine',
       contenu: (largeur: number) => (
-        <Animated.View entering={FadeInDown.duration(380)} style={{ ...carte, gap: 12, backgroundColor: '#EFE6F3', borderWidth: 0 }}>
+        <Animated.View entering={FadeInDown.duration(380)} style={{ ...carte, gap: 12, backgroundColor: '#E6ECF8', borderWidth: 0 }}>
           <View style={{ gap: 2 }}>
             <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ta semaine type")}</Ink>
             <Riche size={18} weight="black" color={c.ink} lineHeight={23} text={sessions ? traduirePluriel(sessions, sessions > 1, "**{0} séance** par semaine", "**{0} séances** par semaine", sessions) : traduire('À ton rythme')} />
@@ -221,7 +221,7 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
           contenu: () => (
             <Animated.View entering={FadeInDown.duration(380)} style={{ gap: 8 }}>
               <Ink size={11} weight="black" color="#8A3F78" style={{ letterSpacing: 1.3 }}>{traduire('TON ACCUEIL DANS 4 SEMAINES')}</Ink>
-              <ApercuAccueil name={name} scene={imageScene} perso={persoDe(ri)} start={start} target={maintain ? null : target} sessions={sessions} days={days} sports={sports} pastille={traduire('Projection')} />
+              <ApercuAccueil name={name} scene={imageScene} perso={univers === 'japon' ? guerrierImage(genre, 3) : persoDe(ri)} start={start} target={maintain ? null : target} sessions={sessions} days={days} sports={sports} pastille={traduire('Projection')} />
             </Animated.View>
           ),
         }]

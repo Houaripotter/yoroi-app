@@ -81,6 +81,7 @@ import { playLevelUpSound } from '@/lib/soundManager';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire, LANG } from '@/lib/i18n/tr';
+import { sticker } from '@/components/yoroi/v2/stickers';
 
 const CASTLE = require('@/assets/avatars/app/monde/fonds/verticale_chateau.webp');
 const APPLE_EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
@@ -100,7 +101,9 @@ export type PaywallSource = 'onboarding' | 'app';
 
 type Recap = { name?: string; genre?: 'h' | 'f'; target?: number | null; sessions?: number | null; goal?: string | null; start?: number | null; height?: number | null; recompo?: boolean; univers?: ChoixUnivers;
   /** 27 octobre 2026 : tous tes objectifs, tes sports et le genre « autre », pour les cartes et le personnage */
-  goals?: ObjectifPour[]; sports?: string[]; autre?: boolean };
+  goals?: ObjectifPour[]; sports?: string[]; autre?: boolean;
+  /** 27 octobre 2026 : la scene choisie a l'onboarding (ecran Ta scene) */
+  scene?: string | null };
 
 type Me = {
   name: string;
@@ -605,15 +608,19 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
   const regle = regleePersonnage({ univers: universHero, genre: me.genre, autre: me.autre, personnage: source === 'onboarding' ? null : me.personnage });
   const mondeClassique = universHero !== 'japon';
   // la scene de ton accueil ; sans choix (debut de l'onboarding), la ruelle de nuit aux lanternes, ou la ville du soir en Classique
+  // 27 octobre 2026 (Houari : « le kimono sur fond rose orangé me soûle ») : a l'onboarding, la scene choisie a l'ecran
+  // Ta scene, sinon la Salle d'armes (Japon) ou la salle de sport (Classique) ; dans l'app, ta scene, sinon la Salle d'armes
   const sceneHero: SceneId = (() => {
-    const id = me.sceneId;
-    if (mondeClassique) return id && estSceneClassique(id) ? id : 'classique_ville_nuit';
-    if (!id || estSceneClassique(id) || (source === 'onboarding' && id === 'dojo')) return 'machiya_nuit';
+    const id = (source === 'onboarding' ? recap?.scene ?? null : me.sceneId) as SceneId | null;
+    if (mondeClassique) return id && estSceneClassique(id) ? id : 'classique_salle_jour';
+    if (!id || estSceneClassique(id) || (source === 'onboarding' && id === 'dojo')) return 'samourai_armurerie';
     return id;
   })();
-  const heroImg = regle.mode === 'fixe' ? personnageAccueil(regle.cle, me.rankIndex) : null;
+  // a l'onboarding, l'exemple montre le Rōnin (rang 4), jamais le kimono du premier rang
+  const rangHero = source === 'onboarding' ? 3 : me.rankIndex;
+  const heroImg = regle.mode === 'fixe' ? personnageAccueil(regle.cle, rangHero) : null;
   const vignetteAlterne = regle.mode === 'alterne'
-    ? <VignetteAlterne scene={sceneForNow(sceneHero)} images={[personnageAccueil(regle.cles[0], me.rankIndex), personnageAccueil(regle.cles[1], me.rankIndex)]} />
+    ? <VignetteAlterne scene={sceneForNow(sceneHero)} images={[personnageAccueil(regle.cles[0], rangHero), personnageAccueil(regle.cles[1], rangHero)]} />
     : undefined;
   const curve = weeklyPoints(me.weights);
   // le carrousel du haut : ta vraie courbe voilee au dela de la periode gratuite, sinon l'exemple marque comme tel
@@ -908,9 +915,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
           ) : (
             <View accessibilityLiveRegion="polite" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingVertical: 12, paddingHorizontal: 12 }}>
               {/* vague 32 : bandeau calme, sans rouge ; « Réessayer » est le bouton du pied */}
-              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: c.indigoTint, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name={offersStatus === 'unavailable' || TEST_BUILD ? 'info' : 'sync'} size={16} color={c.indigo} />
-              </View>
+              <Image source={sticker('sablier')} style={{ width: 38, height: 38 }} resizeMode="contain" accessibilityIgnoresInvertColors />
               <View style={{ flex: 1, gap: 1 }}>
                 <Ink size={13.5} weight="extraBold" style={{ lineHeight: 18 }}>
                   {offersStatus === 'unavailable' || TEST_BUILD ? traduire('Prix indisponibles ici') : traduire('Prix momentanément indisponibles')}

@@ -64,7 +64,7 @@ const SLIDES = [
   { titre: traduire('Ta semaine, **déjà prête**'), sous: traduire('Tes jours, tes sports, et ce que tu auras fait dans un mois à ce rythme.'), fond: '#EFE6F3' },
   { titre: traduire('Ton coach, **sur tes jours**'), sous: traduire('Après la visite, il te propose un programme, avec la charge de chaque exercice.'), fond: '#E3F2EA' },
   { titre: traduire('Après chaque séance, **ton bilan**'), sous: traduire('Ce qui a changé, en quelques lignes, les mots importants en couleur.'), fond: '#F6EEDD' },
-  { titre: traduire('Tes records, **tamponnés**'), sous: traduire('Chaque record battu gagne son tampon et son trophée. Quelques exemples :'), fond: '#FFE1D6' },
+  { titre: traduire('Tes records, **tamponnés**'), sous: traduire('Chaque record battu gagne son tampon et son trophée. Quelques exemples :'), fond: '#E6ECF8' },
 ];
 
 const JOURS_COURTS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];

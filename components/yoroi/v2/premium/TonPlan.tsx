@@ -15,7 +15,10 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon, type IconName } from '@/components/yoroi/v2/espace/ui';
 import { ToriiImage } from '@/components/yoroi/v2/charts/ToriiImage';
 import { traduire } from '@/lib/i18n/tr';
-import { useIllustrations } from '@/components/yoroi/v2/stickers';
+import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+
+/** 27 octobre 2026 soir : le sticker de chaque ligne du plan, a la place de l'icone dans son carre */
+const STICKER_LIGNE: Partial<Record<IconName, NomSticker>> = { target: 'objectifs', scale: 'balance', calendar: 'calendrier' };
 
 /** vague 50 (Houari : « la date dans une couleur différente du libellé, bien visible ») : indigo fonce, fixe sur le pied creme (AA 9,4) */
 export const DATE_ARRIVEE = '#22407E';
@@ -96,9 +99,13 @@ export function CarteTonPlan({ name, scene, personnage, lignes, arrivee, compact
           </Ink>
           {lignes.map((l) => (
             <View key={l.icon + l.cle} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: rowH }}>
-              <View style={{ width: rowH + 1, height: rowH + 1, borderRadius: 7, backgroundColor: l.fond, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name={l.icon} size={compact ? 12 : 13} color={l.ink} stroke={2.4} />
-              </View>
+              {STICKER_LIGNE[l.icon] ? (
+                <Image source={illus.img(STICKER_LIGNE[l.icon] as NomSticker)} style={{ width: rowH + 5, height: rowH + 5 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+              ) : (
+                <View style={{ width: rowH + 1, height: rowH + 1, borderRadius: 7, backgroundColor: l.fond, alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name={l.icon} size={compact ? 12 : 13} color={l.ink} stroke={2.4} />
+                </View>
+              )}
               <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                 {l.depuis ? (
                   <>

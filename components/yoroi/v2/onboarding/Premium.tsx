@@ -10,7 +10,7 @@ import type { Nav } from './types';
 import type { ChoixUnivers } from '@/lib/v2/dojo/choisirUnivers';
 import type { ObjectifPour } from '@/lib/v2/premium/pourToi';
 
-export function Premium({ nav, preview, name, genre, sessions, target, goal, start, height, recompo, univers, goals, sports, autre, onFinish }: {
+export function Premium({ nav, preview, name, genre, sessions, target, goal, start, height, recompo, univers, goals, sports, autre, scene = null, onFinish }: {
   nav: Nav;
   preview: boolean;
   name: string;
@@ -28,6 +28,8 @@ export function Premium({ nav, preview, name, genre, sessions, target, goal, sta
   goals?: ObjectifPour[];
   sports?: string[];
   autre?: boolean;
+  /** 27 octobre 2026 : la scene choisie a l'ecran Ta scene */
+  scene?: string | null;
   onFinish: (how: 'free' | 'premium') => void;
   /** gardes pour l'appelant : les liens sont geres par le paywall (conditions, licence Apple, confidentialite) */
   onOpenTerms?: () => void;
@@ -37,7 +39,7 @@ export function Premium({ nav, preview, name, genre, sessions, target, goal, sta
     <Paywall
       source="onboarding"
       preview={preview}
-      recap={{ name, genre, sessions, target, goal, start, height, recompo, univers, goals, sports, autre }}
+      recap={{ name, genre, sessions, target, goal, start, height, recompo, univers, goals, sports, autre, scene }}
       onFinish={onFinish}
       onBack={nav.onBack}
       onClose={nav.onClose}

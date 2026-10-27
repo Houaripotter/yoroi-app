@@ -554,7 +554,8 @@ export default function OnboardingScreen() {
     await saveOnboarding(draftRef.current);
     // 27 octobre 2026 : la scene choisie a l'ecran Ta scene (seulement une scene ouverte, jamais une scene Premium)
     const sc = draftRef.current.scene;
-    if (sc && sc !== sceneParDefaut(draftRef.current.univers ?? 'japon')) await saveEspace({ scene: sc as SceneId }).catch(() => undefined);
+    // sans choix : la scene par defaut de l'ecran (la Salle d'armes au Japon), celle montree dans Ton plan
+    await saveEspace({ scene: (sc ?? sceneParDefaut(draftRef.current.univers ?? 'japon')) as SceneId }).catch(() => undefined);
     // 27 octobre 2026 (Houari : « s'il choisit le thème Japon mets lui Japon ») : le reglage Illustrations suit l'univers
     // choisi, Japon : Encre japonaise, Classique ou sans personnage : Stickers. Modifiable ensuite dans Reglages.
     await ecrireIllustrations((draftRef.current.univers ?? 'japon') === 'japon' ? 'encre' : 'stickers').catch(() => undefined);
@@ -866,6 +867,7 @@ export default function OnboardingScreen() {
             goals={goalsDe(d)}
             sports={d.sports}
             autre={d.gender === 'autre'}
+            scene={d.scene ?? null}
             onFinish={finish}
             onOpenTerms={() => void safeOpenURL(APPLE_EULA_URL)}
             onOpenPrivacy={() => router.push('/privacy-policy' as any)}

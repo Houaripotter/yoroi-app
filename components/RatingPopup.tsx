@@ -196,7 +196,7 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
             >
               {/* Logo de l'app avec fond noir en clair et blanc en sombre */}
               <View style={[styles.avatarImageContainer, { backgroundColor: isDark ? '#FFFFFF' : '#000000' }]}>
-                <Image source={require('@/assets/images/icon.png')} style={styles.avatarImage} />
+                <Image source={require("@/assets/logo d'app/yoroi-logo2.png")} style={styles.avatarImage} />
               </View>
             </LinearGradient>
 

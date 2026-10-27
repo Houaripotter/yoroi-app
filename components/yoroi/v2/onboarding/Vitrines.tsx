@@ -32,11 +32,12 @@ import type { PhraseRiche } from '@/lib/v2/bilan/texte';
 import type { CarteData, FormatId, ModeleId, OptionsCarte } from '@/lib/v2/cartes/types';
 import { MACHINE_BY_ID } from '@/lib/v2/seance/machines';
 import { machineArt } from '@/lib/v2/seance/machinesArt';
-import { VIE_PERSONNAGES } from '@/lib/v2/dojo/personnages';
+import { GUERRIER_IMAGES, VIE_PERSONNAGES } from '@/lib/v2/dojo/personnages';
 import { VARIANTES_TEINTE, imageTeinte } from '@/lib/v2/dojo/packsTeintes';
 import { styleBuste } from '@/lib/v2/espace/cadrageBuste';
 import { useColors } from './ui';
 import { ApercuAccueil } from './ApercuAccueil';
+import { sticker } from '@/components/yoroi/v2/stickers';
 import { sceneMeta } from '@/components/yoroi/v2/espace/assets';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -62,9 +63,13 @@ function Tete({ domaine, icone, titre, exemple = true }: { domaine: Domaine; ico
   const t = teinte(domaine);
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      <View style={{ width: 26, height: 26, borderRadius: 9, backgroundColor: t.fond, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name={icone} size={15} color={t.texte} stroke={2.4} />
-      </View>
+      {icone === 'camera' ? (
+        <Image source={sticker('appareil_photo')} style={{ width: 30, height: 30 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+      ) : (
+        <View style={{ width: 26, height: 26, borderRadius: 9, backgroundColor: t.fond, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={icone} size={15} color={t.texte} stroke={2.4} />
+        </View>
+      )}
       <Ink size={14} weight="black" color={t.texte} numberOfLines={1} style={{ flex: 1 }}>{titre}</Ink>
       {exemple ? <PastilleExemple /> : null}
     </View>
@@ -104,7 +109,7 @@ export function VitrineAccueil({ seulSante = false }: { seulSante?: boolean } = 
     );
   }
   // 27 octobre 2026 : le nouvel accueil (scene en carte, Ton poids, Ta semaine) a la place de l'ancienne grille de tuiles
-  return <ApercuAccueil name={null} scene={sceneMeta('machiya_nuit').image} perso={null} start={null} target={null} sessions={4} days={[0, 2, 4, 5]} sports={['musculation', 'jjb', 'running']} pastille={traduire('Exemple')} />;
+  return <ApercuAccueil name={null} scene={sceneMeta('samourai_armurerie').image} perso={GUERRIER_IMAGES.h[3]} start={null} target={null} sessions={4} days={[0, 2, 4, 5]} sports={['musculation', 'jjb', 'running']} pastille={traduire('Exemple')} />;
 }
 
 // ===== 2. La citation du jour, trois styles =====

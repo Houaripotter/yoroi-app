@@ -12,10 +12,10 @@
  * il voit qu'il choisit et peut changer. Toujours les jours qu'il a pris. Réduire les animations : première image, fixe.
  */
 import React, { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
+import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import Animated, { FadeIn, FadeOut, ZoomIn, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import type { IconName } from '@/components/yoroi/v2/seances/Icon';
 import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { JOURS_LETTRES, JOURS_NOMS, joursTexte } from '@/components/yoroi/v2/espace/JoursPicker';
@@ -25,13 +25,26 @@ import { traduire } from '@/lib/i18n/tr';
 
 export type FamilleSport = 'combat' | 'muscu' | 'cardio' | 'autre';
 
-// 27 octobre 2026 (refonte Pastel) : les pastels de l'app (peche, bleu, menthe, lilas) et leur encre lisible
+// 27 octobre 2026 (refonte Pastel) : les pastels de l'app (creme, bleu, menthe, lilas ; 27 octobre soir : plus de peche, trop rose) et leur encre lisible
 export const FAMILLES: Record<FamilleSport, { couleur: string; teinte: string; icone: IconName }> = {
-  combat: { couleur: '#B4471E', teinte: '#FFE1D6', icone: 'glove' },
+  combat: { couleur: '#A57A1C', teinte: '#F6EEDD', icone: 'glove' },
   muscu: { couleur: '#23358F', teinte: '#DCE3FF', icone: 'dumbbell' },
   cardio: { couleur: '#1C6B45', teinte: '#E3F2EA', icone: 'steps' },
   autre: { couleur: '#8A3F78', teinte: '#EFE6F3', icone: 'medal' },
 };
+
+/** 27 octobre 2026 (Houari : « des stickers a la place des icones ») : le sticker de chaque sport, sinon celui de sa famille */
+const STICKER_SPORT: Record<string, NomSticker> = {
+  jjb: 'jjb', judo: 'kimono', lutte: 'jjb', grappling: 'jjb', boxe: 'gants', mma: 'gants', kickboxing: 'gants', muay_thai: 'gants', karate: 'kimono',
+  musculation: 'musculation', crossfit: 'kettlebell', fitness: 'kettlebell', running: 'course', trail: 'course', marche: 'sport_marche',
+  velo: 'sport_velo', cyclisme: 'sport_velo', natation: 'sport_nage', football: 'sport_football', yoga: 'souffle',
+};
+const STICKER_FAMILLE: Record<FamilleSport, NomSticker> = { combat: 'gants', muscu: 'musculation', cardio: 'course', autre: 'mes_sports' };
+
+export function stickerSport(id: string | null): NomSticker {
+  if (!id) return STICKER_FAMILLE.muscu;
+  return STICKER_SPORT[id] ?? STICKER_FAMILLE[familleSport(id)];
+}
 
 export function familleSport(id: string): FamilleSport {
   const cat = getSportCategory(id);
@@ -72,6 +85,7 @@ const TOUR_MS = 2500;
 
 function Rond({ on, sport, i, size, calme, doux }: { on: boolean; sport: string | null; i: number; size: number; calme: boolean; doux: boolean }) {
   const pal = usePaletteProgramme();
+  const illus = useIllustrations();
   const f = FAMILLES[sport ? familleSport(sport) : 'muscu'];
   const halo = useSharedValue(calme ? 1 : 0);
   useEffect(() => {
@@ -95,7 +109,7 @@ function Rond({ on, sport, i, size, calme, doux }: { on: boolean; sport: string 
               exiting={calme ? undefined : FadeOut.duration(220)}
               style={{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: f.teinte, borderWidth: 2, borderColor: f.couleur, alignItems: 'center', justifyContent: 'center' }}
             >
-              <Icon name={f.icone} size={Math.round(size * 0.46)} color={f.couleur} strokeWidth={2.4} />
+              <Image source={illus.img(stickerSport(sport))} style={{ width: Math.round(size * 0.74), height: Math.round(size * 0.74) }} resizeMode="contain" accessibilityIgnoresInvertColors />
             </Animated.View>
           </>
         ) : (
@@ -109,6 +123,7 @@ function Rond({ on, sport, i, size, calme, doux }: { on: boolean; sport: string 
 
 export function SemaineCouleurs({ days, sports, size = 38, legende = true }: { days: readonly number[]; sports: readonly string[]; size?: number; legende?: boolean }) {
   const pal = usePaletteProgramme();
+  const illus = useIllustrations();
   const calme = !!useReducedMotion();
   const variantes = variantesRepartition(days, sports);
   const [tour, setTour] = useState(0);
@@ -137,7 +152,7 @@ export function SemaineCouleurs({ days, sports, size = 38, legende = true }: { d
               const f = FAMILLES[familleSport(s)];
               return (
                 <View key={s} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: f.teinte }}>
-                  <Icon name={f.icone} size={13} color={f.couleur} />
+                  <Image source={illus.img(stickerSport(s))} style={{ width: 20, height: 20 }} resizeMode="contain" accessibilityIgnoresInvertColors />
                   <Ink size={12} weight="extraBold" color={f.couleur}>{sportShortName(s)}</Ink>
                 </View>
               );

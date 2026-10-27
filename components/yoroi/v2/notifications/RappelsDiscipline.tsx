@@ -6,7 +6,8 @@
  * Ce composant ne programme rien : il rend le choix, l'appelant l'applique (appliquerChoixRappels).
  */
 import React, { useState } from 'react';
-import { Pressable, Switch, View } from 'react-native';
+import { Image, Pressable, Switch, View } from 'react-native';
+import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { selectionAsync } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
@@ -31,17 +32,25 @@ const JOURS = [
   { j: 6, court: 'D', nom: traduire('dimanche') },
 ];
 
+const STICKER_RAPPEL: Partial<Record<IconName, NomSticker>> = { dumbbell: 'musculation', scale: 'balance', drop: 'nutrition', calendar: 'bilan' };
+
 const hap = () => selectionAsync().catch(() => {});
 
 function Ligne({ icon, titre, sous, on, onToggle, children }: { icon: IconName; titre: string; sous: string; on: boolean; onToggle: (v: boolean) => void; children?: React.ReactNode }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  const illus = useIllustrations();
   return (
     <View style={{ borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: on ? c.accent : c.border, paddingHorizontal: 14, paddingVertical: 10, gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 }}>
-        <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: on ? c.accentTint : c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name={icon} size={19} color={on ? c.accent : c.textSecondary} />
-        </View>
+        {/* 27 octobre 2026 soir : un sticker a la place de l'icone dans son carre (l'icone reste en Encre japonaise) */}
+        {illus.stickers && STICKER_RAPPEL[icon] ? (
+          <Image source={illus.img(STICKER_RAPPEL[icon] as NomSticker)} style={{ width: 40, height: 40, opacity: on ? 1 : 0.85 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+        ) : (
+          <View style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name={icon} size={19} color={on ? c.accent : c.textSecondary} />
+          </View>
+        )}
         <View style={{ flex: 1, gap: 1 }}>
           <Ink size={15} weight="extraBold">{titre}</Ink>
           <Ink size={12.5} color={c.textSecondary} style={{ lineHeight: 17 }}>{sous}</Ink>

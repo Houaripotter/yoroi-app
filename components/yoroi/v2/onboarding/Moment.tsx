@@ -294,9 +294,7 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
       </Bloc>
 
       <Animated.View entering={FadeInDown.delay(240).duration(300)} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 11, borderRadius: 20, backgroundColor: c.accentTint, padding: 12 }}>
-        <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="bell" size={16} color={c.accent} />
-        </View>
+        <Image source={illustration('rappels')} style={{ width: 34, height: 34 }} resizeMode="contain" accessibilityIgnoresInvertColors />
         <Riche
           text={traduire("**Un seul rappel doux**, environ 2{0}h après, seulement ces jours-là et si ta pesée manque. Tu peux tout changer dans Réglages, Rappels.", NB)}
           size={12.5}

@@ -31,7 +31,7 @@ import { AvisDefilants, Defilement, NoteLauriers, useEcranVisible } from '@/comp
 import { CONTENT_COUNTS } from '@/lib/v2/creator/contentReport.generated';
 import { GUERRIER_IMAGES, MONDE_PERSONNAGES, NEW_SCENES, VIE_PERSONNAGES } from '@/lib/v2/dojo/personnages';
 import { imageTeinte } from '@/lib/v2/dojo/packsTeintes';
-import { ENCRES_THEME, type EncreId } from './couleurs';
+import type { EncreId } from './couleurs';
 import { VitrineAccueil, VitrinePartage, VitrinePersonnages, VitrineSeance } from './Vitrines';
 import { TropheeRecord } from '@/components/yoroi/v2/charts/core';
 import { healthName } from '@/lib/v2/onboarding/save';
@@ -128,7 +128,7 @@ function origines(g: 'h' | 'f'): Tile[] {
     const src = imageTeinte(id, t, gg);
     if (p && src !== undefined) out.push({ k: 'image', w: 112, src, label: p.names?.[gg] ?? p.name, sub: traduire('Vie réelle'), fond });
   };
-  un('basket', 'peau_foncee', g, '#FFE1D6');
+  un('basket', 'peau_foncee', g, '#F6EEDD');
   un('soignant', 'asie', g === 'h' ? 'f' : 'h', '#DCE3FF');
   return out;
 }
@@ -196,9 +196,9 @@ function buildRows(g: 'h' | 'f'): Tile[][] {
     // 27 octobre 2026 : une des nouvelles scenes de Marseille, la calanque au couchant
     N_SCENES ? { k: 'scene', w: 168, src: SCENE_CALANQUE, label: traduire("{0} scènes", N_SCENES), sub: traduire('dont {0} nouvelles', NEW_SCENES.length), nouveau: true } : null,
     { k: 'illu', w: 188, src: ILLU.ruban, fond: '#E3F2EA', ink: '#1C6B45', kicker: 'Mensurations', title: traduire('Taille, ventre, bras'), sub: traduire('Ce que la balance ne dit pas') },
-    { k: 'illu', w: 196, src: ILLU.kabuto, fond: '#FFE1D6', ink: '#B4471E', kicker: 'Illustrations', title: traduire('Stickers ou encre'), sub: traduire('Le style de ton app') },
+    { k: 'illu', w: 196, src: ILLU.kabuto, fond: '#E6ECF8', ink: '#3557D9', kicker: 'Illustrations', title: traduire('Stickers ou encre'), sub: traduire('Le style de ton app') },
     N_EXOS ? { k: 'stat', w: 144, n: fmt(N_EXOS), label: traduire('exercices'), sub: traduire('dans la bibliothèque'), tone: 'gold' } : null,
-    { k: 'image', w: 112, src: sport('boxe', autre), label: 'Boxe', fond: '#FFE1D6' },
+    { k: 'image', w: 112, src: sport('boxe', autre), label: 'Boxe', fond: '#F6EEDD' },
   ];
   const r3: (Tile | null)[] = [
     { k: 'image', w: 120, src: monde('ninja', g), label: 'Ninja', sub: traduire('le Dojo'), fond: '#EFE6F3' },
@@ -513,7 +513,7 @@ function PageChrono({ g }: { g: 'h' | 'f' }) {
         })}
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#FFE1D6', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#F6EEDD', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
           <Icon name="bell" size={14} color={ROUGE_CHRONO} stroke={2.6} />
           <Ink size={12.5} weight="extraBold" color={c.ink}>{traduire("Clac clac clac, plus que 10 s")}</Ink>
         </View>
@@ -527,7 +527,7 @@ function PageChrono({ g }: { g: 'h' | 'f' }) {
 }
 
 const SPORTS_PAGE: { id: string; fond: string }[] = [
-  { id: 'boxe', fond: '#FFE1D6' },
+  { id: 'boxe', fond: '#F6EEDD' },
   { id: 'jjb', fond: '#DCE3FF' },
   { id: 'mma', fond: '#EFE6F3' },
   { id: 'musculation', fond: '#F6EEDD' },
@@ -702,24 +702,25 @@ function PageScenes({ designW, actif }: { designW: number; actif: boolean }) {
 
 // 27 octobre 2026 (retour du proprio) : chaque ligne a sa propre teinte douce (fond pastel, picto colore),
 // prise dans les encres de l'onboarding qui suivent le mode clair ou sombre
-const SUR_TEL: { icon: IconName; titre: string; sous: string; encre: EncreId }[] = [
-  { icon: 'user', encre: 'indigo', titre: traduire('Pas de compte à créer'), sous: traduire('Tu ouvres l’app, tu commences.') },
-  { icon: 'shield', encre: 'mousse', titre: traduire('Ton suivi marche sans réseau'), sous: traduire('À la salle, au dojo, en déplacement.') },
-  { icon: 'lock', encre: 'prune', titre: traduire('Tes données restent chez toi'), sous: traduire('Sur ton téléphone, sans compte en ligne.') },
-  { icon: 'close', encre: 'vermillon', titre: traduire('Aucune publicité'), sous: traduire('Ni en gratuit, ni en Premium.') },
-  { icon: 'save', encre: 'sarcelle', titre: traduire('Ta sauvegarde, quand tu veux'), sous: traduire('À remettre sur un autre téléphone.') },
+// 27 octobre 2026 soir (Houari : « des stickers a la place des icones ») : un sticker par ligne (nom : le sticker attendu,
+// remplace : le meilleur existant en attendant, voir _propositions/audit_onboarding_2026-10-27/AUDIT.md)
+const SUR_TEL: { icon: IconName; titre: string; sous: string; encre: EncreId; sticker: NomSticker }[] = [
+  { icon: 'user', encre: 'indigo', sticker: 'play', titre: traduire('Pas de compte à créer'), sous: traduire('Tu ouvres l’app, tu commences.') },
+  { icon: 'shield', encre: 'mousse', sticker: 'boussole', titre: traduire('Ton suivi marche sans réseau'), sous: traduire('À la salle, au dojo, en déplacement.') },
+  { icon: 'lock', encre: 'prune', sticker: 'cle', titre: traduire('Tes données restent chez toi'), sous: traduire('Sur ton téléphone, sans compte en ligne.') },
+  { icon: 'close', encre: 'vermillon', sticker: 'environnement', titre: traduire('Aucune publicité'), sous: traduire('Ni en gratuit, ni en Premium.') },
+  { icon: 'save', encre: 'sarcelle', sticker: 'coffre_ferme', titre: traduire('Ta sauvegarde, quand tu veux'), sous: traduire('À remettre sur un autre téléphone.') },
 ];
 
 function PageTel() {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  const illus = useIllustrations();
   return (
     <PageCarte style={{ paddingVertical: 6 }}>
       {SUR_TEL.map((r, k) => (
         <View key={r.titre} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9, borderTopWidth: k ? 1 : 0, borderTopColor: c.divider }}>
-          <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: ENCRES_THEME[r.encre].fond, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name={r.icon} size={18} color={ENCRES_THEME[r.encre].ink} stroke={2.5} />
-          </View>
+          <Image source={illus.img(r.sticker, sticker(r.sticker))} style={{ width: 42, height: 42 }} resizeMode="contain" accessibilityIgnoresInvertColors />
           <View style={{ flex: 1, gap: 1 }}>
             <Ink size={15} weight="black" tight numberOfLines={1}>{traduire(r.titre)}</Ink>
             <Ink size={12.5} weight="medium" color={c.textSecondary} numberOfLines={1}>{r.sous}</Ink>
