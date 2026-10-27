@@ -52,10 +52,12 @@ const majuscule = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 /** « mi-janvier » ne se coupe pas a la ligne (trait d'union insecable) */
 export const insecable = (t: string) => t.replace(/-/g, '\u2011');
 
-export function Cap({ nav, start, target, height, recompo = false, onTarget, onNext }: {
+export function Cap({ nav, start, target, height, recompo = false, sens, onTarget, onNext }: {
   nav: Nav;
   start: number;
   target: number;
+  /** 27 octobre 2026 : le sens de l'objectif borne la regle (perdre : en dessous du poids du jour, prendre : au dessus) */
+  sens?: string;
   goal?: Goal | null;
   /** vague 29 : perdre du poids et prendre du muscle, baisse lente */
   recompo?: boolean;
@@ -65,6 +67,12 @@ export function Cap({ nav, start, target, height, recompo = false, onTarget, onN
 }) {
   const c = useColors();
   const [w, setW] = useState(0);
+  const baisse = sens === 'baisse' || sens === 'recompo';
+  const hausse = sens === 'hausse';
+  const bas = hausse ? Math.min(250, Math.round((start + 0.1) * 10) / 10) : 30;
+  const haut = baisse ? Math.max(30, Math.round((start - 0.1) * 10) / 10) : 250;
+  const borne = (x: number) => Math.min(haut, Math.max(bas, Math.round(x * 10) / 10));
+  const regler = (x: number) => onTarget(borne(x));
   const e = estimerArrivee({ start, target, sessions: null, heightCm: height ?? null, recompo: recompo && target < start });
   const v = arriveeVue(e, start, target);
   const ok = e.kind === 'ok';
@@ -77,9 +85,9 @@ export function Cap({ nav, start, target, height, recompo = false, onTarget, onN
         <Ink size={64} weight="black" tight numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }}>{kg(target)}</Ink>
         <Ink size={15} weight="bold" color={c.textSecondary}>{traduire("kilos visés")}</Ink>
       </View>
-      <Ruler value={target} onChange={onTarget} hardMin={30} hardMax={250} label={traduire("Règle du poids visé, fais glisser pour régler")} />
+      <Ruler value={target} onChange={regler} hardMin={bas} hardMax={haut} label={traduire("Règle du poids visé, fais glisser pour régler")} />
       {/* vague 30 : au kilo et au dixieme, appui long pour aller vite */}
-      <Pas value={target} onChange={onTarget} pas={PAS_KG} clamp={(x) => Math.min(250, Math.max(30, Math.round(x * 10) / 10))} />
+      <Pas value={target} onChange={regler} pas={PAS_KG} clamp={borne} />
 
       <View onLayout={(ev) => setW(ev.nativeEvent.layout.width)} style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingVertical: 14, paddingHorizontal: 14, gap: 8 }}>
         <View style={{ gap: 1 }}>

@@ -17,10 +17,11 @@ import { Image, View } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { Easing, FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
-import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
-import { Cercles, PuceClaire, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
+import { usePaletteProgramme, usePastel } from '@/components/yoroi/v2/programmes/Habillage';
+import type { IconName } from '@/components/yoroi/v2/seances/Icon';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import { ToriiImage } from '@/components/yoroi/v2/charts/ToriiImage';
 import { RANKS, XP_VALUES, weekXp } from '@/lib/v2/armure';
 import { rythmeMoyenKg } from '@/lib/v2/pesee/estimation';
@@ -88,6 +89,7 @@ function useCompte(fin: number, delai: number, calme: boolean, duree = 1000): nu
 function CheminApercu({ start, target, sessions, recompo, calme }: { start: number; target: number; sessions: number | null; recompo: boolean; calme: boolean }) {
   const c = useColors();
   const pal = usePaletteProgramme();
+  const illus = useIllustrations();
   const { part, kg: fait } = partApres(start, target, sessions, recompo);
   const visible = Math.max(0.06, part);
   const fill = useRemplissage(visible, 250, calme);
@@ -96,9 +98,7 @@ function CheminApercu({ start, target, sessions, recompo, calme }: { start: numb
   return (
     <View style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="scale" size={22} color="#7A5BC7" />
-        </View>
+        <Image source={illus.img('balance')} style={{ width: 44, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
         <View style={{ flex: 1 }}>
           <Ink size={12} weight="bold" color={c.textMuted}>{traduire('Ta carte Poids')}</Ink>
           <Ink size={17} weight="black" tight color={c.ink} numberOfLines={1}>{traduire('Cap sur {0} kg', kg(target))}</Ink>
@@ -138,10 +138,25 @@ function CheminApercu({ start, target, sessions, recompo, calme }: { start: numb
   );
 }
 
+/** Une puce de ce que rapporte la semaine, sur la carte creme */
+function Puce({ icone, texte, encre }: { icone: IconName; texte: string; encre: string }) {
+  const c = useColors();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 30, paddingHorizontal: 11, borderRadius: 15, backgroundColor: c.surface }}>
+      <Icon name={icone} size={13} color={encre} />
+      <Ink size={12.5} weight="extraBold" color={c.ink}>{texte}</Ink>
+    </View>
+  );
+}
+
+/**
+ * 27 octobre 2026 (refonte Pastel) : la carte du Dojo passe du bleu nuit plein a la carte creme des maquettes du Coach,
+ * texte encre, XP et rang dans l'or ; les memes chiffres (regles du Dojo), le meme personnage.
+ */
 function DojoApercu({ rankIndex, rankName, nextName, image, imageSuivante, sessions, pesees, calme }: { rankIndex: number; rankName: string; nextName: string | null; image: ImageSourcePropType | null; imageSuivante: ImageSourcePropType | null; sessions: number | null; pesees: number; calme: boolean }) {
-  const { theme } = useYoroiTheme();
-  const tc = theme.colors;
-  const pal = usePaletteProgramme();
+  const c = useColors();
+  const pa = usePastel();
+  const creme = pa.creme;
   const xp = xpPremiereSemaine(sessions, pesees);
   const suivant = RANKS[rankIndex + 1];
   const besoin = suivant ? Math.max(1, suivant.minXp - (RANKS[rankIndex]?.minXp ?? 0)) : 0;
@@ -151,54 +166,53 @@ function DojoApercu({ rankIndex, rankName, nextName, image, imageSuivante, sessi
   const semaines = xp.total > 0 && besoin ? Math.ceil(besoin / xp.total) : 0;
   const n = Math.max(0, Math.round(sessions ?? 0));
   return (
-    <View style={{ borderRadius: 26, backgroundColor: pal.indigo, overflow: 'hidden', padding: 18, gap: 12, minHeight: 200 }}>
-      <Cercles />
+    <View style={{ borderRadius: 26, backgroundColor: creme.fond, overflow: 'hidden', padding: 18, gap: 12, minHeight: 200 }}>
       {image ? <Image source={image} style={{ position: 'absolute', right: -4, bottom: 0, width: 112, height: 150 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
       <View style={{ maxWidth: image ? '68%' : '100%', gap: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: OR }}>
-            <Icon name="medal" size={13} color="#3A2A08" />
-            <Ink size={12} weight="black" color="#3A2A08">{traduire('Rang {0}', rankName)}</Ink>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: c.surface }}>
+            <Icon name="medal" size={13} color={creme.titre} />
+            <Ink size={12} weight="black" color={creme.encre}>{traduire('Rang {0}', rankName)}</Ink>
           </View>
-          <Ink size={11} weight="black" color={tc.onDarkSecondary} style={{ letterSpacing: 0.6 }}>{traduire('APERÇU')}</Ink>
+          <Ink size={11} weight="black" color={creme.titre} style={{ letterSpacing: 0.6 }}>{traduire('APERÇU')}</Ink>
         </View>
-        <Ink size={22} weight="black" tight color={tc.onDark} accessibilityRole="header">{traduire('Ta première semaine')}</Ink>
+        <Ink size={22} weight="black" tight color={c.ink} accessibilityRole="header">{traduire('Ta première semaine')}</Ink>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-          <Ink size={30} weight="black" tight color={OR}>{`+${compte}`}</Ink>
-          <Ink size={14} weight="black" color={tc.onDark}>XP</Ink>
+          <Ink size={30} weight="black" tight color={creme.encre}>{`+${compte}`}</Ink>
+          <Ink size={14} weight="black" color={creme.titre}>XP</Ink>
         </View>
       </View>
       <View style={{ maxWidth: image ? '70%' : '100%', gap: 6 }}>
-        <View style={{ height: 12, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.18)', overflow: 'hidden' }} accessible accessibilityRole="progressbar" accessibilityLabel={traduire('Ta première semaine : {0} XP', xp.total)}>
+        <View style={{ height: 12, borderRadius: 6, backgroundColor: c.surface, overflow: 'hidden' }} accessible accessibilityRole="progressbar" accessibilityLabel={traduire('Ta première semaine : {0} XP', xp.total)}>
           <Animated.View style={[{ height: 12, borderRadius: 6, overflow: 'hidden' }, fill]}>
-            <LinearGradient colors={['#F2D98F', OR, '#E07A2E']} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ flex: 1 }} />
+            <LinearGradient colors={[creme.barre2, creme.barre, creme.titre]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ flex: 1 }} />
           </Animated.View>
         </View>
         {suivant && nextName ? (
-          <Ink size={12} weight="bold" color={tc.onDarkSecondary}>{traduire('{0} / {1} XP vers {2}', Math.min(xp.total, besoin), besoin, nextName)}</Ink>
+          <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('{0} / {1} XP vers {2}', Math.min(xp.total, besoin), besoin, nextName)}</Ink>
         ) : null}
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, maxWidth: image ? '70%' : '100%' }}>
-        {n ? <PuceClaire icone="dumbbell" texte={traduirePluriel(n, n > 1, '{0} séance +{1}', '{0} séances +{1}', n, xp.seances)} /> : null}
-        {xp.semaine ? <PuceClaire icone="trophy" texte={traduire('Semaine réussie +{0}', xp.semaine)} /> : null}
-        {xp.pesees ? <PuceClaire icone="scale" texte={traduire('Pesées +{0}', xp.pesees)} /> : null}
+        {n ? <Puce icone="dumbbell" encre={creme.titre} texte={traduirePluriel(n, n > 1, '{0} séance +{1}', '{0} séances +{1}', n, xp.seances)} /> : null}
+        {xp.semaine ? <Puce icone="trophy" encre={creme.titre} texte={traduire('Semaine réussie +{0}', xp.semaine)} /> : null}
+        {xp.pesees ? <Puce icone="scale" encre={creme.titre} texte={traduire('Pesées +{0}', xp.pesees)} /> : null}
       </View>
       {suivant && nextName && semaines ? (
-        <Animated.View entering={calme ? undefined : FadeIn.delay(1600).duration(400)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.14)' }}>
+        <Animated.View entering={calme ? undefined : FadeIn.delay(1600).duration(400)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 18, backgroundColor: c.surface }}>
           {imageSuivante ? (
-            <View style={{ width: 40, height: 46, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <View style={{ width: 40, height: 46, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               <Image source={imageSuivante} style={{ width: 38, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
             </View>
           ) : (
-            <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="star" size={20} color="#3A2A08" />
+            <View style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="star" size={20} color={creme.titre} />
             </View>
           )}
           <Riche
             size={13}
             lineHeight={18}
-            color={tc.onDark}
-            ink={OR}
+            color={c.ink}
+            ink={creme.encre}
             style={{ flex: 1 }}
             text={traduirePluriel(semaines, semaines > 1, '**+1 rang** : {0} dans environ {1} semaine à ce rythme', '**+1 rang** : {0} dans environ {1} semaines à ce rythme', nextName, semaines)}
           />

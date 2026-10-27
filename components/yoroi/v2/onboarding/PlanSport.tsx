@@ -58,7 +58,6 @@ function Ligne({ icone, couleur, fond, texte }: { icone: IconName; couleur: stri
 /** partie : tout (une carte), barres (la comparaison seule) ou conseils (ton sport, ce qui compte), pour le carrousel de Ton plan */
 export function PlanSport({ sessions, sports, partie = 'tout' }: { sessions: number | null; sports: string[]; partie?: 'tout' | 'barres' | 'conseils' }) {
   const c = useColors();
-  const pal = usePaletteProgramme();
   const calme = !!useReducedMotion();
   const n = sessions ?? 0;
   const familles = sports.map(familleSport);
@@ -87,8 +86,8 @@ export function PlanSport({ sessions, sports, partie = 'tout' }: { sessions: num
     {
       cle: 'ventre',
       icone: 'tape',
-      couleur: '#7A5BC7',
-      fond: '#ECE6FA',
+      couleur: FAMILLES.autre.couleur,
+      fond: FAMILLES.autre.teinte,
       texte: traduire('Même quand la balance bouge peu, le sport fait baisser **la graisse du ventre** : ne regarde pas que ton poids.'),
     },
     {
@@ -124,8 +123,8 @@ export function PlanSport({ sessions, sports, partie = 'tout' }: { sessions: num
                 <Barre part={b.part} couleur={b.couleur} delai={200 + k * 180} calme={calme} />
               </View>
               {b.cle === 'deux' && n ? (
-                <View style={{ flexShrink: 0, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10, backgroundColor: pal.indigo }}>
-                  <Ink size={11} weight="black" color="#FFFFFF">{traduire('Toi')}</Ink>
+                <View style={{ flexShrink: 0, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10, backgroundColor: c.primary }}>
+                  <Ink size={11} weight="black" color={c.onPrimary}>{traduire('Toi')}</Ink>
                 </View>
               ) : null}
             </View>

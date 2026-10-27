@@ -83,7 +83,6 @@ import { Cap } from '@/components/yoroi/v2/onboarding/Cap';
 import { Rythme, suggestedSessions } from '@/components/yoroi/v2/onboarding/Rythme';
 import { Frein } from '@/components/yoroi/v2/onboarding/Frein';
 import { Affirmation } from '@/components/yoroi/v2/onboarding/Affirmation';
-import { BlocDiscipline } from '@/components/yoroi/v2/onboarding/Discipline';
 import { appliquerChoixRappels } from '@/lib/v2/notifications/rappels';
 import { Taille } from '@/components/yoroi/v2/onboarding/Taille';
 import { Sante } from '@/components/yoroi/v2/onboarding/Sante';
@@ -99,6 +98,7 @@ import type { Nav } from '@/components/yoroi/v2/onboarding/types';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { kg } from '@/components/yoroi/v2/onboarding/ui';
+import { forcerIllustrations } from '@/components/yoroi/v2/stickers';
 
 const APPLE_EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 
@@ -275,7 +275,9 @@ export default function OnboardingScreen() {
   );
 
   const prevOf = (p: number): number => {
-    if (p === POIDS) return santeOff ? SANTE : SPORT;
+    // 27 octobre 2026 : Sante passe a la fin, juste avant Premium
+    if (p === POIDS) return SPORT;
+    if (p === SANTE) return RESULTAT;
     if (p === RYTHME) return sensDe(objectifsDuBrouillon(draftRef.current)) === 'stable' ? TAILLE : CAP;
     if (p === RESULTAT) return COMPARAISON;
     return p - 1;
@@ -320,6 +322,12 @@ export default function OnboardingScreen() {
   // Vague 45 : univers choisi a l'ecran 4, suivi par les ecrans qui montrent le personnage
   const univers: ChoixUnivers = d.univers ?? 'japon';
   const weight = d.weight ?? (genreCalcul === 'femme' ? 62 : 75);
+  // 27 octobre 2026 (retour de Houari) : des l'ecran Ton univers, les illustrations suivent l'univers choisi
+  // (Japon : l'encre japonaise ; Classique ou sans personnage : les stickers). A la sortie, le reglage reprend la main.
+  useEffect(() => {
+    forcerIllustrations(page >= UNIVERS ? (univers === 'japon' ? 'encre' : 'stickers') : null);
+  }, [page, univers]);
+  useEffect(() => () => forcerIllustrations(null), []);
 
   // ===== Ouverture =====
   const start = async () => {
@@ -385,6 +393,25 @@ export default function OnboardingScreen() {
     return null;
   };
   const goalsDe = (x: Draft) => objectifsDuBrouillon(x);
+  /**
+   * 27 octobre 2026 (Houari : « objectif perdre du poids, et on me montre 5 kg à prendre ») : le poids vise doit aller
+   * dans le sens de l'objectif. Un cap repris d'un ancien profil (reinstallation, Studio) ou regle dans l'autre sens
+   * est ignore : null, et le cap preregle prend sa place.
+   */
+  const cibleCoherente = (x: Draft, depart: number): number | null => {
+    const t = x.target;
+    if (t == null) return null;
+    const sens = sensDe(goalsDe(x));
+    if (sens === 'baisse' || sens === 'recompo') return t < depart - 0.05 ? t : null;
+    if (sens === 'hausse') return t > depart + 0.05 ? t : null;
+    if (sens === 'stable') return null;
+    return t;
+  };
+  /** Le cap montre partout apres l'ecran Cap : coherent, sinon le cap preregle (null si poids stable) */
+  const capVu = (x: Draft, depart: number): number | null => {
+    if (sensDe(goalsDe(x)) === 'stable') return null;
+    return cibleCoherente(x, depart) ?? presetTarget(goalsDe(x));
+  };
 
   const afterWeight = () => goTo(TAILLE);
 
@@ -395,12 +422,13 @@ export default function OnboardingScreen() {
       goTo(RYTHME);
       return;
     }
-    if (cur.target == null) patch({ target: presetTarget(goalsDe(cur)) });
+    if (cibleCoherente(cur, cur.weight ?? weight) == null) patch({ target: presetTarget(goalsDe(cur)) });
     goTo(CAP);
   };
 
   // apres les sports : Sante (si elle existe et n'est pas reliee), puis le poids
-  const afterSport = () => goTo(santeOff ? SANTE : POIDS);
+  // 27 octobre 2026 (Houari) : Sante est demandee a la fin (apres ton plan), plus apres les sports
+  const afterSport = () => goTo(POIDS);
 
   // aucun nombre de seances choisi d'avance : l'utilisateur decide sur l'ecran Rythme
   const toRythme = () => goTo(RYTHME);
@@ -443,27 +471,20 @@ export default function OnboardingScreen() {
   const connecterSante = async () => {
     onboardingEvent('reponse', { ecran: 'sante', question: 'autoriser' });
     if (isPreview) {
-      goTo(POIDS);
+      goTo(PREMIUM);
       return;
     }
     setSanteBusy(true);
     try {
+      // a la fin : ton profil est deja enregistre, Sante remplit ton suivi (pesees, pas, seances) a partir de maintenant
       const ok = await demanderAccesSante();
-      if (ok) {
-        setSanteOff(false);
-        // la derniere pesee de Sante preremplit l'ecran suivant (rien n'est enregistre sans validation)
-        const day = await latestHealthWeighIn().catch(() => null);
-        if (day?.weight) {
-          setHealthDay(day);
-          patch({ weight: day.weight, weightOrigin: 'health', healthDate: day.date });
-        }
-      }
+      if (ok) setSanteOff(false);
     } catch (e) {
       logger.warn('[Onboarding] demande Sante', e);
     } finally {
       setSanteBusy(false);
     }
-    goTo(POIDS);
+    goTo(PREMIUM);
   };
 
   const healthLabel = d.weightOrigin === 'health' && d.healthDate
@@ -559,12 +580,13 @@ export default function OnboardingScreen() {
   // ===== Preparation : ce qui est vraiment pret a la fin (26 octobre 2026) =====
   const lignesPreparation = (): string[] => {
     const cur = draftRef.current;
-    const stable = sensDe(goalsDe(cur)) === 'stable' || cur.target == null;
+    const cap = capVu(cur, cur.weighIn?.weight ?? cur.weight ?? weight);
+    const stable = cap == null;
     const n = cur.jours.length || cur.sessions || 0;
     const r = cur.rappels;
     const rappels = !!(r && (r.seance.actif || r.pesee.actif || r.eau.actif || r.bilan.actif));
     return [
-      stable ? traduire('Ton suivi de poids') : traduire('Ton chemin vers {0} kg', kg(cur.target as number)),
+      stable ? traduire('Ton suivi de poids') : traduire('Ton chemin vers {0} kg', kg(cap as number)),
       n ? traduirePluriel(n, n > 1, 'Ta semaine : {0} séance', 'Ta semaine : {0} séances', n) : traduire('Ta semaine d’entraînement'),
       ...(cur.univers !== 'aucun' ? [traduire('Ton personnage et ses rangs')] : []),
       ...(rappels ? [traduire('Tes rappels')] : []),
@@ -618,15 +640,16 @@ export default function OnboardingScreen() {
       case AFFIRMATION:
         // 14 octobre 2026 : sous l'affirmation, la discipline et les rappels a la demande (appliques a la preparation)
         return (
-          <Affirmation nav={nav()} name={d.name} freins={d.freins} genre={d.gender === 'femme' ? 'f' : d.gender === 'homme' ? 'h' : null} onNext={() => goTo(SPORT)}>
-            <BlocDiscipline
-              value={d.rappels}
-              onChange={(r) => answer('rappels', { rappels: r })}
-              ecran="onboarding"
-              apercu={isPreview}
-              joursAutoTexte={traduire("Tes jours d’entraînement, choisis plus loin. Ou touche tes jours ici.")}
-            />
-          </Affirmation>
+          <Affirmation
+            nav={nav()}
+            name={d.name}
+            freins={d.freins}
+            genre={d.gender === 'femme' ? 'f' : d.gender === 'homme' ? 'h' : null}
+            rappels={d.rappels}
+            onRappels={(r) => answer('rappels', { rappels: r })}
+            apercu={isPreview}
+            onNext={() => goTo(SPORT)}
+          />
         );
       case OBJECTIF:
         return (
@@ -645,7 +668,7 @@ export default function OnboardingScreen() {
       case SPORT:
         return (
           <Sport
-            nav={nav({ skip: () => skip({}, santeOff ? SANTE : POIDS) })}
+            nav={nav({ skip: () => skip({}, POIDS) })}
             genre={genre}
             sports={d.sports}
             onToggle={(id) => {
@@ -663,13 +686,13 @@ export default function OnboardingScreen() {
       case SANTE:
         return (
           <Sante
-            nav={nav()}
+            nav={{ ...nav(), progress: 1 }}
             busy={santeBusy}
             onConnect={() => void connecterSante()}
             onLater={() => {
               onboardingEvent('passer', { ecran: 'sante' });
               if (!isPreview) void passerAccesSante();
-              goTo(POIDS);
+              goTo(PREMIUM);
             }}
           />
         );
@@ -712,13 +735,14 @@ export default function OnboardingScreen() {
           <Cap
             nav={nav({ skip: () => skip({ target: null }, RYTHME) })}
             start={weight}
-            target={d.target ?? presetTarget(goalsDe(d)) ?? weight}
+            target={cibleCoherente(d, weight) ?? presetTarget(goalsDe(d)) ?? weight}
+            sens={sensDe(goalsDe(d))}
             goal={d.goal}
             recompo={sensDe(goalsDe(d)) === 'recompo'}
             height={d.height}
             onTarget={(v) => patch({ target: round1(v) })}
             onNext={() => {
-              if (draftRef.current.target == null) patch({ target: presetTarget(goalsDe(draftRef.current)) ?? weight });
+              if (cibleCoherente(draftRef.current, weight) == null) patch({ target: presetTarget(goalsDe(draftRef.current)) ?? weight });
               onboardingEvent('reponse', { ecran: 'cap', question: 'cap' });
               toRythme();
             }}
@@ -760,7 +784,7 @@ export default function OnboardingScreen() {
           <Demo
             nav={nav()}
             start={d.weighIn?.weight ?? weight}
-            target={sensDe(goalsDe(d)) === 'stable' ? null : d.target}
+            target={capVu(d, d.weighIn?.weight ?? weight)}
             goal={d.goal}
             recompo={sensDe(goalsDe(d)) === 'recompo'}
             sessions={d.sessions ?? 0}
@@ -785,14 +809,14 @@ export default function OnboardingScreen() {
             rankIndex={armure.rankIndex}
             pesees={d.peseeJours.length}
             start={d.weighIn?.weight ?? d.weight}
-            target={sensDe(goalsDe(d)) === 'stable' ? null : d.target}
+            target={capVu(d, d.weighIn?.weight ?? weight)}
             goal={d.goal}
             goals={goalsDe(d)}
             sessions={d.sessions}
             days={d.jours}
             height={d.height}
             sports={d.sports}
-            onNext={() => goTo(PREMIUM)}
+            onNext={() => goTo(santeOff ? SANTE : PREMIUM)}
           />
         );
       default:
@@ -803,7 +827,7 @@ export default function OnboardingScreen() {
             name={d.name}
             genre={genre}
             sessions={d.sessions ?? suggestedSessions(d.goal)}
-            target={sensDe(goalsDe(d)) === 'stable' ? null : d.target}
+            target={capVu(d, d.weighIn?.weight ?? weight)}
             goal={d.goal}
             start={d.weighIn?.weight ?? d.weight}
             height={d.height}

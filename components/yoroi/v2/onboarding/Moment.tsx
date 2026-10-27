@@ -30,21 +30,23 @@ import type { Encre } from './couleurs';
 import { MainButton, Riche, Shell, useColors } from './ui';
 import type { Nav } from './types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
-import { illustration } from '@/components/yoroi/v2/stickers';
+import { illustration, tamponPour, type NomSticker } from '@/components/yoroi/v2/stickers';
 
 const CHRONO = require('@/assets/avatars/app/ornements/chrono.webp');
 
-type MomentDef = { id: Exclude<PeseeMoment, 'inconnu'>; label: string; tampon: TamponId | null; encre: Encre };
+type MomentDef = { id: Exclude<PeseeMoment, 'inconnu'>; label: string; tampon: TamponId | null; encre: Encre; sticker: NomSticker };
 
 const LIST: MomentDef[] = [
-  { id: 'reveil', label: traduire('Au réveil'), tampon: 'frein_progres', encre: ENCRES.or },
-  { id: 'douche', label: traduire('Après la douche'), tampon: 'vague', encre: ENCRES.sarcelle },
-  { id: 'midi', label: traduire('Le midi'), tampon: 'objectif_maintien', encre: ENCRES.vermillon },
-  { id: 'soir', label: traduire('Le soir'), tampon: 'lapin_lune', encre: ENCRES.prune },
-  { id: 'heure', label: traduire('Heure précise'), tampon: null, encre: ENCRES.indigo },
+  { id: 'reveil', label: traduire('Au réveil'), tampon: 'frein_progres', encre: ENCRES.or, sticker: 'lune_soleil' },
+  { id: 'douche', label: traduire('Après la douche'), tampon: 'vague', encre: ENCRES.sarcelle, sticker: 'vague' },
+  { id: 'midi', label: traduire('Le midi'), tampon: 'objectif_maintien', encre: ENCRES.vermillon, sticker: 'balance' },
+  { id: 'soir', label: traduire('Le soir'), tampon: 'lapin_lune', encre: ENCRES.prune, sticker: 'sommeil' },
+  { id: 'heure', label: traduire('Heure précise'), tampon: null, encre: ENCRES.indigo, sticker: 'chrono' },
 ];
 
 const NB = ' ';
+/** 27 octobre 2026 (Houari : « la selection ne se voit pas assez ») : un choix franc, fond bleu nuit plein et texte blanc */
+const CHOISI = '#23358F';
 const ITEM = 44;
 
 /** « 7 h 30 » */
@@ -170,10 +172,10 @@ function Rond({ label, sous, on, onPress, a11y, role = 'button' }: { label: stri
     >
       {({ pressed }) => (
         <>
-          <View style={{ width: '100%', maxWidth: 40, aspectRatio: 1, borderRadius: 999, backgroundColor: on ? c.primary : pressed ? c.fillSubtle : c.fillSoft, alignItems: 'center', justifyContent: 'center', transform: [{ scale: on ? 1.06 : 1 }] }}>
-            <Ink size={15.5} weight="black" color={on ? c.onPrimary : c.ink}>{label}</Ink>
+          <View style={{ width: '100%', maxWidth: 40, aspectRatio: 1, borderRadius: 999, backgroundColor: on ? CHOISI : pressed ? c.fillSubtle : c.fillSoft, alignItems: 'center', justifyContent: 'center', transform: [{ scale: on ? 1.08 : 1 }] }}>
+            <Ink size={15.5} weight="black" color={on ? '#FFFFFF' : c.ink}>{label}</Ink>
           </View>
-          {sous ? <Ink size={10} weight="bold" color={on ? c.accent : c.textMuted}>{sous}</Ink> : null}
+          {sous ? <Ink size={10} weight={on ? 'black' : 'bold'} color={on ? CHOISI : c.textMuted}>{sous}</Ink> : null}
         </>
       )}
     </Pressable>
@@ -272,16 +274,13 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
                 style={{ flexBasis: '47%', flexGrow: 1 }}
               >
                 {({ pressed }) => (
-                  <View style={{ minHeight: 60, borderRadius: 16, backgroundColor: on ? m.encre.fond : pressed ? c.fillSubtle : c.background, borderWidth: on ? 2.5 : 1, borderColor: on ? m.encre.ink : c.border, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
-                    {m.tampon ? (
-                      <Tampon name={m.tampon} size={40} rotate={-6} ink={m.encre.ink} accessibilityLabel={null} />
-                    ) : (
-                      <Image source={illustration('chrono', CHRONO)} style={{ width: 40, height: 40 }} resizeMode="contain" accessibilityIgnoresInvertColors />
-                    )}
-                    <Ink size={14} weight="black" color={on ? m.encre.ink : c.ink} style={{ flex: 1, lineHeight: 18 }} numberOfLines={2}>{traduire(m.label)}</Ink>
+                  <View style={{ minHeight: 60, borderRadius: 16, backgroundColor: on ? CHOISI : pressed ? c.fillSubtle : c.background, borderWidth: on ? 0 : 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
+                    {/* 27 octobre 2026 : un sticker qui dit le moment (l'encre japonaise en univers Japon) */}
+                    <Image source={illustration(m.sticker, m.tampon ? tamponPour(m.tampon) : CHRONO)} style={{ width: 40, height: 40 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+                    <Ink size={14} weight="black" color={on ? '#FFFFFF' : c.ink} style={{ flex: 1, lineHeight: 18 }} numberOfLines={2}>{traduire(m.label)}</Ink>
                     {on ? (
-                      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: m.encre.ink, alignItems: 'center', justifyContent: 'center' }}>
-                        <Icon name="check" size={12} color={c.onAccent} stroke={3} />
+                      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
+                        <Icon name="check" size={12} color={CHOISI} stroke={3} />
                       </View>
                     ) : null}
                   </View>

@@ -52,7 +52,10 @@ import { P } from '@/components/yoroi/livePalette';
 import { LiensLegaux } from '@/components/yoroi/v2/premium/LiensLegaux';
 import { traduire, LOCALE, DECIMAL } from '@/lib/i18n/tr';
 import { BoutonLangue } from '@/components/yoroi/v2/langue/ChoixLangue';
-import { illustration } from '@/components/yoroi/v2/stickers';
+import { illustration, sticker, useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+import Animated, { FadeIn, FadeOut, useReducedMotion } from 'react-native-reanimated';
+import { SceneAnimee } from '@/components/yoroi/v2/scenes/SceneAnimee';
+import { SCENES_VOYAGES } from '@/lib/v2/espace/voyages';
 
 
 /** Compteur reel du contenu (null s'il manque : la carte ne s'affiche pas) */
@@ -68,18 +71,21 @@ const N_TECH = count('techniques');
 const N_SCENES = count('scenes');
 const N_CITATIONS = count('citations');
 
-type PageId = 'mur' | 'accueil' | 'poids' | 'records' | 'chrono' | 'sports' | 'seance' | 'partage' | 'personnages' | 'armure' | 'tel';
+type PageId = 'mur' | 'accueil' | 'poids' | 'coach' | 'records' | 'chrono' | 'sports' | 'seance' | 'scenes' | 'partage' | 'personnages' | 'armure' | 'tel';
 
 // vague 30 : le mot cle de chaque titre en couleur (entre ** **). Vague 50 : une page par titre, la premiere est le tout
 const PAGES: { id: PageId; titre: string; sous: string }[] = [
-  { id: 'mur', titre: traduire('Ton carnet de **combattant**'), sous: traduire('Poids, séances, records, chrono et ton Dojo. Glisse pour tout voir.') },
+  { id: 'mur', titre: traduire('Ton carnet de **combattant**'), sous: traduire('Poids, coach, séances, records, chrono, scènes et ton Dojo. Glisse pour tout voir.') },
   // 17 octobre 2026 (revue de l'onboarding) : les nouveautes, dessinees avec les vrais composants (Vitrines.tsx)
-  { id: 'accueil', titre: traduire('Ton accueil **en couleurs**'), sous: traduire('Une tuile par sujet, et ta santé du jour en un coup d’œil.') },
+  { id: 'accueil', titre: traduire('Ta santé du jour, **de ta montre**'), sous: traduire('Pas, exercice, calories, sommeil et cœur arrivent seuls sur ton accueil.') },
   { id: 'poids', titre: traduire('Ton poids, **enfin lisible**'), sous: traduire("Ta vraie tendance, pas le bruit de la balance. Avec {0} si tu veux.", healthName()) },
+  // 27 octobre 2026 (Houari : « il manque le Coach ») : le coach et ses programmes, puis les scenes
+  { id: 'coach', titre: traduire('Ton **coach** te guide'), sous: traduire('Un programme sur tes jours, ta séance du jour et la charge de chaque exercice.') },
   { id: 'records', titre: traduire('Tes records, **tamponnés**'), sous: traduire('Chaque record battu gagne son tampon dans ton carnet.') },
   { id: 'chrono', titre: traduire('Le chrono **des combattants**'), sous: traduire('Rounds, Tabata, repos muscu. Le gong, et les claquettes à 10 s de la fin.') },
   { id: 'sports', titre: traduire('Tous tes sports, **au même endroit**'), sous: N_SPORTS && N_EXOS ? traduire("{0} sports, {1} exercices, ta semaine en un coup d’œil.", fmt(N_SPORTS), fmt(N_EXOS)) : traduire('Tous tes sports, ta semaine d’un coup d’œil.') },
   { id: 'seance', titre: traduire('Tes séances, **plus simples**'), sous: traduire('Exercices en français, ta machine en image, ton lieu en un geste.') },
+  { id: 'scenes', titre: traduire('Des scènes **qui bougent**'), sous: traduire('Marseille, Paris, Tokyo : choisis la scène de ton accueil.') },
   { id: 'partage', titre: traduire('Tes **cartes** à partager'), sous: traduire('Story, Publication ou Carré, et des modèles Record, Semaine, Minimal.') },
   { id: 'personnages', titre: traduire('Des personnages **qui te ressemblent**'), sous: traduire('De toutes origines, homme ou femme. Choisis ton visage.') },
   { id: 'armure', titre: traduire('Ton armure **grandit avec toi**'), sous: traduire('Cinq rangs, d’Ashigaru à Shōgun, et un Dojo à remplir de personnages.') },
@@ -122,10 +128,12 @@ function origines(g: 'h' | 'f'): Tile[] {
     const src = imageTeinte(id, t, gg);
     if (p && src !== undefined) out.push({ k: 'image', w: 112, src, label: p.names?.[gg] ?? p.name, sub: traduire('Vie réelle'), fond });
   };
-  un('basket', 'peau_foncee', g, '#F6E3DF');
-  un('soignant', 'asie', g === 'h' ? 'f' : 'h', '#E3E9F3');
+  un('basket', 'peau_foncee', g, '#FFE1D6');
+  un('soignant', 'asie', g === 'h' ? 'f' : 'h', '#DCE3FF');
   return out;
 }
+
+const SCENE_CALANQUE: ImageSourcePropType = require('@/assets/avatars/app/scenes_voyages/sc13_calanque_couchant.webp');
 
 const ILLU_ENCRE = {
   chrono: require('@/assets/avatars/app/ornements/chrono.webp'),
@@ -152,6 +160,12 @@ const ILLU = {
   get balance(): ImageSourcePropType {
     return illustration('balance', ILLU_ENCRE.balance);
   },
+  get coach(): ImageSourcePropType {
+    return illustration('coach', sticker('coach'));
+  },
+  get kabuto(): ImageSourcePropType {
+    return illustration('kabuto');
+  },
 };
 
 /**
@@ -168,28 +182,32 @@ function buildRows(g: 'h' | 'f'): Tile[][] {
   const autre: 'h' | 'f' = g === 'h' ? 'f' : 'h';
   const r1: (Tile | null)[] = [
     { k: 'poids', w: 0 },
+    // 27 octobre 2026 : le coach et ses programmes
+    { k: 'illu', w: 200, src: ILLU.coach, fond: '#E8ECFF', ink: '#3557D9', kicker: 'Coach', title: traduire('Ta séance du jour'), sub: traduire('Un programme sur tes jours') },
     { k: 'tampons', w: 196, ids: ['record_force', 'record_endurance', 'record_combat'], title: traduire('Records tamponnés'), sub: traduire('Muscu, course, combat') },
-    { k: 'illu', w: 188, src: ILLU.chrono, fond: '#F5EDD9', ink: '#A87B22', kicker: 'Chrono', title: traduire('Rounds et Tabata'), sub: traduire('Le gong, les claquettes') },
-    { k: 'image', w: 116, src: GUERRIER_IMAGES[g][4], label: 'Shōgun', sub: traduire('ton armure'), fond: '#F3EBDA' },
+    { k: 'illu', w: 188, src: ILLU.chrono, fond: '#F6EEDD', ink: '#A57A1C', kicker: 'Chrono', title: traduire('Rounds et Tabata'), sub: traduire('Le gong, les claquettes') },
+    { k: 'image', w: 116, src: GUERRIER_IMAGES[g][4], label: 'Shōgun', sub: traduire('ton armure'), fond: '#F6EEDD' },
     { k: 'couleur', w: 196, bg: 'gold', icon: 'share', kicker: 'Partage', title: traduire('Tes cartes'), sub: traduire('Story, Publication, Carré'), nouveau: true },
     N_SPORTS ? { k: 'stat', w: 128, n: fmt(N_SPORTS), label: 'sports', sub: traduire('à noter en deux touches') } : null,
   ];
   const r2: (Tile | null)[] = [
-    { k: 'illu', w: 196, src: ILLU.jjb, fond: '#F2E4EE', ink: '#7B3F6E', kicker: 'Carnet', title: N_TECH ? `${fmt(N_TECH)} techniques` : traduire('Tes techniques'), sub: traduire('JJB, lutte et frappes') },
+    { k: 'illu', w: 196, src: ILLU.jjb, fond: '#EFE6F3', ink: '#8A3F78', kicker: 'Carnet', title: N_TECH ? `${fmt(N_TECH)} techniques` : traduire('Tes techniques'), sub: traduire('JJB, lutte et frappes') },
     { k: 'tampons', w: 200, ids: ['medaille_or', 'medaille_argent', 'medaille_bronze'], title: traduire('Compétitions'), sub: traduire('Ta catégorie, tes médailles') },
-    N_SCENES ? { k: 'scene', w: 168, src: scene('sommet'), label: traduire("{0} scènes", N_SCENES), sub: `dont ${NEW_SCENES.length} nouvelles`, nouveau: true } : null,
-    { k: 'illu', w: 188, src: ILLU.ruban, fond: '#E8EEDB', ink: '#5A7631', kicker: 'Mensurations', title: traduire('Taille, ventre, bras'), sub: traduire('Ce que la balance ne dit pas') },
+    // 27 octobre 2026 : une des nouvelles scenes de Marseille, la calanque au couchant
+    N_SCENES ? { k: 'scene', w: 168, src: SCENE_CALANQUE, label: traduire("{0} scènes", N_SCENES), sub: traduire('dont {0} nouvelles', NEW_SCENES.length), nouveau: true } : null,
+    { k: 'illu', w: 188, src: ILLU.ruban, fond: '#E3F2EA', ink: '#1C6B45', kicker: 'Mensurations', title: traduire('Taille, ventre, bras'), sub: traduire('Ce que la balance ne dit pas') },
+    { k: 'illu', w: 196, src: ILLU.kabuto, fond: '#FFE1D6', ink: '#B4471E', kicker: 'Illustrations', title: traduire('Stickers ou encre'), sub: traduire('Le style de ton app') },
     N_EXOS ? { k: 'stat', w: 144, n: fmt(N_EXOS), label: traduire('exercices'), sub: traduire('dans la bibliothèque'), tone: 'gold' } : null,
-    { k: 'image', w: 112, src: sport('boxe', autre), label: 'Boxe', fond: '#F6E3DF' },
+    { k: 'image', w: 112, src: sport('boxe', autre), label: 'Boxe', fond: '#FFE1D6' },
   ];
   const r3: (Tile | null)[] = [
-    { k: 'image', w: 120, src: monde('ninja', g), label: 'Ninja', sub: traduire('le Dojo'), fond: '#ECEAEE' },
+    { k: 'image', w: 120, src: monde('ninja', g), label: 'Ninja', sub: traduire('le Dojo'), fond: '#EFE6F3' },
     ...origines(g),
     { k: 'scene', w: 168, src: scene('dojo'), label: traduire('Le Dojo'), sub: traduire('tes personnages') },
     { k: 'couleur', w: 204, bg: 'ink', icon: 'heart', kicker: traduire('Ta santé aujourd’hui'), title: healthName(), sub: traduire('Pas, cœur, sommeil sur l’accueil'), nouveau: true },
     { k: 'couleur', w: 196, bg: 'indigo', icon: 'calendar', kicker: traduire('Ton cap'), title: traduire('Ta date estimée'), sub: traduire('Une fourchette honnête') },
     N_CITATIONS ? { k: 'stat', w: 132, n: fmt(N_CITATIONS), label: 'citations', sub: traduire('une par jour'), tone: 'gold' } : null,
-    { k: 'image', w: 112, src: sport('jjb', g), label: 'JJB', fond: '#E3E9F3' },
+    { k: 'image', w: 112, src: sport('jjb', g), label: 'JJB', fond: '#DCE3FF' },
   ];
   return [r1, r2, r3].map((r) => r.filter((t): t is Tile => t !== null));
 }
@@ -284,11 +302,12 @@ function TileView({ t, h }: { t: Tile; h: number }) {
     case 'couleur': {
       // 17 octobre 2026 : indigo de la charte fixe (en sombre, l'accent clair rendait le texte blanc illisible)
       // 27 octobre 2026 (refonte Pastel) : l'indigo devient le pastel bleu (texte bleu nuit), plus de carre autour de l'icone
-      const bg = t.bg === 'indigo' ? '#DCE3FF' : t.bg === 'ink' ? '#1D2033' : '#F3EBDA';
-      const onBg = t.bg === 'gold' ? '#1D2033' : t.bg === 'indigo' ? '#23358F' : '#FFFFFF';
-      const soft = t.bg === 'gold' ? 'rgba(29,32,41,0.66)' : t.bg === 'indigo' ? 'rgba(35,53,143,0.72)' : 'rgba(255,255,255,0.74)';
+      // 27 octobre 2026 (refonte Pastel, suite) : la tuile sante passe de l'encre pleine a la menthe, l'or au creme
+      const bg = t.bg === 'indigo' ? '#DCE3FF' : t.bg === 'ink' ? '#E3F2EA' : '#F6EEDD';
+      const onBg = t.bg === 'gold' ? '#1D2033' : t.bg === 'indigo' ? '#23358F' : '#1C6B45';
+      const soft = t.bg === 'gold' ? 'rgba(29,32,41,0.66)' : t.bg === 'indigo' ? 'rgba(35,53,143,0.72)' : 'rgba(28,107,69,0.78)';
       const iconBg = 'transparent';
-      const iconCol = t.bg === 'gold' ? c.goldDeep : t.bg === 'ink' ? '#E3C47B' : '#23358F';
+      const iconCol = t.bg === 'gold' ? c.goldDeep : t.bg === 'ink' ? '#1C6B45' : '#23358F';
       return (
         <View style={[card, { backgroundColor: bg, padding: h < 84 ? 10 : 12, justifyContent: 'space-between' }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -318,7 +337,7 @@ function TileView({ t, h }: { t: Tile; h: number }) {
       );
     case 'scene':
       return (
-        <View style={[card, { backgroundColor: c.darkCard }]}>
+        <View style={[card, { backgroundColor: c.fillSoft }]}>
           <Image source={t.src} resizeMode="cover" style={{ position: 'absolute', top: 0, left: 0, width: t.w, height: h }} accessibilityIgnoresInvertColors />
           <LinearGradient colors={['rgba(16,20,34,0)', 'rgba(16,20,34,0.78)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '62%' }} />
           {t.nouveau ? (
@@ -421,7 +440,7 @@ function PagePoids({ designW }: { designW: number }) {
 
 const RECORDS: { t: TamponId; kicker: string; titre: string; sous: string }[] = [
   { t: 'record_force', kicker: traduire('Record de force'), titre: traduire('Développé couché, 100 kg'), sous: traduire('5 kg de plus que ton ancien record') },
-  { t: 'record_endurance', kicker: 'Record d’endurance', titre: '10 km en 46 min 20', sous: traduire('1 min 05 plus vite') },
+  { t: 'record_endurance', kicker: traduire('Record d’endurance'), titre: traduire('10 km en 46 min 20'), sous: traduire('1 min 05 plus vite') },
   { t: 'record_combat', kicker: traduire('Record de combat'), titre: traduire('6 rounds de sparring'), sous: traduire('Ta plus longue séance de combat') },
 ];
 
@@ -453,7 +472,9 @@ function PageRecords() {
 }
 
 /** Le chrono rounds en plein combat : round 3 sur 5, les 10 dernieres secondes en rouge, les claquettes */
-const NUIT = '#1D2029';
+// 27 octobre 2026 (refonte Pastel) : la carte du chrono passe de la nuit au creme, texte encre
+const CREME = '#F6EEDD';
+const CREME_TITRE = '#A57A1C';
 const ROUGE_CHRONO = '#F0644B';
 const EFFORT = '#7E9FE0';
 const REPOS = '#9DBB63';
@@ -464,16 +485,16 @@ function PageChrono({ g }: { g: 'h' | 'f' }) {
   const rounds = 5;
   const actuel = 3;
   return (
-    <View style={{ borderRadius: 24, backgroundColor: NUIT, padding: 16, gap: 12, overflow: 'hidden' }}>
+    <View style={{ borderRadius: 24, backgroundColor: CREME, padding: 16, gap: 12, overflow: 'hidden' }}>
       <Image source={sport('boxe', g)} resizeMode="contain" style={{ position: 'absolute', right: -18, top: 8, width: 132, height: 176, opacity: 0.95 }} accessibilityIgnoresInvertColors />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <View style={{ backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
-          <Ink size={11} weight="black" color={c.goldLight} style={{ letterSpacing: 1 }}>{traduire("ROUND {0} SUR {1}", actuel, rounds)}</Ink>
+        <View style={{ backgroundColor: c.surface, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
+          <Ink size={11} weight="black" color={CREME_TITRE} style={{ letterSpacing: 1 }}>{traduire("ROUND {0} SUR {1}", actuel, rounds)}</Ink>
         </View>
-        <Pastille label="Exemple" blanche />
+        <Pastille label={traduire('Exemple')} blanche />
       </View>
       <View style={{ gap: 0 }}>
-        <Ink size={13} weight="extraBold" color="rgba(255,255,255,0.72)">{traduire("Boxe, rounds de 3 min")}</Ink>
+        <Ink size={13} weight="extraBold" color={c.textSecondary}>{traduire("Boxe, rounds de 3 min")}</Ink>
         <Ink size={78} weight="black" tight color={ROUGE_CHRONO} style={{ lineHeight: 86, fontVariant: ['tabular-nums'] }}>0:08</Ink>
       </View>
       {/* la frise des rounds : barre haute l'effort, barre basse le repos, comme sur l'ecran du chrono */}
@@ -486,19 +507,19 @@ function PageChrono({ g }: { g: 'h' | 'f' }) {
           return (
             <View
               key={k}
-              style={{ flex: effort ? 3 : 1, height: effort ? 30 : 12, borderRadius: 6, backgroundColor: effort ? EFFORT : REPOS, opacity: fait || enCours ? 1 : 0.32, borderWidth: enCours ? 2 : 0, borderColor: '#FFFFFF' }}
+              style={{ flex: effort ? 3 : 1, height: effort ? 30 : 12, borderRadius: 6, backgroundColor: effort ? EFFORT : REPOS, opacity: fait || enCours ? 1 : 0.32, borderWidth: enCours ? 2 : 0, borderColor: c.ink }}
             />
           );
         })}
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: 'rgba(240,100,75,0.18)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#FFE1D6', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
           <Icon name="bell" size={14} color={ROUGE_CHRONO} stroke={2.6} />
-          <Ink size={12.5} weight="extraBold" color="#FFFFFF">{traduire("Clac clac clac, plus que 10 s")}</Ink>
+          <Ink size={12.5} weight="extraBold" color={c.ink}>{traduire("Clac clac clac, plus que 10 s")}</Ink>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
-          <Icon name="timer" size={14} color={c.goldLight} stroke={2.4} />
-          <Ink size={12.5} weight="extraBold" color="#FFFFFF">{traduire("Gong au début et à la fin")}</Ink>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: c.surface, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
+          <Icon name="timer" size={14} color={CREME_TITRE} stroke={2.4} />
+          <Ink size={12.5} weight="extraBold" color={c.ink}>{traduire("Gong au début et à la fin")}</Ink>
         </View>
       </View>
     </View>
@@ -506,12 +527,12 @@ function PageChrono({ g }: { g: 'h' | 'f' }) {
 }
 
 const SPORTS_PAGE: { id: string; fond: string }[] = [
-  { id: 'boxe', fond: '#F6E3DF' },
-  { id: 'jjb', fond: '#E3E9F3' },
-  { id: 'mma', fond: '#ECEAEE' },
-  { id: 'musculation', fond: '#F3EBDA' },
-  { id: 'running', fond: '#E8EEDB' },
-  { id: 'fitness', fond: '#F2E4EE' },
+  { id: 'boxe', fond: '#FFE1D6' },
+  { id: 'jjb', fond: '#DCE3FF' },
+  { id: 'mma', fond: '#EFE6F3' },
+  { id: 'musculation', fond: '#F6EEDD' },
+  { id: 'running', fond: '#E3F2EA' },
+  { id: 'fitness', fond: '#EFE6F3' },
 ];
 
 function PageSports({ g, designW }: { g: 'h' | 'f'; designW: number }) {
@@ -549,34 +570,132 @@ function PageSports({ g, designW }: { g: 'h' | 'f'; designW: number }) {
 
 const RANGS = ['Ashigaru', 'Bushi', traduire('Samouraï'), 'Rōnin', 'Shōgun'];
 
-function PageArmure({ g, designW }: { g: 'h' | 'f'; designW: number }) {
+/** 27 octobre 2026 (Houari) : le Rōnin en vedette, l'homme et la femme a tour de role (toutes les 2,8 s, fixe si Reduire les animations) */
+function useAlterne(ms: number): number {
+  const reduire = useReducedMotion();
+  const [k, setK] = useState(0);
+  useEffect(() => {
+    if (reduire) return;
+    const t = setInterval(() => setK((x) => x + 1), ms);
+    return () => clearInterval(t);
+  }, [reduire, ms]);
+  return reduire ? 0 : k;
+}
+
+function PageArmure({ g }: { g: 'h' | 'f'; designW: number }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const cw = Math.floor((designW - 4 * 4) / 5);
+  const k = useAlterne(2800);
+  const gg: 'h' | 'f' = k % 2 === 0 ? g : g === 'h' ? 'f' : 'h';
   return (
     <View style={{ gap: 10 }}>
-      <PageCarte style={{ paddingHorizontal: 6, paddingTop: 12, paddingBottom: 10 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-          {RANGS.map((r, k) => {
-            const h = 92 + k * 16;
-            return (
-              <View key={r} style={{ width: cw, alignItems: 'center', gap: 4 }}>
-                <Image source={GUERRIER_IMAGES[g][k]} resizeMode="contain" style={{ width: cw + 14, height: h }} accessibilityIgnoresInvertColors />
-                <Ink size={11} weight="black" color={k === 4 ? c.goldDeep : c.ink} numberOfLines={1}>{r}</Ink>
-              </View>
-            );
-          })}
+      <View style={{ borderRadius: 24, backgroundColor: '#F6EEDD', flexDirection: 'row', alignItems: 'flex-end', paddingLeft: 6, paddingRight: 14, paddingTop: 10, overflow: 'hidden', minHeight: 214 }}>
+        <View style={{ width: 160, height: 204 }}>
+          <Animated.Image key={gg} entering={FadeIn.duration(600)} exiting={FadeOut.duration(600)} source={GUERRIER_IMAGES[gg][3]} resizeMode="contain" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, width: 160, height: 204 }} accessibilityIgnoresInvertColors />
         </View>
-      </PageCarte>
+        <View style={{ flex: 1, gap: 5, paddingBottom: 16 }}>
+          <Ink size={10.5} weight="black" color="#A57A1C" style={{ letterSpacing: 1 }}>{traduire('RANG 4 SUR 5')}</Ink>
+          <Ink size={26} weight="black" tight color={c.ink}>Rōnin</Ink>
+          <Ink size={12.5} weight="bold" color={c.textSecondary} style={{ lineHeight: 17 }}>{traduire('Chaque séance et chaque pesée font monter ton rang, d’Ashigaru à Shōgun.')}</Ink>
+          <View style={{ flexDirection: 'row', gap: 4, marginTop: 4 }}>
+            {RANGS.map((r, i) => (
+              <View key={r} style={{ flex: 1, height: 7, borderRadius: 4, backgroundColor: i <= 3 ? (i === 3 ? '#A57A1C' : '#D9B866') : c.surface }} />
+            ))}
+          </View>
+        </View>
+      </View>
       <PageCarte style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10 }}>
         <ArmureEnConstruction piece={PIECES.samourai} progres={0.66} taille={84} />
         <View style={{ flex: 1, gap: 4 }}>
-          <Ink size={10.5} weight="black" color={c.goldDeep} style={{ letterSpacing: 1 }}>EN CONSTRUCTION</Ink>
+          <Ink size={10.5} weight="black" color={c.goldDeep} style={{ letterSpacing: 1 }}>{traduire('EN CONSTRUCTION')}</Ink>
           <Ink size={17} weight="black" tight numberOfLines={1}>{traduire(PIECES.samourai.nom)}</Ink>
           <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={2}>{traduire("Tes séances dévoilent ta pièce suivante, étape par étape.")}</Ink>
           <EtapesPiece faites={2} />
         </View>
       </PageCarte>
+    </View>
+  );
+}
+
+/** 27 octobre 2026 (Houari : « il manque le Coach ») : la seance du jour du coach, en exemple, dans le pastel du Coach */
+const SEANCE_EXEMPLE: { nom: string; detail: string }[] = [
+  { nom: traduire('Développé couché'), detail: traduire('4 séries de 8, 60 kg') },
+  { nom: traduire('Rowing barre'), detail: traduire('4 séries de 10, 50 kg') },
+  { nom: 'Dips', detail: traduire('3 séries de 10') },
+];
+
+function PageCoach() {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const illus = useIllustrations();
+  const jours = [true, false, true, false, true, false, false];
+  return (
+    <View style={{ gap: 10 }}>
+      <View style={{ borderRadius: 24, backgroundColor: '#E8ECFF', padding: 16, gap: 10, overflow: 'hidden' }}>
+        <Image source={illus.img('coach', sticker('coach'))} resizeMode="contain" style={{ position: 'absolute', right: 8, top: 8, width: 78, height: 78 }} accessibilityIgnoresInvertColors />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Ink size={10.5} weight="black" color="#3557D9" style={{ letterSpacing: 1.2 }}>{traduire('SÉANCE DU JOUR')}</Ink>
+          <Pastille label={traduire('Exemple')} blanche />
+        </View>
+        <Ink size={22} weight="black" tight color={c.ink} style={{ maxWidth: '70%' }}>{traduire('Haut du corps')}</Ink>
+        <View style={{ gap: 6 }}>
+          {SEANCE_EXEMPLE.map((x) => (
+            <View key={x.nom} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: c.surface, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8 }}>
+              <Ink size={14} weight="black" color={c.ink} style={{ flex: 1 }} numberOfLines={1}>{x.nom}</Ink>
+              <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={1}>{x.detail}</Ink>
+            </View>
+          ))}
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: '#E3F2EA', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 }}>
+          <Icon name="up" size={13} color="#1C6B45" stroke={2.6} />
+          <Ink size={12} weight="black" color="#1C6B45">{traduire('+5 % de charge quand tu réussis')}</Ink>
+        </View>
+      </View>
+      <PageCarte style={{ gap: 8, paddingVertical: 12 }}>
+        <Ink size={10.5} weight="black" color="#8A3F78" style={{ letterSpacing: 1.2 }}>{traduire('TON PROGRAMME SUR TES JOURS')}</Ink>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((l, i) => (
+            <View key={i} style={{ width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: jours[i] ? '#EFE6F3' : c.fillSoft, borderWidth: jours[i] ? 2 : 0, borderColor: '#B35A9E' }}>
+              <Ink size={13} weight="black" color={jours[i] ? '#6E2F60' : c.textMuted}>{traduire(l)}</Ink>
+            </View>
+          ))}
+        </View>
+      </PageCarte>
+    </View>
+  );
+}
+
+/** 27 octobre 2026 : les scenes de l'accueil, la calanque de Marseille animee en grand (video de la scene), trois autres en dessous */
+const SCENES_PAGE: string[] = ['voyage_moto_tour_eiffel', 'voyage_yatai_pont', 'voyage_balancoire_plage'];
+
+function PageScenes({ designW, actif }: { designW: number; actif: boolean }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const calanque = SCENES_VOYAGES.find((x) => x.id === 'marseille_calanque');
+  const petites = SCENES_PAGE.map((id) => SCENES_VOYAGES.find((x) => x.id === id)).filter((x): x is (typeof SCENES_VOYAGES)[number] => !!x);
+  const grandH = Math.round((designW * 670) / 1200);
+  const pw = Math.floor((designW - 16) / 3);
+  return (
+    <View style={{ gap: 8 }}>
+      {calanque ? (
+        <View>
+          <SceneAnimee scene={calanque.anim as never} source={calanque.image} width={designW} height={grandH} actif={actif} borderRadius={22} />
+          <View style={{ position: 'absolute', left: 10, bottom: 10, backgroundColor: c.surface, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
+            <Ink size={12} weight="black" color={c.ink}>{calanque.nom}</Ink>
+          </View>
+          <View style={{ position: 'absolute', right: 10, top: 10 }}>
+            <Pastille label={traduire('Marseille')} blanche />
+          </View>
+        </View>
+      ) : null}
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {petites.map((x) => (
+          <View key={x.id} style={{ width: pw, gap: 4 }}>
+            <Image source={x.image} resizeMode="cover" style={{ width: pw, height: Math.round(pw * 0.62), borderRadius: 14 }} accessibilityIgnoresInvertColors />
+            <Ink size={11.5} weight="black" color={c.ink} numberOfLines={1}>{x.nom}</Ink>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -744,7 +863,7 @@ export function Accroche({
         <View style={{ width, height: contenuH, overflow: 'hidden', justifyContent: 'center' }} pointerEvents="none">
           <View style={{ gap: ROW_GAP }}>
             {shown.map((r, k) => (
-              <Defilement key={k} speed={speeds[k]} direction={k % 2 === 0 ? 'left' : 'right'} paused={paused || i !== 0} start={[0, 0.4, 0.7][k]}>
+              <Defilement key={k} speed={speeds[k]} direction={k % 2 === 0 ? 'left' : 'right'} paused={!visible || i !== 0} start={[0, 0.4, 0.7][k]}>
                 {r.map((t, j) => (
                   <TileView key={j} t={t} h={tileH} />
                 ))}
@@ -761,7 +880,9 @@ export function Accroche({
       : id === 'records' ? <PageRecords />
       : id === 'chrono' ? <PageChrono g={genre} />
       : id === 'sports' ? <PageSports g={genre} designW={designW} />
-      : id === 'accueil' ? <VitrineAccueil />
+      : id === 'accueil' ? <VitrineAccueil seulSante />
+      : id === 'coach' ? <PageCoach />
+      : id === 'scenes' ? <PageScenes designW={designW} actif={i === PAGES.findIndex((p) => p.id === 'scenes') && visible} />
       : id === 'seance' ? <VitrineSeance />
       : id === 'partage' ? <VitrinePartage largeur={designW} />
       : id === 'personnages' ? <VitrinePersonnages genre={genre} />
@@ -793,7 +914,7 @@ export function Accroche({
           style={({ pressed }) => ({ minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 11, borderRadius: 999, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
         >
           {restoringBackup ? <ActivityIndicator size="small" color={c.accent} /> : <Icon name="restore" size={14} color={c.accent} />}
-          {apercu ? null : <Ink size={12} weight="extraBold" color={c.ink} numberOfLines={1}>{restoringBackup ? 'Restauration' : traduire('J’ai déjà une sauvegarde')}</Ink>}
+          {apercu ? null : <Ink size={12} weight="extraBold" color={c.ink} numberOfLines={1}>{restoringBackup ? traduire('Restauration') : traduire('J’ai déjà une sauvegarde')}</Ink>}
         </Pressable>
         {onClose ? <RoundIcon name="close" label={traduire("Fermer l’aperçu")} onPress={onClose} /> : null}
       </View>
@@ -816,6 +937,9 @@ export function Accroche({
             scrollEventThrottle={16}
             decelerationRate="fast"
             disableIntervalMomentum
+            onScrollBeginDrag={pause}
+            onScrollEndDrag={reprendre}
+            onMomentumScrollEnd={reprendre}
             style={{ flex: 1 }}
             accessibilityLabel={traduire("Les pages de présentation de YOROI, glisse à gauche ou à droite")}
           >
@@ -872,10 +996,11 @@ export function Accroche({
           <MainButton label={traduire("Commencer")} onPress={onStart} />
           {/* vague 30 : les vrais atouts, en grand (plus de « Version gratuite » : l'app est freemium) */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 4, marginHorizontal: -8 }}>
-            <Atout icon="shield" label="Hors ligne" tiny={tiny} />
-            <Atout icon="close" label={traduire("Sans publicité")} tiny={tiny} />
-            <Atout icon="lock" label={traduire("Données sur ton téléphone")} tiny={tiny} large />
-            <Atout icon="heart" label={healthName()} tiny={tiny} large />
+            {/* 27 octobre 2026 (Houari : « trop neutres ») : un sticker et un texte dans sa couleur pastel */}
+            <Atout nom="boussole" encre="#23358F" label={traduire('Hors ligne')} tiny={tiny} />
+            <Atout nom="environnement" encre="#A57A1C" label={traduire("Sans publicité")} tiny={tiny} />
+            <Atout nom="cle" encre="#8A3F78" label={traduire("Données sur ton téléphone")} tiny={tiny} large />
+            <Atout nom="sante_appareils" encre="#1C6B45" label={healthName()} tiny={tiny} large />
           </View>
           <View style={{ alignItems: 'center' }}>
             <Pressable onPress={restoringPurchases ? undefined : () => void onRestorePurchases()} accessibilityRole="button" accessibilityLabel={traduire("Déjà abonné ? Restaurer mes achats")} hitSlop={4} style={{ minHeight: 30, justifyContent: 'center', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -903,16 +1028,14 @@ export function Accroche({
   );
 }
 
-/** Un atout de l'app, en grand : pictogramme dans un rond indigo, libelle sur deux lignes au plus */
-function Atout({ icon, label, tiny, large }: { icon: IconName; label: string; tiny?: boolean; large?: boolean }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
+/** Un atout de l'app : son sticker (ou l'encre japonaise, selon l'univers), le libelle dans sa couleur, deux lignes au plus */
+function Atout({ nom, encre, label, tiny, large }: { nom: NomSticker; encre: string; label: string; tiny?: boolean; large?: boolean }) {
+  const illus = useIllustrations();
+  const t = tiny ? 34 : 42;
   return (
-    <View style={{ flex: large ? 1.3 : 1, alignItems: 'center', gap: tiny ? 3 : 5 }} accessible accessibilityLabel={label}>
-      <View style={{ width: tiny ? 28 : 34, height: tiny ? 28 : 34, borderRadius: 17, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name={icon} size={tiny ? 14 : 16} color={c.onPrimary} stroke={2.6} />
-      </View>
-      <Ink size={tiny ? 11 : 12} weight="black" color={c.ink} numberOfLines={2} style={{ textAlign: 'center', lineHeight: tiny ? 13 : 15 }}>{label}</Ink>
+    <View style={{ flex: large ? 1.3 : 1, alignItems: 'center', gap: tiny ? 2 : 4 }} accessible accessibilityLabel={label}>
+      <Image source={illus.img(nom, sticker(nom))} style={{ width: t, height: t }} resizeMode="contain" accessibilityIgnoresInvertColors />
+      <Ink size={tiny ? 11 : 12} weight="black" color={encre} numberOfLines={2} style={{ textAlign: 'center', lineHeight: tiny ? 13 : 15 }}>{label}</Ink>
     </View>
   );
 }

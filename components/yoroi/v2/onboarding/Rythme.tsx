@@ -12,7 +12,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { JoursPicker, JOURS_LETTRES, JOURS_NOMS, joursTexte } from '@/components/yoroi/v2/espace/JoursPicker';
 import type { Goal } from '@/lib/v2/onboarding/draft';
 import { MainButton, Riche, Shell, useColors } from './ui';
-import { FAMILLES, SemaineCouleurs, familleSport, sportsDesJours } from './SemaineCouleurs';
+import { SemaineCouleurs } from './SemaineCouleurs';
 import type { Nav } from './types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
@@ -57,7 +57,8 @@ export function Rythme({ nav, days, sports = [], onToggle, onNext }: { nav: Nav;
       sub={traduire("Touche les jours où tu peux t’entraîner. Le nombre de séances suit tout seul.")}
       footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={!n} />}
     >
-      <JoursPicker value={days} onToggle={onToggle} label={traduire('Entraînement')} couleurs={sportsDesJours(days, sports).map((s) => FAMILLES[s ? familleSport(s) : 'muscu'].couleur)} />
+      {/* 27 octobre 2026 (refonte Pastel) : les jours pris en pastel ; les couleurs de tes sports restent sur Ta semaine, dessous */}
+      <JoursPicker value={days} onToggle={onToggle} label={traduire('Entraînement')} />
       <View style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 12 }}>
         <View style={{ gap: 4 }}>
           <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ta semaine")}</Ink>

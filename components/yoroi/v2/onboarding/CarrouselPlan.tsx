@@ -177,7 +177,7 @@ export function CarrouselPlan({ pages }: { pages: PageCarrousel[] }) {
                 accessibilityState={{ selected: i === index }}
                 accessibilityLabel={traduire('Carte {0} sur {1}', i + 1, n)}
               >
-                <View style={{ width: i === index ? 22 : 8, height: 8, borderRadius: 4, backgroundColor: i === index ? pal.indigo : pal.anneau }} />
+                <View style={{ width: i === index ? 22 : 8, height: 8, borderRadius: 4, backgroundColor: i === index ? c.detail : pal.anneau }} />
               </Pressable>
             ))}
           </View>

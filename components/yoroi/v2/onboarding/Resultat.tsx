@@ -17,14 +17,13 @@
  * Premium est marquee comme telle, et la premiere carte du paywall la prolonge.
  */
 import React from 'react';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { Icon } from '@/components/yoroi/v2/seances/Icon';
-import type { IconName } from '@/components/yoroi/v2/seances/Icon';
 import { Icon as IconEspace } from '@/components/yoroi/v2/espace/ui';
 import { ceQueYoroiFait, type IdPourToi } from '@/lib/v2/premium/pourToi';
 import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
+import { sticker, useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import { guerrierImage } from '@/components/yoroi/v2/espace/assets';
 import { CLASSIQUE_IMAGES } from '@/lib/v2/dojo/personnages';
 import { rangNom } from '@/lib/v2/dojo/univers';
@@ -71,6 +70,7 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
 }) {
   const c = useColors();
   const pal = usePaletteProgramme();
+  const illus = useIllustrations();
   const title = name.trim() ? traduire("{0}, voici **ton plan**", name.trim()) : traduire('Voici **ton plan**');
   const liste = goals && goals.length ? goals : goal ? [goal] : [];
   const sens = sensDe(liste);
@@ -108,7 +108,8 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
     seances: sessions,
     sports,
   });
-  const ICONE_CHOSE: Record<IdPourToi, IconName> = { coach: 'list', pesee: 'scale', semaine: 'calendar', combat: 'glove', premium: 'chart' };
+  // 27 octobre 2026 (refonte Pastel) : un sticker par chose, plus de carre colore autour d'une icone
+  const STICKER_CHOSE: Record<IdPourToi, NomSticker> = { coach: 'coach', pesee: 'balance', semaine: 'calendrier', combat: 'gants', premium: 'bilan' };
   const pagePourToi: PageCarrousel = {
     cle: 'pour_toi',
     contenu: () => (
@@ -119,9 +120,7 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
         </View>
         {choses.map((k) => (
           <View key={k.id} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }} accessible accessibilityLabel={k.premium ? traduire('{0}, avec Premium. {1}', k.titre, k.texte) : `${k.titre}. ${k.texte}`}>
-            <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: k.premium ? pal.orangeTint : k.id === 'coach' ? pal.indigo : pal.teinte, alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name={ICONE_CHOSE[k.id]} size={20} color={k.premium ? pal.orange : k.id === 'coach' ? '#FFFFFF' : pal.indigo} />
-            </View>
+            <Image source={illus.img(STICKER_CHOSE[k.id], k.id === 'coach' ? sticker('coach') : null)} style={{ width: 42, height: 42 }} resizeMode="contain" accessibilityIgnoresInvertColors />
             <View style={{ flex: 1, gap: 3 }}>
               {k.premium ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', backgroundColor: pal.orangeTint, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
@@ -153,7 +152,7 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
                 color={c.ink}
                 lineHeight={27}
                 style={{ letterSpacing: -0.6 }}
-                text={maintain ? `Garder **${kg(start)} kg**` : v ? (ok ? traduire("Cap sur **{0} kg**", kg(target as number)) : v.titre) : traduire('Tu es déjà sur ton cap')}
+                text={maintain ? traduire('Garder **{0} kg**', kg(start)) : v ? (ok ? traduire("Cap sur **{0} kg**", kg(target as number)) : v.titre) : traduire('Tu es déjà sur ton cap')}
               />
               {/* vague 50 : l'arrivee prevue comme sur Ton plan : le vrai torii et les vraies dates, en indigo fonce */}
               {ok && e?.kind === 'ok' ? <PiedArrivee arrivee={fourchetteDates(e.earliest, e.latest)} style={{ borderRadius: 16, borderWidth: 1, borderColor: '#EFE4C8', marginVertical: 2 }} /> : null}
@@ -213,9 +212,7 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
           <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ton Dojo, dès maintenant")}</Ink>
           <ApercuProgres {...apercuProps} partie="dojo" />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 22, backgroundColor: pal.teinte, padding: 14 }}>
-            <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="list" size={22} color={c.accentText}/>
-            </View>
+            <Image source={illus.img('coach', sticker('coach'))} style={{ width: 44, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
             <Riche size={13} lineHeight={18} color={c.ink} style={{ flex: 1 }} text={traduire('Après la visite de l’app, **ton coach** pourra te proposer un programme sur ces jours, avec tes réponses.')} />
           </View>
         </Animated.View>

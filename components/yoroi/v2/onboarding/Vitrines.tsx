@@ -89,8 +89,19 @@ const SANTE_EXEMPLE: MesureSanteJour[] = [
 ];
 const OBJECTIFS_EXEMPLE: ObjectifsSante = { kcal: 600, exercice: 60 };
 
-export function VitrineAccueil() {
+/** 27 octobre 2026 (Houari : « trop petite, trop loin ») : seulSante, la tuile sante seule, en grand dans la largeur */
+export function VitrineAccueil({ seulSante = false }: { seulSante?: boolean } = {}) {
   const aujourdhui = isoJour(new Date());
+  if (seulSante) {
+    return (
+      <View pointerEvents="none" style={{ gap: 8 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+          <PastilleExemple />
+        </View>
+        <GrilleAccueil tuiles={[{ cle: 'sante', taille: 'pleine', contenu: <TuileSanteJour mesures={SANTE_EXEMPLE} objectifs={OBJECTIFS_EXEMPLE} vitrine /> }]} />
+      </View>
+    );
+  }
   return (
     <View pointerEvents="none" style={{ gap: 10 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>

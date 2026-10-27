@@ -5,7 +5,8 @@
  * reviendra doucement (lib/v2/sante/demande.ts).
  */
 import React, { useEffect, useState } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import { Image, Platform, Pressable, View } from 'react-native';
+import { sticker, useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
@@ -17,15 +18,21 @@ import { texteImport } from '@/lib/v2/sante/connexion';
 import { CATEGORIES_SANTE, resumeDemande } from '@/lib/v2/sante/typesSante';
 import { traduire } from '@/lib/i18n/tr';
 
-function Bloc({ icon, titre, texte, ink, fond }: { icon: IconName; titre: string; texte: string; ink: string; fond: string }) {
+/** 27 octobre 2026 (refonte Pastel) : chaque bloc sur son pastel, avec son sticker (l'icone reste en Encre japonaise sans illustration) */
+function Bloc({ icon, nom, titre, texte, ink, fond }: { icon: IconName; nom: NomSticker; titre: string; texte: string; ink: string; fond: string }) {
   const c = useColors();
+  const illus = useIllustrations();
   return (
-    <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', backgroundColor: c.surface, borderRadius: 20, borderWidth: 1, borderColor: c.border, padding: 14 }}>
-      <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name={icon} size={20} color={ink} />
-      </View>
+    <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', backgroundColor: fond, borderRadius: 20, padding: 14 }}>
+      {illus.stickers ? (
+        <Image source={sticker(nom)} style={{ width: 44, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+      ) : (
+        <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={icon} size={22} color={ink} />
+        </View>
+      )}
       <View style={{ flex: 1, gap: 3 }}>
-        <Ink size={15} weight="extraBold">{titre}</Ink>
+        <Ink size={15} weight="black" color={ink}>{titre}</Ink>
         <Ink size={14} color={c.textSecondary} style={{ lineHeight: 20 }}>{texte}</Ink>
       </View>
     </View>
@@ -60,8 +67,8 @@ export function Sante({ nav, busy, onConnect, onLater, platform = Platform.OS }:
   return (
     <Shell
       {...nav}
-      title={`Relie **${nom}**`}
-      sub={traduire("Ton suivi se remplit tout seul : tes pesées, tes pas et tes séances arrivent sans rien saisir.")}
+      title={traduire('Dernière étape : relie **{0}**', nom)}
+      sub={traduire("Ton suivi se remplit tout seul : tes pesées, tes pas, ton sommeil, ton cœur et les séances de ta montre arrivent sans rien saisir.")}
       gap={12}
       footer={
         <>
@@ -72,9 +79,15 @@ export function Sante({ nav, busy, onConnect, onLater, platform = Platform.OS }:
         </>
       }
     >
-      <Bloc icon="download" titre={traduire("Ce que YOROI lit")} texte={lit} ink={c.accent} fond={c.accentTint} />
-      <Bloc icon="upload" titre={traduire("Ce que YOROI écrit")} texte={traduire("Tes pesées et ta masse grasse, ton eau, ton sommeil noté à la main et les séances que tu notes dans YOROI.")} ink={c.successText} fond={c.successTint} />
-      <Bloc icon="shield" titre={traduire("Rien ne quitte ton téléphone")} texte={traduire("Pas de compte, pas de serveur : tout reste entre YOROI et Santé, sur ce téléphone.")} ink={c.goldDeep} fond={c.goldTint} />
+      {/* ce qui arrive tout seul, en stickers */}
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 4, paddingVertical: 2 }} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+        {(['activite', 'coeur', 'sommeil', 'balance', 'sante_appareils'] as NomSticker[]).map((n, i) => (
+          <Image key={n} source={sticker(n)} style={{ width: 58, height: 58, transform: [{ rotate: `${[-8, 5, -4, 7, -5][i]}deg` }] }} resizeMode="contain" accessibilityIgnoresInvertColors />
+        ))}
+      </View>
+      <Bloc icon="download" nom="sante_appareils" titre={traduire("Ce que YOROI lit")} texte={lit} ink="#23358F" fond="#E8ECFF" />
+      <Bloc icon="upload" nom="coeur" titre={traduire("Ce que YOROI écrit")} texte={traduire("Tes pesées et ta masse grasse, ton eau, ton sommeil noté à la main et les séances que tu notes dans YOROI.")} ink="#1C6B45" fond="#E3F2EA" />
+      <Bloc icon="shield" nom="cle" titre={traduire("Rien ne quitte ton téléphone")} texte={traduire("Pas de compte, pas de serveur : tout reste entre YOROI et Santé, sur ce téléphone.")} ink="#8A3F78" fond="#EFE6F3" />
       <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19, paddingHorizontal: 2 }}>
         {android
           ? traduire('Dans la fenêtre qui suit, active ce que tu veux partager. Tu pourras changer d’avis dans Health Connect.')

@@ -4,7 +4,7 @@
  * Valider enregistre une vraie pesee et montre ce que l'armure a reellement credite.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
@@ -12,7 +12,8 @@ import Svg, { Circle } from 'react-native-svg';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Icon as IconS } from '@/components/yoroi/v2/seances/Icon';
 import type { IconName } from '@/components/yoroi/v2/seances/Icon';
-import { Cercles, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
+import { usePaletteProgramme, usePastel } from '@/components/yoroi/v2/programmes/Habillage';
+import { tamponPour, useIllustrations } from '@/components/yoroi/v2/stickers';
 import { fontStyle } from '@/components/yoroi/fonts';
 import type { Reward } from '@/lib/v2/onboarding/draft';
 import type { ChoixUnivers } from '@/lib/v2/dojo/choisirUnivers';
@@ -56,6 +57,7 @@ const TRAIT = 7;
 function PastilleProgres({ part, etat, icone, legende }: { part: number; etat: 'pleine' | 'en_cours' | 'a_venir'; icone: IconName; legende: string }) {
   const { theme } = useYoroiTheme();
   const tc = theme.colors;
+  const pa = usePastel();
   const r = (TAILLE - TRAIT) / 2;
   const tour = 2 * Math.PI * r;
   const visible = etat === 'en_cours' ? Math.max(0.06, Math.min(1, part)) : 0;
@@ -70,7 +72,7 @@ function PastilleProgres({ part, etat, icone, legende }: { part: number; etat: '
         ) : etat === 'en_cours' ? (
           <>
             <Svg width={TAILLE} height={TAILLE} style={{ position: 'absolute' }}>
-              <Circle cx={TAILLE / 2} cy={TAILLE / 2} r={r} stroke="rgba(255,255,255,0.18)" strokeWidth={TRAIT} fill="rgba(255,255,255,0.10)" />
+              <Circle cx={TAILLE / 2} cy={TAILLE / 2} r={r} stroke={tc.surface} strokeWidth={TRAIT} fill={tc.surface} />
               <Circle
                 cx={TAILLE / 2}
                 cy={TAILLE / 2}
@@ -83,16 +85,16 @@ function PastilleProgres({ part, etat, icone, legende }: { part: number; etat: '
                 transform={`rotate(-90 ${TAILLE / 2} ${TAILLE / 2})`}
               />
             </Svg>
-            <Ink size={17} weight="black" tight color={tc.onDark}>{`${pct} %`}</Ink>
+            <Ink size={17} weight="black" tight color={pa.bleu.encre}>{`${pct} %`}</Ink>
           </>
         ) : (
-          <View style={{ width: TAILLE - 8, height: TAILLE - 8, borderRadius: (TAILLE - 8) / 2, backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
-            <IconS name={icone} size={22} color={tc.onDarkSecondary} />
+          <View style={{ width: TAILLE - 8, height: TAILLE - 8, borderRadius: (TAILLE - 8) / 2, backgroundColor: tc.surface, borderWidth: 1.5, borderColor: pa.bleu.barre2, alignItems: 'center', justifyContent: 'center' }}>
+            <IconS name={icone} size={22} color={pa.bleu.titre} />
           </View>
         )}
       </View>
-      <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 9, backgroundColor: etat === 'a_venir' ? 'rgba(255,255,255,0.12)' : OR }}>
-        <Ink size={10.5} weight="black" color={etat === 'a_venir' ? tc.onDarkSecondary : '#3A2A08'} numberOfLines={1}>{legende}</Ink>
+      <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 9, backgroundColor: etat === 'a_venir' ? tc.surface : OR }}>
+        <Ink size={10.5} weight="black" color={etat === 'a_venir' ? pa.bleu.titre : '#3A2A08'} numberOfLines={1}>{legende}</Ink>
       </View>
     </View>
   );
@@ -129,8 +131,8 @@ const ICONES_A_VENIR: IconName[] = ['dumbbell', 'trophy'];
 export function RewardPanel({ reward, univers = 'japon' }: { reward: Reward; univers?: ChoixUnivers }) {
   const c = useColors();
   const pal = usePaletteProgramme();
-  const { theme } = useYoroiTheme();
-  const tc = theme.colors;
+  const pa = usePastel();
+  const illus = useIllustrations();
   const calme = !!useReducedMotion();
   const v = useRemplissage(Math.max(0, reward.platesBefore), Math.max(0, Math.min(3, reward.platesAfter)), calme);
   // la pastille en cours : la premiere qui n'est pas pleine (au moins la premiere)
@@ -141,9 +143,7 @@ export function RewardPanel({ reward, univers = 'japon' }: { reward: Reward; uni
   return (
     <Animated.View entering={FadeInDown.duration(380)} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: pal.vertTint, alignItems: 'center', justifyContent: 'center' }}>
-          <IconS name="medal" size={22} color={pal.vert} />
-        </View>
+        <Image source={illus.img('medaille_or', tamponPour('medaille_or'))} style={{ width: 48, height: 48 }} resizeMode="contain" accessibilityIgnoresInvertColors />
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={18} weight="black">{traduire("Ton suivi commence")}</Ink>
           <Ink size={13} color={c.textSecondary} style={{ lineHeight: 18 }}>{t.haut}</Ink>
@@ -157,9 +157,9 @@ export function RewardPanel({ reward, univers = 'japon' }: { reward: Reward; uni
           </Animated.View>
         ))}
       </View>
-      <View style={{ borderRadius: 22, backgroundColor: pal.indigo, overflow: 'hidden', padding: 16, gap: 14 }}>
-        <Cercles />
-        <Ink size={11} weight="black" color={tc.onDarkSecondary} style={{ letterSpacing: 0.6 }}>{traduire('APERÇU DE TA PROGRESSION')}</Ink>
+      {/* 27 octobre 2026 (refonte Pastel) : carte bleu pastel au lieu du bleu nuit plein, texte encre */}
+      <View style={{ borderRadius: 22, backgroundColor: pa.bleu.fond, overflow: 'hidden', padding: 16, gap: 14 }}>
+        <Ink size={11} weight="black" color={pa.bleu.titre} style={{ letterSpacing: 0.6 }}>{traduire('APERÇU DE TA PROGRESSION')}</Ink>
         <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-start' }} accessible accessibilityLabel={`${traduire('Ta progression')} : ${pctFinal} %. ${t.aVenir}.`}>
           {[0, 1, 2].map((i) => {
             const etat = i < enCours ? 'pleine' : i === enCours ? 'en_cours' : 'a_venir';
@@ -167,7 +167,7 @@ export function RewardPanel({ reward, univers = 'japon' }: { reward: Reward; uni
             return <PastilleProgres key={i} part={etat === 'en_cours' ? partEnCours : 0} etat={etat} icone={ICONES_A_VENIR[(i + 1) % 2]} legende={legende} />;
           })}
         </View>
-        <Riche size={13} lineHeight={18} color={tc.onDark} ink={OR} text={t.bas} />
+        <Riche size={13} lineHeight={18} color={pa.texte} ink={pa.creme.titre} text={t.bas} />
       </View>
     </Animated.View>
   );
@@ -244,7 +244,7 @@ export function Poids({
           accessibilityLabel={traduire("Ton poids en kilos, touche pour le taper")}
           style={[fontStyle('black'), { fontSize: 88, color: c.ink, textAlign: 'center', minWidth: 200, paddingVertical: 0, letterSpacing: -3, fontVariant: ['tabular-nums'] }]}
         />
-        <Ink size={17} weight="bold" color={c.textSecondary}>kilos</Ink>
+        <Ink size={17} weight="bold" color={c.textSecondary}>{traduire('kilos')}</Ink>
         {healthLabel && origin === 'health' ? (
           <Animated.View entering={FadeIn} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
             <Icon name="heart" size={14} color={c.indigo} />

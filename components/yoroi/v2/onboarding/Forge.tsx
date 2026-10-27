@@ -75,7 +75,7 @@ function Couche({ index, last, t, scene, heroW, heroH, bottom }: { index: number
 
 /** Titre de l'ecran selon l'univers : le debut, puis le mot en or */
 const TITRES: Record<ChoixUnivers, [string, string]> = {
-  japon: ['On forge ', traduire('ton armure')],
+  japon: [traduire('On forge '), traduire('ton armure')],
   classique: [traduire('On prépare '), traduire('ton plan')],
   aucun: [traduire('On prépare '), traduire('ton plan')],
 };
@@ -112,7 +112,7 @@ export function Forge({ nav, genre, univers = 'japon', lignes, run, onDone, onSo
   }, [genre, univers]);
   const [titreDebut, titreOr] = TITRES[univers] ?? TITRES.japon;
   const petit = height < 720;
-  const listH = LINES.length * 42 + 30;
+  const listH = LINES.length * 42 + 36;
   const bottom = insets.bottom + listH + (petit ? 0 : 12);
   const heroH = Math.round(Math.min(height - bottom - insets.top - (petit ? 150 : 190), 400));
   const heroW = Math.round(Math.min(width * 0.8, heroH * 0.75));
@@ -174,7 +174,7 @@ export function Forge({ nav, genre, univers = 'japon', lignes, run, onDone, onSo
       </View>
       <LinearGradient
         pointerEvents="none"
-        colors={['rgba(14,10,8,0.72)', 'rgba(14,10,8,0.05)', 'rgba(14,10,8,0)', 'rgba(14,10,8,0.82)', 'rgba(14,10,8,0.94)']}
+        colors={['rgba(14,10,8,0.62)', 'rgba(14,10,8,0.05)', 'rgba(14,10,8,0)', 'rgba(14,10,8,0.18)', 'rgba(14,10,8,0.3)']}
         locations={[0, 0.24, 0.5, 0.74, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -202,21 +202,22 @@ export function Forge({ nav, genre, univers = 'japon', lignes, run, onDone, onSo
         )}
       </View>
 
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: GUTTER, paddingTop: 14, paddingBottom: insets.bottom + 18, gap: 10 }}>
+      {/* 27 octobre 2026 (refonte Pastel) : la liste dans une carte blanche posee sur la scene, comme la scene en carte de l'accueil */}
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: GUTTER, paddingTop: 18, paddingBottom: insets.bottom + 18, gap: 10, backgroundColor: c.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28 }}>
         {LINES.map((l, i) => {
           const on = i < checked;
           return (
             <View key={l} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 32 }}>
-              <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: on ? 0 : 2, borderColor: 'rgba(255,255,255,0.45)', backgroundColor: on ? c.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: on ? 0 : 2, borderColor: c.border, backgroundColor: on ? c.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                 {on ? <Icon name="check" size={15} color={c.onPrimary} stroke={3} /> : null}
               </View>
-              <Ink size={16} weight={on ? 'extraBold' : 'medium'} color={on ? c.onPrimary : 'rgba(255,255,255,0.72)'}>{l}</Ink>
+              <Ink size={16} weight={on ? 'extraBold' : 'medium'} color={on ? c.ink : c.textSecondary}>{l}</Ink>
             </View>
           );
         })}
         {error ? (
           <View style={{ gap: 10, marginTop: 4 }}>
-            <Ink size={14} weight="bold" color="#FFB4A8">{traduire("L’enregistrement n’a pas abouti. {0}", error)}</Ink>
+            <Ink size={14} weight="bold" color={c.danger}>{traduire("L’enregistrement n’a pas abouti. {0}", error)}</Ink>
             <MainButton label={traduire("Réessayer")} onPress={() => setAttempt((a) => a + 1)} />
           </View>
         ) : null}

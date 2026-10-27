@@ -263,6 +263,8 @@ export function styleIllustrationsPropre(v: unknown): StyleIllustrations {
 }
 
 let courant: StyleIllustrations = STYLE_ILLUSTRATIONS_DEFAUT;
+/** style impose pendant l'onboarding (forcerIllustrations), null sinon */
+let force: StyleIllustrations | null = null;
 let lu = false;
 let lecture: Promise<StyleIllustrations> | null = null;
 
@@ -293,7 +295,18 @@ export function lireIllustrations(): Promise<StyleIllustrations> {
 lireIllustrations().catch(() => {});
 
 export function illustrationsCourantes(): StyleIllustrations {
-  return courant;
+  return force ?? courant;
+}
+
+/**
+ * 27 octobre 2026 (retour de Houari sur l'onboarding) : pendant l'onboarding, les illustrations suivent l'univers
+ * choisi (Japon : l'encre japonaise ; Classique ou sans personnage : les stickers), sans toucher au reglage enregistre.
+ * null rend la main au reglage. Les ecrans ouverts se redessinent (meme evenement que le reglage).
+ */
+export function forcerIllustrations(s: StyleIllustrations | null): void {
+  if (s === force) return;
+  force = s;
+  DeviceEventEmitter.emit(EVENT, force ?? courant);
 }
 
 export async function ecrireIllustrations(s: StyleIllustrations): Promise<void> {
@@ -308,7 +321,7 @@ export async function ecrireIllustrations(s: StyleIllustrations): Promise<void> 
 }
 
 /** Le sticker, ou en Encre japonaise l'illustration d'avant (celle passee en second, sinon celle de la table) */
-export function illustration(nom: NomSticker, ancienne?: ImageSourcePropType | null, style: StyleIllustrations = courant): ImageSourcePropType {
+export function illustration(nom: NomSticker, ancienne?: ImageSourcePropType | null, style: StyleIllustrations = force ?? courant): ImageSourcePropType {
   if (style === 'encre') return ancienne ?? ANCIENNES[nom] ?? STICKERS[nom];
   return STICKERS[nom];
 }
@@ -324,11 +337,11 @@ export function useIllustrations(): {
   img: (nom: NomSticker, ancienne?: ImageSourcePropType | null) => ImageSourcePropType;
   changer: (s: StyleIllustrations) => void;
 } {
-  const [style, setStyle] = useState<StyleIllustrations>(courant);
+  const [style, setStyle] = useState<StyleIllustrations>(force ?? courant);
   useEffect(() => {
     let alive = true;
-    lireIllustrations().then((s) => alive && setStyle(s));
-    const sub = DeviceEventEmitter.addListener(EVENT, (s: StyleIllustrations) => setStyle(s));
+    lireIllustrations().then((s) => alive && setStyle(force ?? s));
+    const sub = DeviceEventEmitter.addListener(EVENT, (s: StyleIllustrations) => setStyle(force ?? s));
     return () => {
       alive = false;
       sub.remove();
@@ -390,12 +403,12 @@ const TAMPONS_SANS_BADGE: Partial<Record<TamponId, NomSticker>> = {
  * Illustrations qui decide de tout, quel que soit l'univers (Japon ou Classique). Stickers : tous les tampons
  * en stickers ; Encre japonaise : les tampons a l'encre. Le parametre univers reste pour les appels existants.
  */
-export function tamponEnSticker(id: TamponId, _univers?: Univers, style: StyleIllustrations = courant): boolean {
+export function tamponEnSticker(id: TamponId, _univers?: Univers, style: StyleIllustrations = force ?? courant): boolean {
   return style === 'stickers' && (!!TAMPONS_CLASSIQUE[id] || !!TAMPONS_SANS_BADGE[id]);
 }
 
 /** L'image d'un tampon : son sticker avec le reglage Stickers, sinon le tampon a l'encre */
-export function tamponPour(id: TamponId, _univers?: Univers, style: StyleIllustrations = courant): ImageSourcePropType {
+export function tamponPour(id: TamponId, _univers?: Univers, style: StyleIllustrations = force ?? courant): ImageSourcePropType {
   if (style === 'stickers') {
     const badge = TAMPONS_CLASSIQUE[id];
     if (badge) return badge;

@@ -25,11 +25,12 @@ import { traduire } from '@/lib/i18n/tr';
 
 export type FamilleSport = 'combat' | 'muscu' | 'cardio' | 'autre';
 
+// 27 octobre 2026 (refonte Pastel) : les pastels de l'app (peche, bleu, menthe, lilas) et leur encre lisible
 export const FAMILLES: Record<FamilleSport, { couleur: string; teinte: string; icone: IconName }> = {
-  combat: { couleur: '#E07A2E', teinte: '#FCE7D6', icone: 'glove' },
-  muscu: { couleur: '#2C4A84', teinte: '#DCE5FA', icone: 'dumbbell' },
-  cardio: { couleur: '#239A62', teinte: '#E6F7EF', icone: 'steps' },
-  autre: { couleur: '#7A5BC7', teinte: '#ECE6FA', icone: 'medal' },
+  combat: { couleur: '#B4471E', teinte: '#FFE1D6', icone: 'glove' },
+  muscu: { couleur: '#23358F', teinte: '#DCE3FF', icone: 'dumbbell' },
+  cardio: { couleur: '#1C6B45', teinte: '#E3F2EA', icone: 'steps' },
+  autre: { couleur: '#8A3F78', teinte: '#EFE6F3', icone: 'medal' },
 };
 
 export function familleSport(id: string): FamilleSport {
@@ -87,14 +88,14 @@ function Rond({ on, sport, i, size, calme, doux }: { on: boolean; sport: string 
       <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
         {on ? (
           <>
-            <Animated.View pointerEvents="none" style={[{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: f.couleur }, haloStyle]} />
+            <Animated.View pointerEvents="none" style={[{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: f.teinte }, haloStyle]} />
             <Animated.View
               key={`on-${sport ?? 'x'}`}
               entering={calme ? undefined : doux ? FadeIn.duration(450) : ZoomIn.delay(i * 70).duration(320)}
               exiting={calme ? undefined : FadeOut.duration(220)}
-              style={{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: f.couleur, alignItems: 'center', justifyContent: 'center', shadowColor: f.couleur, shadowOpacity: 0.45, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 }}
+              style={{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: f.teinte, borderWidth: 2, borderColor: f.couleur, alignItems: 'center', justifyContent: 'center' }}
             >
-              <Icon name={f.icone} size={Math.round(size * 0.48)} color="#FFFFFF" strokeWidth={2.4} />
+              <Icon name={f.icone} size={Math.round(size * 0.46)} color={f.couleur} strokeWidth={2.4} />
             </Animated.View>
           </>
         ) : (
