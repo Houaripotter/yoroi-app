@@ -42,7 +42,7 @@ import { logger } from '@/lib/security/logger';
 import { safeOpenURL, validators } from '@/lib/security/validators';
 import { soundManager } from '@/lib/sounds';
 import { syncArmure } from '@/lib/v2/armure';
-import { getSanteSource } from '@/lib/v2/sante/data';
+import { askExtendedAccess, getSanteSource } from '@/lib/v2/sante/data';
 import { PreviewBar } from '@/components/yoroi/v2/studio/PreviewBar';
 import { useCreatorMode } from '@/lib/v2/creator/CreatorModeContext';
 import { holdPurchasePreview } from '@/lib/v2/creator/purchasePreview';
@@ -77,6 +77,9 @@ import { Univers } from '@/components/yoroi/v2/onboarding/Univers';
 import { rangNom } from '@/lib/v2/dojo/univers';
 import type { ChoixUnivers } from '@/lib/v2/dojo/choisirUnivers';
 import { Objectif } from '@/components/yoroi/v2/onboarding/Objectif';
+import { ChoixScene, sceneParDefaut } from '@/components/yoroi/v2/onboarding/ChoixScene';
+import { saveEspace } from '@/lib/v2/espace';
+import type { SceneId } from '@/lib/v2/espace';
 import { Sport } from '@/components/yoroi/v2/onboarding/Sport';
 import { Poids } from '@/components/yoroi/v2/onboarding/Poids';
 import { Cap } from '@/components/yoroi/v2/onboarding/Cap';
@@ -98,7 +101,7 @@ import type { Nav } from '@/components/yoroi/v2/onboarding/types';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { kg } from '@/components/yoroi/v2/onboarding/ui';
-import { forcerIllustrations } from '@/components/yoroi/v2/stickers';
+import { ecrireIllustrations, forcerIllustrations } from '@/components/yoroi/v2/stickers';
 
 const APPLE_EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 
@@ -126,8 +129,13 @@ const COMPARAISON = 16;
 const FORGE = 17;
 const RESULTAT = 18;
 const PREMIUM = 19;
-const LAST = PREMIUM;
-const NAMES = ['ouverture', 'prenom', 'toi', 'age', 'univers', 'objectif', 'frein', 'affirmation', 'sport', 'sante', 'poids', 'taille', 'cap', 'rythme', 'moment_pesee', 'demonstration', 'comparaison', 'preparation', 'plan', 'premium'];
+// PREMIUM reste le dernier ecran du parcours
+// 27 octobre 2026 (Houari) : Ta scene, juste apres Ton univers ; numero a la fin pour ne pas decaler les autres ecrans
+const SCENE = 20;
+const DERNIER_NUMERO = SCENE;
+/** l'ordre reel du parcours (Ta scene apres Ton univers, Sante apres Ton plan), pour le sens de l'animation et la mesure */
+const ordreDe = (p: number) => (p === SCENE ? UNIVERS + 0.5 : p === SANTE ? RESULTAT + 0.5 : p);
+const NAMES = ['ouverture', 'prenom', 'toi', 'age', 'univers', 'objectif', 'frein', 'affirmation', 'sport', 'sante', 'poids', 'taille', 'cap', 'rythme', 'moment_pesee', 'demonstration', 'comparaison', 'preparation', 'plan', 'premium', 'scene'];
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
 
@@ -139,7 +147,7 @@ export default function OnboardingScreen() {
   const { isCreator } = useCreatorMode();
   // en apercu, aucun achat ni restauration ne passe, quel que soit l'ecran
   useEffect(() => (isPreview ? holdPurchasePreview() : undefined), [isPreview]);
-  const startPage = Math.max(0, Math.min(LAST, parseInt(params.page ?? '0', 10) || 0));
+  const startPage = Math.max(0, Math.min(DERNIER_NUMERO, parseInt(params.page ?? '0', 10) || 0));
 
   const [loaded, setLoaded] = useState(isPreview);
   const [page, setPage] = useState(isPreview ? startPage : OUVERTURE);
@@ -199,7 +207,7 @@ export default function OnboardingScreen() {
       if (!alive) return;
       if (saved && saved.page > OUVERTURE) {
         // la preparation se refait : l'enregistrement final est sans doublon
-        const p = saved.page >= FORGE ? COMPARAISON : saved.page;
+        const p = saved.page >= FORGE && saved.page !== SCENE && saved.page !== SANTE ? COMPARAISON : saved.page;
         const next = { ...saved, page: p };
         draftRef.current = next;
         setD(next);
@@ -259,10 +267,10 @@ export default function OnboardingScreen() {
   // ===== Navigation =====
   const goTo = useCallback(
     (p: number) => {
-      const target = Math.max(0, Math.min(LAST, p));
+      const target = Math.max(0, Math.min(DERNIER_NUMERO, p));
       // mesure : les choix de l'ecran quitte partent seulement quand on avance
-      if (target > draftRef.current.page) choixOnboarding(NAMES[draftRef.current.page], draftRef.current);
-      setDir(target >= draftRef.current.page ? 1 : -1);
+      if (ordreDe(target) > ordreDe(draftRef.current.page)) choixOnboarding(NAMES[draftRef.current.page], draftRef.current);
+      setDir(ordreDe(target) >= ordreDe(draftRef.current.page) ? 1 : -1);
       setPage(target);
       setNotice(null);
       if (target !== POIDS) setShowReward(false);
@@ -278,6 +286,8 @@ export default function OnboardingScreen() {
     // 27 octobre 2026 : Sante passe a la fin, juste avant Premium
     if (p === POIDS) return SPORT;
     if (p === SANTE) return RESULTAT;
+    if (p === SCENE) return UNIVERS;
+    if (p === OBJECTIF) return SCENE;
     if (p === RYTHME) return sensDe(objectifsDuBrouillon(draftRef.current)) === 'stable' ? TAILLE : CAP;
     if (p === RESULTAT) return COMPARAISON;
     return p - 1;
@@ -468,7 +478,7 @@ export default function OnboardingScreen() {
   };
 
   // ===== Sante : la fenetre du systeme, apres l'explication =====
-  const connecterSante = async () => {
+  const connecterSante = async (avance = false) => {
     onboardingEvent('reponse', { ecran: 'sante', question: 'autoriser' });
     if (isPreview) {
       goTo(PREMIUM);
@@ -479,6 +489,8 @@ export default function OnboardingScreen() {
       // a la fin : ton profil est deja enregistre, Sante remplit ton suivi (pesees, pas, seances) a partir de maintenant
       const ok = await demanderAccesSante();
       if (ok) setSanteOff(false);
+      // 27 octobre 2026 : les mesures avancees, seulement si la case est cochee (types deja declares, lib/v2/sante/typesSante.ts)
+      if (ok && avance) await askExtendedAccess().catch(() => false);
     } catch (e) {
       logger.warn('[Onboarding] demande Sante', e);
     } finally {
@@ -540,6 +552,12 @@ export default function OnboardingScreen() {
       patch({ weighIn: res.done });
     }
     await saveOnboarding(draftRef.current);
+    // 27 octobre 2026 : la scene choisie a l'ecran Ta scene (seulement une scene ouverte, jamais une scene Premium)
+    const sc = draftRef.current.scene;
+    if (sc && sc !== sceneParDefaut(draftRef.current.univers ?? 'japon')) await saveEspace({ scene: sc as SceneId }).catch(() => undefined);
+    // 27 octobre 2026 (Houari : « s'il choisit le thème Japon mets lui Japon ») : le reglage Illustrations suit l'univers
+    // choisi, Japon : Encre japonaise, Classique ou sans personnage : Stickers. Modifiable ensuite dans Reglages.
+    await ecrireIllustrations((draftRef.current.univers ?? 'japon') === 'japon' ? 'encre' : 'stickers').catch(() => undefined);
     // 14 octobre 2026 : les rappels choisis a l'ecran 7, et seulement eux (rien d'allume sinon)
     await appliquerChoixRappels(draftRef.current.rappels, { joursEntrainement: draftRef.current.jours }).catch(() => undefined);
     const snap = await syncArmure(true).catch(() => null);
@@ -627,7 +645,18 @@ export default function OnboardingScreen() {
       case AGE:
         return <Age nav={nav({ skip: () => skip({ trancheAge: null }, UNIVERS) })} value={d.trancheAge} onPick={(t) => answer('tranche_age', { trancheAge: t })} onNext={() => goTo(UNIVERS)} />;
       case UNIVERS:
-        return <Univers nav={nav()} genre={genre} genreConnu={genreCalcul != null} value={univers} onPick={(v) => answer('univers', { univers: v })} onNext={() => goTo(OBJECTIF)} />;
+        return <Univers nav={nav()} genre={genre} genreConnu={genreCalcul != null} value={univers} onPick={(v) => answer('univers', { univers: v, ...(v !== draftRef.current.univers ? { scene: null } : {}) })} onNext={() => goTo(SCENE)} />;
+      case SCENE:
+        return (
+          <ChoixScene
+            nav={{ ...nav(), progress: progressOf(UNIVERS, firstAnswered, PRENOM, RESULTAT) }}
+            univers={univers}
+            genre={genre}
+            value={d.scene ?? null}
+            onPick={(id) => answer('scene', { scene: id })}
+            onNext={() => goTo(OBJECTIF)}
+          />
+        );
       case FREIN:
         return (
           <Frein
@@ -688,7 +717,7 @@ export default function OnboardingScreen() {
           <Sante
             nav={{ ...nav(), progress: 1 }}
             busy={santeBusy}
-            onConnect={() => void connecterSante()}
+            onConnect={(avance) => void connecterSante(avance)}
             onLater={() => {
               onboardingEvent('passer', { ecran: 'sante' });
               if (!isPreview) void passerAccesSante();
@@ -816,6 +845,7 @@ export default function OnboardingScreen() {
             days={d.jours}
             height={d.height}
             sports={d.sports}
+            scene={d.scene ?? null}
             onNext={() => goTo(santeOff ? SANTE : PREMIUM)}
           />
         );

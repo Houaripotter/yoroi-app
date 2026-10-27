@@ -38,14 +38,20 @@ import { PlanCurve } from './PlanCurve';
 import { SemaineCouleurs } from './SemaineCouleurs';
 import { PlanSport } from './PlanSport';
 import { ApercuProgres, apercuCheminVisible } from './ApercuProgres';
+import { ApercuAccueil } from './ApercuAccueil';
+import { sceneParDefaut } from './ChoixScene';
+import { sceneMeta } from '@/components/yoroi/v2/espace/assets';
+import { SCENES_CLASSIQUE } from '@/lib/v2/espace/classique';
 import { CarrouselPlan } from './CarrouselPlan';
 import type { PageCarrousel } from './CarrouselPlan';
 import { MainButton, Riche, Shell, kg, marquer, useColors } from './ui';
 import type { Nav } from './types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
-export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIndex = 0, start, target, goal, goals, sessions, days = [], height = null, sports, pesees = 0, onNext }: {
+export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIndex = 0, start, target, goal, goals, sessions, days = [], height = null, sports, pesees = 0, scene = null, onNext }: {
   nav: Nav;
+  /** 27 octobre 2026 : la scene choisie a l'ecran Ta scene (null : celle de l'univers) */
+  scene?: string | null;
   name: string;
   genre: 'h' | 'f';
   /** vague 45 : univers choisi a l'ecran 4 */
@@ -85,7 +91,9 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
   const persoDe = (i: number) => (univers === 'japon' ? guerrierImage(genre, i) : univers === 'classique' ? CLASSIQUE_IMAGES[g][i] : null);
   const nextName = ri < 4 ? rangNom(ri + 1, univers === 'japon' ? 'japon' : 'classique') : null;
 
-  const cheminApercu = apercuCheminVisible(start, maintain ? null : target);
+  const cheminApercu = apercuCheminVisible(start, maintain ? null : target) || start != null;
+  const idScene = scene ?? sceneParDefaut(univers);
+  const imageScene = SCENES_CLASSIQUE.find((s) => s.id === idScene)?.image ?? sceneMeta(idScene).image;
   const carte = { borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 8 } as const;
   const apercuProps = {
     start,
@@ -113,7 +121,7 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
   const pagePourToi: PageCarrousel = {
     cle: 'pour_toi',
     contenu: () => (
-      <Animated.View entering={FadeInDown.duration(380)} style={{ ...carte, gap: 14 }}>
+      <Animated.View entering={FadeInDown.duration(380)} style={{ ...carte, gap: 14, backgroundColor: '#E8ECFF', borderWidth: 0 }}>
         <View style={{ gap: 2 }}>
           <Ink size={13} weight="bold" color={c.textMuted}>{traduire('Pour toi')}</Ink>
           <Riche size={20} weight="black" color={c.ink} lineHeight={25} style={{ letterSpacing: -0.4 }} text={traduire('Ce que **YOROI** va faire pour toi')} />
@@ -144,7 +152,8 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
           cle: 'chemin',
           contenu: (largeur: number) => (
             <Animated.View entering={FadeInDown.duration(380)} style={carte}>
-              <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ton chemin")}</Ink>
+              <Image source={illus.img('torii')} style={{ position: 'absolute', right: 12, top: 10, width: 54, height: 54 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+              <Ink size={11} weight="black" color="#3557D9" style={{ letterSpacing: 1.3 }}>{traduire('TON CHEMIN')}</Ink>
               {/* vague 30 : le poids vise en indigo, la date estimee dans l'or profond, en gras */}
               <Riche
                 size={22}
@@ -157,6 +166,17 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
               {/* vague 50 : l'arrivee prevue comme sur Ton plan : le vrai torii et les vraies dates, en indigo fonce */}
               {ok && e?.kind === 'ok' ? <PiedArrivee arrivee={fourchetteDates(e.earliest, e.latest)} style={{ borderRadius: 16, borderWidth: 1, borderColor: '#EFE4C8', marginVertical: 2 }} /> : null}
               <PlanCurve start={start} target={maintain ? null : v ? v.courbeVers : target} width={Math.max(120, largeur - 32)} height={140} endLabel={v ? v.fin : null} />
+              {/* 27 octobre 2026 : les paliers de ton chemin, avec tes kilos (25, 50, 75 % entre ton poids du jour et ton cap) */}
+              {!maintain && target != null && Math.abs((target as number) - start) >= 1 ? (
+                <View style={{ flexDirection: 'row', gap: 6 }}>
+                  {[0.25, 0.5, 0.75].map((p, k) => (
+                    <View key={p} style={{ flex: 1, borderRadius: 14, backgroundColor: ['#E8ECFF', '#EFE6F3', '#F6EEDD'][k], paddingVertical: 8, alignItems: 'center', gap: 1 }}>
+                      <Ink size={10} weight="black" color={['#3557D9', '#8A3F78', '#A57A1C'][k]} style={{ letterSpacing: 0.8 }}>{traduire('PALIER {0}', k + 1)}</Ink>
+                      <Ink size={15} weight="black" color={c.ink}>{`${kg(start + ((target as number) - start) * p)} kg`}</Ink>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
               <Riche
                 size={14}
                 lineHeight={20}
@@ -177,7 +197,7 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
     {
       cle: 'semaine',
       contenu: (largeur: number) => (
-        <Animated.View entering={FadeInDown.duration(380)} style={{ ...carte, gap: 12 }}>
+        <Animated.View entering={FadeInDown.duration(380)} style={{ ...carte, gap: 12, backgroundColor: '#EFE6F3', borderWidth: 0 }}>
           <View style={{ gap: 2 }}>
             <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ta semaine type")}</Ink>
             <Riche size={18} weight="black" color={c.ink} lineHeight={23} text={sessions ? traduirePluriel(sessions, sessions > 1, "**{0} séance** par semaine", "**{0} séances** par semaine", sessions) : traduire('À ton rythme')} />
@@ -197,10 +217,11 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
     ...(cheminApercu
       ? [{
           cle: 'apercu',
+          // 27 octobre 2026 : ton vrai nouvel accueil dans 4 semaines (ta scene, Ton poids, Ta semaine), avec tes chiffres
           contenu: () => (
             <Animated.View entering={FadeInDown.duration(380)} style={{ gap: 8 }}>
-              <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ton accueil, dès maintenant")}</Ink>
-              <ApercuProgres {...apercuProps} partie="chemin" />
+              <Ink size={11} weight="black" color="#8A3F78" style={{ letterSpacing: 1.3 }}>{traduire('TON ACCUEIL DANS 4 SEMAINES')}</Ink>
+              <ApercuAccueil name={name} scene={imageScene} perso={persoDe(ri)} start={start} target={maintain ? null : target} sessions={sessions} days={days} sports={sports} pastille={traduire('Projection')} />
             </Animated.View>
           ),
         }]

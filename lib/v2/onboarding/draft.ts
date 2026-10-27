@@ -83,6 +83,8 @@ export type Draft = {
   univers: ChoixUnivers;
   /** 14 octobre 2026 : rappels de discipline choisis a l'ecran 7 (rien d'allume par defaut), appliques a la fin */
   rappels: ChoixRappels;
+  /** 27 octobre 2026 : la scene de ton accueil choisie juste apres Ton univers (null : celle de l'univers) */
+  scene?: string | null;
 };
 
 export const EMPTY_DRAFT: Draft = {
@@ -169,6 +171,7 @@ export async function loadDraft(): Promise<Draft | null> {
       peseeJours: Array.isArray(d.peseeJours) ? d.peseeJours.filter((j) => Number.isInteger(j) && j >= 0 && j <= 6) : [],
       peseeHeure: typeof d.peseeHeure === 'string' ? d.peseeHeure : null,
       rappels: rappelsValides(d.rappels),
+      scene: typeof d.scene === 'string' ? d.scene : null,
     };
   } catch {
     return null;

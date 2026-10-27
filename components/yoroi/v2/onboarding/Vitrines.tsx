@@ -17,7 +17,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { tap } from '@/components/yoroi/v2/accueil/kit';
-import { GrilleAccueil, TuileRecord, TuileSanteJour, TuileSerie } from '@/components/yoroi/v2/accueil/Grille';
+import { GrilleAccueil, TuileSanteJour } from '@/components/yoroi/v2/accueil/Grille';
 import { CitationDuJour } from '@/components/yoroi/v2/accueil/Citation';
 import { teinte } from '@/components/yoroi/v2/accueil/domaines';
 import type { Domaine } from '@/components/yoroi/v2/accueil/domaines';
@@ -36,6 +36,8 @@ import { VIE_PERSONNAGES } from '@/lib/v2/dojo/personnages';
 import { VARIANTES_TEINTE, imageTeinte } from '@/lib/v2/dojo/packsTeintes';
 import { styleBuste } from '@/lib/v2/espace/cadrageBuste';
 import { useColors } from './ui';
+import { ApercuAccueil } from './ApercuAccueil';
+import { sceneMeta } from '@/components/yoroi/v2/espace/assets';
 import { traduire } from '@/lib/i18n/tr';
 
 // ===== Briques =====
@@ -91,7 +93,6 @@ const OBJECTIFS_EXEMPLE: ObjectifsSante = { kcal: 600, exercice: 60 };
 
 /** 27 octobre 2026 (Houari : « trop petite, trop loin ») : seulSante, la tuile sante seule, en grand dans la largeur */
 export function VitrineAccueil({ seulSante = false }: { seulSante?: boolean } = {}) {
-  const aujourdhui = isoJour(new Date());
   if (seulSante) {
     return (
       <View pointerEvents="none" style={{ gap: 8 }}>
@@ -102,20 +103,8 @@ export function VitrineAccueil({ seulSante = false }: { seulSante?: boolean } = 
       </View>
     );
   }
-  return (
-    <View pointerEvents="none" style={{ gap: 10 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-        <PastilleExemple />
-      </View>
-      <GrilleAccueil
-        tuiles={[
-          { cle: 'sante', taille: 'pleine', contenu: <TuileSanteJour mesures={SANTE_EXEMPLE} objectifs={OBJECTIFS_EXEMPLE} vitrine /> },
-          { cle: 'serie', taille: 'demi', groupe: 'g', contenu: <TuileSerie semaines={6} goal={3} /> },
-          { cle: 'record', taille: 'demi', groupe: 'g', contenu: <TuileRecord record={{ titre: traduire('Développé couché'), valeur: '100 kg', date: aujourdhui }} /> },
-        ]}
-      />
-    </View>
-  );
+  // 27 octobre 2026 : le nouvel accueil (scene en carte, Ton poids, Ta semaine) a la place de l'ancienne grille de tuiles
+  return <ApercuAccueil name={null} scene={sceneMeta('machiya_nuit').image} perso={null} start={null} target={null} sessions={4} days={[0, 2, 4, 5]} sports={['musculation', 'jjb', 'running']} pastille={traduire('Exemple')} />;
 }
 
 // ===== 2. La citation du jour, trois styles =====

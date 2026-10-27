@@ -53,7 +53,9 @@ export function texteEtape(e: EtatSante, nom: string): string | null {
   }
 }
 
-export function Sante({ nav, busy, onConnect, onLater, platform = Platform.OS }: { nav: Nav; busy?: boolean; onConnect: () => void; onLater: () => void; platform?: string }) {
+/** 27 octobre 2026 : avance, les mesures avancees en plus (marche, alertes du coeur...), seulement si la case est cochee, comme le promet le texte de la demande */
+export function Sante({ nav, busy, onConnect, onLater, platform = Platform.OS }: { nav: Nav; busy?: boolean; onConnect: (avance: boolean) => void; onLater: () => void; platform?: string }) {
+  const [avance, setAvance] = useState(false);
   const c = useColors();
   const [etape, setEtape] = useState<EtatSante>(lireEtatSante());
   useEffect(() => ecouterEtatSante(setEtape), []);
@@ -72,7 +74,7 @@ export function Sante({ nav, busy, onConnect, onLater, platform = Platform.OS }:
       gap={12}
       footer={
         <>
-          <MainButton label={traduire("Autoriser l’accès")} onPress={onConnect} loading={busy} />
+          <MainButton label={traduire("Autoriser l’accès")} onPress={() => onConnect(avance)} loading={busy} />
           <Pressable onPress={onLater} disabled={busy} accessibilityRole="button" accessibilityLabel={traduire("Plus tard")} style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
             <Ink size={15} weight="bold" color={c.textSecondary}>{traduire("Plus tard")}</Ink>
           </Pressable>
@@ -93,6 +95,22 @@ export function Sante({ nav, busy, onConnect, onLater, platform = Platform.OS }:
           ? traduire('Dans la fenêtre qui suit, active ce que tu veux partager. Tu pourras changer d’avis dans Health Connect.')
           : traduire("Dans la fenêtre qui suit, touche « Tout activer », ou choisis une par une ({0} en lecture, {1} en écriture). Tu pourras changer d’avis dans l’app Santé.", resume.lecture, resume.ecriture)}
       </Ink>
+      <Pressable
+        onPress={() => setAvance((v) => !v)}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: avance }}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 18, backgroundColor: avance ? '#23358F' : c.surface, borderWidth: avance ? 0 : 1, borderColor: c.border, padding: 14 }}
+      >
+        <View style={{ width: 26, height: 26, borderRadius: 8, borderWidth: 2, borderColor: avance ? '#FFFFFF' : c.border, backgroundColor: avance ? '#FFFFFF' : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+          {avance ? <Icon name="check" size={15} color="#23358F" stroke={3} /> : null}
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Ink size={14.5} weight="black" color={avance ? '#FFFFFF' : c.ink}>{traduire('Ajouter les mesures avancées')}</Ink>
+          <Ink size={12.5} weight="medium" color={avance ? '#DCE3FF' : c.textSecondary} style={{ lineHeight: 17 }}>
+            {android ? traduire('Glycémie et poussées de fauteuil, en plus.') : traduire('Marche et équilibre, alertes du cœur, électrocardiogramme et humeur, en plus.')}
+          </Ink>
+        </View>
+      </Pressable>
       {busy && texteEtape(etape, nom) ? (
         <Ink size={14} weight="bold" color={c.accent} style={{ lineHeight: 20, paddingHorizontal: 2 }} accessibilityLiveRegion="polite">
           {texteEtape(etape, nom)}
