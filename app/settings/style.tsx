@@ -32,7 +32,7 @@ import { STYLES_CITATION, useStyleCitation, type StyleCitation } from '@/lib/v2/
 import { STYLES_SANTE, useStyleSante, type StyleSante } from '@/lib/v2/accueil/styleSante';
 import { LinearGradient } from 'expo-linear-gradient';
 import { devNow } from '@/lib/v2/creator/devClock';
-import { CONTOURS, RondCadre, contourDe, formeDe, epaisseurDe, nomContour } from '@/components/yoroi/v2/reglages/contour';
+import { CONTOURS, RondCadre, contourDe, resumeRond, styleRondDe } from '@/components/yoroi/v2/reglages/contour';
 import { BusteRond } from '@/components/yoroi/v2/espace/BusteRond';
 import { RondInitiales } from '@/components/yoroi/v2/espace/RondInitiales';
 import { ApercuCourbe } from '@/components/yoroi/v2/charts/CourbePoids';
@@ -321,7 +321,8 @@ export default function Personnaliser() {
       <Tuile
         largeur={W}
         titre={traduire("Photo et contour")}
-        valeur={`${montrePhoto ? traduire('Ta photo') : avecPerso ? traduire('Ton personnage') : traduire('Tes initiales')}, contour ${nomContour(contour).toLowerCase()}`}
+        // 28 octobre 2026 : le resume du rond, « Ta photo, hexagone, contour lilas, cœur »
+        valeur={resumeRond(styleRondDe(espace), montrePhoto ? 'photo' : avecPerso ? 'personnage' : 'initiales')}
         onPress={() => go(ROUTES_PERSONNALISER.photo)}
         apercu={
           <View style={{ height: 92, borderRadius: 15, overflow: 'hidden', backgroundColor: c.fillSoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' }}>
@@ -329,7 +330,8 @@ export default function Personnaliser() {
             {/* 28 octobre 2026 : quatre contours et le tien (ils sont 19), dans ta forme et ton epaisseur */}
             {CONTOURS.filter((o) => o.id === contour || ['fin', 'or', 'lilas', 'aurore'].includes(o.id)).slice(0, 5).map((o) => (
               <View key={o.id} style={{ opacity: o.id === contour ? 1 : 0.55, transform: [{ scale: o.id === contour ? 1.08 : 0.9 }] }}>
-                <RondCadre size={58} contour={o.id} forme={formeDe(espace)} epaisseur={epaisseurDe(espace)} fond="scene" fill="#F5F6FB">
+                {/* le tien porte aussi ton badge */}
+                <RondCadre size={58} {...styleRondDe(espace)} contour={o.id} badge={o.id === contour ? styleRondDe(espace).badge : null} fond="scene" fill="#F5F6FB">
                   {montrePhoto ? (
                     <Image source={{ uri: profile!.profile_photo! }} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
                   ) : avecPerso ? (

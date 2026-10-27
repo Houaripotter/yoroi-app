@@ -376,3 +376,42 @@ function Cadre({ size, contour: contourBrut, forme: formeBrute, epaisseur, fond,
     </View>
   );
 }
+
+/* ---------- 28 octobre 2026 : l'editeur du rond (Photo et contour) ---------- */
+
+/** Les contours ranges par famille, pour les pastilles de l'editeur */
+export const FAMILLES_CONTOUR: { id: string; nom: string; ids: ContourRond[] }[] = [
+  { id: 'pastels', nom: 'Pastels', ids: ['lilas', 'peche', 'menthe', 'azur', 'sable'] },
+  { id: 'degrades', nom: traduire('Dégradés'), ids: ['aurore', 'lagon'] },
+  { id: 'vives', nom: 'Couleurs', ids: ['or', 'indigo', 'rouge', 'vert', 'ciel', 'violet', 'rose', 'orange', 'noir', 'blanc'] },
+  { id: 'discrets', nom: 'Discrets', ids: ['fin', 'aucun'] },
+];
+
+/** La teinte d'une pastille de contour (sur le papier clair) : une couleur, un degrade, ou rien pour Aucun */
+export function teinteContour(id: ContourRond): { couleur?: string; degrade?: [string, string] } {
+  const deg = degrade(id);
+  if (deg) return { degrade: deg };
+  const pa = pastel(id);
+  if (pa) return { couleur: pa };
+  const coul = ANNEAUX[id];
+  if (coul) return { couleur: coul.franc };
+  if (id === 'or') return { couleur: P.gold };
+  if (id === 'indigo') return { couleur: '#3D5D9E' };
+  if (id === 'fin') return { couleur: P.line };
+  return {};
+}
+
+export function nomBadge(id: NomSticker | null): string | null {
+  return id ? BADGES.find((x) => x.id === id)?.nom ?? null : null;
+}
+
+/** Le resume du rond, pour les sous titres : « Ta photo, hexagone, contour lilas, cœur » */
+export function resumeRond(st: StyleRond, contenu: 'photo' | 'personnage' | 'initiales'): string {
+  const qui = contenu === 'photo' ? traduire('Ta photo') : contenu === 'personnage' ? traduire('Ton personnage') : traduire('Tes initiales');
+  const parts = [qui, nomForme(st.forme).toLowerCase()];
+  parts.push(st.contour === 'aucun' ? traduire('sans contour') : traduire('contour {0}', nomContour(st.contour).toLowerCase()));
+  if (st.epaisseur === 'epaisse' && st.contour !== 'aucun') parts.push(traduire('épais'));
+  const b = nomBadge(st.badge);
+  if (b) parts.push(b.toLowerCase());
+  return parts.join(', ');
+}
