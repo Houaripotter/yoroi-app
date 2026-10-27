@@ -11,12 +11,19 @@
  * La carte Poids complete reste a l'ecran Demonstration (pas de doublon).
  * 26 octobre 2026 (soir) : tout passe dans un carrousel de cartes (CarrouselPlan.tsx) : ton chemin, ta semaine, sport ou
  * alimentation, ce que ton sport t'apporte, ton accueil, ton Dojo. Continuer reste toujours visible en bas.
+ * 27 octobre 2026 (Houari : « Il faut montrer ce que YOROI va lui apporter pour qu'il paye ; si on ne lui apporte rien,
+ * ça ne sert à rien ») : juste apres ton chemin, la carte « Ce que YOROI va faire pour toi » : 3 ou 4 choses concretes
+ * tirees de tes reponses et des vraies fonctions de l'app (lib/v2/premium/pourToi.ts, ceQueYoroiFait) ; la seule
+ * Premium est marquee comme telle, et la premiere carte du paywall la prolonge.
  */
 import React from 'react';
 import { View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
+import type { IconName } from '@/components/yoroi/v2/seances/Icon';
+import { Icon as IconEspace } from '@/components/yoroi/v2/espace/ui';
+import { ceQueYoroiFait, type IdPourToi } from '@/lib/v2/premium/pourToi';
 import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { guerrierImage } from '@/components/yoroi/v2/espace/assets';
 import { CLASSIQUE_IMAGES } from '@/lib/v2/dojo/personnages';
@@ -93,8 +100,46 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
     imageSuivante: ri < 4 ? persoDe(ri + 1) : null,
   };
 
+  // 27 octobre 2026 : ce que YOROI va faire pour toi, avec tes chiffres (le poids vise et les seances viennent de tes reponses)
+  const choses = ceQueYoroiFait({
+    objectifs: liste,
+    depuis: start != null ? kg(start) : null,
+    cible: !maintain && target != null ? kg(target as number) : null,
+    seances: sessions,
+    sports,
+  });
+  const ICONE_CHOSE: Record<IdPourToi, IconName> = { coach: 'list', pesee: 'scale', semaine: 'calendar', combat: 'glove', premium: 'chart' };
+  const pagePourToi: PageCarrousel = {
+    cle: 'pour_toi',
+    contenu: () => (
+      <Animated.View entering={FadeInDown.duration(380)} style={{ ...carte, gap: 14 }}>
+        <View style={{ gap: 2 }}>
+          <Ink size={13} weight="bold" color={c.textMuted}>{traduire('Pour toi')}</Ink>
+          <Riche size={20} weight="black" color={c.ink} lineHeight={25} style={{ letterSpacing: -0.4 }} text={traduire('Ce que **YOROI** va faire pour toi')} />
+        </View>
+        {choses.map((k) => (
+          <View key={k.id} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }} accessible accessibilityLabel={k.premium ? traduire('{0}, avec Premium. {1}', k.titre, k.texte) : `${k.titre}. ${k.texte}`}>
+            <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: k.premium ? pal.orangeTint : k.id === 'coach' ? pal.indigo : pal.teinte, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name={ICONE_CHOSE[k.id]} size={20} color={k.premium ? pal.orange : k.id === 'coach' ? '#FFFFFF' : pal.indigo} />
+            </View>
+            <View style={{ flex: 1, gap: 3 }}>
+              {k.premium ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', backgroundColor: pal.orangeTint, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
+                  <IconEspace name="crown" size={11} color={pal.orange} />
+                  <Ink size={10.5} weight="black" color={pal.orange} style={{ letterSpacing: 0.6 }}>{traduire('PREMIUM')}</Ink>
+                </View>
+              ) : null}
+              <Ink size={14.5} weight="black" color={c.ink} style={{ lineHeight: 19 }}>{k.titre}</Ink>
+              <Ink size={13} weight="medium" color={c.textSecondary} style={{ lineHeight: 18 }}>{k.texte}</Ink>
+            </View>
+          </View>
+        ))}
+      </Animated.View>
+    ),
+  };
+
   // 26 octobre 2026 (Houari : « Ton plan est long, ils ne descendront pas jusqu'en bas ») : un carrousel de cartes
-  const pages: PageCarrousel[] = [
+  const pagesBase: PageCarrousel[] = [
     ...(start != null
       ? [{
           cle: 'chemin',
@@ -176,6 +221,9 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
       ),
     },
   ];
+
+  // la carte « Pour toi » juste apres ton chemin (en premier sans chemin)
+  const pages: PageCarrousel[] = pagesBase[0]?.cle === 'chemin' ? [pagesBase[0], pagePourToi, ...pagesBase.slice(1)] : [pagePourToi, ...pagesBase];
 
   return (
     <Shell {...nav} title={title} gap={14} scroll={false} footer={<MainButton label={traduire("Continuer")} onPress={onNext} />}>

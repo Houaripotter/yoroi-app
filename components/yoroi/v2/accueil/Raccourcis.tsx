@@ -11,6 +11,7 @@
  * Bord clair et ombre douce pour se detacher de la scene ; libelles en encre du theme sur le fond de la page.
  */
 import React, { useCallback, useRef, useState } from 'react';
+import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
 import { Image, ScrollView, View } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
 import { useFocusEffect, useGlobalSearchParams, useRouter } from 'expo-router';
@@ -144,6 +145,8 @@ export function RaccourcisDuJour(_props: { water?: number; waterGoal?: number } 
             accessibilityRole="button"
             accessibilityLabel={o.key === 'partager' && pastille ? traduire("{0}. Une nouvelle carte t’attend", o.a11y) : o.key === 'zones' ? traduire('{0}. En bêta', o.a11y) : o.a11y}
           >
+            {/* 27 octobre 2026 : le Coach est montre par la visite guidee */}
+            <TourAnchor id={o.key === 'zones' ? 'accueil.coach' : 'accueil.outil'}>
             <View style={{ width: 80, alignItems: 'center', gap: 6 }}>
               <View
                 style={{
@@ -190,6 +193,7 @@ export function RaccourcisDuJour(_props: { water?: number; waterGoal?: number } 
                 {o.title}
               </Ink>
             </View>
+            </TourAnchor>
           </Press>
         ))}
       </ScrollView>

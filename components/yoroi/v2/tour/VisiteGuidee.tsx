@@ -27,12 +27,13 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import Ajouter from '@/app/ajouter';
 import { getTourScroller, measureTourAnchor } from './TourAnchor';
-import { isVisiteDone, markTourSeen, markVisiteDone, VISITE_VOIX_KEY } from './keys';
+import { isVisiteDone, markTourSeen, markVisiteDone } from './keys';
 import { _fenetreCurrent } from '@/components/yoroi/v2/fenetre/api';
-import { ETAPES, ciblesDe, type Onglet } from './etapes';
+import { ETAPES, ciblesDe, tempsDeLecture, type Onglet } from './etapes';
+import { montrerOngletPlus } from '@/lib/v2/visite/ongletPlus';
 import { entrerExemple, sortirExemple } from '@/lib/v2/visite/demoVisite';
 import { remiseAZeroAuDemarrage } from '@/lib/v2/visite/vitrine';
-import { appliquerVitesse, libelleVitesse, useVitesseVoix } from '@/lib/v2/visite/vitesseVoix';
+import { appliquerVitesse, libelleVitesse, useVitesseVoix, vitesseCourante } from '@/lib/v2/visite/vitesseVoix';
 import { traduire } from '@/lib/i18n/tr';
 
 const ONBOARDING_DONE_KEY = 'yoroi_onboarding_done';
@@ -61,6 +62,16 @@ const VOIX: number[] = [
   require('@/assets/sounds/tour/tour_fr_etape_13.mp3'),
   require('@/assets/sounds/tour/tour_fr_etape_14.mp3'),
   require('@/assets/sounds/tour/tour_fr_etape_15.mp3'),
+  // 27 octobre : nouvel ordre de la visite (bouton plus, onglets, coach, reglages)
+  require('@/assets/sounds/tour/tour_fr_etape_16.mp3'),
+  require('@/assets/sounds/tour/tour_fr_etape_17.mp3'),
+  require('@/assets/sounds/tour/tour_fr_etape_18.mp3'),
+  require('@/assets/sounds/tour/tour_fr_etape_19.mp3'),
+  require('@/assets/sounds/tour/tour_fr_etape_20.mp3'),
+  require('@/assets/sounds/tour/tour_fr_etape_21.mp3'),
+  require('@/assets/sounds/tour/tour_fr_etape_22.mp3'),
+  require('@/assets/sounds/tour/tour_fr_etape_23.mp3'),
+  require('@/assets/sounds/tour/tour_fr_etape_24.mp3'),
 ];
 
 // ── Lancement ──────────────────────────────────────────────────────────────
@@ -116,6 +127,8 @@ async function attendreFenetres(alive: () => boolean): Promise<void> {
 const within = <T,>(p: Promise<T>, ms: number, fallback: T) => Promise.race([p, new Promise<T>((r) => setTimeout(() => r(fallback), ms))]);
 
 const ROUTES: Record<Onglet, string> = { index: '/(tabs)', seances: '/(tabs)/seances', progres: '/(tabs)/progres', dojo: '/(tabs)/dojo' };
+/** L'ecran qui defile de chaque onglet (registerTourScroller) */
+const SCROLLERS: Record<string, string> = { index: 'accueil', seances: 'seances', progres: 'progres', dojo: 'dojo' };
 
 export function VisiteGuidee() {
   const router = useRouter();
@@ -138,6 +151,9 @@ export function VisiteGuidee() {
   const rootRef = useRef<View>(null);
   const runId = useRef(0);
   const playerRef = useRef<AudioPlayer | null>(null);
+  // 27 octobre : une etape sans voix enregistree avance seule apres le temps de lecture
+  const lectureRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const menuRef = useRef(false);
   const ongletRef = useRef<Onglet>('index');
   const lastPress = useRef(0);
   const autoChecked = useRef(false);
@@ -159,6 +175,10 @@ export function VisiteGuidee() {
   const ripple = useSharedValue(0);
 
   const stopVoix = useCallback(() => {
+    if (lectureRef.current) {
+      clearTimeout(lectureRef.current);
+      lectureRef.current = null;
+    }
     const p = playerRef.current;
     playerRef.current = null;
     if (p) {
@@ -171,21 +191,19 @@ export function VisiteGuidee() {
     }
   }, []);
 
-  useEffect(() => {
-    AsyncStorage.getItem(VISITE_VOIX_KEY)
-      .then((v) => {
-        if (v === '0') {
-          voixRef.current = false;
-          setVoix(false);
-        }
-      })
-      .catch(() => {});
+  // 27 octobre 2026 : couper la voix ne vaut que pour la visite en cours. Avant, le choix etait garde : a une etape
+  // sans voix enregistree, on touchait le haut parleur en croyant la remettre, on la coupait pour de bon, et plus
+  // aucune etape ne parlait, meme aux visites suivantes.
+  const remettreVoix = useCallback(() => {
+    voixRef.current = true;
+    setVoix(true);
   }, []);
 
   // Lancement : Aide, Studio, ou web avec ?visite=N (apercu, pour les captures)
   useEffect(() => {
     const start = (depart: number, apercu: boolean) => {
       apercuRef.current = apercu;
+      remettreVoix();
       ouvrirExemple();
       setIndex(Math.max(0, Math.min(ETAPES.length - 1, depart)));
       setActive(true);
@@ -220,6 +238,7 @@ export function VisiteGuidee() {
       await attendreFenetres(() => alive);
       if (alive && ongletRef.current === 'index') {
         apercuRef.current = false;
+        remettreVoix();
         ouvrirExemple();
         setIndex(0);
         setActive(true);
@@ -279,6 +298,7 @@ export function VisiteGuidee() {
     fOpacity.value = withTiming(0, { duration: 150 });
     setActive(false);
     setHole(null);
+    menuRef.current = false;
     setMenu(false);
     setReady(false);
     getTourScroller('accueil')?.scrollToTop();
@@ -313,40 +333,74 @@ export function VisiteGuidee() {
   const parle = useCallback(
     (i: number) => {
       stopVoix();
-      const n = ETAPES[i]?.voix;
+      const e = ETAPES[i];
+      if (!e || !voixRef.current) return;
+      const last = i >= ETAPES.length - 1;
+      /** la suivante, seulement si on est toujours sur cette etape */
+      const suivante = (attente: number, si: () => boolean) => {
+        if (last) return;
+        if (lectureRef.current) clearTimeout(lectureRef.current);
+        lectureRef.current = setTimeout(() => {
+          lectureRef.current = null;
+          if (si() && voixRef.current) setIndex((cur) => (cur === i ? i + 1 : cur));
+        }, attente);
+      };
+      const n = e.voix;
       const fichier = n ? VOIX[n - 1] : undefined;
-      if (!voixRef.current || !fichier) return;
+      // 27 octobre : pas encore de voix pour ce texte : la bulle se lit, puis la visite continue d'elle meme
+      if (!fichier) {
+        const jeton = runId.current;
+        suivante(tempsDeLecture(e.texte, vitesseCourante()), () => runId.current === jeton);
+        return;
+      }
       setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: false }).catch(() => {});
+      let p: AudioPlayer | null = null;
       try {
-        const p = createAudioPlayer(fichier);
+        p = createAudioPlayer(fichier);
+        playerRef.current = p;
         p.volume = 1;
         // 18 octobre : 1x, 1,5x ou 2x, sans voix aigue (lib/v2/visite/vitesseVoix.ts)
         appliquerVitesse(p);
+        const lecteur = p;
         // la voix a fini : on passe seul a l'etape suivante (sauf la derniere)
-        p.addListener('playbackStatusUpdate', (st) => {
-          if (!st.didJustFinish || playerRef.current !== p) return;
-          if (i >= ETAPES.length - 1) return;
-          // un fichier vide ou trop court (voix pas encore enregistree) : on attend « Suivant »
-          if (!st.duration || st.duration < 2) return;
-          setTimeout(() => {
-            if (playerRef.current === p) setIndex(i + 1);
-          }, 1300);
+        lecteur.addListener('playbackStatusUpdate', (st) => {
+          try {
+            if (!st.didJustFinish || playerRef.current !== lecteur) return;
+            // un fichier vide ou trop court (voix pas encore enregistree) : on attend « Suivant »
+            if (!st.duration || st.duration < 2) return;
+            suivante(1300, () => playerRef.current === lecteur);
+          } catch {
+            // la visite continue avec « Suivant »
+          }
         });
-        p.play();
-        playerRef.current = p;
+        lecteur.play();
       } catch {
-        // pas de voix : la visite marche sans
+        // pas de voix pour cette etape : la visite marche sans, et la suivante reessaie
+        if (p) {
+          try {
+            p.remove();
+          } catch {
+            // deja libere
+          }
+        }
+        if (playerRef.current === p) playerRef.current = null;
+        const jeton = runId.current;
+        suivante(tempsDeLecture(e.texte, vitesseCourante()), () => runId.current === jeton);
       }
     },
     [stopVoix],
   );
 
   // Deroule d'une etape
+  // 27 octobre 2026 (Houari : « a l'etape Ton objectif ca bugue, ca descend jusqu'a Sante et plus aucune voix ») :
+  // chaque etape est protegee. Une ancre absente ou hors de l'ecran : la bulle s'affiche seule, sans cadre, et la
+  // visite continue. Une erreur dans une etape ne coupe jamais la voix ni les etapes suivantes.
   useEffect(() => {
     if (!active) return;
     const id = ++runId.current;
     const alive = () => runId.current === id;
     const e = ETAPES[index];
+    if (!e) return;
     let spoke = false;
     const say = () => {
       if (!spoke && alive()) {
@@ -357,6 +411,44 @@ export function VisiteGuidee() {
 
     const ids = ciblesDe(e);
     let cid = ids[0] ?? '';
+
+    /** Position de l'ancre (et de sa seconde ancre « avec », dans le meme cadre) */
+    const mesurer = async (id0: string): Promise<Box | null> => {
+      const a = await anchorRect(id0);
+      if (!a || !e.avec) return a;
+      const b = await anchorRect(e.avec);
+      if (!b) return a;
+      const x = Math.min(a.x, b.x);
+      const y = Math.min(a.y, b.y);
+      return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y };
+    };
+    /** L'ecran bouge encore (defilement, changement d'onglet) : on attend qu'il soit pose */
+    const poser = async (r: Box | null): Promise<Box | null> => {
+      let rect = r;
+      for (let k = 0; k < 12 && rect; k++) {
+        await wait(160);
+        if (!alive()) return null;
+        const again = await mesurer(cid);
+        if (!again) break;
+        const pose = Math.abs(again.y - rect.y) < 1 && Math.abs(again.x - rect.x) < 1;
+        rect = again;
+        if (pose) break;
+      }
+      return rect;
+    };
+    /** Le cadre autour de l'element */
+    const cadre = (rect: Box): Box => {
+      const pad = 7;
+      const top = Math.max(insets.top * 0.5, rect.y - pad);
+      // une carte plus haute que l'ecran (petit telephone) : le cadre s'arrete au-dessus de la barre d'onglets
+      const surBarre = !!cid && !cid.startsWith('onglet.') && !e.menuPlus;
+      const hautBarre = H - (Math.max(insets.bottom - 8, 0) + 14) - 72;
+      const bottom = Math.min(H - 4, rect.y + rect.h + pad, surBarre && rect.y < hautBarre - 40 ? hautBarre : H);
+      return { x: Math.max(4, rect.x - pad), y: top, w: Math.min(W - 8, rect.w + pad * 2), h: Math.max(20, bottom - top) };
+    };
+    /** L'element est vraiment a l'ecran (sinon : bulle seule, jamais un cadre perdu) */
+    const aLEcran = (r: Box | null): r is Box => !!r && r.w > 0 && r.h > 0 && r.y < H - 40 && r.y + r.h > Math.max(40, insets.top) && r.x < W - 10 && r.x + r.w > 10;
+
     const run = async () => {
       setReady(false);
       stopVoix();
@@ -368,112 +460,99 @@ export function VisiteGuidee() {
         if (!alive()) return;
       }
 
-      // l'onglet de l'etape
+      // l'onglet de l'etape (le menu + se ferme avant de changer d'onglet)
+      if (!e.menuPlus && menuRef.current) {
+        menuRef.current = false;
+        setMenu(false);
+      }
       if (e.onglet && ongletRef.current !== e.onglet) {
         router.navigate(ROUTES[e.onglet] as never);
-        await wait(650);
+        await wait(700);
         if (!alive()) return;
       }
       if (e.haut) {
-        getTourScroller('accueil')?.scrollToTop();
+        try {
+          getTourScroller(SCROLLERS[e.onglet ?? ongletRef.current] ?? 'accueil')?.scrollToTop();
+        } catch {
+          // l'ecran n'est pas encore pret
+        }
         await wait(cid ? 650 : 0);
         if (!alive()) return;
       }
-      // le menu du bouton +, montre tel quel
-      const menuAvant = menu;
-      setMenu(!!e.menuPlus);
-      if (e.menuPlus && !menuAvant) {
-        await wait(550);
+      // le menu du bouton +, montre tel quel, sur l'onglet de l'etape
+      if (e.menuPlus) {
+        const ouvrir = !menuRef.current;
+        menuRef.current = true;
+        setMenu(true);
+        if (ouvrir) {
+          await wait(550);
+          if (!alive()) return;
+        }
+        montrerOngletPlus(e.ongletPlus ?? 'seance');
+        await wait(220);
         if (!alive()) return;
       }
 
       let rect: Box | null = null;
       if (cid) {
-        // plusieurs ancres possibles (accueil A, B ou C) : la premiere presente a l'ecran
+        // plusieurs ancres possibles : la premiere presente a l'ecran ; un ecran qui vient de s'ouvrir : on reessaie
         const premiere = async () => {
-          for (const id of ids) {
-            const r = await anchorRect(id);
+          for (const id0 of ids) {
+            const r = await mesurer(id0);
             if (r) {
-              cid = id;
+              cid = id0;
               return r;
             }
           }
           return null;
         };
         rect = await premiere();
-        if (!rect) {
-          await wait(400);
+        for (let essai = 0; essai < 5 && !rect; essai++) {
+          await wait(300);
           if (!alive()) return;
           rect = await premiere();
         }
-        // l'ecran bouge encore (defilement, changement d'onglet) : on attend qu'il soit pose
-        for (let k = 0; k < 12 && rect; k++) {
-          await wait(160);
-          if (!alive()) return;
-          const again = await anchorRect(cid);
-          if (!again) break;
-          const pose = Math.abs(again.y - rect.y) < 1 && Math.abs(again.x - rect.x) < 1;
-          rect = again;
-          if (pose) break;
-        }
-        // l'accueil n'avait pas encore defile (onglet pas encore affiche) : on le refait
-        if (rect && e.haut && (rect.y + rect.h < 10 || rect.y > H - 20)) {
-          getTourScroller('accueil')?.scrollToTop();
+        rect = await poser(rect);
+        if (!alive()) return;
+        // l'onglet n'avait pas encore defile (onglet pas encore affiche) : on le refait
+        if (rect && e.haut && !aLEcran(rect)) {
+          getTourScroller(SCROLLERS[e.onglet ?? ongletRef.current] ?? 'accueil')?.scrollToTop();
           await wait(700);
           if (!alive()) return;
-          rect = await anchorRect(cid);
-          for (let k = 0; k < 12 && rect; k++) {
-            await wait(160);
-            if (!alive()) return;
-            const again = await anchorRect(cid);
-            if (!again) break;
-            const pose = Math.abs(again.y - rect.y) < 1;
-            rect = again;
-            if (pose) break;
-          }
+          rect = await poser(await mesurer(cid));
+          if (!alive()) return;
         }
-        // bulleHaut : le bas de la carte vient juste au-dessus de la barre d'onglets (la bulle est en haut)
+        // l'ancre est plus bas sur l'accueil : on l'amene a l'ecran
         const basVise = H - (Math.max(insets.bottom - 8, 0) + 14) - 72 - 10;
         const decalage = rect && e.bulleHaut ? rect.y + rect.h - basVise : 0;
         if (rect && e.defile && (e.bulleHaut ? Math.abs(decalage) > 6 : rect.y + rect.h > H - 300 || rect.y < insets.top + 20)) {
           getTourScroller('accueil')?.scrollBy(e.bulleHaut ? decalage : rect.y - (insets.top + 70));
           await wait(600);
           if (!alive()) return;
-          rect = await anchorRect(cid);
-          for (let k = 0; k < 12 && rect; k++) {
-            await wait(160);
-            if (!alive()) return;
-            const again = await anchorRect(cid);
-            if (!again) break;
-            const pose = Math.abs(again.y - rect.y) < 1;
-            rect = again;
-            if (pose) break;
-          }
+          rect = await poser(await mesurer(cid));
+          if (!alive()) return;
         }
       }
       if (!alive()) return;
 
-      if (!rect) {
+      // rien a entourer, ou l'element n'est pas a l'ecran : la bulle seule, la visite continue
+      if (!aLEcran(rect)) {
         setHole(null);
+        setVoile(true);
         setReady(true);
         say();
         return;
       }
 
-      const pad = 7;
-      const top = Math.max(insets.top * 0.5, rect.y - pad);
-      // une carte plus haute que l'ecran (petit telephone) : le cadre s'arrete au-dessus de la barre d'onglets
-      const surBarre = !!cid && !cid.startsWith('onglet.') && !e.menuPlus;
-      const hautBarre = H - (Math.max(insets.bottom - 8, 0) + 14) - 72;
-      const bottom = Math.min(H - 4, rect.y + rect.h + pad, surBarre && rect.y < hautBarre - 40 ? hautBarre : H);
-      setHole({ x: Math.max(4, rect.x - pad), y: top, w: Math.min(W - 8, rect.w + pad * 2), h: Math.max(20, bottom - top) });
+      const hole0 = cadre(rect);
+      setHole(hole0);
       setVoile(true);
       setReady(true);
       say();
 
       // le doigt rejoint la cible, puis appuie
       const cx = rect.x + rect.w / 2;
-      const cy = Math.min(H - 40, Math.max(top + 20, rect.y + Math.min(rect.h / 2, 90)));
+      const cy = Math.min(H - 40, Math.max(hole0.y + 20, rect.y + Math.min(rect.h / 2, 90)));
       const travel = reduceMotion ? 0 : 650;
       fOpacity.value = withTiming(1, { duration: 220 });
       fx.value = withTiming(cx, { duration: travel, easing: Easing.out(Easing.cubic) });
@@ -493,13 +572,39 @@ export function VisiteGuidee() {
           setVoile(false);
           fOpacity.value = withTiming(0, { duration: 300 });
         }
+        if (e.ouvreMenu) {
+          // 27 octobre : le doigt appuie sur +, le menu s'ouvre pour de vrai (sans pouvoir etre touche)
+          await wait(380);
+          if (!alive()) return;
+          menuRef.current = true;
+          setMenu(true);
+          setVoile(false);
+          fOpacity.value = withTiming(0, { duration: 300 });
+          await wait(400);
+          if (!alive()) return;
+          montrerOngletPlus('seance');
+        }
+        if (e.puisOngletPlus) {
+          // 27 octobre : on passe d'un onglet du menu + a l'autre, le cadre suit
+          await wait(1400);
+          if (!alive()) return;
+          montrerOngletPlus(e.puisOngletPlus);
+          await wait(260);
+          if (!alive()) return;
+          const apres = await mesurer(cid);
+          if (alive() && aLEcran(apres)) setHole(cadre(apres));
+        }
       }
     };
-    // quoi qu'il arrive, la bulle finit par s'afficher : on peut toujours avancer ou passer
+    // quoi qu'il arrive, la bulle finit par s'afficher et la voix part : on peut toujours avancer ou passer
     run()
-      .catch(() => {})
+      .catch(() => {
+        if (alive()) setHole(null);
+      })
       .finally(() => {
-        if (alive()) setReady(true);
+        if (!alive()) return;
+        setReady(true);
+        say();
       });
   }, [active, index]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -550,7 +655,6 @@ export function VisiteGuidee() {
     const next = !voix;
     voixRef.current = next;
     setVoix(next);
-    AsyncStorage.setItem(VISITE_VOIX_KEY, next ? '1' : '0').catch(() => {});
     selectionAsync().catch(() => {});
     if (next) parle(index);
     else stopVoix();

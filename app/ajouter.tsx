@@ -37,6 +37,7 @@ import { findNextSlot } from '@/components/yoroi/v2/seances/NextUp';
 import type { NextSlot } from '@/components/yoroi/v2/seances/NextUp';
 import { P } from '@/components/yoroi/livePalette';
 import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
+import { ecouterOngletPlus } from '@/lib/v2/visite/ongletPlus';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { chargerProgrammeActif, prochainJour, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
@@ -67,6 +68,8 @@ export default function Ajouter() {
   // 26 octobre 2026 (Houari : « l'utilisateur se perd ») : trois entrees claires en haut, dans cet ordre,
   // et seulement les choix de celle qui est choisie en dessous
   const [onglet, setOnglet] = useState<'seance' | 'mesures' | 'poids'>('seance');
+  // 27 octobre 2026 : la visite guidee montre chaque onglet du menu (lib/v2/visite/ongletPlus.ts)
+  useEffect(() => ecouterOngletPlus(setOnglet), []);
   // fermer en glissant vers le bas (feuille en haut de son defilement) ou sur le cote
   const glisse = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const enHaut = useRef(true);
@@ -235,7 +238,7 @@ export default function Ajouter() {
           ) : null}
 
           {/* 26 octobre 2026 : les trois entrees, dans l'ordre voulu par Houari : seance, mensurations, poids */}
-          <View style={{ flexDirection: 'row', gap: 8 }} accessibilityRole="tablist">
+          <TourAnchor id="ajouter.onglets" style={{ flexDirection: 'row', gap: 8 }} accessibilityRole="tablist">
             {([
               { k: 'seance' as const, t: traduire('Séance'), d: 'M6.5 7v10M17.5 7v10M4 9.5v5M20 9.5v5M6.5 12h11' },
               { k: 'mesures' as const, t: traduire('Mensurations'), d: 'M3 9h18v6H3zM7 9v3M11 9v4M15 9v3M19 9v2' },
@@ -258,7 +261,7 @@ export default function Ajouter() {
                 </Pressable>
               );
             })}
-          </View>
+          </TourAnchor>
 
           {onglet === 'seance' ? (<>
           {/* 1. LA SEANCE : une seance faite en quelques touchers */}
@@ -281,7 +284,7 @@ export default function Ajouter() {
 
           {/* 26 octobre 2026 (Houari : « revois le design, je veux la qualite ») : deux grandes entrees,
               ce qui est prevu aujourd'hui, puis les autres facons en grille, aeree */}
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+          <TourAnchor id="ajouter.facons" style={{ flexDirection: 'row', gap: 10 }}>
             <Pressable
               onPress={() => open('/quick-log')}
               accessibilityRole="button"
@@ -310,7 +313,7 @@ export default function Ajouter() {
                 <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2}>{traduire("avec le chrono et le repos")}</Ink>
               </View>
             </Pressable>
-          </View>
+          </TourAnchor>
 
           {prog || slot ? (
             <>
@@ -355,6 +358,7 @@ export default function Ajouter() {
 
           {/* 2. MENSURATIONS (26 octobre 2026 : meme style que « Note ta seance », que Houari adore) */}
           {onglet === 'mesures' ? (
+            <TourAnchor id="ajouter.detail">
             <Hero
               titre={traduire('Tes mensurations')}
               sous={traduire('taille, bras, cuisses, au ruban')}
@@ -367,10 +371,12 @@ export default function Ajouter() {
                 { t: traduire('Photo'), on: () => open('/photos'), fond: '#E2EADB' },
               ]}
             />
+            </TourAnchor>
           ) : null}
 
           {/* 3. POIDS : a la main, par photo de la balance, composition (meme style que « Note ta seance ») */}
           {onglet === 'poids' ? (
+            <TourAnchor id="ajouter.detail">
             <Hero
               titre={traduire('Ta pesée')}
               sous={traduire('ton poids du jour, ta composition')}
@@ -383,6 +389,7 @@ export default function Ajouter() {
                 { t: traduire('Composition'), on: () => open('/body-composition'), fond: '#E2EADB' },
               ]}
             />
+            </TourAnchor>
           ) : null}
 
           {/* 26 octobre 2026 (Houari : « Autre chose en bas, c'est moche ») : de petites puces, toujours visibles */}

@@ -127,11 +127,17 @@ export function CarteTonPlan({ name, scene, personnage, lignes, arrivee, compact
  */
 export function PiedArrivee({ arrivee, compact = false, style }: { arrivee: string; compact?: boolean; style?: StyleProp<ViewStyle> }) {
   return (
-    <View style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: compact ? 8 : 11, backgroundColor: PIED_FOND }, style]} accessible accessibilityLabel={traduire("Arrivée prévue {0}", arrivee)}>
-      <ToriiImage width={compact ? 36 : 42} />
-      <View style={{ flexShrink: 1, alignItems: 'flex-start' }}>
-        <Ink size={11} weight="black" color={PIED_DOUX} style={{ letterSpacing: 1.1 }} numberOfLines={1}>{traduire("ARRIVÉE PRÉVUE")}</Ink>
-        <Ink size={compact ? 18 : 20} weight="black" color={DATE_ARRIVEE} tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{arrivee.replace(/^./, (x) => x.toUpperCase())}</Ink>
+    // 27 octobre 2026 (Houari : « le texte n'est pas centré, surtout la date avec le torii ») : le libelle et la date
+    // centres l'un sur l'autre, le torii a gauche, et le groupe entier centre dans le pied (sa largeur suit le texte)
+    <View style={[{ alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: compact ? 8 : 11, backgroundColor: PIED_FOND }, style]} accessible accessibilityLabel={traduire("Arrivée prévue {0}", arrivee)}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, maxWidth: '100%' }}>
+        <ToriiImage width={compact ? 32 : 38} />
+        <View style={{ flexShrink: 1, alignItems: 'center' }}>
+          <Ink size={11} weight="black" color={PIED_DOUX} style={{ letterSpacing: 1.1, textAlign: 'center' }} numberOfLines={1}>{traduire("ARRIVÉE PRÉVUE")}</Ink>
+          <Ink size={compact ? 18 : 20} weight="black" color={DATE_ARRIVEE} tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ textAlign: 'center' }}>{arrivee.replace(/^./, (x) => x.toUpperCase())}</Ink>
+        </View>
+        {/* contrepoids invisible de la largeur du torii : la date tombe au centre exact du pied */}
+        <View style={{ width: compact ? 32 : 38 }} />
       </View>
     </View>
   );

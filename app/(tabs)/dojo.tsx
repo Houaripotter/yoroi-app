@@ -18,6 +18,7 @@ import Animated from 'react-native-reanimated';
 import { ENTREE } from '@/components/yoroi/v2/accueil/kit';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
+import { TourAnchor, registerTourScroller } from '@/components/yoroi/v2/tour/TourAnchor';
 import { FeatureList } from '@/components/yoroi/v2/FeatureList';
 import { INK_TAB_BAR_SPACE } from '@/components/yoroi/v2/InkTabBar';
 import { ArmureEnConstruction, EtapesPiece } from '@/components/yoroi/v2/dojo/ArmureEnConstruction';
@@ -174,6 +175,8 @@ export default function Dojo() {
 
   // Vague 48 : la visite du Dojo avec la voix
   const scrollRef = useRef<ScrollView>(null);
+  // 27 octobre 2026 : la visite guidee remonte l'onglet en haut avant de montrer ton rang
+  useEffect(() => registerTourScroller('dojo', { scrollBy: () => {}, scrollToTop: () => scrollRef.current?.scrollTo({ y: 0, animated: true }) }), []);
   const scrollY = useRef(0);
   const [visite, setVisite] = useState(false);
   const [visiteEtat, setVisiteEtat] = useState<'faite' | 'plus_tard' | null>('faite');
@@ -346,6 +349,7 @@ export default function Dojo() {
 
         {/* Scene : ton personnage et ton rang */}
         <Section i={0} ancre="hero">
+          <TourAnchor id="dojo.rang">
           <Pressable
             onPress={() => {
               tap();
@@ -377,6 +381,7 @@ export default function Dojo() {
             </ScenePlate>
             </RankFrame>
           </Pressable>
+          </TourAnchor>
         </Section>
 
         {/* Vague 47 : aujourd'hui, ta serie de jours et ton coffre du jour (la raison de revenir chaque jour) */}

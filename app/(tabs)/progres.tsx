@@ -20,6 +20,7 @@ import Svg, { Path } from 'react-native-svg';
 import { selectionAsync } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
+import { TourAnchor, registerTourScroller } from '@/components/yoroi/v2/tour/TourAnchor';
 import { WeightTrendChart } from '@/components/yoroi/v2/progres/WeightTrendChart';
 import { POIDS } from '@/components/yoroi/v2/charts/CourbePoids';
 import { INK_TAB_BAR_SPACE } from '@/components/yoroi/v2/InkTabBar';
@@ -83,6 +84,8 @@ export default function Progres() {
   const [section, setSection] = useState<Section>('Corps');
   // vague 44 : le bandeau de scene suit legerement le defilement (fil d'animation)
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  // 27 octobre 2026 : la visite guidee remonte l'onglet en haut avant de montrer ta vue d'ensemble
+  useEffect(() => registerTourScroller('progres', { scrollBy: () => {}, scrollToTop: () => (scrollRef.current as any)?.scrollTo?.({ y: 0, animated: true }) }), [scrollRef]);
   const defil = useScrollOffset(scrollRef);
   const scrollY = useRef(0);
   const tabsY = useRef(0);
@@ -128,6 +131,7 @@ export default function Progres() {
 
         {/* Vue d'ensemble : une tuile par facette, chacune ouvre son onglet */}
         {hasData ? (
+          <TourAnchor id="progres.ensemble">
           <VueEnsemble
             series={weights.series}
             compo={bio.points}
@@ -136,6 +140,7 @@ export default function Progres() {
             onOpen={openCible}
             style={{ marginHorizontal: 22, marginTop: 4 }}
           />
+          </TourAnchor>
         ) : null}
 
         {/* 25 octobre 2026 : ta semaine et ton mois, tout reuni (app/bilan-periode.tsx) */}

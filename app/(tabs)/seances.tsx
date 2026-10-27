@@ -16,12 +16,13 @@
  * 7. (16 octobre, SEANCES AVATAR) « Importer mes seances » depuis Apple Sante ou Health Connect : carte en haut tant
  *    que rien n'est importe, bouton dans l'etat vide, et le menu de l'onglet (les trois points). Masque sur le web.
  */
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
+import { TourAnchor, registerTourScroller } from '@/components/yoroi/v2/tour/TourAnchor';
 import { INK_TAB_BAR_SPACE } from '@/components/yoroi/v2/InkTabBar';
 import type { Training } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
@@ -111,6 +112,8 @@ export default function Seances() {
   const [importOpen, setImportOpen] = useState(false);
   const importSante = importSeancesDisponible();
   const scrollRef = useRef<ScrollView>(null);
+  // 27 octobre 2026 : la visite guidee remonte l'onglet en haut avant de montrer ta semaine
+  useEffect(() => registerTourScroller('seances', { scrollBy: () => {}, scrollToTop: () => scrollRef.current?.scrollTo({ y: 0, animated: true }) }), []);
   const historyY = useRef(0);
   const femme = gender === 'femme';
 
@@ -226,7 +229,8 @@ export default function Seances() {
         {/* Importer mes seances : visible en haut tant que rien ne vient de Sante */}
         {importSante && loaded && trainings.length > 0 && importedCount === 0 ? <CarteImportSeances onPress={() => setImportOpen(true)} /> : null}
 
-        {/* La semaine en un coup d'oeil */}
+        {/* La semaine en un coup d'oeil (27 octobre 2026 : ancre de la visite guidee) */}
+        <TourAnchor id="seances.semaine">
         <WeekHero
           week={week}
           plates={plates}
@@ -236,6 +240,7 @@ export default function Seances() {
           onOpenCharge={() => router.push('/charge' as any)}
           onChooseGoal={() => router.push('/settings?objectif=1' as any)}
         />
+        </TourAnchor>
 
         {/* Prochain entrainement prevu */}
         <NextUp

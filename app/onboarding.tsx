@@ -809,6 +809,9 @@ export default function OnboardingScreen() {
             height={d.height}
             recompo={sensDe(goalsDe(d)) === 'recompo'}
             univers={univers}
+            goals={goalsDe(d)}
+            sports={d.sports}
+            autre={d.gender === 'autre'}
             onFinish={finish}
             onOpenTerms={() => void safeOpenURL(APPLE_EULA_URL)}
             onOpenPrivacy={() => router.push('/privacy-policy' as any)}

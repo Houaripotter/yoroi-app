@@ -21,14 +21,14 @@
  * seulement dans l'apercu du Studio quand le store ne renvoie rien).
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions, type ImageSourcePropType } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Constants from 'expo-constants';
-import Animated, { Easing, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming, runOnJS, type SharedValue } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from 'react-native-reanimated';
 import Svg, { Defs, Path, RadialGradient, Stop, Circle } from 'react-native-svg';
 import { format } from 'date-fns';
 import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
@@ -53,7 +53,6 @@ import { PREVIEW_PURCHASE_MESSAGE } from '@/lib/v2/creator/purchasePreview';
 import { EXAMPLE_PACKAGES, previewTrial, usePaywallVariant } from '@/lib/v2/creator/paywallVariant';
 import * as Notifications from 'expo-notifications';
 import { FREE_FOREVER, PREMIUM_ROWS, savingsPercent, sortOffers, trialFor, type OfferInfo } from '@/lib/v2/premium/offer';
-import { FREE_LIMITS } from '@/lib/v2/premium/limits';
 import { offresEvent, paywallEvent } from '@/lib/v2/premium/events';
 import { SOURCES, couleurA, couleursSource, estSourcePremium, type SourcePaywall } from '@/lib/v2/premium/sources';
 import { longDate, scheduleTrialReminder, storeName } from '@/lib/v2/onboarding/trial';
@@ -61,19 +60,17 @@ import { getProfile, getWeights } from '@/lib/database';
 import { getEspace, objectifVise } from '@/lib/v2/espace';
 import { getArmureState } from '@/lib/v2/armure';
 import { GUERRIER_IMAGES, CLASSIQUE_IMAGES, parsePersonnage } from '@/lib/v2/dojo/personnages';
-import { SANS_PERSONNAGE } from '@/lib/v2/dojo/univers';
 import type { ChoixUnivers } from '@/lib/v2/dojo/choisirUnivers';
 import { estSceneClassique } from '@/lib/v2/espace/classique';
 import type { SceneId } from '@/lib/v2/espace';
 import { personnageImage as personnageAccueil, sceneForNow } from '@/components/yoroi/v2/accueil/images';
-import { CourbePoids, LegendeCourbe } from '@/components/yoroi/v2/charts/CourbePoids';
+import { CourbePoids } from '@/components/yoroi/v2/charts/CourbePoids';
 import { LiensLegaux, LienLegalTexte } from '@/components/yoroi/v2/premium/LiensLegaux';
-import { imageVitrine, libelleVitrine, listeVitrines, prochaineVitrine, rangBoucle, type Vitrine } from '@/lib/v2/premium/vitrine';
-import { CarteCourbe, ListeBenefices, PhrasePlan, phrasePlan } from '@/components/yoroi/v2/premium/Benefices';
+import { cartesPremium, regleePersonnage, texteCarte, type ObjectifPour, type ProfilPourToi } from '@/lib/v2/premium/pourToi';
+import { getUserSettings } from '@/lib/storage';
 import { CarrouselPremium } from '@/components/yoroi/v2/premium/CarrouselPremium';
 import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { basAtteint } from '@/lib/v2/premium/defilement';
-import { cadrageBuste } from '@/lib/v2/espace/cadrageBuste';
 import { ApercuDansBarre, useApercuVisible } from '@/components/yoroi/v2/studio/PreviewBar';
 import { safeOpenURL } from '@/lib/security/validators';
 import { playLevelUpSound } from '@/lib/soundManager';
@@ -85,7 +82,6 @@ const CASTLE = require('@/assets/avatars/app/monde/fonds/verticale_chateau.webp'
 const APPLE_EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 const GUTTER = 20;
 const DAY = 86400000;
-const FREE_MONTHS = Math.round(FREE_LIMITS.chartDays / 30);
 const REMINDER_DAYS = 2;
 /** Expo Go : RevenueCat n'y vend rien, l'achat ne marche que dans l'app installee */
 const IN_EXPO_GO = (() => {
@@ -98,7 +94,9 @@ const TEST_BUILD = IN_EXPO_GO || Platform.OS === 'web';
 
 export type PaywallSource = 'onboarding' | 'app';
 
-type Recap = { name?: string; genre?: 'h' | 'f'; target?: number | null; sessions?: number | null; goal?: string | null; start?: number | null; height?: number | null; recompo?: boolean; univers?: ChoixUnivers };
+type Recap = { name?: string; genre?: 'h' | 'f'; target?: number | null; sessions?: number | null; goal?: string | null; start?: number | null; height?: number | null; recompo?: boolean; univers?: ChoixUnivers;
+  /** 27 octobre 2026 : tous tes objectifs, tes sports et le genre « autre », pour les cartes et le personnage */
+  goals?: ObjectifPour[]; sports?: string[]; autre?: boolean };
 
 type Me = {
   name: string;
@@ -116,6 +114,10 @@ type Me = {
   start: number | null;
   height: number | null;
   recompo: boolean;
+  /** 27 octobre 2026 : tes objectifs (onboarding ou espace), tes sports, genre declare « autre » */
+  objectifs: ObjectifPour[];
+  sports: string[];
+  autre: boolean;
 };
 
 /** vague 50 : de vraies dates, « du 28 janv. au 15 mai », « le 18 oct. » (lib/v2/pesee/estimation.ts) */
@@ -296,14 +298,15 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
     start: recap?.start ?? null,
     height: recap?.height ?? null,
     recompo: recap?.recompo ?? false,
+    objectifs: recap?.goals ?? [],
+    sports: recap?.sports ?? [],
+    autre: recap?.autre ?? false,
   }));
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [celebrate, setCelebrate] = useState<Celebrate | null>(null);
   // Reessayer touche dans un apercu force du Studio : indicateur bref, aucun appel au store
   const [retrying, setRetrying] = useState(false);
-  // 17 octobre 2026 : l'espace lu (univers et personnage), avant de choisir la vitrine du bandeau
-  const [espaceLu, setEspaceLu] = useState(false);
 
   useEffect(() => {
     paywallEvent('affichage', { source: src, apercu: preview });
@@ -318,10 +321,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
       .then((e) => {
         if (alive) setMe((prev) => ({ ...prev, personnage: e.personnage ?? null, scene: sceneMeta(e.scene), sceneId: e.scene ?? null }));
       })
-      .catch(() => undefined)
-      .finally(() => {
-        if (alive) setEspaceLu(true);
-      });
+      .catch(() => undefined);
     return () => {
       alive = false;
     };
@@ -331,13 +331,14 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [profile, espace, armure, weights, toutes, memoTorii] = await Promise.all([
+      const [profile, espace, armure, weights, toutes, memoTorii, reglages] = await Promise.all([
         getProfile().catch(() => null),
         getEspace().catch(() => null),
         getArmureState().catch(() => null),
         getWeights(183).catch(() => []),
         getWeights().catch(() => []),
         lireToriiGarde().catch(() => null),
+        recap ? Promise.resolve(null) : getUserSettings().catch(() => null),
       ]);
       if (!alive) return;
       const since = Date.now() - 183 * DAY;
@@ -370,6 +371,9 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
         start: recap?.start != null ? recap.start : pts.length && pts[pts.length - 1].t >= Date.now() - 30 * DAY ? pts[pts.length - 1].v : null,
         height: recap?.height ?? profile?.height_cm ?? null,
         recompo: recap?.recompo ?? false,
+        objectifs: recap?.goals ?? (espace?.objectifs?.length ? espace.objectifs : recap?.goal ? [recap.goal as ObjectifPour] : profile?.weight_goal ? [profile.weight_goal as ObjectifPour] : []),
+        sports: recap?.sports ?? espace?.sportsFavoris ?? [],
+        autre: recap?.autre ?? reglages?.genreDeclare === 'autre',
       }));
     })();
     return () => {
@@ -505,7 +509,8 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
   const heroTrial = trial ?? annualTrial;
   const titleBottom = isPremium || !heroTrial ? null : `${essaiGratuit(heroTrial.days).replace(/^./, (x) => x.toUpperCase())}.`;
   const heroTitle = isPremium ? (me.personnage && parsePersonnage(me.personnage).kind !== 'guerrier' && parsePersonnage(me.personnage).kind !== 'pack' ? traduire('Ton Premium est à toi.') : traduire('Ton armure Premium est à toi.')) : titleBottom ? 'Essaie YOROI en entier.' : traduire('Passe à YOROI Premium.');
-  const subtitle = isPremium ? traduire('Tout ce qui est marqué Premium est ouvert.') : traduire('Tout ton historique, tes analyses, le combat et tout le monde samouraï. Ton suivi, lui, reste gratuit.');
+  // 27 octobre 2026 : ce qui reste gratuit d'abord (honnete), le carrousel dit ensuite ce que Premium fait pour TOI
+  const subtitle = isPremium ? traduire('Tout ce qui est marqué Premium est ouvert.') : traduire('Ta pesée, tes séances et ton coach restent gratuits. Premium te montre tout le chemin.');
   const buyLabel = trial ? traduire('Commencer mon essai gratuit') : 'M’abonner';
   // la ligne collee sous le bouton : prix total, periode, apres l'essai
   // espaces insecables : un prix et sa periode ne se coupent jamais en fin de ligne
@@ -561,27 +566,22 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
   // que le plan existe, la fourchette de l'estimation (le torii sera son milieu)
   const planArrivee = plan6.aPlan ? plan6.arrivee : estimation?.kind === 'ok' ? arriveeCourte(estimation.earliest, estimation.latest) : null;
   // 17 octobre 2026 : ce que Premium fait de ton plan. Sans aucune donnee, la carte generale : des libelles, aucun chiffre
-  const goalPlan = goalEntry ? me.goal : null;
   const ciblePlan = me.target && !maintient ? kg(me.target) : null;
   const lignesGenerales: LignePlan[] = [
     { icon: 'target', ink: c.textSecondary, fond: c.fillSubtle, cle: 'Ton objectif', a11y: traduire('ton objectif') },
     { icon: 'scale', ink: c.textSecondary, fond: c.fillSubtle, cle: 'Ton poids visé', a11y: traduire('ton poids visé') },
     { icon: 'calendar', ink: c.textSecondary, fond: c.fillSubtle, cle: 'Ton rythme', apres: 'par semaine', a11y: traduire('ton rythme par semaine') },
   ];
-  const titreCourbe = (goalPlan === 'lose' || goalPlan === 'gain') && ciblePlan ? traduire("Ta courbe jusqu’à {0} kg", ciblePlan) : maintient ? traduire('Ton poids, mois après mois') : traduire('Ta courbe en entier');
-  // vague 48 (Houari) : l'en-tete suit tes choix. Ton personnage a ton rang, Classique ou Japon ;
-  // sans personnage, un visuel du produit (la courbe et son torii). A l'onboarding, l'univers que tu viens de choisir.
-  const persoHero: string = (() => {
-    const g = me.genre;
-    const k = me.personnage ? parsePersonnage(me.personnage).kind : null;
-    const u = source === 'onboarding' ? recap?.univers : undefined;
-    if (u === 'aucun') return SANS_PERSONNAGE;
-    if (u === 'classique') return k === 'classique' && me.personnage ? me.personnage : `classique_${g}`;
-    if (u === 'japon') return me.personnage && k !== 'classique' && k !== 'aucun' ? me.personnage : `guerrier_${g}`;
-    return me.personnage ?? `guerrier_${g}`;
-  })();
-  const kindHero = parsePersonnage(persoHero).kind;
-  const mondeClassique = kindHero === 'classique' || kindHero === 'aucun';
+  // 27 octobre 2026 (Houari : « Arrête les costumes au hasard. Reste sur l'homme ou la femme qu'il a choisi ») :
+  // plus de vitrine qui tourne. Japon : ta tenue japonaise ; Classique : ta tenue normale ; sans personnage : rien ;
+  // genre « autre » : homme et femme de ton univers en alternance (lib/v2/premium/pourToi.ts, regleePersonnage).
+  // A l'onboarding, l'univers que tu viens de choisir ; dans l'app, ton personnage (un pack que tu as choisi reste le tien).
+  const kindPerso = me.personnage ? parsePersonnage(me.personnage).kind : null;
+  const universHero: ChoixUnivers = source === 'onboarding' && recap?.univers
+    ? recap.univers
+    : kindPerso === 'aucun' ? 'aucun' : kindPerso === 'classique' ? 'classique' : 'japon';
+  const regle = regleePersonnage({ univers: universHero, genre: me.genre, autre: me.autre, personnage: source === 'onboarding' ? null : me.personnage });
+  const mondeClassique = universHero !== 'japon';
   // la scene de ton accueil ; sans choix (debut de l'onboarding), la ruelle de nuit aux lanternes, ou la ville du soir en Classique
   const sceneHero: SceneId = (() => {
     const id = me.sceneId;
@@ -589,98 +589,10 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
     if (!id || estSceneClassique(id) || (source === 'onboarding' && id === 'dojo')) return 'machiya_nuit';
     return id;
   })();
-  const heroImg = kindHero === 'aucun' ? null : personnageAccueil(persoHero, me.rankIndex);
-  // 17 octobre 2026 (Houari : « change de scène et de personnage pour leur donner envie ») : compte gratuit, le bandeau
-  // montre a chaque ouverture un autre couple scene et personnage Premium (lib/v2/premium/vitrine.ts), homme et femme
-  // en alternance, toutes origines ; hors Japon pour l'univers Classique, aucune pour Sans personnage.
-  // Ta carte « Ton plan » garde ton personnage et ta scene, comme le bandeau quand tu es deja Premium.
-  const [vitrine, setVitrine] = useState<Vitrine | null>(null);
-  // l'espace tarde (premier lancement, import en cours) : au bout de 700 ms, la vitrine se choisit quand meme
-  const [delaiPasse, setDelaiPasse] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setDelaiPasse(true), 700);
-    return () => clearTimeout(t);
-  }, []);
-  const attendEspace = !espaceLu && !delaiPasse && !(source === 'onboarding' && recap?.univers);
-  const veutVitrine = !isPremium && kindHero !== 'aucun';
-  useEffect(() => {
-    if (vitrine || !veutVitrine || attendEspace) return;
-    setVitrine(prochaineVitrine(kindHero === 'classique'));
-  }, [vitrine, veutVitrine, attendEspace, kindHero]);
-  // 17 octobre 2026 (Houari : « je voulais qu'elles défilent pour que l'utilisateur puisse voir ») : le bandeau defile
-  // tout seul parmi les couples de la liste, en partant de celui de la rotation : toutes les 3,5 s, fondu enchaine de la
-  // scene et du personnage ensemble ; le texte et le voile restent fixes. Glisser au doigt passe au suivant ou au
-  // precedent, le doigt pose met en pause ; « réduire les animations » : pas de defilement automatique, glissement seul.
-  // L'image suivante est deja montee (invisible) : aucun flash au changement.
-  const listeDefile = useMemo(() => listeVitrines(kindHero === 'classique'), [kindHero]);
-  const reduireCar = useReducedMotion();
-  const [rang, setRang] = useState(0);
-  const [ancienRang, setAncienRang] = useState<number | null>(null);
-  const rangRef = useRef(0);
-  const [pauseDoigt] = useState(false);
-  const fondu = useSharedValue(1);
-  useEffect(() => {
-    if (!vitrine) return;
-    const i = Math.max(0, listeDefile.findIndex((x) => x.scene === vitrine.scene && x.cle === vitrine.cle));
-    rangRef.current = i;
-    setRang(i);
-  }, [vitrine, listeDefile]);
-  const allerA = useCallback(
-    (n: number) => {
-      const cible = rangBoucle(n, listeDefile.length);
-      if (listeDefile.length < 2 || cible === rangRef.current) return;
-      setAncienRang(rangRef.current);
-      rangRef.current = cible;
-      setRang(cible);
-      fondu.value = 0;
-      fondu.value = withTiming(1, { duration: reduireCar ? 0 : 700, easing: Easing.inOut(Easing.quad) }, (fini) => {
-        if (fini) runOnJS(setAncienRang)(null);
-      });
-    },
-    [listeDefile, reduireCar, fondu],
-  );
-  const allerRef = useRef(allerA);
-  allerRef.current = allerA;
-  const enVitrine = veutVitrine && vitrine !== null;
-  useEffect(() => {
-    if (!enVitrine || reduireCar || pauseDoigt || celebrate || listeDefile.length < 2) return;
-    const t = setTimeout(() => allerRef.current(rangRef.current + 1), 3500);
-    return () => clearTimeout(t);
-  }, [enVitrine, reduireCar, pauseDoigt, celebrate, rang, listeDefile.length]);
-  // les couches du bandeau qui defile : l'ancien couple dessous (pendant le fondu), le suivant invisible (prechargement),
-  // le couple courant dessus ; une cle par rang, l'image suivante devient la courante sans etre rechargee
-  const couches: { k: string; v: Vitrine; role: 'ancien' | 'suivant' | 'courant' }[] = enVitrine
-    ? [
-        ...(ancienRang !== null && ancienRang !== rang ? [{ k: `v${ancienRang}`, v: listeDefile[ancienRang], role: 'ancien' as const }] : []),
-        ...(listeDefile.length > 1 ? [{ k: `v${rangBoucle(rang + 1, listeDefile.length)}`, v: listeDefile[rangBoucle(rang + 1, listeDefile.length)], role: 'suivant' as const }] : []),
-        { k: `v${rang}`, v: listeDefile[rang] ?? (vitrine as Vitrine), role: 'courant' as const },
-      ].filter((x, i, l) => x.v && l.findIndex((y) => y.k === x.k) === i)
-    : [];
-  const fonduVignette = useAnimatedStyle(() => ({ opacity: fondu.value }));
-  // 17 octobre 2026 (Houari : « le personnage aussi ici ») : la photo de ta carte « Ton plan » suit le bandeau, meme couple,
-  // meme fondu, en buste (lib/v2/espace/cadrageBuste.ts, cadrage moyen si l'image n'est pas mesuree). Premium : ton personnage.
-  const VIGNETTE_W = 84;
-  const vignetteDefile = enVitrine ? (
-    <>
-      {couches.map(({ k, v, role }) => {
-        const img = imageVitrine(v.cle);
-        const b = cadrageBuste(img);
-        return (
-          <Animated.View key={k} pointerEvents="none" style={[StyleSheet.absoluteFill, role === 'courant' ? fonduVignette : { opacity: role === 'ancien' ? 1 : 0 }]}>
-            <Image source={sceneForNow(v.scene)} resizeMode="cover" style={StyleSheet.absoluteFill} />
-            <Image source={img} resizeMode="contain" style={{ position: 'absolute', width: b.w * VIGNETTE_W, height: b.h * VIGNETTE_W, left: b.l * VIGNETTE_W, top: b.t * VIGNETTE_W }} />
-          </Animated.View>
-        );
-      })}
-    </>
-  ) : undefined;
-  // le benefice « Scènes et personnages » montre un autre couple Premium que celui du depart du bandeau
-  const mondeVignette = useMemo(() => {
-    const l = listeVitrines(kindHero === 'classique');
-    const i = l.findIndex((x) => x.scene === (vitrine?.scene ?? sceneHero));
-    const x = l[(i + 1 + l.length) % l.length];
-    return { scene: x.scene, personnage: imageVitrine(x.cle) };
-  }, [kindHero, vitrine, sceneHero]);
+  const heroImg = regle.mode === 'fixe' ? personnageAccueil(regle.cle, me.rankIndex) : null;
+  const vignetteAlterne = regle.mode === 'alterne'
+    ? <VignetteAlterne scene={sceneForNow(sceneHero)} images={[personnageAccueil(regle.cles[0], me.rankIndex), personnageAccueil(regle.cles[1], me.rankIndex)]} />
+    : undefined;
   const curve = weeklyPoints(me.weights);
   // le carrousel du haut : ta vraie courbe voilee au dela de la periode gratuite, sinon l'exemple marque comme tel
   const dessinCourbe = (w: number, h: number) =>
@@ -694,17 +606,20 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
         </View>
       </View>
     );
-  // la carte « Scènes et personnages » : le couple Premium de cette ouverture (Pack Basket, Pack Course...), en vignette claire
-  const vitrineMonde = vitrine ?? listeDefile[0] ?? null;
-  const mondeCarrousel = {
-    scene: sceneForNow(vitrineMonde?.scene ?? mondeVignette.scene),
-    personnage: kindHero === 'aucun' ? null : vitrineMonde ? imageVitrine(vitrineMonde.cle) : mondeVignette.personnage,
-    libelle: vitrineMonde ? libelleVitrine(vitrineMonde) : null,
+  // 27 octobre 2026 : les cartes du carrousel, choisies et rangees selon TES reponses (lib/v2/premium/pourToi.ts)
+  const profilPourToi: ProfilPourToi = {
+    objectifs: me.objectifs.length ? me.objectifs : me.goal && !contradiction ? [me.goal as ObjectifPour] : [],
+    depuis: me.start != null ? kg(me.start) : null,
+    cible: ciblePlan,
+    seances: me.sessions,
+    sports: me.sports,
   };
+  const cartesCarrousel = cartesPremium(profilPourToi).map((id) => texteCarte(id, profilPourToi));
   const small = height < 760;
   // 26 octobre 2026 : le carrousel clair remplace le bandeau sombre ; compact sur les petits ecrans (375 x 667),
   // pour que la carte de ton plan commence encore au dessus du bouton colle en bas
-  const carrouselH = height < 720 ? 146 : height < 860 ? 166 : 184;
+  // 27 octobre 2026 : un peu plus haut, pour un titre personnalise sur trois lignes sans rien couper
+  const carrouselH = height < 720 ? 176 : height < 860 ? 184 : 196;
   const apercuBarre = useApercuVisible();
   const innerW = width - GUTTER * 2 - 32;
 
@@ -827,7 +742,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
             </Ink>
             {height >= 720 ? <Ink size={13.5} weight="medium" color={pal.texte2} style={{ textAlign: 'center', lineHeight: 18, maxWidth: 340 }}>{subtitle}</Ink> : null}
           </Animated.View>
-          <CarrouselPremium hauteur={carrouselH} marge={GUTTER} titreCourbe={titreCourbe} courbe={dessinCourbe} monde={mondeCarrousel} goal={goalPlan} />
+          <CarrouselPremium hauteur={carrouselH} marge={GUTTER} cartes={cartesCarrousel} courbe={dessinCourbe} seances={me.sessions} />
         </View>
 
         <View style={{ paddingHorizontal: GUTTER, gap: height < 720 ? 12 : height < 860 ? 14 : 20, paddingTop: height < 720 ? 10 : height < 860 ? 12 : 16 }}>
@@ -853,30 +768,12 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
           ) : null}
           {!isPremium && !mur ? (
             <View style={{ gap: small ? 10 : 12 }}>
-              <CarteTonPlan name={me.name} scene={sceneForNow(sceneHero)} personnage={heroImg} lignes={planLines.length ? planLines : lignesGenerales} arrivee={planLines.length ? planArrivee : null} compact={height < 720} vignette={vignetteDefile} />
-              <PhrasePlan texte={phrasePlan(goalPlan, ciblePlan)} />
+              <CarteTonPlan name={me.name} scene={sceneForNow(sceneHero)} personnage={heroImg} lignes={planLines.length ? planLines : lignesGenerales} arrivee={planLines.length ? planArrivee : null} compact={height < 720} vignette={vignetteAlterne} />
             </View>
           ) : null}
 
-          {/* 2 bis. Ce que Premium fait de ton plan : la courbe en entier (ta vraie courbe voilee, sinon un exemple marque),
-              puis trois benefices concrets illustres, dans l'ordre de ton objectif (components/yoroi/v2/premium/Benefices.tsx) */}
-          {!isPremium && !(mur?.courbe && curve.length >= 2) ? (
-            <CarteCourbe titre={titreCourbe} exemple={curve.length < 2} pastille={<PastillePremium />} ligne={curve.length >= 2 ? traduire("Tes vraies pesées. Au-delà de {0} mois, c’est avec Premium.", FREE_MONTHS) : traduire('Avec Premium, ta courbe se voit sur 6 mois, 1 an et tout ton historique, avec ton poids projeté.')}>
-              {curve.length >= 2 ? (
-                <View style={{ gap: 8 }}>
-                  <View style={{ height: 110, overflow: 'hidden', borderRadius: 14 }} accessible accessibilityLabel={traduire("Aperçu de ta courbe de poids sur 6 mois, la suite est avec Premium")}>
-                    <WeightCurve points={curve} width={innerW} height={110} color={c.accent} surface={c.surface} ligne={plan6.ligne} torii={plan6.torii} />
-                  </View>
-                  {plan6.ligne ? <LegendeCourbe rythme cap={null} torii={null} /> : null}
-                </View>
-              ) : (
-                <View pointerEvents="none" accessible accessibilityLabel={traduire("Exemple de courbe de poids")}>
-                  <CourbePoids points={COURBE_EXEMPLE.points} style={1} cap={COURBE_EXEMPLE.cap} torii={COURBE_EXEMPLE.torii} height={110} compact label={traduire("Exemple de courbe de poids")} />
-                </View>
-              )}
-            </CarteCourbe>
-          ) : null}
-          {!isPremium ? <ListeBenefices goal={goalPlan} monde={mondeVignette} /> : null}
+          {/* 2 bis. (27 octobre 2026, Houari : « jette les choses inutiles ») : la carte de la courbe et la liste analyses,
+              combat, scenes sont parties : le carrousel du haut dit deja, avec TES chiffres, ce que Premium fait pour toi. */}
 
           {/* 3. Ce que change l'abonnement, tire de lib/v2/premium/limits.ts et offer.ts (6 lignes) */}
           {!isPremium ? (
@@ -1202,9 +1099,10 @@ function ApercuSource({ libelle, phrase, encre, fond, icone, children }: { libel
 }
 
 /**
- * « Fais défiler pour tout voir » (17 octobre 2026) : une pastille douce posee au dessus des boutons, la fleche descend
- * et remonte lentement (immobile si « réduire les animations ») ; la toucher fait defiler jusqu'en bas. Elle s'efface
- * des que le bas est atteint.
+ * Indice de defilement (27 octobre 2026, Houari : « "Fais défiler pour tout voir" est au milieu du texte, on ne peut
+ * rien lire ») : plus de pastille flottante posee sur le contenu. Un petit chevron DANS la barre du bas, au dessus du
+ * bouton : il ne couvre jamais aucun texte. Il descend et remonte lentement (immobile si « réduire les animations »),
+ * le toucher fait defiler jusqu'en bas, et il s'efface des que le bas est atteint.
  */
 function IndicateurDefiler({ onPress, reduire }: { onPress: () => void; reduire: boolean }) {
   const { theme } = useYoroiTheme();
@@ -1212,24 +1110,47 @@ function IndicateurDefiler({ onPress, reduire }: { onPress: () => void; reduire:
   const dy = useSharedValue(0);
   useEffect(() => {
     if (reduire) return;
-    dy.value = withRepeat(withSequence(withTiming(3, { duration: 750, easing: Easing.inOut(Easing.quad) }), withTiming(0, { duration: 750, easing: Easing.inOut(Easing.quad) })), -1);
+    dy.value = withRepeat(withSequence(withTiming(2.5, { duration: 750, easing: Easing.inOut(Easing.quad) }), withTiming(0, { duration: 750, easing: Easing.inOut(Easing.quad) })), -1);
   }, [reduire, dy]);
   const fleche = useAnimatedStyle(() => ({ transform: [{ translateY: dy.value }] }));
   return (
-    <Animated.View exiting={FadeOut.duration(220)} pointerEvents="box-none" style={{ position: 'absolute', top: -46, left: 0, right: 0, alignItems: 'center' }}>
+    <Animated.View exiting={FadeOut.duration(200)} style={{ alignItems: 'center', marginTop: -4, marginBottom: 2 }}>
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={traduire("Fais défiler pour tout voir")}
-        hitSlop={8}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 34, paddingHorizontal: 14, borderRadius: 999, backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: 1, borderColor: c.border, shadowColor: c.shadow, shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 4 })}
+        hitSlop={{ top: 6, bottom: 4, left: 40, right: 40 }}
+        style={{ height: 18, width: 44, alignItems: 'center', justifyContent: 'center' }}
       >
-        <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Fais défiler pour tout voir")}</Ink>
         <Animated.View style={fleche}>
-          <Icon name="down" size={15} color={c.accent} stroke={2.6} />
+          <Icon name="down" size={16} color={c.textMuted} stroke={2.6} />
         </Animated.View>
       </Pressable>
     </Animated.View>
+  );
+}
+
+/**
+ * Genre « autre » (27 octobre 2026) : la photo de ta carte « Ton plan » montre l'homme et la femme de ton univers en
+ * alternance, toutes les 3,5 s, en fondu ; « réduire les animations » : la premiere image seulement, fixe.
+ */
+function VignetteAlterne({ scene, images }: { scene: ImageSourcePropType; images: [ImageSourcePropType, ImageSourcePropType] }) {
+  const reduire = useReducedMotion();
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (reduire) return;
+    const t = setInterval(() => setI((x) => 1 - x), 3500);
+    return () => clearInterval(t);
+  }, [reduire]);
+  const W = 84;
+  const BUSTE = 168;
+  return (
+    <>
+      <Image source={scene} resizeMode="cover" style={StyleSheet.absoluteFill} />
+      <Animated.View key={i} entering={reduire ? undefined : FadeIn.duration(600)} exiting={reduire ? undefined : FadeOut.duration(600)} pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <Image source={images[i]} resizeMode="contain" style={{ position: 'absolute', top: 6, left: (W - BUSTE) / 2, width: BUSTE, height: BUSTE / 0.75 }} />
+      </Animated.View>
+    </>
   );
 }
 

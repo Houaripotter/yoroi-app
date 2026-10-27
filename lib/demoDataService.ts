@@ -1,6 +1,6 @@
 // ============================================
 // DONNEES DE DEMO : un seul profil, Heny
-// Musculation (Salle de musculation), jiu-jitsu brésilien (Club de JJB), course sur la
+// Musculation (Basic Fit Prado), jiu-jitsu brésilien (Club de JJB), course sur la
 // Corniche le samedi et foot à 5 un dimanche soir sur deux ou trois. Sept mois d'historique qui se
 // tiennent : pesées qui suivent le plan vers le torii, charges et records qui montent, sparrings
 // avec rounds, ceinture bleue, deux compétitions passées et une à venir (nom fictif),
@@ -816,7 +816,8 @@ export const COMPETITIONS_INVENTEES_DEMO: string[] = [
 
 /** 17 octobre : clubs de la demo (noms affiches tels quels). Plus aucune competition creee par la demo. */
 export const CLUB_JJB_DEMO = 'Club de JJB';
-export const CLUB_MUSCU_DEMO = 'Salle de musculation';
+// 27 octobre 2026 (Houari) : la salle de Heny s'appelle « Basic Fit Prado » (avant : « Salle de musculation », affichee « SM »)
+export const CLUB_MUSCU_DEMO = 'Basic Fit Prado';
 const OBJECTIF_SEMAINE = 6;
 
 const DEMO_PAST_ONLY_TABLES = ['weights', 'trainings', 'measurements', 'health_data', 'photos', 'combats', 'sleep_entries', 'hydration_logs', 'body_compositions'];
@@ -1427,10 +1428,11 @@ export async function injecterHenyVitrine(): Promise<HenyStats> {
   if (!vitrineActive()) throw new Error('[DemoData] vitrine fermee : Heny n’est pas chargee');
   await AsyncStorage.setItem(DEMO_ACTIVE_KEY, 'true');
   if (!vitrineActive()) throw new Error('[DemoData] vitrine fermee pendant le chargement');
-  return injectHeny();
+  // le logo de la salle seulement ici (demo dans l'app), jamais dans la demo des captures de l'App Store
+  return injectHeny({ logoMarque: true });
 }
 
-async function injectHeny(): Promise<HenyStats> {
+async function injectHeny(opts: { logoMarque?: boolean } = {}): Promise<HenyStats> {
   seedState = 20261010;
 
   // ======= 2. ON VIDE =======
@@ -1490,9 +1492,11 @@ async function injectHeny(): Promise<HenyStats> {
   await saveEspace({ scene: 'chateau', personnage: 'guerrier_h', sportsFavoris: ['musculation', 'jjb', 'running', 'football'], objectifSemaine: OBJECTIF_SEMAINE, objectifChoisi: true, identite: 'personnage' });
 
   // ========== CLUBS ==========
-  // Noms generiques (aucun vrai club ni vraie salle), sans logo de marque : l'app affiche ses initiales
+  // Club de JJB : nom generique, l'app affiche ses initiales. 27 octobre 2026 : la salle s'appelle Basic Fit Prado ;
+  // son logo (assets/images/basic-fit.png, deja dans l'app) seulement pendant la visite guidee (vitrine), jamais
+  // dans la demo des captures de l'App Store (un logo de marque sur une capture du store : risque de refus chez Apple)
   const gbClubId = await addClub({ name: CLUB_JJB_DEMO, sport: 'jjb', color: '#1D2029', logo_uri: null } as never);
-  const bfClubId = await addClub({ name: CLUB_MUSCU_DEMO, sport: 'musculation', color: '#2C4A84', logo_uri: null } as never);
+  const bfClubId = await addClub({ name: CLUB_MUSCU_DEMO, sport: 'musculation', color: '#2C4A84', logo_uri: opts.logoMarque ? 'basic-fit' : null } as never);
   await AsyncStorage.setItem('@yoroi_user_clubs', JSON.stringify([
     { id: gbClubId, name: CLUB_JJB_DEMO, sport: 'jjb', color: '#1D2029', sessions_per_week: 3 },
     { id: bfClubId, name: CLUB_MUSCU_DEMO, sport: 'musculation', color: '#2C4A84', sessions_per_week: 4 },

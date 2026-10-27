@@ -8,8 +8,9 @@ import React from 'react';
 import { Paywall } from '@/components/yoroi/v2/premium/Paywall';
 import type { Nav } from './types';
 import type { ChoixUnivers } from '@/lib/v2/dojo/choisirUnivers';
+import type { ObjectifPour } from '@/lib/v2/premium/pourToi';
 
-export function Premium({ nav, preview, name, genre, sessions, target, goal, start, height, recompo, univers, onFinish }: {
+export function Premium({ nav, preview, name, genre, sessions, target, goal, start, height, recompo, univers, goals, sports, autre, onFinish }: {
   nav: Nav;
   preview: boolean;
   name: string;
@@ -23,6 +24,10 @@ export function Premium({ nav, preview, name, genre, sessions, target, goal, sta
   recompo?: boolean;
   /** vague 48 : l'univers choisi, pour le personnage et la scene de l'en-tete */
   univers?: ChoixUnivers;
+  /** 27 octobre 2026 : tous tes objectifs, tes sports et le genre « autre » (cartes du paywall et personnage) */
+  goals?: ObjectifPour[];
+  sports?: string[];
+  autre?: boolean;
   onFinish: (how: 'free' | 'premium') => void;
   /** gardes pour l'appelant : les liens sont geres par le paywall (conditions, licence Apple, confidentialite) */
   onOpenTerms?: () => void;
@@ -32,7 +37,7 @@ export function Premium({ nav, preview, name, genre, sessions, target, goal, sta
     <Paywall
       source="onboarding"
       preview={preview}
-      recap={{ name, genre, sessions, target, goal, start, height, recompo, univers }}
+      recap={{ name, genre, sessions, target, goal, start, height, recompo, univers, goals, sports, autre }}
       onFinish={onFinish}
       onBack={nav.onBack}
       onClose={nav.onClose}
