@@ -6,6 +6,7 @@
  * (ACSM 2009, Schoenfeld 2016, Singer 2024) ; une a trois repetitions en reserve (Refalo 2023, Robinson 2024).
  * Noms d'exercices : nom exact de constants/exerciseLibrary.ts (verifie par __tests__/unit/programmes.test.ts).
  */
+import { programmePersoParId } from './registrePerso';
 import { ordonnerParPoste } from './ordre';
 import type { ExoProgramme, JourProgramme, Materiel, Niveau, Programme } from './types';
 
@@ -1957,7 +1958,8 @@ PROGRAMMES.sort((a, b) => (ORDRE.indexOf(a.id) + 100) % 100 - (ORDRE.indexOf(b.i
 
 export function programmeParId(id: string | null | undefined): Programme | undefined {
   if (!id) return undefined;
-  return PROGRAMMES.find((p) => p.id === id);
+  // 27 octobre 2026 : tes programmes construits (« Je construis le mien », registrePerso.ts)
+  return PROGRAMMES.find((p) => p.id === id) ?? programmePersoParId(id);
 }
 
 export function libelleNiveau(n: Niveau): string {

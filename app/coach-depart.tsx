@@ -34,6 +34,14 @@
  * (usePastel, Habillage.tsx), barre d'étapes fine avec « Étape N sur M », plus aucune grande carte indigo, boutons
  * pastel au texte bleu nuit. Style seulement : étapes, calculs et navigation inchangés.
  * Ancien rendu : _archive_ancien_design_2026-10-09/coach_2026-10-27/.
+ * 27 octobre 2026, le Guide (maquettes Coach2-A, B et C-Guide, « Aide moi à choisir ») : sept questions, une par
+ * écran, « Question N sur 7 », une bulle du coach, et l'encart « Ton programme pour l'instant » qui suit chaque réponse :
+ *  1. Tu t'es déjà entraîné ? (remplace « Depuis quand tu fais de la muscu ? »)  2. Ton objectif  3. Tes jours
+ *  4. Ton temps  5. Où tu t'entraînes, puis « Coche ce que tu as » (le matériel de Ma salle)
+ *  6. Tu as mal quelque part en ce moment ? (pour ce programme seulement, rien n'est écrit dans l'infirmerie)
+ *  7. Tu pratiques aussi un sport ?  Puis le résultat, avec « Une question ? » en bas.
+ * La traduction des réponses pour les règles de choix.ts est dans lib/v2/programmes/guide.ts. Ancien rendu :
+ * _archive_ancien_design_2026-10-09/coach_2026-10-27/avant_entree_coach2/.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
@@ -46,6 +54,7 @@ import type { IconName } from '@/components/yoroi/v2/seances/Icon';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { Capitales, ombrePastel, usePastel } from '@/components/yoroi/v2/programmes/Habillage';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeIn, FadeInRight, LinearTransition } from 'react-native-reanimated';
 import { GrilleModules } from '@/components/yoroi/v2/programmes/GrilleModules';
 import { CarteConseilObjectif, FeuillePourquoi } from '@/components/yoroi/v2/programmes/Pourquoi';
 import { POURQUOI_MODULE, conseilsDesObjectifs } from '@/lib/v2/programmes/pourquoi';
@@ -73,24 +82,49 @@ import { TesJours } from '@/components/yoroi/v2/programmes/TesJours';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Materiel, Niveau, Programme } from '@/lib/v2/programmes/types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
+import { CarteMuscles } from '@/components/yoroi/v2/programmes/CarteMuscles';
+import { QuestionsCoach } from '@/components/yoroi/v2/programmes/QuestionsCoach';
+import { LectureRonde } from '@/components/yoroi/v2/programmes/Lecture';
+import { DOULEURS_AUTRES, DOULEURS_PRINCIPALES, EXPERIENCES, basculerDouleur, niveauDuGuide, regionsDuGuide, reponsesDuGuide } from '@/lib/v2/programmes/guide';
+import type { Douleur, Experience } from '@/lib/v2/programmes/guide';
+import { EQUIPEMENTS } from '@/lib/v2/programmes/materiel';
+import type { Equipement } from '@/lib/v2/programmes/materiel';
+import { LIBELLE_REGION } from '@/lib/v2/programmes/blessures';
 
-type Etape = 'attente' | 'intro' | 'objectifs' | 'niveau' | 'jours' | 'temps' | 'sport' | 'lieu' | 'liste' | 'resultat'
+type Etape = 'attente' | 'intro' | 'experience' | 'objectifs' | 'jours' | 'temps' | 'lieu' | 'douleur' | 'sport' | 'liste' | 'resultat'
   // 27 octobre 2026 : avant la liste (preselection.ts)
   | 'pjours' | 'ptemps' | 'pniveau' | 'plieu' | 'profil';
 
 const ETAPE_PRE: Record<EtapePre, Etape> = { jours: 'pjours', temps: 'ptemps', niveau: 'pniveau', lieu: 'plieu', profil: 'profil' };
-const QUIZ: Etape[] = ['intro', 'objectifs', 'niveau', 'jours', 'temps', 'sport', 'lieu'];
+const QUIZ: Etape[] = ['intro', 'experience', 'objectifs', 'jours', 'temps', 'lieu', 'douleur', 'sport'];
 
 const NIVEAUX: { key: Niveau; label: string }[] = [
   { key: 'debutant', label: 'Moins de 6 mois' },
   { key: 'intermediaire', label: '6 mois à 2 ans' },
   { key: 'confirme', label: 'Plus de 2 ans' },
 ];
-const LIEUX: { key: Materiel; label: string; icone: IconName }[] = [
-  { key: 'salle', label: 'En salle', icone: 'dumbbell' },
-  { key: 'halteres', label: 'À la maison, avec des haltères', icone: 'dumbbell' },
-  { key: 'maison', label: 'À la maison, sans matériel', icone: 'body' },
+const LIEUX: { key: Materiel; label: string; icone: IconName; sous: string; sticker: NomSticker }[] = [
+  { key: 'salle', label: 'En salle', icone: 'dumbbell', sous: 'Machines, barres, poulies', sticker: 'musculation' },
+  { key: 'halteres', label: 'À la maison, avec des haltères', icone: 'dumbbell', sous: 'Une paire, un banc ou une chaise', sticker: 'poids' },
+  { key: 'maison', label: 'À la maison, sans matériel', icone: 'body', sous: 'Au poids du corps', sticker: 'tapis' },
 ];
+
+/** 27 octobre 2026 : le sticker de chaque réponse à « Tu t'es déjà entraîné ? » */
+const STICKER_EXPERIENCE: Record<Experience, NomSticker> = { jamais: 'debuter', longtemps: 'sablier', videos: 'videos', regulier: 'force_eclair' };
+const ICONE_EXPERIENCE: Record<Experience, IconName> = { jamais: 'book', longtemps: 'clock', videos: 'play', regulier: 'bolt' };
+
+/** La bulle du coach, une par question (maquettes Coach2-Guide) */
+const BULLE: Partial<Record<Etape, string>> = {
+  experience: 'Pour t’apprendre les gestes avant de charger.',
+  objectifs: 'Tu peux en choisir plusieurs.',
+  jours: 'Je place tes séances sur ta semaine.',
+  temps: 'Ta séance rentre dans ton temps.',
+  lieu: 'Que des exercices que tu peux faire.',
+  douleur: 'Encore une question après celle là.',
+  sport: 'Dernière question.',
+};
 
 export default function CoachDepart() {
   // 27 octobre 2026 : les couleurs pastel des maquettes Coach (Habillage.tsx, usePastel)
@@ -105,7 +139,7 @@ export default function CoachDepart() {
   const commeOnboarding = depuisOnboarding || depuisVisite;
 
   // chemin=liste : on attend ce qu'on sait déjà (profil, programme, matériel) pour préparer les écrans avant la liste
-  const [etape, setEtape] = useState<Etape>(commeOnboarding ? 'intro' : params.chemin === 'liste' ? 'attente' : 'objectifs');
+  const [etape, setEtape] = useState<Etape>(commeOnboarding ? 'intro' : params.chemin === 'liste' ? 'attente' : 'experience');
   const [historique, setHistorique] = useState<Etape[]>([]);
   const [chemin, setChemin] = useState<'quiz' | 'liste'>(params.chemin === 'liste' ? 'liste' : 'quiz');
   const [objectifs, setObjectifs] = useState<ObjectifChoix[]>([]);
@@ -138,14 +172,23 @@ export default function CoachDepart() {
   const [voirAutres, setVoirAutres] = useState(false);
   const [lieuSauve, setLieuSauve] = useState<Materiel | undefined>(undefined);
   const [charge, setCharge] = useState(false);
+  // 27 octobre 2026, le Guide : ton expérience, tes douleurs, ton matériel coché (null : pas touché)
+  const [experience, setExperience] = useState<Experience | null>(null);
+  const [douleurs, setDouleurs] = useState<Douleur[]>([]);
+  const [autreZone, setAutreZone] = useState(false);
+  const [equip, setEquip] = useState<Equipement[] | null>(null);
+  const [equipSauve, setEquipSauve] = useState<Equipement[] | null>(null);
+  const illus = useIllustrations();
 
   useEffect(() => {
     getProfile().then((pr) => setFemme(pr?.avatar_gender === 'femme')).catch(() => {});
     const a = chargerProgrammeActif().then((x) => { setActif(x); return x; }).catch(() => { setActif(null); return null; });
-    const m = chargerMateriel().then((x) => setLieuSauve(lieuDuMateriel(x))).catch(() => {});
+    const m = chargerMateriel().then((x) => { setLieuSauve(lieuDuMateriel(x)); setEquipSauve(x); }).catch(() => {});
     const pc = lireProfilCoach().then((p) => {
       setProfil(p);
       if (p.objectifs.length) setObjectifs((l) => (l.length ? l : p.objectifs));
+      // « Je n'y connais rien » à l'onboarding : « Jamais » est déjà coché au Guide
+      if (p.objectifs.includes('debuter')) setExperience((e) => e ?? 'jamais');
       if (p.jours.length) setJours((l) => (l.length ? l : p.jours));
       if (p.sport) setSport(p.sport);
     });
@@ -154,19 +197,19 @@ export default function CoachDepart() {
   const connues = profil && commeOnboarding ? etapesConnues(profil) : { jours: false, sport: false };
   const prerempli = !!profil?.objectifs.length;
 
-  const debuter = objectifs.includes('debuter');
-  const courseSeule = objectifs.length === 1 && objectifs[0] === 'course';
-  const conseil = useMemo(
-    () => (objectifs.length ? conseilDepart({ objectifs, niveau: debuter ? undefined : niveau, jours, temps, sport, lieu }) : null),
-    [objectifs, niveau, debuter, jours, temps, sport, lieu],
+  // 27 octobre 2026 : le Guide demande ton expérience (guide.ts) ; sans réponse (chemin liste), comme avant
+  const debuter = experience ? niveauDuGuide(experience).debuter : objectifs.includes('debuter');
+  const reponses = useMemo(
+    () => (experience ? reponsesDuGuide({ experience, objectifs, jours, temps, sport, lieu }) : { objectifs, niveau: debuter ? undefined : niveau, jours, temps, sport, lieu }),
+    [experience, objectifs, niveau, debuter, jours, temps, sport, lieu],
   );
+  // aussi sans objectif : l'encart « Ton programme pour l'instant » suit chaque réponse
+  const conseil = useMemo(() => (reponses.objectifs.length || experience ? conseilDepart(reponses) : null), [reponses, experience]);
   // plusieurs objectifs : 2 ou 3 programmes « Pour toi »
-  const propositions = useMemo(
-    () => (conseil ? propositionsDepart({ objectifs, niveau: debuter ? undefined : niveau, jours, temps, sport, lieu }, conseil) : []),
-    [conseil, objectifs, niveau, debuter, jours, temps, sport, lieu],
-  );
+  const propositions = useMemo(() => (conseil ? propositionsDepart(reponses, conseil) : []), [conseil, reponses]);
   // les conseils du coach, un par objectif (ton sport compris)
-  const conseils = useMemo(() => conseilsDesObjectifs(objectifsAvecSport(objectifs, sport)), [objectifs, sport]);
+  const conseils = useMemo(() => conseilsDesObjectifs(objectifsAvecSport(reponses.objectifs, sport)), [reponses, sport]);
+  const regionsGuide = regionsDuGuide(douleurs);
   const prog = choisi ? programmeParId(choisi) ?? null : null;
   const possibles = prog ? modulesPossibles(prog) : [];
   // Tes jours du résultat : ton plan pour ce programme, sinon tes jours (ou les jours conseillés) dans l'ordre
@@ -177,8 +220,8 @@ export default function CoachDepart() {
 
   // les étapes du questionnaire, pour la barre de progression
   // juste après l'onboarding, les jours et le sport déjà donnés ne sont pas redemandés
-  const suiteQuiz: Etape[] = (['objectifs', 'niveau', 'jours', 'temps', 'sport', 'lieu', 'resultat'] as Etape[]).filter(
-    (e) => !(e === 'niveau' && debuter) && !(e === 'jours' && connues.jours) && !(e === 'sport' && connues.sport),
+  const suiteQuiz: Etape[] = (['experience', 'objectifs', 'jours', 'temps', 'lieu', 'douleur', 'sport', 'resultat'] as Etape[]).filter(
+    (e) => !(e === 'jours' && connues.jours) && !(e === 'sport' && connues.sport),
   );
   const suiteListe: Etape[] = [...preSuite, 'liste', 'resultat'];
   const suiteVue = chemin === 'liste' ? suiteListe : suiteQuiz;
@@ -353,6 +396,11 @@ export default function CoachDepart() {
   };
 
   const garderMateriel = async () => {
+    // 27 octobre 2026 : « Coche ce que tu as » au Guide, ton choix est gardé (Ma salle)
+    if (chemin === 'quiz' && equip) {
+      await enregistrerMateriel(equip);
+      return;
+    }
     // le questionnaire, ou ton lieu donné avant la liste
     if (chemin !== 'quiz' && !repondu.includes('lieu')) return;
     const m = await chargerMateriel().catch(() => null);
@@ -363,7 +411,7 @@ export default function CoachDepart() {
     if (!prog) return;
     const go = async () => {
       await garderMateriel();
-      const a = await demarrerProgramme(prog.id, joursEff, { choix: 'rien', minutes, ...(sansMarche ? { sansMarche: true } : {}) }, modules.filter((m) => possibles.some((x) => x.id === m)), planRes);
+      const a = await demarrerProgramme(prog.id, joursEff, { choix: 'rien', minutes, ...(sansMarche ? { sansMarche: true } : {}) }, modules.filter((m) => possibles.some((x) => x.id === m)), planRes, chemin === 'quiz' ? { douleurs: regionsGuide } : undefined);
       if (!a) return;
       await ecrireDepart('fait');
       sortir('coach');
@@ -391,11 +439,77 @@ export default function CoachDepart() {
   /* ------------------------------------------------ rendu ------------------------------------------------ */
   const titreEcran = (titre: string, pourquoi?: string) => (
     <View style={{ gap: 6, marginBottom: 4 }}>
-      <Ink size={28} weight="black" tight color={pa.texte} accessibilityRole="header" style={{ lineHeight: 32 }}>{titre}</Ink>
+      <Ink size={28} weight="black" color={pa.texte} accessibilityRole="header" style={{ lineHeight: 33 }}>{titre}</Ink>
       {pourquoi ? <Ink size={15} weight="bold" color={pa.texte2}>{pourquoi}</Ink> : null}
     </View>
   );
   const titreSection = (t: string) => <Ink size={16} weight="black" tight color={pa.texte} accessibilityRole="header" style={{ marginHorizontal: 2 }}>{t}</Ink>;
+
+  /* ---------------- le Guide (27 octobre 2026) : l'encart « Ton programme pour l'instant », mis à jour à chaque réponse ---------------- */
+  const equipVu: Equipement[] = equip ?? equipSauve ?? materielDuLieu(lieu);
+  const questions: Etape[] = suiteQuiz.filter((e) => e !== 'resultat');
+  const rangQuestion = questions.indexOf(etape);
+  const apercu = (() => {
+    if (chemin !== 'quiz' || rangQuestion < 0 || !conseil) return null;
+    const pc = programmeParId(conseil.id);
+    if (!pc) return null;
+    // les réponses déjà données : les questions passées, et celle ci si elle est répondue
+    const ici = etape === 'experience' ? !!experience : etape === 'objectifs' ? objectifs.some((o) => o !== 'debuter') : etape === 'douleur' ? douleurs.length > 0 : true;
+    const faites = questions.slice(0, rangQuestion + (ici ? 1 : 0));
+    const puces: string[] = [];
+    for (const q of faites) {
+      if (q === 'experience' && experience) puces.push(traduire(EXPERIENCES.find((x) => x.key === experience)?.label ?? ''));
+      if (q === 'objectifs') {
+        const o = objectifs.filter((x) => x !== 'debuter');
+        if (o.length) puces.push(traduire(OBJECTIFS_CHOIX.find((x) => x.key === o[0])?.label ?? '') + (o.length > 1 ? ` +${o.length - 1}` : ''));
+      }
+      if (q === 'jours' && jours.length) puces.push(traduire('{0} jours', jours.length));
+      if (q === 'temps') puces.push(traduire(TEMPS_SEANCE.find((x) => x.key === temps)?.label ?? ''));
+      if (q === 'lieu') puces.push(traduire(LIEUX.find((x) => x.key === lieu)?.label ?? ''));
+      if (q === 'douleur') puces.push(regionsGuide.length ? traduire('Ménage {0}', regionsGuide.map((r) => traduire(LIBELLE_REGION[r])).join(', ')) : traduire('Aucune douleur'));
+      if (q === 'sport' && sport !== 'non') puces.push(traduire(AUTRES_SPORTS.find((x) => x.key === sport)?.label ?? ''));
+    }
+    const ligne = traduire('{0} j par semaine, {1} min', pc.joursParSemaine, pc.dureeMin);
+    return (
+      <Animated.View layout={LinearTransition.duration(240)} style={{ marginTop: 4, borderRadius: 22, paddingVertical: 14, paddingHorizontal: 16, gap: 10, backgroundColor: pa.lilas.fond }} accessible accessibilityLabel={`${traduire('Ton programme pour l’instant')}, ${traduire(pc.titre)}, ${ligne}`}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <View style={{ flex: 1 }}><Capitales texte={traduire('Ton programme pour l’instant')} couleur={pa.lilas.titre} /></View>
+          {faites.length ? <Ink size={12} weight="extraBold" color={pa.lilas.titre}>{traduirePluriel(faites.length, faites.length > 1, '{0} réponse', '{0} réponses', faites.length)}</Ink> : null}
+        </View>
+        <Animated.View key={`${pc.id}${conseil.jours.join('')}`} entering={FadeIn.duration(320)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ width: 64 }}>
+            <MiniSemaine jours={conseil.jours} couleur={pa.lilas.barre} vide={pa.carte} hauteur={34} gap={2} />
+          </View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Ink size={16} weight="black" color={pa.texte} numberOfLines={2}>{traduire(pc.titre)}</Ink>
+            <Ink size={13} weight="bold" color={pa.texte2} numberOfLines={3}>{ligne}</Ink>
+          </View>
+        </Animated.View>
+        {puces.length ? (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            {puces.filter(Boolean).map((t) => (
+              <View key={t} style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: pa.carte, maxWidth: '100%' }}>
+                <Ink size={12} weight="extraBold" color={pa.texte} numberOfLines={1}>{t}</Ink>
+              </View>
+            ))}
+          </View>
+        ) : null}
+      </Animated.View>
+    );
+  })();
+  // la bulle du coach au dessus de chaque question
+  const bulle = chemin === 'quiz' && rangQuestion >= 0 && BULLE[etape] ? (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+      {illus.stickers ? (
+        <View style={[{ width: 46, height: 46, borderRadius: 23, backgroundColor: pa.carte, alignItems: 'center', justifyContent: 'center' }, ombrePastel(pa.ombre)]}>
+          <Image source={illus.img('coach')} style={{ width: 36, height: 36 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+        </View>
+      ) : null}
+      <View style={[{ flexShrink: 1, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 16, backgroundColor: pa.carte }, ombrePastel(pa.ombre)]}>
+        <Ink size={13} weight="bold" color={pa.texte2}>{traduire(BULLE[etape]!)}</Ink>
+      </View>
+    </View>
+  ) : null;
 
   let corps: React.ReactNode = null;
   let bas: React.ReactNode = null;
@@ -436,7 +550,7 @@ export default function CoachDepart() {
     );
     bas = (
       <View style={{ gap: 10 }}>
-        <BoutonPlein label={traduire('Oui, c’est parti')} onPress={() => { tap(); aller('objectifs'); }} />
+        <BoutonPlein label={traduire('Oui, c’est parti')} onPress={() => { tap(); aller('experience'); }} />
         <BoutonDoux label={traduire('Plus tard')} onPress={plusTard} />
       </View>
     );
@@ -446,9 +560,6 @@ export default function CoachDepart() {
     corps = (
       <View style={{ gap: 12 }}>
         {titreEcran(traduire('Ton objectif ?'), prerempli ? traduire('Repris de tes réponses, ajuste si tu veux') : traduire('Plusieurs choix possibles'))}
-        <CarteChoix grand role="checkbox" icone="book" sticker="debuter" teinte={0} label={traduire('Je n’y connais rien')} sous={traduire('YOROI te guide pas à pas')} on={debuter} onPress={() => basculerObjectif('debuter')} />
-        <CarteChoix icone="list" teinte={1} label={traduire('Je sais déjà quel programme je veux')} on={false} fleche onPress={() => { tap(); ouvrirListe(); }} />
-        <View style={{ marginTop: 8 }}>{titreSection(traduire('Tes objectifs'))}</View>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           {OBJECTIFS_CHOIX.filter((o) => o.key !== 'debuter').map((o, k) => (
             <TuileChoix key={o.key} icone={ICONE_OBJECTIF[o.key] ?? 'target'} sticker={STICKER_OBJECTIF[o.key]} cle={o.key} teinte={k} label={traduire(o.label)} on={objectifs.includes(o.key)} onPress={() => basculerObjectif(o.key)} />
@@ -456,31 +567,38 @@ export default function CoachDepart() {
         </View>
       </View>
     );
-    bas = objectifs.length ? <BoutonPlein label={traduire('Suivant')} onPress={() => { tap(); suivante('objectifs'); }} /> : null;
+    corps = <View style={{ gap: 14 }}>{corps}{apercu}</View>;
+    bas = objectifs.some((o) => o !== 'debuter') ? <BoutonPlein label={traduire('Suivant')} onPress={() => { tap(); suivante('objectifs'); }} /> : null;
   }
 
-  if (etape === 'niveau') {
-    const choix = courseSeule
-      ? [{ key: 'debutant' as Niveau, label: 'Non, pas encore' }, { key: 'intermediaire' as Niveau, label: 'Oui' }]
-      : NIVEAUX;
+  if (etape === 'experience') {
     corps = (
       <View style={{ gap: 12 }}>
-        {titreEcran(courseSeule ? traduire('Tu cours déjà 30 minutes sans t’arrêter ?') : traduire('Depuis quand tu fais de la muscu ?'), traduire('Pour choisir un programme à ton niveau'))}
-        {choix.map((n, k) => (
+        {titreEcran(traduire('Tu t’es déjà entraîné ?'), traduire('Sois honnête, personne ne juge.'))}
+        {EXPERIENCES.map((x, k) => (
           <CarteChoix
-            key={n.key}
+            key={x.key}
             role="radio"
             grand
-            teinte={courseSeule ? (k === 0 ? 1 : 2) : k}
-            icone={courseSeule ? (k === 0 ? 'close' : 'check') : undefined}
-            visuel={courseSeule ? undefined : (_on, t) => <BarresNiveau n={k + 1} couleur={t.encre} vide={pa.carte} />}
-            label={traduire(n.label)}
-            on={niveau === n.key}
-            onPress={() => { tap(); setNiveau(n.key); setTimeout(() => suivante('niveau'), 160); }}
+            teinte={[2, 1, 3, 0][k]}
+            icone={ICONE_EXPERIENCE[x.key]}
+            sticker={STICKER_EXPERIENCE[x.key]}
+            visuel={x.key === 'videos' ? () => <LectureRonde taille={30} /> : undefined}
+            label={traduire(x.label)}
+            sous={traduire(x.sous)}
+            on={experience === x.key}
+            onPress={() => {
+              tap();
+              setExperience(x.key);
+              setNiveau(niveauDuGuide(x.key).niveau);
+            }}
           />
         ))}
+        {apercu}
+        <Ink size={13} weight="bold" color={pa.texte2} style={{ marginHorizontal: 2, lineHeight: 18 }}>{traduire('Ensuite : ton objectif, tes jours, ton temps, ton matériel, une douleur éventuelle, ton sport.')}</Ink>
       </View>
     );
+    bas = experience ? <BoutonPlein label={traduire('Suivant')} onPress={() => { tap(); suivante('experience'); }} /> : null;
   }
 
   if (etape === 'jours') {
@@ -501,6 +619,7 @@ export default function CoachDepart() {
         <Pressable onPress={() => { tap(); setJours([]); suivante('jours'); }} accessibilityRole="button" hitSlop={6} style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
           <Ink size={14} weight="bold" color={pa.bleu.encre} style={{ textDecorationLine: 'underline' }}>{traduire('Je ne sais pas, choisis pour moi')}</Ink>
         </Pressable>
+        {apercu}
       </View>
     );
     bas = jours.length ? <BoutonPlein label={traduire('Suivant')} onPress={() => { tap(); suivante('jours'); }} /> : null;
@@ -510,7 +629,8 @@ export default function CoachDepart() {
     corps = (
       <View style={{ gap: 14 }}>
         {titreEcran(traduire('Combien de temps par séance ?'), traduire('Pour des séances qui rentrent dans ton temps'))}
-        <TuilesTemps options={TEMPS_SEANCE} valeur={temps} onChoisir={(t) => { tap(); setTemps(t); marquer('temps'); setTimeout(() => suivante('temps'), 160); }} />
+        <TuilesTemps options={TEMPS_SEANCE} valeur={temps} onChoisir={(t) => { tap(); setTemps(t); marquer('temps'); }} />
+        {apercu}
       </View>
     );
     bas = <BoutonPlein label={traduire('Suivant')} onPress={() => { tap(); marquer('temps'); suivante('temps'); }} />;
@@ -521,11 +641,12 @@ export default function CoachDepart() {
       <View style={{ gap: 12 }}>
         {titreEcran(traduire('Tu pratiques aussi un sport ?'), traduire('Pour que ta muscu aide ton sport, sans te fatiguer'))}
         {AUTRES_SPORTS.map((s, k) => (
-          <CarteChoix key={s.key} role="radio" icone={ICONE_SPORT[s.key] ?? 'medal'} teinte={k} label={traduire(s.label)} on={sport === s.key} onPress={() => { tap(); setSport(s.key); setTimeout(() => suivante('sport'), 160); }} />
+          <CarteChoix key={s.key} role="radio" icone={ICONE_SPORT[s.key] ?? 'medal'} teinte={k} label={traduire(s.label)} on={sport === s.key} onPress={() => { tap(); setSport(s.key); }} />
         ))}
+        {apercu}
       </View>
     );
-    bas = <BoutonPlein label={traduire('Suivant')} onPress={() => { tap(); suivante('sport'); }} />;
+    bas = <BoutonPlein label={traduire('Voir mon programme')} onPress={() => { tap(); suivante('sport'); }} />;
   }
 
   if (etape === 'lieu') {
@@ -533,11 +654,71 @@ export default function CoachDepart() {
       <View style={{ gap: 12 }}>
         {titreEcran(traduire('Où tu t’entraînes ?'), traduire('Pour des exercices que tu peux vraiment faire'))}
         {LIEUX.map((l, k) => (
-          <CarteChoix key={l.key} role="radio" grand icone={l.icone} teinte={k} label={traduire(l.label)} on={lieu === l.key} onPress={() => { tap(); setLieu(l.key); }} />
+          <CarteChoix key={l.key} role="radio" grand icone={l.icone} sticker={l.sticker} teinte={k} label={traduire(l.label)} sous={traduire(l.sous)} on={lieu === l.key} onPress={() => { tap(); setLieu(l.key); setEquip(materielDuLieu(l.key)); }} />
         ))}
+        {/* « Coche ce que tu as » : le matériel de Ma salle, préréglé selon le lieu (ou ce que tu as déjà coché) */}
+        <View style={{ marginTop: 6 }}><Capitales texte={traduire('Coche ce que tu as')} couleur={pa.bleu.titre} /></View>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {EQUIPEMENTS.map((e) => {
+            const liste = equipVu;
+            const on = liste.includes(e.id);
+            return (
+              <Pressable
+                key={e.id}
+                onPress={() => { tap(); setEquip(on ? liste.filter((x) => x !== e.id) : [...liste, e.id]); }}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: on }}
+                accessibilityLabel={traduire(e.label)}
+                style={({ pressed }) => [{ minHeight: 44, paddingHorizontal: 14, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: on ? pa.bouton : pressed ? pa.bleu.fond : pa.carte }, on ? null : ombrePastel(pa.ombre)]}
+              >
+                {on ? <Icon name="check" size={14} color={pa.surBouton} strokeWidth={3} /> : null}
+                <Ink size={14} weight="extraBold" color={on ? pa.surBouton : pa.texte}>{traduire(e.label)}</Ink>
+              </Pressable>
+            );
+          })}
+        </View>
+        {apercu}
       </View>
     );
-    bas = <BoutonPlein label={traduire('Voir mon programme')} onPress={() => { tap(); marquer('lieu'); ouvrirResultat('quiz'); }} />;
+    bas = <BoutonPlein label={traduire('Suivant')} onPress={() => { tap(); marquer('lieu'); if (!equip) setEquip(equipVu); suivante('lieu'); }} />;
+  }
+
+  if (etape === 'douleur') {
+    const autres = DOULEURS_AUTRES.filter((d) => douleurs.includes(d.key));
+    corps = (
+      <View style={{ gap: 12 }}>
+        {titreEcran(traduire('Tu as mal quelque part en ce moment ?'), traduire('Je remplace les exercices qui chargent cette zone. Ce n’est pas un diagnostic.'))}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+          {DOULEURS_PRINCIPALES.map((d) => (
+            <TuileDouleur key={d.key} label={traduire(d.label)} point={d.point} nulle={d.key === 'nulle'} on={douleurs.includes(d.key)} onPress={() => { tap(); setDouleurs((l) => basculerDouleur(l, d.key)); }} />
+          ))}
+        </View>
+        <Pressable onPress={() => { tap(); setAutreZone((v) => !v); }} accessibilityRole="button" accessibilityState={{ expanded: autreZone || autres.length > 0 }} hitSlop={4} style={({ pressed }) => ({ minHeight: 44, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+          <Ink size={14} weight="extraBold" color={pa.surBouton}>{traduire('Autre zone : {0}', DOULEURS_AUTRES.map((d) => traduire(d.label).replace(/^(la |le |l’|l')/i, '')).join(', '))}</Ink>
+        </Pressable>
+        {autreZone || autres.length ? (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: -4 }}>
+            {DOULEURS_AUTRES.map((d) => {
+              const on = douleurs.includes(d.key);
+              return (
+                <Pressable key={d.key} onPress={() => { tap(); setDouleurs((l) => basculerDouleur(l, d.key)); }} accessibilityRole="checkbox" accessibilityState={{ checked: on }} style={({ pressed }) => [{ minHeight: 44, paddingHorizontal: 14, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: on ? pa.bouton : pressed ? pa.bleu.fond : pa.carte }, on ? null : ombrePastel(pa.ombre)]}>
+                  {on ? <Icon name="check" size={14} color={pa.surBouton} strokeWidth={3} /> : null}
+                  <Ink size={14} weight="extraBold" color={on ? pa.surBouton : pa.texte}>{traduire(d.label)}</Ink>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
+        {regionsGuide.length ? (
+          <Pressable onPress={() => { tap(); router.push('/infirmary' as any); }} accessibilityRole="link" hitSlop={4} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, opacity: pressed ? 0.7 : 1 })}>
+            <Ink size={14} weight="extraBold" color={pa.surBouton} style={{ flexShrink: 1 }}>{traduire('Préciser dans l’infirmerie')}</Ink>
+            <Icon name="chevron" size={14} color={pa.surBouton} />
+          </Pressable>
+        ) : null}
+        {apercu}
+      </View>
+    );
+    bas = douleurs.length ? <BoutonPlein label={traduire('Suivant')} onPress={() => { tap(); suivante('douleur'); }} /> : null;
   }
 
   /* ---------------- avant la liste ---------------- */
@@ -783,7 +964,7 @@ export default function CoachDepart() {
           </View>
         ) : null}
 
-        {duConseil && conseil!.guideDebutant ? (
+        {(duConseil && conseil!.guideDebutant) || (chemin === 'quiz' && niveauDuGuide(experience).gestes) ? (
           <CarteChoix icone="scale" teinte={2} label={traduire('Trouver ton poids de départ')} on={false} fleche onPress={() => { tap(); setGuide(true); }} />
         ) : null}
 
@@ -816,6 +997,9 @@ export default function CoachDepart() {
             ))}
           </View>
         ) : null}
+
+        {/* 27 octobre 2026 : « Une question ? », venues de l'accueil du coach (poids de départ, séries, charge, ton but) */}
+        <QuestionsCoach />
       </View>
     );
     bas = (
@@ -833,6 +1017,17 @@ export default function CoachDepart() {
         <Pressable onPress={retour} accessibilityRole="button" accessibilityLabel={traduire('Retour')} style={({ pressed }) => [{ width: 44, height: 44, borderRadius: 22, backgroundColor: pa.carte, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.94 : 1 }] }, ombrePastel(pa.ombre)]}>
           <Icon name="chevronLeft" size={18} color={pa.texte} />
         </Pressable>
+        {chemin === 'quiz' && etape !== 'intro' && etape !== 'attente' ? (
+          // 27 octobre 2026, le Guide : « Question N sur 7 », la barre pleine sur le résultat
+          <View style={{ flex: 1, gap: 6 }} accessible accessibilityLabel={rangQuestion >= 0 ? traduire('Question {0} sur {1}', rangQuestion + 1, questions.length) : traduire('Ton programme')}>
+            <View style={{ flexDirection: 'row', gap: 4 }}>
+              {questions.map((e, k) => (
+                <View key={e} style={{ height: 5, flex: 1, borderRadius: 3, backgroundColor: rangQuestion < 0 || k <= rangQuestion ? pa.etape : pa.etapeVide }} />
+              ))}
+            </View>
+            <Ink size={12} weight="bold" color={pa.texte2} numberOfLines={1}>{rangQuestion >= 0 ? traduire('Question {0} sur {1}', rangQuestion + 1, questions.length) : traduire('Ton programme')}</Ink>
+          </View>
+        ) : (
         <View style={{ flex: 1, gap: 6 }} accessible accessibilityLabel={traduire('Étape {0} sur {1}', rang + 1, suiteVue.length)}>
           {etape === 'intro' || etape === 'attente' ? null : (
             <>
@@ -845,13 +1040,18 @@ export default function CoachDepart() {
             </>
           )}
         </View>
+        )}
         <Pressable onPress={plusTard} accessibilityRole="button" hitSlop={8} style={{ minHeight: 44, paddingHorizontal: 4, justifyContent: 'center' }}>
           <Ink size={14} weight="bold" color={pa.texte2}>{traduire('Plus tard')}</Ink>
         </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
-        {corps}
+        {/* 27 octobre 2026 : chaque question arrive en glissant doucement */}
+        <Animated.View key={etape} entering={FadeInRight.duration(280)}>
+          {bulle}
+          {corps}
+        </Animated.View>
       </ScrollView>
 
       {bas ? <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: insets.bottom + 14, backgroundColor: pa.page }}>{bas}</View> : null}
@@ -1020,6 +1220,38 @@ function BoutonDoux({ label, onPress }: { label: string; onPress: () => void }) 
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 50, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? pa.bleu.fond : pa.carte, borderWidth: 1, borderColor: pa.ligne })}>
       <Ink size={15} weight="extraBold" color={pa.bleu.encre}>{label}</Ink>
+    </Pressable>
+  );
+}
+
+/**
+ * Une réponse à « Tu as mal quelque part ? » (maquette Coach2-C-Guide) : deux par ligne, la petite silhouette avec
+ * le point rouge sur la zone, ou la coche verte de « Nulle part ». Choisie : bleu très pâle, bord doux, coche.
+ */
+function TuileDouleur({ label, point, nulle, on, onPress }: { label: string; point?: [number, number]; nulle?: boolean; on: boolean; onPress: () => void }) {
+  const pa = usePastel();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: on }}
+      accessibilityLabel={label}
+      style={({ pressed }) => [
+        { width: '47%', flexGrow: 1, minHeight: 84, borderRadius: 22, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: on ? pa.choisi : pa.carte, borderWidth: 1.5, borderColor: on ? pa.bordChoisi : 'transparent', transform: [{ scale: pressed ? 0.97 : 1 }] },
+        on ? null : ombrePastel(pa.ombre),
+      ]}
+    >
+      <View style={{ width: 34, alignItems: 'center' }} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+        {nulle ? (
+          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: pa.menthe.barre, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="check" size={18} color="#FFFFFF" strokeWidth={3.4} />
+          </View>
+        ) : (
+          <CarteMuscles vue="face" largeur={34} muscles={false} point={point} />
+        )}
+      </View>
+      <Ink size={15} weight="black" color={pa.texte} numberOfLines={3} style={{ flex: 1, paddingRight: on ? 18 : 0 }}>{label}</Ink>
+      {on ? <View style={{ position: 'absolute', top: 8, right: 8, width: 22, height: 22, borderRadius: 11, backgroundColor: pa.coche, alignItems: 'center', justifyContent: 'center' }}><Icon name="check" size={12} color={pa.surCoche} strokeWidth={3.2} /></View> : null}
     </Pressable>
   );
 }

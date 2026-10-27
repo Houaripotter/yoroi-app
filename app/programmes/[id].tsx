@@ -30,7 +30,10 @@ import { libelleMateriel, libelleNiveau, libelleRepos, programmeParId, sportDuPr
 import { PRECISION_EXO, musclesDeExo } from '@/lib/v2/programmes/musclesExos';
 import { cardioDeLaSemaine, resumeDuJour, routeDuJour } from '@/lib/v2/programmes/lancer';
 import { raisonRemplacement } from '@/lib/v2/programmes/materiel';
-import { LIBELLE_REGION, regionsDesBlessures } from '@/lib/v2/programmes/blessures';
+import { LIBELLE_REGION, regionsDesBlessures, unirRegions } from '@/lib/v2/programmes/blessures';
+import { estProgrammePerso } from '@/lib/v2/programmes/registrePerso';
+import { chargerProgrammesPerso } from '@/lib/v2/programmes/monProgramme';
+import { QuestionsCoach } from '@/components/yoroi/v2/programmes/QuestionsCoach';
 import { jourPourToi } from '@/lib/v2/programmes/perso';
 import type { ExoPerso } from '@/lib/v2/programmes/perso';
 import { ExercisePicker } from '@/components/yoroi/v2/seance/ExercisePicker';
@@ -67,7 +70,18 @@ export default function ProgrammeDetail() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id?: string }>();
-  const p = programmeParId(typeof id === 'string' ? id : undefined);
+  // 27 octobre 2026 : ton programme construit (« Je construis le mien ») est lu du téléphone, puis trouvé comme les autres
+  const [persoLu, setPersoLu] = useState(0);
+  const perso = estProgrammePerso(typeof id === 'string' ? id : undefined);
+  useEffect(() => {
+    if (!perso) return;
+    let vivant = true;
+    const relire = () => { void chargerProgrammesPerso().then(() => { if (vivant) setPersoLu((n) => n + 1); }); };
+    relire();
+    const sub = DeviceEventEmitter.addListener(PROGRAMME_CHANGED_EVENT, relire);
+    return () => { vivant = false; sub.remove(); };
+  }, [perso]);
+  const p = useMemo(() => programmeParId(typeof id === 'string' ? id : undefined), [id, persoLu]); // eslint-disable-line react-hooks/exhaustive-deps
   const [actif, setActif] = useState<ProgrammeActif | null>(null);
   const [femme, setFemme] = useState(false);
   const [nom, setNom] = useState('');
@@ -155,6 +169,8 @@ export default function ProgrammeDetail() {
   }, []);
 
   if (!p) {
+    // ton programme construit pas encore lu : page vide un instant, pas « introuvable »
+    if (perso && persoLu === 0) return <View style={{ flex: 1, backgroundColor: c.background }} />;
     return (
       <View style={{ flex: 1, backgroundColor: c.background, paddingTop: insets.top + 8, paddingHorizontal: 22 }}>
         <EnTete titre={traduire('Programme introuvable')} repli="/programmes" style={{ marginHorizontal: -22, marginTop: -8 }} />
@@ -163,6 +179,8 @@ export default function ProgrammeDetail() {
   }
 
   const enCours = actif?.id === p.id;
+  // tes douleurs de l'infirmerie, et celles dites au Guide pour ce programme (27 octobre 2026)
+  const regionsVues = unirRegions(regions, enCours ? actif?.douleurs : null);
   const favori = favoris.includes(p.id);
   // l'étoile ronde : pleine et indigo quand le programme est dans tes favoris
   const etoile = (
@@ -183,13 +201,13 @@ export default function ProgrammeDetail() {
   // la prochaine séance (tes jours, ton matériel, tes douleurs et tes modules appliqués), ou le jour 1 avant de commencer
   const iProchain = enCours && actif ? prochainJour(actif)?.index ?? 0 : 0;
   const jBrutProchain = p.jours[iProchain];
-  const jProchain = jourPourToi(jBrutProchain, materiel, regions, machines, enCours ? actif?.remplacements : null, ctxFin);
+  const jProchain = jourPourToi(jBrutProchain, materiel, regionsVues, machines, enCours ? actif?.remplacements : null, ctxFin);
   const titreProchain = traduire(jProchain.titre);
   // la séance des pastilles : celle que tu as touchée, sinon la prochaine
   const iVuBrut = jourVu ? p.jours.findIndex((x) => x.id === jourVu) : -1;
   const iVu = iVuBrut >= 0 ? iVuBrut : iProchain;
   const jBrutVu = p.jours[iVu];
-  const jVu = iVu === iProchain ? jProchain : jourPourToi(jBrutVu, materiel, regions, machines, enCours ? actif?.remplacements : null, ctxFin);
+  const jVu = iVu === iProchain ? jProchain : jourPourToi(jBrutVu, materiel, regionsVues, machines, enCours ? actif?.remplacements : null, ctxFin);
   const message = enCours && actif ? messageCoach({ programme: p, actif, jours, prochaineSeance: titreProchain, femme, fixe: !!planEffectif(actif, p) }) : null;
   // 26 octobre 2026 : la carte dit quel programme, pourquoi cette séance et la suite (lib/v2/programmes/heroJour.ts)
   const hero = enCours && actif && message ? infosHero({ programme: p, actif, jour: jProchain, jours, message, semaine }) : null;
@@ -233,7 +251,7 @@ export default function ProgrammeDetail() {
   const proposerExpress = (index: number, minutes: number) => {
     const j = p.jours[index];
     // le meme calcul que la seance lancee (app/seance/muscu.tsx) : ton materiel et tes douleurs d'abord, puis l'express
-    const protege = jourPourToi(j, materiel, regions, machines, enCours ? actif?.remplacements : null, ctxFin);
+    const protege = jourPourToi(j, materiel, regionsVues, machines, enCours ? actif?.remplacements : null, ctxFin);
     const x = seanceExpress(protege.exos, minutes);
     const garde = x.exos.map((e) => traduire('{0} : {1} séries', traduire(nomFr(e.nom)), e.series)).join('\n');
     const reporte = x.reportes.length ? `\n\n${traduire('À faire une autre fois : {0}.', x.reportes.map((n) => traduire(nomFr(n))).join(', '))}` : '';
@@ -279,7 +297,7 @@ export default function ProgrammeDetail() {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView ref={defilement} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 40, gap: 18 }} showsVerticalScrollIndicator={false}>
         {/* 26 octobre 2026 : maquette D aux couleurs de E (Houari : « je préfère D mais avec les couleurs de E ») */}
-        <EnTeteRond salut={salutation(nom)} titre={enCours ? traduire('Ton programme') : traduire('Programme')} droite={etoile} repli="/programmes" />
+        <EnTeteRond salut={salutation(nom)} titre={enCours ? traduire('Ton programme') : traduire('Programme')} droite={perso ? undefined : etoile} repli="/programmes" />
 
         {/* 1. LA SÉANCE DU JOUR EN GRAND : le nom, les muscles, « Commencer » ; avant de commencer, le programme */}
         {enCours && message ? (
@@ -315,7 +333,20 @@ export default function ProgrammeDetail() {
         <SemaineRonds ronds={rondsDeLaSemaine(p, enCours ? actif : null, planAvant && !enCours ? joursDuPlan(planAvant) : jours, undefined, enCours ? undefined : planAvant)} />
 
         {/* 27 octobre 2026 : Tes jours, la séance de chaque jour (Push lundi, Pull mardi...), modifiable à tout moment */}
-        {enCours ? (
+        {/* ton programme construit : ses jours se changent dans « Je construis le mien » */}
+        {perso ? (
+          <Pressable
+            onPress={() => { tap(); router.push({ pathname: '/coach-construire' as any, params: { id: p.id } }); }}
+            accessibilityRole="button"
+            style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: pressed ? pal.teinte : pal.carte }, OMBRE_CARTE]}
+          >
+            <View style={{ flex: 1, gap: 2 }}>
+              <Ink size={15} weight="black" color={pal.texte}>{traduire('Modifier mon programme')}</Ink>
+              <Ink size={12} weight="bold" color={pal.texte2}>{traduire('Tes jours, tes exercices, ton rappel')}</Ink>
+            </View>
+            <Icon name="chevron" size={16} color={pal.texte3} />
+          </Pressable>
+        ) : enCours ? (
           <TesJoursEnCours programme={p} />
         ) : (
           <TesJours programme={p} plan={planAvant} jours={jours} onPlan={setPlanAvant} onJours={setJours} />
@@ -488,6 +519,9 @@ export default function ProgrammeDetail() {
 
         {/* « Prouvé par N études » : une ligne discrète tout en bas, « Voir » ouvre le détail */}
         <LigneEtudes sources={p.sources} />
+
+        {/* 27 octobre 2026 : « Une question ? », venues de l'accueil du coach (poids de départ, séries, charge, ton but) */}
+        {p.jours.some((x) => x.exos.length) ? <QuestionsCoach /> : null}
 
         <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>
           {traduire('Si tu as un problème de santé, une douleur ou une blessure, demande l’avis d’un médecin avant de commencer. Le questionnaire PAR-Q+ t’aide à savoir si c’est nécessaire.')}

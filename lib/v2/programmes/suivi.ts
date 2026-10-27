@@ -18,6 +18,11 @@ import type { FinSeance } from './finSeance';
 import { extrasDe, finDesModules, lireModules, modulesActifs, normaliserModules } from './modules';
 import type { ModuleId } from './modules';
 import { MACHINE_BY_ID } from '@/lib/v2/seance/machines';
+import { estProgrammePerso } from './registrePerso';
+import { archiverProgrammePerso, chargerProgrammesPerso, joursDuPerso } from './monProgramme';
+import type { ProgrammePerso } from './monProgramme';
+import { LIBELLE_REGION } from './blessures';
+import type { Region } from './blessures';
 
 const CLE = 'yoroi_programme_actif_v1';
 export const PROGRAMME_CHANGED_EVENT = 'YOROI_PROGRAMME_CHANGED';
@@ -52,7 +57,27 @@ export type ProgrammeActif = {
    * Absent : tes jours dans l'ordre s'ils sont aussi nombreux que les séances, sinon les séances s'enchaînent.
    */
   plan?: number[];
+  /**
+   * 27 octobre 2026 : « Tu as mal quelque part en ce moment ? » (le Guide du coach). Les zones à ménager pour ce
+   * programme seulement : les exercices qui les chargent sont remplacés (blessures.ts), comme une douleur de
+   * l'infirmerie. Rien n'est écrit dans l'infirmerie.
+   */
+  douleurs?: Region[];
 };
+
+/** Les zones du Guide, lues sans faire confiance au stockage */
+export function lireDouleurs(v: unknown): Region[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out = Array.from(new Set(v.filter((x): x is Region => typeof x === 'string' && x in LIBELLE_REGION)));
+  return out.length ? out : undefined;
+}
+
+/** Le plan d'un programme construit par toi : le jour de chaque séance vient de son id (« perso-…-d3 » = jeudi) */
+export function planDuProgrammePerso(p: Programme): number[] | null {
+  if (!estProgrammePerso(p.id)) return null;
+  const plan = p.jours.map((j) => Number(/-d(\d)$/.exec(j.id)?.[1] ?? -1));
+  return plan.every((d) => d >= 0 && d <= 6) && new Set(plan).size === plan.length && plan.length ? plan : null;
+}
 
 /**
  * Le prochain jour garde a partir de `index` (en tournant) : les seances de marche retirees par ta fin de
@@ -88,18 +113,22 @@ export async function chargerProgrammeActif(): Promise<ProgrammeActif | null> {
     const raw = await AsyncStorage.getItem(CLE);
     if (!raw) return null;
     const brut = JSON.parse(raw) as ProgrammeActif;
+    // ton programme construit : sa semaine est lue avant (programmeParId le trouve ensuite, registrePerso.ts)
+    if (brut && estProgrammePerso(brut.id)) await chargerProgrammesPerso();
     const p = brut && programmeParId(brut.id);
     if (!p) {
       retenirFinActive(null);
       return null;
     }
     // fin de seance : absente dans les anciennes versions, illisible = ignoree
-    const { fin: _f, modules: _m, plan: _p, ...reste } = brut;
+    const { fin: _f, modules: _m, plan: _p, douleurs: _d, ...reste } = brut;
     const fin = lireFinSeance(brut.fin);
     const modules = lireModules(brut.modules);
-    // plan illisible ou d'une autre version du programme : ignoré, tes jours prennent le relais
-    const plan = planValide(p, brut.plan, fin);
-    const a: ProgrammeActif = { ...reste, ...(fin ? { fin } : {}), ...(modules ? { modules } : {}), ...(plan ? { plan, jours: joursDuPlan(plan) } : {}), faits: Array.isArray(brut.faits) ? brut.faits : [], prochain: 0 };
+    const douleurs = lireDouleurs(brut.douleurs);
+    // plan illisible ou d'une autre version du programme : ignoré, tes jours prennent le relais.
+    // Ton programme construit : toujours la semaine que tu as construite (modifiée ou non depuis)
+    const plan = planDuProgrammePerso(p) ?? planValide(p, brut.plan, fin);
+    const a: ProgrammeActif = { ...reste, ...(fin ? { fin } : {}), ...(modules ? { modules } : {}), ...(douleurs ? { douleurs } : {}), ...(plan ? { plan, jours: joursDuPlan(plan) } : {}), faits: Array.isArray(brut.faits) ? brut.faits : [], prochain: 0 };
     a.prochain = indexGarde(p, a, Math.min(Math.max(0, brut.prochain | 0), p.jours.length - 1));
     retenirFinActive(a.id, a.fin, a.modules);
     return a;
@@ -123,15 +152,17 @@ async function ecrire(a: ProgrammeActif | null): Promise<void> {
  * `modules` (26 octobre 2026) : la liste complete choisie au depart (Questionnaire.tsx). Donnee, elle decide aussi
  * des abdos et du cardio ; `fin` garde alors la duree du cardio et les seances de marche.
  */
-export async function demarrerProgramme(id: string, jours?: number[], fin?: FinSeance | null, modules?: readonly ModuleId[] | null, plan?: readonly number[] | null): Promise<ProgrammeActif | null> {
+export async function demarrerProgramme(id: string, jours?: number[], fin?: FinSeance | null, modules?: readonly ModuleId[] | null, plan?: readonly number[] | null, options?: { douleurs?: readonly Region[] | null }): Promise<ProgrammeActif | null> {
+  if (estProgrammePerso(id)) await chargerProgrammesPerso();
   const p = programmeParId(id);
   if (!p) return null;
   const choisis = joursValides(jours);
   const f = modules ? finDesModules(modules, lireFinSeance(fin)) : lireFinSeance(fin);
   const extras = extrasDe(modules);
-  const a: ProgrammeActif = { id, debut: jourLocal(), prochain: 0, faits: [], ...(choisis ? { jours: choisis } : {}), ...(f && (modules ? f.choix !== 'rien' || f.sansMarche : true) ? { fin: f } : {}), ...(extras.length ? { modules: extras } : {}) };
-  // 27 octobre 2026 : tes jours séance par séance (Tes jours), choisis au départ
-  const pl = planValide(p, plan, a.fin);
+  const douleurs = lireDouleurs(options?.douleurs);
+  const a: ProgrammeActif = { id, debut: jourLocal(), prochain: 0, faits: [], ...(choisis ? { jours: choisis } : {}), ...(f && (modules ? f.choix !== 'rien' || f.sansMarche : true) ? { fin: f } : {}), ...(extras.length ? { modules: extras } : {}), ...(douleurs ? { douleurs } : {}) };
+  // 27 octobre 2026 : tes jours séance par séance (Tes jours), choisis au départ ; ton programme construit : sa semaine
+  const pl = planDuProgrammePerso(p) ?? planValide(p, plan, a.fin);
   if (pl) {
     a.plan = pl;
     a.jours = joursDuPlan(pl);
@@ -286,6 +317,39 @@ export async function remplacerExercice(jourId: string, index: number, nom: stri
 
 export async function arreterProgramme(): Promise<void> {
   await ecrire(null);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Ton programme construit (27 octobre 2026, « Je construis le mien », monProgramme.ts) : enregistré, il devient
+ * ton programme en cours. Déjà en cours : il est mis à jour sans perdre ton début, tes séances faites ni ta
+ * progression ; seuls les jours suivent ta nouvelle semaine.
+ * ---------------------------------------------------------------------------------------------- */
+export async function suivreProgrammePerso(pp: Pick<ProgrammePerso, 'id' | 'semaine'>): Promise<ProgrammeActif | null> {
+  await chargerProgrammesPerso();
+  const p = programmeParId(pp.id);
+  if (!p) return null;
+  const a = await chargerProgrammeActif();
+  const plan = planDuProgrammePerso(p);
+  if (!plan) return null;
+  if (a && a.id === pp.id) {
+    // tes exercices, tu les as changés toi même dans ta semaine : plus de remplacement à garder
+    const { remplacements: _r, plan: _p, ...reste } = a;
+    const suite: ProgrammeActif = { ...reste, plan, jours: joursDuPlan(plan) };
+    suite.prochain = indexGarde(p, suite, Math.min(a.prochain, p.jours.length - 1));
+    await ecrire(suite);
+    return suite;
+  }
+  return demarrerProgramme(pp.id, joursDuPerso(pp), null, null, plan);
+}
+
+/**
+ * Supprimer ton programme construit : il est archivé (monProgramme.ts), jamais effacé, et s'il était en cours il
+ * s'arrête. Tes séances enregistrées (historique, charges, records) ne sont pas touchées.
+ */
+export async function supprimerProgrammePerso(id: string): Promise<void> {
+  const a = await chargerProgrammeActif();
+  await archiverProgrammePerso(id);
+  if (a && a.id === id) await ecrire(null);
 }
 
 /** Choisir toi-meme le prochain jour (tu as saute une seance, tu veux faire les jambes aujourd'hui...) */

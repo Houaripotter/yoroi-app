@@ -109,3 +109,12 @@ export function regionsDesBlessures(blessures: { zone_id: string; status?: strin
   }
   return [...out];
 }
+
+/**
+ * 27 octobre 2026 : tes douleurs de l'infirmerie et celles dites au Guide du coach (ProgrammeActif.douleurs,
+ * pour ce programme seulement), sans doublon. Les deux ménagent les mêmes exercices.
+ */
+export function unirRegions(a: readonly Region[], b: readonly Region[] | null | undefined): Region[] {
+  if (!b || !b.length) return [...a];
+  return Array.from(new Set([...a, ...b]));
+}

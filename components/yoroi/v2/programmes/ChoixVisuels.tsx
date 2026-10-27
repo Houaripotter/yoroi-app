@@ -276,8 +276,8 @@ export function CarteChoix({ label, sous, on, onPress, icone, sticker, teinte = 
         <Image source={illus.img(sticker)} style={{ width: grand ? 48 : 44, height: grand ? 48 : 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
       ) : icone || visuel ? <CarreIcone icone={icone} teinte={t} taille={grand ? 46 : 42} contenu={visuel ? visuel(on, t) : undefined} /> : null}
       <View style={{ flex: 1, gap: 3 }}>
-        <Ink size={grand ? 17 : 16} weight="black" tight color={pa.texte} numberOfLines={2}>{label}</Ink>
-        {sous ? <Ink size={13} weight="bold" color={pa.texte2} numberOfLines={1}>{sous}</Ink> : null}
+        <Ink size={grand ? 17 : 16} weight="black" color={pa.texte} numberOfLines={2}>{label}</Ink>
+        {sous ? <Ink size={13} weight="bold" color={pa.texte2} numberOfLines={2}>{sous}</Ink> : null}
       </View>
       {on ? <Coche taille={24} /> : fleche ? <Icon name="chevron" size={16} color={pa.texte3} /> : null}
     </Pressable>

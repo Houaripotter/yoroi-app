@@ -32,7 +32,7 @@ import { EQUIPEMENTS, TOUT_LE_MATERIEL, remplacesParLaSalle } from '@/lib/v2/pro
 import { MaSalle } from '@/components/yoroi/v2/programmes/MaSalle';
 import type { Equipement } from '@/lib/v2/programmes/materiel';
 import { MessageDuJour } from '@/components/yoroi/v2/programmes/MessageDuJour';
-import { CorpsZones } from '@/components/yoroi/v2/programmes/CorpsZones';
+import { CarteMuscles } from '@/components/yoroi/v2/programmes/CarteMuscles';
 import { PlanningProgramme } from '@/components/yoroi/v2/programmes/PlanningProgramme';
 import { PROGRAMME_CHANGED_EVENT, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, enregistrerMateriel, materielDuLieu, activerSemaineLegere, arreterSemaineLegere, chargerProgrammeActif, estSemaineLegere, faitsCetteSemaine, joursDuProgramme, prochainJour, proposerSemaineLegere, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
@@ -331,7 +331,7 @@ function CarteProgramme({ p, femme, enCours, favori, onFavori, onPress, remplace
 function CorpsMini() {
   return (
     <View pointerEvents="none" style={{ marginLeft: 8 }}>
-      <CorpsZones cote="devant" choisies={['abdos', 'bras', 'quadriceps']} onToggle={() => {}} hauteur={120} interactif={false} />
+      <CarteMuscles vue="face" largeur={55} choisies={['abdos', 'bras', 'quadriceps']} />
     </View>
   );
 }

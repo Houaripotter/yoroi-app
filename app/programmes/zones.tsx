@@ -23,7 +23,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
 import { Glass, tap } from '@/components/yoroi/v2/seances/ui';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
-import { CorpsZones } from '@/components/yoroi/v2/programmes/CorpsZones';
+import { CarteMuscles } from '@/components/yoroi/v2/programmes/CarteMuscles';
 import { CarteExoZone } from '@/components/yoroi/v2/programmes/CarteExoZone';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { OMBRE_CARTE, carteBlanche, tonDuRang } from '@/components/yoroi/v2/seance/pastel';
@@ -69,7 +69,8 @@ export default function ZonesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { preset } = useLocalSearchParams<{ preset?: string }>();
+  // 27 octobre 2026 (Coach, « Explorer par muscle ») : zone=pectoraux ouvre la séance de ce muscle, vue=muscles la grille
+  const { preset, zone, vue } = useLocalSearchParams<{ preset?: string; zone?: string; vue?: string }>();
   const [mode, setMode] = useState<Mode>('choix');
   const [choisies, setChoisies] = useState<ZoneId[]>([]);
   const [derniereFois, setDerniereFois] = useState<ZoneId[]>([]);
@@ -81,8 +82,16 @@ export default function ZonesScreen() {
     if (r) {
       setChoisies(r.zones);
       setMode('seance');
+      return;
     }
-  }, [preset]);
+    const z = ZONES.find((x) => x.id === zone);
+    if (z) {
+      setChoisies([z.id]);
+      setMode('seance');
+      return;
+    }
+    if (vue === 'muscles') setMode('muscles');
+  }, [preset, zone, vue]);
   // ta derniere seance, relue a chaque retour sur l'ecran (apres une seance, « Refaire » est a jour)
   useFocusEffect(
     useCallback(() => {
@@ -209,8 +218,8 @@ export default function ZonesScreen() {
                 style={({ pressed }) => [carteBlanche(c.surface, c.divider), { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, paddingRight: 14, borderRadius: 24, opacity: pressed ? 0.88 : 1 }]}
               >
                 <View style={{ flexDirection: 'row', gap: 2, paddingHorizontal: 8, paddingVertical: 6, borderRadius: 18, backgroundColor: c.fillSubtle }}>
-                  <CorpsZones cote="devant" choisies={r.zones} onToggle={() => {}} hauteur={100} interactif={false} />
-                  <CorpsZones cote="derriere" choisies={r.zones} onToggle={() => {}} hauteur={100} interactif={false} />
+                  <CarteMuscles vue="face" largeur={46} choisies={r.zones} />
+                  <CarteMuscles vue="dos" largeur={46} choisies={r.zones} />
                 </View>
                 <View style={{ flex: 1, gap: 3 }}>
                   <Ink size={18} weight="black" tight>{traduire(r.nom)}</Ink>

@@ -64,7 +64,9 @@ import type { EtatSeance } from '@/lib/v2/widgets/activiteSeance';
 import { appliquerActionsIle, ecouterActionsIle, planIle } from '@/lib/v2/seance/actionsIle';
 import { coachSeance } from '@/lib/v2/seance/coachSeance';
 import type { TextesIle } from '@/lib/v2/seance/actionsIle';
-import { LIBELLE_REGION, regionsDesBlessures } from '@/lib/v2/programmes/blessures';
+import { LIBELLE_REGION, regionsDesBlessures, unirRegions } from '@/lib/v2/programmes/blessures';
+import { estProgrammePerso } from '@/lib/v2/programmes/registrePerso';
+import { chargerProgrammesPerso } from '@/lib/v2/programmes/monProgramme';
 import { jourPourToi } from '@/lib/v2/programmes/perso';
 import { EXPLICATION_PRISE, PRISES, avecPrise, sansPrise } from '@/lib/v2/seance/prise';
 import type { Prise } from '@/lib/v2/seance/prise';
@@ -210,6 +212,8 @@ export default function SeanceMuscu() {
           let programme: MuscuDraft['programme'];
           let maSeance: string | undefined;
           // 24 octobre 2026 : seance d'un programme, exercices et charges proposes (lib/v2/programmes/progression.ts)
+          // 27 octobre 2026 : ton programme construit (« Je construis le mien ») est lu avant d'être cherché
+          if (estProgrammePerso(param1(raw.programme))) await chargerProgrammesPerso().catch(() => []);
           const prog = programmeParId(param1(raw.programme));
           const jourIdx = prog ? prog.jours.findIndex((j) => j.id === param1(raw.jour)) : -1;
           // 24 octobre 2026 : « Je ne sais pas quoi faire », la seance des zones touchees sur le corps (lib/v2/programmes/zones.ts)
@@ -220,7 +224,7 @@ export default function SeanceMuscu() {
             // ton materiel et tes douleurs declarees : chaque exercice impossible ou qui charge une zone douloureuse
             // est remplace par le plus proche (lib/v2/programmes/materiel.ts, blessures.ts)
             // puis tes exercices changes a la main sur la page du programme en cours (lib/v2/programmes/perso.ts)
-            const protege = jourPourToi(jourSource, materiel, regionsDesBlessures(blessures ?? []), machines, prog && actif && actif.id === prog.id ? actif.remplacements : null);
+            const protege = jourPourToi(jourSource, materiel, unirRegions(regionsDesBlessures(blessures ?? []), prog && actif && actif.id === prog.id ? actif.douleurs : null), machines, prog && actif && actif.id === prog.id ? actif.remplacements : null);
             // seance express (15, 20 ou 30 min) : la seance du jour raccourcie (lib/v2/programmes/express.ts)
             const express = Number(param1(raw.express)) || 0;
             const jour = express > 0 ? { ...protege, exos: seanceExpress(protege.exos, express).exos } : protege;
