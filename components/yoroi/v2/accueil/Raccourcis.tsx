@@ -41,7 +41,8 @@ import { FeuillePartage } from './FeuillePartage';
 import { ombreCarte, P, Press } from './kit';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
-import { ECHELLE_MIN_LIBELLE, lignesLibelleOutil } from '@/lib/v2/accueil/libelleOutil';
+import { ECHELLE_MIN_LIBELLE, lierFinDeLigne, lignesLibelleOutil } from '@/lib/v2/accueil/libelleOutil';
+import { PastilleBeta } from './PastilleBeta';
 
 const CARTE_A: ImageSourcePropType = require('@/assets/avatars/app/carnet/partage_nuit.webp');
 const CARTE_B: ImageSourcePropType = require('@/assets/avatars/app/carnet/partage_sakura.webp');
@@ -62,7 +63,7 @@ type Teinte = keyof typeof TEINTES;
 const ENCRE = '#1D2033';
 const ENCRE_DOUCE = 'rgba(29,32,51,0.62)';
 
-type Outil = { key: string; title: string; a11y: string; href: string | { pathname: string; params: Record<string, string> } | null; teinte: Teinte; img: ImageSourcePropType | null; sticker: NomSticker };
+type Outil = { key: string; title: string; a11y: string; href: string | { pathname: string; params: Record<string, string> } | null; teinte: Teinte; img: ImageSourcePropType | null; sticker: NomSticker; beta?: boolean };
 
 /** Tes outils, dans l'ordre demande par Houari, avec Partager en deuxieme */
 export function outilsAccueil(): Outil[] {
@@ -70,7 +71,7 @@ export function outilsAccueil(): Outil[] {
     // 24 octobre 2026 : « je veux faire une seance mais je ne sais pas quoi faire ».
     // 26 octobre 2026 (Houari : « il est où le coach ? ») : la pastille ouvre le Coach (app/coach.tsx), qui rassemble
     // ton programme, ta seance du jour, les seances toutes faites (app/programmes/zones.tsx) et tes questions
-    { key: 'zones', title: traduire('Coach'), a11y: traduire('Ton coach : ton programme, ta séance du jour, tes réponses'), href: '/coach', teinte: 'bleu', img: CORPS_ZONES, sticker: 'coach' },
+    { key: 'zones', title: traduire('Coach'), a11y: traduire('Ton coach : ton programme, ta séance du jour, tes réponses'), href: '/coach', teinte: 'bleu', img: CORPS_ZONES, sticker: 'coach', beta: true },
     { key: 'chrono', title: traduire('Chrono'), a11y: traduire('Chrono : repos, rounds, Tabata'), href: '/timer', teinte: 'creme', img: ORNEMENTS.chrono, sticker: 'chrono' },
     { key: 'partager', title: traduire('Partager'), a11y: traduire('Partager une carte : ta séance, ton record, ta semaine'), href: null, teinte: 'lilas', img: null, sticker: 'partager' },
     { key: 'objectifs', title: traduire('Objectifs'), a11y: traduire('Objectifs à cocher, par sport'), href: '/training-goals', teinte: 'menthe', img: ORNEMENTS.cible, sticker: 'objectifs' },
@@ -84,7 +85,7 @@ export function outilsAccueil(): Outil[] {
  * 27 octobre 2026, soir (Houari : « toutes au même gabarit, parfaitement alignées ») : un seul gabarit pour toutes
  * les cartes. Le petit titre en capitales en haut a gauche, le sticker en haut a droite (meme taille, meme place
  * partout, il ne touche jamais le texte), la ligne principale en bas a gauche, meme marge et meme ligne de base
- * sur toutes les cartes. Le BETA du Coach : une petite pastille sous son titre.
+ * sur toutes les cartes. Le Beta du Coach : une petite pastille a droite de son titre (PastilleBeta.tsx, 27 octobre).
  */
 const CARTE_L = 172;
 const CARTE_H = 140;
@@ -216,7 +217,7 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
               key={o.key}
               onPress={() => (o.href ? router.push(o.href as any) : ouvrirPartage())}
               accessibilityRole="button"
-              accessibilityLabel={o.key === 'partager' && pastille ? traduire("{0}. Une nouvelle carte t’attend", o.a11y) : o.key === 'zones' ? traduire('{0}. En bêta', o.a11y) : o.a11y}
+              accessibilityLabel={o.key === 'partager' && pastille ? traduire("{0}. Une nouvelle carte t’attend", o.a11y) : o.beta ? traduire('{0}. En bêta', o.a11y) : o.a11y}
             >
               {/* 27 octobre 2026 : le Coach est montre par la visite guidee */}
               <TourAnchor id={o.key === 'zones' ? 'accueil.coach' : 'accueil.outil'}>
@@ -236,7 +237,8 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
                       <Image source={image} resizeMode="contain" style={{ position: 'absolute', right: STICKER_DROITE, top: STICKER_HAUT, width: STICKER, height: STICKER }} accessibilityIgnoresInvertColors />
                     )}
                     {/* le petit titre en capitales, en haut a gauche, jamais sous le sticker */}
-                    <View style={{ width: TITRE_L, minHeight: 14 }}>
+                    {/* 27 octobre 2026 : la pastille Beta sur la meme ligne que le titre, a sa droite, centree verticalement */}
+                    <View style={{ width: o.beta ? TITRE_L + 8 : TITRE_L, minHeight: 14, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                       <Ink
                         size={10}
                         weight="black"
@@ -244,16 +246,11 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
                         numberOfLines={lignesLibelleOutil(o.title)}
                         adjustsFontSizeToFit
                         minimumFontScale={ECHELLE_MIN_LIBELLE}
-                        style={{ letterSpacing: 1, lineHeight: 14 }}
+                        style={{ letterSpacing: 1, lineHeight: 14, flexShrink: 1 }}
                       >
                         {o.title.toUpperCase()}
                       </Ink>
-                      {o.key === 'zones' ? (
-                        // 25 octobre 2026 (Houari : « un petit logo beta ») : petite pastille discrete sous le titre
-                        <View pointerEvents="none" style={{ alignSelf: 'flex-start', marginTop: 6, height: 18, paddingHorizontal: 7, borderRadius: 9, backgroundColor: '#EEF1FF', justifyContent: 'center' }}>
-                          <Ink size={10} weight="bold" color="#3557D9" style={{ letterSpacing: 0.8, lineHeight: 12 }}>{traduire('BÊTA')}</Ink>
-                        </View>
-                      ) : null}
+                      {o.beta ? <PastilleBeta /> : null}
                     </View>
                     {/* la ligne principale, en bas a gauche : meme marge et meme ligne de base partout */}
                     <View style={{ marginTop: 'auto' }}>
@@ -273,7 +270,7 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
                         android_hyphenationFrequency="none"
                         style={{ lineHeight: 19, letterSpacing: -0.2 }}
                       >
-                        {ligne}
+                        {lierFinDeLigne(ligne)}
                       </Ink>
                     </View>
                     {o.key === 'partager' && pastille ? (

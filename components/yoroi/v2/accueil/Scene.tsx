@@ -26,8 +26,9 @@
  * pastilles : les outils sont poses sur la ligne d'horizon, leurs libelles sur le fond de la page. Le voile du salut
  * est local (plateau doux derriere ta photo et ton prenom), la droite de la scene et ton personnage restent lumineux.
  * Le plancher des pieds suit les pastilles (lib/v2/espace/sol.ts, PLANCHER_OUTILS).
- * 16 octobre (Personnaliser) : appui long sur la scene, Ta scene ; appui long sur ton personnage, Ton personnage
- * (un toucher sur le personnage ouvre toujours Ta scene, comme avant).
+ * 16 octobre (Personnaliser) : appui long sur la scene, Ta scene ; appui long sur ton personnage, Ton personnage.
+ * 27 octobre 2026 (Houari : « chacun son truc ») : un simple toucher sur ton personnage ouvre Ton personnage
+ * (le Vestiaire), un toucher sur le decor ouvre Ta scene. La zone du personnage est posee par dessus celle de la scene.
  * 16 octobre (miroir) : sur les scenes dont le seul sol est a gauche (Sommet des nuages, trois scenes Lanternes, Mer
  * la nuit), l'image retournee et le recadrage retourne mettent le sol a droite, sous ton personnage (lib/v2/espace/miroir.ts).
  * 19 octobre 2026 (Houari : « on ne voit pas la scene », le grand rond, le salut et la date la couvraient, tes outils
@@ -271,21 +272,17 @@ function SceneFenetre({ top, scene, name, personnage, rankIndex, photo, scrollY,
           <Image source={personnageImage(personnage, rankIndex)} style={{ position: 'absolute', left: 0, top: 0, width: charW, height: charH }} resizeMode="contain" accessibilityLabel={traduire("Ton personnage")} />
         </Animated.View>
       ) : null}
-      {/* 16 octobre : la zone du dessin du personnage (21 % a 83 % de l'image) : appui long, Ton personnage */}
+      {/* la zone du dessin du personnage (21 % a 83 % de l'image), par dessus la scene : toucher, Ton personnage (27 octobre) */}
       {aUnPersonnage(personnage) && !apercu ? (
         <Pressable
-          onPress={() => router.push(ROUTES_PERSONNALISER.scene as any)}
+          onPress={() => router.push(ROUTES_PERSONNALISER.personnage as any)}
           onLongPress={() => {
             impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
             router.push(ROUTES_PERSONNALISER.personnage as any);
           }}
           delayLongPress={450}
           accessibilityRole="button"
-          accessibilityLabel={traduire("Ton personnage. Appui long pour le changer")}
-          accessibilityActions={[{ name: 'longpress', label: traduire('Changer ton personnage') }]}
-          onAccessibilityAction={(e) => {
-            if (e.nativeEvent.actionName === 'longpress') router.push(ROUTES_PERSONNALISER.personnage as any);
-          }}
+          accessibilityLabel={traduire("Changer ton personnage")}
           style={{ position: 'absolute', right: charRight + charW * 0.17, bottom: place.bas, width: charW * 0.62, height: charH * 0.92 }}
         />
       ) : null}
@@ -336,7 +333,7 @@ function SceneFenetre({ top, scene, name, personnage, rankIndex, photo, scrollY,
 
 /**
  * 27 octobre 2026 (refonte Pastel) : la scene de l'accueil en carte arrondie. Meme image, meme video, meme son, meme
- * personnage pose sur le sol, memes touchers (Ta scene, appui long sur ton personnage) ; ni salut, ni lanterne, ni cloche.
+ * personnage pose sur le sol, memes touchers (le decor ouvre Ta scene, ton personnage ouvre Ton personnage) ; ni salut, ni lanterne, ni cloche.
  */
 function SceneCarte({ scene, personnage, rankIndex, largeur, decor }: Props) {
   const router = useRouter();
@@ -388,18 +385,14 @@ function SceneCarte({ scene, personnage, rankIndex, largeur, decor }: Props) {
         ) : null}
         {aUnPersonnage(personnage) ? (
           <Pressable
-            onPress={() => router.push(ROUTES_PERSONNALISER.scene as any)}
+            onPress={() => router.push(ROUTES_PERSONNALISER.personnage as any)}
             onLongPress={() => {
               impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
               router.push(ROUTES_PERSONNALISER.personnage as any);
             }}
             delayLongPress={450}
             accessibilityRole="button"
-            accessibilityLabel={traduire("Ton personnage. Appui long pour le changer")}
-            accessibilityActions={[{ name: 'longpress', label: traduire('Changer ton personnage') }]}
-            onAccessibilityAction={(e) => {
-              if (e.nativeEvent.actionName === 'longpress') router.push(ROUTES_PERSONNALISER.personnage as any);
-            }}
+            accessibilityLabel={traduire("Changer ton personnage")}
             style={{ position: 'absolute', right: charRight + charW * 0.17, bottom: place.bas, width: charW * 0.62, height: charH * 0.92 }}
           />
         ) : null}

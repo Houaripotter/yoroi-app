@@ -21,3 +21,13 @@ export function tailleLibelleOutil(titre: string): number {
   const t = Math.min(TAILLE_LIBELLE, LARGEUR_LIBELLE / (plusLong * CHASSE));
   return Math.max(TAILLE_LIBELLE * ECHELLE_MIN_LIBELLE, Math.floor(t * 10) / 10);
 }
+
+/**
+ * 27 octobre 2026 (Houari : « Ta séance du jour » laissait « jour » seul sur la deuxieme ligne) : a partir de trois
+ * mots, les deux derniers restent ensemble (espace insecable), la coupure tombe plus tot : « Ta séance / du jour ».
+ */
+export function lierFinDeLigne(texte: string): string {
+  const mots = texte.trim().split(/\s+/);
+  if (mots.length < 3) return texte;
+  return `${mots.slice(0, -2).join(' ')} ${mots[mots.length - 2]} ${mots[mots.length - 1]}`;
+}
