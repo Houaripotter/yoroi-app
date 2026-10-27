@@ -86,7 +86,8 @@ export default function Pack() {
   const equip = () => {
     if (equipped) return;
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
-    void saveEspace({ personnage: key });
+    // 27 octobre 2026 : comme la Boutique, un personnage du monde samourai remet l'univers Japon
+    void saveEspace(monde ? { personnage: key, univers: 'japon' } : { personnage: key });
   };
 
   return (

@@ -8,8 +8,8 @@
  * la silhouette disparait et le rond montre ta photo ou tes initiales.
  * 27 octobre 2026, maquette B « Vestiaire » (refonte Pastel et Ciel) : en haut ton personnage en grand sur un socle
  * pastel devant ta scene en fond doux, son nom, son univers et ses 5 rangs ; puis un carrousel par univers et par pack
- * (memes choix qu'avant : choisirUnivers pour le Guerrier, le Sportif et Sans personnage, choisirPersonnage pour le monde
- * samourai debloque, la fiche du pack pour les autres) ; en bas la silhouette, le rond de profil et son contour.
+ * (memes choix qu'avant : choisirUnivers pour le Guerrier, le Sportif et Sans personnage, saveEspace avec l'univers Japon pour le
+ * monde samourai debloque, comme la Boutique, la fiche du pack pour les autres) ; en bas la silhouette, le rond de profil et son contour.
  * Les anciennes versions des deux routes sont gardees dans _archive_ancien_design_2026-10-09/personnage_B_2026-10-27/.
  */
 import React, { useEffect, useState } from 'react';
@@ -32,7 +32,8 @@ import { CONTOURS, RondCadre, contourDe, type ContourRond } from '@/components/y
 import { Groupe, TUILE } from '@/components/yoroi/v2/reglages/kit';
 import { useEspace } from '@/lib/v2/espace/useEspace';
 import { useIdentite } from '@/lib/v2/espace/useIdentite';
-import { choisirPersonnage } from '@/lib/v2/espace/personnage';
+import { saveEspace } from '@/lib/v2/espace';
+import { writeOldAvatar } from '@/lib/v2/watchIdentity';
 import { usePremium } from '@/context/PremiumContext';
 import {
   MONDE_PERSONNAGES,
@@ -57,6 +58,7 @@ import { choisirUnivers, choixUniversDe, genreDuPersonnage } from '@/lib/v2/dojo
 import { RondInitiales } from '@/components/yoroi/v2/espace/RondInitiales';
 import { SILHOUETTES, calculerSilhouetteAuto, silhouetteActive, silhouetteNom, type SilhouetteId, type SilhouetteMode } from '@/lib/v2/silhouette';
 import { BusteRond } from '@/components/yoroi/v2/espace/BusteRond';
+import { universAffiche } from './universAffiche';
 import { traduire } from '@/lib/i18n/tr';
 
 /* ---------- mesures de la maquette B ---------- */
@@ -205,9 +207,10 @@ export function Vestiaire() {
   const genre: 'h' | 'f' = genreDuPersonnage(espace.personnage, profile?.avatar_gender);
   const choixUnivers = choixUniversDe(espace);
   const sansPerso = choixUnivers === 'aucun';
-  const univers = choixUnivers === 'japon' ? 'japon' : 'classique';
-  const universNom = UNIVERS_CHOIX.find((u) => u.id === choixUnivers)?.nom ?? 'Japon';
   const actuel = parsePersonnage(espace.personnage);
+  // l'univers affiche suit le personnage (le monde samourai toujours Japon, le Sportif jamais les rangs Japon)
+  const univers = universAffiche(espace.personnage, espace.univers);
+  const universNom = UNIVERS_CHOIX.find((u) => u.id === (sansPerso ? 'aucun' : univers))?.nom ?? 'Japon';
   const perso = personnageImage(espace.personnage, rankIndex, genre);
   const sceneImage = imageDeTaScene(espace.scene);
   const hasPhoto = !!profile?.profile_photo;
@@ -284,7 +287,11 @@ export function Vestiaire() {
       onPress: () => {
         selectionAsync().catch(() => {});
         if (p.kind === 'monde' && !lock) {
-          void choisirPersonnage(key).then(succes);
+          // comme la Boutique : le monde samourai remet l'univers Japon (rangs Ashigaru a Shogun) ; la montre suit
+          void saveEspace({ personnage: key, univers: 'japon' })
+            .then(() => writeOldAvatar(key))
+            .then(succes)
+            .catch(() => {});
         } else {
           router.push({ pathname: '/dojo/pack', params: { id: p.id } } as any);
         }
