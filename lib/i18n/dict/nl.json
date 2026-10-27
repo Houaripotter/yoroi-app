@@ -19352,5 +19352,19 @@
 "{0} jours par semaine": "{0} dagen per week",
 "Le plus proche de ce que tu veux": "Het dichtst bij wat je wilt",
 "Avec un autre nombre de jours": "Met een ander aantal dagen",
-"Voir les autres programmes": "Bekijk de andere programma's"
+"Voir les autres programmes": "Bekijk de andere programma's",
+"Change quand tu veux, même en pleine semaine : ton historique et tes charges restent.": "Pas het aan wanneer je wilt, ook midden in de week: je geschiedenis en je gewichten blijven.",
+"Pour l’instant, tes séances s’enchaînent dans l’ordre sur tes jours. Touche un jour pour donner à chaque séance son jour.": "Voorlopig volgen je trainingen elkaar op volgorde op je dagen. Tik op een dag om elke training een eigen dag te geven.",
+"Prévue le {0}": "Gepland op {0}",
+"Sans jour": "Geen dag",
+"Tes séances s’enchaînent dans l’ordre sur ces jours.": "Je trainingen volgen elkaar op deze dagen op volgorde.",
+"Touche un jour pour choisir sa séance.": "Tik op een dag om de training te kiezen.",
+"Touche un jour pour t’entraîner ou te reposer.": "Tik op een dag om te trainen of te rusten.",
+"le dos": "de rug",
+"les fessiers": "de bilspieren",
+"les jambes": "de benen",
+"les pectoraux": "de borst",
+"{0} : quelle séance ?": "{0}: welke training?",
+"{0} et {1} se suivent et travaillent tous les deux {2} : un jour entre les deux aide à récupérer.": "{0} en {1} volgen direct op elkaar en trainen allebei {2}: een dag ertussen helpt herstellen.",
+"{0} n’a pas de jour : tu ne la feras pas cette semaine.": "{0} heeft geen dag: je doet hem deze week niet."
 }

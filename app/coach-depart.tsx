@@ -55,7 +55,6 @@ import { etapesPreselection, joursLePlusProche, joursProposes, lieuDuMateriel, m
 import type { EtapePre, Envies, QuestionPre } from '@/lib/v2/programmes/preselection';
 import { DEBUTANT, OBJECTIFS_CHOIX } from '@/lib/v2/programmes/choix';
 import type { ObjectifChoix } from '@/lib/v2/programmes/choix';
-import { conseilJours } from '@/lib/v2/programmes/coach';
 import { AUTRES_SPORTS, TEMPS_SEANCE, conseilDepart, ecrireDepart, lireDepart, objectifsAvecSport, propositionsDepart } from '@/lib/v2/programmes/depart';
 import { etapesConnues, lireProfilCoach } from '@/lib/v2/programmes/profilCoach';
 import type { ProfilCoach } from '@/lib/v2/programmes/profilCoach';
@@ -65,6 +64,8 @@ import { aDesJoursMarche, MINUTES_FIN } from '@/lib/v2/programmes/finSeance';
 import { GROUPES_PROGRAMMES, moduleParId, modulesPossibles, moduleUtile, normaliserModules } from '@/lib/v2/programmes/modules';
 import type { ModuleId } from '@/lib/v2/programmes/modules';
 import { chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerMateriel, joursConseilles, materielDuLieu } from '@/lib/v2/programmes/suivi';
+import { joursDuPlan, planParDefaut, planValide } from '@/lib/v2/programmes/planJours';
+import { TesJours } from '@/components/yoroi/v2/programmes/TesJours';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Materiel, Niveau, Programme } from '@/lib/v2/programmes/types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
@@ -114,6 +115,8 @@ export default function CoachDepart() {
   const [choisi, setChoisi] = useState<string | null>(null);
   const [modules, setModules] = useState<ModuleId[]>([]);
   const [joursRes, setJoursRes] = useState<number[]>([]);
+  // 27 octobre 2026 : le jour de chaque séance, changé à la main pour ce programme (Tes jours) ; sinon tes jours dans l'ordre
+  const [planPerso, setPlanPerso] = useState<{ id: string; plan: number[] } | null>(null);
   const [minutes, setMinutes] = useState<number>(30);
   const [sansMarche, setSansMarche] = useState(false);
   const [guide, setGuide] = useState(false);
@@ -163,6 +166,10 @@ export default function CoachDepart() {
   const conseils = useMemo(() => conseilsDesObjectifs(objectifsAvecSport(objectifs, sport)), [objectifs, sport]);
   const prog = choisi ? programmeParId(choisi) ?? null : null;
   const possibles = prog ? modulesPossibles(prog) : [];
+  // Tes jours du résultat : ton plan pour ce programme, sinon tes jours (ou les jours conseillés) dans l'ordre
+  const finRes = sansMarche ? { choix: 'rien' as const, minutes, sansMarche: true } : null;
+  const planRes = prog ? (planPerso?.id === prog.id ? planValide(prog, planPerso.plan, finRes) : null) ?? planParDefaut(prog, joursRes, joursConseilles, finRes) : null;
+  const joursEff = planRes ? joursDuPlan(planRes) : joursRes;
   const img = sportImage(prog ? sportDuProgramme(prog) : 'musculation', femme, 1);
 
   // les étapes du questionnaire, pour la barre de progression
@@ -353,7 +360,7 @@ export default function CoachDepart() {
     if (!prog) return;
     const go = async () => {
       await garderMateriel();
-      const a = await demarrerProgramme(prog.id, joursRes, { choix: 'rien', minutes, ...(sansMarche ? { sansMarche: true } : {}) }, modules.filter((m) => possibles.some((x) => x.id === m)));
+      const a = await demarrerProgramme(prog.id, joursEff, { choix: 'rien', minutes, ...(sansMarche ? { sansMarche: true } : {}) }, modules.filter((m) => possibles.some((x) => x.id === m)), planRes);
       if (!a) return;
       await ecrireDepart('fait');
       sortir('coach');
@@ -707,7 +714,7 @@ export default function CoachDepart() {
                     </View>
                     <Ink size={24} weight="black" tight color={c.onDark} numberOfLines={3} accessibilityRole="header">{traduire(px.titre)}</Ink>
                     <Ink size={13} weight="bold" color={c.onDarkSecondary} numberOfLines={3} style={{ lineHeight: 18 }}>{traduire(x.pourquoi)}</Ink>
-                    <PointsSemaine jours={joursRes} plein="#FFFFFF" vide="rgba(255,255,255,0.2)" taille={20} />
+                    <PointsSemaine jours={joursEff} plein="#FFFFFF" vide="rgba(255,255,255,0.2)" taille={20} />
                   </View>
                   <PucesCouvre couvre={x.couvre} surIndigo />
                   <View style={{ maxWidth: img ? '68%' : '100%' }}><PucesProgramme p={px} /></View>
@@ -729,7 +736,7 @@ export default function CoachDepart() {
             <Ink size={24} weight="black" tight color={c.onDark} numberOfLines={3} accessibilityRole="header">{traduire(prog.titre)}</Ink>
             <Ink size={13} weight="bold" color={c.onDarkSecondary} numberOfLines={4} style={{ lineHeight: 18 }}>{traduire(duConseil ? conseil!.pourquoi : prog.accroche)}</Ink>
             <View style={{ marginTop: 2 }}>
-              <PointsSemaine jours={joursRes} plein="#FFFFFF" vide="rgba(255,255,255,0.2)" taille={20} />
+              <PointsSemaine jours={joursEff} plein="#FFFFFF" vide="rgba(255,255,255,0.2)" taille={20} />
             </View>
           </View>
           <View style={{ maxWidth: img ? '68%' : '100%' }} accessible accessibilityLabel={traduire('{0} j par semaine, {1} min', prog.joursParSemaine, prog.dureeMin)}>
@@ -750,11 +757,15 @@ export default function CoachDepart() {
           </View>
         ) : null}
 
-        <View style={{ gap: 12, backgroundColor: pal.carte, borderRadius: 24, padding: 16 }}>
-          {titreSection(traduire('Tes jours'))}
-          <RangeeJours jours={joursRes} onBasculer={(d) => basculerJour(d, joursRes, setJoursRes, true)} />
-          <Ink size={12} weight="bold" color={pal.texte2}>{conseilJours(prog.joursParSemaine, joursRes.length)}</Ink>
-        </View>
+        {/* 27 octobre 2026 : Tes jours, la séance de chaque jour, préréglés avec tes jours (TesJours.tsx) */}
+        <TesJours
+          programme={prog}
+          plan={planRes}
+          jours={joursRes}
+          fin={finRes}
+          onPlan={(pl) => setPlanPerso({ id: prog.id, plan: pl })}
+          onJours={setJoursRes}
+        />
 
         {possibles.length ? (
           <View style={{ gap: 12 }}>

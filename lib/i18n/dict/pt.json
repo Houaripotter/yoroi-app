@@ -19352,5 +19352,19 @@
 "{0} jours par semaine": "{0} dias por semana",
 "Le plus proche de ce que tu veux": "O mais próximo do que você quer",
 "Avec un autre nombre de jours": "Com outro número de dias",
-"Voir les autres programmes": "Ver os outros programas"
+"Voir les autres programmes": "Ver os outros programas",
+"Change quand tu veux, même en pleine semaine : ton historique et tes charges restent.": "Muda quando quiseres, mesmo a meio da semana: o teu histórico e as tuas cargas mantêm se.",
+"Pour l’instant, tes séances s’enchaînent dans l’ordre sur tes jours. Touche un jour pour donner à chaque séance son jour.": "Por agora, as tuas sessões seguem a ordem nos teus dias. Toca num dia para dar a cada sessão o seu dia.",
+"Prévue le {0}": "Prevista para {0}",
+"Sans jour": "Sem dia",
+"Tes séances s’enchaînent dans l’ordre sur ces jours.": "As tuas sessões seguem a ordem nestes dias.",
+"Touche un jour pour choisir sa séance.": "Toca num dia para escolher a sessão.",
+"Touche un jour pour t’entraîner ou te reposer.": "Toca num dia para treinar ou descansar.",
+"le dos": "as costas",
+"les fessiers": "os glúteos",
+"les jambes": "as pernas",
+"les pectoraux": "o peito",
+"{0} : quelle séance ?": "{0}: que sessão?",
+"{0} et {1} se suivent et travaillent tous les deux {2} : un jour entre les deux aide à récupérer.": "{0} e {1} são seguidas e trabalham ambas {2}: um dia entre as duas ajuda a recuperar.",
+"{0} n’a pas de jour : tu ne la feras pas cette semaine.": "{0} não tem dia: não a vais fazer esta semana."
 }

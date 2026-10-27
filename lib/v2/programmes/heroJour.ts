@@ -90,7 +90,7 @@ export function infosHero(opts: { programme: Programme; actif: ProgrammeActif; j
   let ensuite = '';
   if (!message.seanceDuJour) ensuite = message.ensuite;
   else {
-    const suite = seancesAVenir(actif, 2)[1];
+    const suite = seancesAVenir(actif, 2, auj)[1];
     if (suite && suite.jour.id !== jour.id && jours.length) {
       const d = prochainJourPrevu(jours, auj, false);
       ensuite = traduire('Puis ensuite : {0}, {1}', nomDuProgramme(traduire(suite.jour.titre).split(/\s?:\s/)[0]), nomJour(d, auj));

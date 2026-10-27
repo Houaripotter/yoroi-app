@@ -19352,5 +19352,19 @@
 "{0} jours par semaine": "{0} days a week",
 "Le plus proche de ce que tu veux": "The closest to what you want",
 "Avec un autre nombre de jours": "With a different number of days",
-"Voir les autres programmes": "See the other programs"
+"Voir les autres programmes": "See the other programs",
+"Change quand tu veux, même en pleine semaine : ton historique et tes charges restent.": "Change it whenever you like, even mid week: your history and your loads stay.",
+"Pour l’instant, tes séances s’enchaînent dans l’ordre sur tes jours. Touche un jour pour donner à chaque séance son jour.": "For now, your sessions follow each other in order on your days. Tap a day to give each session its own day.",
+"Prévue le {0}": "Planned on {0}",
+"Sans jour": "No day",
+"Tes séances s’enchaînent dans l’ordre sur ces jours.": "Your sessions follow each other in order on these days.",
+"Touche un jour pour choisir sa séance.": "Tap a day to choose its session.",
+"Touche un jour pour t’entraîner ou te reposer.": "Tap a day to train or rest.",
+"le dos": "the back",
+"les fessiers": "the glutes",
+"les jambes": "the legs",
+"les pectoraux": "the chest",
+"{0} : quelle séance ?": "{0}: which session?",
+"{0} et {1} se suivent et travaillent tous les deux {2} : un jour entre les deux aide à récupérer.": "{0} and {1} are back to back and both work {2}: a day between them helps you recover.",
+"{0} n’a pas de jour : tu ne la feras pas cette semaine.": "{0} has no day: you will not do it this week."
 }

@@ -23,6 +23,7 @@ import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import type { IconName } from '@/components/yoroi/v2/seances/Icon';
 import { CarteIllustree, EnTeteRond, nomCourt, salutation, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { FeuillePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
+import { TesJoursEnCours } from '@/components/yoroi/v2/programmes/TesJours';
 import { getProfile } from '@/lib/database';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { PROGRESSION } from '@/lib/v2/programmes/catalogue';
@@ -120,6 +121,9 @@ export default function CoachScreen() {
             </Pressable>
           ) : null}
         </CarteIllustree>
+
+        {/* 27 octobre 2026 : tes jours, séance par séance, modifiables d'ici aussi (TesJours.tsx) */}
+        {p ? <TesJoursEnCours programme={p} /> : null}
 
         <Pressable
           onPress={() => depart('liste')}

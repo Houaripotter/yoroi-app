@@ -17,7 +17,7 @@ import { saveNotification } from '@/lib/notificationHistoryService';
 import { contenuSansSante } from '@/lib/v2/notifications/texte';
 import { noter } from '@/lib/v2/notifications/mesure';
 import { datesRappelSeance, messageSeance } from '@/lib/v2/notifications/discipline';
-import { chargerProgrammeActif, seancesAVenir, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { chargerProgrammeActif, seancesAuxDates, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import { messageDuJour } from '@/lib/v2/programmes/lancer';
 import { getEspace, objectifVise } from '@/lib/v2/espace';
 import { traduire } from '@/lib/i18n/tr';
@@ -501,7 +501,8 @@ class NotificationService {
     // 24 octobre 2026 : avec un programme en cours, le rappel dit la seance du jour (« Aujourd'hui : Pectoraux... »).
     // Les seances deja faites n'ont pas de rappel, et la liste est reprogrammee apres chaque seance : l'ordre suit le programme.
     const actif = await chargerProgrammeActif().catch(() => null);
-    const prevues = actif ? seancesAVenir(actif, dates.length) : [];
+    // 27 octobre 2026 : avec tes jours séance par séance (Tes jours), chaque date dit la séance de son jour
+    const prevues = actif ? seancesAuxDates(actif, dates) : [];
 
     for (const [k, date] of dates.entries()) {
       const prevue = prevues[k];

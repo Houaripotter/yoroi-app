@@ -103,16 +103,21 @@ export function prochainJourPrevu(jours: number[], depuis: Date, inclus: boolean
  * sans séance jusqu'à aujourd'hui : la séance a sauté
  */
 export function seanceRatee(a: ProgrammeActif, jours: number[], aujourdhui: Date): boolean {
+  return !!jourRate(a, jours, aujourdhui);
+}
+
+/** Le jour prévu raté (voir seanceRatee), null si rien n'a sauté */
+export function jourRate(a: Pick<ProgrammeActif, 'debut' | 'faits'>, jours: readonly number[], aujourdhui: Date): Date | null {
   const auj = jourLocal(aujourdhui);
   for (let k = 1; k <= 7; k++) {
     const d = ajouter(aujourdhui, -k);
     const iso = jourLocal(d);
-    if (iso < a.debut) return false;
+    if (iso < a.debut) return null;
     if (!jours.includes(indexJour(d))) continue;
     // une séance faite ce jour-là ou depuis : rien n'a sauté
-    return !a.faits.some((f) => f.date >= iso && f.date <= auj);
+    return a.faits.some((f) => f.date >= iso && f.date <= auj) ? null : d;
   }
-  return false;
+  return null;
 }
 
 export function messageCoach(opts: {
@@ -124,6 +129,11 @@ export function messageCoach(opts: {
   prochaineSeance: string;
   femme: boolean;
   aujourdhui?: Date;
+  /**
+   * 27 octobre 2026 : chaque séance a son jour (planJours.ts, Tes jours). Le jour prévu passe avant le rattrapage,
+   * et un jour de repos reste un jour de repos, même avant la première séance.
+   */
+  fixe?: boolean;
 }): MessageCoach {
   const auj = opts.aujourdhui ?? new Date();
   const iso = jourLocal(auj);
@@ -140,6 +150,12 @@ export function messageCoach(opts: {
 
   if (faitAujourdhui) {
     return { etat: 'fait', titre: traduire('Séance faite'), texte: traduire(choisir(MOTS_FAIT, g), ch), ensuite: ensuiteLe(prochainJourPrevu(jours, auj, false)), seanceDuJour: false };
+  }
+  if (opts.fixe && prevuAujourdhui) {
+    return { etat: jamais ? 'debut' : 'aujourdhui', titre: traduire('Aujourd’hui : {0}', seance), texte: traduire(choisir(jamais ? MOTS_DEBUT : MOTS_JOUR, g), ch), ensuite: '', seanceDuJour: true };
+  }
+  if (opts.fixe && jamais && !seanceRatee(opts.actif, jours, auj)) {
+    return { etat: 'repos', titre: traduire('Jour de repos'), texte: traduire(choisir(MOTS_REPOS, g), ch), ensuite: ensuiteLe(prochainJourPrevu(jours, auj, false)), seanceDuJour: false };
   }
   if (jamais) {
     return { etat: 'debut', titre: traduire('Aujourd’hui : {0}', seance), texte: traduire(choisir(MOTS_DEBUT, g), ch), ensuite: '', seanceDuJour: true };

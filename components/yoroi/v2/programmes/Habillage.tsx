@@ -23,7 +23,7 @@ import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { musclesDeExo } from '@/lib/v2/programmes/musclesExos';
-import { indexGarde, seancesAVenir } from '@/lib/v2/programmes/suivi';
+import { indexGarde, planEffectif, seancesAVenir } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Programme } from '@/lib/v2/programmes/types';
 
@@ -650,13 +650,16 @@ const isoLocal = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).pad
  * Ta semaine, du lundi au dimanche : la séance faite chaque jour (suivi.ts, faits), puis les prochaines séances
  * du programme posées sur tes jours choisis, dans l'ordre (seancesAVenir). Sans programme en cours : le plan
  * à partir d'aujourd'hui, rien n'est marqué fait.
+ * 27 octobre 2026 : avec un plan (Tes jours, planJours.ts), chaque jour montre sa séance à lui. `plan` : celui
+ * à montrer avant de commencer ; en cours, celui du programme.
  */
-export function rondsDeLaSemaine(p: Programme, actif: ProgrammeActif | null, jours: readonly number[], aujourdhui = new Date()): RondJour[] {
+export function rondsDeLaSemaine(p: Programme, actif: ProgrammeActif | null, jours: readonly number[], aujourdhui = new Date(), planAvant?: readonly number[] | null): RondJour[] {
   const t = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), aujourdhui.getDate(), 12);
   const kAuj = (t.getDay() + 6) % 7;
   const aujIso = isoLocal(t);
   const enCours = !!actif && actif.id === p.id;
   const faitAuj = enCours && actif!.faits.some((f) => f.date === aujIso);
+  const plan = enCours ? planEffectif(actif, p) : planAvant ?? null;
   const suite: { titre: string }[] = [];
   if (enCours) suite.push(...seancesAVenir(actif!, 7).map((x) => x.jour));
   else {
@@ -679,10 +682,10 @@ export function rondsDeLaSemaine(p: Programme, actif: ProgrammeActif | null, jou
       const j = p.jours.find((x) => x.id === fait.jourId);
       return { ...base, etat: 'fait', libelle: j ? nomCourt(traduire(j.titre)) : traduire('Faite') };
     }
-    if (!jours.includes(k)) return { ...base, etat: 'repos', libelle: traduire('Repos') };
+    if (!(plan ? plan.includes(k) : jours.includes(k))) return { ...base, etat: 'repos', libelle: traduire('Repos') };
     const aVenir = di > aujIso || (di === aujIso && !faitAuj);
     if (!aVenir) return { ...base, etat: enCours && di >= actif!.debut ? 'rate' : 'passe', libelle: enCours && di >= actif!.debut ? traduire('À rattraper') : '' };
-    const j = suite[n++];
+    const j = plan ? p.jours[plan.indexOf(k)] : suite[n++];
     const etat = prochainVu ? 'prevu' : 'prochain';
     prochainVu = true;
     return { ...base, etat, libelle: j ? nomCourt(traduire(j.titre)) : '' };

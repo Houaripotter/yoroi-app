@@ -16,7 +16,7 @@ import { notificationService } from '@/lib/notificationService';
 import { ouvrirReglagesSysteme, permissionPourRappels, rappelsAutorises } from '@/lib/v2/notifications/rappels';
 import { HEURES_RAPPEL, estAutreHeure, heureRappelValide, joursDuRappel, libelleHeureRappel, memesJours } from '@/lib/v2/programmes/rappel';
 import { messageDuJour } from '@/lib/v2/programmes/lancer';
-import { semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { prochainJour, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Programme } from '@/lib/v2/programmes/types';
 import { traduire } from '@/lib/i18n/tr';
@@ -86,13 +86,14 @@ export function RappelSeance({ programme, actif, jours }: { programme: Programme
     if (on && !occupe && !memesJours(joursRappel, joursDuRappel(jours))) void appliquer(true, heure);
   }, [cleJours, on]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // séance faite, programme changé : le texte des rappels suit
+  // séance faite, programme changé, séances déplacées sur d'autres jours (Tes jours) : le texte des rappels suit
+  const clePlan = (actif.plan ?? []).join(',');
   useEffect(() => {
     if (on) void notificationService.replanifierSeances();
-  }, [on, actif.prochain, programme.id]);
+  }, [on, actif.prochain, programme.id, clePlan]);
 
   const nomsJours = jours.map((d) => traduire(JOURS[d])).join(', ');
-  const exemple = messageDuJour(programme, programme.jours[Math.min(actif.prochain, programme.jours.length - 1)], semaineDuProgramme(actif));
+  const exemple = messageDuJour(programme, prochainJour(actif)?.jour ?? programme.jours[Math.min(actif.prochain, programme.jours.length - 1)], semaineDuProgramme(actif));
 
   return (
     <Glass style={{ gap: 12, borderColor: on ? c.accent : c.divider }}>

@@ -19352,5 +19352,19 @@
 "{0} jours par semaine": "{0} Tage pro Woche",
 "Le plus proche de ce que tu veux": "Am nächsten an dem, was du willst",
 "Avec un autre nombre de jours": "Mit einer anderen Anzahl Tage",
-"Voir les autres programmes": "Die anderen Programme ansehen"
+"Voir les autres programmes": "Die anderen Programme ansehen",
+"Change quand tu veux, même en pleine semaine : ton historique et tes charges restent.": "Ändere es, wann du willst, auch mitten in der Woche: Dein Verlauf und deine Gewichte bleiben.",
+"Pour l’instant, tes séances s’enchaînent dans l’ordre sur tes jours. Touche un jour pour donner à chaque séance son jour.": "Im Moment folgen deine Einheiten der Reihe nach an deinen Tagen. Tippe auf einen Tag, um jeder Einheit ihren Tag zu geben.",
+"Prévue le {0}": "Geplant am {0}",
+"Sans jour": "Kein Tag",
+"Tes séances s’enchaînent dans l’ordre sur ces jours.": "Deine Einheiten folgen an diesen Tagen der Reihe nach.",
+"Touche un jour pour choisir sa séance.": "Tippe auf einen Tag, um seine Einheit zu wählen.",
+"Touche un jour pour t’entraîner ou te reposer.": "Tippe auf einen Tag, um zu trainieren oder zu ruhen.",
+"le dos": "den Rücken",
+"les fessiers": "den Po",
+"les jambes": "die Beine",
+"les pectoraux": "die Brust",
+"{0} : quelle séance ?": "{0}: welche Einheit?",
+"{0} et {1} se suivent et travaillent tous les deux {2} : un jour entre les deux aide à récupérer.": "{0} und {1} folgen direkt aufeinander und trainieren beide {2}: Ein Tag dazwischen hilft bei der Erholung.",
+"{0} n’a pas de jour : tu ne la feras pas cette semaine.": "{0} hat keinen Tag: Du machst sie diese Woche nicht."
 }

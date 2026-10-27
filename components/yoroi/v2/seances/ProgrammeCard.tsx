@@ -16,7 +16,7 @@ import { sportImage, sportTint } from '@/lib/v2/seance/sportVisuals';
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import { sportDuProgramme } from '@/lib/v2/programmes/catalogue';
 import { resumeDuJour, routeDuJour } from '@/lib/v2/programmes/lancer';
-import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, faitsCetteSemaine, joursDuProgramme, prochainJour, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, faitsCetteSemaine, joursDuProgramme, planEffectif, prochainJour, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import { messageCoach } from '@/lib/v2/programmes/coach';
 import { CoachProgramme } from '@/components/yoroi/v2/programmes/CoachProgramme';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
@@ -91,7 +91,7 @@ export function ProgrammeCard({ onOpen, femme = false }: { onOpen: () => void; f
         <View style={{ padding: 16, gap: 14 }}>
           {/* 25 octobre 2026 : le mot du coach du jour (lib/v2/programmes/coach.ts) ; le bouton Commencer est plus bas */}
           <CoachProgramme
-            message={{ ...messageCoach({ programme: p, actif, jours: joursDuProgramme(actif, p), prochaineSeance: traduire(j.titre), femme }), seanceDuJour: false }}
+            message={{ ...messageCoach({ programme: p, actif, jours: joursDuProgramme(actif, p), prochaineSeance: traduire(j.titre), femme, fixe: !!planEffectif(actif, p) }), seanceDuJour: false }}
             onCommencer={commencer}
           />
           <View style={{ gap: 6 }}>

@@ -9,7 +9,8 @@ import { programmeParId } from './catalogue';
 import { TOUT_LE_MATERIEL } from './materiel';
 import type { Equipement } from './materiel';
 import type { JourProgramme, Programme } from './types';
-import { joursValides } from './coach';
+import { indexJour, jourRate, joursValides } from './coach';
+import { estPlanFixe, indicesGardes, joursDuPlan, memePlan, planParDefaut, planValide, REPOS } from './planJours';
 import { avecRemplacement, cleCase } from './perso';
 import type { Remplacements } from './perso';
 import { joursRetires, lireFinSeance, retenirFinActive } from './finSeance';
@@ -45,6 +46,12 @@ export type ProgrammeActif = {
    * Abdos et cardio restent dans `fin`, lisible par les anciennes versions. modulesActifs(a) rend les deux ensemble.
    */
   modules?: ModuleId[];
+  /**
+   * 27 octobre 2026 : le jour de chaque séance, dans l'ordre du programme (0 = lundi, -1 = sans jour), pour les
+   * programmes à la semaine (planJours.ts). `jours` reste tenu à jour avec les jours du plan.
+   * Absent : tes jours dans l'ordre s'ils sont aussi nombreux que les séances, sinon les séances s'enchaînent.
+   */
+  plan?: number[];
 };
 
 /**
@@ -87,10 +94,12 @@ export async function chargerProgrammeActif(): Promise<ProgrammeActif | null> {
       return null;
     }
     // fin de seance : absente dans les anciennes versions, illisible = ignoree
-    const { fin: _f, modules: _m, ...reste } = brut;
+    const { fin: _f, modules: _m, plan: _p, ...reste } = brut;
     const fin = lireFinSeance(brut.fin);
     const modules = lireModules(brut.modules);
-    const a: ProgrammeActif = { ...reste, ...(fin ? { fin } : {}), ...(modules ? { modules } : {}), faits: Array.isArray(brut.faits) ? brut.faits : [], prochain: 0 };
+    // plan illisible ou d'une autre version du programme : ignoré, tes jours prennent le relais
+    const plan = planValide(p, brut.plan, fin);
+    const a: ProgrammeActif = { ...reste, ...(fin ? { fin } : {}), ...(modules ? { modules } : {}), ...(plan ? { plan, jours: joursDuPlan(plan) } : {}), faits: Array.isArray(brut.faits) ? brut.faits : [], prochain: 0 };
     a.prochain = indexGarde(p, a, Math.min(Math.max(0, brut.prochain | 0), p.jours.length - 1));
     retenirFinActive(a.id, a.fin, a.modules);
     return a;
@@ -114,13 +123,19 @@ async function ecrire(a: ProgrammeActif | null): Promise<void> {
  * `modules` (26 octobre 2026) : la liste complete choisie au depart (Questionnaire.tsx). Donnee, elle decide aussi
  * des abdos et du cardio ; `fin` garde alors la duree du cardio et les seances de marche.
  */
-export async function demarrerProgramme(id: string, jours?: number[], fin?: FinSeance | null, modules?: readonly ModuleId[] | null): Promise<ProgrammeActif | null> {
+export async function demarrerProgramme(id: string, jours?: number[], fin?: FinSeance | null, modules?: readonly ModuleId[] | null, plan?: readonly number[] | null): Promise<ProgrammeActif | null> {
   const p = programmeParId(id);
   if (!p) return null;
   const choisis = joursValides(jours);
   const f = modules ? finDesModules(modules, lireFinSeance(fin)) : lireFinSeance(fin);
   const extras = extrasDe(modules);
   const a: ProgrammeActif = { id, debut: jourLocal(), prochain: 0, faits: [], ...(choisis ? { jours: choisis } : {}), ...(f && (modules ? f.choix !== 'rien' || f.sansMarche : true) ? { fin: f } : {}), ...(extras.length ? { modules: extras } : {}) };
+  // 27 octobre 2026 : tes jours séance par séance (Tes jours), choisis au départ
+  const pl = planValide(p, plan, a.fin);
+  if (pl) {
+    a.plan = pl;
+    a.jours = joursDuPlan(pl);
+  }
   a.prochain = indexGarde(p, a, 0);
   await ecrire(a);
   return a;
@@ -132,7 +147,7 @@ export async function enregistrerFin(fin: FinSeance): Promise<void> {
   const p = a && programmeParId(a.id);
   const f = lireFinSeance(fin);
   if (!a || !p || !f) return;
-  const suite: ProgrammeActif = { ...a, fin: f };
+  const suite: ProgrammeActif = planSuitLaFin(p, a.fin, { ...a, fin: f });
   suite.prochain = indexGarde(p, suite, a.prochain);
   await ecrire(suite);
 }
@@ -150,7 +165,7 @@ export async function enregistrerModules(modules: readonly ModuleId[], options?:
   const fin = finDesModules(liste, base);
   const extras = extrasDe(liste);
   const { modules: _m, fin: _f, ...reste } = a;
-  const suite: ProgrammeActif = { ...reste, fin, ...(extras.length ? { modules: extras } : {}) };
+  const suite: ProgrammeActif = planSuitLaFin(p, a.fin, { ...reste, fin, ...(extras.length ? { modules: extras } : {}) });
   suite.prochain = indexGarde(p, suite, a.prochain);
   await ecrire(suite);
 }
@@ -160,17 +175,98 @@ export function modulesDuProgramme(a: ProgrammeActif | null): ModuleId[] {
   return modulesActifs(a);
 }
 
-/** Tes jours d'entrainement changent (0 = lundi) */
+/**
+ * Tes jours d'entrainement changent (0 = lundi), sans dire quelle seance va ou : le plan seance par seance est
+ * oublie, tes jours dans l'ordre le remplacent (planEffectif)
+ */
 export async function enregistrerJours(jours: number[]): Promise<void> {
   const a = await chargerProgrammeActif();
   const choisis = joursValides(jours);
   if (!a || !choisis) return;
-  await ecrire({ ...a, jours: choisis });
+  const { plan: _p, ...reste } = a;
+  await ecrire({ ...reste, jours: choisis });
 }
 
-/** Tes jours d'entrainement : ceux que tu as choisis, sinon les jours conseilles du programme */
+/**
+ * 27 octobre 2026 : Tes jours, seance par seance (Push lundi, Pull mardi...). L'historique et la progression ne
+ * bougent pas : seule la seance de chaque jour change, a partir d'aujourd'hui.
+ */
+export async function enregistrerPlan(plan: readonly number[]): Promise<void> {
+  const a = await chargerProgrammeActif();
+  const p = a && programmeParId(a.id);
+  if (!a || !p) return;
+  const pl = planValide(p, plan, a.fin);
+  if (!pl) return;
+  if (memePlan(pl, a.plan) && memePlan(joursDuPlan(pl), a.jours ?? null)) return;
+  await ecrire({ ...a, plan: pl, jours: joursDuPlan(pl) });
+}
+
+/**
+ * Le plan qui compte : celui que tu as fait, sinon tes jours dans l'ordre (ou les jours conseilles) s'ils sont
+ * aussi nombreux que les seances. null : programme en boucle, ou tes jours ne collent pas au nombre de seances
+ * (les seances s'enchainent alors dans l'ordre, comme avant).
+ */
+export function planEffectif(a: Pick<ProgrammeActif, 'plan' | 'jours' | 'fin'> | null, p: Programme): number[] | null {
+  if (!estPlanFixe(p)) return null;
+  const v = planValide(p, a?.plan, a?.fin);
+  if (v) return v;
+  const jours = joursValides(a?.jours);
+  if (jours && jours.length !== indicesGardes(p, a?.fin).length) return null;
+  return planParDefaut(p, jours, joursConseilles, a?.fin);
+}
+
+/** Ta fin de seance change les seances de marche gardees : le plan suit, les jours aussi */
+function planSuitLaFin(p: Programme, avant: FinSeance | undefined, a: ProgrammeActif): ProgrammeActif {
+  if (!a.plan) return a;
+  const gardes = indicesGardes(p, a.fin);
+  const retiresAvant = joursRetires(p, avant);
+  // une marche remise : elle prend le premier jour libre parmi les jours conseilles, puis n'importe lequel
+  const brut = p.jours.map((_, i) => (gardes.includes(i) ? (a.plan![i] ?? REPOS) : REPOS));
+  const libres = [...joursConseilles(p.joursParSemaine), 0, 1, 2, 3, 4, 5, 6].filter((d) => !brut.includes(d));
+  for (const i of gardes) if (retiresAvant.includes(p.jours[i].id) && brut[i] === REPOS) brut[i] = libres.shift() ?? REPOS;
+  const pl = planValide(p, brut, a.fin);
+  const { plan: _p, ...reste } = a;
+  return pl ? { ...reste, plan: pl, jours: joursDuPlan(pl) } : reste;
+}
+
+/** Tes jours d'entrainement : ceux du plan, sinon ceux que tu as choisis, sinon les jours conseilles du programme */
 export function joursDuProgramme(a: ProgrammeActif | null, p: Programme): number[] {
+  const plan = a && a.id === p.id ? planEffectif(a, p) : null;
+  if (plan) return joursDuPlan(plan);
   return joursValides(a?.jours) ?? joursConseilles(p.joursParSemaine);
+}
+
+const ajouterJours = (d: Date, n: number): Date => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n, 12);
+
+/**
+ * La seance a faire selon ton plan (programme a la semaine) : celle d'aujourd'hui si elle n'est pas faite ;
+ * un jour de repos, celle d'un jour prevu rate (on rattrape) ; sinon la prochaine de la semaine. null sans plan.
+ */
+export function indexDuPlan(a: ProgrammeActif, p: Programme, aujourdhui = new Date()): number | null {
+  const plan = planEffectif(a, p);
+  if (!plan) return null;
+  const iso = jourLocal(aujourdhui);
+  const iAuj = plan.indexOf(indexJour(aujourdhui));
+  const faitAuj = a.faits.some((f) => f.date === iso);
+  if (iAuj >= 0 && !faitAuj) return iAuj;
+  if (iAuj < 0 && !faitAuj) {
+    const rate = jourRate(a, joursDuPlan(plan), aujourdhui);
+    const iRate = rate ? plan.indexOf(indexJour(rate)) : -1;
+    if (iRate >= 0) return iRate;
+  }
+  for (let k = 1; k <= 7; k++) {
+    const i = plan.indexOf(indexJour(ajouterJours(aujourdhui, k)));
+    if (i >= 0) return i;
+  }
+  return null;
+}
+
+/** La seance prevue ce jour la par ton plan (null : repos ce jour, ou programme sans plan) */
+export function seanceDuPlanLe(a: Pick<ProgrammeActif, 'plan' | 'jours' | 'fin'> | null, p: Programme, date: Date): JourProgramme | null {
+  const plan = planEffectif(a, p);
+  if (!plan) return null;
+  const i = plan.indexOf(indexJour(date));
+  return i >= 0 ? p.jours[i] : null;
 }
 
 /**
@@ -229,10 +325,12 @@ export function faitsCetteSemaine(a: ProgrammeActif, aujourdhui = new Date()): n
   return a.faits.filter((f) => f.date >= debut).length;
 }
 
-export function prochainJour(a: ProgrammeActif): { programme: Programme; jour: JourProgramme; index: number } | null {
+/** La seance a faire : selon ton plan s'il y en a un (27 octobre 2026), sinon la suivante dans l'ordre */
+export function prochainJour(a: ProgrammeActif, aujourdhui = new Date()): { programme: Programme; jour: JourProgramme; index: number } | null {
   const p = programmeParId(a.id);
   if (!p) return null;
-  const index = indexGarde(p, a, Math.min(a.prochain, p.jours.length - 1));
+  const duPlan = indexDuPlan(a, p, aujourdhui);
+  const index = duPlan ?? indexGarde(p, a, Math.min(a.prochain, p.jours.length - 1));
   return { programme: p, jour: p.jours[index], index };
 }
 
@@ -345,11 +443,38 @@ export function materielDuLieu(lieu: 'salle' | 'maison' | 'halteres'): Equipemen
  * seance (lib/notificationService.ts), sans doublon.
  * ---------------------------------------------------------------------------------------------- */
 
-/** Pour les rappels : la seance prevue pour chacune des prochaines dates (le programme tourne dans l'ordre) */
-export function seancesAVenir(a: ProgrammeActif, n: number): { programme: Programme; jour: JourProgramme; semaine: number }[] {
+/**
+ * Les prochaines seances, dans l'ordre ou elles viennent. Avec un plan (27 octobre 2026) : la seance a faire,
+ * puis celles des jours suivants du plan. Sans plan : le programme tourne dans l'ordre.
+ */
+export function seancesAVenir(a: ProgrammeActif, n: number, aujourdhui = new Date()): { programme: Programme; jour: JourProgramme; semaine: number }[] {
   const p = programmeParId(a.id);
   if (!p) return [];
   const out: { programme: Programme; jour: JourProgramme; semaine: number }[] = [];
+  const plan = planEffectif(a, p);
+  const premier = plan ? indexDuPlan(a, p, aujourdhui) : null;
+  if (plan && premier !== null) {
+    out.push({ programme: p, jour: p.jours[premier], semaine: semaineDuProgramme(a, aujourdhui) });
+    // la suite : les jours du plan apres le jour de cette seance (apres aujourd'hui si elle est rattrapee)
+    const faitAuj = a.faits.some((f) => f.date === jourLocal(aujourdhui));
+    const rattrapee = plan.indexOf(indexJour(aujourdhui)) < 0 && !faitAuj && !!jourRate(a, joursDuPlan(plan), aujourdhui);
+    let ecart = 0;
+    if (!rattrapee) {
+      for (let k = faitAuj ? 1 : 0; k <= 7; k++) {
+        if (plan.indexOf(indexJour(ajouterJours(aujourdhui, k))) === premier) {
+          ecart = k;
+          break;
+        }
+      }
+    }
+    const base = ajouterJours(aujourdhui, ecart);
+    for (let k = 1; out.length < n && k <= n * 7; k++) {
+      const d = ajouterJours(base, k);
+      const i = plan.indexOf(indexJour(d));
+      if (i >= 0) out.push({ programme: p, jour: p.jours[i], semaine: semaineDuProgramme(a, d) });
+    }
+    return out;
+  }
   // les seances de marche retirees par ta fin de seance ne sont pas annoncees
   let i = indexGarde(p, a, a.prochain);
   for (let k = 0; k < n; k++) {
@@ -357,6 +482,23 @@ export function seancesAVenir(a: ProgrammeActif, n: number): { programme: Progra
     i = indexGarde(p, a, i + 1);
   }
   return out;
+}
+
+/**
+ * Pour les rappels dates : la seance de chaque date. Avec un plan, celle du jour (null un jour de repos) ;
+ * sans plan, les seances dans l'ordre, une par date.
+ */
+export function seancesAuxDates(a: ProgrammeActif, dates: readonly Date[]): ({ programme: Programme; jour: JourProgramme; semaine: number } | null)[] {
+  const p = programmeParId(a.id);
+  if (!p) return dates.map(() => null);
+  if (planEffectif(a, p)) {
+    return dates.map((d) => {
+      const j = seanceDuPlanLe(a, p, d);
+      return j ? { programme: p, jour: j, semaine: semaineDuProgramme(a, d) } : null;
+    });
+  }
+  const suite = seancesAVenir(a, dates.length);
+  return dates.map((_, k) => suite[k] ?? null);
 }
 
 /** Jours conseilles (0 = lundi) pour recevoir le message, selon les jours par semaine du programme */
