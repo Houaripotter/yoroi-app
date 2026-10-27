@@ -235,9 +235,11 @@ export const HAUT_VOL_CARTE = 14 - 42;
 
 /** Carte Ton poids Pastel : marge 16, haut 16, petit titre de 15, le chiffre de 40 (ligne de 44), l'anneau de 62 */
 // 27 octobre 2026 nuit (Houari : « réduis la taille de ton poids ») : chiffre en 32, anneau de 50, haut 14
-export const CARTE_PASTEL = { marge: 16, haut: 12, titre: 15, ecartTitre: 2, ligneChiffre: 31, anneau: 44, rayon: 28 };
+// 27 octobre 2026 nuit (Houari : « fais moi un beau truc ») : chiffre en 32 (ligne de 35), chiffres violets, virgule et kg en encre
+export const CARTE_PASTEL = { marge: 16, haut: 12, titre: 15, ecartTitre: 2, ligneChiffre: 35, anneau: 44, rayon: 28 };
 /** « 100,0 » en 40 points (environ 24 par chiffre, 9 pour la virgule) et « kg » en 15 : 142, arrondi a 146 */
-export const CHIFFRE_PASTEL_MAX = 104;
+/** 27 octobre 2026 nuit : « 104,5 » en 32 (environ 20 par chiffre, 8 pour la virgule), 5 d'ecart et « kg » en 15 : 113, arrondi a 116 */
+export const CHIFFRE_PASTEL_MAX = 116;
 /** Une citrouille ou un sapin de 40, entre le chiffre et l'anneau */
 export const DECOR_PASTEL = { w: 40, h: 40, ecart: 6 };
 

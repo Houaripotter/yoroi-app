@@ -60,12 +60,12 @@ import { arriveePrevueTexte } from '@/lib/v2/pesee/arrivee';
 import { jourCourt, phraseStatut, statutLigne, texteFenetreTorii } from '@/lib/v2/pesee/ligneDirectrice';
 import type { Statut } from '@/lib/v2/pesee/ligneDirectrice';
 import { paletteSombre } from '@/components/yoroi/livePalette';
-import { ECART_EAU_KG, etatObjectif, texteObjectif, texteTendance } from '@/lib/v2/pesee/etatObjectif';
+import { ECART_EAU_KG, etatObjectif, kg1, texteObjectif, texteTendance } from '@/lib/v2/pesee/etatObjectif';
 import { FeuilleObjectif } from '@/components/yoroi/v2/pesee/ObjectifPoids';
 import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
 import type { QuoiObjectif } from '@/components/yoroi/v2/pesee/ObjectifPoids';
 import { Card, Icon, ombreCarte, P, Press } from './kit';
-import { traduire, LANG } from '@/lib/i18n/tr';
+import { traduire, LANG, DECIMAL } from '@/lib/i18n/tr';
 
 const PERIODE_TEXTE: Record<number, string> = { 30: traduire('en 1 mois'), 90: traduire('en 3 mois'), 180: traduire('en 6 mois'), 365: traduire('en 1 an'), [PERIODE_PLAN]: traduire('depuis ton début') };
 
@@ -111,6 +111,17 @@ function BoutonStyle({ onPress }: { onPress: () => void }) {
   );
 }
 
+/** 27 octobre 2026 nuit : la hauteur des petites pastilles sous ton poids */
+const HAUT_PASTILLE = 26;
+
+/** Fond et texte d'une pastille de la page 1, lisibles (AA) en clair et en sombre */
+function teintePastille(ton: Statut['ton'], sombre: boolean): { fond: string; texte: string } {
+  if (ton === 'vert') return sombre ? { fond: '#163A2B', texte: '#5FC596' } : { fond: '#DDF3E7', texte: '#17704A' };
+  if (ton === 'bleu') return sombre ? { fond: '#232F58', texte: '#8EA6FF' } : { fond: '#E1E8FF', texte: '#2F50B8' };
+  if (ton === 'orange') return sombre ? { fond: '#3D2812', texte: '#F3A55C' } : { fond: '#FFEBDA', texte: '#A14E00' };
+  return sombre ? { fond: '#2C2A55', texte: P.ink } : { fond: '#EEEBFF', texte: P.ink };
+}
+
 type Props = {
   series: DayWeight[];
   targetWeight: number | null;
@@ -152,7 +163,10 @@ function AnneauChemin({ part }: { part: number }) {
 }
 
 /** 27 octobre 2026 soir : la carte en blanc pur, un voile lilas pastel en haut qui s'efface vers le blanc */
-export const VOILE_CARTE_POIDS = { clair: '#E9E4FF', sombre: '#262449', hauteur: 150 } as const;
+// 27 octobre 2026 nuit : un arret au milieu (le voile s'efface en douceur) et le bord blanc de 5 autour
+export const VOILE_CARTE_POIDS = { clair: '#E9E4FF', clairMilieu: '#F3F0FF', sombre: '#262449', sombreMilieu: '#20223A', hauteur: 150, bord: 5 } as const;
+/** le rayon de la carte (CARTE_PASTEL.rayon) */
+const CARTE_POIDS_RAYON = 28;
 
 /** La partie fixe de la page courbe autour de la courbe (titre, panneau, periodes), pour caler sa hauteur sur la page 1 */
 const CHROME_PAGE_COURBE = 102;
@@ -631,24 +645,59 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
   // la courbe prend la hauteur laissee par la page 1, entre 136 et 196 points : pas de grand vide sous la courbe
   const hCourbe = Math.round(Math.max(COURBE_MIN, Math.min(COURBE_MAX, hautPage1 - CHROME_PAGE_COURBE - (fond ? 4 : 0))));
 
+  // 27 octobre 2026 nuit (Houari : « fais moi un beau truc ») : les chiffres de ton poids dans le violet de la carte
+  // (POIDS.softText, celui de l'anneau et du voile lilas, AA sur le voile), la virgule et « kg » en encre neutre.
+  // Le vert reste a la pastille de l'ecart : il change de sens selon les jours, le violet est toujours juste.
+  const violet = POIDS.softText;
+  const poidsTxt = formatKg(last.value);
+  const iVirgule = poidsTxt.lastIndexOf(DECIMAL);
+  const entier = iVirgule < 0 ? poidsTxt : poidsTxt.slice(0, iVirgule);
+  const decimales = iVirgule < 0 ? '' : poidsTxt.slice(iVirgule + 1);
+
+  // les phrases deviennent des pastilles courtes, a la ligne si la langue est longue : rien n'est jamais coupe
   // « depuis ton début » sur la page 1, quelle que soit la periode choisie sur la courbe (la source unique)
   const variation = etat.variation;
   const versDebut = variation != null && goal !== null && mode !== 'maintien' && ((lossGoal && variation < 0) || (!lossGoal && variation > 0));
-  const ligneDebut =
-    variation != null && Math.abs(variation) >= 0.05 ? (
-      <Ink size={13} weight="bold" color={fg2} style={{ flexShrink: 1 }}>
-        <Ink size={13} weight="extraBold" color={versDebut ? POIDS.capText : fg}>
-          {`${variation < 0 ? '−' : '+'}${formatKg(Math.abs(variation))} kg`}
+  const tDebut = teintePastille(follow && scrub ? 'gris' : versDebut ? 'vert' : 'gris', sombre);
+  const pastilleDebut = (
+    <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: HAUT_PASTILLE, paddingHorizontal: 10, paddingVertical: 4, borderRadius: HAUT_PASTILLE / 2, backgroundColor: tDebut.fond, maxWidth: '100%' }}>
+      {follow && scrub ? (
+        ligneEcart(fg2, POIDS.softText, POIDS.capText, fg)
+      ) : variation != null && Math.abs(variation) >= 0.05 ? (
+        <Ink size={12.5} weight="bold" color={tDebut.texte} style={{ flexShrink: 1 }}>
+          <Ink size={12.5} weight="black" color={tDebut.texte}>
+            {`${variation < 0 ? '−' : '+'}${formatKg(Math.abs(variation))} kg`}
+          </Ink>
+          {` ${PERIODE_TEXTE[PERIODE_PLAN]}`}
         </Ink>
-        {` ${PERIODE_TEXTE[PERIODE_PLAN]}`}
-      </Ink>
-    ) : variation != null ? (
-      <Ink size={13} weight="bold" color={fg2} style={{ flexShrink: 1 }}>
-        {traduire("stable {0}", PERIODE_TEXTE[PERIODE_PLAN])}
-      </Ink>
-    ) : (
-      ligneEcart(fg2, POIDS.softText, POIDS.capText, fg)
-    );
+      ) : variation != null ? (
+        <Ink size={12.5} weight="bold" color={tDebut.texte} style={{ flexShrink: 1 }}>
+          {traduire("stable {0}", PERIODE_TEXTE[PERIODE_PLAN])}
+        </Ink>
+      ) : (
+        ligneEcart(fg2, POIDS.softText, POIDS.capText, fg)
+      )}
+    </View>
+  );
+  // « Tu descends plus vite que prévu » devient « Plus vite que prévu » (le sens est deja dans la pastille verte)
+  const passe = !!(follow && scrub);
+  const texteStatut = phrase ? (passe ? `${phrase.avant}${traduire(phrase.cle)}${phrase.apres}` : `${traduire(phrase.cle.charAt(0).toUpperCase() + phrase.cle.slice(1))}${phrase.apres}`) : null;
+  const tStatut = phrase ? teintePastille(phrase.ton, sombre) : null;
+  // l'alerte balance (derniere pesee loin de ta tendance) : une seule ligne courte (sans chevron, pour tenir sur 375),
+  // l'explication complete au toucher (appAlert) et pour VoiceOver
+  const dT = etat.ecartTendance;
+  const alerte = eauTxt && dT != null ? (() => {
+    const fort = Math.abs(dT) >= 2;
+    const n = kg1(dT);
+    const fr = fort
+      ? dT > 0 ? 'Pesée à vérifier : {0} kg au-dessus de ta tendance' : 'Pesée à vérifier : {0} kg sous ta tendance'
+      : dT > 0 ? 'Eau probable : {0} kg au-dessus de ta tendance' : 'Eau probable : {0} kg sous ta tendance';
+    // une langue qui n'a pas encore la phrase courte : « Your trend: 80.4 kg, −5.4 kg » (deja traduit), une ligne aussi
+    if (LANG !== 'fr' && traduire(fr) === fr) return { fort, n: `${dT > 0 ? '+' : '−'}${n} kg`, avant: `${tendTxt?.valeur ?? ''}, `, apres: '', trouve: true };
+    const texte = traduire(fr, n);
+    const i = texte.indexOf(`${n} kg`);
+    return { fort, n: `${n} kg`, avant: i < 0 ? texte : texte.slice(0, i), apres: i < 0 ? '' : texte.slice(i + n.length + 3), trouve: i >= 0 };
+  })() : null;
 
   // Page 1 : ton poids en tete (l'ancienne page Ton poids), puis ton chemin en paliers et ton objectif
   const pageUne = (
@@ -659,21 +708,27 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
         if (h > 0 && Math.abs(h - hautPage1) > 1) setHautPage1(h);
       }}
     >
-      <Press onPress={openDetail} haptic="light" accessibilityRole="button" accessibilityLabel={traduire("{0}. Voir le détail", a11y)}>
+      <Press onPress={openDetail} haptic="light" accessibilityRole="button" accessibilityLabel={traduire("{0}. Voir le détail", [a11y, texteStatut].filter(Boolean).join(', '))}>
+        {/* le titre et ton poids a gauche, l'anneau du chemin a droite ; le creux entre les deux accueille les citrouilles et les sapins */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
           <View style={{ flexShrink: 1, minWidth: 0 }}>
-            <Ink size={11} weight="black" color={P.indigo} numberOfLines={1} style={{ letterSpacing: 1.4 }}>
+            <Ink size={11} weight="black" color={P.indigo} style={{ letterSpacing: 1.4 }}>
               {(isToday ? traduire('Ton poids') : `${traduire('Ton poids')}, ${relativeDay(last.date)}`).toUpperCase()}
             </Ink>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4, marginTop: 2 }}>
-              <Ink size={28} weight="black" tight numberOfLines={1} color={fg} style={{ fontVariant: ['tabular-nums'], letterSpacing: -0.8 }}>
-                {formatKg(last.value)}
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5, marginTop: 2 }}>
+              <Ink size={32} weight="black" tight numberOfLines={1} color={violet} style={{ fontVariant: ['tabular-nums'], lineHeight: 35 }}>
+                {entier}
+                {decimales ? (
+                  <Ink size={32} weight="black" tight color={fg}>
+                    {DECIMAL}
+                  </Ink>
+                ) : null}
+                {decimales}
               </Ink>
-              <Ink size={12} weight="black" color={chiffreC}>
+              <Ink size={15} weight="extraBold" color={fg}>
                 {'kg'}
               </Ink>
             </View>
-            <View style={{ marginTop: 2, flexDirection: 'row' }}>{ligneDebut}</View>
           </View>
           {chemin ? (
             <View style={{ alignItems: 'center', gap: 2 }}>
@@ -684,21 +739,37 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
             </View>
           ) : null}
         </View>
-        {phrase ? (
-          <Ink size={12.5} weight="bold" color={fg2} style={{ marginTop: 4, lineHeight: 17 }}>
-            {phrase.avant}
-            <Ink size={12.5} weight="black" color={phrase.ton === 'gris' ? fg : couleurTon(phrase.ton)}>
-              {phrase.cle}
-            </Ink>
-            {phrase.apres}
-          </Ink>
-        ) : null}
-        {eauTxt ? (
-          <Ink size={11.5} weight="bold" color={fg3} style={{ marginTop: 2, lineHeight: 15 }}>
-            {eauTxt}
-          </Ink>
-        ) : null}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 10 }}>
+          {pastilleDebut}
+          {texteStatut && tStatut ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: HAUT_PASTILLE, paddingHorizontal: 10, paddingVertical: 4, borderRadius: HAUT_PASTILLE / 2, backgroundColor: tStatut.fond, maxWidth: '100%' }}>
+              <Ink size={12.5} weight="extraBold" color={tStatut.texte} style={{ flexShrink: 1 }}>
+                {texteStatut}
+              </Ink>
+            </View>
+          ) : null}
+        </View>
       </Press>
+      {alerte && eauTxt ? (
+        <Press onPress={() => appAlert(traduire('Ta tendance'), eauTxt)} haptic="light" accessibilityRole="button" accessibilityLabel={eauTxt} accessibilityHint={traduire("Voir le détail")} hitSlop={6}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: -1 }}>
+            <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: alerte.fort ? (sombre ? '#4A3710' : '#FFE2A1') : sombre ? '#2E2A55' : '#E6E1FF', alignItems: 'center', justifyContent: 'center' }}>
+              <Ink size={11} weight="black" color={alerte.fort ? (sombre ? '#F2C46B' : '#8A5A00') : violet} style={{ lineHeight: 13 }}>
+                {alerte.fort ? '!' : 'i'}
+              </Ink>
+            </View>
+            <Ink size={12} weight="bold" color={fg3} style={{ flexShrink: 1, lineHeight: 16 }}>
+              {alerte.avant}
+              {alerte.trouve ? (
+                <Ink size={12} weight="black" color={alerte.fort ? POIDS.or : fg2}>
+                  {alerte.n}
+                </Ink>
+              ) : null}
+              {alerte.apres}
+            </Ink>
+          </View>
+        </Press>
+      ) : null}
       {chemin ? (
         <Press onPress={openDetail} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("{0}{1}. Voir le détail de ton poids", atteint ? traduire('Torii atteint') : traduire("{0} % du chemin, encore {1} kilos", Math.round(chemin.part * 100), formatKg(chemin.reste)), arrivee ? traduire(", arrivée prévue {0}", arrivee) : '')}>
           <View style={{ gap: 6, paddingTop: 8, borderTopWidth: 1, borderColor: P.line2 }}>
@@ -827,14 +898,22 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
       style={[{ borderRadius: 28, backgroundColor: P.white }, ombreCarte]}
     >
       <View style={{ borderRadius: 28, overflow: 'hidden' }}>
-        <LinearGradient
+        {/* un bord blanc de 5 tout autour du voile : la carte se detache nettement du fond de l'app.
+            27 octobre 2026 nuit (Houari : une marche dans l'angle) : sur iPhone, un degrade ne se coupe pas a des rayons
+            differents par coin ; il est donc pose dans une boite qui coupe (overflow hidden), au rayon interieur exact
+            (28 moins 5 = 23, deux arcs concentriques), et il s'efface vers le blanc sur trois arrets, sans arete. */}
+        <View
           pointerEvents="none"
-          colors={[sombre ? VOILE_CARTE_POIDS.sombre : VOILE_CARTE_POIDS.clair, P.white]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          // un bord blanc de 5 tout autour du voile : la carte se detache nettement du fond de l'app
-          style={{ position: 'absolute', left: 5, right: 5, top: 5, height: VOILE_CARTE_POIDS.hauteur, borderTopLeftRadius: 23, borderTopRightRadius: 23 }}
-        />
+          style={{ position: 'absolute', left: VOILE_CARTE_POIDS.bord, right: VOILE_CARTE_POIDS.bord, top: VOILE_CARTE_POIDS.bord, height: VOILE_CARTE_POIDS.hauteur, borderTopLeftRadius: CARTE_POIDS_RAYON - VOILE_CARTE_POIDS.bord, borderTopRightRadius: CARTE_POIDS_RAYON - VOILE_CARTE_POIDS.bord, overflow: 'hidden' }}
+        >
+          <LinearGradient
+            colors={[sombre ? VOILE_CARTE_POIDS.sombre : VOILE_CARTE_POIDS.clair, sombre ? VOILE_CARTE_POIDS.sombreMilieu : VOILE_CARTE_POIDS.clairMilieu, P.white]}
+            locations={[0, 0.55, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+          />
+        </View>
         <PagesScroll
           ref={pagesRef as any}
           horizontal
