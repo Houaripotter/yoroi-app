@@ -5,9 +5,12 @@
  * relance qui montre le geste si rien n'a bougé. Chaque carte défile en hauteur si elle ne tient pas.
  * Une carte n'est montée qu'à son arrivée à l'écran : ses animations partent quand on la voit.
  * Réduire les animations : pas de relance.
+ * 27 octobre 2026 (Houari : « fais le tourner, ça donne envie ») : les cartes avancent seules toutes les 4 s, en boucle.
+ * Un doigt posé met en pause, le défilement reprend 5 s après. Pas de défilement seul avec Réduire les animations
+ * ni avec un lecteur d'écran. Une carte courte est centrée en hauteur (plus de grand vide sous la carte).
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { AccessibilityInfo, Pressable, ScrollView, View } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -20,6 +23,9 @@ export type PageCarrousel = { cle: string; contenu: (largeur: number) => React.R
 
 const ECART = 10;
 const BORD_SUIVANTE = 18;
+/** une carte toutes les 4 s ; apres un geste, reprise 5 s plus tard */
+const AVANCE_MS = 4000;
+const REPRISE_MS = 5000;
 
 /** Numero de la carte a l'ecran pour un decalage donne */
 export function pageDuDecalage(x: number, pas: number, n: number): number {
@@ -36,6 +42,10 @@ export function CarrouselPlan({ pages }: { pages: PageCarrousel[] }) {
   const [index, setIndex] = useState(0);
   const [montees, setMontees] = useState(1);
   const touche = useRef(false);
+  const enPause = useRef(false);
+  const reprise = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [tic, setTic] = useState(0);
+  const [lecteur, setLecteur] = useState(false);
   const n = pages.length;
   const largeur = Math.max(0, W - 2 * GUTTER - (n > 1 ? BORD_SUIVANTE : 0));
   const pas = largeur + ECART;
@@ -57,6 +67,52 @@ export function CarrouselPlan({ pages }: { pages: PageCarrousel[] }) {
     };
   }, [calme, n, W]);
 
+  // lecteur d'ecran : jamais de carte qui part toute seule
+  useEffect(() => {
+    let vivant = true;
+    AccessibilityInfo.isScreenReaderEnabled()
+      .then((v) => {
+        if (vivant) setLecteur(!!v);
+      })
+      .catch(() => {});
+    const sub = AccessibilityInfo.addEventListener?.('screenReaderChanged', (v: boolean) => setLecteur(!!v));
+    return () => {
+      vivant = false;
+      sub?.remove?.();
+    };
+  }, []);
+
+  // les cartes avancent seules, en boucle (pause tant qu'un doigt est pose)
+  useEffect(() => {
+    if (calme || lecteur || n < 2 || !W || pas <= 0) return;
+    const t = setTimeout(() => {
+      if (enPause.current) return;
+      const suivante = (index + 1) % n;
+      touche.current = true;
+      setMontees((m) => Math.max(m, suivante + 1));
+      ref.current?.scrollTo({ x: suivante * pas, animated: true });
+      setIndex(suivante);
+      setTic((k) => k + 1);
+    }, AVANCE_MS);
+    return () => clearTimeout(t);
+  }, [calme, lecteur, n, W, pas, index, tic]);
+
+  useEffect(() => () => {
+    if (reprise.current) clearTimeout(reprise.current);
+  }, []);
+
+  const pause = () => {
+    enPause.current = true;
+    if (reprise.current) clearTimeout(reprise.current);
+  };
+  const reprendre = () => {
+    if (reprise.current) clearTimeout(reprise.current);
+    reprise.current = setTimeout(() => {
+      enPause.current = false;
+      setTic((k) => k + 1);
+    }, REPRISE_MS);
+  };
+
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const x = e.nativeEvent.contentOffset.x;
     const i = pageDuDecalage(x, pas, n);
@@ -72,7 +128,13 @@ export function CarrouselPlan({ pages }: { pages: PageCarrousel[] }) {
   };
 
   return (
-    <View style={{ flex: 1, marginHorizontal: -GUTTER, gap: 10 }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+    <View
+      style={{ flex: 1, marginHorizontal: -GUTTER, gap: 10 }}
+      onLayout={(e) => setW(e.nativeEvent.layout.width)}
+      onTouchStart={pause}
+      onTouchEnd={reprendre}
+      onTouchCancel={reprendre}
+    >
       {W > 0 ? (
         <ScrollView
           ref={ref}
@@ -88,11 +150,13 @@ export function CarrouselPlan({ pages }: { pages: PageCarrousel[] }) {
           onScroll={onScroll}
           onScrollBeginDrag={() => {
             touche.current = true;
+            pause();
           }}
+          onScrollEndDrag={reprendre}
         >
           {pages.map((p, i) => (
             <View key={p.cle} style={{ width: largeur }} accessibilityLabel={traduire('Carte {0} sur {1}', i + 1, n)}>
-              <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 8, gap: 12 }}>
+              <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingBottom: 8, gap: 12 }}>
                 {i < montees ? p.contenu(largeur) : null}
               </ScrollView>
             </View>

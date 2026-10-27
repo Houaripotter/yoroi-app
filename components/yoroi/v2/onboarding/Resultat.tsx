@@ -177,14 +177,15 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
       : []),
     {
       cle: 'semaine',
-      contenu: () => (
+      contenu: (largeur: number) => (
         <Animated.View entering={FadeInDown.duration(380)} style={{ ...carte, gap: 12 }}>
           <View style={{ gap: 2 }}>
             <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ta semaine type")}</Ink>
             <Riche size={18} weight="black" color={c.ink} lineHeight={23} text={sessions ? traduirePluriel(sessions, sessions > 1, "**{0} séance** par semaine", "**{0} séances** par semaine", sessions) : traduire('À ton rythme')} />
             {days.length ? <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={2}>{joursTexte(days).replace(/^./, (x) => x.toUpperCase())}</Ink> : null}
           </View>
-          <SemaineCouleurs days={days} sports={sports} size={36} />
+          {/* 27 octobre 2026 : les ronds suivent la largeur de la carte (SE comme grands telephones) ; la repartition tourne */}
+          <SemaineCouleurs days={days} sports={sports} size={Math.max(30, Math.min(42, Math.floor((largeur - 34) / 7) - 5))} />
         </Animated.View>
       ),
     },

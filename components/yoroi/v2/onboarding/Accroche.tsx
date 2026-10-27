@@ -31,6 +31,7 @@ import { AvisDefilants, Defilement, NoteLauriers, useEcranVisible } from '@/comp
 import { CONTENT_COUNTS } from '@/lib/v2/creator/contentReport.generated';
 import { GUERRIER_IMAGES, MONDE_PERSONNAGES, NEW_SCENES, VIE_PERSONNAGES } from '@/lib/v2/dojo/personnages';
 import { imageTeinte } from '@/lib/v2/dojo/packsTeintes';
+import { ENCRES_THEME, type EncreId } from './couleurs';
 import { VitrineAccueil, VitrinePartage, VitrinePersonnages, VitrineSeance } from './Vitrines';
 import { TropheeRecord } from '@/components/yoroi/v2/charts/core';
 import { healthName } from '@/lib/v2/onboarding/save';
@@ -559,12 +560,14 @@ function PageArmure({ g, designW }: { g: 'h' | 'f'; designW: number }) {
   );
 }
 
-const SUR_TEL: { icon: IconName; titre: string; sous: string }[] = [
-  { icon: 'user', titre: traduire('Pas de compte à créer'), sous: traduire('Tu ouvres l’app, tu commences.') },
-  { icon: 'shield', titre: traduire('Ton suivi marche sans réseau'), sous: traduire('À la salle, au dojo, en déplacement.') },
-  { icon: 'lock', titre: traduire('Tes données restent chez toi'), sous: traduire('Sur ton téléphone, sans compte en ligne.') },
-  { icon: 'close', titre: traduire('Aucune publicité'), sous: traduire('Ni en gratuit, ni en Premium.') },
-  { icon: 'save', titre: traduire('Ta sauvegarde, quand tu veux'), sous: traduire('À remettre sur un autre téléphone.') },
+// 27 octobre 2026 (retour du proprio) : chaque ligne a sa propre teinte douce (fond pastel, picto colore),
+// prise dans les encres de l'onboarding qui suivent le mode clair ou sombre
+const SUR_TEL: { icon: IconName; titre: string; sous: string; encre: EncreId }[] = [
+  { icon: 'user', encre: 'indigo', titre: traduire('Pas de compte à créer'), sous: traduire('Tu ouvres l’app, tu commences.') },
+  { icon: 'shield', encre: 'mousse', titre: traduire('Ton suivi marche sans réseau'), sous: traduire('À la salle, au dojo, en déplacement.') },
+  { icon: 'lock', encre: 'prune', titre: traduire('Tes données restent chez toi'), sous: traduire('Sur ton téléphone, sans compte en ligne.') },
+  { icon: 'close', encre: 'vermillon', titre: traduire('Aucune publicité'), sous: traduire('Ni en gratuit, ni en Premium.') },
+  { icon: 'save', encre: 'sarcelle', titre: traduire('Ta sauvegarde, quand tu veux'), sous: traduire('À remettre sur un autre téléphone.') },
 ];
 
 function PageTel() {
@@ -574,8 +577,8 @@ function PageTel() {
     <PageCarte style={{ paddingVertical: 6 }}>
       {SUR_TEL.map((r, k) => (
         <View key={r.titre} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9, borderTopWidth: k ? 1 : 0, borderTopColor: c.divider }}>
-          <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name={r.icon} size={18} color={c.onAccent} stroke={2.5} />
+          <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: ENCRES_THEME[r.encre].fond, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name={r.icon} size={18} color={ENCRES_THEME[r.encre].ink} stroke={2.5} />
           </View>
           <View style={{ flex: 1, gap: 1 }}>
             <Ink size={15} weight="black" tight numberOfLines={1}>{traduire(r.titre)}</Ink>

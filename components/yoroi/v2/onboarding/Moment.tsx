@@ -9,6 +9,8 @@
  * 15 octobre 2026 (Houari : « 1 fois par semaine puis je touche un jour, ca passe a 2 ») : la frequence choisie est respectee.
  * Toucher un jour le prend ; si la frequence est deja atteinte, il remplace le plus ancien pris (lib/v2/joursFrequence.ts).
  * La frequence ne change que si tu la touches.
+ * 27 octobre 2026 (Houari : « réduis un peu la taille, vraiment légèrement ») : titre, cartes, ronds et tuiles
+ * environ 8 a 10 % plus petits, pour que plus de choses tiennent sans defiler.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
@@ -139,12 +141,12 @@ function RoueHeure({ value, onChange }: { value: string; onChange: (hhmm: string
 function Bloc({ n, titre, children, delay }: { n: number; titre: string; children: React.ReactNode; delay: number }) {
   const c = useColors();
   return (
-    <Animated.View entering={FadeInDown.delay(delay).duration(300)} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 14 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: c.ink, alignItems: 'center', justifyContent: 'center' }}>
-          <Ink size={13} weight="black" color={c.background}>{String(n)}</Ink>
+    <Animated.View entering={FadeInDown.delay(delay).duration(300)} style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 14, gap: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
+        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: c.ink, alignItems: 'center', justifyContent: 'center' }}>
+          <Ink size={12} weight="black" color={c.background}>{String(n)}</Ink>
         </View>
-        <Ink size={17} weight="black" tight style={{ flex: 1 }}>{titre}</Ink>
+        <Ink size={15.5} weight="black" tight style={{ flex: 1 }}>{titre}</Ink>
       </View>
       {children}
     </Animated.View>
@@ -167,8 +169,8 @@ function Rond({ label, sous, on, onPress, a11y, role = 'button' }: { label: stri
     >
       {({ pressed }) => (
         <>
-          <View style={{ width: '100%', maxWidth: 44, aspectRatio: 1, borderRadius: 999, backgroundColor: on ? c.accent : pressed ? c.fillSubtle : c.fillSoft, alignItems: 'center', justifyContent: 'center', transform: [{ scale: on ? 1.06 : 1 }] }}>
-            <Ink size={17} weight="black" color={on ? c.onAccent : c.ink}>{label}</Ink>
+          <View style={{ width: '100%', maxWidth: 40, aspectRatio: 1, borderRadius: 999, backgroundColor: on ? c.accent : pressed ? c.fillSubtle : c.fillSoft, alignItems: 'center', justifyContent: 'center', transform: [{ scale: on ? 1.06 : 1 }] }}>
+            <Ink size={15.5} weight="black" color={on ? c.onAccent : c.ink}>{label}</Ink>
           </View>
           {sous ? <Ink size={10} weight="bold" color={on ? c.accent : c.textMuted}>{sous}</Ink> : null}
         </>
@@ -210,16 +212,16 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
   const reste = freq != null && n < freq ? freq - n : 0;
   const ready = !!value && value !== 'inconnu' && n > 0;
   return (
-    <Shell {...nav} title={traduire("Ton **rendez-vous** avec la balance")} gap={14} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={!ready} />}>
-      <Animated.View entering={FadeIn.duration(260)} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 22, backgroundColor: ENCRES.sarcelle.fond, paddingVertical: 12, paddingHorizontal: 14 }}>
-        <Tampon name="objectif_perdre" size={64} rotate={-8} ink={ENCRES.sarcelle.ink} animate accessibilityLabel={null} />
+    <Shell {...nav} title={traduire("Ton **rendez-vous** avec la balance")} echelle={0.91} gap={12} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={!ready} />}>
+      <Animated.View entering={FadeIn.duration(260)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 22, backgroundColor: ENCRES.sarcelle.fond, paddingVertical: 10, paddingHorizontal: 13 }}>
+        <Tampon name="objectif_perdre" size={58} rotate={-8} ink={ENCRES.sarcelle.ink} animate accessibilityLabel={null} />
         <Riche
           text={traduire("Te peser **aux mêmes moments**, c’est ce qui rend ta courbe fiable d’une semaine à l’autre.")}
-          size={15}
+          size={14}
           weight="bold"
           color={c.ink}
           ink={ENCRES.sarcelle.ink}
-          lineHeight={21}
+          lineHeight={19}
           style={{ flex: 1 }}
         />
       </Animated.View>
@@ -269,13 +271,13 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
                 style={{ flexBasis: '47%', flexGrow: 1 }}
               >
                 {({ pressed }) => (
-                  <View style={{ minHeight: 66, borderRadius: 18, backgroundColor: on ? m.encre.fond : pressed ? c.fillSubtle : c.background, borderWidth: on ? 2.5 : 1, borderColor: on ? m.encre.ink : c.border, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
+                  <View style={{ minHeight: 60, borderRadius: 16, backgroundColor: on ? m.encre.fond : pressed ? c.fillSubtle : c.background, borderWidth: on ? 2.5 : 1, borderColor: on ? m.encre.ink : c.border, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
                     {m.tampon ? (
-                      <Tampon name={m.tampon} size={44} rotate={-6} ink={m.encre.ink} accessibilityLabel={null} />
+                      <Tampon name={m.tampon} size={40} rotate={-6} ink={m.encre.ink} accessibilityLabel={null} />
                     ) : (
-                      <Image source={CHRONO} style={{ width: 44, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+                      <Image source={CHRONO} style={{ width: 40, height: 40 }} resizeMode="contain" accessibilityIgnoresInvertColors />
                     )}
-                    <Ink size={15} weight="black" color={on ? m.encre.ink : c.ink} style={{ flex: 1, lineHeight: 19 }} numberOfLines={2}>{traduire(m.label)}</Ink>
+                    <Ink size={14} weight="black" color={on ? m.encre.ink : c.ink} style={{ flex: 1, lineHeight: 18 }} numberOfLines={2}>{traduire(m.label)}</Ink>
                     {on ? (
                       <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: m.encre.ink, alignItems: 'center', justifyContent: 'center' }}>
                         <Icon name="check" size={12} color={c.onAccent} stroke={3} />
@@ -291,14 +293,14 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
         {value === 'reveil' ? <Riche text={traduire("**À jeun, au réveil** : le plus fiable d’un jour à l’autre.")} size={13} weight="bold" ink={ENCRES.or.ink} /> : null}
       </Bloc>
 
-      <Animated.View entering={FadeInDown.delay(240).duration(300)} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderRadius: 20, backgroundColor: c.accentTint, padding: 14 }}>
-        <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View entering={FadeInDown.delay(240).duration(300)} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 11, borderRadius: 20, backgroundColor: c.accentTint, padding: 12 }}>
+        <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="bell" size={16} color={c.accent} />
         </View>
         <Riche
           text={traduire("**Un seul rappel doux**, environ 2{0}h après, seulement ces jours-là et si ta pesée manque. Tu peux tout changer dans Réglages, Rappels.", NB)}
-          size={13}
-          lineHeight={19}
+          size={12.5}
+          lineHeight={18}
           color={c.ink}
           style={{ flex: 1 }}
         />

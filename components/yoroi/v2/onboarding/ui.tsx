@@ -176,9 +176,9 @@ export function Riche({ text, size = 14, color, ink, dateInk = OR_PROFOND, weigh
  * 26 octobre 2026 (Houari : « réduire la taille du texte ») : 29 (25 sur petit iPhone), agrandissement du systeme
  * plafonne a 1,15 pour que l'ecran se lise en entier sans defiler.
  */
-export function Titre({ text, sub, ink, petit }: { text: string; sub?: string; ink?: string; petit?: boolean }) {
+export function Titre({ text, sub, ink, petit, echelle = 1 }: { text: string; sub?: string; ink?: string; petit?: boolean; echelle?: number }) {
   const c = useColors();
-  const fs = petit ? 25 : 29;
+  const fs = Math.round((petit ? 25 : 29) * echelle);
   return (
     <View style={{ gap: 8 }}>
       <Ink size={fs} weight="black" tight maxFontSizeMultiplier={1.15} style={{ lineHeight: Math.round(fs * 1.18) }} accessibilityRole="header" accessibilityLabel={text.replace(/\*\*|\^\^/g, '')}>
@@ -204,6 +204,7 @@ export function Shell({
   fond,
   titleInk,
   onFin,
+  echelle = 1,
 }: {
   progress?: number | null;
   onBack?: () => void;
@@ -221,6 +222,8 @@ export function Shell({
   titleInk?: string;
   /** 15 octobre 2026 : appele quand le bas du contenu est visible (ou s'il tient sans defiler) */
   onFin?: () => void;
+  /** 27 octobre 2026 : taille du titre (1 = normale), pour un ecran un peu plus compact */
+  echelle?: number;
 }) {
   const c = useColors();
   const insets = useSafeAreaInsets();
@@ -232,7 +235,7 @@ export function Shell({
   };
   const apercu = useApercuVisible();
   const petit = useWindowDimensions().height < 720;
-  const head = title ? <Titre text={title} sub={sub} ink={titleInk} petit={petit} /> : null;
+  const head = title ? <Titre text={title} sub={sub} ink={titleInk} petit={petit} echelle={echelle} /> : null;
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {fond ? <FondEpoque fond={fond} voile="clair" /> : null}

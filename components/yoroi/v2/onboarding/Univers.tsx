@@ -18,7 +18,9 @@ import { traduire } from '@/lib/i18n/tr';
 
 /** Decor et personnage de chaque carte */
 export function illustrationUnivers(choix: ChoixUnivers, genre: 'h' | 'f'): { scene: ImageSourcePropType; perso: ImageSourcePropType | null } {
-  if (choix === 'japon') return { scene: sceneMeta('dojo').image, perso: guerrierImage(genre, 0) };
+  // 27 octobre 2026 (choix de Houari) : la Salle d'armes (scene offerte du pack Samourai) remplace le dojo clair ;
+  // le personnage reste, il se lit bien sur la scene sombre
+  if (choix === 'japon') return { scene: sceneMeta('samourai_armurerie').image, perso: guerrierImage(genre, 0) };
   if (choix === 'classique') return { scene: sceneMeta('classique_salle_jour').image, perso: CLASSIQUE_IMAGES[genre][0] };
   return { scene: sceneMeta('classique_salle_jour').image, perso: null };
 }

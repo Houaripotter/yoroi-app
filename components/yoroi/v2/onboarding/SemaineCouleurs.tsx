@@ -6,10 +6,14 @@
  * Tes sports sont répartis sur tes jours dans l'ordre, à titre d'exemple : la légende le dit, tu places tes
  * séances comme tu veux. Utilisé par « Tes jours d'entraînement » (Rythme.tsx) et « Ton plan » (Resultat.tsx).
  * Réduire les animations : tout est affiché d'un coup.
+ * 27 octobre 2026 (Houari : « pourquoi tu proposes plus de JJB que de muscu ; fais une animation où la répartition
+ * change ») : la muscu passe en premier (au moins autant de jours qu'un autre sport sur la première image), puis la
+ * répartition tourne toutes les 2,5 s (un sport décale d'un jour à chaque fois), avec un fondu doux sur les ronds :
+ * il voit qu'il choisit et peut changer. Toujours les jours qu'il a pris. Réduire les animations : première image, fixe.
  */
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import Animated, { ZoomIn, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+import Animated, { FadeOut, ZoomIn, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import type { IconName } from '@/components/yoroi/v2/seances/Icon';
@@ -36,17 +40,36 @@ export function familleSport(id: string): FamilleSport {
   return 'autre';
 }
 
-/** Le sport de chaque jour d'entraînement : tes sports dans l'ordre, en boucle (null : aucun sport choisi) */
-export function sportsDesJours(days: readonly number[], sports: readonly string[]): (string | null)[] {
-  const tries = [...days].sort((a, b) => a - b);
+/** Tes sports sans doublon, la muscu d'abord (elle n'a jamais moins de jours qu'un autre sport sur l'exemple) */
+export function ordreSports(sports: readonly string[]): string[] {
+  const uniques = [...new Set(sports)];
+  return [...uniques.filter((s) => familleSport(s) === 'muscu'), ...uniques.filter((s) => familleSport(s) !== 'muscu')];
+}
+
+/**
+ * Le sport de chaque jour d'entraînement : tes sports dans l'ordre (muscu d'abord), en boucle (null : aucun sport choisi).
+ * decalage : la variante de l'exemple (0 = la première), chaque cran décale tes sports d'un jour.
+ */
+export function sportsDesJours(days: readonly number[], sports: readonly string[], decalage = 0): (string | null)[] {
+  const tries = [...new Set(days)].sort((a, b) => a - b);
+  const ordre = ordreSports(sports);
   const out: (string | null)[] = [null, null, null, null, null, null, null];
+  const n = ordre.length;
   tries.forEach((d, k) => {
-    if (d >= 0 && d <= 6) out[d] = sports.length ? sports[k % sports.length] : null;
+    if (d >= 0 && d <= 6) out[d] = n ? ordre[(((k + decalage) % n) + n) % n] : null;
   });
   return out;
 }
 
-function Rond({ on, sport, i, size, calme }: { on: boolean; sport: string | null; i: number; size: number; calme: boolean }) {
+/** Nombre de variantes differentes de l'exemple (1 : rien ne tourne) */
+export function variantesRepartition(days: readonly number[], sports: readonly string[]): number {
+  const n = ordreSports(sports).length;
+  return days.length && n > 1 ? n : 1;
+}
+
+const TOUR_MS = 2500;
+
+function Rond({ on, sport, i, size, calme, doux }: { on: boolean; sport: string | null; i: number; size: number; calme: boolean; doux: boolean }) {
   const pal = usePaletteProgramme();
   const f = FAMILLES[sport ? familleSport(sport) : 'muscu'];
   const halo = useSharedValue(calme ? 1 : 0);
@@ -67,8 +90,9 @@ function Rond({ on, sport, i, size, calme }: { on: boolean; sport: string | null
             <Animated.View pointerEvents="none" style={[{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: f.couleur }, haloStyle]} />
             <Animated.View
               key={`on-${sport ?? 'x'}`}
-              entering={calme ? undefined : ZoomIn.delay(i * 70).springify().damping(11)}
-              style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: f.couleur, alignItems: 'center', justifyContent: 'center', shadowColor: f.couleur, shadowOpacity: 0.45, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 }}
+              entering={calme ? undefined : doux ? ZoomIn.duration(360).delay(i * 40) : ZoomIn.delay(i * 70).springify().damping(11)}
+              exiting={calme ? undefined : FadeOut.duration(220)}
+              style={{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: f.couleur, alignItems: 'center', justifyContent: 'center', shadowColor: f.couleur, shadowOpacity: 0.45, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 }}
             >
               <Icon name={f.icone} size={Math.round(size * 0.48)} color="#FFFFFF" strokeWidth={2.4} />
             </Animated.View>
@@ -85,15 +109,24 @@ function Rond({ on, sport, i, size, calme }: { on: boolean; sport: string | null
 export function SemaineCouleurs({ days, sports, size = 38, legende = true }: { days: readonly number[]; sports: readonly string[]; size?: number; legende?: boolean }) {
   const pal = usePaletteProgramme();
   const calme = !!useReducedMotion();
-  const parJour = sportsDesJours(days, sports);
+  const variantes = variantesRepartition(days, sports);
+  const [tour, setTour] = useState(0);
+  // la répartition en exemple tourne : il voit qu'il peut la changer
+  useEffect(() => {
+    if (calme || variantes < 2) return;
+    const t = setInterval(() => setTour((k) => k + 1), TOUR_MS);
+    return () => clearInterval(t);
+  }, [calme, variantes]);
+  const decalage = calme ? 0 : tour % variantes;
+  const parJour = sportsDesJours(days, sports, decalage);
   const label = days.length ? traduire('{0} séances : {1}', days.length, joursTexte([...days])) : traduire('Aucun jour choisi');
-  // la légende : les sports vraiment placés, sans doublon
-  const places = [...new Set(parJour.filter((s): s is string => !!s))];
+  // la légende : les sports placés au fil des variantes (tous quand ça tourne), sans doublon, muscu d'abord
+  const places = variantes > 1 ? ordreSports(sports) : [...new Set(parJour.filter((s): s is string => !!s))];
   return (
     <View style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }} accessible accessibilityLabel={label}>
         {JOURS_NOMS.map((n, i) => (
-          <Rond key={n} i={i} on={days.includes(i)} sport={parJour[i]} size={size} calme={calme} />
+          <Rond key={n} i={i} on={days.includes(i)} sport={parJour[i]} size={size} calme={calme} doux={tour > 0} />
         ))}
       </View>
       {legende && places.length ? (
@@ -109,7 +142,7 @@ export function SemaineCouleurs({ days, sports, size = 38, legende = true }: { d
               );
             })}
           </View>
-          {places.length > 1 ? <Ink size={11} weight="bold" color={pal.texte3}>{traduire('Répartition en exemple, tu places tes séances comme tu veux.')}</Ink> : null}
+          {places.length > 1 ? <Ink size={11} weight="bold" color={pal.texte3}>{traduire('Exemple : tu répartis tes sports comme tu veux.')}</Ink> : null}
         </View>
       ) : null}
     </View>
