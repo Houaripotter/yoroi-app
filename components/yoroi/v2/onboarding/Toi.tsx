@@ -9,7 +9,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { AppState, View, useWindowDimensions } from 'react-native';
-import Animated, { FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { ChoiceCard, Chip, MainButton, Shell, useColors } from './ui';
 import { DEFILE, DEFILE_PAS_MS } from './defile';
@@ -19,14 +19,14 @@ import { traduire } from '@/lib/i18n/tr';
 
 function Card({ genre, label, selected, onPress, height, index }: { genre: 'h' | 'f'; label: string; selected: boolean; onPress: () => void; height: number; index: number }) {
   const c = useColors();
-  const wave = useSharedValue(0);
+  const reduce = useReducedMotion();
   const hop = useSharedValue(0);
+  // 27 octobre 2026 : plus de balancement a gauche et a droite, un seul petit saut doux quand on choisit
   useEffect(() => {
-    if (!selected) return;
-    wave.value = withSequence(withTiming(-7, { duration: 140 }), withTiming(7, { duration: 160 }), withTiming(-5, { duration: 150 }), withTiming(4, { duration: 140 }), withSpring(0, { damping: 10 }));
-    hop.value = withSequence(withTiming(-12, { duration: 180 }), withSpring(0, { damping: 8, stiffness: 180 }));
-  }, [selected, wave, hop]);
-  const anim = useAnimatedStyle(() => ({ transform: [{ translateY: hop.value }, { rotate: `${wave.value}deg` }] }));
+    if (!selected || reduce) return;
+    hop.value = withSequence(withTiming(-6, { duration: 200, easing: Easing.out(Easing.quad) }), withTiming(0, { duration: 260, easing: Easing.inOut(Easing.quad) }));
+  }, [selected, reduce, hop]);
+  const anim = useAnimatedStyle(() => ({ transform: [{ translateY: hop.value }] }));
   const liste = DEFILE[genre];
   const tenue = liste[index % liste.length];
   const imgH = height - 64;

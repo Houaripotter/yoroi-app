@@ -55,7 +55,7 @@ export function Objectif({ nav, name = '', goals, onChange, onNext }: { nav: Nav
               </View>
               <View style={{ width: 30, alignItems: 'center' }}>
                 {on ? (
-                  <Animated.View entering={ZoomIn.springify().damping(12)} style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: g.encre.ink, alignItems: 'center', justifyContent: 'center' }}>
+                  <Animated.View entering={ZoomIn.duration(220)} style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: g.encre.ink, alignItems: 'center', justifyContent: 'center' }}>
                     <Icon name="check" size={15} color={c.onAccent} stroke={3} />
                   </Animated.View>
                 ) : (

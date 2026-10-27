@@ -1118,7 +1118,8 @@ function IndicateurDefiler({ onPress, reduire }: { onPress: () => void; reduire:
   const dy = useSharedValue(0);
   useEffect(() => {
     if (reduire) return;
-    dy.value = withRepeat(withSequence(withTiming(2.5, { duration: 750, easing: Easing.inOut(Easing.quad) }), withTiming(0, { duration: 750, easing: Easing.inOut(Easing.quad) })), -1);
+    // 27 octobre 2026 : trois allers retours puis immobile, plus de boucle sans fin
+    dy.value = withRepeat(withSequence(withTiming(2.5, { duration: 750, easing: Easing.inOut(Easing.quad) }), withTiming(0, { duration: 750, easing: Easing.inOut(Easing.quad) })), 3);
   }, [reduire, dy]);
   const fleche = useAnimatedStyle(() => ({ transform: [{ translateY: dy.value }] }));
   return (

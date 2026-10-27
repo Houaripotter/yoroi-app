@@ -16,7 +16,6 @@ import Animated, {
   useSharedValue,
   withDelay,
   withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -70,9 +69,9 @@ export function Ouverture({
   useEffect(() => {
     scene.value = withTiming(1, { duration: 350, easing: Easing.out(Easing.cubic) });
     phase.value = withDelay(250, withTiming(4, { duration: 1000, easing: Easing.inOut(Easing.quad) }));
-    settle.value = withDelay(250, withSequence(withTiming(1, { duration: 220 }), withSpring(0, { damping: 9, stiffness: 140 })));
+    settle.value = withDelay(250, withSequence(withTiming(1, { duration: 220 }), withTiming(0, { duration: 320, easing: Easing.out(Easing.cubic) })));
     sweep.value = withDelay(1150, withTiming(1, { duration: 500, easing: Easing.inOut(Easing.quad) }));
-    logo.value = withDelay(1250, withSpring(1, { damping: 10, stiffness: 160 }));
+    logo.value = withDelay(1250, withTiming(1, { duration: 420, easing: Easing.out(Easing.cubic) }));
     const t1 = setTimeout(() => tap('light'), 600);
     const t2 = setTimeout(() => tap('light'), 1000);
     const t3 = setTimeout(() => {

@@ -22,7 +22,7 @@ export function Prenom({ nav, name, onChange, onNext }: { nav: Nav; name: string
     <Shell {...nav} title={traduire("D’abord, **ton prénom**")} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={!valid} />}>
       <View style={{ minHeight: 120, justifyContent: 'center', alignItems: 'center', paddingVertical: 8 }} accessibilityLiveRegion="polite">
         {shown ? (
-          <Animated.View key={shown.length > 0 ? 'on' : 'off'} entering={ZoomIn.springify().damping(14)}>
+          <Animated.View key={shown.length > 0 ? 'on' : 'off'} entering={ZoomIn.duration(240)}>
             <Ink size={52} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ textAlign: 'center', color: c.accent }}>{shown}</Ink>
           </Animated.View>
         ) : (

@@ -605,7 +605,7 @@ export default function OnboardingScreen() {
       case AGE:
         return <Age nav={nav({ skip: () => skip({ trancheAge: null }, UNIVERS) })} value={d.trancheAge} onPick={(t) => answer('tranche_age', { trancheAge: t })} onNext={() => goTo(UNIVERS)} />;
       case UNIVERS:
-        return <Univers nav={nav()} genre={genre} value={univers} onPick={(v) => answer('univers', { univers: v })} onNext={() => goTo(OBJECTIF)} />;
+        return <Univers nav={nav()} genre={genre} genreConnu={genreCalcul != null} value={univers} onPick={(v) => answer('univers', { univers: v })} onNext={() => goTo(OBJECTIF)} />;
       case FREIN:
         return (
           <Frein

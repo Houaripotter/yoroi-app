@@ -13,7 +13,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import Animated, { FadeOut, ZoomIn, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, ZoomIn, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import type { IconName } from '@/components/yoroi/v2/seances/Icon';
@@ -90,7 +90,7 @@ function Rond({ on, sport, i, size, calme, doux }: { on: boolean; sport: string 
             <Animated.View pointerEvents="none" style={[{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: f.couleur }, haloStyle]} />
             <Animated.View
               key={`on-${sport ?? 'x'}`}
-              entering={calme ? undefined : doux ? ZoomIn.duration(360).delay(i * 40) : ZoomIn.delay(i * 70).springify().damping(11)}
+              entering={calme ? undefined : doux ? FadeIn.duration(450) : ZoomIn.delay(i * 70).duration(320)}
               exiting={calme ? undefined : FadeOut.duration(220)}
               style={{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: f.couleur, alignItems: 'center', justifyContent: 'center', shadowColor: f.couleur, shadowOpacity: 0.45, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 }}
             >

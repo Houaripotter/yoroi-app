@@ -53,7 +53,8 @@ function Descends() {
   const y = useSharedValue(0);
   useEffect(() => {
     if (reduce) return;
-    y.value = withRepeat(withSequence(withTiming(4, { duration: 700, easing: Easing.inOut(Easing.quad) }), withTiming(0, { duration: 700, easing: Easing.inOut(Easing.quad) })), -1);
+    // 27 octobre 2026 : deux respirations puis immobile, plus de boucle sans fin
+    y.value = withRepeat(withSequence(withTiming(4, { duration: 700, easing: Easing.inOut(Easing.quad) }), withTiming(0, { duration: 700, easing: Easing.inOut(Easing.quad) })), 2);
     return () => cancelAnimation(y);
   }, [reduce, y]);
   const anim = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));

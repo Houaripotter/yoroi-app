@@ -9,12 +9,14 @@
  *     séance, la semaine réussie 20 XP plus 10 par séance visée, 5 XP par pesée), puis le prochain rang et
  *     combien de semaines a ce rythme il faut pour l'atteindre.
  * Réduire les animations : tout est affiché rempli, sans mouvement.
+ * 27 octobre 2026 (Houari : « le badge Premier palier tremble, vibre, ça fait mal aux yeux ») : plus de zoom à ressort,
+ * le badge et la carte du prochain rang apparaissent en fondu, une seule fois, puis restent immobiles.
  */
 import React, { useEffect, useState } from 'react';
 import { Image, View } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { Easing, ZoomIn, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
@@ -127,7 +129,7 @@ function CheminApercu({ start, target, sessions, recompo, calme }: { start: numb
         <Ink size={20} weight="black" tight color={pal.indigo}>{`${pct} %`}</Ink>
       </View>
       {part >= PALIERS[0] ? (
-        <Animated.View entering={calme ? undefined : ZoomIn.delay(1300).springify().damping(10)} style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#FBF1D9' }}>
+        <Animated.View entering={calme ? undefined : FadeIn.delay(1300).duration(400)} style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#FBF1D9' }}>
           <Icon name="star" size={14} color="#9A6B12" fill="#E3C47B" />
           <Ink size={12} weight="black" color="#9A6B12">{traduire('Premier palier du chemin')}</Ink>
         </Animated.View>
@@ -182,7 +184,7 @@ function DojoApercu({ rankIndex, rankName, nextName, image, imageSuivante, sessi
         {xp.pesees ? <PuceClaire icone="scale" texte={traduire('Pesées +{0}', xp.pesees)} /> : null}
       </View>
       {suivant && nextName && semaines ? (
-        <Animated.View entering={calme ? undefined : ZoomIn.delay(1600).springify().damping(11)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.14)' }}>
+        <Animated.View entering={calme ? undefined : FadeIn.delay(1600).duration(400)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.14)' }}>
           {imageSuivante ? (
             <View style={{ width: 40, height: 46, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               <Image source={imageSuivante} style={{ width: 38, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
