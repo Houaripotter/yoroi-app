@@ -238,9 +238,12 @@ const MOIS_EN: Record<string, number> = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5
 /** Dates de Hevy : « 10 Jun 2024, 08:15 » ou ISO « 2024-06-10T08:15:00Z » ; heure locale gardee telle quelle */
 export function lireDateHevy(s: string): { date: string; heure: string; ms: number } | null {
   const t = s.trim();
-  let m = /^(\d{1,2})\s+([A-Za-z]{3})[a-z]*\.?\s+(\d{4}),?\s+(\d{1,2}):(\d{2})/.exec(t);
-  if (m && MOIS_EN[m[2].toLowerCase()]) {
-    const a = +m[3], mo = MOIS_EN[m[2].toLowerCase()], j = +m[1], h = +m[4], mi = +m[5];
+  // Hevy ecrit le mois dans la langue du telephone : « 10 Jun 2024 », « 27 oct. 2026 », « 3 févr. 2026 », « 5 août 2026 »
+  let m = /^(\d{1,2})\s+([A-Za-zÀ-ÿ]+)\.?\s+(\d{4}),?\s+(\d{1,2}):(\d{2})/.exec(t);
+  const moisLu = m ? sansAccents(m[2].toLowerCase()) : '';
+  const moisNum = m ? (MOIS[moisLu] ?? MOIS_EN[moisLu.slice(0, 3)]) : undefined;
+  if (m && moisNum) {
+    const a = +m[3], mo = moisNum, j = +m[1], h = +m[4], mi = +m[5];
     return { date: `${a}-${deux(mo)}-${deux(j)}`, heure: `${deux(h)}:${deux(mi)}`, ms: Date.UTC(a, mo - 1, j, h, mi) };
   }
   m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(t);
