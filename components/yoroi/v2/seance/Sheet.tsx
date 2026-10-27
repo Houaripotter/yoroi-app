@@ -61,12 +61,12 @@ export function ChoiceRow<T extends string | number>({ options, value, onChange,
               alignItems: 'center',
               justifyContent: 'center',
               // (vague 39) surfaces du theme : lisible en clair comme en sombre
-              backgroundColor: on ? (teinte ? teinte.fill : c.ink) : pressed ? c.fillSubtle : teinte ? teinte.tint : c.surface,
-              borderWidth: on || teinte ? 0 : 1,
+              backgroundColor: on ? (teinte ? teinte.fill : c.primary) : pressed ? c.fillSubtle : teinte ? teinte.tint : c.fillSoft,
+              borderWidth: 0,
               borderColor: c.border,
             })}
           >
-            <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? (teinte ? teinte.onFill : c.background) : teinte ? teinte.text : c.ink}>{traduire(o.label)}</Ink>
+            <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? (teinte ? teinte.onFill : c.onPrimary) : teinte ? teinte.text : c.ink}>{traduire(o.label)}</Ink>
           </Pressable>
         );
       })}

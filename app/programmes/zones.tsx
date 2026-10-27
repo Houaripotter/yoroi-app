@@ -25,7 +25,8 @@ import { Glass, tap } from '@/components/yoroi/v2/seances/ui';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { CorpsZones } from '@/components/yoroi/v2/programmes/CorpsZones';
 import { CarteExoZone } from '@/components/yoroi/v2/programmes/CarteExoZone';
-import { P } from '@/components/yoroi/livePalette';
+import { P, blancA } from '@/components/yoroi/livePalette';
+import { OMBRE_CARTE, carteBlanche, tonDuRang } from '@/components/yoroi/v2/seance/pastel';
 import { RACCOURCIS_ZONES, ZONES, raccourciActif, seanceZones, titreZones, zoneParId } from '@/lib/v2/programmes/zones';
 import type { ZoneId } from '@/lib/v2/programmes/zones';
 import { dureeEstimee } from '@/lib/v2/programmes/express';
@@ -151,8 +152,8 @@ export default function ZonesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
-      <ScrollView ref={defile} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + (mode === 'choix' ? 40 : 120), gap: 14 }} showsVerticalScrollIndicator={false}>
-        <EnTete titre={titreEcran} sousTitre={sousTitre} onRetour={retour} repli="/programmes" style={{ marginHorizontal: -22, marginTop: -8 }} />
+      <ScrollView ref={defile} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + (mode === 'choix' ? 40 : 120), gap: 14 }} showsVerticalScrollIndicator={false}>
+        <EnTete titre={titreEcran} sousTitre={sousTitre} onRetour={retour} repli="/programmes" style={{ marginHorizontal: -16, marginTop: -8 }} />
 
         {/* 1. CHOIX : les seances toutes faites en grosses cartes */}
         {mode === 'choix' ? (
@@ -163,21 +164,21 @@ export default function ZonesScreen() {
               onPress={() => { tap(); router.push('/programmes' as any); }}
               accessibilityRole="button"
               accessibilityLabel={`${traduire('Trouve ton programme')}, ${traduire('PPL, Upper Lower, Full body : prouvés par des études')}`}
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 112, paddingVertical: 16, paddingLeft: 18, paddingRight: 12, borderRadius: 24, backgroundColor: pressed ? P.white : c.accentTint, borderWidth: 1.5, borderColor: c.accent, overflow: 'hidden' })}
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 112, paddingVertical: 16, paddingLeft: 18, paddingRight: 12, borderRadius: 24, backgroundColor: c.carteDouce, opacity: pressed ? 0.88 : 1, overflow: 'hidden' })}
             >
               <View style={{ flex: 1, gap: 6 }}>
-                <Ink size={11} weight="black" color={c.accent} style={{ letterSpacing: 0.6 }}>{traduire('PROUVÉ PAR DES ÉTUDES')}</Ink>
+                <Ink size={11} weight="black" color={c.accentText} style={{ letterSpacing: 0.6 }}>{traduire('PROUVÉ PAR DES ÉTUDES')}</Ink>
                 <Ink size={20} weight="black" tight>{traduire('Trouve ton programme')}</Ink>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                   {['PPL', 'Upper Lower', 'Full body'].map((t) => (
-                    <View key={t} style={{ paddingHorizontal: 9, paddingVertical: 4, borderRadius: 10, backgroundColor: P.white }}>
-                      <Ink size={12} weight="extraBold" color={c.accent}>{t}</Ink>
+                    <View key={t} style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: P.white }}>
+                      <Ink size={12} weight="extraBold" color={c.accentText}>{t}</Ink>
                     </View>
                   ))}
                 </View>
               </View>
               <Image source={illustration('torii', TORII)} style={{ width: 78, height: 78 }} resizeMode="contain" accessibilityIgnoresInvertColors />
-              <Icon name="chevron" size={18} color={c.accent} />
+              <Icon name="chevron" size={18} color={c.accentText} />
             </Pressable>
 
             {/* ta derniere seance, quand elle n'est pas deja une des cartes */}
@@ -187,8 +188,8 @@ export default function ZonesScreen() {
                 accessibilityRole="button"
                 style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, borderRadius: 22, backgroundColor: pressed ? P.white : c.accentTint })}
               >
-                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name="repeat" size={19} color={c.onAccent} />
+                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: P.white, alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="repeat" size={19} color={c.onPrimary} />
                 </View>
                 <View style={{ flex: 1, gap: 1 }}>
                   <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('Refaire ta dernière séance')}</Ink>
@@ -205,7 +206,7 @@ export default function ZonesScreen() {
                 onPress={() => ouvrirSeance(r.zones)}
                 accessibilityRole="button"
                 accessibilityLabel={`${traduire(r.nom)}, ${traduire('{0} exercices', r.nb)}, ${traduire('environ {0} min', r.minutes)}`}
-                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, paddingRight: 14, borderRadius: 24, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}
+                style={({ pressed }) => [carteBlanche(c.surface, c.divider), { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, paddingRight: 14, borderRadius: 24, opacity: pressed ? 0.88 : 1 }]}
               >
                 <View style={{ flexDirection: 'row', gap: 2, paddingHorizontal: 8, paddingVertical: 6, borderRadius: 18, backgroundColor: c.fillSubtle }}>
                   <CorpsZones cote="devant" choisies={r.zones} onToggle={() => {}} hauteur={100} interactif={false} />
@@ -227,7 +228,7 @@ export default function ZonesScreen() {
                   onPress={() => ouvrirSeance(r.zones)}
                   accessibilityRole="button"
                   accessibilityLabel={`${traduire('Grip')}, ${traduire('{0} exercices', r.nb)}, ${traduire('environ {0} min', r.minutes)}`}
-                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, paddingRight: 14, borderRadius: 24, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}
+                  style={({ pressed }) => [carteBlanche(c.surface, c.divider), { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, paddingRight: 14, borderRadius: 24, opacity: pressed ? 0.88 : 1 }]}
                 >
                   <View style={{ width: 84, height: 84, borderRadius: 18, overflow: 'hidden', backgroundColor: c.fillSubtle }}>
                     <Image source={VIGNETTES.avantbras} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
@@ -249,20 +250,20 @@ export default function ZonesScreen() {
               onPress={() => { tap(); router.push('/mes-seances/modifier' as any); }}
               accessibilityRole="button"
               accessibilityLabel={traduire('Je crée ma séance')}
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 92, paddingVertical: 16, paddingLeft: 18, paddingRight: 14, borderRadius: 24, backgroundColor: pressed ? c.accentPressed : c.accent, overflow: 'hidden' })}
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 92, paddingVertical: 16, paddingLeft: 18, paddingRight: 14, borderRadius: 24, backgroundColor: pressed ? c.primaryPressed : c.primary, overflow: 'hidden' })}
             >
               <View style={{ flex: 1, gap: 4 }}>
-                <Ink size={18} weight="black" tight color={c.onAccent}>{traduire('Je crée ma séance')}</Ink>
-                <Ink size={13} weight="bold" color={c.onAccent} style={{ opacity: 0.85 }}>{traduire('Tu choisis tes exercices, tu lui donnes un nom')}</Ink>
+                <Ink size={18} weight="black" tight color={c.onPrimary}>{traduire('Je crée ma séance')}</Ink>
+                <Ink size={13} weight="bold" color={c.onPrimary} style={{ opacity: 0.8 }}>{traduire('Tu choisis tes exercices, tu lui donnes un nom')}</Ink>
               </View>
               <View style={{ flexDirection: 'row' }}>
                 {(['epaules', 'abdos', 'fessiers'] as ZoneId[]).map((id, i) => (
-                  <View key={id} style={{ width: 46, height: 46, borderRadius: 23, overflow: 'hidden', borderWidth: 2, borderColor: c.onAccent, backgroundColor: P.white, marginLeft: i ? -14 : 0 }}>
+                  <View key={id} style={{ width: 46, height: 46, borderRadius: 23, overflow: 'hidden', borderWidth: 2, borderColor: P.white, backgroundColor: P.white, marginLeft: i ? -14 : 0 }}>
                     <Image source={VIGNETTES[id]} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
                   </View>
                 ))}
               </View>
-              <Icon name="chevron" size={18} color={c.onAccent} />
+              <Icon name="chevron" size={18} color={c.onPrimary} />
             </Pressable>
 
             {/* ou YOROI propose les exercices pour les muscles choisis */}
@@ -273,10 +274,10 @@ export default function ZonesScreen() {
                 aller('muscles');
               }}
               accessibilityRole="button"
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, borderRadius: 22, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}
+              style={({ pressed }) => [carteBlanche(c.surface, c.divider), { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, opacity: pressed ? 0.88 : 1 }]}
             >
               <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name="body" size={19} color={c.accent} />
+                <Icon name="body" size={19} color={c.accentText} />
               </View>
               <View style={{ flex: 1, gap: 1 }}>
                 <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('YOROI te propose les exercices')}</Ink>
@@ -293,7 +294,7 @@ export default function ZonesScreen() {
           <>
             {choisies.length ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Ink size={14} weight="extraBold" color={c.accent}>{traduirePluriel(choisies.length, choisies.length > 1, '{0} muscle choisi', '{0} muscles choisis', choisies.length)}</Ink>
+                <Ink size={14} weight="extraBold" color={c.accentText}>{traduirePluriel(choisies.length, choisies.length > 1, '{0} muscle choisi', '{0} muscles choisis', choisies.length)}</Ink>
                 <Pressable onPress={() => { tap(); setChoisies([]); }} accessibilityRole="button" hitSlop={8} style={{ minHeight: 36, justifyContent: 'center' }}>
                   <Ink size={13} weight="extraBold" color={c.textSecondary}>{traduire('Tout effacer')}</Ink>
                 </Pressable>
@@ -314,7 +315,7 @@ export default function ZonesScreen() {
                         accessibilityRole="checkbox"
                         accessibilityState={{ checked: on }}
                         accessibilityLabel={traduire(z?.nom ?? id)}
-                        style={({ pressed }) => ({ width: largeurTuile, borderRadius: 20, overflow: 'hidden', backgroundColor: P.white, borderWidth: on ? 2.5 : 1, borderColor: on ? c.accent : c.divider, opacity: pressed ? 0.85 : 1 })}
+                        style={({ pressed }) => ({ width: largeurTuile, borderRadius: 20, overflow: 'hidden', backgroundColor: P.white, borderWidth: on ? 2.5 : 0, borderColor: on ? c.detail : c.divider, opacity: pressed ? 0.85 : 1, ...OMBRE_CARTE })}
                       >
                         <Image source={VIGNETTES[id]} style={{ width: '100%', height: Math.round(largeurTuile * 0.62) }} resizeMode="cover" accessibilityIgnoresInvertColors />
                         <View style={{ paddingHorizontal: 12, paddingVertical: 10, gap: 1 }}>
@@ -322,8 +323,8 @@ export default function ZonesScreen() {
                           <Ink size={12} weight="bold" color={c.textSecondary}>{traduirePluriel(n, n > 1, '{0} exercice', '{0} exercices', n)}</Ink>
                         </View>
                         {on ? (
-                          <View style={{ position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: 13, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: P.white }}>
-                            <Icon name="check" size={14} color={c.onAccent} />
+                          <View style={{ position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: 13, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: P.white }}>
+                            <Icon name="check" size={14} color={c.onPrimary} />
                           </View>
                         ) : null}
                       </Pressable>
@@ -334,7 +335,7 @@ export default function ZonesScreen() {
             ))}
             {exos.length ? (
               <Pressable onPress={() => aller('seance')} accessibilityRole="button" style={{ minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
-                <Ink size={14} weight="extraBold" color={c.accent}>{traduire('Voir les exercices de ma séance')}</Ink>
+                <Ink size={14} weight="extraBold" color={c.accentText}>{traduire('Voir les exercices de ma séance')}</Ink>
               </Pressable>
             ) : null}
           </>
@@ -343,33 +344,34 @@ export default function ZonesScreen() {
         {/* 3. SEANCE : ta seance du jour, exercice par exercice */}
         {mode === 'seance' && exos.length ? (
           <>
-            <View style={{ padding: 18, borderRadius: 24, backgroundColor: '#2F3243', gap: 12 }}>
-              <Ink size={12} weight="black" color="rgba(255,255,255,0.7)">{traduire('TA SÉANCE DU JOUR')}</Ink>
-              <Ink size={22} weight="black" color="#FFFFFF" tight>{titre}</Ink>
+            {/* 27 octobre 2026 (refonte Pastel) : la carte lilas du programme du jour, plus de fond encre plein */}
+            <View style={{ padding: 18, borderRadius: 24, backgroundColor: P.programmeFond, gap: 12 }}>
+              <Ink size={12} weight="black" color={P.etiquettePrune} style={{ letterSpacing: 0.6 }}>{traduire('TA SÉANCE DU JOUR')}</Ink>
+              <Ink size={22} weight="black" tight>{titre}</Ink>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {[
                   { icone: 'dumbbell' as const, t: traduire('{0} exercices', exos.length) },
                   { icone: 'clock' as const, t: traduire('environ {0} min', minutes) },
                 ].map((p) => (
-                  <View key={p.icone} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.12)' }}>
-                    <Icon name={p.icone} size={15} color="#FFFFFF" />
-                    <Ink size={13} weight="extraBold" color="#FFFFFF">{p.t}</Ink>
+                  <View key={p.icone} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: blancA(0.7) }}>
+                    <Icon name={p.icone} size={15} color={P.etiquettePrune} />
+                    <Ink size={13} weight="extraBold" color={P.etiquettePrune}>{p.t}</Ink>
                   </View>
                 ))}
               </View>
-              <Ink size={13} color="rgba(255,255,255,0.8)">{traduire('Fais-les dans l’ordre : les gros muscles d’abord, les abdos à la fin.')}</Ink>
+              <Ink size={13} weight="bold" color={c.textSecondary}>{traduire('Fais-les dans l’ordre : les gros muscles d’abord, les abdos à la fin.')}</Ink>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              <Pressable onPress={() => { tap(); aller('muscles'); }} accessibilityRole="button" style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.14)' }}>
-                <Ink size={13} weight="extraBold" color="#FFFFFF">{traduire('Changer les muscles')}</Ink>
+              <Pressable onPress={() => { tap(); aller('muscles'); }} accessibilityRole="button" style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: P.white }}>
+                <Ink size={13} weight="extraBold" color={c.onPrimary}>{traduire('Changer les muscles')}</Ink>
               </Pressable>
               {/* la garder : elle s'ouvre dans Mes seances, tu changes les exercices et tu lui donnes un nom */}
               <Pressable
                 onPress={() => { tap(); router.push({ pathname: '/mes-seances/modifier' as any, params: { zones: choisies.join(',') } }); }}
                 accessibilityRole="button"
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.14)' }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: P.white }}
               >
-                <Icon name="bookmark" size={15} color="#FFFFFF" />
-                <Ink size={13} weight="extraBold" color="#FFFFFF">{traduire('La modifier et l’enregistrer')}</Ink>
+                <Icon name="bookmark" size={15} color={c.onPrimary} />
+                <Ink size={13} weight="extraBold" color={c.onPrimary}>{traduire('La modifier et l’enregistrer')}</Ink>
               </Pressable>
               </View>
             </View>
@@ -377,7 +379,7 @@ export default function ZonesScreen() {
               <CarteExoZone key={x.nom} exo={x} numero={k + 1} total={exos.length} zone={traduire(zoneDe(x.nom)?.nom ?? '') || undefined} />
             ))}
 
-            <Glass style={{ gap: 12 }}>
+            <Glass style={[carteBlanche(c.surface, c.divider), { gap: 12 }]}>
               <Ink size={16} weight="black">{traduire('Quand verras-tu des résultats ?')}</Ink>
               {[
                 { t: traduire('Dès les premières séances'), d: traduire('Les gestes deviennent faciles et tu soulèves plus : au début, c’est surtout ton cerveau qui apprend à commander tes muscles.') },
@@ -385,8 +387,8 @@ export default function ZonesScreen() {
                 { t: traduire('Ensuite, dans le miroir'), d: traduire('Ça se voit avec la régularité : 2 à 3 séances par semaine, en ajoutant un peu de charge ou de répétitions quand c’est facile. YOROI te le propose tout seul.') },
               ].map((x, i) => (
                 <View key={i} style={{ flexDirection: 'row', gap: 12 }}>
-                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-                    <Ink size={13} weight="black" color={c.onAccent}>{String(i + 1)}</Ink>
+                  <View style={{ width: 30, height: 30, borderRadius: 11, backgroundColor: tonDuRang(i).fond, alignItems: 'center', justifyContent: 'center' }}>
+                    <Ink size={13} weight="black" color={tonDuRang(i).encre}>{String(i + 1)}</Ink>
                   </View>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Ink size={14} weight="extraBold">{x.t}</Ink>
@@ -402,19 +404,21 @@ export default function ZonesScreen() {
 
       {/* le bouton, en bas, des qu'on a choisi */}
       {mode !== 'choix' ? (
-        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingTop: 10, paddingBottom: insets.bottom + 10, backgroundColor: c.background, borderTopWidth: 1, borderColor: c.border }}>
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingTop: 10, paddingBottom: insets.bottom + 10, backgroundColor: c.background }}>
           <Pressable
             onPress={commencer}
             disabled={!exos.length}
             accessibilityRole="button"
             accessibilityState={{ disabled: !exos.length }}
-            style={({ pressed }) => ({ minHeight: 62, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, backgroundColor: !exos.length ? c.fillSoft : pressed ? c.accentPressed : c.accent })}
+            style={({ pressed }) => ({ minHeight: 62, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, backgroundColor: !exos.length ? c.fillSoft : pressed ? c.primaryPressed : c.primary })}
           >
-            <Icon name="play" size={22} color={exos.length ? c.onAccent : c.textMuted} />
+            <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: blancA(0.7), alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="play" size={20} color={exos.length ? c.onPrimary : c.textMuted} />
+            </View>
             <View style={{ flex: 1 }}>
-              <Ink size={17} weight="black" color={exos.length ? c.onAccent : c.textMuted}>{exos.length ? traduire('Commencer ma séance') : traduire('Choisis au moins un muscle')}</Ink>
+              <Ink size={17} weight="black" color={exos.length ? c.onPrimary : c.textMuted}>{exos.length ? traduire('Commencer ma séance') : traduire('Choisis au moins un muscle')}</Ink>
               {exos.length ? (
-                <Ink size={13} weight="bold" color={c.onAccent} style={{ opacity: 0.85 }} numberOfLines={1}>
+                <Ink size={13} weight="bold" color={c.onPrimary} style={{ opacity: 0.8 }} numberOfLines={1}>
                   {traduirePluriel(exos.length, exos.length > 1, '{0} exercice, environ {1} min', '{0} exercices, environ {1} min', exos.length, minutes)}
                 </Ink>
               ) : null}

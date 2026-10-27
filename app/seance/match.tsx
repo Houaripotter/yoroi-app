@@ -223,8 +223,8 @@ export default function SeanceMatch() {
       </ScrollView>
 
       <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 18 }}>
-        <Pressable onPress={save} disabled={saving} accessibilityRole="button" style={({ pressed }) => ({ height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent, opacity: saving ? 0.6 : 1, shadowColor: c.accent, shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 4 })}>
-          <Ink size={16} weight="extraBold" color={c.onAccent}>{saving ? 'Enregistrement...' : traduire('Enregistrer ce combat')}</Ink>
+        <Pressable onPress={save} disabled={saving} accessibilityRole="button" style={({ pressed }) => ({ height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary, opacity: saving ? 0.6 : 1, shadowColor: c.shadow, shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 4 })}>
+          <Ink size={16} weight="black" color={c.onPrimary}>{saving ? 'Enregistrement...' : traduire('Enregistrer ce combat')}</Ink>
         </Pressable>
       </View>
     </View>

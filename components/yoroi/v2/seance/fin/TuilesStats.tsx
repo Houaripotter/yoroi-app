@@ -10,6 +10,8 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/seance/Icon';
 import type { IconName } from '@/components/yoroi/v2/seance/Icon';
 import { valeurMontee } from './logique';
+import { ton } from '@/components/yoroi/v2/seance/pastel';
+import { blancA } from '@/components/yoroi/livePalette';
 
 export type TuileVue = {
   cle: string;
@@ -46,25 +48,27 @@ function useAvancee(lance: boolean, delai: number): number {
 }
 
 function Tuile({ t, i, anime, pret }: { t: TuileVue; i: number; anime: boolean; pret: boolean }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
+  // le theme fait redessiner la tuile quand le mode clair ou sombre change (ton() lit la palette en cours)
+  useYoroiTheme();
   const avancee = useAvancee(pret && anime, 300 + i * 120);
   const v = pret ? valeurMontee(t.cible, avancee, t.decimales ?? 0) : 0;
   const finale = t.format(t.cible);
+  // 27 octobre 2026 : chaque grand chiffre sur son pastel (creme, ciel, peche, menthe)
+  const p = ton((['creme', 'ciel', 'peche', 'menthe'] as const)[i % 4]);
   return (
     <Animated.View
       entering={anime ? FadeInDown.delay(260 + i * 90).duration(360) : undefined}
       accessible
       accessibilityLabel={`${finale}, ${t.label}`}
-      style={{ flex: 1, minWidth: 0, borderRadius: 22, paddingVertical: 16, paddingHorizontal: 12, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, gap: 8 }}
+      style={{ flex: 1, minWidth: 0, borderRadius: 22, paddingVertical: 14, paddingHorizontal: 12, backgroundColor: p.fond, gap: 6 }}
     >
-      <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name={t.icone} size={17} color={c.accent} strokeWidth={2.4} />
+      <View style={{ width: 30, height: 30, borderRadius: 11, backgroundColor: blancA(0.75), alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name={t.icone} size={17} color={p.encre} strokeWidth={2.4} />
       </View>
       <Ink size={26} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ fontVariant: ['tabular-nums'] }}>
         {pret ? t.format(v) : finale}
       </Ink>
-      <Ink size={12} weight="bold" color={c.textMuted} numberOfLines={1}>{t.label}</Ink>
+      <Ink size={12.5} weight="extraBold" color={p.encre} numberOfLines={1}>{t.label}</Ink>
     </Animated.View>
   );
 }

@@ -8,23 +8,24 @@
  * ces muscles, avec leur nom ; tu ajoutes, retires ou changes ce que tu veux, puis tu l'enregistres.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { useYoroiTheme } from '@/components/yoroi';
 import { fontStyle } from '@/components/yoroi/fonts';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
-import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { tap } from '@/components/yoroi/v2/seances/ui';
 import { ExercisePicker } from '@/components/yoroi/v2/seance/ExercisePicker';
 import { ExoDemo } from '@/components/yoroi/v2/seance/ExoDemo';
 import { Stepper } from '@/components/yoroi/v2/seance/Stepper';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
-import { P } from '@/components/yoroi/livePalette';
-import { fondAjouter, PlusPastille } from '@/components/yoroi/v2/accueil/kit';
+import { P, blancA } from '@/components/yoroi/livePalette';
+import { PlusPastille } from '@/components/yoroi/v2/accueil/kit';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
+import { carteBlanche, tonDuRang } from '@/components/yoroi/v2/seance/pastel';
 import { getTrainings } from '@/lib/database';
 import { logger } from '@/lib/security/logger';
 import { demoDe } from '@/lib/v2/programmes/demos';
@@ -36,7 +37,7 @@ import { MAX_EXOS, MAX_SERIES, chargerMesSeances, creerMaSeance, exosDepuisSeanc
 import type { ExoSeance } from '@/lib/v2/seance/mesSeances';
 import { seanceZones, titreZones, ZONES } from '@/lib/v2/programmes/zones';
 import type { ZoneId } from '@/lib/v2/programmes/zones';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type Ligne = ExoSeance & { cle: string };
 
@@ -58,6 +59,9 @@ export default function ModifierMaSeance() {
   const [autres, setAutres] = useState<string[]>([]);
   const [hist, setHist] = useState<{ map: Map<string, ExerciseHistory>; recent: string[] }>({ map: new Map(), recent: [] });
   const [picker, setPicker] = useState(false);
+  // 27 octobre 2026 : l'exercice dont les reglages sont ouverts (un seul a la fois, le dernier ajoute)
+  const [ouvert, setOuvert] = useState<string | null>(null);
+  const illus = useIllustrations();
   const [pret, setPret] = useState(!id);
   // la seance a modifier existe encore (elle a pu etre supprimee entre temps)
   const [trouvee, setTrouvee] = useState(false);
@@ -110,7 +114,9 @@ export default function ModifierMaSeance() {
     const h = hist.map.get(normName(name));
     const depuis = h ? exosDepuisSeance([{ name, muscle_group: muscle ?? h.muscle, sets: (h.travail ?? h.lastSets).length, reps: 0, weight: 0, setsData: h.travail ?? h.lastSets }])[0] : null;
     const e: ExoSeance = depuis ?? { nom: name, ...(muscle ? { muscle } : {}), series: 3, reps: 10, poids: 0 };
-    maj((l) => [...l, { ...e, cle: cle() }].slice(0, MAX_EXOS));
+    const k = cle();
+    maj((l) => [...l, { ...e, cle: k }].slice(0, MAX_EXOS));
+    setOuvert(k);
     tap();
   };
 
@@ -151,91 +157,128 @@ export default function ModifierMaSeance() {
   };
 
   const total = lignes.reduce((n, e) => n + e.series, 0);
+  const vide = lignes.length === 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       {/* avec des changements, le retour passe par la fleche (qui demande confirmation), pas par le glissement */}
       <Stack.Screen options={{ gestureEnabled: !modifie }} />
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 120, gap: 14 }} showsVerticalScrollIndicator={false}>
-        <EnTete titre={id && trouvee ? traduire('Modifier ta séance') : traduire('Nouvelle séance')} onRetour={retour} repli="/mes-seances" style={{ marginHorizontal: -22, marginTop: -8 }} />
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 120 }} showsVerticalScrollIndicator={false}>
+        <EnTete titre={id && trouvee ? traduire('Modifier ta séance') : traduire('Nouvelle séance')} onRetour={retour} repli="/mes-seances" style={{ marginHorizontal: -16, marginTop: -8 }} />
 
-        <View style={{ gap: 6 }}>
-          <Ink size={13} weight="extraBold" color={c.textSecondary}>{traduire('NOM')}</Ink>
-          <TextInput
-            value={nom}
-            onChangeText={(t) => {
-              marquerModifie();
-              setNom(t.slice(0, 40));
-            }}
-            placeholder={lignes.length ? nomParDefaut(lignes, autres) : traduire('Push lundi, Jambes, Haut du corps...')}
-            placeholderTextColor={c.textMuted}
-            returnKeyType="done"
-            accessibilityLabel={traduire('Nom de la séance')}
-            style={[fontStyle('bold'), { minHeight: 56, fontSize: 18, color: c.ink, paddingHorizontal: 16, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }]}
-          />
+        {/* 27 octobre 2026 (maquette Pastel Seance) : le nom dans une carte blanche, son sticker a gauche */}
+        <View style={[carteBlanche(c.surface, c.divider), { marginTop: 12, borderRadius: 24, paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
+          <Image source={illus.img('musculation')} style={{ width: 44, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Ink size={12} weight="extraBold" color={c.textSecondary}>{traduire('Nom')}</Ink>
+            <TextInput
+              value={nom}
+              onChangeText={(t) => {
+                marquerModifie();
+                setNom(t.slice(0, 40));
+              }}
+              placeholder={lignes.length ? nomParDefaut(lignes, autres) : traduire('Push lundi, Jambes, Haut du corps...')}
+              placeholderTextColor={c.textMuted}
+              returnKeyType="done"
+              accessibilityLabel={traduire('Nom de la séance')}
+              style={[fontStyle('black'), { minHeight: 32, fontSize: 18, color: c.ink, padding: 0 }]}
+            />
+          </View>
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-          <Ink size={13} weight="extraBold" color={c.textSecondary}>{traduire('EXERCICES')}</Ink>
-          {lignes.length ? <Ink size={13} weight="bold" color={c.textMuted}>{traduire('{0} séries au total', total)}</Ink> : null}
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 24, marginBottom: 10, paddingHorizontal: 4 }}>
+          <Ink size={18} weight="black" tight>{traduire('Exercices')}</Ink>
+          {lignes.length ? (
+            <Ink size={13} weight="extraBold" color={c.accentText}>
+              {`${traduirePluriel(lignes.length, lignes.length > 1, '{0} exercice', '{0} exercices', lignes.length)}, ${traduire('{0} séries au total', total)}`}
+            </Ink>
+          ) : null}
         </View>
 
-        {pret && lignes.length === 0 ? (
-          <Ink size={14} color={c.textSecondary}>{traduire('Ajoute tes exercices dans l’ordre où tu les fais. Les charges viendront de ta dernière fois.')}</Ink>
+        {pret && vide ? (
+          <View style={[carteBlanche(c.surface, c.divider), { alignItems: 'center', gap: 10, paddingVertical: 22, paddingHorizontal: 22 }]}>
+            <Image source={illus.img('carnet')} style={{ width: 72, height: 72 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+            <Ink size={14} weight="bold" color={c.textSecondary} style={{ textAlign: 'center', lineHeight: 20 }}>{traduire('Ajoute tes exercices dans l’ordre où tu les fais. Les charges viendront de ta dernière fois.')}</Ink>
+          </View>
         ) : null}
 
-        {lignes.map((e, i) => (
-          <View key={e.cle} style={{ borderRadius: 20, padding: 12, gap: 10, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              {demoDe(e.nom) ? (
-                <ExoDemo nom={e.nom} largeur={64} hauteur={44} arrondi={12} bordure={false} />
-              ) : (
-                <View style={{ width: 64, height: 44, borderRadius: 12, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name="dumbbell" size={20} color={c.textSecondary} />
-                </View>
-              )}
-              <View style={{ flex: 1, gap: 1 }}>
-                <Ink size={15} weight="extraBold" numberOfLines={2}>{`${i + 1}. ${traduire(nomFr(e.nom))}`}</Ink>
-                {e.muscle ? <Ink size={12} color={c.textMuted}>{traduire(niceGroup(e.muscle))}</Ink> : null}
-              </View>
-              <Fleche nom="up" label={traduire('Monter {0}', traduire(nomFr(e.nom)))} actif={i > 0} onPress={() => deplacer(i, -1)} />
-              <Fleche nom="down" label={traduire('Descendre {0}', traduire(nomFr(e.nom)))} actif={i < lignes.length - 1} onPress={() => deplacer(i, 1)} />
-              <Fleche nom="close" label={traduire('Retirer {0}', traduire(nomFr(e.nom)))} actif onPress={() => maj((l) => l.filter((x) => x.cle !== e.cle))} />
-            </View>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <View style={{ flex: 1, alignItems: 'center', gap: 4, paddingVertical: 8, borderRadius: 14, backgroundColor: c.fillSubtle }}>
-                <Ink size={11} weight="bold" color={c.textSecondary}>{traduire('séries')}</Ink>
-                <Stepper value={e.series} step={1} min={1} max={MAX_SERIES} size={18} button={32} unit={traduire('séries')} onChange={(v) => maj((l) => l.map((x) => (x.cle === e.cle ? { ...x, series: v } : x)))} />
-              </View>
-              <View style={{ flex: 1, alignItems: 'center', gap: 4, paddingVertical: 8, borderRadius: 14, backgroundColor: c.fillSubtle }}>
-                <Ink size={11} weight="bold" color={c.textSecondary}>{traduire('répétitions')}</Ink>
-                <Stepper value={e.reps} step={1} min={1} max={100} size={18} button={32} unit={traduire('répétitions')} onChange={(v) => maj((l) => l.map((x) => (x.cle === e.cle ? { ...x, reps: v } : x)))} />
-              </View>
-            </View>
-          </View>
-        ))}
+        <View style={{ gap: 10 }}>
+          {lignes.map((e, i) => {
+            const t = tonDuRang(i);
+            const nomExo = traduire(nomFr(e.nom));
+            const ouverte = ouvert === e.cle;
+            return (
+              <View key={e.cle} style={[carteBlanche(c.surface, c.divider), { padding: 12, gap: 12 }]}>
+                <Pressable
+                  onPress={() => { tap(); setOuvert(ouverte ? null : e.cle); }}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: ouverte }}
+                  accessibilityLabel={`${i + 1}. ${nomExo}, ${traduire('{0} séries de {1}', e.series, e.reps)}`}
+                  accessibilityHint={traduire('Régler les séries, l’ordre, ou retirer')}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
+                >
+                  <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: t.fond, alignItems: 'center', justifyContent: 'center' }}>
+                    <Ink size={17} weight="black" color={t.encre}>{String(i + 1)}</Ink>
+                  </View>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Ink size={15.5} weight="black" tight numberOfLines={2}>{nomExo}</Ink>
+                    <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={1}>
+                      {[traduire('{0} séries de {1}', e.series, e.reps), e.muscle ? traduire(niceGroup(e.muscle)) : ''].filter(Boolean).join(', ')}
+                    </Ink>
+                  </View>
+                  {demoDe(e.nom) ? <ExoDemo nom={e.nom} largeur={52} hauteur={40} arrondi={12} bordure={false} /> : null}
+                  <Poignee couleur={P.poignee} ouverte={ouverte} />
+                </Pressable>
 
+                {ouverte ? (
+                  <>
+                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                      <View style={{ flex: 1, alignItems: 'center', gap: 4, paddingVertical: 10, borderRadius: 16, backgroundColor: t.fond }}>
+                        <Ink size={12} weight="extraBold" color={t.encre}>{traduire('séries')}</Ink>
+                        <Stepper value={e.series} step={1} min={1} max={MAX_SERIES} size={18} button={32} unit={traduire('séries')} onChange={(v) => maj((l) => l.map((x) => (x.cle === e.cle ? { ...x, series: v } : x)))} />
+                      </View>
+                      <View style={{ flex: 1, alignItems: 'center', gap: 4, paddingVertical: 10, borderRadius: 16, backgroundColor: t.fond }}>
+                        <Ink size={12} weight="extraBold" color={t.encre}>{traduire('répétitions')}</Ink>
+                        <Stepper value={e.reps} step={1} min={1} max={100} size={18} button={32} unit={traduire('répétitions')} onChange={(v) => maj((l) => l.map((x) => (x.cle === e.cle ? { ...x, reps: v } : x)))} />
+                      </View>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Fleche nom="up" label={traduire('Monter {0}', nomExo)} actif={i > 0} onPress={() => deplacer(i, -1)} />
+                      <Fleche nom="down" label={traduire('Descendre {0}', nomExo)} actif={i < lignes.length - 1} onPress={() => deplacer(i, 1)} />
+                      <View style={{ flex: 1 }} />
+                      <Fleche nom="close" label={traduire('Retirer {0}', nomExo)} texte={traduire('Retirer')} actif onPress={() => { setOuvert(null); maj((l) => l.filter((x) => x.cle !== e.cle)); }} />
+                    </View>
+                  </>
+                ) : null}
+              </View>
+            );
+          })}
+        </View>
+
+        {/* bouton plein pastel (Houari ne voulait plus du bouton en pointilles) */}
         {lignes.length < MAX_EXOS ? (
           <Pressable
             onPress={() => { tap(); setPicker(true); }}
             accessibilityRole="button"
-            style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: fondAjouter(pressed) })}
+            style={({ pressed }) => ({ marginTop: 14, height: 60, borderRadius: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: pressed ? c.primaryPressed : c.primary })}
           >
-            <PlusPastille />
-            <Ink size={15} weight="extraBold" color={c.accentText}>{traduire('Ajouter un exercice')}</Ink>
+            <View style={{ width: 30, height: 30, borderRadius: 11, backgroundColor: blancA(0.7), alignItems: 'center', justifyContent: 'center' }}>
+              <PlusPastille />
+            </View>
+            <Ink size={16} weight="black" color={c.onPrimary}>{traduire('Ajouter un exercice')}</Ink>
           </Pressable>
         ) : null}
       </ScrollView>
 
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 22, paddingTop: 12, paddingBottom: insets.bottom + 16, backgroundColor: c.background, borderTopWidth: 1, borderColor: c.divider }}>
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 16, backgroundColor: c.background }}>
         <Pressable
           onPress={enregistrer}
-          disabled={lignes.length === 0}
+          disabled={vide}
           accessibilityRole="button"
-          accessibilityState={{ disabled: lignes.length === 0 }}
-          style={({ pressed }) => ({ height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: lignes.length === 0 ? c.fillSoft : pressed ? c.primaryPressed : c.primary })}
+          accessibilityState={{ disabled: vide }}
+          style={({ pressed }) => ({ height: 60, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: vide ? c.fillSoft : pressed ? c.primaryPressed : c.primary })}
         >
-          <Ink size={16} weight="extraBold" color={lignes.length === 0 ? c.textMuted : c.onPrimary}>{traduire('Enregistrer')}</Ink>
+          <Ink size={17} weight="black" color={vide ? c.textMuted : c.onPrimary}>{traduire('Enregistrer')}</Ink>
         </Pressable>
       </View>
 
@@ -244,20 +287,37 @@ export default function ModifierMaSeance() {
   );
 }
 
-function Fleche({ nom, label, actif, onPress }: { nom: 'up' | 'down' | 'close'; label: string; actif: boolean; onPress: () => void }) {
+/** La poignee a six points de la maquette : elle ouvre et ferme les reglages de l'exercice */
+function Poignee({ couleur, ouverte }: { couleur: string; ouverte: boolean }) {
+  return (
+    <View style={{ width: 28, height: 40, alignItems: 'center', justifyContent: 'center', opacity: ouverte ? 0.6 : 1 }}>
+      <Svg width={20} height={20} viewBox="0 0 24 24">
+        {[6, 12, 18].map((y) => (
+          <React.Fragment key={y}>
+            <Circle cx={9} cy={y} r={1.6} fill={couleur} />
+            <Circle cx={15} cy={y} r={1.6} fill={couleur} />
+          </React.Fragment>
+        ))}
+      </Svg>
+    </View>
+  );
+}
+
+function Fleche({ nom, label, actif, onPress, texte }: { nom: 'up' | 'down' | 'close'; label: string; actif: boolean; onPress: () => void; texte?: string }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const d = nom === 'up' ? 'M6 15l6-6 6 6' : nom === 'down' ? 'M6 9l6 6 6-6' : 'M7 7l10 10M17 7L7 17';
+  const rouge = nom === 'close';
   return (
     <Pressable
       onPress={() => { if (actif) { tap(); onPress(); } }}
       disabled={!actif}
       accessibilityRole="button"
       accessibilityLabel={label}
-      hitSlop={4}
-      style={({ pressed }) => ({ width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSoft : c.fillSubtle, opacity: actif ? 1 : 0.35 })}
+      style={({ pressed }) => ({ minWidth: 44, height: 40, paddingHorizontal: texte ? 14 : 0, borderRadius: 14, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: rouge ? c.dangerTint : pressed ? c.fillSubtle : c.fillSoft, opacity: actif ? (pressed ? 0.8 : 1) : 0.35 })}
     >
-      <FlecheSvg d={d} couleur={nom === 'close' ? c.danger : c.ink} />
+      <FlecheSvg d={d} couleur={rouge ? c.danger : c.ink} />
+      {texte ? <Ink size={13} weight="extraBold" color={c.danger}>{texte}</Ink> : null}
     </Pressable>
   );
 }

@@ -11,7 +11,6 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { BigButton, SectionTitle, tap } from './ui';
 import { ExoDemo } from '@/components/yoroi/v2/seance/ExoDemo';
-import { P } from '@/components/yoroi/livePalette';
 import { sportImage, sportTint } from '@/lib/v2/seance/sportVisuals';
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import { sportDuProgramme } from '@/lib/v2/programmes/catalogue';
@@ -21,6 +20,7 @@ import { messageCoach } from '@/lib/v2/programmes/coach';
 import { CoachProgramme } from '@/components/yoroi/v2/programmes/CoachProgramme';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { traduire } from '@/lib/i18n/tr';
+import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 
 export function ProgrammeCard({ onOpen, femme = false }: { onOpen: () => void; femme?: boolean }) {
   const { theme } = useYoroiTheme();
@@ -43,7 +43,7 @@ export function ProgrammeCard({ onOpen, femme = false }: { onOpen: () => void; f
     return (
       <>
         <SectionTitle title={traduire('Programmes')} />
-        <View style={{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: c.divider, overflow: 'hidden' }}>
+        <View style={[carteBlanche(c.surface, c.divider), { borderRadius: 24, overflow: 'hidden' }]}>
           <View style={{ height: 124, backgroundColor: sportTint('musculation'), overflow: 'hidden', padding: 16, justifyContent: 'flex-end' }}>
             {art ? <Image source={art} style={{ position: 'absolute', right: 0, top: 8, width: 118, height: 158 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
             <View style={{ maxWidth: '66%', gap: 2 }}>
@@ -79,7 +79,7 @@ export function ProgrammeCard({ onOpen, femme = false }: { onOpen: () => void; f
   return (
     <>
       <SectionTitle title={traduire('Ton programme')} action={traduire('Voir')} onAction={onOpen} />
-      <View style={{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: c.divider, overflow: 'hidden' }}>
+      <View style={[carteBlanche(c.surface, c.divider), { borderRadius: 24, overflow: 'hidden' }]}>
         <View style={{ height: 124, backgroundColor: sportTint(sportDuProgramme(p)), overflow: 'hidden', padding: 16, justifyContent: 'flex-end' }}>
           {art ? <Image source={art} style={{ position: 'absolute', right: 0, top: 8, width: 118, height: 158 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
           <View style={{ maxWidth: '66%', gap: 2 }}>
@@ -97,10 +97,10 @@ export function ProgrammeCard({ onOpen, femme = false }: { onOpen: () => void; f
           <View style={{ gap: 6 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Ink size={13} weight="extraBold">{traduire('Cette semaine')}</Ink>
-              <Ink size={13} weight="extraBold" color={c.accent}>{traduire('{0} sur {1} séances', faits, p.joursParSemaine)}</Ink>
+              <Ink size={13} weight="extraBold" color={c.accentText}>{traduire('{0} sur {1} séances', faits, p.joursParSemaine)}</Ink>
             </View>
             <View style={{ height: 8, borderRadius: 4, backgroundColor: c.fillSubtle, overflow: 'hidden' }}>
-              <View style={{ width: `${Math.round(part * 100)}%`, height: 8, borderRadius: 4, backgroundColor: c.accent }} />
+              <View style={{ width: `${Math.round(part * 100)}%`, height: 8, borderRadius: 4, backgroundColor: c.detail }} />
             </View>
           </View>
 

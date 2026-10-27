@@ -11,6 +11,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { MOODS, loadRessenti, saveRessenti } from '@/lib/v2/seance/ressenti';
 import type { Ressenti } from '@/lib/v2/seance/ressenti';
 import { traduire } from '@/lib/i18n/tr';
+import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 
 const STAR = 'M12 3.2l2.7 5.5 6 .9-4.35 4.2 1.03 6-5.38-2.83-5.38 2.83 1.03-6L3.3 9.6l6-.9z';
 // cles francaises, traduites au rendu (la langue peut changer apres le chargement du module)
@@ -93,7 +94,7 @@ export function NoteCompacte({ trainingId, combat }: { trainingId: number; comba
   const anything = r.rating !== null || r.mood !== null || r.technique !== null;
 
   return (
-    <View style={{ marginHorizontal: 22, marginTop: 12, borderRadius: 22, padding: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, gap: 12 }}>
+    <View style={{ ...carteBlanche(c.surface, c.divider), marginHorizontal: 22, marginTop: 12, borderRadius: 22, padding: 16, gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <Ink size={17} weight="black" tight style={{ flexShrink: 1 }}>{traduire("Ta note et ton ressenti")}</Ink>
         <Ink size={12} weight="bold" color={saved && anything ? c.successText : c.textMuted}>

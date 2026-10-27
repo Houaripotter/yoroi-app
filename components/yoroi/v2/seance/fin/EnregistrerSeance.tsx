@@ -8,7 +8,8 @@
  * Rien pour une séance sans exercices (combat, cardio).
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
+import { illustration } from '@/components/yoroi/v2/stickers';
 import { useRouter } from 'expo-router';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
@@ -21,6 +22,7 @@ import { chargerMesSeances, creerMaSeance, differencesExos, exosDepuisSeance, fu
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import type { ExoSeance, MaSeance } from '@/lib/v2/seance/mesSeances';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 
 type Etat =
   | { cas: 'rien' }
@@ -149,11 +151,9 @@ export function EnregistrerSeance({ trainingId, maSeanceId, marge = 22 }: { trai
   // meme forme que le rappel (un element, puis la feuille) : la feuille garde sa place et n'est jamais demontee
   return (
     <>
-    <View style={{ marginHorizontal: marge, marginTop: 18, borderRadius: 22, padding: 16, gap: 12, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
+    <View style={{ ...carteBlanche(c.surface, c.divider), marginHorizontal: marge, marginTop: 18, borderRadius: 22, padding: 16, gap: 12 }}>
       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-        <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name={changee ? 'refresh' : 'bookmark'} size={22} color={c.accent} />
-        </View>
+        <Image source={illustration(changee ? 'refresh' : 'carnet')} style={{ width: 48, height: 48 }} resizeMode="contain" accessibilityIgnoresInvertColors />
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={17} weight="black" tight>{changee ? traduire('Tu as changé {0}', changee.nom) : traduire('Refais-la en un appui')}</Ink>
           <Ink size={13} color={c.textSecondary}>
@@ -165,15 +165,15 @@ export function EnregistrerSeance({ trainingId, maSeanceId, marge = 22 }: { trai
       </View>
       {changee ? (
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <Pressable onPress={() => setEtat({ cas: 'dedans', seance: changee })} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 16, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : 'transparent' })}>
+          <Pressable onPress={() => setEtat({ cas: 'dedans', seance: changee })} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.fillSoft })}>
             <Ink size={14} weight="extraBold">{traduire('Garder comme avant')}</Ink>
           </Pressable>
-          <Pressable onPress={() => mettreAJour(changee)} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
+          <Pressable onPress={() => mettreAJour(changee)} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
             <Ink size={14} weight="extraBold" color={c.onPrimary}>{traduire('Mettre à jour')}</Ink>
           </Pressable>
         </View>
       ) : (
-        <Pressable onPress={() => setNommer(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 52, borderRadius: 16, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
+        <Pressable onPress={() => setNommer(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 54, borderRadius: 20, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
           <Icon name="bookmark" size={18} color={c.onPrimary} />
           <Ink size={15} weight="extraBold" color={c.onPrimary}>{traduire('Enregistrer cette séance')}</Ink>
         </Pressable>

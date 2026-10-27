@@ -321,8 +321,8 @@ export default function SeanceCardio() {
           {draft.form && draft.details ? <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={1}>{draft.editId ? traduire('Modifier ta séance') : dayLabel(draft.details.date)}</Ink> : null}
           <Ink size={22} weight="black" tight numberOfLines={1}>{draft.label || sportName}</Ink>
         </View>
-        <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-          <Ink size={15} weight="extraBold" color={c.onDark}>{draft.form ? traduire('Enregistrer') : traduire('Terminer')}</Ink>
+        <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
+          <Ink size={15} weight="black" color={c.onPrimary}>{draft.form ? traduire('Enregistrer') : traduire('Terminer')}</Ink>
         </Pressable>
       </View>
 
@@ -461,8 +461,8 @@ export default function SeanceCardio() {
           {calories > 0 ? <MiniStat label="calories" value={String(Math.round(calories))} /> : null}
         </View>
         {draft.details ? <SessionDetailsForm value={draft.details} onChange={setDetails} sport={draft.sport} showWhen={!!draft.form} hideDuration /> : null}
-        <Pressable onPress={save} disabled={saving} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent, opacity: saving ? 0.6 : 1 })}>
-          <Ink size={16} weight="extraBold" color={c.onAccent}>{saving ? 'Enregistrement...' : draft.editId ? traduire('Enregistrer les changements') : traduire('Enregistrer la séance')}</Ink>
+        <Pressable onPress={save} disabled={saving} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary, opacity: saving ? 0.6 : 1 })}>
+          <Ink size={16} weight="black" color={c.onPrimary}>{saving ? 'Enregistrement...' : draft.editId ? traduire('Enregistrer les changements') : traduire('Enregistrer la séance')}</Ink>
         </Pressable>
         <Pressable onPress={abandon} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
           <Ink size={14} weight="bold" color={c.textMuted}>{draft.form ? traduire('Quitter sans enregistrer') : traduire('Abandonner la séance')}</Ink>

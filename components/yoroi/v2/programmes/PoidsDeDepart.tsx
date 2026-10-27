@@ -14,6 +14,7 @@ import { sourceParId } from '@/lib/v2/programmes/sources';
 import { safeOpenURL } from '@/lib/security/validators';
 import { traduire } from '@/lib/i18n/tr';
 import { TuileGuide } from '@/components/yoroi/v2/programmes/Habillage';
+import { tonDuRang } from '@/components/yoroi/v2/seance/pastel';
 
 export function FeuillePoidsDeDepart({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { theme } = useYoroiTheme();
@@ -23,8 +24,8 @@ export function FeuillePoidsDeDepart({ visible, onClose }: { visible: boolean; o
       <View style={{ gap: 14, paddingHorizontal: 4 }}>
         {POIDS_DE_DEPART.map((x, i) => (
           <View key={x.titre} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
-            <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.darkCard, alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
-              <Ink size={13} weight="black" color={c.onDark}>{String(i + 1)}</Ink>
+            <View style={{ width: 32, height: 32, borderRadius: 12, backgroundColor: tonDuRang(i).fond, alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
+              <Ink size={14} weight="black" color={tonDuRang(i).encre}>{String(i + 1)}</Ink>
             </View>
             <View style={{ flex: 1, gap: 3 }}>
               <Ink size={15} weight="black" tight>{traduire(x.titre)}</Ink>

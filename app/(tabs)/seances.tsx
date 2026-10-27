@@ -61,6 +61,7 @@ import { importSeancesDisponible, nomSourceSante } from '@/lib/v2/seances/import
 import { devNow } from '@/lib/v2/creator/devClock';
 import { P } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { OMBRE_CARTE } from '@/components/yoroi/v2/seance/pastel';
 
 type Grouping = 'semaine' | 'mois';
 type Filter = { kind: 'tous' } | { kind: 'montre' } | { kind: 'sport'; sport: string };
@@ -344,9 +345,9 @@ export default function Seances() {
               onPress={() => { tap(); setSearchOpen((v) => !v); if (searchOpen) setQuery(''); }}
               accessibilityRole="button"
               accessibilityLabel={searchOpen ? traduire('Fermer la recherche') : traduire('Chercher une séance')}
-              style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: searchOpen ? c.ink : P.carte, borderWidth: 1, borderColor: searchOpen ? c.ink : c.divider }}
+              style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: searchOpen ? c.primary : c.surface, ...OMBRE_CARTE }}
             >
-              <Icon name={searchOpen ? 'close' : 'search'} size={20} color={searchOpen ? P.paper : c.ink} />
+              <Icon name={searchOpen ? 'close' : 'search'} size={20} color={searchOpen ? c.onPrimary : c.ink} />
             </Pressable>
           ) : null}
         </View>

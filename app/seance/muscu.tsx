@@ -45,6 +45,9 @@ import { rappelReposAutorise, useRappelFinRepos } from '@/lib/v2/seance/rappelRe
 import { useI18n } from '@/lib/I18nContext';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { blancA } from '@/components/yoroi/livePalette';
+import { PlusPastille } from '@/components/yoroi/v2/accueil/kit';
+import { carteBlanche, ton, tonDuRang } from '@/components/yoroi/v2/seance/pastel';
+import type { TonSeance } from '@/components/yoroi/v2/seance/pastel';
 import { intensite, niveauRpe } from '@/lib/v2/intensite';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { programmeParId, libelleRepos } from '@/lib/v2/programmes/catalogue';
@@ -741,11 +744,11 @@ export default function SeanceMuscu() {
       {/* En-tete : retour (la seance reste en cours), titre, chrono, Terminer */}
       <View style={{ paddingTop: Math.max(insets.top, 24) + 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         {draft.form ? (
-          <Pressable onPress={abandon} accessibilityRole="button" accessibilityLabel={traduire("Fermer sans enregistrer")} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.fillSubtle }}>
+          <Pressable onPress={abandon} accessibilityRole="button" accessibilityLabel={traduire("Fermer sans enregistrer")} style={[carteBlanche(c.surface, c.divider), { width: 46, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }]}>
             <Icon name="close" size={18} strokeWidth={2.6} />
           </Pressable>
         ) : (
-          <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel={traduire("Réduire, la séance reste en cours")} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.fillSubtle }}>
+          <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel={traduire("Réduire, la séance reste en cours")} style={[carteBlanche(c.surface, c.divider), { width: 46, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }]}>
             <Icon name="down" size={20} strokeWidth={2.6} />
           </Pressable>
         )}
@@ -760,27 +763,27 @@ export default function SeanceMuscu() {
             <Ink size={26} weight="black" style={{ fontVariant: ['tabular-nums'] }}>{fmtClock(elapsedSec)}</Ink>
           </View>
         )}
-        <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-          <Ink size={15} weight="extraBold" color={c.onAccent}>{draft.form ? traduire('Enregistrer') : traduire('Terminer')}</Ink>
+        <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 46, paddingHorizontal: 18, borderRadius: 16, justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
+          <Ink size={15} weight="black" color={c.onPrimary}>{draft.form ? traduire('Enregistrer') : traduire('Terminer')}</Ink>
         </Pressable>
       </View>
 
       {/* Avancement : une barre par exercice */}
       {draft.exercises.length > 0 ? (
-        <View style={{ flexDirection: 'row', gap: 5, paddingHorizontal: 22, marginTop: 10 }} accessibilityLabel={traduire("Exercice {0} sur {1}", draft.exercises.indexOf(current!) + 1, draft.exercises.length)}>
+        <View style={{ flexDirection: 'row', gap: 5, paddingHorizontal: 16, marginTop: 10 }} accessibilityLabel={traduire("Exercice {0} sur {1}", draft.exercises.indexOf(current!) + 1, draft.exercises.length)}>
           {draft.exercises.map((e) => {
             const isCur = e.id === current?.id;
             const all = e.sets.length > 0 && e.sets.every((s) => s.done);
             return (
               <Pressable key={e.id} onPress={() => update((d) => allerAExercice(d, e.id))} accessibilityLabel={traduire("Aller à {0}", e.name)} style={{ flex: 1, paddingVertical: 8 }}>
-                <View style={{ height: 5, borderRadius: 3, backgroundColor: isCur ? c.accent : all ? c.ink : '#D5D2CA' }} />
+                <View style={{ height: 5, borderRadius: 3, backgroundColor: isCur ? c.detail : all ? c.onPrimary : c.fillSubtle }} />
               </Pressable>
             );
           })}
         </View>
       ) : null}
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 8, paddingBottom: bottomSpace, gap: 10 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: bottomSpace, gap: 12 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" showsVerticalScrollIndicator={false}>
         {!current ? (
           <EmptyStart
             image={sportImage(draft.sport, femme, 1)}
@@ -801,9 +804,9 @@ export default function SeanceMuscu() {
               if (!mot) return null;
               const fort = mot.moment === 'derniere' || mot.moment === 'fin' || mot.moment === 'moitie';
               return (
-                <View accessibilityLiveRegion="polite" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 14, backgroundColor: fort ? c.darkCard : c.accentTint }}>
-                  <Ink size={11} weight="black" color={fort ? c.onDark : c.accent} style={{ letterSpacing: 0.6, textTransform: 'uppercase' }}>{traduire('Coach')}</Ink>
-                  <Ink size={14} weight="extraBold" color={fort ? c.onDark : c.ink} style={{ flex: 1, lineHeight: 19 }}>{mot.texte}</Ink>
+                <View accessibilityLiveRegion="polite" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 20, paddingVertical: 12, paddingHorizontal: 14, backgroundColor: fort ? ton('lilas').fond : c.accentTint }}>
+                  <Ink size={11} weight="black" color={fort ? ton('lilas').encre : c.accentText} style={{ letterSpacing: 0.6, textTransform: 'uppercase' }}>{traduire('Coach')}</Ink>
+                  <Ink size={14} weight="extraBold" color={c.ink} style={{ flex: 1, lineHeight: 19 }}>{mot.texte}</Ink>
                 </View>
               );
             })()}
@@ -834,7 +837,7 @@ export default function SeanceMuscu() {
                   </Ink>
                 ) : null}
               </View>
-              <Pressable onPress={() => setMenuFor(current.id)} accessibilityRole="button" accessibilityLabel={traduire("Options de l'exercice")} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.fillSubtle }}>
+              <Pressable onPress={() => setMenuFor(current.id)} accessibilityRole="button" accessibilityLabel={traduire("Options de l'exercice")} style={[carteBlanche(c.surface, c.divider), { width: 46, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }]}>
                 <Icon name="more" size={20} />
               </Pressable>
             </View>
@@ -845,7 +848,7 @@ export default function SeanceMuscu() {
             </View>
 
             {current.cible ? (
-              <View style={{ marginHorizontal: 4, padding: 12, borderRadius: 14, backgroundColor: c.accentTint, gap: 3 }}>
+              <View style={{ marginHorizontal: 4, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 18, backgroundColor: c.accentTint, gap: 3 }}>
                 <Ink size={13} weight="extraBold" color={c.accent}>
                   {current.cible.secondes
                     ? traduire('Objectif : tenir {0} à {1} secondes, repos {2}. Note les secondes dans la colonne Répétitions.', current.cible.repsMin, current.cible.repsMax, libelleRepos(current.cible.reposSec))
@@ -871,7 +874,7 @@ export default function SeanceMuscu() {
             ) : null}
 
             {current.notes ? (
-              <Pressable onPress={() => setNoteFor(current.id)} style={{ marginHorizontal: 4, padding: 12, borderRadius: 14, backgroundColor: c.goldTint }}>
+              <Pressable onPress={() => setNoteFor(current.id)} style={{ marginHorizontal: 4, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 18, backgroundColor: ton('creme').fond }}>
                 <Ink size={13} color={c.textSecondary}>{current.notes}</Ink>
               </Pressable>
             ) : null}
@@ -886,8 +889,11 @@ export default function SeanceMuscu() {
             {current.sets.map((s, i) => {
               if (i === activeIndex) {
                 return (
-                  <View key={s.id} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 2, borderColor: c.ink, padding: 12, gap: 10, shadowColor: c.shadow, shadowOpacity: 0.1, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}>
+                  <View key={s.id} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 2, borderColor: c.primary, padding: 14, gap: 12, shadowColor: c.shadow, shadowOpacity: 0.07, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 }}>
+                      <View style={{ minWidth: 32, height: 32, paddingHorizontal: 8, borderRadius: 12, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+                        <Ink size={15} weight="black" color={c.onPrimary}>{String(i + 1)}</Ink>
+                      </View>
                       <Ink size={16} weight="black" style={{ flex: 1 }}>{s.type === 'dropset' ? traduire('Drop set, charge baissée') : traduire("Série {0}", i + 1)}</Ink>
                       {s.prevWeight !== undefined ? <Ink size={12} weight="bold" color={c.textMuted} numberOfLines={1}>{traduire("la dernière fois {0}", setLabel({ weight: s.prevWeight, reps: s.prevReps ?? 0 }, unite))}</Ink> : null}
                     </View>
@@ -895,7 +901,7 @@ export default function SeanceMuscu() {
                       <View style={{ flex: 1 }}>
                         <Stepper layout="stack" value={saisieDepuisKg(s.weight, unite)} step={lb ? 5 : 2} fine={lb ? 1 : 0.5} max={lb ? 1100 : 500} decimals unit={lb ? traduire('livres') : traduire('kilos')} size={38} button={50} hint={lb ? traduire('livres') : traduire('kilos')} onChange={(v) => setValue(current.id, s.id, { weight: kgDepuisSaisie(v, unite) })} />
                       </View>
-                      <View style={{ width: 1, backgroundColor: c.border, marginVertical: 6 }} />
+                      <View style={{ width: 1, backgroundColor: c.divider, marginVertical: 6 }} />
                       <View style={{ flex: 1 }}>
                         <Stepper layout="stack" value={s.reps} step={1} max={200} unit={traduire("répétitions")} size={38} button={50} hint={i > 0 && s.prevReps === undefined ? traduire("comme la série {0}", i) : traduire('répétitions')} onChange={(v) => setValue(current.id, s.id, { reps: v })} />
                       </View>
@@ -907,10 +913,10 @@ export default function SeanceMuscu() {
                         disabled={s.reps <= 0}
                         accessibilityRole="button"
                         accessibilityLabel={traduire("Valider la série {0}", i + 1)}
-                        style={({ pressed }) => ({ minHeight: 58, borderRadius: 18, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: s.reps <= 0 ? c.border : pressed ? c.accentPressed : c.accent })}
+                        style={({ pressed }) => ({ minHeight: 58, borderRadius: 20, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: s.reps <= 0 ? c.fillSoft : pressed ? c.primaryPressed : c.primary })}
                       >
-                        <Icon name="check" size={24} color={c.onAccent} strokeWidth={3} />
-                        <Ink size={17} weight="extraBold" color={c.onAccent}>{traduire("Valider la série")}</Ink>
+                        <Icon name="check" size={24} color={s.reps <= 0 ? c.textMuted : c.onPrimary} strokeWidth={3} />
+                        <Ink size={17} weight="black" color={s.reps <= 0 ? c.textMuted : c.onPrimary}>{traduire("Valider la série")}</Ink>
                       </Pressable>
                     ) : null}
                   </View>
@@ -929,7 +935,7 @@ export default function SeanceMuscu() {
                   onLongPress={() => askSetAction(current, i)}
                   accessibilityRole="button"
                   accessibilityLabel={s.done ? traduire("Série {0} validée, {1}. Toucher pour la modifier", i + 1, setLabel(s, unite)) : traduire("Série {0} prévue, {1}", i + 1, setLabel(s, unite))}
-                  style={{ flexDirection: 'row', alignItems: 'center', minHeight: 54, paddingHorizontal: 8, borderRadius: 16, backgroundColor: pending ? 'transparent' : blancA(0.55), borderWidth: pending ? 1.5 : 0, borderStyle: 'dashed', borderColor: c.border }}
+                  style={[pending ? { backgroundColor: c.fillSoft, borderRadius: 18 } : carteBlanche(c.surface, c.divider), { flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 8, borderRadius: 18 }]}
                 >
                   <Ink size={16} weight="extraBold" color={c.textSecondary} style={{ width: 44, textAlign: 'center' }}>{i + 1}</Ink>
                   <Ink size={20} weight={pending ? 'bold' : 'black'} color={pending ? c.textMuted : c.ink} style={{ flex: 1, textAlign: 'center' }}>{fmtNum(saisieDepuisKg(s.weight, unite))}</Ink>
@@ -939,8 +945,8 @@ export default function SeanceMuscu() {
                       s.record ? (
                         <Hanko size={30} animate={freshRecord === s.id} />
                       ) : (
-                        <View style={{ width: 30, height: 30, borderRadius: 10, backgroundColor: c.ink, alignItems: 'center', justifyContent: 'center' }}>
-                          <Icon name="check" size={16} color={c.background} strokeWidth={3} />
+                        <View style={{ width: 32, height: 32, borderRadius: 12, backgroundColor: ton('menthe').fond, alignItems: 'center', justifyContent: 'center' }}>
+                          <Icon name="check" size={16} color={ton('menthe').encre} strokeWidth={3} />
                         </View>
                       )
                     ) : null}
@@ -956,14 +962,14 @@ export default function SeanceMuscu() {
             ) : null}
 
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Pressable onPress={() => addSet(current)} accessibilityRole="button" accessibilityLabel={traduire("Ajouter une série")} style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 16, flexDirection: 'row', gap: 8, borderWidth: 1.5, borderColor: c.accent, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentTint : 'transparent' })}>
-                <Icon name="plus" size={18} color={c.accent} strokeWidth={2.6} />
-                <Ink size={15} weight="extraBold" color={c.accent}>{traduire("Ajouter une série")}</Ink>
+              <Pressable onPress={() => addSet(current)} accessibilityRole="button" accessibilityLabel={traduire("Ajouter une série")} style={({ pressed }) => ({ flex: 1, minHeight: 52, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primary : c.accentTint })}>
+                <Icon name="plus" size={18} color={c.accentText} strokeWidth={2.6} />
+                <Ink size={15} weight="extraBold" color={c.accentText}>{traduire("Ajouter une série")}</Ink>
               </Pressable>
               {!draft.form && current.sets.some((x) => x.done) ? (
-                <Pressable onPress={() => addDropSet(current)} accessibilityRole="button" accessibilityLabel={traduire('Drop set : une série tout de suite, charge baissée')} style={({ pressed }) => ({ minHeight: 50, paddingHorizontal: 16, borderRadius: 16, flexDirection: 'row', gap: 6, borderWidth: 1.5, borderColor: c.accent, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentTint : 'transparent' })}>
-                  <Icon name="down" size={16} color={c.accent} strokeWidth={2.6} />
-                  <Ink size={15} weight="extraBold" color={c.accent}>{traduire('Drop set')}</Ink>
+                <Pressable onPress={() => addDropSet(current)} accessibilityRole="button" accessibilityLabel={traduire('Drop set : une série tout de suite, charge baissée')} style={({ pressed }) => ({ minHeight: 52, paddingHorizontal: 16, borderRadius: 18, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: ton('lilas').fond, opacity: pressed ? 0.85 : 1 })}>
+                  <Icon name="down" size={16} color={ton('lilas').encre} strokeWidth={2.6} />
+                  <Ink size={15} weight="extraBold" color={ton('lilas').encre}>{traduire('Drop set')}</Ink>
                 </Pressable>
               ) : null}
             </View>
@@ -977,16 +983,17 @@ export default function SeanceMuscu() {
 
 
             {currentDone ? (
-              <View style={{ marginTop: 6, padding: 16, borderRadius: 22, backgroundColor: c.successTint, gap: 10 }}>
-                <Ink size={17} weight="black" color={c.successText}>{traduire("Exercice bouclé.")}</Ink>
+              <View style={{ marginTop: 6, padding: 16, borderRadius: 22, backgroundColor: ton('menthe').fond, gap: 12 }}>
+                <Ink size={17} weight="black" color={ton('menthe').encre}>{traduire("Exercice bouclé.")}</Ink>
                 {nextEx ? (
-                  <Pressable onPress={() => update((d) => allerAExercice(d, nextEx.id))} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 50, borderRadius: 16, backgroundColor: pressed ? c.textSecondary : c.ink, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 14 })}>
-                    <Ink size={15} weight="extraBold" color={c.background} numberOfLines={1}>{traduire("Suivant : {0}", nextEx.name)}</Ink>
-                    <Icon name="chevron" size={18} color={c.background} />
+                  <Pressable onPress={() => update((d) => allerAExercice(d, nextEx.id))} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 52, borderRadius: 18, backgroundColor: pressed ? blancA(0.7) : c.surface, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 14 })}>
+                    <Ink size={15} weight="black" color={ton('menthe').encre} numberOfLines={1} style={{ flexShrink: 1 }}>{traduire("Suivant : {0}", nextEx.name)}</Ink>
+                    <Icon name="chevron" size={18} color={ton('menthe').encre} />
                   </Pressable>
                 ) : (
-                  <Pressable onPress={() => setPickerOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 50, borderRadius: 16, backgroundColor: pressed ? c.textSecondary : c.ink, alignItems: 'center', justifyContent: 'center' })}>
-                    <Ink size={15} weight="extraBold" color={c.background}>{traduire("Ajouter un exercice")}</Ink>
+                  <Pressable onPress={() => setPickerOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 52, borderRadius: 18, backgroundColor: pressed ? blancA(0.7) : c.surface, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center' })}>
+                    <PlusPastille />
+                    <Ink size={15} weight="black" color={c.onPrimary}>{traduire("Ajouter un exercice")}</Ink>
                   </Pressable>
                 )}
               </View>
@@ -995,16 +1002,18 @@ export default function SeanceMuscu() {
             {/* La suite de la seance */}
             {draft.exercises.length > 1 ? (
               <View style={{ marginTop: 14, gap: 8 }}>
-                <Ink size={13} weight="bold" color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire("Ta séance")}</Ink>
+                <Ink size={18} weight="black" tight style={{ paddingHorizontal: 4 }}>{traduire("Ta séance")}</Ink>
                 {draft.exercises.map((e, i) => {
                   if (e.id === current.id) return null;
                   const doneCount = e.sets.filter((s) => s.done).length;
                   const all = (doneCount === e.sets.length || (!!e.laisse && doneCount > 0)) && e.sets.length > 0;
                   return (
-                    <Pressable key={e.id} onPress={() => update((d) => allerAExercice(d, e.id))} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 64, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, gap: 12, borderRadius: 18, backgroundColor: pressed ? c.fillSubtle : blancA(0.7), borderWidth: 1, borderColor: c.border, opacity: all ? 0.6 : 1 })}>
-                      <ExoDemo nom={sansPrise(e.name).base} taille={52} arrondi={12} />
-                      <Ink size={13} weight="extraBold" color={c.textMuted} style={{ width: 18 }}>{i + 1}</Ink>
-                      <Ink size={15} weight="bold" color={all ? c.textMuted : c.ink} style={{ flex: 1 }} numberOfLines={1}>{traduire(e.name)}</Ink>
+                    <Pressable key={e.id} onPress={() => update((d) => allerAExercice(d, e.id))} accessibilityRole="button" style={({ pressed }) => [carteBlanche(c.surface, c.divider), { minHeight: 70, flexDirection: 'row', alignItems: 'center', padding: 12, gap: 12, opacity: all ? 0.6 : pressed ? 0.85 : 1 }]}>
+                      <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: tonDuRang(i).fond, alignItems: 'center', justifyContent: 'center' }}>
+                        <Ink size={17} weight="black" color={tonDuRang(i).encre}>{String(i + 1)}</Ink>
+                      </View>
+                      <Ink size={15.5} weight="black" tight color={all ? c.textMuted : c.ink} style={{ flex: 1 }} numberOfLines={2}>{traduire(e.name)}</Ink>
+                      <ExoDemo nom={sansPrise(e.name).base} taille={44} arrondi={12} />
                       <Ink size={13} weight="bold" color={all ? c.successText : c.textMuted}>{all ? (e.laisse ? traduire("{0} faites", doneCount) : traduire('fait')) : doneCount > 0 ? traduire("{0} sur {1}", doneCount, e.sets.length) : traduire("{0} séries", e.sets.length)}</Ink>
                     </Pressable>
                   );
@@ -1013,15 +1022,17 @@ export default function SeanceMuscu() {
             ) : null}
 
             {/* un seul bouton Ajouter un exercice a la fois : celui de la carte Exercice boucle quand il n'y a pas de suite */}
-            {currentDone && !nextEx ? null : <Pressable onPress={() => setPickerOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ marginTop: 8, minHeight: 54, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, backgroundColor: pressed ? c.fillSubtle : blancA(0.7), borderWidth: 1, borderColor: c.border })}>
-              <Icon name="plus" size={20} />
-              <Ink size={15} weight="bold" style={{ flex: 1 }}>{traduire("Ajouter un exercice")}</Ink>
+            {currentDone && !nextEx ? null : <Pressable onPress={() => setPickerOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ marginTop: 4, height: 60, borderRadius: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: pressed ? c.primaryPressed : c.primary })}>
+              <View style={{ width: 30, height: 30, borderRadius: 11, backgroundColor: blancA(0.7), alignItems: 'center', justifyContent: 'center' }}>
+                <PlusPastille />
+              </View>
+              <Ink size={16} weight="black" color={c.onPrimary}>{traduire("Ajouter un exercice")}</Ink>
             </Pressable>}
           </>
         )}
 
         {/* Reglages de la seance */}
-        <View style={{ marginTop: 10, padding: 14, borderRadius: 20, backgroundColor: blancA(0.7), borderWidth: 1, borderColor: c.border, gap: 12 }}>
+        <View style={[carteBlanche(c.surface, c.divider), { marginTop: 10, padding: 16, gap: 12 }]}>
           {!draft.form ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Icon name="clock" size={20} color={c.textSecondary} />
             <Ink size={15} weight="bold" style={{ flex: 1 }}>{traduire("Repos entre les séries")}</Ink>
@@ -1108,8 +1119,8 @@ export default function SeanceMuscu() {
               {PRISES.map((x) => {
                 const on = sansPrise(priseEx.name).prise === x.id;
                 return (
-                  <Pressable key={x.id} onPress={() => choisirPrise(priseEx, on ? null : x.id)} accessibilityRole="button" accessibilityState={{ selected: on }} style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, justifyContent: 'center', backgroundColor: on ? c.ink : pressed ? c.fillSubtle : 'transparent', borderWidth: on ? 0 : 1.5, borderColor: c.border })}>
-                    <Ink size={15} weight="extraBold" color={on ? c.background : c.ink}>{traduire(x.label)}</Ink>
+                  <Pressable key={x.id} onPress={() => choisirPrise(priseEx, on ? null : x.id)} accessibilityRole="button" accessibilityState={{ selected: on }} style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, justifyContent: 'center', backgroundColor: on ? c.primary : pressed ? c.fillSubtle : c.fillSoft })}>
+                    <Ink size={15} weight="extraBold" color={on ? c.onPrimary : c.ink}>{traduire(x.label)}</Ink>
                   </Pressable>
                 );
               })}
@@ -1136,8 +1147,8 @@ export default function SeanceMuscu() {
               autoFocus
               style={[fontStyle('medium'), { minHeight: 90, fontSize: 16, color: c.ink, padding: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, textAlignVertical: 'top' }]}
             />
-            <Pressable onPress={() => setNoteFor(null)} style={({ pressed }) => ({ minHeight: 52, borderRadius: 16, backgroundColor: pressed ? c.textSecondary : c.ink, alignItems: 'center', justifyContent: 'center' })}>
-              <Ink size={16} weight="extraBold" color={c.background}>{traduire("Valider")}</Ink>
+            <Pressable onPress={() => setNoteFor(null)} style={({ pressed }) => ({ minHeight: 56, borderRadius: 20, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}>
+              <Ink size={16} weight="black" color={c.onPrimary}>{traduire("Valider")}</Ink>
             </Pressable>
           </View>
         ) : null}
@@ -1161,8 +1172,8 @@ export default function SeanceMuscu() {
             </Ink>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {summary.pendingValid > 0 ? (
-                <Pressable onPress={validateAll} accessibilityRole="button" accessibilityLabel={summary.pendingValid === 1 ? traduire('Valider la série restante') : traduire("Valider les {0} séries restantes", summary.pendingValid)} style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-                  <Ink size={14} weight="extraBold" color={c.onAccent}>{traduire("Tout valider")}</Ink>
+                <Pressable onPress={validateAll} accessibilityRole="button" accessibilityLabel={summary.pendingValid === 1 ? traduire('Valider la série restante') : traduire("Valider les {0} séries restantes", summary.pendingValid)} style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
+                  <Ink size={14} weight="extraBold" color={c.onPrimary}>{traduire("Tout valider")}</Ink>
                 </Pressable>
               ) : null}
               <Pressable onPress={showPending} accessibilityRole="button" accessibilityLabel={traduire("Voir les séries à valider")} style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : blancA(0.75), borderWidth: 1, borderColor: c.border })}>
@@ -1172,13 +1183,13 @@ export default function SeanceMuscu() {
           </View>
         ) : null}
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Stat label={traduire("durée")} value={fmtMinutes(draft.form && draft.details ? draft.details.duration : elapsedSec / 60)} />
-          <Stat label={traduire("séries")} value={String(summary.sets)} />
+          <Stat ton="creme" label={traduire("durée")} value={fmtMinutes(draft.form && draft.details ? draft.details.duration : elapsedSec / 60)} />
+          <Stat ton="ciel" label={traduire("séries")} value={String(summary.sets)} />
           {/* pas de « 0 kg soulevés » : le tonnage n'apparait que s'il y en a un (poids du corps exclu) */}
-          {summary.tonnage > 0 ? <Stat label={accordSouleve(summary.tonnage, unite)} value={formatTonnage(summary.tonnage, unite)} /> : null}
+          {summary.tonnage > 0 ? <Stat ton="peche" label={accordSouleve(summary.tonnage, unite)} value={formatTonnage(summary.tonnage, unite)} /> : null}
         </View>
         {summary.records > 0 ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 16, backgroundColor: c.accentTint }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 16, backgroundColor: ton('peche').fond }}>
             <Hanko size={34} />
             <Ink size={15} weight="extraBold" style={{ flex: 1 }}>{summary.records === 1 ? traduire('Un record battu aujourd’hui') : traduire("{0} records battus aujourd’hui", summary.records)}</Ink>
           </View>
@@ -1207,8 +1218,8 @@ export default function SeanceMuscu() {
             {MUSCLES.map((m) => {
               const on = shownMuscles.includes(m.id);
               return (
-                <Pressable key={m.id} onPress={() => toggleMuscle(m.id)} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ minHeight: 40, paddingHorizontal: 12, borderRadius: 12, justifyContent: 'center', backgroundColor: on ? c.indigo : blancA(0.75), borderWidth: on ? 0 : 1, borderColor: c.border }}>
-                  <Ink size={13} weight="bold" color={on ? '#FFFFFF' : c.ink}>{traduire(m.name)}</Ink>
+                <Pressable key={m.id} onPress={() => toggleMuscle(m.id)} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ minHeight: 40, paddingHorizontal: 12, borderRadius: 12, justifyContent: 'center', backgroundColor: on ? c.primary : c.fillSoft }}>
+                  <Ink size={13} weight="bold" color={on ? c.onPrimary : c.ink}>{traduire(m.name)}</Ink>
                 </Pressable>
               );
             })}
@@ -1220,8 +1231,8 @@ export default function SeanceMuscu() {
         {summary.sets === 0 && !draft.form ? (
           <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Valide au moins une série pour enregistrer ta séance.")}</Ink>
         ) : null}
-        <Pressable onPress={save} disabled={saving || (summary.sets === 0 && !draft.form)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: summary.sets === 0 && !draft.form ? c.border : pressed ? c.accentPressed : c.accent, opacity: saving ? 0.6 : 1 })}>
-          <Ink size={16} weight="extraBold" color={c.onAccent}>{saving ? 'Enregistrement...' : draft.editId ? traduire('Enregistrer les changements') : traduire('Enregistrer la séance')}</Ink>
+        <Pressable onPress={save} disabled={saving || (summary.sets === 0 && !draft.form)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: summary.sets === 0 && !draft.form ? c.fillSoft : pressed ? c.primaryPressed : c.primary, opacity: saving ? 0.6 : 1 })}>
+          <Ink size={16} weight="black" color={summary.sets === 0 && !draft.form ? c.textMuted : c.onPrimary}>{saving ? 'Enregistrement...' : draft.editId ? traduire('Enregistrer les changements') : traduire('Enregistrer la séance')}</Ink>
         </Pressable>
         <Pressable onPress={abandon} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
           <Ink size={14} weight="bold" color={c.textMuted}>{draft.form ? traduire('Quitter sans enregistrer') : traduire('Abandonner la séance')}</Ink>
@@ -1243,20 +1254,20 @@ function BarreAction({ bottom, etape, aSuivre, onValider, onSuivant, onTerminer,
   const c = theme.colors;
   const principal =
     etape.quoi === 'valider'
-      ? { label: traduire('Valider la série {0} sur {1}', etape.serie, etape.total), sous: etape.detail, icon: 'check' as const, onPress: onValider, fond: c.accent, texte: c.onAccent, actif: etape.possible }
+      ? { label: traduire('Valider la série {0} sur {1}', etape.serie, etape.total), sous: etape.detail, icon: 'check' as const, onPress: onValider, fond: c.primary, texte: c.onPrimary, actif: etape.possible }
       : etape.quoi === 'suivant'
-        ? { label: traduire('Exercice suivant'), sous: etape.nom, icon: 'chevron' as const, onPress: onSuivant, fond: c.ink, texte: c.background, actif: true }
+        ? { label: traduire('Exercice suivant'), sous: etape.nom, icon: 'chevron' as const, onPress: onSuivant, fond: ton('menthe').fond, texte: ton('menthe').encre, actif: true }
         : etape.quoi === 'terminer'
-          ? { label: traduire('Terminer la séance'), sous: traduire('Tout est fait, bravo'), icon: 'check' as const, onPress: onTerminer, fond: c.accent, texte: c.onAccent, actif: true }
-          : { label: traduire('Ajouter un exercice'), sous: '', icon: 'plus' as const, onPress: onAjouter, fond: c.accent, texte: c.onAccent, actif: true };
+          ? { label: traduire('Terminer la séance'), sous: traduire('Tout est fait, bravo'), icon: 'check' as const, onPress: onTerminer, fond: c.primary, texte: c.onPrimary, actif: true }
+          : { label: traduire('Ajouter un exercice'), sous: '', icon: 'plus' as const, onPress: onAjouter, fond: c.primary, texte: c.onPrimary, actif: true };
   return (
-    <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingTop: 10, paddingBottom: bottom + 10, backgroundColor: c.background, borderTopWidth: 1, borderColor: c.border, gap: 8 }}>
+    <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingTop: 10, paddingBottom: bottom + 10, backgroundColor: c.background, gap: 8 }}>
       {aSuivre ? (
         <Pressable onPress={onSuivant} accessibilityRole="button" accessibilityLabel={traduire('Passer à {0}', aSuivre)} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 4 }}>
           <Ink size={12} weight="bold" color={c.textMuted}>{traduire('À suivre')}</Ink>
           <Ink size={13} weight="extraBold" color={c.ink} numberOfLines={1} style={{ flex: 1 }}>{aSuivre}</Ink>
-          <Ink size={12} weight="extraBold" color={c.accent}>{traduire('Passer')}</Ink>
-          <Icon name="chevron" size={14} color={c.accent} />
+          <Ink size={12} weight="extraBold" color={c.accentText}>{traduire('Passer')}</Ink>
+          <Icon name="chevron" size={14} color={c.accentText} />
         </Pressable>
       ) : null}
       <Pressable
@@ -1268,27 +1279,26 @@ function BarreAction({ bottom, etape, aSuivre, onValider, onSuivant, onTerminer,
         disabled={!principal.actif}
         accessibilityRole="button"
         accessibilityLabel={principal.sous ? `${principal.label}, ${principal.sous}` : principal.label}
-        style={({ pressed }) => ({ minHeight: 64, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, backgroundColor: !principal.actif ? c.border : pressed ? c.accentPressed : principal.fond, shadowColor: principal.fond, shadowOpacity: principal.actif ? 0.28 : 0, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: principal.actif ? 4 : 0 })}
+        style={({ pressed }) => ({ minHeight: 64, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, backgroundColor: !principal.actif ? c.fillSoft : principal.fond, opacity: pressed ? 0.85 : 1 })}
       >
-        <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name={principal.icon} size={22} color={principal.texte} strokeWidth={3} />
+        <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: blancA(0.7), alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={principal.icon} size={22} color={principal.actif ? principal.texte : c.textMuted} strokeWidth={3} />
         </View>
         <View style={{ flex: 1 }}>
-          <Ink size={17} weight="black" color={principal.texte} numberOfLines={1}>{principal.label}</Ink>
-          {principal.sous ? <Ink size={13} weight="bold" color={principal.texte} style={{ opacity: 0.8 }} numberOfLines={1}>{principal.sous}</Ink> : null}
+          <Ink size={17} weight="black" color={principal.actif ? principal.texte : c.textMuted} numberOfLines={1}>{principal.label}</Ink>
+          {principal.sous ? <Ink size={13} weight="bold" color={principal.actif ? principal.texte : c.textMuted} style={{ opacity: 0.8 }} numberOfLines={1}>{principal.sous}</Ink> : null}
         </View>
       </Pressable>
     </View>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
+function Stat({ label, value, ton: t }: { label: string; value: string; ton: TonSeance }) {
+  const p = ton(t);
   return (
-    <View style={{ flex: 1, padding: 12, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
+    <View style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 20, backgroundColor: p.fond, gap: 2 }}>
+      <Ink size={12.5} weight="extraBold" color={p.encre} numberOfLines={1}>{label.charAt(0).toUpperCase() + label.slice(1)}</Ink>
       <Ink size={22} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{value}</Ink>
-      <Ink size={12} color={c.textMuted}>{label}</Ink>
     </View>
   );
 }
@@ -1298,7 +1308,7 @@ function MenuRow({ icon, label, onPress, danger, disabled }: { icon: 'up' | 'dow
   const c = theme.colors;
   const color = disabled ? c.textMuted : danger ? c.danger : c.ink;
   return (
-    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 54, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border, opacity: disabled ? 0.5 : 1 })}>
+    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 54, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, backgroundColor: pressed ? c.fillSubtle : c.fillSoft, opacity: disabled ? 0.5 : 1 })}>
       <Icon name={icon} size={20} color={color} />
       <Ink size={15} weight="bold" color={color}>{label}</Ink>
     </Pressable>
@@ -1310,14 +1320,15 @@ function EmptyStart({ image, recent, onPick, onLibrary }: { image: ReturnType<ty
   const c = theme.colors;
   return (
     <View style={{ gap: 14, marginTop: 10 }}>
-      <View style={{ height: 230, borderRadius: 28, backgroundColor: c.indigoTint, overflow: 'hidden', padding: 20 }}>
+      <View style={{ height: 230, borderRadius: 26, backgroundColor: ton('ciel').fond, overflow: 'hidden', padding: 20 }}>
         {image ? <Image source={image} style={{ position: 'absolute', right: -20, bottom: -40, width: 200, height: 266 }} resizeMode="contain" /> : null}
         <View style={{ maxWidth: '62%', gap: 6 }}>
           <Ink size={26} weight="black" tight>{traduire("Premier exercice ?")}</Ink>
           <Ink size={14} color={c.textSecondary}>{traduire("Choisis-le, tes séries arrivent pré-remplies avec ta dernière fois.")}</Ink>
         </View>
-        <Pressable onPress={onLibrary} accessibilityRole="button" style={({ pressed }) => ({ position: 'absolute', left: 20, bottom: 20, minHeight: 48, paddingHorizontal: 18, borderRadius: 16, justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-          <Ink size={15} weight="extraBold" color={c.onAccent}>{traduire("Choisir un exercice")}</Ink>
+        <Pressable onPress={onLibrary} accessibilityRole="button" style={({ pressed }) => ({ position: 'absolute', left: 20, bottom: 20, minHeight: 48, paddingHorizontal: 18, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: pressed ? blancA(0.75) : c.surface })}>
+          <PlusPastille />
+          <Ink size={15} weight="black" color={c.onPrimary}>{traduire("Choisir un exercice")}</Ink>
         </Pressable>
       </View>
       {recent.length > 0 ? (
@@ -1325,8 +1336,8 @@ function EmptyStart({ image, recent, onPick, onLibrary }: { image: ReturnType<ty
           <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Tes exercices récents")}</Ink>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {recent.map((h) => (
-              <Pressable key={h.name} onPress={() => onPick(h)} accessibilityRole="button" accessibilityLabel={traduire("Ajouter {0}", h.name)} style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : blancA(0.75), borderWidth: 1, borderColor: c.border })}>
-                <Ink size={14} weight="bold">{traduire(h.name)}</Ink>
+              <Pressable key={h.name} onPress={() => onPick(h)} accessibilityRole="button" accessibilityLabel={traduire("Ajouter {0}", h.name)} style={({ pressed }) => [carteBlanche(c.surface, c.divider), { minHeight: 48, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, justifyContent: 'center', opacity: pressed ? 0.85 : 1 }]}>
+                <Ink size={14} weight="extraBold">{traduire(h.name)}</Ink>
                 <Ink size={11} color={c.textMuted}>{niceGroup(h.muscle)}</Ink>
               </Pressable>
             ))}

@@ -18,7 +18,7 @@ import type { ExerciseHistory } from '@/lib/v2/seance/history';
 import { niceGroup, relativeDay } from '@/lib/v2/seance/format';
 import { Icon } from './Icon';
 import { MachineFinder, MachineFinderButton } from './MachineFinder';
-import { P, blancA } from '@/components/yoroi/livePalette';
+import { OMBRE_CARTE, ton } from '@/components/yoroi/v2/seance/pastel';
 import { fondAjouter, PlusPastille } from '@/components/yoroi/v2/accueil/kit';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { traduire } from '@/lib/i18n/tr';
@@ -151,8 +151,8 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
     // pendant une recherche, c'est « Tous » qui est allume : on cherche dans toutes les categories
     const on = query.trim() ? id === null : group === id;
     return (
-      <Pressable key={id ?? 'tous'} onPress={() => { setGroup(id); setQuery(''); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 12, justifyContent: 'center', backgroundColor: on ? c.ink : 'transparent', borderWidth: on ? 0 : 1.5, borderColor: c.border }}>
-        <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? P.paper : c.textSecondary}>{label}</Ink>
+      <Pressable key={id ?? 'tous'} onPress={() => { setGroup(id); setQuery(''); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 12, justifyContent: 'center', backgroundColor: on ? c.primary : c.surface }}>
+        <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? c.onPrimary : c.textSecondary}>{label}</Ink>
       </Pressable>
     );
   };
@@ -167,8 +167,8 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
           </Pressable>
         </View>
 
-        <View style={{ marginHorizontal: 22, marginTop: 16, height: 60, borderRadius: 20, backgroundColor: c.surface, borderWidth: focus ? 2 : 1.5, borderColor: focus ? c.ink : c.border, flexDirection: 'row', alignItems: 'center', paddingLeft: 16, paddingRight: 8, gap: 12 }}>
-          <Icon name="search" size={22} color={focus ? c.ink : c.textMuted} strokeWidth={2.4} />
+        <View style={{ marginHorizontal: 22, marginTop: 16, height: 60, borderRadius: 20, backgroundColor: c.surface, borderWidth: focus ? 2 : 0, borderColor: focus ? c.primary : c.border, ...OMBRE_CARTE, flexDirection: 'row', alignItems: 'center', paddingLeft: 16, paddingRight: 8, gap: 12 }}>
+          <Icon name="search" size={22} color={focus ? c.onPrimary : c.textMuted} strokeWidth={2.4} />
           <TextInput
             ref={champ}
             value={query}
@@ -213,7 +213,7 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
           keyExtractor={(l) => l.key}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: insets.bottom + 30, gap: 6 }}
+          contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: insets.bottom + 30, gap: 8 }}
           ListEmptyComponent={
             query.trim() ? (
               <View style={{ paddingVertical: 28, alignItems: 'center', gap: 14 }}>
@@ -268,7 +268,7 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
                 onPress={() => pick(item.name, item.muscle)}
                 accessibilityRole="button"
                 accessibilityLabel={traduire("Ajouter {0}", item.name)}
-                style={({ pressed }) => ({ minHeight: 64, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : blancA(0.75), borderWidth: 1, borderColor: c.divider })}
+                style={({ pressed }) => ({ minHeight: 64, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : c.surface, ...OMBRE_CARTE })}
               >
                 <View style={{ flex: 1, gap: 2 }}>
                   <Ink size={16} weight="extraBold" numberOfLines={1}>{traduire(item.name)}</Ink>
@@ -278,11 +278,13 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
                   </Ink>
                 </View>
                 {inSession ? (
-                  <View style={{ width: 30, height: 30, borderRadius: 10, backgroundColor: c.ink, alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon name="check" size={16} color={c.background} strokeWidth={3} />
+                  <View style={{ width: 32, height: 32, borderRadius: 12, backgroundColor: ton('menthe').fond, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="check" size={16} color={ton('menthe').encre} strokeWidth={3} />
                   </View>
                 ) : (
-                  <Icon name="plus" size={20} color={c.textSecondary} />
+                  <View style={{ width: 32, height: 32, borderRadius: 12, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="plus" size={16} color={c.onPrimary} strokeWidth={3} />
+                  </View>
                 )}
               </Pressable>
             );

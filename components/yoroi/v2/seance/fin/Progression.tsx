@@ -12,6 +12,7 @@ import { Icon } from '@/components/yoroi/v2/seance/Icon';
 import type { IconName } from '@/components/yoroi/v2/seance/Icon';
 import { jaugeSemaine } from './logique';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 
 function Jauge({ ratio, couleur, fond, hauteur, anime, delai }: { ratio: number; couleur: string; fond: string; hauteur: number; anime: boolean; delai: number }) {
   const p = useSharedValue(anime ? 0 : ratio);
@@ -66,7 +67,7 @@ export function Progression({
   return (
     <Animated.View
       entering={anime ? FadeInDown.delay(420).duration(380) : undefined}
-      style={{ marginHorizontal: 22, marginTop: 12, borderRadius: 22, padding: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, gap: 14 }}
+      style={{ ...carteBlanche(c.surface, c.divider), marginHorizontal: 22, marginTop: 12, borderRadius: 22, padding: 16, gap: 14 }}
     >
       <View style={{ gap: 10 }} accessible accessibilityLabel={`${traduire("Ta semaine")}, ${compte}. ${ligneSemaine}`}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}>

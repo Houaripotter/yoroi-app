@@ -12,7 +12,7 @@ import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { tap } from '@/components/yoroi/v2/seances/ui';
 import { ExoDemo, FOND_DEMO } from '@/components/yoroi/v2/seance/ExoDemo';
 import { FicheTechnique } from '@/components/yoroi/v2/programmes/FicheTechnique';
-import { P } from '@/components/yoroi/livePalette';
+import { blancA } from '@/components/yoroi/livePalette';
 import { demoDe } from '@/lib/v2/programmes/demos';
 import { useSourceDemos } from '@/lib/v2/programmes/demosTest';
 import { ficheDe } from '@/lib/v2/programmes/fiches';
@@ -21,6 +21,7 @@ import { libelleRepos } from '@/lib/v2/programmes/catalogue';
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import type { ExoProgramme } from '@/lib/v2/programmes/types';
 import { traduire } from '@/lib/i18n/tr';
+import { carteBlanche, ton } from '@/components/yoroi/v2/seance/pastel';
 
 function Repere({ valeur, libelle }: { valeur: string; libelle: string }) {
   const { theme } = useYoroiTheme();
@@ -46,18 +47,18 @@ export function CarteExoZone({ exo, numero, total, zone, marge = 44 }: { exo: Ex
   const reps = `${exo.repsMin} ${traduire('à')} ${exo.repsMax}`;
 
   return (
-    <View style={{ borderRadius: 24, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider, overflow: 'hidden' }}>
+    <View style={[carteBlanche(c.surface, c.divider), { borderRadius: 24, overflow: 'hidden' }]}>
       {/* l'animation en grand, avec le numéro et la zone posés dessus */}
       <View style={{ backgroundColor: FOND_DEMO }}>
         {animee ? <ExoDemo nom={exo.nom} largeur={largeur} hauteur={Math.round(Math.min(220, largeur * 0.58))} arrondi={0} bordure={false} /> : <View style={{ height: 64 }} />}
         <View style={{ position: 'absolute', top: 12, left: 12, right: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View style={{ paddingHorizontal: 10, height: 28, borderRadius: 14, backgroundColor: c.ink, flexDirection: 'row', alignItems: 'center' }}>
-            <Ink size={12} weight="black" color={P.carte} style={{ fontVariant: ['tabular-nums'] }}>{traduire('{0} sur {1}', numero, total)}</Ink>
+          <View style={{ paddingHorizontal: 10, height: 28, borderRadius: 14, backgroundColor: blancA(0.92), flexDirection: 'row', alignItems: 'center' }}>
+            <Ink size={12} weight="black" color={c.ink} style={{ fontVariant: ['tabular-nums'] }}>{traduire('{0} sur {1}', numero, total)}</Ink>
           </View>
           {zone ? (
-            <View style={{ paddingHorizontal: 10, height: 28, borderRadius: 14, backgroundColor: c.accent, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-              <Icon name="target" size={13} color={c.onAccent} strokeWidth={2.4} />
-              <Ink size={12} weight="black" color={c.onAccent}>{zone}</Ink>
+            <View style={{ paddingHorizontal: 10, height: 28, borderRadius: 14, backgroundColor: c.primary, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <Icon name="target" size={13} color={c.onPrimary} strokeWidth={2.4} />
+              <Ink size={12} weight="black" color={c.onPrimary}>{zone}</Ink>
             </View>
           ) : null}
         </View>
@@ -73,12 +74,12 @@ export function CarteExoZone({ exo, numero, total, zone, marge = 44 }: { exo: Ex
         </View>
 
         {exo.conseil ? (
-          <View style={{ flexDirection: 'row', gap: 12, padding: 12, borderRadius: 16, backgroundColor: c.accentTint }}>
-            <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="check" size={16} color={c.onAccent} strokeWidth={2.8} />
+          <View style={{ flexDirection: 'row', gap: 12, padding: 12, borderRadius: 18, backgroundColor: ton('menthe').fond }}>
+            <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: blancA(0.8), alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="check" size={16} color={ton('menthe').encre} strokeWidth={2.8} />
             </View>
             <View style={{ flex: 1, gap: 2 }}>
-              <Ink size={12} weight="black" color={c.accent}>{traduire('LE BON GESTE')}</Ink>
+              <Ink size={12} weight="black" color={ton('menthe').encre}>{traduire('LE BON GESTE')}</Ink>
               <Ink size={14} color={c.ink}>{traduire(exo.conseil)}</Ink>
             </View>
           </View>

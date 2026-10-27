@@ -40,6 +40,7 @@ import { DEFAULT_SPORTS, seanceKindFor, seanceRoute, sportImage, sportShortName,
 import { useNow } from '@/lib/v2/seance/useNow';
 import { routeDuCreneau } from '@/lib/v2/programmes/agenda';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { OMBRE_CARTE, carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type Hero = {
@@ -252,7 +253,7 @@ export default function OnSentraine() {
                   accessibilityRole="tab"
                   accessibilityState={{ selected: o.on }}
                   accessibilityLabel={o.a11y}
-                  style={{ flex: 1, minHeight: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: o.on ? c.surface : 'transparent', borderWidth: o.on ? 1 : 0, borderColor: c.border }}
+                  style={{ flex: 1, minHeight: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: o.on ? c.surface : 'transparent', ...(o.on ? OMBRE_CARTE : {}) }}
                 >
                   <Ink size={14} weight="extraBold" color={o.on ? c.ink : c.textSecondary} numberOfLines={1}>{traduire(o.label)}</Ink>
                 </Pressable>
@@ -266,8 +267,8 @@ export default function OnSentraine() {
 
 
         {later && params.date ? (
-          <View style={{ borderRadius: 24, padding: 18, backgroundColor: c.indigoTint, gap: 4 }}>
-            <Ink size={13} weight="bold" color={c.indigo}>{traduire("Séance à ajouter")}</Ink>
+          <View style={{ borderRadius: 24, padding: 18, backgroundColor: c.carteDouce, gap: 4 }}>
+            <Ink size={13} weight="extraBold" color={c.accentText}>{traduire("Séance à ajouter")}</Ink>
             <Ink size={24} weight="black" tight>{dayLabel(params.date)}</Ink>
             <Ink size={14} color={c.textSecondary}>{traduire("Choisis le sport, tu règles l’heure et la durée ensuite.")}</Ink>
           </View>
@@ -275,16 +276,16 @@ export default function OnSentraine() {
 
         {/* Seance en cours */}
         {draft && !later ? (
-          <View style={{ borderRadius: 24, padding: 16, backgroundColor: c.accentTint, borderWidth: 1, borderColor: 'rgba(44,74,132,0.25)', gap: 12 }}>
+          <View style={{ borderRadius: 24, padding: 16, backgroundColor: c.carteDouce, gap: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.accent }} />
-              <Ink size={14} weight="bold" color={c.accent} style={{ flex: 1 }}>{traduire("Séance en cours")}</Ink>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.detail }} />
+              <Ink size={14} weight="extraBold" color={c.accentText} style={{ flex: 1 }}>{traduire("Séance en cours")}</Ink>
               <Ink size={18} weight="black" style={{ fontVariant: ['tabular-nums'] }}>{fmtClock((now - draft.startedAt) / 1000)}</Ink>
             </View>
             <Ink size={22} weight="black" tight>{draftTitle(draft)}</Ink>
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Pressable onPress={() => router.push({ pathname: draftRoute(draft) as any, params: { resume: '1' } })} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 48, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-                <Ink size={15} weight="extraBold" color={c.onAccent}>{traduire("Reprendre")}</Ink>
+              <Pressable onPress={() => router.push({ pathname: draftRoute(draft) as any, params: { resume: '1' } })} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? blancA(0.75) : c.surface })}>
+                <Ink size={15} weight="black" color={c.onPrimary}>{traduire("Reprendre")}</Ink>
               </Pressable>
               <Pressable
                 onPress={async () => {
@@ -292,7 +293,7 @@ export default function OnSentraine() {
                   setDraft(null);
                 }}
                 accessibilityRole="button"
-                style={{ minHeight: 48, paddingHorizontal: 16, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: blancA(0.7) }}
+                style={{ minHeight: 50, paddingHorizontal: 16, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: blancA(0.5) }}
               >
                 <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Abandonner")}</Ink>
               </Pressable>
@@ -302,15 +303,15 @@ export default function OnSentraine() {
 
         {/* Programme du jour, ou ta derniere seance a refaire */}
         {hero && !later ? (
-          <Pressable onPress={hero.go} accessibilityRole="button" accessibilityLabel={`${hero.over}, ${hero.title}. ${hero.cta}`} style={({ pressed }) => ({ height: 168, borderRadius: 26, backgroundColor: c.darkCard, overflow: 'hidden', transform: [{ scale: pressed ? 0.985 : 1 }] })}>
+          <Pressable onPress={hero.go} accessibilityRole="button" accessibilityLabel={`${hero.over}, ${hero.title}. ${hero.cta}`} style={({ pressed }) => ({ height: 168, borderRadius: 26, backgroundColor: P.programmeFond, overflow: 'hidden', transform: [{ scale: pressed ? 0.985 : 1 }] })}>
             {heroImg ? <Image source={heroImg} style={{ position: 'absolute', right: -10, bottom: -66, width: 165, height: 220 }} resizeMode="contain" /> : null}
             <View style={{ position: 'absolute', left: 18, top: 18, maxWidth: width * 0.55, gap: 3 }}>
-              <Ink size={13} weight="bold" color={c.goldLight}>{hero.over}</Ink>
-              <Ink size={24} weight="black" tight color={c.onDark} numberOfLines={2}>{traduire(hero.title)}</Ink>
-              <Ink size={13} color={c.onDarkSecondary} numberOfLines={1}>{traduire(hero.sub)}</Ink>
+              <Ink size={13} weight="extraBold" color={P.etiquettePrune}>{hero.over}</Ink>
+              <Ink size={24} weight="black" tight numberOfLines={2}>{traduire(hero.title)}</Ink>
+              <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={1}>{traduire(hero.sub)}</Ink>
             </View>
-            <View style={{ position: 'absolute', left: 18, bottom: 16, minHeight: 44, paddingHorizontal: 18, borderRadius: 14, backgroundColor: '#FFFFFF', justifyContent: 'center' }}>
-              <Ink size={15} weight="extraBold" color={c.accent}>{hero.cta}</Ink>
+            <View style={{ position: 'absolute', left: 18, bottom: 16, minHeight: 46, paddingHorizontal: 18, borderRadius: 16, backgroundColor: c.primary, justifyContent: 'center' }}>
+              <Ink size={15} weight="black" color={c.onPrimary}>{hero.cta}</Ink>
             </View>
           </Pressable>
         ) : null}
@@ -318,7 +319,7 @@ export default function OnSentraine() {
         {slots.length > 1 && !later ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {slots.map((s) => (
-              <Pressable key={s.id ?? s.sport} onPress={() => go(s.sport, { label: s.label || getSportName(s.sport), ...(s.id ? { slotId: String(s.id) } : {}) })} style={({ pressed }) => ({ minHeight: 50, paddingHorizontal: 14, borderRadius: 16, justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : blancA(0.7), borderWidth: 1, borderColor: c.border })}>
+              <Pressable key={s.id ?? s.sport} onPress={() => go(s.sport, { label: s.label || getSportName(s.sport), ...(s.id ? { slotId: String(s.id) } : {}) })} style={({ pressed }) => [carteBlanche(c.surface, c.divider), { minHeight: 50, paddingHorizontal: 14, borderRadius: 16, justifyContent: 'center', opacity: pressed ? 0.85 : 1 }]}>
                 <Ink size={14} weight="extraBold">{s.label || getSportName(s.sport)}</Ink>
                 {s.time ? <Ink size={12} color={c.textMuted}>{s.time.slice(0, 5)}</Ink> : null}
               </Pressable>
@@ -348,7 +349,7 @@ export default function OnSentraine() {
         </View>
 
         {/* Recherche dans tous les sports */}
-        <View style={{ height: 52, borderRadius: 18, backgroundColor: blancA(0.7), borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 12 }}>
+        <View style={{ ...carteBlanche(c.surface, c.divider), height: 52, borderRadius: 18, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 12 }}>
           <Icon name="search" size={20} color={c.textMuted} />
           <TextInput
             value={query}
@@ -363,7 +364,7 @@ export default function OnSentraine() {
         {results.length > 0 ? (
           <View style={{ gap: 6 }}>
             {results.map((s) => (
-              <Pressable key={s.id} onPress={() => go(s.id)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, borderRadius: 16, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.divider })}>
+              <Pressable key={s.id} onPress={() => go(s.id)} accessibilityRole="button" style={({ pressed }) => [carteBlanche(c.surface, c.divider), { minHeight: 56, borderRadius: 18, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.85 : 1 }]}>
                 <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: sportTint(s.id), borderWidth: 1, borderColor: c.border }} />
                 <View style={{ flex: 1 }}>
                   <Ink size={15} weight="extraBold">{traduire(s.name)}</Ink>
@@ -379,7 +380,7 @@ export default function OnSentraine() {
 
         {/* vague 37 : ta montre, en un toucher, quand elle est reliee */}
         {!later && !direct && provider ? (
-          <Pressable onPress={syncWatch} accessibilityRole="button" accessibilityLabel={traduire("Récupérer tes séances depuis {0}", provider)} style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 12 })}>
+          <Pressable onPress={syncWatch} accessibilityRole="button" accessibilityLabel={traduire("Récupérer tes séances depuis {0}", provider)} style={({ pressed }) => [carteBlanche(c.surface, c.divider), { minHeight: 56, borderRadius: 18, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 12, opacity: pressed ? 0.85 : 1 }]}>
             <Icon name="clock" size={22} color={c.accent} />
             <View style={{ flex: 1 }}>
               <Ink size={12} weight="bold" color={c.textMuted}>{traduire("Ta montre, via {0}", provider)}</Ink>
@@ -389,7 +390,7 @@ export default function OnSentraine() {
           </Pressable>
         ) : null}
 
-        {!later ? <Pressable onPress={() => router.push('/seance/deja-faite' as any)} accessibilityRole="button" style={({ pressed }) => ({ height: 56, borderRadius: 18, backgroundColor: pressed ? c.fillSubtle : blancA(0.7), borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 12 })}>
+        {!later ? <Pressable onPress={() => router.push('/seance/deja-faite' as any)} accessibilityRole="button" style={({ pressed }) => [carteBlanche(c.surface, c.divider), { height: 56, borderRadius: 18, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 12, opacity: pressed ? 0.85 : 1 }]}>
           <Icon name="clock" size={22} />
           <Ink size={15} weight="bold" style={{ flex: 1 }}>{traduire("Saisie rapide : sport, durée, ressenti")}</Ink>
           <Icon name="chevron" size={18} color={c.textMuted} />

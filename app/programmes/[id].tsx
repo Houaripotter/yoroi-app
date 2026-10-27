@@ -6,7 +6,9 @@
  * choisie au départ. Les guides (charge, poids de départ) sont regroupés sous le conseil du coach.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { DeviceEventEmitter, Pressable, ScrollView, View } from 'react-native';
+import { DeviceEventEmitter, Image, Pressable, ScrollView, View } from 'react-native';
+import { illustration } from '@/components/yoroi/v2/stickers';
+import { OMBRE_CARTE, carteBlanche, tonDuRang } from '@/components/yoroi/v2/seance/pastel';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
@@ -33,7 +35,7 @@ import { jourPourToi } from '@/lib/v2/programmes/perso';
 import type { ExoPerso } from '@/lib/v2/programmes/perso';
 import { ExercisePicker } from '@/components/yoroi/v2/seance/ExercisePicker';
 import { MaSalle } from '@/components/yoroi/v2/programmes/MaSalle';
-import { BoutonRond, CarteConseil, EnTeteRond, HeroJour, LigneEtudes, Pastille, SemaineRonds, TitreSection, TuilesStats, musclesDuJour, nomCourt, rondsDeLaSemaine, salutation, teinteExo, tuileCharge, usePaletteProgramme, type Tuile } from '@/components/yoroi/v2/programmes/Habillage';
+import { BoutonRond, CarteConseil, EnTeteRond, HeroJour, LigneEtudes, Pastille, SemaineRonds, TitreSection, TuilesStats, musclesDuJour, nomCourt, rondsDeLaSemaine, salutation, tuileCharge, usePaletteProgramme, type Tuile } from '@/components/yoroi/v2/programmes/Habillage';
 import { buildExerciseHistory } from '@/lib/v2/seance/history';
 import type { ExoProtege, Region } from '@/lib/v2/programmes/blessures';
 import type { Equipement } from '@/lib/v2/programmes/materiel';
@@ -274,8 +276,8 @@ export default function ProgrammeDetail() {
   const faireCeJour = (index: number) => lancerJour(p.jours[index].id);
 
   return (
-    <View style={{ flex: 1, backgroundColor: pal.page }}>
-      <ScrollView ref={defilement} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 18, paddingBottom: insets.bottom + 40, gap: 18 }} showsVerticalScrollIndicator={false}>
+    <View style={{ flex: 1, backgroundColor: c.background }}>
+      <ScrollView ref={defilement} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 40, gap: 18 }} showsVerticalScrollIndicator={false}>
         {/* 26 octobre 2026 : maquette D aux couleurs de E (Houari : « je préfère D mais avec les couleurs de E ») */}
         <EnTeteRond salut={salutation(nom)} titre={enCours ? traduire('Ton programme') : traduire('Programme')} droite={etoile} repli="/programmes" />
 
@@ -321,7 +323,7 @@ export default function ProgrammeDetail() {
 
         {/* 4. LES SÉANCES : une pastille par séance, les mêmes cartes d'exercices ; la prochaine au départ */}
         <TitreSection titre={traduire('Les séances')} action={traduire('Ma salle')} onAction={() => setSalleOpen(true)} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -18, marginTop: -8 }} contentContainerStyle={{ paddingHorizontal: 18, gap: 8 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16, marginTop: -8 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
           {p.jours.map((jx, index) => {
             const on = jx.id === jVu.id;
             const prochaine = jx.id === jBrutProchain.id;
@@ -333,10 +335,10 @@ export default function ProgrammeDetail() {
                 accessibilityRole="tab"
                 accessibilityState={{ selected: on }}
                 accessibilityLabel={`${traduire('Jour {0}, {1}', index + 1, traduire(jx.titre))}${prochaine && enCours ? `, ${traduire('Prochaine séance')}` : ''}`}
-                style={({ pressed }) => ({ minHeight: 46, paddingHorizontal: 16, borderRadius: 23, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: on ? pal.indigo : pressed ? pal.teinte : pal.carte, opacity: retire ? 0.55 : 1 })}
+                style={({ pressed }) => ({ minHeight: 46, paddingHorizontal: 16, borderRadius: 23, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: on ? c.primary : pressed ? c.fillSubtle : pal.carte, opacity: retire ? 0.55 : 1, ...(on ? {} : OMBRE_CARTE) })}
               >
                 {prochaine && enCours ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: on ? '#FFFFFF' : pal.orange }} /> : null}
-                <Ink size={14} weight={on ? 'black' : 'extraBold'} color={on ? c.onDark : pal.texte} numberOfLines={1}>{nomCourt(traduire(jx.titre))}</Ink>
+                <Ink size={14} weight={on ? 'black' : 'extraBold'} color={on ? c.onPrimary : pal.texte} numberOfLines={1}>{nomCourt(traduire(jx.titre))}</Ink>
               </Pressable>
             );
           })}
@@ -593,10 +595,10 @@ function LigneExo({ e, premier, raison, onChanger, onRevenir, carte, k = 0 }: { 
 
   // 26 octobre 2026, maquette D : « Au programme », une carte par exercice, carré d'icône coloré, séries en grand
   if (carte) {
-    const t = teinteExo(pal, k);
+    const t = tonDuRang(k);
     const muscle = mu?.principaux[0] ? traduire(mu.principaux[0]) : traduire(e.muscle.charAt(0) + e.muscle.slice(1).toLocaleLowerCase());
     return (
-      <View style={{ backgroundColor: pal.carte, borderRadius: 22, paddingVertical: 12, paddingHorizontal: 14, gap: 10, shadowColor: pal.indigo, shadowOpacity: 0.06, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 1 }}>
+      <View style={[carteBlanche(pal.carte, c.divider), { paddingVertical: 12, paddingHorizontal: 12, gap: 10 }]}>
         <Pressable
           onPress={() => { tap(); setDeplie((o) => !o); }}
           accessibilityRole="button"
@@ -604,15 +606,16 @@ function LigneExo({ e, premier, raison, onChanger, onRevenir, carte, k = 0 }: { 
           accessibilityLabel={`${traduire(nomFr(e.nom))}. ${phrase}`}
           style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52, opacity: pressed ? 0.75 : 1 })}
         >
-          <View style={{ width: 50, height: 50, borderRadius: 16, backgroundColor: t.fond, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name={e.secondes ? 'timer' : 'dumbbell'} size={24} color={t.encre} />
+          {/* 27 octobre 2026 (refonte Pastel) : le numero de l'exercice sur sa pastille pastel */}
+          <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: t.fond, alignItems: 'center', justifyContent: 'center' }}>
+            <Ink size={17} weight="black" color={t.encre}>{String(k + 1)}</Ink>
           </View>
           <View style={{ flex: 1, gap: 3 }}>
             <Ink size={15} weight="extraBold" color={pal.texte} numberOfLines={2}>{traduire(nomFr(e.nom))}</Ink>
             <Ink size={12} weight="bold" color={pal.texte2} numberOfLines={1}>{`${muscle} · ${traduire('{0} de repos', libelleRepos(e.reposSec))}`}</Ink>
             {signe ? <View style={{ flexDirection: 'row', marginTop: 2 }}>{signe}</View> : null}
           </View>
-          <Ink size={17} weight="black" color={pal.accent} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ maxWidth: '34%' }}>{volume}</Ink>
+          <Ink size={17} weight="black" color={c.accentText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ maxWidth: '34%' }}>{volume}</Ink>
         </Pressable>
         {details}
       </View>
@@ -649,14 +652,13 @@ function LigneExo({ e, premier, raison, onChanger, onRevenir, carte, k = 0 }: { 
 
 /** Ce qui n'est pas un exercice (fin de séance cardio, rounds, sortie), dans le même style de carte */
 function CarteEnPlus({ icone, k, surtitre, titre, texte, note, children }: { icone: 'steps' | 'glove'; k: number; surtitre?: string; titre: string; texte?: string; note?: string; children?: React.ReactNode }) {
+  const { theme } = useYoroiTheme();
   const pal = usePaletteProgramme();
-  const t = teinteExo(pal, k);
+  const t = tonDuRang(k);
   return (
-    <View style={{ backgroundColor: pal.carte, borderRadius: 22, paddingVertical: 12, paddingHorizontal: 14, gap: 10 }}>
+    <View style={[carteBlanche(pal.carte, theme.colors.divider), { paddingVertical: 12, paddingHorizontal: 14, gap: 10 }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View style={{ width: 50, height: 50, borderRadius: 16, backgroundColor: t.fond, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name={icone} size={24} color={t.encre} />
-        </View>
+        <Image source={illustration(icone === 'glove' ? 'gants' : 'sport_marche')} style={{ width: 50, height: 50 }} resizeMode="contain" accessibilityIgnoresInvertColors />
         <View style={{ flex: 1, gap: 2 }}>
           {surtitre ? <Ink size={11} weight="extraBold" color={t.encre}>{surtitre}</Ink> : null}
           <Ink size={15} weight="extraBold" color={pal.texte}>{titre}</Ink>
@@ -679,9 +681,9 @@ function ActionExo({ label, onPress, etat, accessibilityLabel }: { label: string
       accessibilityRole="button"
       accessibilityState={etat === undefined ? undefined : { expanded: etat }}
       accessibilityLabel={accessibilityLabel ?? label}
-      style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: pressed ? c.accentTint : c.surface, borderWidth: 1, borderColor: c.accent })}
+      style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: pressed ? c.primary : c.accentTint })}
     >
-      <Ink size={13} weight="extraBold" color={c.accent}>{label}</Ink>
+      <Ink size={13} weight="extraBold" color={c.accentText}>{label}</Ink>
     </Pressable>
   );
 }

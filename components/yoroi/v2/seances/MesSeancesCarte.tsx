@@ -4,17 +4,18 @@
  * Données : lib/v2/seance/mesSeances.ts. Liste complète : app/mes-seances.
  */
 import React, { useEffect, useState } from 'react';
-import { DeviceEventEmitter, Pressable, View } from 'react-native';
+import { DeviceEventEmitter, Image, Pressable, View } from 'react-native';
+import { illustration } from '@/components/yoroi/v2/stickers';
 import { useRouter } from 'expo-router';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { P } from '@/components/yoroi/livePalette';
 import { Icon } from './Icon';
 import { SectionTitle, tap } from './ui';
 import { relativeDay } from '@/lib/v2/seance/format';
 import { MES_SEANCES_EVENT, chargerMesSeances } from '@/lib/v2/seance/mesSeances';
 import type { MaSeance } from '@/lib/v2/seance/mesSeances';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 
 export function MesSeancesCarte() {
   const { theme } = useYoroiTheme();
@@ -39,10 +40,8 @@ export function MesSeancesCarte() {
     return (
       <>
         <SectionTitle title={traduire('Mes séances')} />
-        <Pressable onPress={ouvrir} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 72, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}>
-          <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="bookmark" size={22} color={c.accent} />
-          </View>
+        <Pressable onPress={ouvrir} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 72, paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 12, ...carteBlanche(c.surface, c.divider), opacity: pressed ? 0.85 : 1 })}>
+          <Image source={illustration('carnet')} style={{ width: 48, height: 48 }} resizeMode="contain" accessibilityIgnoresInvertColors />
           <View style={{ flex: 1, gap: 2 }}>
             <Ink size={16} weight="black" tight>{traduire('Enregistre tes séances')}</Ink>
             <Ink size={13} color={c.textSecondary}>{traduire('Push, Jambes, Haut du corps : à refaire en un appui')}</Ink>
@@ -56,7 +55,7 @@ export function MesSeancesCarte() {
   return (
     <>
       <SectionTitle title={traduire('Mes séances')} action={traduire('Voir tout')} onAction={ouvrir} />
-      <View style={{ borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider, overflow: 'hidden' }}>
+      <View style={[carteBlanche(c.surface, c.divider), { overflow: 'hidden' }]}>
         {liste.slice(0, 3).map((s, i) => (
           <View key={s.id} style={{ minHeight: 68, paddingLeft: 16, paddingRight: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider }}>
             <Pressable onPress={ouvrir} accessibilityRole="button" style={{ flex: 1, gap: 2 }}>

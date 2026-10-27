@@ -18,6 +18,8 @@ import { CHOIX_FIN, FIN_PAR_DEFAUT, MINUTES_FIN, NOTE_FIN, SOURCES_FIN, aDesJour
 import type { ChoixFin, FinSeance } from '@/lib/v2/programmes/finSeance';
 import type { Programme } from '@/lib/v2/programmes/types';
 import { traduire } from '@/lib/i18n/tr';
+import { ton } from '@/components/yoroi/v2/seance/pastel';
+import { blancA } from '@/components/yoroi/livePalette';
 
 const ICONE: Record<ChoixFin, IconName> = { rien: 'close', abdos: 'body', cardio: 'steps', les_deux: 'flame' };
 
@@ -38,15 +40,15 @@ export function CarteFinDeSeance({ fin, femme, onPress }: { fin: FinSeance | nul
       onPress={() => { tap(); onPress(); }}
       accessibilityRole="button"
       accessibilityLabel={traduire('Fin de séance : abdos et cardio')}
-      style={({ pressed }) => ({ borderRadius: 24, backgroundColor: c.darkCard, overflow: 'hidden', padding: 18, minHeight: 120, justifyContent: 'center', opacity: pressed ? 0.92 : 1 })}
+      style={({ pressed }) => ({ borderRadius: 24, backgroundColor: ton('menthe').fond, overflow: 'hidden', padding: 18, minHeight: 120, justifyContent: 'center', opacity: pressed ? 0.9 : 1 })}
     >
       {img ? <Image source={img} style={{ position: 'absolute', right: -6, bottom: -56, width: 120, height: 170 }} resizeMode="contain" /> : null}
       <View style={{ maxWidth: '66%', gap: 4 }}>
-        <Ink size={12} weight="extraBold" color={c.onDarkSecondary}>{traduire('FIN DE SÉANCE')}</Ink>
-        <Ink size={18} weight="black" tight color={c.onDark}>{traduire('Abdos et cardio')}</Ink>
-        <Ink size={13} color={c.onDarkSecondary}>{texteFin(fin)}</Ink>
-        {retire ? <Ink size={12} weight="bold" color={c.onDarkSecondary}>{traduire('Séances de marche du programme retirées')}</Ink> : null}
-        <Ink size={13} weight="extraBold" color={c.onDark} style={{ marginTop: 4 }}>{traduire('Choisir')}</Ink>
+        <Ink size={12} weight="black" color={ton('menthe').encre} style={{ letterSpacing: 0.6 }}>{traduire('FIN DE SÉANCE')}</Ink>
+        <Ink size={18} weight="black" tight color={c.ink}>{traduire('Abdos et cardio')}</Ink>
+        <Ink size={13} weight="bold" color={c.textSecondary}>{texteFin(fin)}</Ink>
+        {retire ? <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('Séances de marche du programme retirées')}</Ink> : null}
+        <Ink size={13} weight="black" color={ton('menthe').encre} style={{ marginTop: 4 }}>{traduire('Choisir')}</Ink>
       </View>
     </Pressable>
   );
@@ -82,13 +84,13 @@ export function FeuilleFinDeSeance({ visible, programme, valeur, bouton, onValid
               onPress={() => { tap(); setF((x) => ({ ...x, choix: o.key })); }}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
-              style={{ width: '47%', flexGrow: 1, minHeight: 96, borderRadius: 20, padding: 14, gap: 6, backgroundColor: on ? c.darkCard : c.fillSubtle, borderWidth: 1.5, borderColor: on ? c.darkCard : c.divider }}
+              style={{ width: '47%', flexGrow: 1, minHeight: 96, borderRadius: 20, padding: 14, gap: 6, backgroundColor: on ? c.primary : c.fillSoft, borderWidth: 2, borderColor: on ? c.detail : 'transparent' }}
             >
-              <View style={{ width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? 'rgba(255,255,255,0.16)' : c.accentTint }}>
-                <Icon name={ICONE[o.key]} size={18} color={on ? c.onDark : c.accent} />
+              <View style={{ width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: blancA(on ? 0.75 : 1) }}>
+                <Icon name={ICONE[o.key]} size={18} color={c.onPrimary} />
               </View>
-              <Ink size={15} weight="black" tight color={on ? c.onDark : c.ink}>{traduire(o.label)}</Ink>
-              <Ink size={12} color={on ? c.onDarkSecondary : c.textSecondary}>{traduire(o.sous)}</Ink>
+              <Ink size={15} weight="black" tight color={on ? c.onPrimary : c.ink}>{traduire(o.label)}</Ink>
+              <Ink size={12} weight="bold" color={c.textSecondary}>{traduire(o.sous)}</Ink>
             </Pressable>
           );
         })}

@@ -22,6 +22,8 @@ import { safeOpenURL } from '@/lib/security/validators';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
+import { P, blancA } from '@/components/yoroi/livePalette';
+import { illustration } from '@/components/yoroi/v2/stickers';
 import { musclesDeExo } from '@/lib/v2/programmes/musclesExos';
 import { indexGarde, planEffectif, seancesAVenir } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
@@ -123,8 +125,8 @@ export function RondIcone({ icone, plein }: { icone: IconName; plein?: boolean }
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
-    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: plein ? c.darkCard : c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-      <Icon name={icone} size={20} color={plein ? c.onDark : c.accent} />
+    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: plein ? c.primary : c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+      <Icon name={icone} size={20} color={plein ? c.onPrimary : c.accentText} />
     </View>
   );
 }
@@ -550,6 +552,16 @@ export function Cercles() {
   );
 }
 
+/** 27 octobre 2026 : les memes cercles, en voile blanc sur une carte pastel */
+function CerclesDoux() {
+  return (
+    <>
+      <View pointerEvents="none" style={{ position: 'absolute', right: -50, top: -60, width: 190, height: 190, borderRadius: 95, backgroundColor: blancA(0.35) }} />
+      <View pointerEvents="none" style={{ position: 'absolute', right: -40, bottom: -80, width: 230, height: 230, borderRadius: 115, backgroundColor: blancA(0.25) }} />
+    </>
+  );
+}
+
 const ombreDouce = (couleur: string): ViewStyle => ({ shadowColor: couleur, shadowOpacity: 0.07, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 2 });
 
 /** « Bonjour Houari », selon l'heure */
@@ -600,9 +612,9 @@ export function BoutonRond({ icone, onPress, label, actif }: { icone: IconName; 
       accessibilityRole="button"
       accessibilityState={actif === undefined ? undefined : { selected: actif }}
       accessibilityLabel={label}
-      style={({ pressed }) => ({ width: 46, height: 46, borderRadius: 23, backgroundColor: actif === false ? pal.carte : pal.indigo, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.94 : 1 }] })}
+      style={({ pressed }) => [{ width: 46, height: 46, borderRadius: 23, backgroundColor: actif === false ? pal.carte : c.primary, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.94 : 1 }] }, ombreDouce(c.shadow)]}
     >
-      <Icon name={icone} size={20} color={actif === false ? pal.indigo : c.onDark} fill={actif === false ? undefined : c.onDark} />
+      <Icon name={icone} size={20} color={c.onPrimary} fill={actif === false ? undefined : c.onPrimary} />
     </Pressable>
   );
 }
@@ -648,31 +660,33 @@ export function HeroJour({ pastille, nom, muscles, infos, texte, image, bouton, 
 }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const pal = usePaletteProgramme();
+  // 27 octobre 2026 (refonte Pastel) : plus de grande carte bleu nuit, la carte lilas du programme du jour de l'accueil
+  const fond = P.programmeFond;
+  const encre = P.etiquettePrune;
   return (
-    <View style={[{ borderRadius: 30, backgroundColor: pal.indigo, overflow: 'hidden', paddingVertical: 22, paddingHorizontal: 20, minHeight: 236, gap: 14 }, ombreDouce(pal.indigo)]}>
-      <Cercles />
+    <View style={{ borderRadius: 28, backgroundColor: fond, overflow: 'hidden', paddingVertical: 22, paddingHorizontal: 20, minHeight: 236, gap: 14 }}>
+      <CerclesDoux />
       {image ? <Image source={image} style={{ position: 'absolute', right: -6, bottom: 0, width: 150, height: 204 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
       <View style={{ maxWidth: image ? '60%' : '100%', gap: 8 }} accessible accessibilityLabel={[pastille, ligne, nom, muscles, infos, pourquoi, ensuite, ...(ajouts ?? []), texte].filter(Boolean).join('. ')}>
-        <View style={{ alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999 }}>
-          <Ink size={12} weight="extraBold" color={c.onDark} numberOfLines={1}>{pastille}</Ink>
+        <View style={{ alignSelf: 'flex-start', backgroundColor: blancA(0.75), paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999 }}>
+          <Ink size={12} weight="extraBold" color={encre} numberOfLines={1}>{pastille}</Ink>
         </View>
-        {ligne ? <Ink size={12} weight="bold" color={c.onDarkSecondary} numberOfLines={2}>{ligne}</Ink> : null}
-        <Ink size={petitNom ? 24 : 34} weight="black" tight color={c.onDark} numberOfLines={petitNom ? 3 : 2} adjustsFontSizeToFit minimumFontScale={0.7} style={{ lineHeight: petitNom ? 28 : 37 }}>{nom}</Ink>
-        {muscles ? <Ink size={14} weight="bold" color={c.onDarkSecondary} numberOfLines={2}>{muscles}</Ink> : null}
-        {infos ? <Ink size={13} weight="bold" color={c.onDarkSecondary} numberOfLines={2}>{infos}</Ink> : null}
-        {pourquoi ? <Ink size={13} weight="bold" color={c.onDark} style={{ lineHeight: 18 }} numberOfLines={3}>{pourquoi}</Ink> : null}
+        {ligne ? <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2}>{ligne}</Ink> : null}
+        <Ink size={petitNom ? 24 : 34} weight="black" tight color={c.ink} numberOfLines={petitNom ? 3 : 2} adjustsFontSizeToFit minimumFontScale={0.7} style={{ lineHeight: petitNom ? 28 : 37 }}>{nom}</Ink>
+        {muscles ? <Ink size={14} weight="extraBold" color={encre} numberOfLines={2}>{muscles}</Ink> : null}
+        {infos ? <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={2}>{infos}</Ink> : null}
+        {pourquoi ? <Ink size={13} weight="bold" color={c.ink} style={{ lineHeight: 18 }} numberOfLines={3}>{pourquoi}</Ink> : null}
         {ajouts?.length ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {ajouts.map((a) => (
-              <View key={a} style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.16)' }}>
-                <Ink size={12} weight="extraBold" color={c.onDark} numberOfLines={1}>{a}</Ink>
+              <View key={a} style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: blancA(0.6) }}>
+                <Ink size={12} weight="extraBold" color={encre} numberOfLines={1}>{a}</Ink>
               </View>
             ))}
           </View>
         ) : null}
-        {texte ? <Ink size={13} weight="bold" color={c.onDark} style={{ lineHeight: 18 }} numberOfLines={4}>{texte}</Ink> : null}
-        {ensuite ? <Ink size={12} weight="extraBold" color={c.onDarkSecondary} numberOfLines={2}>{ensuite}</Ink> : null}
+        {texte ? <Ink size={13} weight="bold" color={c.ink} style={{ lineHeight: 18 }} numberOfLines={4}>{texte}</Ink> : null}
+        {ensuite ? <Ink size={12} weight="extraBold" color={c.textSecondary} numberOfLines={2}>{ensuite}</Ink> : null}
       </View>
       {bouton ? (
         <Pressable
@@ -688,11 +702,11 @@ export function HeroJour({ pastille, nom, muscles, infos, texte, image, bouton, 
             flexDirection: 'row',
             alignItems: 'center',
             gap: 8,
-            backgroundColor: bouton.discret ? (pressed ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.18)') : pressed ? c.onDarkSecondary : c.onDark,
+            backgroundColor: bouton.discret ? blancA(pressed ? 0.75 : 0.55) : pressed ? c.primaryPressed : c.primary,
           })}
         >
-          <Icon name={bouton.icone ?? 'play'} size={14} color={bouton.discret ? c.onDark : pal.indigo} fill={bouton.icone && bouton.icone !== 'play' ? undefined : bouton.discret ? c.onDark : pal.indigo} />
-          <Ink size={15} weight="black" color={bouton.discret ? c.onDark : pal.indigo} numberOfLines={1} style={{ flexShrink: 1 }}>{bouton.label}</Ink>
+          <Icon name={bouton.icone ?? 'play'} size={14} color={bouton.discret ? c.ink : c.onPrimary} fill={bouton.icone && bouton.icone !== 'play' ? undefined : bouton.discret ? c.ink : c.onPrimary} />
+          <Ink size={15} weight="black" color={bouton.discret ? c.ink : c.onPrimary} numberOfLines={1} style={{ flexShrink: 1 }}>{bouton.label}</Ink>
         </Pressable>
       ) : null}
       {children}
@@ -829,8 +843,8 @@ export function SemaineRonds({ ronds, titre }: { ronds: RondJour[]; titre?: stri
       <View style={{ flexDirection: 'row', gap: 4 }}>
         {ronds.map((r, k) => {
           const plein = r.etat === 'fait';
-          const fond = plein ? pal.indigo : r.etat === 'repos' ? pal.teinte : pal.carte;
-          const bord = r.etat === 'prochain' ? pal.indigo : r.etat === 'prevu' || r.etat === 'rate' || r.etat === 'passe' ? pal.anneau : 'transparent';
+          const fond = plein ? c.primary : r.etat === 'repos' ? c.fillSoft : pal.carte;
+          const bord = r.etat === 'prochain' ? c.detail : r.etat === 'prevu' || r.etat === 'rate' || r.etat === 'passe' ? pal.anneau : 'transparent';
           return (
             <View
               key={k}
@@ -840,7 +854,7 @@ export function SemaineRonds({ ronds, titre }: { ronds: RondJour[]; titre?: stri
             >
               <Ink size={11} weight="extraBold" color={pal.texte2}>{r.lettre}</Ink>
               <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: fond, borderWidth: bord === 'transparent' ? 0 : 2, borderColor: bord, alignItems: 'center', justifyContent: 'center' }}>
-                {plein ? <Icon name="check" size={16} color={c.onDark} strokeWidth={3} /> : null}
+                {plein ? <Icon name="check" size={16} color={c.onPrimary} strokeWidth={3} /> : null}
               </View>
               <Ink size={11} weight={r.etat === 'repos' || r.etat === 'rate' ? 'bold' : 'extraBold'} color={r.etat === 'repos' || r.etat === 'rate' ? pal.texte3 : pal.texte} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
                 {r.libelle || ' '}
@@ -882,7 +896,7 @@ export function TitreSection({ titre, action, onAction }: { titre: string; actio
 export function CarteConseil({ principes }: { principes: string[] }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const pal = usePaletteProgramme();
+  const pa = usePastel();
   const [ouvert, setOuvert] = useState(false);
   if (!principes.length) return null;
   const regle = principes.find((fr) => /fourchette|charge|%/i.test(fr)) ?? principes[0];
@@ -893,16 +907,14 @@ export function CarteConseil({ principes }: { principes: string[] }) {
         onPress={() => { tap(); setOuvert(true); }}
         accessibilityRole="button"
         accessibilityLabel={`${traduire('Le conseil du coach')}. ${court}. ${traduire('Comment le suivre')}`}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 24, padding: 16, backgroundColor: pal.indigo, opacity: pressed ? 0.9 : 1 })}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 24, padding: 16, backgroundColor: pa.creme.fond, opacity: pressed ? 0.9 : 1 })}
       >
-        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="chart" size={22} color={c.onDark} />
-        </View>
+        <Image source={illustration('coach')} style={{ width: 48, height: 48 }} resizeMode="contain" accessibilityIgnoresInvertColors />
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={15} weight="black" color={c.onDark}>{traduire('Le conseil du coach')}</Ink>
-          <Ink size={13} color={c.onDarkSecondary} style={{ lineHeight: 18 }}>{court}</Ink>
+          <Ink size={15} weight="black" color={pa.creme.encre}>{traduire('Le conseil du coach')}</Ink>
+          <Ink size={13} weight="bold" color={c.textSecondary} style={{ lineHeight: 18 }}>{court}</Ink>
         </View>
-        <Icon name="chevron" size={16} color={c.onDark} />
+        <Icon name="chevron" size={16} color={pa.creme.titre} />
       </Pressable>
       <FeuillePrincipes visible={ouvert} principes={principes} onClose={() => setOuvert(false)} />
     </>

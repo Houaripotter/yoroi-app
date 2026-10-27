@@ -11,6 +11,7 @@ import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/seance/Icon';
+import { blancA } from '@/components/yoroi/livePalette';
 import { loadDraft } from '@/lib/v2/seance/model';
 import type { SeanceDraft } from '@/lib/v2/seance/model';
 import { draftRoute, draftTitle } from '@/lib/v2/seance/resume';
@@ -92,26 +93,26 @@ export function SeanceEnCours() {
           alignItems: 'center',
           gap: 12,
           backgroundColor: pressed ? c.primaryPressed : c.primary,
-          shadowColor: c.accent,
-          shadowOpacity: 0.35,
+          shadowColor: c.shadow,
+          shadowOpacity: 0.12,
           shadowRadius: 16,
           shadowOffset: { width: 0, height: 8 },
           elevation: 8,
         })}
       >
-        <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
-          <Animated.View style={[{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#FFFFFF' }, point]} />
+        <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: blancA(0.75), alignItems: 'center', justifyContent: 'center' }}>
+          <Animated.View style={[{ width: 12, height: 12, borderRadius: 6, backgroundColor: c.detail }, point]} />
         </View>
         <View style={{ flex: 1, gap: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Ink size={12} weight="extraBold" color={c.onAccent} style={{ opacity: 0.85 }}>{traduire('SÉANCE EN COURS')}</Ink>
-            <Ink size={14} weight="black" color={c.onAccent} style={{ fontVariant: ['tabular-nums'] }}>{fmtClock(Math.floor((now - draft.startedAt) / 1000))}</Ink>
+            <Ink size={12} weight="extraBold" color={c.onPrimary} style={{ opacity: 0.8 }}>{traduire('SÉANCE EN COURS')}</Ink>
+            <Ink size={14} weight="black" color={c.onPrimary} style={{ fontVariant: ['tabular-nums'] }}>{fmtClock(Math.floor((now - draft.startedAt) / 1000))}</Ink>
           </View>
-          <Ink size={15} weight="black" color={c.onAccent} numberOfLines={1}>{sous || traduire(draftTitle(draft))}</Ink>
+          <Ink size={15} weight="black" color={c.onPrimary} numberOfLines={1}>{sous || traduire(draftTitle(draft))}</Ink>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Ink size={13} weight="extraBold" color={c.onAccent}>{traduire('Reprendre')}</Ink>
-          <Icon name="chevron" size={16} color={c.onAccent} />
+          <Ink size={13} weight="extraBold" color={c.onPrimary}>{traduire('Reprendre')}</Ink>
+          <Icon name="chevron" size={16} color={c.onPrimary} />
         </View>
       </Pressable>
     </View>

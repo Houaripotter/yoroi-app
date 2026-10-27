@@ -61,6 +61,7 @@ import { useMouvementReduit } from '@/components/yoroi/v2/seance/fin/useMouvemen
 import { choisirTuiles, ligneComparaison } from '@/components/yoroi/v2/seance/fin/logique';
 import type { CleTuile } from '@/components/yoroi/v2/seance/fin/logique';
 import { LANG, traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 
 type Reward = { xp: number; records: string[]; weekHeld: boolean; weekXp: number; state: ArmureState };
 type RankParty = { data: CelebrationData; personnage: string };
@@ -278,11 +279,11 @@ export default function SeanceFin() {
           onPress={() => router.replace('/(tabs)/seances' as any)}
           accessibilityRole="button"
           accessibilityLabel={traduire("Voir mes séances")}
-          style={({ pressed }) => ({ alignSelf: 'stretch', marginTop: 10, height: 56, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}
+          style={({ pressed }) => ({ alignSelf: 'stretch', marginTop: 10, height: 60, borderRadius: 22, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}
         >
-          <Ink size={17} weight="extraBold" color={c.onAccent}>{traduire("Voir mes séances")}</Ink>
+          <Ink size={17} weight="black" color={c.onPrimary}>{traduire("Voir mes séances")}</Ink>
         </Pressable>
-        <Pressable onPress={close} accessibilityRole="button" accessibilityLabel={traduire("Retour à l’accueil")} style={{ alignSelf: 'stretch', height: 56, borderRadius: 18, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={close} accessibilityRole="button" accessibilityLabel={traduire("Retour à l’accueil")} style={[carteBlanche(c.surface, c.divider), { alignSelf: 'stretch', height: 60, alignItems: 'center', justifyContent: 'center' }]}>
           <Ink size={16} weight="extraBold">{traduire("Retour à l’accueil")}</Ink>
         </Pressable>
       </View>
@@ -353,10 +354,10 @@ export default function SeanceFin() {
         )}
       </ScrollView>
 
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 22, paddingTop: 12, paddingBottom: insets.bottom + 16, backgroundColor: c.background, borderTopWidth: 1, borderColor: c.divider, flexDirection: 'row', gap: 10 }}>
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 22, paddingTop: 12, paddingBottom: insets.bottom + 16, backgroundColor: c.background, flexDirection: 'row', gap: 10 }}>
         <BoutonCarte onPress={() => router.push((bilan?.carte ? lienCarteBilan(`seance:${id}`) : `/carte?moment=seance&id=${id}`) as any)} />
-        <Pressable onPress={close} accessibilityRole="button" accessibilityLabel={traduire("Terminer")} style={({ pressed }) => ({ flex: 1, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent, shadowColor: c.accent, shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 4 })}>
-          <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Terminer")}</Ink>
+        <Pressable onPress={close} accessibilityRole="button" accessibilityLabel={traduire("Terminer")} style={({ pressed }) => ({ flex: 1, height: 58, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
+          <Ink size={17} weight="black" color={c.onPrimary}>{traduire("Terminer")}</Ink>
         </Pressable>
       </View>
 

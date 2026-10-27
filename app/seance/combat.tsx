@@ -512,8 +512,8 @@ export default function SeanceCombat() {
           </View>
           <Ink size={22} weight="black" tight>{libelleTypeSeance(draft, aliasTypeSeance)}</Ink>
         </Pressable>
-        <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-          <Ink size={15} weight="extraBold" color={c.onAccent}>{draft.form ? traduire('Enregistrer') : traduire('Terminer')}</Ink>
+        <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
+          <Ink size={15} weight="black" color={c.onPrimary}>{draft.form ? traduire('Enregistrer') : traduire('Terminer')}</Ink>
         </Pressable>
       </View>
 
@@ -549,7 +549,7 @@ export default function SeanceCombat() {
               const n = i + 1;
               const done = n < t.index || (t.phase !== 'round' && n <= lastNumber);
               const cur = t.phase === 'round' && n === t.index;
-              return <View key={n} style={{ width: dots > 8 ? 18 : 30, height: 8, borderRadius: 4, backgroundColor: cur ? c.accent : done ? c.ink : '#D5D2CA' }} />;
+              return <View key={n} style={{ width: dots > 8 ? 18 : 30, height: 8, borderRadius: 4, backgroundColor: cur ? c.detail : done ? c.onPrimary : c.fillSubtle }} />;
             })}
           </View>
         ) : null}
@@ -586,8 +586,8 @@ export default function SeanceCombat() {
           <Pressable onPress={() => shift(-10)} disabled={t.phase === 'idle' || t.phase === 'done'} accessibilityRole="button" accessibilityLabel={traduire("Reculer de 10 secondes")} style={({ pressed }) => ({ width: 60, height: 60, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.border : c.fillSubtle, opacity: t.phase === 'idle' || t.phase === 'done' ? 0.4 : 1 })}>
             <Ink size={15} weight="extraBold">− 10</Ink>
           </Pressable>
-          <Pressable onPress={togglePause} accessibilityRole="button" accessibilityLabel={t.phase === 'idle' ? traduire('Lancer les rounds') : t.phase === 'done' ? traduire('Encore un round') : t.paused !== null ? traduire('Reprendre') : traduire('Pause')} style={({ pressed }) => ({ width: 84, height: 84, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: t.phase === 'idle' || t.phase === 'done' ? (pressed ? c.accentPressed : c.accent) : pressed ? c.textSecondary : c.ink })}>
-            <Icon name={running ? 'pause' : 'play'} size={32} color={t.phase === 'idle' || t.phase === 'done' ? c.onAccent : c.background} />
+          <Pressable onPress={togglePause} accessibilityRole="button" accessibilityLabel={t.phase === 'idle' ? traduire('Lancer les rounds') : t.phase === 'done' ? traduire('Encore un round') : t.paused !== null ? traduire('Reprendre') : traduire('Pause')} style={({ pressed }) => ({ width: 84, height: 84, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: t.phase === 'idle' || t.phase === 'done' ? (pressed ? c.primaryPressed : c.primary) : pressed ? c.primary : c.primaryPressed })}>
+            <Icon name={running ? 'pause' : 'play'} size={32} color={c.onPrimary} />
           </Pressable>
           <Pressable onPress={() => shift(10)} disabled={t.phase === 'idle' || t.phase === 'done'} accessibilityRole="button" accessibilityLabel={traduire("Avancer de 10 secondes")} style={({ pressed }) => ({ width: 60, height: 60, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.border : c.fillSubtle, opacity: t.phase === 'idle' || t.phase === 'done' ? 0.4 : 1 })}>
             <Ink size={15} weight="extraBold">+ 10</Ink>
@@ -881,8 +881,8 @@ export default function SeanceCombat() {
           </Pressable>
         )}
         {draft.details ? <SessionDetailsForm value={draft.details} onChange={(patch) => update((d) => (d.details ? { ...d, details: { ...d.details, ...patch } } : d))} sport={draft.sport} showWhen={!!draft.form} /> : null}
-        <Pressable onPress={save} disabled={saving} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent, opacity: saving ? 0.6 : 1 })}>
-          <Ink size={16} weight="extraBold" color={c.onAccent}>{saving ? 'Enregistrement...' : draft.editId ? traduire('Enregistrer les changements') : traduire('Enregistrer la séance')}</Ink>
+        <Pressable onPress={save} disabled={saving} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary, opacity: saving ? 0.6 : 1 })}>
+          <Ink size={16} weight="black" color={c.onPrimary}>{saving ? 'Enregistrement...' : draft.editId ? traduire('Enregistrer les changements') : traduire('Enregistrer la séance')}</Ink>
         </Pressable>
         <Pressable onPress={abandon} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
           <Ink size={14} weight="bold" color={c.textMuted}>{draft.form ? traduire('Quitter sans enregistrer') : traduire('Abandonner la séance')}</Ink>

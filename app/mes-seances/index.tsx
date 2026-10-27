@@ -12,11 +12,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
-import { BigButton, EmptyState, Row, Sheet, tap } from '@/components/yoroi/v2/seances/ui';
+import { EmptyState, Row, Sheet, tap } from '@/components/yoroi/v2/seances/ui';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { NomSeanceSheet } from '@/components/yoroi/v2/seance/NomSeance';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
-import { P } from '@/components/yoroi/livePalette';
+import { blancA } from '@/components/yoroi/livePalette';
+import { PlusPastille } from '@/components/yoroi/v2/accueil/kit';
+import { carteBlanche, tonDuRang } from '@/components/yoroi/v2/seance/pastel';
 import { relativeDay } from '@/lib/v2/seance/format';
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import { MES_SEANCES_EVENT, chargerMesSeances, dupliquerMaSeance, modifierMaSeance, supprimerMaSeance, totalSeries } from '@/lib/v2/seance/mesSeances';
@@ -64,8 +66,8 @@ export default function MesSeances() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 14 }} showsVerticalScrollIndicator={false}>
-        <EnTete titre={traduire('Mes séances')} sousTitre={traduire('tes séances à toi, à refaire en un appui')} repli="/(tabs)/seances" style={{ marginHorizontal: -22, marginTop: -8 }} />
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 40, gap: 12 }} showsVerticalScrollIndicator={false}>
+        <EnTete titre={traduire('Mes séances')} sousTitre={traduire('tes séances à toi, à refaire en un appui')} repli="/(tabs)/seances" style={{ marginHorizontal: -16, marginTop: -8 }} />
 
         {liste && liste.length === 0 ? (
           <EmptyState
@@ -77,7 +79,8 @@ export default function MesSeances() {
           />
         ) : null}
 
-        {(liste ?? []).map((s) => {
+        {(liste ?? []).map((s, rang) => {
+          const t = tonDuRang(rang);
           const noms = s.exos.map((e) => traduire(nomFr(e.nom)));
           const vus = noms.slice(0, 4);
           const reste = noms.length - vus.length;
@@ -85,7 +88,7 @@ export default function MesSeances() {
             ? traduirePluriel(s.fois, s.fois > 1, 'Faite {0}, {1} fois', 'Faite {0}, {1} fois', traduire(relativeDay(s.faiteLe)), s.fois)
             : traduire('Pas encore faite');
           return (
-            <View key={s.id} style={{ borderRadius: 24, padding: 16, gap: 12, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider }}>
+            <View key={s.id} style={[carteBlanche(c.surface, c.divider), { borderRadius: 24, padding: 16, gap: 14 }]}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
                 <View style={{ flex: 1, gap: 3 }}>
                   <Ink size={20} weight="black" tight numberOfLines={2}>{s.nom}</Ink>
@@ -93,32 +96,32 @@ export default function MesSeances() {
                     {traduirePluriel(s.exos.length, s.exos.length > 1, '{0} exercice, {1} séries', '{0} exercices, {1} séries', s.exos.length, totalSeries(s))}
                   </Ink>
                 </View>
-                <Pressable onPress={() => { tap(); setMenu(s); }} accessibilityRole="button" accessibilityLabel={traduire('Options de {0}', s.nom)} hitSlop={6} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSoft : c.fillSubtle })}>
+                <Pressable onPress={() => { tap(); setMenu(s); }} accessibilityRole="button" accessibilityLabel={traduire('Options de {0}', s.nom)} hitSlop={6} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.fillSoft })}>
                   <Icon name="more" size={20} color={c.ink} />
                 </Pressable>
               </View>
 
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {vus.map((n, i) => (
-                  <View key={`${n}-${i}`} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: c.fillSubtle }}>
-                    <Ink size={12} weight="bold" numberOfLines={1}>{n}</Ink>
+                  <View key={`${n}-${i}`} style={{ paddingHorizontal: 11, paddingVertical: 6, borderRadius: 12, backgroundColor: t.fond }}>
+                    <Ink size={12.5} weight="extraBold" color={t.encre} numberOfLines={1}>{n}</Ink>
                   </View>
                 ))}
                 {reste > 0 ? (
-                  <View style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: c.fillSubtle }}>
-                    <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('+{0}', reste)}</Ink>
+                  <View style={{ paddingHorizontal: 11, paddingVertical: 6, borderRadius: 12, backgroundColor: c.fillSoft }}>
+                    <Ink size={12.5} weight="extraBold" color={c.textSecondary}>{traduire('+{0}', reste)}</Ink>
                   </View>
                 ) : null}
               </View>
 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <Ink size={12} color={c.textMuted} style={{ flex: 1 }} numberOfLines={2}>{quand}</Ink>
+                <Ink size={12.5} weight="bold" color={c.textMuted} style={{ flex: 1 }} numberOfLines={2}>{quand}</Ink>
                 <Pressable
                   onPress={() => commencer(s)}
                   disabled={s.exos.length === 0}
                   accessibilityRole="button"
                   accessibilityLabel={traduire('Commencer {0}', s.nom)}
-                  style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 18, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: s.exos.length === 0 ? c.fillSoft : pressed ? c.primaryPressed : c.primary })}
+                  style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 18, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: s.exos.length === 0 ? c.fillSoft : pressed ? c.primaryPressed : c.primary })}
                 >
                   <Icon name="play" size={16} color={c.onPrimary} />
                   <Ink size={15} weight="extraBold" color={c.onPrimary}>{traduire('Commencer')}</Ink>
@@ -130,7 +133,17 @@ export default function MesSeances() {
 
         {liste && liste.length > 0 ? (
           <>
-            <BigButton label={traduire('Créer une séance')} icon="plus" tone="soft" onPress={() => modifier(null)} />
+            {/* 27 octobre 2026 : le meme bouton plein pastel que « Ajouter un exercice » */}
+            <Pressable
+              onPress={() => modifier(null)}
+              accessibilityRole="button"
+              style={({ pressed }) => ({ marginTop: 4, height: 60, borderRadius: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: pressed ? c.primaryPressed : c.primary })}
+            >
+              <View style={{ width: 30, height: 30, borderRadius: 11, backgroundColor: blancA(0.7), alignItems: 'center', justifyContent: 'center' }}>
+                <PlusPastille />
+              </View>
+              <Ink size={16} weight="black" color={c.onPrimary}>{traduire('Créer une séance')}</Ink>
+            </Pressable>
             <Ink size={12} color={c.textMuted} style={{ textAlign: 'center', paddingHorizontal: 12 }}>
               {traduire('Astuce : à la fin de chaque séance, « Enregistrer cette séance » l’ajoute ici.')}
             </Ink>
