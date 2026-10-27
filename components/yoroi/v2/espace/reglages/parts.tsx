@@ -12,7 +12,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import type { Profile } from '@/lib/database';
 import type { Espace } from '@/lib/v2/espace';
-import { RondCadre, contourDe } from '@/components/yoroi/v2/reglages/contour';
+import { RondCadre, styleRondDe } from '@/components/yoroi/v2/reglages/contour';
 import { getSportName } from '@/lib/sports';
 import { personnageImage } from '../assets';
 import { RondInitiales } from '../RondInitiales';
@@ -48,7 +48,7 @@ export function ProfileHeader({ profile, espace, rankIndex, onPress, onEditPhoto
   const details = [taille, cible].filter(Boolean).join(', ');
 
   const rond = (
-    <RondCadre size={72} contour={contourDe(espace)} fond="papier" fill="#F5F6FB">
+    <RondCadre size={72} {...styleRondDe(espace)} fond="papier" fill="#F5F6FB">
       {showPhoto ? (
         <Image source={{ uri: profile!.profile_photo! }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
       ) : sansPerso ? (

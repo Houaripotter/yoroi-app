@@ -485,7 +485,7 @@ function BandeauVoile({ H, alpha }: { H: number; alpha: number }) {
  */
 export function RondProfil({ photo: initialPhoto, personnage: initialPerso, rankIndex, apercu = false, nom, taille }: { photo: string | null; personnage: string; rankIndex: number; apercu?: boolean; nom?: string | null; taille?: number }) {
   const router = useRouter();
-  const { photo, personnage, contour } = useRondProfil({ photo: initialPhoto, personnage: initialPerso });
+  const { photo, personnage, style: styleRond } = useRondProfil({ photo: initialPhoto, personnage: initialPerso });
   const [broken, setBroken] = React.useState(false);
   React.useEffect(() => setBroken(false), [photo]);
   const shown = photo && !broken ? photo : null;
@@ -496,7 +496,7 @@ export function RondProfil({ photo: initialPhoto, personnage: initialPerso, rank
   return (
     <Press disabled={apercu} onPress={() => router.push('/settings' as any)} accessibilityRole={apercu ? undefined : 'button'} accessibilityLabel={apercu ? traduire('Ton rond de profil') : traduire('Ton profil et tes réglages')} hitSlop={6}>
       <View style={[{ width: S + 8, height: S + 8, borderRadius: (S + 8) / 2 }, ombre]}>
-        <RondCadre size={S + 8} contour={contour} fond="scene" fill={taille ? P.tuileIndigo : P.paper}>
+        <RondCadre size={S + 8} {...styleRond} fond="scene" fill={taille ? P.tuileIndigo : P.paper}>
           {shown ? (
             <Image source={{ uri: shown }} style={{ width: '100%', height: '100%' }} resizeMode="cover" onError={() => setBroken(true)} accessibilityIgnoresInvertColors />
           ) : !aUnPersonnage(personnage || initialPerso) ? (

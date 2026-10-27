@@ -19,7 +19,7 @@ import { GUTTER, Icon, RoundButton } from '@/components/yoroi/v2/espace/ui';
 import { SCENE_FOCUS, SCENE_RATIO, sceneForNow, sceneIsDark } from '@/components/yoroi/v2/accueil/images';
 import type { SceneId } from '@/lib/v2/espace';
 import { useEspace } from '@/lib/v2/espace/useEspace';
-import { contourDe } from '@/components/yoroi/v2/reglages/contour';
+import { RondCadre, styleRondDe } from '@/components/yoroi/v2/reglages/contour';
 import { RondInitiales } from '@/components/yoroi/v2/espace/RondInitiales';
 import { aUnPersonnage } from '@/lib/v2/dojo/personnages';
 import { BusteRond } from '@/components/yoroi/v2/espace/BusteRond';
@@ -108,10 +108,11 @@ export function ProfilHero({ top, scene, photo, personnage, onPhoto, name, onNam
   const { width } = useWindowDimensions();
   const now = new Date();
   const dark = sceneIsDark(scene, now);
-  // vague 41 : le contour choisi dans Reglages, le meme qu'a l'accueil
+  // vague 41 : le contour choisi dans Reglages, le meme qu'a l'accueil. 28 octobre 2026 : le vrai cadre partage
+  // (RondCadre), avant un bord fait main ici qui ne connaissait que Fin, Or et Indigo (les autres couleurs devenaient
+  // indigo) ; la forme, l'epaisseur et le badge suivent aussi, avec la photo comme avec le personnage
   const { espace } = useEspace();
-  const contour = contourDe(espace);
-  const bord = contour === 'aucun' ? { borderWidth: 0 } : contour === 'fin' ? { borderWidth: 3, borderColor: 'rgba(255,255,255,0.85)' } : { borderWidth: 4, borderColor: contour === 'or' ? c.gold : '#3D5D9E' };
+  const styleRond = styleRondDe(espace);
   const H = bannerHeight(top);
 
   // recadrage : l'image couvre le bandeau, son motif (chateau, torii, temple) reste au centre
@@ -153,7 +154,8 @@ export function ProfilHero({ top, scene, photo, personnage, onPhoto, name, onNam
       {/* ta photo, a cheval sur le bas de la scene */}
       <View style={{ alignItems: 'center', marginTop: -PHOTO / 2 - 10, gap: 10 }}>
         <Pressable onPress={onPhoto} accessibilityRole="button" accessibilityLabel={traduire("Changer ta photo")} style={{ width: PHOTO, height: PHOTO }}>
-          <View style={{ width: PHOTO, height: PHOTO, borderRadius: PHOTO / 2, overflow: 'hidden', ...bord, backgroundColor: c.fillSoft, alignItems: 'center', shadowColor: c.ink, shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } }}>
+          <View style={{ width: PHOTO, height: PHOTO, shadowColor: c.ink, shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } }}>
+            <RondCadre size={PHOTO} {...styleRond} fond="scene" fill={c.fillSoft}>
             {photo ? (
               <Image source={{ uri: photo }} style={{ width: '100%', height: '100%' }} />
             ) : sansPerso ? (
@@ -161,7 +163,9 @@ export function ProfilHero({ top, scene, photo, personnage, onPhoto, name, onNam
             ) : (
               <BusteRond source={personnage} />
             )}
+            </RondCadre>
           </View>
+          {/* l'appareil photo en bas a droite, le badge du rond en haut a droite : jamais l'un sur l'autre */}
           <View style={{ position: 'absolute', right: 2, bottom: 2, width: 40, height: 40, borderRadius: 20, backgroundColor: c.primary, borderWidth: 3, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="camera" size={18} color={c.onPrimary} stroke={2.4} />
           </View>

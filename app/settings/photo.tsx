@@ -19,7 +19,7 @@ import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { personnageImage } from '@/components/yoroi/v2/espace/assets';
 import { imageDeTaScene } from '@/components/yoroi/v2/espace/apercuScene';
 import { markIdentiteChoisie } from '@/components/yoroi/v2/espace/identite';
-import { CONTOURS, RondCadre, contourDe, type ContourRond } from '@/components/yoroi/v2/reglages/contour';
+import { CONTOURS, RondCadre, contourDe, styleRondDe, type ContourRond } from '@/components/yoroi/v2/reglages/contour';
 import { Groupe } from '@/components/yoroi/v2/reglages/kit';
 import { RondInitiales } from '@/components/yoroi/v2/espace/RondInitiales';
 import { BusteRond } from '@/components/yoroi/v2/espace/BusteRond';
@@ -84,6 +84,8 @@ export default function PhotoEtContour() {
   // meme regle que l'accueil : la photo si elle est choisie (ou sans personnage), sinon le personnage ou tes initiales
   const montrePhoto = !!photo && (espace.identite === 'photo' || !avecPerso);
   const contour = contourDe(espace);
+  // 28 octobre 2026 : la forme, l'epaisseur et le badge choisis dans Ton personnage suivent aussi ici
+  const styleRond = styleRondDe(espace);
   // 27 octobre 2026 : ta vraie scene, comme sur l'accueil (avant : le Dojo pour les scenes recentes)
   const scene = { image: imageDeTaScene(espace.scene) };
   const prenom = profile?.name?.trim() || traduire('Ton prénom');
@@ -147,10 +149,10 @@ export default function PhotoEtContour() {
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <View style={{ flex: 1.15, height: 160, borderRadius: 22, overflow: 'hidden', backgroundColor: c.fillSoft, borderWidth: 1, borderColor: c.border, justifyContent: 'flex-end', padding: 14 }}>
           <Image source={scene.image} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
-          <RondCadre size={84} contour={contour} fond="scene" fill="#F5F6FB">{contenu(84)}</RondCadre>
+          <RondCadre size={84} {...styleRond} fond="scene" fill="#F5F6FB">{contenu(84)}</RondCadre>
         </View>
         <View style={{ flex: 1, height: 160, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 10 }}>
-          <RondCadre size={84} contour={contour} fond="papier" fill="#F5F6FB">{contenu(84)}</RondCadre>
+          <RondCadre size={84} {...styleRond} fond="papier" fill="#F5F6FB">{contenu(84)}</RondCadre>
           <Ink size={14} weight="black" numberOfLines={1}>{prenom}</Ink>
         </View>
       </View>
@@ -207,7 +209,7 @@ export default function PhotoEtContour() {
               >
                 <View style={{ width: 60, height: 60, borderRadius: 30, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
                   <Image source={scene.image} style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
-                  <RondCadre size={50} contour={o.id as ContourRond} fond="scene" fill="#F5F6FB">{contenu(44)}</RondCadre>
+                  <RondCadre size={50} contour={o.id as ContourRond} forme={styleRond.forme} epaisseur={styleRond.epaisseur} fond="scene" fill="#F5F6FB">{contenu(44)}</RondCadre>
                 </View>
                 <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? c.accent : c.textSecondary} numberOfLines={1}>{traduire(o.nom)}</Ink>
               </Pressable>

@@ -28,7 +28,8 @@ import { personnageImage, personnageNom } from '@/components/yoroi/v2/espace/ass
 import { imageDeTaScene, useEspaceAuRetour } from '@/components/yoroi/v2/espace/apercuScene';
 import { ChoiceSheet, ValueRow } from '@/components/yoroi/v2/espace/reglages/parts';
 import { markIdentiteChoisie, syncIdentite } from '@/components/yoroi/v2/espace/identite';
-import { CONTOURS, RondCadre, contourDe, type ContourRond } from '@/components/yoroi/v2/reglages/contour';
+import { BADGES, CONTOURS, EPAISSEURS, FORMES, RondCadre, styleRondDe, type ContourRond, type EpaisseurRond, type FormeRond } from '@/components/yoroi/v2/reglages/contour';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import { Groupe, TUILE } from '@/components/yoroi/v2/reglages/kit';
 import { useEspace } from '@/lib/v2/espace/useEspace';
 import { useIdentite } from '@/lib/v2/espace/useIdentite';
@@ -217,7 +218,9 @@ export function Vestiaire() {
   // sans personnage, la photo des qu'elle existe, sinon tes initiales (meme regle que l'accueil)
   const identite = (espace.identite === 'photo' || sansPerso) && hasPhoto ? 'photo' : 'personnage';
   const rondInitiales = identite !== 'photo' && sansPerso;
-  const contour = contourDe(espace);
+  // 28 octobre 2026 : forme, contour, epaisseur et badge du rond, avec la photo comme avec le personnage
+  const styleRond = styleRondDe(espace);
+  const illus = useIllustrations();
 
   // silhouette : jamais de chiffre ni de mot blessant
   const silMode: SilhouetteMode = espace.silhouette ?? 'classique';
@@ -444,11 +447,75 @@ export function Vestiaire() {
         )}
       </Card>
 
-      <Groupe title={traduire('Contour du rond')} sub={traduire('À l’accueil, dans Réglages et sur ton profil')} />
+      {/* 28 octobre 2026 : ton rond, en direct avec ta vraie photo (ou ton personnage, ou tes initiales) :
+          sa forme, son contour, son epaisseur et un badge. Il suit a l'accueil, dans Reglages et sur ton profil */}
+      <Groupe title={traduire('Ton rond de profil')} sub={traduire('À l’accueil, dans Réglages et sur ton profil')} />
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <View style={{ flex: 1.15, height: 150, borderRadius: 22, overflow: 'hidden', backgroundColor: c.fillSoft, justifyContent: 'flex-end', padding: 16 }}>
+          <Image source={sceneImage} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
+          <RondCadre size={92} {...styleRond} fond="scene" fill="#F2F1EC">
+            {contenuRond(92)}
+          </RondCadre>
+        </View>
+        <View style={{ flex: 1, height: 150, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <RondCadre size={92} {...styleRond} fond="papier" fill="#F2F1EC">
+            {contenuRond(92)}
+          </RondCadre>
+          <Ink size={13} weight="extraBold" numberOfLines={1} style={{ paddingHorizontal: 8 }}>{profile?.name?.trim().split(' ')[0] || traduire('Ton profil')}</Ink>
+        </View>
+      </View>
+
       <Card>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10, paddingVertical: 14, rowGap: 8 }}>
+        <View style={{ paddingHorizontal: 14, paddingTop: 14, gap: 10 }}>
+          <TitreRangee titre={traduire('Forme')} couleur={P.etiquettePrune} />
+        </View>
+        <View style={{ flexDirection: 'row', paddingHorizontal: 10, paddingTop: 8, paddingBottom: 6 }}>
+          {FORMES.map((f) => {
+            const on = f.id === styleRond.forme;
+            return (
+              <Pressable
+                key={f.id}
+                onPress={() => { selectionAsync().catch(() => {}); update({ formeRond: f.id as FormeRond }).catch(() => {}); }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={traduire('Forme {0}', f.nom)}
+                style={({ pressed }) => ({ width: '25%', alignItems: 'center', gap: 6, paddingVertical: 8, borderRadius: 16, backgroundColor: on ? c.accentTint : pressed ? c.fillSoft : 'transparent' })}
+              >
+                <RondCadre size={56} contour={styleRond.contour} forme={f.id} epaisseur={styleRond.epaisseur} fond="papier" fill="#F2F1EC">
+                  {contenuRond(56)}
+                </RondCadre>
+                <Ink size={11.5} weight={on ? 'extraBold' : 'bold'} color={on ? c.accent : c.textSecondary} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8} style={{ textAlign: 'center', lineHeight: 14 }}>{f.nom}</Ink>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <View style={{ height: 1, backgroundColor: c.divider, marginHorizontal: 14 }} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingTop: 14 }}>
+          <TitreRangee titre={traduire('Contour')} couleur={P.tuileMentheTexte} />
+          {/* l'epaisseur : deux petites pastilles */}
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            {EPAISSEURS.map((ep) => {
+              const on = ep.id === styleRond.epaisseur;
+              return (
+                <Pressable
+                  key={ep.id}
+                  onPress={() => { selectionAsync().catch(() => {}); update({ epaisseurRond: ep.id as EpaisseurRond }).catch(() => {}); }}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: on }}
+                  accessibilityLabel={traduire('Épaisseur {0}', ep.nom)}
+                  hitSlop={6}
+                  style={({ pressed }) => ({ height: 28, paddingHorizontal: 12, borderRadius: 14, justifyContent: 'center', backgroundColor: on ? P.primary : pressed ? c.fillSoft : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border })}
+                >
+                  <Ink size={12} weight="extraBold" color={on ? P.onPrimary : c.textSecondary}>{ep.nom}</Ink>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10, paddingVertical: 10, rowGap: 6 }}>
           {CONTOURS.map((o) => {
-            const on = o.id === contour;
+            const on = o.id === styleRond.contour;
             return (
               <Pressable
                 key={o.id}
@@ -456,25 +523,56 @@ export function Vestiaire() {
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
                 accessibilityLabel={`Contour ${o.nom}`}
-                style={({ pressed }) => ({ width: '25%', alignItems: 'center', gap: 8, paddingVertical: 6, borderRadius: 16, backgroundColor: on ? c.accentTint : pressed ? c.fillSoft : 'transparent' })}
+                style={({ pressed }) => ({ width: '25%', alignItems: 'center', gap: 6, paddingVertical: 6, borderRadius: 16, backgroundColor: on ? c.accentTint : pressed ? c.fillSoft : 'transparent' })}
               >
-                <View style={{ width: 62, height: 62, borderRadius: 31, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 62, height: 62, borderRadius: 18, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
                   <Image source={sceneImage} style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
-                  <RondCadre size={52} contour={o.id} fond="scene" fill="#F2F1EC">
-                    {contenuRond(46)}
+                  <RondCadre size={52} contour={o.id} forme={styleRond.forme} epaisseur={styleRond.epaisseur} fond="scene" fill="#F2F1EC">
+                    {contenuRond(52)}
                   </RondCadre>
                 </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  {on ? <Icon name="check" size={13} color={c.accent} stroke={3} /> : null}
-                  <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? c.accent : c.textSecondary}>{traduire(o.nom)}</Ink>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                  {on ? <Icon name="check" size={12} color={c.accent} stroke={3} /> : null}
+                  <Ink size={12} weight={on ? 'extraBold' : 'bold'} color={on ? c.accent : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{traduire(o.nom)}</Ink>
                 </View>
               </Pressable>
             );
           })}
         </View>
+
+        <View style={{ height: 1, backgroundColor: c.divider, marginHorizontal: 14 }} />
+        <View style={{ paddingHorizontal: 14, paddingTop: 14, gap: 2 }}>
+          <TitreRangee titre={traduire('Badge')} couleur={P.tuileSableTexte} />
+          <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire('Un petit sticker posé en haut à droite de ton rond')}</Ink>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 14, paddingTop: 10, paddingBottom: 16, gap: 8 }}>
+          {[null, ...BADGES.map((x) => x.id)].map((id) => {
+            const on = (styleRond.badge ?? null) === id;
+            const nom = id ? BADGES.find((x) => x.id === id)?.nom ?? '' : traduire('Aucun');
+            return (
+              <Pressable
+                key={id ?? 'aucun'}
+                onPress={() => { selectionAsync().catch(() => {}); update({ badgeRond: id ?? 'aucun' }).catch(() => {}); }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={traduire('Badge {0}', nom)}
+                style={({ pressed }) => ({ width: 60, alignItems: 'center', gap: 4, transform: [{ scale: pressed ? 0.95 : 1 }] })}
+              >
+                <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: on ? c.accentTint : c.fillSoft, borderWidth: 2, borderColor: on ? c.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                  {id ? (
+                    <Image source={illus.img(id)} style={{ width: 40, height: 40 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+                  ) : (
+                    <Ink size={11} weight="extraBold" color={on ? c.accent : c.textMuted}>{traduire('Aucun')}</Ink>
+                  )}
+                </View>
+                <Ink size={11} weight={on ? 'extraBold' : 'bold'} color={on ? c.accent : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{nom}</Ink>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
       </Card>
       <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>
-        {traduire('{0}. Un simple choix de style, sans lien avec ton rang.', CONTOURS.find((x) => x.id === contour)?.sub ?? '')}
+        {traduire('{0}. Un simple choix de style, sans lien avec ton rang.', CONTOURS.find((x) => x.id === styleRond.contour)?.sub ?? '')}
       </Ink>
 
       <ChoiceSheet

@@ -104,7 +104,14 @@ export type Espace = {
   sceneFixe?: SceneId;
   /** vague 41 : contour du rond de profil (accueil, Reglages, profil). Absent : 'fin', un cercle blanc translucide.
    *  Simple choix de style, sans lien avec le rang du Dojo. */
-  contourRond?: 'aucun' | 'fin' | 'or' | 'indigo' | 'noir' | 'blanc' | 'rouge' | 'vert' | 'ciel' | 'violet' | 'rose' | 'orange';
+  contourRond?: 'aucun' | 'fin' | 'or' | 'indigo' | 'noir' | 'blanc' | 'rouge' | 'vert' | 'ciel' | 'violet' | 'rose' | 'orange'
+    | 'lilas' | 'peche' | 'menthe' | 'azur' | 'sable' | 'aurore' | 'lagon';
+  /** 28 octobre 2026 : forme du rond de profil (components/yoroi/v2/reglages/contour.tsx). Absent : 'rond'. */
+  formeRond?: 'rond' | 'carre' | 'hexagone' | 'ecusson';
+  /** 28 octobre 2026 : epaisseur du contour. Absent : 'fine', le rendu d'avant. */
+  epaisseurRond?: 'fine' | 'epaisse';
+  /** 28 octobre 2026 : badge sticker pose en haut a droite du rond (nom de sticker), 'aucun' ou absent : pas de badge. */
+  badgeRond?: string;
   /** vague 45 : univers du personnage (lib/v2/dojo/univers.ts). Absent : 'japon', aussi pour les utilisateurs existants.
    *  Le choix « Sans personnage » met l'univers classique et la cle de personnage 'aucun'. */
   univers?: Univers;
