@@ -15,12 +15,15 @@
 import React, { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, View, type ImageSourcePropType } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { notificationAsync, NotificationFeedbackType, selectionAsync } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
 import { P } from '@/components/yoroi/livePalette';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { Card, EspaceScreen, GUTTER, Icon } from '@/components/yoroi/v2/espace/ui';
+import { Card, GUTTER, Icon } from '@/components/yoroi/v2/espace/ui';
+import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
 import { personnageImage, personnageNom } from '@/components/yoroi/v2/espace/assets';
 import { imageDeTaScene, useEspaceAuRetour } from '@/components/yoroi/v2/espace/apercuScene';
 import { ChoiceSheet, ValueRow } from '@/components/yoroi/v2/espace/reglages/parts';
@@ -58,6 +61,12 @@ import { traduire } from '@/lib/i18n/tr';
 
 /* ---------- mesures de la maquette B ---------- */
 const HERO_H = 290;
+/** hauteur de la carte repliee, collee en haut pendant le defilement */
+const HERO_MIN = 170;
+const REPLI = HERO_H - HERO_MIN;
+/** figure : hauteur et marge sous les pieds, carte ouverte puis repliee */
+const FIG_H = [222, 116] as const;
+const FIG_BAS = [36, 12] as const;
 const VIGNETTE_W = 76;
 const VIGNETTE_H = 92;
 /** largeur du nom sous la vignette : un peu plus que la vignette, pour les noms longs sur 2 lignes */
@@ -303,43 +312,41 @@ export function Vestiaire() {
     void choisirUnivers('aucun', genre).then(succes);
   };
 
-  return (
-    <EspaceScreen title={traduire('Ton personnage')} gap={14}>
-      {/* le personnage choisi en grand, sur un socle pastel, devant ta scene en fond doux */}
-      <View style={{ height: HERO_H, borderRadius: 30, overflow: 'hidden', backgroundColor: P.programmeFond }}>
-        <Image source={sceneImage} style={{ position: 'absolute', width: '100%', height: '100%', opacity: sansPerso ? 1 : 0.32 }} resizeMode="cover" accessibilityIgnoresInvertColors />
-        {!sansPerso ? (
-          <>
-            <LinearGradient colors={[P.programmeFond + 'B3', P.programmeFond2]} locations={[0, 0.82]} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
-            <View style={{ position: 'absolute', left: '50%', bottom: 22, width: 190, height: 40, marginLeft: -95, borderRadius: 95, backgroundColor: P.primary }} />
-            <View style={{ position: 'absolute', left: '50%', bottom: 30, width: 150, height: 22, marginLeft: -75, borderRadius: 75, backgroundColor: P.pureWhite, opacity: 0.8 }} />
-            <Image
-              source={perso}
-              style={{ position: 'absolute', left: 0, right: 0, bottom: 38, height: 230, width: '100%' }}
-              resizeMode="contain"
-              accessibilityLabel={traduire('Ton personnage, {0}', personnageNom(espace.personnage))}
-            />
-          </>
-        ) : null}
-        <View style={{ position: 'absolute', top: 14, left: 14, height: 26, paddingHorizontal: 10, borderRadius: 13, backgroundColor: P.glass, justifyContent: 'center' }}>
-          <Ink size={11} weight="extraBold" color={P.etiquettePrune} style={{ letterSpacing: 1.4, textTransform: 'uppercase' }}>{universNom}</Ink>
-        </View>
-        <Pressable
-          onPress={() => { selectionAsync().catch(() => {}); router.navigate('/(tabs)' as any); }}
-          accessibilityRole="button"
-          accessibilityLabel={traduire('Voir dans ma scène')}
-          hitSlop={8}
-          style={({ pressed }) => ({
-            position: 'absolute', top: 14, right: 14, height: 30, paddingHorizontal: 12, borderRadius: 15,
-            backgroundColor: pressed ? c.fillSoft : P.pureWhite, flexDirection: 'row', alignItems: 'center', gap: 6,
-            shadowColor: c.shadow, shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 2,
-          })}
-        >
-          <Icon name="eye" size={14} color={c.accent} stroke={2.4} />
-          <Ink size={12} weight="extraBold" color={c.accent}>{traduire('Voir dans ma scène')}</Ink>
-        </Pressable>
-      </View>
+  /* ---------- la carte collee en haut, qui se replie au defilement ---------- */
+  const insets = useSafeAreaInsets();
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+  const heroStyle = useAnimatedStyle(() => ({
+    height: interpolate(scrollY.value, [0, REPLI], [HERO_H, HERO_MIN], Extrapolation.CLAMP),
+  }));
+  const figStyle = useAnimatedStyle(() => ({
+    height: interpolate(scrollY.value, [0, REPLI], [FIG_H[0], FIG_H[1]], Extrapolation.CLAMP),
+    bottom: interpolate(scrollY.value, [0, REPLI], [FIG_BAS[0], FIG_BAS[1]], Extrapolation.CLAMP),
+  }));
+  // l'ombre au sol suit les pieds et se resserre avec la figure
+  const solStyle = useAnimatedStyle(() => ({
+    bottom: interpolate(scrollY.value, [0, REPLI], [FIG_BAS[0] + 12, FIG_BAS[1] + 8], Extrapolation.CLAMP),
+    transform: [{ scale: interpolate(scrollY.value, [0, REPLI], [1, 0.62], Extrapolation.CLAMP) }],
+  }));
 
+  return (
+    <View style={{ flex: 1, backgroundColor: c.background }}>
+      <EnTete
+        titre={traduire('Ton personnage')}
+        onRetour={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as any))}
+        zoneSure
+        defile={false}
+        fond={c.background}
+      />
+      <View style={{ flex: 1 }}>
+      <Animated.ScrollView
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: 8 + HERO_H + 20, paddingHorizontal: GUTTER, paddingBottom: insets.bottom + 40, gap: 14 }}
+      >
       {/* son nom, son univers et ses 5 rangs */}
       <View style={{ alignItems: 'center', gap: 2, marginTop: -2 }}>
         <Ink size={22} weight="extraBold" tight style={{ textAlign: 'center' }}>{personnageNom(espace.personnage)}</Ink>
@@ -384,14 +391,7 @@ export function Vestiaire() {
         </Ink>
       ) : null}
 
-      {/* un carrousel par univers et par pack */}
-      <View style={{ gap: 18, marginTop: 6 }}>
-        {rangees.map((r, i) => (
-          <Rangee key={r.id} titre={r.titre} sub={r.sub} couleur={COULEURS_RANGEES[i % COULEURS_RANGEES.length]} items={r.items} />
-        ))}
-      </View>
-
-      {/* vague 45 : sans personnage, la scene seule, en fin de liste */}
+      {/* vague 45 : sans personnage, la scene seule, en tete de liste, pour qui ne veut aucune figure */}
       <Pressable
         onPress={pickAucun}
         accessibilityRole="button"
@@ -416,6 +416,13 @@ export function Vestiaire() {
       <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4, marginTop: -4 }}>
         {traduire('Ton XP et ton rang restent les mêmes')}
       </Ink>
+
+      {/* un carrousel par univers et par pack */}
+      <View style={{ gap: 18, marginTop: 6 }}>
+        {rangees.map((r, i) => (
+          <Rangee key={r.id} titre={r.titre} sub={r.sub} couleur={COULEURS_RANGEES[i % COULEURS_RANGEES.length]} items={r.items} />
+        ))}
+      </View>
 
       {/* la silhouette et le rond de profil */}
       <Groupe title={!sansPerso && estGuerrier ? traduire('Silhouette et rond de profil') : traduire('Rond de profil')} />
@@ -504,7 +511,48 @@ export function Vestiaire() {
           if (v === 'photo' && !hasPhoto) setTimeout(() => go('/settings/photo'), 350);
         }}
       />
-    </EspaceScreen>
+      </Animated.ScrollView>
+      {/* le personnage choisi, colle en haut : il change sous tes yeux pendant que tu parcours la liste */}
+      <View pointerEvents="box-none" style={{ position: 'absolute', top: 0, left: 0, right: 0, paddingTop: 8, paddingBottom: 6, paddingHorizontal: GUTTER, backgroundColor: c.background }}>
+      <Animated.View style={[{ borderRadius: 30, overflow: 'hidden', backgroundColor: P.programmeFond }, heroStyle]}>
+        <Image source={sceneImage} style={{ position: 'absolute', width: '100%', height: '100%', opacity: sansPerso ? 1 : 0.32 }} resizeMode="cover" accessibilityIgnoresInvertColors />
+        {!sansPerso ? (
+          <>
+            <LinearGradient colors={[P.programmeFond + 'B3', P.programmeFond2]} locations={[0, 0.82]} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+            {/* ombre douce au sol : deux ellipses tres legeres, sans bord */}
+            <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, right: 0, height: 0, alignItems: 'center' }, solStyle]}>
+              <View style={{ position: 'absolute', top: -80, width: 160, height: 160, borderRadius: 80, backgroundColor: P.ink, opacity: 0.045, transform: [{ scaleY: 0.11 }] }} />
+              <View style={{ position: 'absolute', top: -46, width: 92, height: 92, borderRadius: 46, backgroundColor: P.ink, opacity: 0.07, transform: [{ scaleY: 0.13 }] }} />
+            </Animated.View>
+            <Animated.Image
+              source={perso}
+              style={[{ position: 'absolute', left: 0, right: 0, width: '100%' }, figStyle]}
+              resizeMode="contain"
+              accessibilityLabel={traduire('Ton personnage, {0}', personnageNom(espace.personnage))}
+            />
+          </>
+        ) : null}
+        <View style={{ position: 'absolute', top: 14, left: 14, height: 26, paddingHorizontal: 10, borderRadius: 13, backgroundColor: P.glass, justifyContent: 'center' }}>
+          <Ink size={11} weight="extraBold" color={P.etiquettePrune} style={{ letterSpacing: 1.4, textTransform: 'uppercase' }}>{universNom}</Ink>
+        </View>
+        <Pressable
+          onPress={() => { selectionAsync().catch(() => {}); router.navigate('/(tabs)' as any); }}
+          accessibilityRole="button"
+          accessibilityLabel={traduire('Voir dans ma scène')}
+          hitSlop={8}
+          style={({ pressed }) => ({
+            position: 'absolute', top: 14, right: 14, height: 30, paddingHorizontal: 12, borderRadius: 15,
+            backgroundColor: pressed ? c.fillSoft : P.pureWhite, flexDirection: 'row', alignItems: 'center', gap: 6,
+            shadowColor: c.shadow, shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 2,
+          })}
+        >
+          <Icon name="eye" size={14} color={c.accent} stroke={2.4} />
+          <Ink size={12} weight="extraBold" color={c.accent}>{traduire('Voir dans ma scène')}</Ink>
+        </Pressable>
+      </Animated.View>
+      </View>
+      </View>
+    </View>
   );
 }
 
