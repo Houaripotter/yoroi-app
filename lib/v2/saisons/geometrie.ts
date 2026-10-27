@@ -234,9 +234,10 @@ export function remonteeScene(o: { H: number; imgH: number; sol: number }): numb
 export const HAUT_VOL_CARTE = 14 - 42;
 
 /** Carte Ton poids Pastel : marge 16, haut 16, petit titre de 15, le chiffre de 40 (ligne de 44), l'anneau de 62 */
-export const CARTE_PASTEL = { marge: 16, haut: 16, titre: 15, ecartTitre: 2, ligneChiffre: 44, anneau: 62, rayon: 28 };
+// 27 octobre 2026 nuit (Houari : « réduis la taille de ton poids ») : chiffre en 32, anneau de 50, haut 14
+export const CARTE_PASTEL = { marge: 16, haut: 14, titre: 15, ecartTitre: 2, ligneChiffre: 35, anneau: 50, rayon: 28 };
 /** « 100,0 » en 40 points (environ 24 par chiffre, 9 pour la virgule) et « kg » en 15 : 142, arrondi a 146 */
-export const CHIFFRE_PASTEL_MAX = 146;
+export const CHIFFRE_PASTEL_MAX = 118;
 /** Une citrouille ou un sapin de 40, entre le chiffre et l'anneau */
 export const DECOR_PASTEL = { w: 40, h: 40, ecart: 6 };
 
