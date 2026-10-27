@@ -69,6 +69,8 @@ import { LiensLegaux, LienLegalTexte } from '@/components/yoroi/v2/premium/Liens
 import { cartesPremium, regleePersonnage, texteCarte, type ObjectifPour, type ProfilPourToi } from '@/lib/v2/premium/pourToi';
 import { getUserSettings } from '@/lib/storage';
 import { CarrouselPremium } from '@/components/yoroi/v2/premium/CarrouselPremium';
+import { apercuNutrition } from '@/lib/v2/premium/apercus';
+import { ageDepuisNaissance } from '@/lib/v2/onboarding/trancheAge';
 import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { basAtteint } from '@/lib/v2/premium/defilement';
 import { ApercuDansBarre, useApercuVisible } from '@/components/yoroi/v2/studio/PreviewBar';
@@ -113,6 +115,8 @@ type Me = {
   /** vague 32 : poids du jour (derniere pesee de moins de 30 jours, ou celle de l'onboarding), taille, recomposition */
   start: number | null;
   height: number | null;
+  /** 27 octobre 2026 : ton age (date de naissance du profil), pour l'apercu nutrition ; null a l'onboarding */
+  age: number | null;
   recompo: boolean;
   /** 27 octobre 2026 : tes objectifs (onboarding ou espace), tes sports, genre declare « autre » */
   objectifs: ObjectifPour[];
@@ -297,6 +301,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
     weights: [],
     start: recap?.start ?? null,
     height: recap?.height ?? null,
+    age: null,
     recompo: recap?.recompo ?? false,
     objectifs: recap?.goals ?? [],
     sports: recap?.sports ?? [],
@@ -370,6 +375,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
         weights: pts,
         start: recap?.start != null ? recap.start : pts.length && pts[pts.length - 1].t >= Date.now() - 30 * DAY ? pts[pts.length - 1].v : null,
         height: recap?.height ?? profile?.height_cm ?? null,
+        age: ageDepuisNaissance(profile?.birth_date) ?? (profile?.age && profile.age > 0 ? profile.age : null),
         recompo: recap?.recompo ?? false,
         objectifs: recap?.goals ?? (espace?.objectifs?.length ? espace.objectifs : recap?.goal ? [recap.goal as ObjectifPour] : profile?.weight_goal ? [profile.weight_goal as ObjectifPour] : []),
         sports: recap?.sports ?? espace?.sportsFavoris ?? [],
@@ -615,6 +621,8 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
     sports: me.sports,
   };
   const cartesCarrousel = cartesPremium(profilPourToi).map((id) => texteCarte(id, profilPourToi));
+  // l'apercu de la carte nutrition : le calcul de l'ecran Plan nutritionnel avec tes mesures, sinon l'exemple marque
+  const apercuNutri = apercuNutrition({ poids: me.start, taille: me.height, age: me.age, genre: me.genre, objectifs: profilPourToi.objectifs });
   const small = height < 760;
   // 26 octobre 2026 : le carrousel clair remplace le bandeau sombre ; compact sur les petits ecrans (375 x 667),
   // pour que la carte de ton plan commence encore au dessus du bouton colle en bas
@@ -742,7 +750,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
             </Ink>
             {height >= 720 ? <Ink size={13.5} weight="medium" color={pal.texte2} style={{ textAlign: 'center', lineHeight: 18, maxWidth: 340 }}>{subtitle}</Ink> : null}
           </Animated.View>
-          <CarrouselPremium hauteur={carrouselH} marge={GUTTER} cartes={cartesCarrousel} courbe={dessinCourbe} seances={me.sessions} />
+          <CarrouselPremium hauteur={carrouselH} marge={GUTTER} cartes={cartesCarrousel} courbe={dessinCourbe} seances={me.sessions} nutrition={apercuNutri} />
         </View>
 
         <View style={{ paddingHorizontal: GUTTER, gap: height < 720 ? 12 : height < 860 ? 14 : 20, paddingTop: height < 720 ? 10 : height < 860 ? 12 : 16 }}>

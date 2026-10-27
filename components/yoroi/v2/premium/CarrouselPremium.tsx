@@ -7,26 +7,27 @@
  * « Ce que YOROI va faire pour toi » de l'onboarding), puis ton rythme, tes progres, ta nutrition, ton combat, seulement
  * quand ils te concernent. Chacune est un vrai contenu Premium du code.
  * Langage des pages Programmes et Coach (components/yoroi/v2/programmes/Habillage.tsx) : la carte indigo a cercles
- * translucides pour ton chemin, des cartes teintees (bleu, orange, vert) pour la suite. Texte a gauche, illustration a
- * droite, rayon 24. Defilement seul toutes les 4,2 s (jamais avec « réduire les animations »), le doigt pose le met en
+ * translucides pour ton chemin, des cartes bleu doux pour la suite (27 octobre : plus de fonds vert ni orange). Texte a
+ * gauche, a droite un petit apercu du vrai ecran Premium (Apercus.tsx), rayon 24. Defilement seul toutes les 4,2 s (jamais avec « réduire les animations »), le doigt pose le met en
  * pause, les points en dessous disent ou tu en es et menent a une carte.
  * Aucun achat ici : le prix, l'essai, le bouton et les mentions restent dans le paywall, a leur place.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { Icon, type IconName } from '@/components/yoroi/v2/espace/ui';
+import { Icon } from '@/components/yoroi/v2/espace/ui';
 import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import type { CartePremiumTexte } from '@/lib/v2/premium/pourToi';
+import type { ApercuNutrition as DonneesNutrition } from '@/lib/v2/premium/apercus';
+import { ApercuCombat, ApercuNutrition, ApercuProgres, ApercuRythme } from '@/components/yoroi/v2/premium/Apercus';
 import { traduire } from '@/lib/i18n/tr';
 
 const ESPACE = 12;
 const AUTO_MS = 4200;
 
-export function CarrouselPremium({ hauteur, marge, cartes, courbe, seances }: {
+export function CarrouselPremium({ hauteur, marge, cartes, courbe, seances, nutrition }: {
   hauteur: number;
   /** marge laterale de la page */
   marge: number;
@@ -36,6 +37,8 @@ export function CarrouselPremium({ hauteur, marge, cartes, courbe, seances }: {
   courbe: (w: number, h: number) => React.ReactNode;
   /** tes seances par semaine, pour l'illustration de la carte rythme */
   seances: number | null;
+  /** ton objectif par jour et tes macros (lib/v2/premium/apercus.ts), pour l'apercu de la carte nutrition */
+  nutrition: DonneesNutrition;
 }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
@@ -50,31 +53,16 @@ export function CarrouselPremium({ hauteur, marge, cartes, courbe, seances }: {
   const [doigt, setDoigt] = useState(false);
   const n = cartes.length;
 
-  const tuile = (enfant: React.ReactNode, w: number, h: number) => (
-    <View style={{ width: w, height: h, borderRadius: 20, backgroundColor: pal.carte, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }} pointerEvents="none">{enfant}</View>
-  );
-  const grandeIcone = (icon: IconName, encre: string, fond: string, petite: IconName | null, w: number, h: number) => tuile(
-    <>
-      <View style={{ position: 'absolute', right: -18, bottom: -22, width: h * 0.7, height: h * 0.7, borderRadius: h, backgroundColor: fond }} />
-      <Icon name={icon} size={Math.round(Math.min(w, h) * 0.46)} color={encre} stroke={2} />
-      {petite ? (
-        <View style={{ position: 'absolute', top: 10, left: 10, width: 30, height: 30, borderRadius: 15, backgroundColor: fond, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name={petite} size={16} color={encre} />
-        </View>
-      ) : null}
-    </>,
-    w,
-    h,
-  );
-
+  // 27 octobre 2026 (Houari : « les fonds verts et orange, ça ne donne pas envie ») : ton chemin en carte indigo,
+  // toutes les autres en bleu doux ; les couleurs vives restent dans les petits apercus
   const style = (id: CartePremiumTexte['id']): { fond: string; encre: string; encre2: string; sombre: boolean } => {
     if (id === 'chemin') return { fond: pal.indigo, encre: c.onDark, encre2: c.onDarkSecondary, sombre: true };
-    if (id === 'rythme') return { fond: pal.vertTint, encre: pal.texte, encre2: pal.texte2, sombre: false };
-    if (id === 'nutrition' || id === 'combat') return { fond: pal.orangeTint, encre: pal.texte, encre2: pal.texte2, sombre: false };
     return { fond: pal.teinte, encre: pal.texte, encre2: pal.texte2, sombre: false };
   };
 
-  const visuel = (id: CartePremiumTexte['id'], w: number, h: number): React.ReactNode => {
+  // 27 octobre 2026 (Houari : « au lieu des icones, mets des choses de l'app qui lui donnent envie, comme une demo ») :
+  // un morceau du vrai ecran Premium, en petit (components/yoroi/v2/premium/Apercus.tsx)
+  const visuel = (id: CartePremiumTexte['id'], w: number, h: number, actif: boolean): React.ReactNode => {
     switch (id) {
       case 'chemin':
         return (
@@ -82,43 +70,15 @@ export function CarrouselPremium({ hauteur, marge, cartes, courbe, seances }: {
             {courbe(w - 12, h - 12)}
           </View>
         );
-      case 'rythme': {
-        // ta semaine : autant de jours pleins que de seances choisies (illustration, aucune autre valeur)
-        const pleins = Math.max(0, Math.min(7, seances ?? 0));
-        const d = Math.round(Math.min(w / 5.2, h / 4.6));
-        const rond = (i: number) => <View key={i} style={{ width: d, height: d, borderRadius: d / 2, backgroundColor: i < pleins ? pal.vert : pal.vertTint, borderWidth: i < pleins ? 0 : 1.5, borderColor: pal.anneau }} />;
-        return tuile(
-          <View style={{ alignItems: 'center', gap: Math.round(d * 0.35) }}>
-            <Icon name="calendar" size={Math.round(d * 1.1)} color={pal.vert} />
-            <View style={{ flexDirection: 'row', gap: Math.round(d * 0.3) }}>{[0, 1, 2, 3].map(rond)}</View>
-            <View style={{ flexDirection: 'row', gap: Math.round(d * 0.3) }}>{[4, 5, 6].map(rond)}</View>
-          </View>,
-          w,
-          h,
-        );
-      }
+      case 'rythme':
+        return <ApercuRythme w={w} h={h} seances={seances} />;
       case 'progres':
-        return tuile(
-          <>
-            {/* des barres qui montent : illustration, aucune valeur */}
-            <Svg width={Math.round(w * 0.6)} height={Math.round(h * 0.48)} viewBox="0 0 60 48" style={{ marginTop: Math.round(h * 0.12) }}>
-              <Path d="M6 44V30" stroke={pal.anneau} strokeWidth={8} strokeLinecap="round" />
-              <Path d="M22 44V24" stroke={pal.anneau} strokeWidth={8} strokeLinecap="round" />
-              <Path d="M38 44V16" stroke={pal.accent} strokeWidth={8} strokeLinecap="round" opacity={0.55} />
-              <Path d="M54 44V8" stroke={pal.accent} strokeWidth={8} strokeLinecap="round" />
-            </Svg>
-            <View style={{ position: 'absolute', top: 10, left: 10, width: 30, height: 30, borderRadius: 15, backgroundColor: pal.teinte, alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="dumbbell" size={16} color={pal.accent} />
-            </View>
-          </>,
-          w,
-          h,
-        );
+        return <ApercuProgres w={w} h={h} actif={actif} />;
       case 'nutrition':
-        return grandeIcone('flame', pal.orange, pal.orangeTint, 'target', w, h);
+        return <ApercuNutrition w={w} h={h} d={nutrition} actif={actif} />;
       case 'combat':
       default:
-        return grandeIcone('swords', pal.orange, pal.orangeTint, 'trophy', w, h);
+        return <ApercuCombat w={w} h={h} actif={actif} />;
     }
   };
 
@@ -162,9 +122,9 @@ export function CarrouselPremium({ hauteur, marge, cartes, courbe, seances }: {
         onTouchEnd={() => setDoigt(false)}
         onTouchCancel={() => setDoigt(false)}
       >
-        {cartes.map((k) => {
+        {cartes.map((k, i) => {
           const s = style(k.id);
-          const visW = Math.round(cw * (k.id === 'chemin' ? 0.38 : 0.32));
+          const visW = Math.round(cw * (k.id === 'chemin' ? 0.38 : 0.37));
           return (
             <View
               key={k.id}
@@ -185,7 +145,7 @@ export function CarrouselPremium({ hauteur, marge, cartes, courbe, seances }: {
                 <Ink size={petit ? 16 : 17.5} weight="black" tight color={s.encre} numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.85} style={{ lineHeight: petit ? 19.5 : 21.5 }}>{k.titre}</Ink>
                 <Ink size={12.5} weight="bold" color={s.encre2} numberOfLines={3} style={{ lineHeight: petit ? 16.5 : 17 }}>{k.texte}</Ink>
               </View>
-              {visuel(k.id, visW, visH)}
+              {visuel(k.id, visW, visH, i === rang)}
             </View>
           );
         })}
