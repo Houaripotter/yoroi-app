@@ -83,6 +83,16 @@ export type ChronoEngine = {
   elapsedMs: () => number;
   /** heure (ms) de fin de la phase en cours si elle tourne, sinon null */
   phaseEndsAt: () => number | null;
+  /**
+   * 28 octobre 2026 : etat a garder pour reprendre apres une fermeture de l'app (sprints guides,
+   * lib/v2/intervalles/brouillon.ts) : phase, debut absolu de la phase (decale des pauses), pause, durees reelles.
+   */
+  snapshot: () => { status: ChronoStatus; index: number; phaseStartMs: number; pausedAtMs: number | null; durations: number[] };
+  /**
+   * Reprend une seance gardee : la phase index a commence a phaseStartMs (pauses deja retirees). En pause si
+   * pausedAtMs est donne. Les phases finies pendant l'absence s'enchainent sans rejouer les sons.
+   */
+  restore: (phases: ChronoPhase[], index: number, phaseStartMs: number, pausedAtMs: number | null) => void;
 };
 
 export function useChronoEngine(onEvent: (e: ChronoEvent) => void): ChronoEngine {
@@ -404,9 +414,42 @@ export function useChronoEngine(onEvent: (e: ChronoEvent) => void): ChronoEngine
     return startAtRef.current + p.duration * 1000;
   }, []);
 
+  const snapshot = useCallback(() => ({
+    status: statusRef.current,
+    index: indexRef.current,
+    phaseStartMs: startAtRef.current,
+    pausedAtMs: pausedAtRef.current,
+    durations: phasesRef.current.map((p) => p.duration),
+  }), []);
+
+  const restore = useCallback((list: ChronoPhase[], i: number, phaseStartMs: number, pausedAtMs: number | null) => {
+    clearTimer();
+    if (list.length === 0) return;
+    const idx = Math.min(list.length - 1, Math.max(0, Math.floor(i)));
+    runRef.current += 1;
+    firedRef.current = new Set();
+    phasesRef.current = list;
+    setPhases(list);
+    indexRef.current = idx;
+    setIndex(idx);
+    startAtRef.current = phaseStartMs;
+    pausedAtRef.current = pausedAtMs;
+    // la phase en cours a deja ete annoncee avant la fermeture
+    once(`phase:${idx}`);
+    if (pausedAtMs !== null) {
+      setStat('paused');
+      publish(Date.now());
+      syncRing();
+      return;
+    }
+    setStat('running');
+    syncRing();
+    step();
+  }, [step, syncRing]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const phase = phases[index] ?? null;
   const next = phases[index + 1] ?? null;
-  return { status, index, phase, next, phases, display, remaining, progress, start, pause, resume, skip, advance, restartPhase, finishNow, adjust, stop, elapsedMs, phaseEndsAt };
+  return { status, index, phase, next, phases, display, remaining, progress, start, pause, resume, skip, advance, restartPhase, finishNow, adjust, stop, elapsedMs, phaseEndsAt, snapshot, restore };
 }
 
 /** Duree totale d'une liste de phases, en secondes */

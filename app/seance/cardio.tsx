@@ -23,7 +23,8 @@ import { logger } from '@/lib/security/logger';
 import { SPORTS, getSportCategory, getSportName } from '@/lib/sports';
 import { fmtClock, fmtMinutes, fmtNum, hhmm, isoDay, parseNum } from '@/lib/v2/seance/format';
 import { useSauvegardeBrouillon } from '@/lib/v2/seance/useSauvegardeBrouillon';
-import { clearDraft, loadDraft } from '@/lib/v2/seance/model';
+import { clearDraft, effacerSaisie, loadDraft } from '@/lib/v2/seance/model';
+import { offrirSaisie } from '@/lib/v2/seance/repriseSaisie';
 import type { CardioDraft, SessionDetails } from '@/lib/v2/seance/model';
 import { detailsFromTraining, loadTrainingForEdit, mesuresMachine, sportLibre, trainingFromDetails } from '@/lib/v2/seance/edit';
 import { noteSansScore, scoreDeSeance } from '@/lib/v2/seance/score';
@@ -98,7 +99,8 @@ export default function SeanceCardio() {
           // 17 octobre : le nom libre du sport « Autre » et le score dans leurs champs (anciennes seances : relus de la note)
           const libre = sportLibre({ sport: t.sport || 'running', session_type: t.session_type }, (id) => SPORTS.some((x) => x.id === id));
           const score = scoreDeSeance(t);
-          setDraft({
+          // 28 octobre 2026 : une modification laissée en plan (app fermée) se reprend
+          void offrirSaisie<CardioDraft>({
             kind: 'cardio',
             form: true,
             editId: params.editId,
@@ -121,7 +123,7 @@ export default function SeanceCardio() {
             resistance: t.resistance ?? undefined,
             watts: t.watts ?? undefined,
             cadence: t.cadence ?? undefined,
-          });
+          }, setDraft);
           if (t.speed || t.pente || t.resistance || t.watts || t.cadence || t.max_heart_rate) setMore(true);
           return;
         }
@@ -153,7 +155,8 @@ export default function SeanceCardio() {
           })(),
         });
         if (form) {
-          setDraft(fresh());
+          // 28 octobre 2026 : une saisie après coup laissée en plan se reprend
+          void offrirSaisie(fresh(), setDraft);
           return;
         }
         if (existing && existing.kind === 'cardio' && params.resume) {
@@ -234,7 +237,7 @@ export default function SeanceCardio() {
     if (draft.form) {
       appAlert(draft.editId ? traduire('Quitter sans enregistrer ?') : traduire('Annuler cette saisie ?'), traduire('Tes changements ne seront pas gardés.'), [
         { text: traduire('Rester'), style: 'cancel' },
-        { text: traduire('Quitter'), style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); router.back(); } },
+        { text: traduire('Quitter'), style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); void effacerSaisie(draft); router.back(); } },
       ]);
       return;
     }
@@ -297,6 +300,7 @@ export default function SeanceCardio() {
       // 26 octobre 2026 : la seance est enregistree, le brouillon part tout de suite (sinon, app fermee juste
       // apres, elle reapparaissait « en cours » et pouvait etre enregistree deux fois)
       if (!draft.form) await clearDraft();
+      else await effacerSaisie(draft);
       if (draft.programme && !draft.editId) await marquerJourFait(draft.programme.id, draft.programme.jourId, result.id, draft.form && det ? det.date : undefined).catch(() => {});
       if (draft.editId) {
         router.back();

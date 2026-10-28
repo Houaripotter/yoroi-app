@@ -42,6 +42,7 @@ import { routeDuCreneau } from '@/lib/v2/programmes/agenda';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { OMBRE_CARTE, carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { HabillageBoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 type Hero = {
@@ -289,9 +290,19 @@ export default function OnSentraine() {
                 <Ink size={15} weight="black" color={c.onPrimary}>{traduire("Reprendre")}</Ink>
               </Pressable>
               <Pressable
-                onPress={async () => {
-                  await clearDraft();
-                  setDraft(null);
+                onPress={() => {
+                  // 28 octobre 2026 : une séance en cours ne part plus sur un seul toucher
+                  appAlert(traduire('Effacer la séance en cours ?'), traduire('Ses séries ne seront pas gardées. Pour les garder, reprends la et termine la.'), [
+                    { text: traduire('Garder'), style: 'cancel' },
+                    {
+                      text: traduire('Effacer'),
+                      style: 'destructive',
+                      onPress: async () => {
+                        await clearDraft();
+                        setDraft(null);
+                      },
+                    },
+                  ]);
                 }}
                 accessibilityRole="button"
                 style={{ minHeight: 50, paddingHorizontal: 16, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: blancA(0.5) }}

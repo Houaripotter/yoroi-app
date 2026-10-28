@@ -4,6 +4,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
+import { lireListePourEcriture } from '@/lib/v2/sauvegarde/lectureSure';
 import { DeviceEventEmitter } from 'react-native';
 import { openDatabase } from '@/lib/database';
 import type { CombatRound } from '@/lib/database';
@@ -32,6 +33,9 @@ async function readAll(): Promise<SparringPartnerData[]> {
   }
 }
 
+/** 28 octobre 2026 : lecture STRICTE avant une ecriture (une liste illisible n'est jamais remplacee) */
+const readAllForWrite = (): Promise<SparringPartnerData[]> => lireListePourEcriture<SparringPartnerData>(SPARRING_PARTNERS_KEY);
+
 async function writeAll(list: SparringPartnerData[]) {
   await AsyncStorage.setItem(SPARRING_PARTNERS_KEY, JSON.stringify(list));
   DeviceEventEmitter.emit(PARTNERS_CHANGED_EVENT);
@@ -59,14 +63,9 @@ export async function loadPartnerPhotos(): Promise<{ photos: Record<string, stri
     const ex = seen.get(k);
     if (!ex || (!ex.photoUri && p.photoUri)) seen.set(k, p);
   }
+  // 28 octobre 2026 : le dedoublonnage par nom sert a l'affichage seulement. Avant, il etait REECRIT :
+  // deux partenaires du meme prenom, et la fiche du second (notes, bilans, missions) etait effacee.
   const deduped = Array.from(seen.values());
-  if (deduped.length !== partners.length) {
-    try {
-      await AsyncStorage.setItem(SPARRING_PARTNERS_KEY, JSON.stringify(deduped));
-    } catch {
-      // sans importance
-    }
-  }
   const photos: Record<string, string> = {};
   const fiches = new Set<string>();
   for (const p of deduped) {
@@ -78,7 +77,7 @@ export async function loadPartnerPhotos(): Promise<{ photos: Record<string, stri
 }
 
 export async function savePartnerPhoto(name: string, photoUri: string) {
-  const list = await readAll();
+  const list = await readAllForWrite();
   const k = keyOf(name);
   const ex = list.find((p) => keyOf(p.name) === k);
   if (ex) ex.photoUri = photoUri || undefined;
@@ -87,7 +86,7 @@ export async function savePartnerPhoto(name: string, photoUri: string) {
 }
 
 export async function deletePartnerFiche(name: string) {
-  const list = (await readAll()).filter((p) => keyOf(p.name) !== keyOf(name));
+  const list = (await readAllForWrite()).filter((p) => keyOf(p.name) !== keyOf(name));
   await writeAll(list);
 }
 
@@ -95,12 +94,14 @@ export async function deletePartnerFiche(name: string) {
 export async function renamePartner(oldName: string, newName: string, photo: string | null) {
   const oldKey = keyOf(oldName);
   const newKey = keyOf(newName);
-  const list = await readAll();
+  const list = await readAllForWrite();
   const oldIdx = list.findIndex((p) => keyOf(p.name) === oldKey);
   const newIdx = list.findIndex((p) => keyOf(p.name) === newKey);
   if (oldIdx >= 0) {
-    list[oldIdx] = { ...list[oldIdx], name: newName.trim(), photoUri: photo || undefined };
-    if (newIdx >= 0 && newIdx !== oldIdx) list.splice(newIdx, 1);
+    // 28 octobre 2026 : deux fiches reunies sous le meme nom, les champs de l'autre sont gardes (avant : effacee)
+    const autre = newIdx >= 0 && newIdx !== oldIdx ? list[newIdx] : undefined;
+    list[oldIdx] = { ...(autre ?? {}), ...list[oldIdx], name: newName.trim(), photoUri: photo || undefined };
+    if (autre) list.splice(newIdx, 1);
   } else if (newIdx >= 0) {
     list[newIdx] = { ...list[newIdx], name: newName.trim(), photoUri: photo || undefined };
   } else {

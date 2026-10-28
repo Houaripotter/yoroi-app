@@ -312,6 +312,26 @@ export async function programmePersoParId(id: string | null | undefined): Promis
   return (await chargerProgrammesPerso()).find((p) => p.id === id) ?? null;
 }
 
+/**
+ * 28 octobre 2026 (audit « ne jamais perdre de données ») : avant d'écrire, la liste est relue strictement.
+ * Stockage indisponible : l'erreur remonte, rien n'est écrit (avant : liste vide, puis ton nouveau programme
+ * écrit seul, tous les autres effacés). Liste illisible : recopiée à part avant d'écrire une liste neuve.
+ */
+export const CLE_PROGRAMMES_PERSO_ILLISIBLE = 'yoroi_programmes_perso_illisible_v1';
+async function chargerPourEcrire(): Promise<ProgrammePerso[]> {
+  const raw = await AsyncStorage.getItem(CLE_PROGRAMMES_PERSO);
+  if (raw) {
+    let lisible = false;
+    try {
+      lisible = Array.isArray(JSON.parse(raw));
+    } catch {
+      lisible = false;
+    }
+    if (!lisible) await AsyncStorage.setItem(CLE_PROGRAMMES_PERSO_ILLISIBLE, raw);
+  }
+  return lireProgrammesPerso(raw);
+}
+
 async function ecrireListe(liste: ProgrammePerso[]): Promise<void> {
   // les archivés restent ; au delà du plafond, les plus vieux archivés partent d'abord
   let garde = liste;
@@ -330,7 +350,7 @@ async function ecrireListe(liste: ProgrammePerso[]): Promise<void> {
 export async function enregistrerProgrammePerso(pp: ProgrammePerso, maintenant = new Date()): Promise<ProgrammePerso> {
   const propre = nettoyerPerso({ ...pp, modifieLe: jourLocal(maintenant) });
   if (!propre || !peutEnregistrer(propre)) throw new Error('programme vide');
-  const liste = await chargerProgrammesPerso();
+  const liste = await chargerPourEcrire();
   const i = liste.findIndex((p) => p.id === propre.id);
   const suite = i >= 0 ? liste.map((p, k) => (k === i ? { ...propre, creeLe: p.creeLe } : p)) : [...liste, propre];
   await ecrireListe(suite);
@@ -339,7 +359,7 @@ export async function enregistrerProgrammePerso(pp: ProgrammePerso, maintenant =
 
 /** Supprimer = archiver (date du jour) : il quitte « Mes programmes », tes séances faites ne bougent pas */
 export async function archiverProgrammePerso(id: string, maintenant = new Date()): Promise<void> {
-  const liste = await chargerProgrammesPerso();
+  const liste = await chargerPourEcrire();
   if (!liste.some((p) => p.id === id)) return;
   await ecrireListe(liste.map((p) => (p.id === id ? { ...p, archive: jourLocal(maintenant) } : p)));
 }

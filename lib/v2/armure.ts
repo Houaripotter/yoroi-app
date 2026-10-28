@@ -45,6 +45,7 @@ import { getSportCategory, getSportName } from '@/lib/sports';
 import { ALL_IBJJF_COMPETITIONS } from '@/lib/competitions-ibjjf-2025';
 import { ALL_CFJJB_COMPETITIONS } from '@/lib/competitions-cfjjb-2026';
 import { logger } from '@/lib/security/logger';
+import { mettreDeCote } from '@/lib/v2/sauvegarde/lectureSure';
 import { getEspace, saveEspace } from '@/lib/v2/espace';
 import { reprendreAncienAvatar } from '@/lib/v2/espace/personnage';
 import { durationOf, mondayOf, tonnage } from '@/lib/v2/trainingWeek';
@@ -429,18 +430,33 @@ type Meta = {
 
 const EMPTY_META: Meta = { v: 1, migratedAt: null, seals: {}, pauses: {}, goals: [], rankSeen: 0, pendingSeals: [], recap: false };
 
+// 28 octobre 2026 (audit « ne jamais perdre de donnees ») : un journal ou des reglages presents mais
+// illisibles ne sont plus reecrits par dessus (avant : lus comme vides, puis remplaces, XP et sceaux perdus).
+// La valeur illisible est mise de cote sous <cle>__illisible ; l'ecriture reprend des qu'une lecture reussit.
+let ledgerIllisible = false;
+let metaIllisible = false;
+
 async function readLedger(): Promise<LedgerRow[]> {
+  let raw: string | null = null;
   try {
-    const raw = await AsyncStorage.getItem(LEDGER_KEY);
-    if (!raw) return [];
+    raw = await AsyncStorage.getItem(LEDGER_KEY);
+    if (!raw) { ledgerIllisible = false; return []; }
     const list = JSON.parse(raw) as unknown;
-    return Array.isArray(list) ? (list as LedgerRow[]).filter((r) => r && typeof r.k === 'string' && r.a > 0) : [];
+    if (!Array.isArray(list)) throw new Error('journal pas une liste');
+    ledgerIllisible = false;
+    return (list as LedgerRow[]).filter((r) => r && typeof r.k === 'string' && r.a > 0);
   } catch {
+    ledgerIllisible = true;
+    if (raw) void mettreDeCote(LEDGER_KEY, raw);
     return [];
   }
 }
 
 async function writeLedger(rows: LedgerRow[]): Promise<void> {
+  if (ledgerIllisible) {
+    logger.warn('[Armure] journal illisible : pas de reecriture pour ne rien perdre');
+    return;
+  }
   try {
     await AsyncStorage.setItem(LEDGER_KEY, JSON.stringify(rows));
   } catch (e) {
@@ -449,16 +465,26 @@ async function writeLedger(rows: LedgerRow[]): Promise<void> {
 }
 
 async function readMeta(): Promise<Meta> {
+  let raw: string | null = null;
   try {
-    const raw = await AsyncStorage.getItem(META_KEY);
-    if (!raw) return { ...EMPTY_META, seals: {}, pauses: {}, goals: [], pendingSeals: [] };
-    return { ...EMPTY_META, ...(JSON.parse(raw) as Partial<Meta>) };
+    raw = await AsyncStorage.getItem(META_KEY);
+    if (!raw) { metaIllisible = false; return { ...EMPTY_META, seals: {}, pauses: {}, goals: [], pendingSeals: [] }; }
+    const lu = JSON.parse(raw) as unknown;
+    if (!lu || typeof lu !== 'object' || Array.isArray(lu)) throw new Error('reglages pas un objet');
+    metaIllisible = false;
+    return { ...EMPTY_META, ...(lu as Partial<Meta>) };
   } catch {
+    metaIllisible = true;
+    if (raw) void mettreDeCote(META_KEY, raw);
     return { ...EMPTY_META, seals: {}, pauses: {}, goals: [], pendingSeals: [] };
   }
 }
 
 async function writeMeta(m: Meta): Promise<void> {
+  if (metaIllisible) {
+    logger.warn('[Armure] reglages illisibles : pas de reecriture pour ne rien perdre');
+    return;
+  }
   try {
     await AsyncStorage.setItem(META_KEY, JSON.stringify(m));
   } catch (e) {

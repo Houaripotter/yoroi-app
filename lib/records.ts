@@ -6,6 +6,7 @@
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { avecVerrou, lireListePourEcriture } from '@/lib/v2/sauvegarde/lectureSure';
 import { getAllMeasurements, getAllWorkouts } from './storage';
 import { getMeasurements } from './database';
 import logger from '@/lib/security/logger';
@@ -538,9 +539,10 @@ export const savePersonalRecords = async (records: PersonalRecords): Promise<voi
 /**
  * Ajouter un evenement de record a l'historique
  */
-export const addRecordToHistory = async (event: NewRecordEvent): Promise<void> => {
+export const addRecordToHistory = async (event: NewRecordEvent): Promise<void> => avecVerrou(STORAGE_KEY_RECORDS_HISTORY, async () => {
   try {
-    const history = await getRecordsHistory();
+    // 28 octobre 2026 : lecture STRICTE avant ecriture
+    const history = await lireListePourEcriture<NewRecordEvent>(STORAGE_KEY_RECORDS_HISTORY);
     history.unshift(event);
     // Garder seulement les 50 derniers
     const trimmed = history.slice(0, 50);
@@ -548,7 +550,7 @@ export const addRecordToHistory = async (event: NewRecordEvent): Promise<void> =
   } catch (error) {
     logger.error('Erreur ajout historique:', error);
   }
-};
+});
 
 /**
  * Obtenir l'historique des records

@@ -14,9 +14,12 @@
     <include domain="sharedpref" path="." />
     <exclude domain="sharedpref" path="SecureStore" />
   </cloud-backup>
+  <!-- 28 octobre 2026 : transfert direct d'un telephone a l'autre (cable ou sans fil), sans limite de taille :
+       TOUS les fichiers de l'app (photos de progres, photo de profil, base, copies de securite). Pas dans
+       cloud-backup : au dela de 25 Mo Google n'y sauvegarde plus rien du tout, la base comprise. -->
   <device-transfer>
     <include domain="database" path="." />
-    <include domain="file" path="SQLite/" />
+    <include domain="file" path="." />
     <include domain="sharedpref" path="." />
     <exclude domain="sharedpref" path="SecureStore" />
   </device-transfer>

@@ -26,6 +26,33 @@ async function lireCles(): Promise<Set<string>> {
 
 const signature = (date: string, noms: string[]): string => `${date}|${noms.map((n) => n.trim().toLowerCase()).sort().join(',')}`;
 
+/**
+ * 28 octobre 2026 : deux vraies séances le même jour avec les mêmes exercices (matin et soir) sont toutes les deux
+ * importées. Une séance est un doublon si, en plus du jour et des exercices, l'heure ET le détail des séries
+ * concordent (une heure ou un détail absent d'un côté ne départage pas). Réimporter le même fichier ne double
+ * rien : les clés déjà importées sont retenues, et l'heure et les séries sont les mêmes.
+ */
+export type Empreinte = { sig: string; heure: string | null; series: string | null };
+const heureDe = (h?: string | null): string | null => {
+  const m = h ? /^(\d{1,2}):(\d{2})/.exec(h.trim()) : null;
+  return m ? `${m[1].padStart(2, '0')}:${m[2]}` : null;
+};
+const seriesDe = (exos: { name: string; setsData?: { weight: number; reps: number }[] }[]): string | null => {
+  const parts = exos
+    .map((e) => `${e.name.trim().toLowerCase()}:${(e.setsData ?? []).map((x) => `${Number(x.weight) || 0}x${Number(x.reps) || 0}`).join(',')}`)
+    .sort();
+  return exos.some((e) => (e.setsData ?? []).length > 0) ? parts.join(';') : null;
+};
+export function empreinteDe(date: string, heure: string | null | undefined, exos: { name: string; setsData?: { weight: number; reps: number }[] }[]): Empreinte {
+  return { sig: signature(date, exos.map((e) => e.name)), heure: heureDe(heure), series: seriesDe(exos) };
+}
+export function memeSeance(a: Empreinte, b: Empreinte): boolean {
+  if (a.sig !== b.sig) return false;
+  const h = a.heure === null || b.heure === null || a.heure === b.heure;
+  const s = a.series === null || b.series === null || a.series === b.series;
+  return h && s;
+}
+
 /** Exercice YOROI : meilleure serie en resume, toutes les series en detail */
 export function versExercice(e: SeanceLue['exos'][number]): Exercise {
   const travail = e.series.filter((s) => s.type !== 'warmup');
@@ -47,20 +74,39 @@ export const dureeEstimee = (s: SeanceLue): number =>
 
 export type BilanImport = { ajoutees: number; dejaLa: number; echecs: number };
 
-export async function enregistrerCarnet(seances: SeanceLue[], surProgres?: (fait: number, total: number) => void): Promise<BilanImport> {
+/**
+ * 28 octobre 2026 : un seul import à la fois. Deux appuis rapprochés sur « Importer » lançaient deux imports qui
+ * lisaient la base avant que l'autre n'écrive : chaque séance en double. Le second attend le premier, puis ne
+ * trouve plus rien de nouveau.
+ */
+let importEnCours: Promise<BilanImport> | null = null;
+
+export function enregistrerCarnet(seances: SeanceLue[], surProgres?: (fait: number, total: number) => void): Promise<BilanImport> {
+  const avant = importEnCours;
+  const p = (async () => {
+    if (avant) await avant.catch(() => undefined);
+    return enregistrerMaintenant(seances, surProgres);
+  })();
+  importEnCours = p;
+  void p.finally(() => {
+    if (importEnCours === p) importEnCours = null;
+  }).catch(() => undefined);
+  return p;
+}
+
+async function enregistrerMaintenant(seances: SeanceLue[], surProgres?: (fait: number, total: number) => void): Promise<BilanImport> {
   const cles = await lireCles();
   const existantes = (await getTrainings().catch(() => [] as Training[])) ?? [];
-  const deja = new Set(
-    existantes
-      .filter((t) => t.exercises && t.exercises.length)
-      .map((t) => signature(t.date.slice(0, 10), (t.exercises ?? []).map((e) => e.name))),
-  );
+  const deja: Empreinte[] = existantes
+    .filter((t) => t.exercises && t.exercises.length)
+    .map((t) => empreinteDe(t.date.slice(0, 10), t.start_time, (t.exercises ?? []) as { name: string; setsData?: { weight: number; reps: number }[] }[]));
   const bilan: BilanImport = { ajoutees: 0, dejaLa: 0, echecs: 0 };
   let n = 0;
   for (const s of seances) {
     n++;
-    const sig = signature(s.date, s.exos.map((e) => e.nom));
-    if (cles.has(s.cle) || deja.has(sig)) {
+    const exercises = s.exos.map(versExercice);
+    const emp = empreinteDe(s.date, s.heure, exercises as { name: string; setsData?: { weight: number; reps: number }[] }[]);
+    if (cles.has(s.cle) || deja.some((d) => memeSeance(d, emp))) {
       bilan.dejaLa++;
       surProgres?.(n, seances.length);
       continue;
@@ -71,12 +117,12 @@ export async function enregistrerCarnet(seances: SeanceLue[], surProgres?: (fait
         date: s.date,
         start_time: s.heure,
         duration_minutes: dureeEstimee(s),
-        exercises: s.exos.map(versExercice),
+        exercises,
         notes: s.titre,
         source: 'import',
       } as Training);
       cles.add(s.cle);
-      deja.add(sig);
+      deja.push(emp);
       bilan.ajoutees++;
     } catch (e) {
       logger.warn('[ImportCarnet] seance non enregistree', e);

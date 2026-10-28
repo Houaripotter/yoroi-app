@@ -19,13 +19,16 @@ import {
   deleteInjury,
   deleteMeasurementRecord,
   deletePhoto,
+  emptyTrashCorps,
   deleteWeight,
   getAllWeights,
   getInjuries,
   getMeasurements,
   getPhotos,
   getTrainingsCount,
+  openDatabase,
 } from '@/lib/database';
+import { snapshotBeforeImport } from '@/lib/v2/sauvegarde/avantMiseAJour';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { MesureConfidentialite } from '@/components/yoroi/v2/reglages/MesureConfidentialite';
@@ -52,8 +55,10 @@ async function countInDatabase(id: string): Promise<number> {
 async function deleteInDatabase(id: string): Promise<void> {
   if (id === 'weights') {
     const [w, m] = await Promise.all([getAllWeights(), getMeasurements()]);
-    for (const x of w) if (x.id != null) await deleteWeight(x.id);
-    for (const x of m) if (x.id != null) await deleteMeasurementRecord(x.id);
+    // « Supprimer mes données » : rien ne reste, pas meme dans la corbeille (28 octobre 2026)
+    for (const x of w) if (x.id != null) await deleteWeight(x.id, { definitif: true });
+    for (const x of m) if (x.id != null) await deleteMeasurementRecord(x.id, { definitif: true });
+    await emptyTrashCorps();
   } else if (id === 'workouts') {
     await deleteAllTrainings();
   } else if (id === 'photos') {
@@ -142,6 +147,10 @@ export default function PrivacyDataScreen() {
         onPress: async () => {
           setSaving(true);
           try {
+            // 28 octobre 2026 : copie de securite locale juste avant (Reglages, copies de securite), non bloquante
+            await openDatabase()
+              .then((db) => snapshotBeforeImport(db, traduire('Avant la suppression de « {0} »', cat.label)))
+              .catch(() => null);
             if (cat.secure) await secureStorage.removeItem(cat.key);
             else await AsyncStorage.removeItem(cat.key);
             await deleteInDatabase(cat.id);
@@ -162,8 +171,16 @@ export default function PrivacyDataScreen() {
     if (saving) return;
     appAlert(traduire('Supprimer toutes les données'), messageEffacement(Platform.OS), [
       { text: traduire('Annuler'), style: 'cancel' },
+      // 28 octobre 2026 : une seconde confirmation, l'effacement complet ne part jamais d'un appui de trop
+      { text: traduire('Supprimer'), style: 'destructive', onPress: confirmerToutSupprimer },
+    ]);
+  };
+
+  const confirmerToutSupprimer = () => {
+    appAlert(traduire('Vraiment tout supprimer ?'), traduire('Pesées, séances, photos et réglages partent pour de bon. Fais une sauvegarde avant si tu veux les garder.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: traduire('Supprimer'),
+        text: traduire('Tout supprimer'),
         style: 'destructive',
         onPress: async () => {
           setSaving(true);

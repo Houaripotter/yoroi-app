@@ -1,12 +1,25 @@
 import * as SQLite from 'expo-sqlite';
+import { lireCorbeilleCorps, restaurerCorps, supprimerAvecCorbeille } from '@/lib/corbeilleCorps';
+import type { ElementCorbeilleCorps } from '@/lib/corbeilleCorps';
 import { vitrineDb } from '@/lib/v2/visite/vitrine';
 import { initTrainingJournalDB } from './trainingJournalService';
 import logger from '@/lib/security/logger';
 import { getDismissedImportIds } from '@/lib/v2/seances/dismissedImports';
-import { snapshotBeforeMigrations, recordMigrationResult } from '@/lib/v2/sauvegarde/avantMiseAJour';
+import { snapshotBeforeMigrations, recordMigrationResult, snapshotBeforeImport } from '@/lib/v2/sauvegarde/avantMiseAJour';
 import { rebaseLocalUri } from '@/lib/v2/sauvegarde/chemins';
 import { reprendrePeseesDuCoffre } from './databaseReprisePesees';
 import { traduire } from '@/lib/i18n/tr';
+import { groupesDoublonsPesees, requeteMiseAJourPesee } from '@/lib/v2/pesee/miseAJourPesee';
+import type { LignePesee, ModifPesee } from '@/lib/v2/pesee/miseAJourPesee';
+
+/** 28 octobre 2026 : copie de securite locale avant une suppression groupee. Jamais bloquante. */
+const copieAvantSuppression = async (database: SQLite.SQLiteDatabase, raison: string): Promise<void> => {
+  try {
+    await snapshotBeforeImport(database, raison);
+  } catch {
+    // la suppression continue, elle a ete confirmee par l'utilisateur
+  }
+};
 
 // ============================================
 // YOROI DATABASE - STOCKAGE LOCAL SQLite
@@ -634,6 +647,8 @@ const _runMigrations = async (database: SQLite.SQLiteDatabase) => {
   await safeAddColumn(database, 'trash_trainings', 'location_lon', 'REAL');
   await safeAddColumn(database, 'trash_trainings', 'location_name', 'TEXT');
   await safeAddColumn(database, 'trash_trainings', 'combat_rounds', 'TEXT');
+  // 28 octobre 2026 : la ligne entiere de la seance supprimee (Sante, FC, zones, trace, score...), pour tout remettre
+  await safeAddColumn(database, 'trash_trainings', 'row_json', 'TEXT');
   await safeAddColumn(database, 'clubs', 'logo_uri', 'TEXT');
   await safeAddColumn(database, 'clubs', 'color', 'TEXT');
   await safeAddColumn(database, 'clubs', 'sessions_per_week', 'INTEGER');
@@ -1071,9 +1086,13 @@ export const getCompositionHistory = async (limit: number = 10): Promise<Weight[
   );
 };
 
-export const deleteWeight = async (id: number): Promise<void> => {
+/**
+ * 28 octobre 2026 : la pesee part d'abord a la corbeille (lib/corbeilleCorps.ts), 30 jours, avec « Annuler ».
+ * definitif : « Supprimer mes donnees » seulement. Renvoie l'id dans la corbeille.
+ */
+export const deleteWeight = async (id: number, options?: { definitif?: boolean }): Promise<number | null> => {
   const database = await openDatabase();
-  await database.runAsync('DELETE FROM weights WHERE id = ?', [id]);
+  return supprimerAvecCorbeille(database as any, 'weights', id, options?.definitif === true);
 };
 
 // ============================================
@@ -1339,13 +1358,39 @@ export const getTrainingStats = async (): Promise<{ sport: string; count: number
   );
 };
 
-export const deleteTraining = async (id: number): Promise<void> => {
+/** Supprime la seance (corbeille d'abord) ; renvoie l'id dans la corbeille, null si la copie n'a pas pu se faire */
+export const deleteTraining = async (id: number): Promise<number | null> => {
   const database = await openDatabase();
+  let trashId: number | null = null;
 
   // Lire la séance avant de la supprimer
   const row = await database.getFirstAsync<any>(
     'SELECT * FROM trainings WHERE id = ?', [id]
   );
+
+  // 28 octobre 2026 (audit « ne jamais perdre de donnees ») : la corbeille AVANT l'effacement. Avant, la seance
+  // etait effacee puis copiee : app fermee entre les deux ou copie ratee, elle etait perdue. Et la copie gardait
+  // la ligne entiere (row_json), plus seulement une partie des colonnes.
+  if (row) {
+    try {
+      const r = await database.runAsync(
+        `INSERT INTO trash_trainings (original_id, club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, heart_rate, max_heart_rate, location_lat, location_lon, location_name, combat_rounds, created_at, row_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [row.id, row.club_id ?? null, row.sport ?? null, row.session_type ?? null, row.date, row.start_time ?? null, row.duration_minutes ?? null, row.notes ?? null, row.muscles ?? null, row.exercises ?? null, row.technique_rating ?? null, row.is_outdoor ?? 0, row.distance ?? null, row.calories ?? null, row.intensity ?? null, row.rounds ?? null, row.round_duration ?? null, row.pente ?? null, row.speed ?? null, row.resistance ?? null, row.watts ?? null, row.cadence ?? null, row.heart_rate ?? null, row.max_heart_rate ?? null, row.location_lat ?? null, row.location_lon ?? null, row.location_name ?? null, row.combat_rounds ?? null, row.created_at ?? null, JSON.stringify(row)]
+      );
+      trashId = r?.lastInsertRowId ?? null;
+    } catch (e) {
+      // colonne row_json absente (migration ratee) : la copie sans elle, comme avant
+      try {
+        const r2 = await database.runAsync(
+          `INSERT INTO trash_trainings (original_id, club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, heart_rate, max_heart_rate, location_lat, location_lon, location_name, combat_rounds, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [row.id, row.club_id ?? null, row.sport ?? null, row.session_type ?? null, row.date, row.start_time ?? null, row.duration_minutes ?? null, row.notes ?? null, row.muscles ?? null, row.exercises ?? null, row.technique_rating ?? null, row.is_outdoor ?? 0, row.distance ?? null, row.calories ?? null, row.intensity ?? null, row.rounds ?? null, row.round_duration ?? null, row.pente ?? null, row.speed ?? null, row.resistance ?? null, row.watts ?? null, row.cadence ?? null, row.heart_rate ?? null, row.max_heart_rate ?? null, row.location_lat ?? null, row.location_lon ?? null, row.location_name ?? null, row.combat_rounds ?? null, row.created_at ?? null]
+        );
+        trashId = r2?.lastInsertRowId ?? null;
+      } catch (e2) {
+        logger.error('Erreur mise en corbeille:', e, e2);
+      }
+    }
+  }
 
   // Supprimer de la table principale
   await database.runAsync('DELETE FROM trainings WHERE id = ?', [id]);
@@ -1358,17 +1403,16 @@ export const deleteTraining = async (id: number): Promise<void> => {
     logger.warn('Créneau non remis à faire après suppression', e);
   }
 
-  // Mettre en corbeille
-  if (row) {
+  if (row && trashId) {
     try {
-      await database.runAsync(
-        `INSERT INTO trash_trainings (original_id, club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, heart_rate, max_heart_rate, location_lat, location_lon, location_name, combat_rounds, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [row.id, row.club_id ?? null, row.sport ?? null, row.session_type ?? null, row.date, row.start_time ?? null, row.duration_minutes ?? null, row.notes ?? null, row.muscles ?? null, row.exercises ?? null, row.technique_rating ?? null, row.is_outdoor ?? 0, row.distance ?? null, row.calories ?? null, row.intensity ?? null, row.rounds ?? null, row.round_duration ?? null, row.pente ?? null, row.speed ?? null, row.resistance ?? null, row.watts ?? null, row.cadence ?? null, row.heart_rate ?? null, row.max_heart_rate ?? null, row.location_lat ?? null, row.location_lon ?? null, row.location_name ?? null, row.combat_rounds ?? null, row.created_at ?? null]
-      );
-    } catch (e) {
-      logger.error('Erreur mise en corbeille:', e);
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      // barre « Annuler » (components/yoroi/v2/seances/AnnulerSuppression.tsx, lib/v2/seances/corbeille.ts)
+      require('react-native').DeviceEventEmitter.emit('YOROI_SEANCE_SUPPRIMEE', { trashId, sport: row.sport, date: row.date });
+    } catch {
+      // sans barre « Annuler » : la seance reste dans la corbeille 30 jours
     }
   }
+  return trashId;
 };
 
 // ============================================
@@ -2228,6 +2272,7 @@ export const resetDatabase = async (): Promise<void> => {
     try { await database.execAsync('DELETE FROM weights;'); } catch (e) { /* table peut ne pas exister */ }
     try { await database.execAsync('DELETE FROM trainings;'); } catch (e) { /* table peut ne pas exister */ }
     try { await database.execAsync('DELETE FROM measurements;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM trash_corps;'); } catch (e) { /* table peut ne pas exister */ }
     try { await database.execAsync('DELETE FROM photos;'); } catch (e) { /* table peut ne pas exister */ }
     try { await database.execAsync('DELETE FROM achievements;'); } catch (e) { /* table peut ne pas exister */ }
     try { await database.execAsync('DELETE FROM weekly_plan;'); } catch (e) { /* table peut ne pas exister */ }
@@ -2476,6 +2521,27 @@ export const restoreFromTrash = async (trashId: number): Promise<void> => {
   );
   if (!item) return;
 
+  // 28 octobre 2026 : la ligne entiere gardee a la suppression, colonnes encore presentes dans la table
+  let full: Record<string, unknown> | null = null;
+  try {
+    const v = item.row_json ? JSON.parse(item.row_json) : null;
+    full = v && typeof v === 'object' && !Array.isArray(v) ? v : null;
+  } catch {
+    full = null;
+  }
+  if (full) {
+    const cols = await _getTableColumns(database, 'trainings');
+    const keys = Object.keys(full).filter((k) => k !== 'id' && cols.has(k));
+    if (keys.length && keys.includes('date')) {
+      await database.runAsync(
+        `INSERT INTO trainings (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`,
+        keys.map((k) => (full![k] ?? null) as any)
+      );
+      await database.runAsync('DELETE FROM trash_trainings WHERE id = ?', [trashId]);
+      return;
+    }
+  }
+
   await database.runAsync(
     `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, distance, calories, intensity, rounds, round_duration, is_outdoor, pente, speed, resistance, watts, cadence, heart_rate, max_heart_rate, location_lat, location_lon, location_name, combat_rounds, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -2530,17 +2596,9 @@ export default {
  */
 export const countWeightDuplicates = async (): Promise<number> => {
   const database = await openDatabase();
-  const rows = await database.getAllAsync<any>('SELECT date, source FROM weights');
-  const counts = new Map<string, number>();
-  for (const row of rows) {
-    const key = `${row.date}|${row.source || 'manual'}`;
-    counts.set(key, (counts.get(key) || 0) + 1);
-  }
-  let duplicates = 0;
-  for (const c of counts.values()) {
-    if (c > 1) duplicates += c - 1;
-  }
-  return duplicates;
+  const rows = await database.getAllAsync<LignePesee>('SELECT id, date, source, weight FROM weights');
+  // 28 octobre 2026 : meme regle que deduplicateWeights (meme jour, meme source, meme poids)
+  return groupesDoublonsPesees(rows).reduce((n, g) => n + g.supprimer.length, 0);
 };
 
 /**
@@ -2620,59 +2678,56 @@ export const deduplicateTrainings = async (): Promise<number> => {
  */
 export const deduplicateWeights = async (): Promise<{ removed: number; kept: number }> => {
   const database = await openDatabase();
-  const rows = await database.getAllAsync<any>('SELECT * FROM weights ORDER BY id ASC');
-
-  // Grouper par (date, source)
-  const groups = new Map<string, any[]>();
-  for (const row of rows) {
-    const key = `${row.date}|${row.source || 'manual'}`;
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(row);
-  }
-
-  const columns = ['weight', 'fat_percent', 'muscle_percent', 'water_percent',
-                   'bone_mass', 'visceral_fat', 'metabolic_age', 'bmr', 'note'];
+  const rows = await database.getAllAsync<LignePesee>('SELECT * FROM weights ORDER BY id ASC');
+  // 28 octobre 2026 : seulement les VRAIS doublons (meme jour, meme source, meme poids), voir
+  // lib/v2/pesee/miseAJourPesee.ts. Avant, la pesee du soir etait supprimee si celle du matin existait.
+  const groupes = groupesDoublonsPesees(rows);
+  if (!groupes.length) return { removed: 0, kept: rows.length };
+  await copieAvantSuppression(database, traduire('Avant le nettoyage des doublons'));
   let removed = 0;
-
-  for (const group of groups.values()) {
-    if (group.length <= 1) continue;
-
-    // Fusionner : garder la meilleure valeur (première non-null) pour chaque colonne
-    const merged: any = { ...group[0] };
-    for (const row of group.slice(1)) {
-      for (const col of columns) {
-        if ((merged[col] == null || merged[col] === '') && row[col] != null && row[col] !== '') {
-          merged[col] = row[col];
-        }
+  await database.withTransactionAsync(async () => {
+    for (const g of groupes) {
+      const cols = Object.keys(g.fusion);
+      if (cols.length) {
+        await database.runAsync(
+          `UPDATE weights SET ${cols.map((c) => `${c} = ?`).join(', ')} WHERE id = ?`,
+          [...cols.map((c) => g.fusion[c] as string | number), g.garder.id],
+        );
       }
+      const placeholders = g.supprimer.map(() => '?').join(',');
+      await database.runAsync(`DELETE FROM weights WHERE id IN (${placeholders})`, g.supprimer);
+      removed += g.supprimer.length;
     }
-
-    // Mettre à jour l'entrée conservée (id le plus bas)
-    await database.runAsync(
-      `UPDATE weights SET weight = ?, fat_percent = ?, muscle_percent = ?, water_percent = ?,
-       bone_mass = ?, visceral_fat = ?, metabolic_age = ?, bmr = ?, note = ? WHERE id = ?`,
-      [merged.weight, merged.fat_percent ?? null, merged.muscle_percent ?? null,
-       merged.water_percent ?? null, merged.bone_mass ?? null, merged.visceral_fat ?? null,
-       merged.metabolic_age ?? null, merged.bmr ?? null, merged.note ?? null, merged.id]
-    );
-
-    // Supprimer les doublons (toutes les entrées sauf la première)
-    const idsToDelete = group.slice(1).map(r => r.id);
-    const placeholders = idsToDelete.map(() => '?').join(',');
-    await database.runAsync(`DELETE FROM weights WHERE id IN (${placeholders})`, idsToDelete);
-    removed += idsToDelete.length;
-  }
-
+  });
   return { removed, kept: rows.length - removed };
 };
 
-export const deleteMeasurementRecord = async (id: number): Promise<void> => {
+/** 28 octobre 2026 : comme deleteWeight, la mensuration part d'abord a la corbeille */
+export const deleteMeasurementRecord = async (id: number, options?: { definitif?: boolean }): Promise<number | null> => {
   const database = await openDatabase();
-  await database.runAsync('DELETE FROM measurements WHERE id = ?', [id]);
+  return supprimerAvecCorbeille(database as any, 'measurements', id, options?.definitif === true);
+};
+
+/** Corbeille des pesees et mensurations (30 jours) */
+export const getTrashCorps = async (): Promise<ElementCorbeilleCorps[]> => lireCorbeilleCorps((await openDatabase()) as any);
+
+/** Remet une pesee ou une mensuration ; false si elle est deja remise */
+export const restoreCorpsFromTrash = async (trashId: number): Promise<boolean> => restaurerCorps((await openDatabase()) as any, trashId);
+
+/** « Supprimer mes donnees » : la corbeille des pesees et mensurations est videe aussi */
+export const emptyTrashCorps = async (): Promise<void> => {
+  const database = await openDatabase();
+  try {
+    await database.execAsync('DELETE FROM trash_corps;');
+  } catch {
+    // table absente : rien a vider
+  }
 };
 
 export const deleteWeightsBySource = async (source: string): Promise<number> => {
   const database = await openDatabase();
+  // 28 octobre 2026 : copie de securite locale avant d'effacer plusieurs pesees d'un coup (non bloquante)
+  await copieAvantSuppression(database, traduire('Avant la suppression des pesées {0}', source));
   const countResult = await database.getFirstAsync<{ count: number }>(
     'SELECT COUNT(*) as count FROM weights WHERE source = ?', [source]
   );
@@ -2739,35 +2794,15 @@ export const updateMeasurementRecord = async (id: number, data: Partial<Measurem
   );
 };
 
+/**
+ * 28 octobre 2026 : seules les colonnes PRESENTES dans data sont ecrites (lib/v2/pesee/miseAJourPesee.ts).
+ * Avant, corriger une seule valeur (ex. la masse grasse) vidait toutes les autres colonnes de la pesee.
+ */
 export const updateWeight = async (id: number, data: Partial<Weight>): Promise<void> => {
+  const q = requeteMiseAJourPesee(id, data as ModifPesee);
+  if (!q) return;
   const database = await openDatabase();
-  await database.runAsync(
-    `UPDATE weights SET
-      weight = COALESCE(?, weight),
-      fat_percent = ?,
-      muscle_percent = ?,
-      water_percent = ?,
-      bone_mass = ?,
-      visceral_fat = ?,
-      metabolic_age = ?,
-      bmr = ?,
-      note = ?,
-      date = COALESCE(?, date)
-    WHERE id = ?`,
-    [
-      data.weight ?? null,
-      data.fat_percent ?? null,
-      data.muscle_percent ?? null,
-      data.water_percent ?? null,
-      data.bone_mass ?? null,
-      data.visceral_fat ?? null,
-      data.metabolic_age ?? null,
-      data.bmr ?? null,
-      data.note ?? null,
-      data.date ?? null,
-      id,
-    ]
-  );
+  await database.runAsync(q.sql, q.values);
 };
 
 /**

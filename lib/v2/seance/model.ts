@@ -39,6 +39,8 @@ type DraftBase = {
   /** id de la seance modifiee */
   editId?: number;
   details?: SessionDetails;
+  /** 28 octobre 2026 : heure (ms) de la derniere ecriture, la derniere trace de vie de la seance */
+  majMs?: number;
 };
 
 export type LiveSet = {
@@ -204,14 +206,67 @@ const DRAFT_KEY = 'yoroi_seance_brouillon_v1';
 const REST_KEY = 'yoroi_seance_repos_v1';
 const COMBAT_PREFS_KEY = 'yoroi_seance_combat_v1';
 
+/** Au dela, une seance n'est plus reprise « en direct » : elle passe dans les seances non terminees */
+export const DRAFT_MAX_MS = 2 * 24 * 3600 * 1000;
+
+/** Quelque chose a ete fait : une serie validee, un round rempli, une mesure de cardio */
+export function aDuTravail(d: SeanceDraft): boolean {
+  if (d.kind === 'muscu') return d.exercises.some((e) => e.sets.some((x) => x.done));
+  if (d.kind === 'combat') {
+    return (!!d.timer && d.timer.phase !== 'idle')
+      || d.rounds.some((r) => !!(r.intensity || r.partner || r.result || r.method || r.notes)) || !!d.notes.trim() || !!d.theme.trim();
+  }
+  return !!(d.distance.trim() || d.calories.trim() || d.heartRate.trim() || d.notes.trim() || d.manualMinutes);
+}
+
+/**
+ * 28 octobre 2026 (audit « ne jamais perdre de donnees ») : une seance en direct de plus de 2 jours n'est plus
+ * effacee sans un mot. Avec au moins une serie faite, elle part dans les seances non terminees
+ * (lib/v2/seance/ancien.ts) : « Enregistrer ce qui est fait » ou « Effacer », a ton choix. Vide, elle part.
+ */
+export const ANCIENS_KEY = 'yoroi_seances_non_terminees_v1';
+
+export async function chargerAnciens(): Promise<SeanceDraft[]> {
+  try {
+    const raw = await AsyncStorage.getItem(ANCIENS_KEY);
+    const v = raw ? JSON.parse(raw) : [];
+    return Array.isArray(v) ? v.filter((d) => d && d.kind && d.startedAt) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function archiverAncien(d: SeanceDraft): Promise<void> {
+  // une liste illisible n'est jamais remplacee : l'erreur remonte et le brouillon reste ou il est
+  const raw = await AsyncStorage.getItem(ANCIENS_KEY);
+  const v = raw ? JSON.parse(raw) : [];
+  const liste: SeanceDraft[] = Array.isArray(v) ? v : [];
+  if (!liste.some((x) => x && x.startedAt === d.startedAt && x.kind === d.kind)) liste.push(d);
+  await AsyncStorage.setItem(ANCIENS_KEY, JSON.stringify(liste));
+}
+
+export async function retirerAncien(d: Pick<SeanceDraft, 'kind' | 'startedAt'>): Promise<void> {
+  const raw = await AsyncStorage.getItem(ANCIENS_KEY);
+  const v = raw ? JSON.parse(raw) : [];
+  const liste: SeanceDraft[] = Array.isArray(v) ? v : [];
+  await AsyncStorage.setItem(ANCIENS_KEY, JSON.stringify(liste.filter((x) => !(x && x.startedAt === d.startedAt && x.kind === d.kind))));
+}
+
 export async function loadDraft(): Promise<SeanceDraft | null> {
   try {
     const raw = await AsyncStorage.getItem(DRAFT_KEY);
     if (!raw) return null;
     const d = JSON.parse(raw) as SeanceDraft;
     if (!d || !d.kind || !d.startedAt) return null;
-    // un brouillon de plus de 2 jours n'a plus de sens
-    if (Date.now() - d.startedAt > 2 * 24 * 3600 * 1000) {
+    if (Date.now() - d.startedAt > DRAFT_MAX_MS) {
+      if (aDuTravail(d)) {
+        try {
+          await archiverAncien(d);
+        } catch {
+          // non archivee : on la laisse en place, rien n'est efface
+          return null;
+        }
+      }
       await clearDraft();
       return null;
     }
@@ -225,7 +280,7 @@ export async function saveDraft(d: SeanceDraft): Promise<void> {
   // une saisie apres coup ou une modification ne remplace jamais la seance en cours
   if (d.form) return;
   try {
-    await AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+    await AsyncStorage.setItem(DRAFT_KEY, JSON.stringify({ ...d, majMs: Date.now() }));
   } catch {
     // stockage indisponible : la seance continue en memoire
   }
@@ -236,35 +291,103 @@ export async function saveDraft(d: SeanceDraft): Promise<void> {
  * tapais si le telephone ferme l'app. Elle ne remplace jamais la seance en direct (cle differente).
  */
 const SAISIE_KEY = 'yoroi_seance_saisie_v1';
-const SAISIE_MAX_MS = 12 * 3600 * 1000;
+/**
+ * 28 octobre 2026 : une saisie par sport et par seance modifiee (cle `muscu:new`, `cardio:42`...), gardee 7 jours
+ * (avant : 12 heures, et la modification d'une seance existante n'etait jamais gardee). Ecritures une par une.
+ */
+const SAISIES_KEY = 'yoroi_seance_saisies_v2';
+const SAISIE_MAX_MS = 7 * 24 * 3600 * 1000;
+export const cleSaisie = (d: { kind: SeanceDraft['kind']; editId?: number | null }): string => `${d.kind}:${d.editId ? d.editId : 'new'}`;
 
-export async function sauverSaisie(d: SeanceDraft): Promise<void> {
-  if (!d.form || d.editId) return;
+type Saisies = Record<string, SeanceDraft & { savedAt?: number }>;
+let fileSaisies: Promise<unknown> = Promise.resolve();
+function enFileSaisies<T>(fn: () => Promise<T>): Promise<T> {
+  const p = fileSaisies.then(fn, fn);
+  fileSaisies = p.catch(() => undefined);
+  return p;
+}
+async function lireSaisies(strict: boolean): Promise<Saisies> {
+  const raw = await AsyncStorage.getItem(SAISIES_KEY);
+  if (!raw) return {};
   try {
-    await AsyncStorage.setItem(SAISIE_KEY, JSON.stringify({ ...d, savedAt: Date.now() }));
+    const v = JSON.parse(raw);
+    if (v && typeof v === 'object' && !Array.isArray(v)) return v as Saisies;
   } catch {
-    // rien : la saisie continue en memoire
+    // illisible
   }
+  if (strict) throw new Error('saisies illisibles');
+  return {};
 }
 
-export async function chargerSaisie(kind: SeanceDraft['kind']): Promise<SeanceDraft | null> {
+export function sauverSaisie(d: SeanceDraft): Promise<void> {
+  if (!d.form) return Promise.resolve();
+  return enFileSaisies(async () => {
+    try {
+      const all = await lireSaisies(true);
+      all[cleSaisie(d)] = { ...d, savedAt: Date.now() };
+      await AsyncStorage.setItem(SAISIES_KEY, JSON.stringify(all));
+    } catch {
+      // rien : la saisie continue en memoire
+    }
+  });
+}
+
+/** La saisie en cours de ce sport (nouvelle saisie), ou de cette seance modifiee (editId) */
+export async function chargerSaisie(kind: SeanceDraft['kind'], editId?: number | null): Promise<SeanceDraft | null> {
+  await fileSaisies.catch(() => undefined);
+  try {
+    const d = (await lireSaisies(false))[cleSaisie({ kind, editId })];
+    if (d && d.kind === kind && d.form && Date.now() - (d.savedAt ?? 0) <= SAISIE_MAX_MS) return d;
+  } catch {
+    // rien
+  }
+  if (editId) return null;
+  // ancienne cle (avant le 28 octobre 2026)
   try {
     const raw = await AsyncStorage.getItem(SAISIE_KEY);
     if (!raw) return null;
     const d = JSON.parse(raw) as SeanceDraft & { savedAt?: number };
-    if (!d || d.kind !== kind || !d.form || Date.now() - (d.savedAt ?? 0) > SAISIE_MAX_MS) return null;
+    if (!d || d.kind !== kind || !d.form || d.editId || Date.now() - (d.savedAt ?? 0) > SAISIE_MAX_MS) return null;
     return d;
   } catch {
     return null;
   }
 }
 
-export async function effacerSaisie(): Promise<void> {
-  try {
-    await AsyncStorage.removeItem(SAISIE_KEY);
-  } catch {
-    // rien
-  }
+/** Une seance modifiee vient d'etre enregistree (lib/v2/seance/save.ts) : ses saisies gardees partent, quel que soit l'ecran */
+export function effacerSaisiesDeSeance(editId: number): Promise<void> {
+  return enFileSaisies(async () => {
+    try {
+      const all = await lireSaisies(true);
+      let change = false;
+      for (const k of Object.keys(all)) if (k.endsWith(`:${editId}`)) { delete all[k]; change = true; }
+      if (change) await AsyncStorage.setItem(SAISIES_KEY, JSON.stringify(all));
+    } catch {
+      // rien
+    }
+  });
+}
+
+/** Saisie enregistree ou abandonnee. Sans argument : la nouvelle saisie de musculation (ancien appel). */
+export function effacerSaisie(d: { kind: SeanceDraft['kind']; editId?: number | null } = { kind: 'muscu' }): Promise<void> {
+  return enFileSaisies(async () => {
+    try {
+      const all = await lireSaisies(true);
+      delete all[cleSaisie(d)];
+      await AsyncStorage.setItem(SAISIES_KEY, JSON.stringify(all));
+    } catch {
+      // rien
+    }
+    if (!d.editId) {
+      try {
+        const raw = await AsyncStorage.getItem(SAISIE_KEY);
+        const old = raw ? JSON.parse(raw) : null;
+        if (!old || old.kind === d.kind) await AsyncStorage.removeItem(SAISIE_KEY);
+      } catch {
+        // rien
+      }
+    }
+  });
 }
 
 /**
@@ -298,12 +421,16 @@ export async function clearDraft(): Promise<void> {
   // les ecritures en attente sont annulees, celle en cours se termine avant l'effacement
   generation++;
   aEcrire = null;
-  await fileEcriture.catch(() => {});
-  try {
-    await AsyncStorage.removeItem(DRAFT_KEY);
-  } catch {
-    // rien a faire
-  }
+  // 28 octobre 2026 : l'effacement passe dans la file des ecritures. Avant, une nouvelle seance ecrite juste
+  // apres clearDraft pouvait etre effacee par lui (l'effacement partait apres elle) : plus de brouillon.
+  fileEcriture = fileEcriture.catch(() => {}).then(async () => {
+    try {
+      await AsyncStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // rien a faire
+    }
+  });
+  await fileEcriture;
   // 26 octobre 2026 : plus de seance, plus de rappel de fin de repos
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports

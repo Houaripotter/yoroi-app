@@ -33,6 +33,7 @@ import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { kgDepuisSaisie, saisieDepuisKg } from '@/lib/v2/unitePoids';
 import { useSauvegardeBrouillon } from '@/lib/v2/seance/useSauvegardeBrouillon';
 import { allerAExercice, seriesRestantes, chargerSaisie, clearDraft, effacerSaisie, loadDraft, loadRestPref, saveRestPref, uid } from '@/lib/v2/seance/model';
+import { offrirSaisie } from '@/lib/v2/seance/repriseSaisie';
 import type { LiveExercise, LiveSet, MuscuDraft, SessionDetails } from '@/lib/v2/seance/model';
 import { detailsFromTraining, loadTrainingForEdit, trainingFromDetails } from '@/lib/v2/seance/edit';
 import { initialDetails, readParams, timeOf, wantsForm } from '@/lib/v2/seance/params';
@@ -70,6 +71,8 @@ import { chargerProgrammesPerso } from '@/lib/v2/programmes/monProgramme';
 import { jourPourToi } from '@/lib/v2/programmes/perso';
 import { EXPLICATION_PRISE, PRISES, avecPrise, sansPrise } from '@/lib/v2/seance/prise';
 import type { Prise } from '@/lib/v2/seance/prise';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { BoutonCoachVocal, useCoachVocal } from '@/components/yoroi/v2/seance/CoachVocal';
 
 const INTENSITIES = [
@@ -176,12 +179,13 @@ export default function SeanceMuscu() {
         if (params.editId) {
           const t = await loadTrainingForEdit(params.editId);
           if (!t) {
-            appAlert(traduire('Séance introuvable'), traduire('Elle a peut-être été supprimée.'));
+            appAlert(traduire('Séance introuvable'), traduire('Elle a sans doute été supprimée.'));
             router.back();
             return;
           }
           const exercises = (t.exercises ?? []).filter((e) => e && e.name).map(exerciseDone);
-          setDraft({
+          // 28 octobre 2026 : une modification laissée en plan (app fermée) se reprend
+          void offrirSaisie<MuscuDraft>({
             kind: 'muscu',
             form: true,
             editId: params.editId,
@@ -197,7 +201,7 @@ export default function SeanceMuscu() {
             muscles: t.muscles ? t.muscles.split(',').map((m) => m.trim()).filter(Boolean) : null,
             intensity: t.intensity ?? null,
             details: detailsFromTraining(t),
-          });
+          }, setDraft);
           return;
         }
 
@@ -247,7 +251,7 @@ export default function SeanceMuscu() {
               const conseil = zone
                 ? e.impossible
                   ? traduire('Tu as signalé une douleur : {0}. Passe cet exercice, et demande l’avis d’un professionnel si elle dure.', traduire(LIBELLE_REGION[zone]))
-                  : [traduire('Remplace {0} pour ménager {1}', traduire(nomFr(e.remplace ?? '')), traduire(LIBELLE_REGION[zone])), PRECISION_EXO[e.nom] ? traduire(PRECISION_EXO[e.nom]) : ''].filter(Boolean).join(' ')
+                  : [traduire('Remplace {0} pour ménager {1}', sansTiret(traduire(nomFr(e.remplace ?? ''))), traduire(LIBELLE_REGION[zone])), PRECISION_EXO[e.nom] ? traduire(PRECISION_EXO[e.nom]) : ''].filter(Boolean).join(' ')
                 : e.remplace
                   ? PRECISION_EXO[e.nom] ? traduire(PRECISION_EXO[e.nom]) : undefined
                   : e.conseil ?? (PRECISION_EXO[e.nom] ? traduire(PRECISION_EXO[e.nom]) : undefined);
@@ -584,10 +588,10 @@ export default function SeanceMuscu() {
     const titre = traduire(draftTitle(draft));
     if (!cur) return { titre, debutMs: draft.startedAt, libelle: titre, finReposMs: null, reposTotalS: 0, ensuite: '' };
     const i = cur.sets.findIndex((x) => !x.done);
-    const nom = traduire(nomFr(cur.name));
+    const nom = sansTiret(traduire(nomFr(cur.name)));
     const libelle = i >= 0 ? traduire('{0}, série {1} sur {2}', nom, i + 1, cur.sets.length) : traduire('{0}, bouclé', nom);
     const suivant = i >= 0 ? null : draft.exercises.find((e) => e.id !== cur.id && seriesRestantes(e) > 0);
-    const ensuite = i >= 0 ? traduire('Ensuite : {0}, série {1}', nom, i + 1) : suivant ? traduire('Ensuite : {0}', traduire(nomFr(suivant.name))) : traduire('Dernier effort, bravo');
+    const ensuite = i >= 0 ? traduire('Ensuite : {0}, série {1}', nom, i + 1) : suivant ? traduire('Ensuite : {0}', sansTiret(traduire(nomFr(suivant.name)))) : traduire('Dernier effort, bravo');
     // 25 octobre 2026 : boutons « Série faite » et « +15 s » dans la Dynamic Island (lib/v2/seance/actionsIle.ts)
     const textes: TextesIle = {
       serie: traduire('{0}, série {1} sur {2}'),
@@ -598,8 +602,13 @@ export default function SeanceMuscu() {
       plus15: traduire('+15 s'),
       reposFini: tRepos('timer.restEnded'),
     };
-    const plan = planIle(draft, textes, (e) => traduire(nomFr(e.name)), rappelIle);
-    return { titre, debutMs: draft.startedAt, libelle, finReposMs: draft.restEndsAt ?? null, reposTotalS: draft.restTotal, ensuite, plan };
+    const plan = planIle(draft, textes, (e) => sansTiret(traduire(nomFr(e.name))), rappelIle);
+    // 28 octobre 2026 : la charge et les repetitions de la prochaine serie de chaque exercice, pour l'Apple Watch
+    const charges = draft.exercises.map((e) => {
+      const st = e.sets.find((x) => !x.done) ?? e.sets[e.sets.length - 1];
+      return { kg: Number(st?.weight) || 0, reps: Number(st?.reps) || e.cible?.repsMin || Number(st?.prevReps) || 0 };
+    });
+    return { titre, debutMs: draft.startedAt, libelle, finReposMs: draft.restEndsAt ?? null, reposTotalS: draft.restTotal, ensuite, plan, charges };
   }, [draft, rappelIle]); // eslint-disable-line react-hooks/exhaustive-deps
   useActiviteSeance(etatLive);
   // les appuis faits dans la Dynamic Island arrivent ici quand l'écran est ouvert (lib/v2/widgets/synchro.ts)
@@ -633,7 +642,7 @@ export default function SeanceMuscu() {
     if (draft?.form) {
       appAlert(draft.editId ? traduire('Quitter sans enregistrer ?') : traduire('Annuler cette saisie ?'), traduire('Tes changements ne seront pas gardés.'), [
         { text: 'Rester', style: 'cancel' },
-        { text: 'Quitter', style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); void effacerSaisie(); router.back(); } },
+        { text: 'Quitter', style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); void effacerSaisie(draft); router.back(); } },
       ]);
       return;
     }
@@ -701,7 +710,7 @@ export default function SeanceMuscu() {
       // 26 octobre 2026 : la seance est enregistree, le brouillon part tout de suite (sinon, app fermee juste
       // apres, elle reapparaissait « en cours » et pouvait etre enregistree deux fois)
       if (!draft.form) await clearDraft();
-      else void effacerSaisie();
+      else void effacerSaisie(draft);
       if (draft.programme && !draft.editId) await marquerJourFait(draft.programme.id, draft.programme.jourId, result.id, draft.form && det ? det.date : undefined).catch(() => {});
       if (draft.maSeance && !draft.editId && exercises.length > 0) await marquerFaite(draft.maSeance, draft.form && det ? det.date : undefined).catch(() => {});
       if (draft.editId) {
@@ -771,9 +780,7 @@ export default function SeanceMuscu() {
           </View>
         )}
         {!draft.form ? <BoutonCoachVocal /> : null}
-        <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 46, paddingHorizontal: 18, borderRadius: 16, justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
-          <Ink size={15} weight="black" color={c.onPrimary}>{draft.form ? traduire('Enregistrer') : traduire('Terminer')}</Ink>
-        </Pressable>
+        <BoutonPrincipal onPress={() => setFinishOpen(true)} hauteur={46} rayon={16} compact tailleTexte={15} lignes={1} label={draft.form ? traduire('Enregistrer') : traduire('Terminer')} />
       </View>
 
       {/* Avancement : une barre par exercice */}
@@ -807,7 +814,7 @@ export default function SeanceMuscu() {
                 femme,
                 maintenant: now,
                 charge: (kg) => (lb ? traduire('{0} lb', fmtNum(saisieDepuisKg(kg, unite))) : traduire('{0} kg', fmtNum(kg))),
-                nom: (n) => traduire(nomFr(n)),
+                nom: (n) => sansTiret(traduire(nomFr(n))),
               });
               if (!mot) return null;
               const fort = mot.moment === 'derniere' || mot.moment === 'fin' || mot.moment === 'moitie';
@@ -823,7 +830,7 @@ export default function SeanceMuscu() {
                 {draft.exercises.length > 1 ? (
                   <Ink size={13} weight="extraBold" color={c.accent}>{traduire('EXERCICE {0} SUR {1}', draft.exercises.indexOf(current) + 1, draft.exercises.length)}</Ink>
                 ) : null}
-                <Ink size={30} weight="black" tight>{traduire(current.name)}</Ink>
+                <Ink size={30} weight="black" tight>{sansTiret(traduire(current.name))}</Ink>
                 <Ink size={14} color={c.textSecondary}>
                   {lastBest && hCurrent ? (
                     <>
@@ -916,16 +923,16 @@ export default function SeanceMuscu() {
                     </View>
                     {/* en saisie apres coup, le bouton reste dans la carte ; en direct, il est dans la barre fixe du bas */}
                     {draft.form ? (
-                      <Pressable
+                      <BoutonPrincipal
                         onPress={() => validate(current, i)}
                         disabled={s.reps <= 0}
-                        accessibilityRole="button"
                         accessibilityLabel={traduire("Valider la série {0}", i + 1)}
-                        style={({ pressed }) => ({ minHeight: 58, borderRadius: 20, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: s.reps <= 0 ? c.fillSoft : pressed ? c.primaryPressed : c.primary })}
-                      >
-                        <Icon name="check" size={24} color={s.reps <= 0 ? c.textMuted : c.onPrimary} strokeWidth={3} />
-                        <Ink size={17} weight="black" color={s.reps <= 0 ? c.textMuted : c.onPrimary}>{traduire("Valider la série")}</Ink>
-                      </Pressable>
+                        label={traduire("Valider la série")}
+                        hauteur={58}
+                        rayon={20}
+                        tailleTexte={17}
+                        icone={(col) => <Icon name="check" size={24} color={col} strokeWidth={3} />}
+                      />
                     ) : null}
                   </View>
                 );
@@ -1020,7 +1027,7 @@ export default function SeanceMuscu() {
                       <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: tonDuRang(i).fond, alignItems: 'center', justifyContent: 'center' }}>
                         <Ink size={17} weight="black" color={tonDuRang(i).encre}>{String(i + 1)}</Ink>
                       </View>
-                      <Ink size={15.5} weight="black" tight color={all ? c.textMuted : c.ink} style={{ flex: 1 }} numberOfLines={2}>{traduire(e.name)}</Ink>
+                      <Ink size={15.5} weight="black" tight color={all ? c.textMuted : c.ink} style={{ flex: 1 }} numberOfLines={2}>{sansTiret(traduire(e.name))}</Ink>
                       <ExoDemo nom={sansPrise(e.name).base} taille={44} arrondi={12} />
                       <Ink size={13} weight="bold" color={all ? c.successText : c.textMuted}>{all ? (e.laisse ? traduire("{0} faites", doneCount) : traduire('fait')) : doneCount > 0 ? traduire("{0} sur {1}", doneCount, e.sets.length) : traduire("{0} séries", e.sets.length)}</Ink>
                     </Pressable>
@@ -1074,10 +1081,10 @@ export default function SeanceMuscu() {
               : activeIndex >= 0
                 ? { quoi: 'valider', serie: activeIndex + 1, total: current.sets.length, detail: setLabel(current.sets[activeIndex], unite), possible: current.sets[activeIndex].reps > 0 }
                 : nextEx
-                  ? { quoi: 'suivant', nom: traduire(nomFr(nextEx.name)) }
+                  ? { quoi: 'suivant', nom: sansTiret(traduire(nomFr(nextEx.name))) }
                   : { quoi: 'terminer' }
           }
-          aSuivre={activeIndex >= 0 && nextEx ? traduire(nomFr(nextEx.name)) : null}
+          aSuivre={activeIndex >= 0 && nextEx ? sansTiret(traduire(nomFr(nextEx.name))) : null}
           onValider={() => current && activeIndex >= 0 && validate(current, activeIndex)}
           onSuivant={() => nextEx && update((d) => allerAExercice(d, nextEx.id))}
           onTerminer={() => setFinishOpen(true)}
@@ -1155,16 +1162,14 @@ export default function SeanceMuscu() {
               autoFocus
               style={[fontStyle('medium'), { minHeight: 90, fontSize: 16, color: c.ink, padding: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, textAlignVertical: 'top' }]}
             />
-            <Pressable onPress={() => setNoteFor(null)} style={({ pressed }) => ({ minHeight: 56, borderRadius: 20, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}>
-              <Ink size={16} weight="black" color={c.onPrimary}>{traduire("Valider")}</Ink>
-            </Pressable>
+            <BoutonPrincipal onPress={() => setNoteFor(null)} label={traduire("Valider")} rayon={20} tailleTexte={16} />
           </View>
         ) : null}
       </Sheet>
 
       {/* Fin de seance */}
       <Sheet visible={finishOpen} onClose={() => setFinishOpen(false)} title={draft.editId ? traduire('Enregistrer les changements ?') : draft.form ? traduire('Enregistrer la séance ?') : traduire('Terminer la séance ?')} scroll>
-        <SportRibbon sport={draft.sport} femme={femme} sub={draft.label && draft.label !== getSportName(draft.sport) ? traduire(draft.label) : undefined} />
+        <SportRibbon sport={draft.sport} femme={femme} sub={draft.label && sansTiret(draft.label) !== getSportName(draft.sport) ? sansTiret(traduire(draft.label)) : undefined} />
         {/* series pas encore validees : en haut, avec de quoi agir (16 octobre 2026) */}
         {summary.pending > 0 ? (
           <View style={{ gap: 10, padding: 14, borderRadius: 18, backgroundColor: intensite(3).tint }}>
@@ -1180,9 +1185,7 @@ export default function SeanceMuscu() {
             </Ink>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {summary.pendingValid > 0 ? (
-                <Pressable onPress={validateAll} accessibilityRole="button" accessibilityLabel={summary.pendingValid === 1 ? traduire('Valider la série restante') : traduire("Valider les {0} séries restantes", summary.pendingValid)} style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
-                  <Ink size={14} weight="extraBold" color={c.onPrimary}>{traduire("Tout valider")}</Ink>
-                </Pressable>
+                <BoutonPrincipal onPress={validateAll} haptique="light" accessibilityLabel={summary.pendingValid === 1 ? traduire('Valider la série restante') : traduire("Valider les {0} séries restantes", summary.pendingValid)} label={traduire("Tout valider")} hauteur={46} rayon={14} tailleTexte={14} lignes={1} compact style={{ flex: 1 }} />
               ) : null}
               <Pressable onPress={showPending} accessibilityRole="button" accessibilityLabel={traduire("Voir les séries à valider")} style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : blancA(0.75), borderWidth: 1, borderColor: c.border })}>
                 <Ink size={14} weight="extraBold">{traduire("Voir")}</Ink>
@@ -1227,7 +1230,7 @@ export default function SeanceMuscu() {
               const on = shownMuscles.includes(m.id);
               return (
                 <Pressable key={m.id} onPress={() => toggleMuscle(m.id)} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ minHeight: 40, paddingHorizontal: 12, borderRadius: 12, justifyContent: 'center', backgroundColor: on ? c.primary : c.fillSoft }}>
-                  <Ink size={13} weight="bold" color={on ? c.onPrimary : c.ink}>{traduire(m.name)}</Ink>
+                  <Ink size={13} weight="bold" color={on ? c.onPrimary : c.ink}>{sansTiret(traduire(m.name))}</Ink>
                 </Pressable>
               );
             })}
@@ -1239,9 +1242,7 @@ export default function SeanceMuscu() {
         {summary.sets === 0 && !draft.form ? (
           <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Valide au moins une série pour enregistrer ta séance.")}</Ink>
         ) : null}
-        <Pressable onPress={save} disabled={saving || (summary.sets === 0 && !draft.form)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: summary.sets === 0 && !draft.form ? c.fillSoft : pressed ? c.primaryPressed : c.primary, opacity: saving ? 0.6 : 1 })}>
-          <Ink size={16} weight="black" color={summary.sets === 0 && !draft.form ? c.textMuted : c.onPrimary}>{saving ? 'Enregistrement...' : draft.editId ? traduire('Enregistrer les changements') : traduire('Enregistrer la séance')}</Ink>
-        </Pressable>
+        <BoutonPrincipal onPress={save} disabled={saving || (summary.sets === 0 && !draft.form)} loading={saving} label={draft.editId ? traduire('Enregistrer les changements') : traduire('Enregistrer la séance')} />
         <Pressable onPress={abandon} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
           <Ink size={14} weight="bold" color={c.textMuted}>{draft.form ? traduire('Quitter sans enregistrer') : traduire('Abandonner la séance')}</Ink>
         </Pressable>
@@ -1278,25 +1279,49 @@ function BarreAction({ bottom, etape, aSuivre, onValider, onSuivant, onTerminer,
           <Icon name="chevron" size={14} color={c.accentText} />
         </Pressable>
       ) : null}
-      <Pressable
-        onPress={() => {
-          if (!principal.actif) return;
-          impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
-          principal.onPress();
-        }}
-        disabled={!principal.actif}
-        accessibilityRole="button"
-        accessibilityLabel={principal.sous ? `${principal.label}, ${principal.sous}` : principal.label}
-        style={({ pressed }) => ({ minHeight: 64, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, backgroundColor: !principal.actif ? c.fillSoft : principal.fond, opacity: pressed ? 0.85 : 1 })}
-      >
-        <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: blancA(0.7), alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name={principal.icon} size={22} color={principal.actif ? principal.texte : c.textMuted} strokeWidth={3} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Ink size={17} weight="black" color={principal.actif ? principal.texte : c.textMuted} numberOfLines={1}>{principal.label}</Ink>
-          {principal.sous ? <Ink size={13} weight="bold" color={principal.actif ? principal.texte : c.textMuted} style={{ opacity: 0.8 }} numberOfLines={1}>{principal.sous}</Ink> : null}
-        </View>
-      </Pressable>
+      {principal.fond === c.primary ? (
+        // 28 octobre 2026 : l'action principale (valider, terminer, ajouter) prend le bouton principal partage
+        <BoutonPrincipal
+          onPress={principal.onPress}
+          disabled={!principal.actif}
+          accessibilityLabel={principal.sous ? `${principal.label}, ${principal.sous}` : principal.label}
+          hauteur={64}
+          rayon={22}
+          styleBouton={{ justifyContent: 'flex-start', gap: 12, paddingHorizontal: 16 }}
+        >
+          {(col) => (
+            <>
+              <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: principal.actif ? 'rgba(255,255,255,0.18)' : blancA(0.7), alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name={principal.icon} size={22} color={col} strokeWidth={3} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Ink size={17} weight="black" color={col} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{principal.label}</Ink>
+                {principal.sous ? <Ink size={13} weight="bold" color={col} style={{ opacity: 0.82 }} numberOfLines={1}>{principal.sous}</Ink> : null}
+              </View>
+            </>
+          )}
+        </BoutonPrincipal>
+      ) : (
+    <Pressable
+          onPress={() => {
+            if (!principal.actif) return;
+            impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+            principal.onPress();
+          }}
+          disabled={!principal.actif}
+          accessibilityRole="button"
+          accessibilityLabel={principal.sous ? `${principal.label}, ${principal.sous}` : principal.label}
+          style={({ pressed }) => ({ minHeight: 64, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, backgroundColor: !principal.actif ? c.fillSoft : principal.fond, opacity: pressed ? 0.85 : 1 })}
+        >
+          <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: blancA(0.7), alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name={principal.icon} size={22} color={principal.actif ? principal.texte : c.textMuted} strokeWidth={3} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Ink size={17} weight="black" color={principal.actif ? principal.texte : c.textMuted} numberOfLines={1}>{principal.label}</Ink>
+            {principal.sous ? <Ink size={13} weight="bold" color={principal.actif ? principal.texte : c.textMuted} style={{ opacity: 0.8 }} numberOfLines={1}>{principal.sous}</Ink> : null}
+          </View>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -1332,7 +1357,7 @@ function EmptyStart({ image, recent, onPick, onLibrary }: { image: ReturnType<ty
         {image ? <Image source={image} style={{ position: 'absolute', right: -20, bottom: -40, width: 200, height: 266 }} resizeMode="contain" /> : null}
         <View style={{ maxWidth: '62%', gap: 6 }}>
           <Ink size={26} weight="black" tight>{traduire("Premier exercice ?")}</Ink>
-          <Ink size={14} color={c.textSecondary}>{traduire("Choisis-le, tes séries arrivent pré-remplies avec ta dernière fois.")}</Ink>
+          <Ink size={14} color={c.textSecondary}>{traduire("Choisis cet exercice : tes séries arrivent déjà remplies avec ta dernière fois.")}</Ink>
         </View>
         <Pressable onPress={onLibrary} accessibilityRole="button" style={({ pressed }) => ({ position: 'absolute', left: 20, bottom: 20, minHeight: 48, paddingHorizontal: 18, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: pressed ? blancA(0.75) : c.surface })}>
           <PlusPastille />
@@ -1345,7 +1370,7 @@ function EmptyStart({ image, recent, onPick, onLibrary }: { image: ReturnType<ty
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {recent.map((h) => (
               <Pressable key={h.name} onPress={() => onPick(h)} accessibilityRole="button" accessibilityLabel={traduire("Ajouter {0}", h.name)} style={({ pressed }) => [carteBlanche(c.surface, c.divider), { minHeight: 48, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, justifyContent: 'center', opacity: pressed ? 0.85 : 1 }]}>
-                <Ink size={14} weight="extraBold">{traduire(h.name)}</Ink>
+                <Ink size={14} weight="extraBold">{sansTiret(traduire(h.name))}</Ink>
                 <Ink size={11} color={c.textMuted}>{niceGroup(h.muscle)}</Ink>
               </Pressable>
             ))}

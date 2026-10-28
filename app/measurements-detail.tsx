@@ -63,7 +63,7 @@ export default function MeasurementsDetailScreen() {
 
   // 18 octobre 2026 : une prise fausse se supprime d'un appui, apres confirmation (meme fenetre que les pesees)
   const onHistoryPress = (pt: DetailPoint) => {
-    appAlert(traduire('Supprimer cette prise ?'), traduire("Toutes tes mensurations du {0} partent pour de bon.", formatLongDate(pt.date)), [
+    appAlert(traduire('Supprimer cette prise ?'), traduire("Toutes tes mensurations du {0} restent 30 jours dans la corbeille.", formatLongDate(pt.date)), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
         text: traduire('Supprimer'),

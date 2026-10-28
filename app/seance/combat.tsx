@@ -33,7 +33,8 @@ import {
 import type { TimerEvent } from '@/lib/v2/seance/combat';
 import { fmtClock, fmtMinutes, hhmm, isoDay } from '@/lib/v2/seance/format';
 import { useSauvegardeBrouillon } from '@/lib/v2/seance/useSauvegardeBrouillon';
-import { clearDraft, loadCombatPrefs, loadDraft, saveCombatPrefs } from '@/lib/v2/seance/model';
+import { clearDraft, effacerSaisie, loadCombatPrefs, loadDraft, saveCombatPrefs } from '@/lib/v2/seance/model';
+import { offrirSaisie } from '@/lib/v2/seance/repriseSaisie';
 import type { CombatDraft, CombatSessionType, LiveRound, RoundIntensity, SessionDetails } from '@/lib/v2/seance/model';
 import { detailsFromTraining, loadTrainingForEdit, trainingFromDetails } from '@/lib/v2/seance/edit';
 import { aliasTypeSeance, initialDetails, readParams, timeOf, wantsForm } from '@/lib/v2/seance/params';
@@ -142,7 +143,8 @@ export default function SeanceCombat() {
                 orig: r,
               }))
             : Array.from({ length: Math.min(t.rounds ?? 0, 30) }, (_, i) => ({ number: i + 1 }));
-          setDraft({
+          // 28 octobre 2026 : une modification laissée en plan (app fermée) se reprend
+          void offrirSaisie<CombatDraft>({
             kind: 'combat',
             form: true,
             editId: params.editId,
@@ -164,7 +166,7 @@ export default function SeanceCombat() {
             gamePlan: t.game_plan ?? '',
             worked: t.what_worked ?? '',
             didnt: t.what_didnt_work ?? '',
-          });
+          }, setDraft);
           if (t.game_plan || t.what_worked || t.what_didnt_work) setBilanOpen(true);
           return;
         }
@@ -198,7 +200,8 @@ export default function SeanceCombat() {
           rpe: params.intensity ?? null,
         });
         if (form) {
-          setDraft(fresh());
+          // 28 octobre 2026 : une saisie après coup laissée en plan se reprend
+          void offrirSaisie(fresh(), setDraft);
           return;
         }
         if (existing && existing.kind === 'combat' && params.resume) {
@@ -370,7 +373,7 @@ export default function SeanceCombat() {
     if (draft?.form) {
       appAlert(draft.editId ? traduire('Quitter sans enregistrer ?') : traduire('Annuler cette saisie ?'), traduire('Tes changements ne seront pas gardés.'), [
         { text: traduire('Rester'), style: 'cancel' },
-        { text: traduire('Quitter'), style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); router.back(); } },
+        { text: traduire('Quitter'), style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); void effacerSaisie(draft); router.back(); } },
       ]);
       return;
     }
@@ -453,6 +456,7 @@ export default function SeanceCombat() {
       // 26 octobre 2026 : la seance est enregistree, le brouillon part tout de suite (sinon, app fermee juste
       // apres, elle reapparaissait « en cours » et pouvait etre enregistree deux fois)
       if (!draft.form) await clearDraft();
+      else await effacerSaisie(draft);
       if (draft.programme && !draft.editId) await marquerJourFait(draft.programme.id, draft.programme.jourId, result.id, draft.form && det ? det.date : undefined).catch(() => {});
       if (draft.editId) {
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});

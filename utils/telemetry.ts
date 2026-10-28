@@ -59,6 +59,9 @@ export type MethodeSeance = 'live' | 'dictee' | 'deja_faite' | 'saisie' | 'montr
 export type TypeObjectif = 'poids' | 'seance';
 export type EtapeVisite = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12' | '13' | '14';
 
+export type NiveauStockage = 'proche' | 'critique';
+export type CauseStockage = 'total' | 'cle';
+
 export type EtapeOnboarding =
   | 'accroche' | 'prenom' | 'toi' | 'age' | 'univers' | 'objectif' | 'frein' | 'affirmation' | 'sport' | 'poids'
   | 'taille' | 'cap' | 'rythme' | 'moment' | 'demo' | 'comparaison' | 'forge' | 'resultat' | 'premium';
@@ -124,6 +127,8 @@ export interface Evenements {
   sante_connexion: { plateforme: Plateforme; resultat: Resultat };
   sauvegarde_exportee: { type: TypeExport };
   donnees_effacees: Rien;
+  /** 28 octobre 2026 : stockage de l'app presque plein (Android limite AsyncStorage), aucune valeur ni nom de cle */
+  stockage_presque_plein: { niveau: NiveauStockage; cause: CauseStockage };
   // retention
   session_return: { tranche_jours: TrancheJours; tranche_ecart: TrancheEcart };
   serie_semaines: { tranche_serie: TrancheSerie };

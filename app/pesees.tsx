@@ -91,7 +91,7 @@ export default function Pesees() {
         style: 'destructive',
         // NUIT 14 : une confirmation avant de supprimer pour de bon
         onPress: () =>
-          appAlert(traduire('Supprimer cette pesée ?'), traduire("{0} kg, {1}. Elle part pour de bon, avec sa composition.", formatKg(w.weight), formatLongDate(w.date.slice(0, 10))), [
+          appAlert(traduire('Supprimer cette pesée ?'), traduire("{0} kg, {1}. Elle reste 30 jours dans la corbeille, avec sa composition.", formatKg(w.weight), formatLongDate(w.date.slice(0, 10))), [
             { text: traduire('Annuler'), style: 'cancel' },
             {
               text: traduire('Supprimer'),

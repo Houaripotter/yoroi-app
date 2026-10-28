@@ -3,6 +3,7 @@
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { avecVerrou, lireListePourEcriture, objetPourEcriture } from '@/lib/v2/sauvegarde/lectureSure';
 import { DeviceEventEmitter } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import {
@@ -709,9 +710,10 @@ export const getBadgeUnlockDates = async (): Promise<Record<string, string>> => 
 /**
  * Debloquer un badge
  */
-export const unlockBadge = async (badgeId: string): Promise<boolean> => {
+export const unlockBadge = async (badgeId: string): Promise<boolean> => avecVerrou(STORAGE_KEYS.UNLOCKED_BADGES, async () => {
   try {
-    const unlockedBadges = await getUnlockedBadges();
+    // 28 octobre 2026 : lectures STRICTES (une liste illisible n'est plus remplacee par [ce badge])
+    const unlockedBadges = await lireListePourEcriture<string>(STORAGE_KEYS.UNLOCKED_BADGES);
 
     // Deja debloque
     if (unlockedBadges.includes(badgeId)) {
@@ -726,7 +728,7 @@ export const unlockBadge = async (badgeId: string): Promise<boolean> => {
     );
 
     // Enregistrer la date
-    const dates = await getBadgeUnlockDates();
+    const dates = objetPourEcriture<Record<string, string>>(await AsyncStorage.getItem(STORAGE_KEYS.BADGE_UNLOCK_DATES), STORAGE_KEYS.BADGE_UNLOCK_DATES) ?? {};
     dates[badgeId] = new Date().toISOString();
     await AsyncStorage.setItem(
       STORAGE_KEYS.BADGE_UNLOCK_DATES,
@@ -751,7 +753,7 @@ export const unlockBadge = async (badgeId: string): Promise<boolean> => {
     logger.error('Erreur deblocage badge:', error);
     return false;
   }
-};
+});
 
 /**
  * Verifier si un badge est debloque

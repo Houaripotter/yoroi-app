@@ -3,6 +3,7 @@
  * statistiques reelles calculees depuis les rounds enregistres, rangs et tiers.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { avecVerrou, lireListePourEcriture } from '@/lib/v2/sauvegarde/lectureSure';
 import { DeviceEventEmitter } from 'react-native';
 import type { CombatRound, Training } from '@/lib/database';
 import type { Archetype, ExperienceLevel, PartnerBadge, PartnerMedia, PartnerMission } from '@/lib/partnerModel';
@@ -109,8 +110,21 @@ export async function savePartners(partners: Partner[]): Promise<void> {
  * Enregistre un partenaire en gardant les champs ecrits ailleurs entre-temps
  * (badges debloques et missions du mois sont ecrits directement par leurs services).
  */
+/**
+ * 28 octobre 2026 : lecture STRICTE avant une ecriture. Avant, une liste illisible donnait [] et
+ * l'enregistrement d'un partenaire effacait toutes les autres fiches (notes tactiques, bilans).
+ */
+async function loadPartnersForWrite(): Promise<Partner[]> {
+  const list = await lireListePourEcriture<Partner>(PARTNERS_KEY);
+  return list.filter((p) => p && p.id && p.name).map((p) => normalize(p));
+}
+
 export async function upsertPartner(p: Partner): Promise<Partner[]> {
-  const list = await loadPartners();
+  return avecVerrou(PARTNERS_KEY, () => upsertPartnerSansVerrou(p));
+}
+
+async function upsertPartnerSansVerrou(p: Partner): Promise<Partner[]> {
+  const list = await loadPartnersForWrite();
   const idx = list.findIndex((x) => x.id === p.id);
   if (idx < 0) {
     const next = [p, ...list];
@@ -139,10 +153,12 @@ function mergeById<T extends { id: string }>(a?: T[], b?: T[]): T[] | undefined 
 }
 
 export async function deletePartner(id: string): Promise<Partner[]> {
-  const list = await loadPartners();
-  const next = list.filter((p) => p.id !== id);
-  await savePartners(next);
-  return next;
+  return avecVerrou(PARTNERS_KEY, async () => {
+    const list = await loadPartnersForWrite();
+    const next = list.filter((p) => p.id !== id);
+    await savePartners(next);
+    return next;
+  });
 }
 
 export function newPartner(name: string, id: string): Partner {

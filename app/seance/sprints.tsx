@@ -16,7 +16,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, ScrollView, Vibration, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,6 +37,10 @@ import {
 import { alerteEtape, nomChoix, notesSeance, resumeAutour, resumeSprints, versPhasesChrono } from '@/lib/v2/intervalles/textes';
 import { evenementFin, evenementPourEtape } from '@/lib/v2/intervalles/coach';
 import { annulerAlertesSprints, planifierAlertesSprints } from '@/lib/v2/intervalles/alertes';
+import {
+  chargerBrouillonSprints, effacerBrouillonSprints, etatMaintenant, faitsMaintenant, finPourEnregistrer, generationSprints, sauverBrouillonSprints,
+  type BrouillonSprints,
+} from '@/lib/v2/intervalles/brouillon';
 import { useCoachIntervalles } from '@/lib/v2/coachVocal/useCoachIntervalles';
 import { SOURCES } from '@/lib/v2/programmes/sources';
 import { soundManager } from '@/lib/sounds';
@@ -52,7 +56,20 @@ import { traduire } from '@/lib/i18n/tr';
 /** Ton dernier réglage, repris à l'ouverture */
 const REGLAGES_KEY = 'yoroi_sprints_guides_v1';
 
-type EnCours = { plan: EtapeIntervalle[]; reglages: ReglagesIntervalles; choix: ChoixSprint; debutMs: number; finMs: number | null; faits: number };
+/**
+ * gen : la génération du brouillon de CETTE séance (lib/v2/intervalles/brouillon.ts) ; une écriture tardive
+ * d'une séance enregistrée ou effacée est ignorée. arretee : arrêtée en cours de route, bilan à enregistrer.
+ */
+type EnCours = { plan: EtapeIntervalle[]; reglages: ReglagesIntervalles; choix: ChoixSprint; debutMs: number; finMs: number | null; faits: number; gen: number; arretee?: boolean };
+
+/** « il y a 12 min », mêmes textes que la reprise d'une séance (lib/v2/seance/resume.ts) */
+function depuis(ms: number): string {
+  const min = Math.max(0, Math.round((Date.now() - ms) / 60000));
+  if (min < 1) return traduire("à l'instant");
+  if (min < 60) return traduire("il y a {0} min", min);
+  const h = Math.floor(min / 60);
+  return traduire("il y a {0} h{1}", h, min % 60 ? ` ${String(min % 60).padStart(2, '0')}` : '');
+}
 
 function haptic(s: ImpactFeedbackStyle) {
   impactAsync(s).catch(() => {});
@@ -83,6 +100,7 @@ function sourceCourte(id: string | undefined): string | null {
 export default function SprintsGuides() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ resume?: string }>();
   const [choix, setChoix] = useState<ChoixSprint>('debutant');
   const [reglages, setReglages] = useState<ReglagesIntervalles>(PRESETS.debutant.reglages);
   const [showFinish, setShowFinish] = useState(false);
@@ -146,7 +164,7 @@ export default function SprintsGuides() {
       case 'finish': {
         sans(() => backgroundTaskService.end());
         void annulerAlertesSprints();
-        s.finMs = Date.now();
+        s.finMs = s.finMs ?? Date.now();
         s.faits = s.reglages.sprints;
         setFaits(s.faits);
         if (e.live) {
@@ -171,6 +189,117 @@ export default function SprintsGuides() {
   engineRef.current = engine;
   const status = engine.status;
   useActiviteChrono(engine, traduire('Sprints guidés'));
+
+  // ─── Séance gardée à chaque changement (28 octobre 2026) : app tuée, rien n'est perdu ───
+  const garder = useCallback((extra?: Partial<BrouillonSprints>) => {
+    const s = enCours.current;
+    if (!s) return;
+    const snap = engineRef.current.snapshot();
+    if (snap.status === 'idle' && !extra) return;
+    const b: BrouillonSprints = {
+      v: 1,
+      plan: s.plan,
+      durees: snap.durations.length === s.plan.length ? snap.durations : s.plan.map((e) => e.duree),
+      reglages: s.reglages,
+      choix: s.choix,
+      debutMs: s.debutMs,
+      index: snap.index,
+      etapeDebutMs: snap.phaseStartMs || s.debutMs,
+      pauseMs: snap.status === 'paused' ? snap.pausedAtMs : null,
+      statut: snap.status === 'paused' ? 'paused' : snap.status === 'finished' ? 'finished' : 'running',
+      finMs: s.finMs,
+      faits: s.faits,
+      arretee: s.arretee,
+      majMs: Date.now(),
+      ...extra,
+    };
+    void sauverBrouillonSprints(b, s.gen);
+  }, []);
+  const garderRef = useRef(garder);
+  garderRef.current = garder;
+
+  // chaque étape, pause, reprise, réglage de durée et la fin
+  useEffect(() => {
+    if (status === 'idle') return;
+    garder();
+  }, [status, engine.index, engine.phases, garder]);
+
+  // passage en arrière plan et fermeture de l'écran : la dernière version, sans attendre
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st !== 'active') garderRef.current();
+    });
+    return () => {
+      sub.remove();
+      garderRef.current();
+    };
+  }, []);
+
+  /** Reprend une séance gardée : là où elle en est maintenant, ou son bilan si elle est finie ou arrêtée */
+  const reprendreBrouillon = useCallback((b: BrouillonSprints, bilanSeulement = false) => {
+    const now = Date.now();
+    const e = etatMaintenant(b, now);
+    const faitsB = faitsMaintenant(b, now);
+    const s: EnCours = {
+      plan: b.plan, reglages: b.reglages, choix: b.choix, debutMs: b.debutMs,
+      finMs: b.finMs, faits: b.statut === 'finished' || b.arretee ? faitsB : 0, gen: generationSprints(), arretee: b.arretee,
+    };
+    enCours.current = s;
+    setReglages(b.reglages);
+    setChoix(b.choix);
+    setRpe(null);
+    if (bilanSeulement || b.arretee || b.statut === 'finished' || e.fini) {
+      // le bilan : ce qui est fait, gardé tel quel jusqu'à ton choix
+      s.faits = faitsB;
+      s.finMs = finPourEnregistrer(b, now);
+      s.arretee = s.arretee || (bilanSeulement && !e.fini);
+      setFaits(s.faits);
+      if (engineRef.current.status !== 'idle') engineRef.current.stop();
+      void sauverBrouillonSprints({ ...b, statut: 'finished', faits: s.faits, finMs: s.finMs, arretee: s.arretee }, s.gen);
+      setShowFinish(true);
+      return;
+    }
+    reinitialiser();
+    setFaits(0);
+    setShowFinish(false);
+    const phases = versPhasesChrono(b.plan).map((p, i) => ({ ...p, duration: b.durees[i] ?? p.duration }));
+    engineRef.current.restore(phases, b.index, b.etapeDebutMs, b.statut === 'paused' ? (b.pauseMs ?? now) : null);
+  }, [reinitialiser]);
+
+  // à l'ouverture : une séance gardée ? (relance de l'app, toucher de la barre « Séance en cours »)
+  useEffect(() => {
+    let vivant = true;
+    chargerBrouillonSprints().then((b) => {
+      if (!vivant || !b || enCours.current) return;
+      if (params.resume === '1') {
+        reprendreBrouillon(b);
+        return;
+      }
+      const now = Date.now();
+      const e = etatMaintenant(b, now);
+      const n = faitsMaintenant(b, now);
+      const fini = b.arretee || b.statut === 'finished' || e.fini;
+      const effacer = () =>
+        appAlert(traduire('Effacer ces sprints ?'), traduire('Ils ne seront pas enregistrés.'), [
+          { text: traduire('Garder'), style: 'cancel', onPress: () => reprendreBrouillon(b) },
+          { text: traduire('Effacer'), style: 'destructive', onPress: () => { void effacerBrouillonSprints(); } },
+        ], { cancelable: false });
+      appAlert(
+        fini ? traduire('Tes sprints ne sont pas encore enregistrés') : traduire('Des sprints sont en cours'),
+        traduire('{0} sur {1} sprints faits, commencés {2}.', n, b.reglages.sprints, depuis(b.debutMs)),
+        [
+          { text: traduire('Effacer'), style: 'destructive', onPress: effacer },
+          ...(fini ? [] : [{ text: traduire('Enregistrer ce qui est fait'), onPress: () => reprendreBrouillon(b, true) }]),
+          { text: fini ? traduire('Voir le bilan') : traduire('Reprendre'), style: 'primary' as const, onPress: () => reprendreBrouillon(b) },
+        ],
+        { cancelable: false },
+      );
+    });
+    return () => {
+      vivant = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // sons préparés à l'ouverture, tout nettoyé en quittant
   useEffect(() => {
@@ -228,9 +357,10 @@ export default function SprintsGuides() {
     setShowFinish(false);
     setRpe(null);
     setFaits(0);
-    enCours.current = { plan, reglages, choix, debutMs: Date.now(), finMs: null, faits: 0 };
+    enCours.current = { plan, reglages, choix, debutMs: Date.now(), finMs: null, faits: 0, gen: generationSprints() };
     reinitialiser();
     engine.start(versPhasesChrono(plan));
+    garder();
     void timerNotifications.proposerAuLancement('sprints');
     AsyncStorage.setItem(REGLAGES_KEY, JSON.stringify({ choix, reglages })).catch(() => {});
   };
@@ -246,25 +376,63 @@ export default function SprintsGuides() {
     if (s && n > 0) {
       s.finMs = s.finMs ?? Date.now();
       s.faits = n;
+      s.arretee = true;
       setFaits(n);
+      // gardé jusqu'à ton choix : enregistrer ou effacer
+      garder({ statut: 'finished', faits: n, finMs: s.finMs, arretee: true });
       setShowFinish(true);
     } else {
+      // aucun sprint fait (arrêt confirmé) : rien à garder
       enCours.current = null;
+      void effacerBrouillonSprints();
       setShowFinish(false);
     }
   };
 
   const recommencer = () => {
-    setShowFinish(false);
-    if (engine.status !== 'idle') engine.stop();
-    enCours.current = null;
-    lancer();
+    const go = () => {
+      setShowFinish(false);
+      if (engineRef.current.status !== 'idle') engineRef.current.stop();
+      enCours.current = null;
+      void effacerBrouillonSprints();
+      lancer();
+    };
+    // 28 octobre 2026 : des sprints faits ne partent plus sur un seul toucher
+    if ((enCours.current?.faits ?? 0) > 0) {
+      appAlert(traduire('Effacer ces sprints ?'), traduire('Ils ne seront pas enregistrés.'), [
+        { text: traduire('Garder'), style: 'cancel' },
+        { text: traduire('Effacer'), style: 'destructive', onPress: go },
+      ]);
+      return;
+    }
+    go();
   };
 
+  /**
+   * Fermer le bilan sans enregistrer (28 octobre 2026) : avant, la séance partait sans un mot. Séance finie :
+   * le bilan se rouvre avec « Voir le bilan ». Séance arrêtée : on demande avant d'effacer.
+   */
   const fermerBilan = () => {
     setShowFinish(false);
-    if (engine.status === 'finished') engine.stop();
-    enCours.current = null;
+    if (engineRef.current.status === 'finished') return;
+    const s = enCours.current;
+    if (!s || s.faits <= 0) {
+      enCours.current = null;
+      void effacerBrouillonSprints();
+      return;
+    }
+    appAlert(traduire('Quitter sans enregistrer ?'), traduire('Tes sprints faits ne seront pas gardés.'), [
+      { text: traduire('Garder'), style: 'cancel', onPress: () => setShowFinish(true) },
+      {
+        text: traduire('Ne pas enregistrer'),
+        style: 'destructive',
+        onPress: () => {
+          enCours.current = null;
+          setFaits(0);
+          void effacerBrouillonSprints();
+        },
+      },
+    ], { cancelable: false });
   };
 
   const enregistrer = async () => {
@@ -288,13 +456,15 @@ export default function SprintsGuides() {
         },
         { title: traduire('Sprints guidés'), methode: 'live' },
       );
-      setShowFinish(false);
-      if (engine.status !== 'idle') engine.stop();
+      // enregistrée : le brouillon part tout de suite (sinon elle reviendrait « en cours » et pourrait être enregistrée deux fois)
       enCours.current = null;
+      await effacerBrouillonSprints();
+      setShowFinish(false);
+      if (engineRef.current.status !== 'idle') engineRef.current.stop();
       router.replace({ pathname: '/seance/fin' as any, params: { id: String(result.id) } });
     } catch (err) {
       logger.error('Enregistrement des sprints impossible', err);
-      appAlert(traduire('Oups'), traduire('La séance n’a pas pu être enregistrée. Réessaie.'));
+      appAlert(traduire('Oups'), traduire('La séance n’a pas pu être enregistrée. Elle reste gardée, réessaie.'));
     } finally {
       savingRef.current = false;
       setSaving(false);

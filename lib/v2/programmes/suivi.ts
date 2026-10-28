@@ -152,7 +152,7 @@ async function ecrire(a: ProgrammeActif | null): Promise<void> {
  * `modules` (26 octobre 2026) : la liste complete choisie au depart (Questionnaire.tsx). Donnee, elle decide aussi
  * des abdos et du cardio ; `fin` garde alors la duree du cardio et les seances de marche.
  */
-export async function demarrerProgramme(id: string, jours?: number[], fin?: FinSeance | null, modules?: readonly ModuleId[] | null, plan?: readonly number[] | null, options?: { douleurs?: readonly Region[] | null }): Promise<ProgrammeActif | null> {
+async function demarrerProgramme_(id: string, jours?: number[], fin?: FinSeance | null, modules?: readonly ModuleId[] | null, plan?: readonly number[] | null, options?: { douleurs?: readonly Region[] | null }): Promise<ProgrammeActif | null> {
   if (estProgrammePerso(id)) await chargerProgrammesPerso();
   const p = programmeParId(id);
   if (!p) return null;
@@ -173,7 +173,7 @@ export async function demarrerProgramme(id: string, jours?: number[], fin?: FinS
 }
 
 /** Ta fin de seance change (abdos, cardio, seances de marche gardees ou non) */
-export async function enregistrerFin(fin: FinSeance): Promise<void> {
+async function enregistrerFin_(fin: FinSeance): Promise<void> {
   const a = await chargerProgrammeActif();
   const p = a && programmeParId(a.id);
   const f = lireFinSeance(fin);
@@ -187,7 +187,7 @@ export async function enregistrerFin(fin: FinSeance): Promise<void> {
  * Tes modules changent (liste complete : force, grip, cou, abdos, cardio, mobilite). `minutes` et `sansMarche`
  * reglent la fin de seance ; absents, ceux du programme en cours restent.
  */
-export async function enregistrerModules(modules: readonly ModuleId[], options?: { minutes?: number; sansMarche?: boolean }): Promise<void> {
+async function enregistrerModules_(modules: readonly ModuleId[], options?: { minutes?: number; sansMarche?: boolean }): Promise<void> {
   const a = await chargerProgrammeActif();
   const p = a && programmeParId(a.id);
   if (!a || !p) return;
@@ -210,7 +210,7 @@ export function modulesDuProgramme(a: ProgrammeActif | null): ModuleId[] {
  * Tes jours d'entrainement changent (0 = lundi), sans dire quelle seance va ou : le plan seance par seance est
  * oublie, tes jours dans l'ordre le remplacent (planEffectif)
  */
-export async function enregistrerJours(jours: number[]): Promise<void> {
+async function enregistrerJours_(jours: number[]): Promise<void> {
   const a = await chargerProgrammeActif();
   const choisis = joursValides(jours);
   if (!a || !choisis) return;
@@ -222,7 +222,7 @@ export async function enregistrerJours(jours: number[]): Promise<void> {
  * 27 octobre 2026 : Tes jours, seance par seance (Push lundi, Pull mardi...). L'historique et la progression ne
  * bougent pas : seule la seance de chaque jour change, a partir d'aujourd'hui.
  */
-export async function enregistrerPlan(plan: readonly number[]): Promise<void> {
+async function enregistrerPlan_(plan: readonly number[]): Promise<void> {
   const a = await chargerProgrammeActif();
   const p = a && programmeParId(a.id);
   if (!a || !p) return;
@@ -304,7 +304,7 @@ export function seanceDuPlanLe(a: Pick<ProgrammeActif, 'plan' | 'jours' | 'fin'>
  * « Changer » sur la page du programme : l'exercice de la case `index` du jour devient `nom`
  * (null, ou le nom d'origine : tu reviens a l'exercice du programme). Series, repetitions et repos ne bougent pas.
  */
-export async function remplacerExercice(jourId: string, index: number, nom: string | null, original?: string): Promise<void> {
+async function remplacerExercice_(jourId: string, index: number, nom: string | null, original?: string): Promise<void> {
   const a = await chargerProgrammeActif();
   const p = a && programmeParId(a.id);
   if (!a || !p) return;
@@ -315,7 +315,7 @@ export async function remplacerExercice(jourId: string, index: number, nom: stri
   await ecrire(Object.keys(remplacements).length ? { ...reste, remplacements } : reste);
 }
 
-export async function arreterProgramme(): Promise<void> {
+async function arreterProgramme_(): Promise<void> {
   await ecrire(null);
 }
 
@@ -324,7 +324,7 @@ export async function arreterProgramme(): Promise<void> {
  * ton programme en cours. Déjà en cours : il est mis à jour sans perdre ton début, tes séances faites ni ta
  * progression ; seuls les jours suivent ta nouvelle semaine.
  * ---------------------------------------------------------------------------------------------- */
-export async function suivreProgrammePerso(pp: Pick<ProgrammePerso, 'id' | 'semaine'>): Promise<ProgrammeActif | null> {
+async function suivreProgrammePerso_(pp: Pick<ProgrammePerso, 'id' | 'semaine'>): Promise<ProgrammeActif | null> {
   await chargerProgrammesPerso();
   const p = programmeParId(pp.id);
   if (!p) return null;
@@ -339,21 +339,21 @@ export async function suivreProgrammePerso(pp: Pick<ProgrammePerso, 'id' | 'sema
     await ecrire(suite);
     return suite;
   }
-  return demarrerProgramme(pp.id, joursDuPerso(pp), null, null, plan);
+  return demarrerProgramme_(pp.id, joursDuPerso(pp), null, null, plan);
 }
 
 /**
  * Supprimer ton programme construit : il est archivé (monProgramme.ts), jamais effacé, et s'il était en cours il
  * s'arrête. Tes séances enregistrées (historique, charges, records) ne sont pas touchées.
  */
-export async function supprimerProgrammePerso(id: string): Promise<void> {
+async function supprimerProgrammePerso_(id: string): Promise<void> {
   const a = await chargerProgrammeActif();
   await archiverProgrammePerso(id);
   if (a && a.id === id) await ecrire(null);
 }
 
 /** Choisir toi-meme le prochain jour (tu as saute une seance, tu veux faire les jambes aujourd'hui...) */
-export async function choisirProchainJour(index: number): Promise<void> {
+async function choisirProchainJour_(index: number): Promise<void> {
   const a = await chargerProgrammeActif();
   const p = a && programmeParId(a.id);
   if (!a || !p) return;
@@ -361,7 +361,7 @@ export async function choisirProchainJour(index: number): Promise<void> {
 }
 
 /** Une seance du programme est enregistree : le jour suivant devient le prochain */
-export async function marquerJourFait(programmeId: string, jourId: string, trainingId?: number, date?: string): Promise<void> {
+async function marquerJourFait_(programmeId: string, jourId: string, trainingId?: number, date?: string): Promise<void> {
   const a = await chargerProgrammeActif();
   const p = a && programmeParId(a.id);
   if (!a || !p || a.id !== programmeId) return;
@@ -420,14 +420,14 @@ export function proposerSemaineLegere(a: ProgrammeActif, aujourdhui = new Date()
 }
 
 /** Sept jours plus legers a partir d'aujourd'hui */
-export async function activerSemaineLegere(): Promise<void> {
+async function activerSemaineLegere_(): Promise<void> {
   const a = await chargerProgrammeActif();
   if (!a) return;
   const auj = jourLocal();
   await ecrire({ ...a, legereJusquau: plusJours(auj, 6), legeres: [...(a.legeres ?? []), auj].slice(-50) });
 }
 
-export async function arreterSemaineLegere(): Promise<void> {
+async function arreterSemaineLegere_(): Promise<void> {
   const a = await chargerProgrammeActif();
   if (!a) return;
   const { legereJusquau: _fin, ...reste } = a;
@@ -452,7 +452,7 @@ export async function chargerMateriel(): Promise<Equipement[] | null> {
   }
 }
 
-export async function enregistrerMateriel(liste: Equipement[] | null): Promise<void> {
+async function enregistrerMateriel_(liste: Equipement[] | null): Promise<void> {
   try {
     if (liste) await AsyncStorage.setItem(CLE_MATERIEL, JSON.stringify(Array.from(new Set(liste))));
     else await AsyncStorage.removeItem(CLE_MATERIEL);
@@ -483,7 +483,7 @@ export async function chargerMachines(): Promise<string[] | null> {
 }
 
 /** Ton materiel et tes machines, enregistres ensemble (une seule mise a jour des ecrans) */
-export async function enregistrerSalle(liste: Equipement[] | null, machines: string[] | null): Promise<void> {
+async function enregistrerSalle_(liste: Equipement[] | null, machines: string[] | null): Promise<void> {
   try {
     const ids = Array.from(new Set((machines ?? []).filter((x) => MACHINE_BY_ID.has(x))));
     if (ids.length) await AsyncStorage.setItem(CLE_MACHINES, JSON.stringify(ids));
@@ -491,7 +491,7 @@ export async function enregistrerSalle(liste: Equipement[] | null, machines: str
   } catch {
     // stockage indisponible : les programmes restent tels quels
   }
-  await enregistrerMateriel(liste);
+  await enregistrerMateriel_(liste);
 }
 
 /** Le materiel par defaut selon le lieu du questionnaire */
@@ -598,7 +598,7 @@ export async function chargerFavoris(): Promise<string[]> {
 }
 
 /** Etoile touchee : renvoie la nouvelle liste */
-export async function basculerFavori(id: string): Promise<string[]> {
+async function basculerFavori_(id: string): Promise<string[]> {
   const suite = basculerDansFavoris(await chargerFavoris(), id);
   try {
     await AsyncStorage.setItem(CLE_FAVORIS, JSON.stringify(suite));
@@ -607,4 +607,67 @@ export async function basculerFavori(id: string): Promise<string[]> {
   }
   prevenir();
   return suite;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * 28 octobre 2026 (audit « ne jamais perdre de donnees ») : chaque lecture modification ecriture passe dans
+ * une file par cle. Avant, deux enregistrements rapproches (fin de seance qui marque le jour fait, et un
+ * changement de jours ou de modules) lisaient le meme etat : le second ecrasait le premier, une seance faite
+ * pouvait disparaitre de la progression. Les fonctions internes (nom_) ne passent pas par la file : elles
+ * s'appellent entre elles sans s'attendre.
+ * ---------------------------------------------------------------------------------------------- */
+const files = new Map<string, Promise<unknown>>();
+export function enFileProgramme<T>(cle: string, fn: () => Promise<T>): Promise<T> {
+  const avant = files.get(cle) ?? Promise.resolve();
+  const p = avant.then(fn, fn);
+  files.set(cle, p.catch(() => undefined));
+  return p;
+}
+export function demarrerProgramme(...a: Parameters<typeof demarrerProgramme_>): ReturnType<typeof demarrerProgramme_> {
+  return enFileProgramme(CLE, () => demarrerProgramme_(...a)) as ReturnType<typeof demarrerProgramme_>;
+}
+export function enregistrerFin(...a: Parameters<typeof enregistrerFin_>): ReturnType<typeof enregistrerFin_> {
+  return enFileProgramme(CLE, () => enregistrerFin_(...a)) as ReturnType<typeof enregistrerFin_>;
+}
+export function enregistrerModules(...a: Parameters<typeof enregistrerModules_>): ReturnType<typeof enregistrerModules_> {
+  return enFileProgramme(CLE, () => enregistrerModules_(...a)) as ReturnType<typeof enregistrerModules_>;
+}
+export function enregistrerJours(...a: Parameters<typeof enregistrerJours_>): ReturnType<typeof enregistrerJours_> {
+  return enFileProgramme(CLE, () => enregistrerJours_(...a)) as ReturnType<typeof enregistrerJours_>;
+}
+export function enregistrerPlan(...a: Parameters<typeof enregistrerPlan_>): ReturnType<typeof enregistrerPlan_> {
+  return enFileProgramme(CLE, () => enregistrerPlan_(...a)) as ReturnType<typeof enregistrerPlan_>;
+}
+export function remplacerExercice(...a: Parameters<typeof remplacerExercice_>): ReturnType<typeof remplacerExercice_> {
+  return enFileProgramme(CLE, () => remplacerExercice_(...a)) as ReturnType<typeof remplacerExercice_>;
+}
+export function arreterProgramme(...a: Parameters<typeof arreterProgramme_>): ReturnType<typeof arreterProgramme_> {
+  return enFileProgramme(CLE, () => arreterProgramme_(...a)) as ReturnType<typeof arreterProgramme_>;
+}
+export function suivreProgrammePerso(...a: Parameters<typeof suivreProgrammePerso_>): ReturnType<typeof suivreProgrammePerso_> {
+  return enFileProgramme(CLE, () => suivreProgrammePerso_(...a)) as ReturnType<typeof suivreProgrammePerso_>;
+}
+export function supprimerProgrammePerso(...a: Parameters<typeof supprimerProgrammePerso_>): ReturnType<typeof supprimerProgrammePerso_> {
+  return enFileProgramme(CLE, () => supprimerProgrammePerso_(...a)) as ReturnType<typeof supprimerProgrammePerso_>;
+}
+export function choisirProchainJour(...a: Parameters<typeof choisirProchainJour_>): ReturnType<typeof choisirProchainJour_> {
+  return enFileProgramme(CLE, () => choisirProchainJour_(...a)) as ReturnType<typeof choisirProchainJour_>;
+}
+export function marquerJourFait(...a: Parameters<typeof marquerJourFait_>): ReturnType<typeof marquerJourFait_> {
+  return enFileProgramme(CLE, () => marquerJourFait_(...a)) as ReturnType<typeof marquerJourFait_>;
+}
+export function activerSemaineLegere(...a: Parameters<typeof activerSemaineLegere_>): ReturnType<typeof activerSemaineLegere_> {
+  return enFileProgramme(CLE, () => activerSemaineLegere_(...a)) as ReturnType<typeof activerSemaineLegere_>;
+}
+export function arreterSemaineLegere(...a: Parameters<typeof arreterSemaineLegere_>): ReturnType<typeof arreterSemaineLegere_> {
+  return enFileProgramme(CLE, () => arreterSemaineLegere_(...a)) as ReturnType<typeof arreterSemaineLegere_>;
+}
+export function enregistrerSalle(...a: Parameters<typeof enregistrerSalle_>): ReturnType<typeof enregistrerSalle_> {
+  return enFileProgramme(CLE_MATERIEL, () => enregistrerSalle_(...a)) as ReturnType<typeof enregistrerSalle_>;
+}
+export function enregistrerMateriel(...a: Parameters<typeof enregistrerMateriel_>): ReturnType<typeof enregistrerMateriel_> {
+  return enFileProgramme(CLE_MATERIEL, () => enregistrerMateriel_(...a)) as ReturnType<typeof enregistrerMateriel_>;
+}
+export function basculerFavori(...a: Parameters<typeof basculerFavori_>): ReturnType<typeof basculerFavori_> {
+  return enFileProgramme(CLE_FAVORIS, () => basculerFavori_(...a)) as ReturnType<typeof basculerFavori_>;
 }

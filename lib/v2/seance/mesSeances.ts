@@ -16,7 +16,7 @@ import { LANG, traduire } from '@/lib/i18n/tr';
 
 const CLE = 'yoroi_mes_seances_v1';
 export const MES_SEANCES_EVENT = 'YOROI_MES_SEANCES_CHANGED';
-/** au delà, la liste devient illisible : on garde les plus récentes */
+/** repère d'affichage seulement : rien n'est jamais coupé à l'écriture (28 octobre 2026) */
 export const MAX_SEANCES = 60;
 export const MAX_EXOS = 25;
 export const MAX_SERIES = 10;
@@ -183,8 +183,42 @@ export async function chargerMesSeances(): Promise<MaSeance[]> {
   }
 }
 
+/**
+ * 28 octobre 2026 (audit « ne jamais perdre de données ») :
+ * 1. les modifications passent une par une (file) : deux enregistrements rapprochés (fin de séance qui marque
+ *    « faite » et modification) ne s'écrasent plus l'un l'autre ;
+ * 2. avant d'écrire, la liste est relue strictement : stockage indisponible, on n'écrit rien (avant : liste vide
+ *    puis écriture, tout effacé) ; liste illisible, elle est d'abord recopiée à part (CLE_ILLISIBLE) ;
+ * 3. plus de coupe à MAX_SEANCES à l'écriture : la 61e séance n'efface plus ta plus ancienne.
+ */
+export const CLE_ILLISIBLE = 'yoroi_mes_seances_illisible_v1';
+let file: Promise<unknown> = Promise.resolve();
+function enFile<T>(fn: () => Promise<T>): Promise<T> {
+  const p = file.then(fn, fn);
+  file = p.catch(() => undefined);
+  return p;
+}
+
+async function chargerPourEcrire(): Promise<MaSeance[]> {
+  // une erreur de lecture remonte : rien n'est écrit par dessus
+  const raw = await AsyncStorage.getItem(CLE);
+  if (!raw) return [];
+  let v: unknown;
+  try {
+    v = JSON.parse(raw);
+  } catch {
+    v = null;
+  }
+  if (!Array.isArray(v)) {
+    // copie gardée avant d'écrire une liste neuve ; si la copie échoue, on n'écrit rien
+    await AsyncStorage.setItem(CLE_ILLISIBLE, raw);
+    return [];
+  }
+  return trierSeances(v.map(nettoyer).filter((x): x is MaSeance => x !== null));
+}
+
 async function ecrire(liste: MaSeance[]): Promise<void> {
-  await AsyncStorage.setItem(CLE, JSON.stringify(trierSeances(liste).slice(0, MAX_SEANCES)));
+  await AsyncStorage.setItem(CLE, JSON.stringify(trierSeances(liste)));
   try {
     DeviceEventEmitter.emit(MES_SEANCES_EVENT);
   } catch {
@@ -198,8 +232,12 @@ export async function maSeanceParId(id: string | null | undefined): Promise<MaSe
 }
 
 /** Nouvelle séance ; le nom est rendu unique */
-export async function creerMaSeance(nom: string, sport: string, exos: ExoSeance[]): Promise<MaSeance> {
-  const liste = await chargerMesSeances();
+export function creerMaSeance(nom: string, sport: string, exos: ExoSeance[]): Promise<MaSeance> {
+  return enFile(() => creer(nom, sport, exos));
+}
+
+async function creer(nom: string, sport: string, exos: ExoSeance[]): Promise<MaSeance> {
+  const liste = await chargerPourEcrire();
   const s: MaSeance = {
     id: `s${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
     nom: nomLibre(nom, liste.map((x) => x.nom)),
@@ -212,23 +250,29 @@ export async function creerMaSeance(nom: string, sport: string, exos: ExoSeance[
   return s;
 }
 
-export async function modifierMaSeance(id: string, patch: Partial<Pick<MaSeance, 'nom' | 'exos' | 'sport'>>): Promise<void> {
-  const liste = await chargerMesSeances();
+export function modifierMaSeance(id: string, patch: Partial<Pick<MaSeance, 'nom' | 'exos' | 'sport'>>): Promise<void> {
+  return enFile(async () => {
+  const liste = await chargerPourEcrire();
   const autres = liste.filter((s) => s.id !== id).map((s) => s.nom);
   await ecrire(liste.map((s) => (s.id === id ? { ...s, ...patch, ...(patch.nom !== undefined ? { nom: nomLibre(patch.nom, autres) } : {}), ...(patch.exos ? { exos: patch.exos.slice(0, MAX_EXOS) } : {}) } : s)));
+  });
 }
 
-export async function supprimerMaSeance(id: string): Promise<void> {
-  await ecrire((await chargerMesSeances()).filter((s) => s.id !== id));
+export function supprimerMaSeance(id: string): Promise<void> {
+  return enFile(async () => ecrire((await chargerPourEcrire()).filter((s) => s.id !== id)));
 }
 
-export async function dupliquerMaSeance(id: string): Promise<MaSeance | null> {
-  const s = await maSeanceParId(id);
-  return s ? creerMaSeance(traduire('{0}, copie', s.nom), s.sport, s.exos) : null;
+export function dupliquerMaSeance(id: string): Promise<MaSeance | null> {
+  return enFile(async () => {
+    const s = (await chargerPourEcrire()).find((x) => x.id === id);
+    return s ? creer(traduire('{0}, copie', s.nom), s.sport, s.exos) : null;
+  });
 }
 
 /** Appelé à l'enregistrement d'une séance lancée depuis Mes séances */
-export async function marquerFaite(id: string, date?: string): Promise<void> {
-  const liste = await chargerMesSeances();
-  await ecrire(liste.map((s) => (s.id === id ? { ...s, faiteLe: (date ?? jourLocal()).slice(0, 10), fois: s.fois + 1 } : s)));
+export function marquerFaite(id: string, date?: string): Promise<void> {
+  return enFile(async () => {
+    const liste = await chargerPourEcrire();
+    await ecrire(liste.map((s) => (s.id === id ? { ...s, faiteLe: (date ?? jourLocal()).slice(0, 10), fois: s.fois + 1 } : s)));
+  });
 }

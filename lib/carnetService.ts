@@ -5,6 +5,7 @@
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { lireListePourEcriture } from '@/lib/v2/sauvegarde/lectureSure';
 import { logger } from '@/lib/security/logger';
 import { intensite, niveauRpe } from './v2/intensite';
 import { traduire } from '@/lib/i18n/tr';
@@ -686,8 +687,10 @@ export const initializeStarterPack = async (): Promise<void> => {
     // L'utilisateur crée ses propres benchmarks et skills
 
     // Initialize with empty arrays
-    await AsyncStorage.setItem(BENCHMARKS_KEY, JSON.stringify([]));
-    await AsyncStorage.setItem(SKILLS_KEY, JSON.stringify([]));
+    // 28 octobre 2026 : seulement si la liste n'existe pas. Un carnet deja la (restaure d'une sauvegarde
+    // sans ce drapeau, par exemple) etait remplace par une liste vide.
+    if ((await AsyncStorage.getItem(BENCHMARKS_KEY)) == null) await AsyncStorage.setItem(BENCHMARKS_KEY, JSON.stringify([]));
+    if ((await AsyncStorage.getItem(SKILLS_KEY)) == null) await AsyncStorage.setItem(SKILLS_KEY, JSON.stringify([]));
 
     await AsyncStorage.setItem(INITIALIZED_KEY, 'true');
   } catch (error) {
@@ -698,6 +701,21 @@ export const initializeStarterPack = async (): Promise<void> => {
 // ============================================
 // BENCHMARK FUNCTIONS
 // ============================================
+
+/**
+ * 28 octobre 2026 : lectures STRICTES avant une ecriture (lib/v2/sauvegarde/lectureSure.ts). Avant, une liste
+ * illisible donnait [] et l'ajout suivant reecrivait [nouvel element] par dessus tout le carnet.
+ */
+const getBenchmarksForWrite = async (): Promise<Benchmark[]> => {
+  await initializeStarterPack();
+  return lireListePourEcriture<Benchmark>(BENCHMARKS_KEY);
+};
+const getSkillsForWrite = async (): Promise<Skill[]> => {
+  await initializeStarterPack();
+  return lireListePourEcriture<Skill>(SKILLS_KEY);
+};
+const getTrashBenchmarksForWrite = (): Promise<TrashItem<Benchmark>[]> => lireListePourEcriture<TrashItem<Benchmark>>(TRASH_BENCHMARKS_KEY);
+const getTrashSkillsForWrite = (): Promise<TrashItem<Skill>[]> => lireListePourEcriture<TrashItem<Skill>>(TRASH_SKILLS_KEY);
 
 export const getBenchmarks = async (): Promise<Benchmark[]> => {
   try {
@@ -720,7 +738,7 @@ export const createBenchmark = async (
   forcedId?: string
 ): Promise<Benchmark | null> => {
   try {
-    const benchmarks = await getBenchmarks();
+    const benchmarks = await getBenchmarksForWrite();
     const newBenchmark: Benchmark = {
       id: forcedId || generateId(),
       name,
@@ -765,7 +783,7 @@ export const addBenchmarkEntry = async (
   }
 ): Promise<BenchmarkEntry | null> => {
   try {
-    const benchmarks = await getBenchmarks();
+    const benchmarks = await getBenchmarksForWrite();
     const index = benchmarks.findIndex(b => b.id === benchmarkId);
     if (index === -1) return null;
 
@@ -795,12 +813,12 @@ export const addBenchmarkEntry = async (
 
 export const deleteBenchmark = async (benchmarkId: string): Promise<boolean> => {
   try {
-    const benchmarks = await getBenchmarks();
+    const benchmarks = await getBenchmarksForWrite();
     const benchmark = benchmarks.find(b => b.id === benchmarkId);
     if (!benchmark) return false;
 
     // Déplacer vers la corbeille
-    const trashItems = await getTrashBenchmarks();
+    const trashItems = await getTrashBenchmarksForWrite();
     trashItems.push({
       item: benchmark,
       deletedAt: new Date().toISOString(),
@@ -819,7 +837,7 @@ export const deleteBenchmark = async (benchmarkId: string): Promise<boolean> => 
 
 export const deleteBenchmarkEntry = async (benchmarkId: string, entryId: string): Promise<boolean> => {
   try {
-    const benchmarks = await getBenchmarks();
+    const benchmarks = await getBenchmarksForWrite();
     const index = benchmarks.findIndex(b => b.id === benchmarkId);
     if (index === -1) return false;
 
@@ -876,7 +894,7 @@ export const createSkill = async (
   initialNote?: string
 ): Promise<Skill | null> => {
   try {
-    const skills = await getSkills();
+    const skills = await getSkillsForWrite();
     const now = new Date().toISOString();
     const notes: SkillNote[] = [];
 
@@ -913,7 +931,7 @@ export const updateSkillStatus = async (
   status: SkillStatus
 ): Promise<boolean> => {
   try {
-    const skills = await getSkills();
+    const skills = await getSkillsForWrite();
     const index = skills.findIndex(s => s.id === skillId);
     if (index === -1) return false;
 
@@ -932,7 +950,7 @@ export const addSkillNote = async (
   text: string
 ): Promise<boolean> => {
   try {
-    const skills = await getSkills();
+    const skills = await getSkillsForWrite();
     const index = skills.findIndex(s => s.id === skillId);
     if (index === -1) return false;
 
@@ -956,7 +974,7 @@ export const incrementDrillCount = async (
   amount: number = 1
 ): Promise<boolean> => {
   try {
-    const skills = await getSkills();
+    const skills = await getSkillsForWrite();
     const index = skills.findIndex(s => s.id === skillId);
     if (index === -1) return false;
 
@@ -972,12 +990,12 @@ export const incrementDrillCount = async (
 
 export const deleteSkill = async (skillId: string): Promise<boolean> => {
   try {
-    const skills = await getSkills();
+    const skills = await getSkillsForWrite();
     const skill = skills.find(s => s.id === skillId);
     if (!skill) return false;
 
     // Déplacer vers la corbeille
-    const trashItems = await getTrashSkills();
+    const trashItems = await getTrashSkillsForWrite();
     trashItems.push({
       item: skill,
       deletedAt: new Date().toISOString(),
@@ -999,7 +1017,7 @@ export const deleteSkillNote = async (
   noteId: string
 ): Promise<boolean> => {
   try {
-    const skills = await getSkills();
+    const skills = await getSkillsForWrite();
     const index = skills.findIndex(s => s.id === skillId);
     if (index === -1) return false;
 
@@ -1018,7 +1036,7 @@ export const updateSkillVideoUrl = async (
   videoUrl: string | undefined
 ): Promise<boolean> => {
   try {
-    const skills = await getSkills();
+    const skills = await getSkillsForWrite();
     const index = skills.findIndex(s => s.id === skillId);
     if (index === -1) return false;
 
@@ -1156,12 +1174,12 @@ export const getTrashSkills = async (): Promise<TrashItem<Skill>[]> => {
  */
 export const restoreBenchmark = async (benchmarkId: string): Promise<boolean> => {
   try {
-    const trashItems = await getTrashBenchmarks();
+    const trashItems = await getTrashBenchmarksForWrite();
     const item = trashItems.find(t => t.item.id === benchmarkId);
     if (!item) return false;
 
     // Ajouter le benchmark restauré
-    const benchmarks = await getBenchmarks();
+    const benchmarks = await getBenchmarksForWrite();
     benchmarks.push(item.item);
     await AsyncStorage.setItem(BENCHMARKS_KEY, JSON.stringify(benchmarks));
 
@@ -1181,12 +1199,12 @@ export const restoreBenchmark = async (benchmarkId: string): Promise<boolean> =>
  */
 export const restoreSkill = async (skillId: string): Promise<boolean> => {
   try {
-    const trashItems = await getTrashSkills();
+    const trashItems = await getTrashSkillsForWrite();
     const item = trashItems.find(t => t.item.id === skillId);
     if (!item) return false;
 
     // Ajouter la skill restaurée
-    const skills = await getSkills();
+    const skills = await getSkillsForWrite();
     skills.push(item.item);
     await AsyncStorage.setItem(SKILLS_KEY, JSON.stringify(skills));
 
@@ -1236,7 +1254,7 @@ export const getTrashCount = async (): Promise<number> => {
  */
 export const cleanDemoData = async (): Promise<{ removed: number; message: string }> => {
   try {
-    const benchmarks = await getBenchmarks();
+    const benchmarks = await getBenchmarksForWrite();
 
     // Identifier les benchmarks de démo (ceux sans entries ou créés automatiquement)
     const demoBenchmarks = benchmarks.filter(b =>
@@ -1285,7 +1303,7 @@ export const cleanDemoData = async (): Promise<{ removed: number; message: strin
  */
 export const importWatchExercisesToPhone = async (): Promise<number> => {
   try {
-    const benchmarks = await getBenchmarks();
+    const benchmarks = await getBenchmarksForWrite();
     const existingIds = new Set(benchmarks.map(b => b.id));
     const existingNames = new Set(benchmarks.map(b => b.name.toLowerCase()));
 

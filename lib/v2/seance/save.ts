@@ -106,6 +106,13 @@ export async function saveSeance(training: Training, opts: SaveOptions): Promise
     for (const k of JOINED) delete merged[k];
     await updateTraining(opts.editId, merged);
     id = opts.editId;
+    // 28 octobre 2026 : la modification est enregistree, sa saisie gardee (app fermee en cours) ne sert plus
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      await require('./model').effacerSaisiesDeSeance(opts.editId);
+    } catch {
+      // rien
+    }
   } else {
     id = Number(await addTraining({ ...training, weekly_plan_id: opts.slotId ?? training.weekly_plan_id }));
   }

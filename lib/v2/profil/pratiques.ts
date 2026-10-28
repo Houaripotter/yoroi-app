@@ -19,6 +19,7 @@
  * Pratique principale : celle marquee principale, sinon la premiere.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { mettreDeCote } from '@/lib/v2/sauvegarde/lectureSure';
 import { DeviceEventEmitter } from 'react-native';
 import { ceintureValide, gammeDe, gradePropre, type CeintureId } from './gammes';
 
@@ -232,6 +233,8 @@ function lireEtat(raw: string | null): EtatPratiques | null {
     if (o && typeof o === 'object' && Array.isArray(o.pratiques)) return { v: 1, pratiques: o.pratiques, ignores: Array.isArray(o.ignores) ? o.ignores : [] };
   } catch {
     // valeur abimee : on repart de la migration, rien n'est ecrase tant que tu ne modifies rien
+    // 28 octobre 2026 : et une copie de la valeur abimee est gardee sous @yoroi_pratiques__illisible
+    void mettreDeCote(CLE_PRATIQUES, raw);
   }
   return null;
 }

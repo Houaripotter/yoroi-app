@@ -552,6 +552,8 @@ export default function Seances() {
       <Sheet visible={menuOpen} onClose={() => setMenuOpen(false)} title={traduire("Séances")}>
         <Row icon="download" title={traduire("Importer mes séances")} sub={traduire("Depuis ta montre, une autre app ou un fichier")} onPress={() => { setMenuOpen(false); setTimeout(() => setChoixImportOpen(true), 350); }} />
         <Row icon="calendar" title={traduire("Planning et calendrier")} onPress={() => { setMenuOpen(false); router.push('/planning' as any); }} />
+        {/* 28 octobre 2026 : les seances supprimees, 30 jours, avec « Restaurer » (app/corbeille.tsx) */}
+        <Row icon="trash" title={traduire("Corbeille")} sub={traduire("Séances, pesées et mensurations supprimées, 30 jours")} onPress={() => { setMenuOpen(false); router.push('/corbeille' as any); }} />
       </Sheet>
       {/* Le choix d'import : trois chemins clairs, chacun son icone */}
       <Sheet visible={choixImportOpen} onClose={() => setChoixImportOpen(false)} title={traduire("Importer mes séances")}>

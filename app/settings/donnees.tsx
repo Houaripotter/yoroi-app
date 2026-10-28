@@ -230,6 +230,15 @@ export default function MesDonnees() {
     }
   };
 
+  // 28 octobre 2026 : une seconde confirmation avant d'effacer (un seul appui suffisait)
+  const confirmerDesinstallation = () => {
+    if (busy) return;
+    showPopup(traduire('Vraiment tout effacer ?'), traduire('Pesées, séances, photos et réglages partent pour de bon. Fais une sauvegarde avant si tu veux les garder.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
+      { text: traduire('Tout effacer'), style: 'destructive', onPress: handleCleanUninstall },
+    ]);
+  };
+
   const handleCleanUninstall = async () => {
     if (busy) return;
     setBusy(true);
@@ -342,7 +351,7 @@ export default function MesDonnees() {
               {traduire("Avant de supprimer YOROI, efface tout ce qu’il a gardé sur ton téléphone. Pense à faire une sauvegarde si tu veux revenir un jour.")}</Ink>
             <Ink size={14} color={c.textSecondary}>{TEXTE_EFFACE}</Ink>
             <Ink size={14} color={c.textSecondary}>{texteResteEnDehors(Platform.OS)}</Ink>
-            <Button tone="danger" icon="trash" label={traduire("Effacer les données de YOROI")} onPress={handleCleanUninstall} />
+            <Button tone="danger" icon="trash" label={traduire("Effacer les données de YOROI")} onPress={confirmerDesinstallation} />
             <Button tone="ghost" label={traduire("Annuler")} onPress={() => setCleanVisible(false)} />
           </>
         ) : (

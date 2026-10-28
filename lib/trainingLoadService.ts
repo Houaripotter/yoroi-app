@@ -99,7 +99,45 @@ export const calculateSessionLoad = (duration: number, rpe: number): number => {
 /**
  * Sauvegarde une charge d'entraînement (surcharge pour accepter un objet ou des paramètres)
  */
-export const saveTrainingLoad = async (
+/**
+ * 28 octobre 2026 (audit « ne jamais perdre de données ») : lecture stricte avant d'écrire. Avant, une lecture
+ * ratée ou un texte abîmé donnait une liste vide, puis la nouvelle charge était écrite seule : tout l'historique
+ * des ressentis effacé. Maintenant : lecture ratée, rien n'est écrit ; texte illisible, il est recopié à part.
+ * Les écritures passent une par une (deux fins de séance rapprochées ne s'écrasent plus).
+ */
+export const TRAINING_LOADS_ILLISIBLE_KEY = '@yoroi_training_loads_illisible';
+let fileCharges: Promise<unknown> = Promise.resolve();
+
+const chargesPourEcrire = async (): Promise<TrainingLoad[]> => {
+  const raw = await AsyncStorage.getItem(STORAGE_KEY);
+  if (!raw) return [];
+  let v: unknown = null;
+  try {
+    v = JSON.parse(raw);
+  } catch {
+    v = null;
+  }
+  if (Array.isArray(v)) return v as TrainingLoad[];
+  await AsyncStorage.setItem(TRAINING_LOADS_ILLISIBLE_KEY, raw);
+  return [];
+};
+
+export const saveTrainingLoad = (
+  params: SaveTrainingLoadParams | number,
+  date?: string,
+  duration?: number,
+  rpe?: number,
+  sport?: string
+): Promise<TrainingLoad> => {
+  const p = fileCharges.then(
+    () => saveTrainingLoadNow(params, date, duration, rpe, sport),
+    () => saveTrainingLoadNow(params, date, duration, rpe, sport),
+  );
+  fileCharges = p.catch(() => undefined);
+  return p;
+};
+
+const saveTrainingLoadNow = async (
   params: SaveTrainingLoadParams | number,
   date?: string,
   duration?: number,
@@ -107,7 +145,7 @@ export const saveTrainingLoad = async (
   sport?: string
 ): Promise<TrainingLoad> => {
   try {
-    const loads = await getTrainingLoads();
+    const loads = await chargesPourEcrire();
     
     let newLoad: TrainingLoad;
     

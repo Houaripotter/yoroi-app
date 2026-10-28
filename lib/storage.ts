@@ -8,6 +8,7 @@ import { DeviceEventEmitter, Platform } from 'react-native';
 import logger from './security/logger';
 import secureStorage from './security/secureStorage';
 import { rebaseLocalUri } from './v2/sauvegarde/chemins';
+import { avecVerrou, lireListePourEcriture, listePourEcriture, objetPourEcriture } from './v2/sauvegarde/lectureSure';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire } from '@/lib/i18n/tr';
 // ThemeName supprimé - utilise maintenant string pour compatibilité avec le nouveau système de thèmes
@@ -507,7 +508,8 @@ const getSecureMeasurements = async (): Promise<Measurement[]> => {
 const getSecureMeasurementsForWrite = async (): Promise<Measurement[]> => {
   await migrateMeasurementsToSecureStorage();
   const data = await secureStorage.getItemStrict(STORAGE_KEYS.MEASUREMENTS);
-  return Array.isArray(data) ? data : [];
+  // 28 octobre 2026 : une valeur presente mais illisible LANCE (avant : [] puis reecriture par dessus l'historique)
+  return listePourEcriture<Measurement>(data, STORAGE_KEYS.MEASUREMENTS);
 };
 
 /**
@@ -587,8 +589,11 @@ const mergeLegacyPhotos = async (current: Photo[]): Promise<Photo[]> => {
  * Récupère les photos : liste v2 (AsyncStorage, sans limite de taille) + reprise unique des anciennes listes.
  * Les chemins sont recollés sur le dossier actuel de l'app (il peut changer à la mise à jour sur iPhone).
  */
-const readPhotosRaw = async (): Promise<Photo[]> => {
-  const v2 = parsePhotoList(await AsyncStorage.getItem(PHOTOS_ASYNC_KEY));
+const readPhotosRaw = async (strict = false): Promise<Photo[]> => {
+  const brut = await AsyncStorage.getItem(PHOTOS_ASYNC_KEY);
+  // 28 octobre 2026 : avant une ecriture, une liste illisible LANCE au lieu de devenir [] (sinon la photo
+  // suivante remplacait toute la liste)
+  const v2 = strict ? listePourEcriture<Photo>(brut, PHOTOS_ASYNC_KEY) : parsePhotoList(brut);
   try {
     return await mergeLegacyPhotos(v2);
   } catch (error) {
@@ -599,7 +604,7 @@ const readPhotosRaw = async (): Promise<Photo[]> => {
 
 /** Lecture STRICTE avant une écriture : une lecture ratée lance une erreur au lieu de renvoyer [] (sinon on écrasait la liste) */
 const getSecurePhotosForWrite = async (): Promise<Photo[]> =>
-  (await readPhotosRaw()).map((p) => (p && p.file_uri ? { ...p, file_uri: rebaseLocalUri(p.file_uri) } : p));
+  (await readPhotosRaw(true)).map((p) => (p && p.file_uri ? { ...p, file_uri: rebaseLocalUri(p.file_uri) } : p));
 
 const getSecurePhotos = async (): Promise<Photo[]> => {
   try {
@@ -642,7 +647,7 @@ export const getMeasurementsByPeriod = async (days: number): Promise<Measurement
   return allMeasurements.filter(m => new Date(m.date) >= cutoffDate);
 };
 
-export const addMeasurement = async (measurement: Omit<Measurement, 'id' | 'created_at'>): Promise<Measurement> => {
+export const addMeasurement = async (measurement: Omit<Measurement, 'id' | 'created_at'>): Promise<Measurement> => avecVerrou(STORAGE_KEYS.MEASUREMENTS, async () => {
   const measurements = await getSecureMeasurementsForWrite();
 
   const newMeasurement: Measurement = {
@@ -652,12 +657,12 @@ export const addMeasurement = async (measurement: Omit<Measurement, 'id' | 'crea
   };
 
   measurements.push(newMeasurement);
-  await saveSecureMeasurements(measurements);
+  if (!(await saveSecureMeasurements(measurements))) throw new Error('mesure non enregistree');
 
   return newMeasurement;
-};
+});
 
-export const updateMeasurement = async (id: string, updates: Partial<Measurement>): Promise<boolean> => {
+export const updateMeasurement = async (id: string, updates: Partial<Measurement>): Promise<boolean> => avecVerrou(STORAGE_KEYS.MEASUREMENTS, async () => {
   const measurements = await getSecureMeasurementsForWrite();
   const index = measurements.findIndex(m => m.id === id);
 
@@ -665,13 +670,13 @@ export const updateMeasurement = async (id: string, updates: Partial<Measurement
 
   measurements[index] = { ...measurements[index], ...updates };
   return await saveSecureMeasurements(measurements);
-};
+});
 
-export const deleteMeasurement = async (id: string): Promise<boolean> => {
+export const deleteMeasurement = async (id: string): Promise<boolean> => avecVerrou(STORAGE_KEYS.MEASUREMENTS, async () => {
   const measurements = await getSecureMeasurementsForWrite();
   const filtered = measurements.filter(m => m.id !== id);
   return await saveSecureMeasurements(filtered);
-};
+});
 
 export const deleteAllMeasurements = async (): Promise<boolean> => {
   return await saveSecureMeasurements([]);
@@ -706,8 +711,8 @@ export const hasWorkoutOnDate = async (date: string): Promise<boolean> => {
   return workouts.some(w => w.date === date);
 };
 
-export const addWorkout = async (workout: Omit<Workout, 'id' | 'created_at'>): Promise<Workout> => {
-  const workouts = await getData<Workout>(STORAGE_KEYS.WORKOUTS);
+export const addWorkout = async (workout: Omit<Workout, 'id' | 'created_at'>): Promise<Workout> => avecVerrou(STORAGE_KEYS.WORKOUTS, async () => {
+  const workouts = await lireListePourEcriture<Workout>(STORAGE_KEYS.WORKOUTS);
 
   const newWorkout: Workout = {
     ...workout,
@@ -719,13 +724,13 @@ export const addWorkout = async (workout: Omit<Workout, 'id' | 'created_at'>): P
   await saveData(STORAGE_KEYS.WORKOUTS, workouts);
 
   return newWorkout;
-};
+});
 
-export const deleteWorkout = async (id: string): Promise<boolean> => {
-  const workouts = await getData<Workout>(STORAGE_KEYS.WORKOUTS);
+export const deleteWorkout = async (id: string): Promise<boolean> => avecVerrou(STORAGE_KEYS.WORKOUTS, async () => {
+  const workouts = await lireListePourEcriture<Workout>(STORAGE_KEYS.WORKOUTS);
   const filtered = workouts.filter(w => w.id !== id);
   return await saveData(STORAGE_KEYS.WORKOUTS, filtered);
-};
+});
 
 export const deleteAllWorkouts = async (): Promise<boolean> => {
   return await saveData(STORAGE_KEYS.WORKOUTS, []);
@@ -751,18 +756,22 @@ export const savePhotoToStorage = async (
     const photosDir = await ensurePhotosDirectoryExists();
 
     let finalUri = sourceUri;
+    let copie: string | null = null;
 
-    // Si FileSystem disponible (mobile natif), copier le fichier dans le dossier sécurisé
-    if (photosDir && Platform.OS !== 'web') {
-      try {
-        const filename = `photo_${id}.jpg`;
-        const destinationUri = `${photosDir}${filename}`;
-        await FileSystem.copyAsync({ from: sourceUri, to: destinationUri });
-        finalUri = destinationUri;
-      } catch (copyError) {
-        logger.warn('Impossible de copier, utilisation de l\'URI original:', copyError);
-        // Fallback : utiliser l'URI d'origine (toujours dans le sandbox iOS)
+    // 28 octobre 2026 : sur le telephone, la photo est TOUJOURS copiee dans Documents/photos et la copie est
+    // verifiee (fichier present, taille non nulle). Avant, une copie ratee gardait l'adresse temporaire du
+    // selecteur d'images, que le systeme efface plus tard : la photo disparaissait. Copie ratee : rien n'est enregistre.
+    if (Platform.OS !== 'web') {
+      if (!photosDir) throw new Error('dossier des photos indisponible');
+      const destinationUri = `${photosDir}photo_${id}.jpg`;
+      await FileSystem.copyAsync({ from: sourceUri, to: destinationUri });
+      const info = await FileSystem.getInfoAsync(destinationUri);
+      if (!info.exists || !(Number((info as { size?: number }).size) > 0)) {
+        await FileSystem.deleteAsync(destinationUri, { idempotent: true }).catch(() => undefined);
+        throw new Error('copie de la photo vide ou absente');
       }
+      finalUri = destinationUri;
+      copie = destinationUri;
     }
 
     const newPhoto: Photo = {
@@ -775,9 +784,15 @@ export const savePhotoToStorage = async (
       created_at: new Date().toISOString(),
     };
 
-    const photos = await getSecurePhotosForWrite();
-    photos.push(newPhoto);
-    await saveSecurePhotos(photos);
+    const enregistree = await avecVerrou(PHOTOS_ASYNC_KEY, async () => {
+      const photos = await getSecurePhotosForWrite();
+      photos.push(newPhoto);
+      return saveSecurePhotos(photos);
+    });
+    if (!enregistree) {
+      if (copie) await FileSystem.deleteAsync(copie, { idempotent: true }).catch(() => undefined);
+      throw new Error('liste des photos non enregistree');
+    }
 
     return newPhoto;
   } catch (error: unknown) {
@@ -796,16 +811,15 @@ export const getPhotosFromStorage = async (): Promise<Photo[]> => {
 };
 
 /** Met a jour une photo du coffre (pose, poids, note) sans toucher au fichier */
-export const updatePhotoInStorage = async (id: string, updates: Partial<Pick<Photo, 'pose' | 'weight' | 'notes'>>): Promise<boolean> => {
+export const updatePhotoInStorage = async (id: string, updates: Partial<Pick<Photo, 'pose' | 'weight' | 'notes'>>): Promise<boolean> => avecVerrou(PHOTOS_ASYNC_KEY, async () => {
   const photos = await getSecurePhotosForWrite();
   const i = photos.findIndex(p => p.id === id);
   if (i === -1) return false;
   photos[i] = { ...photos[i], ...updates };
-  await saveSecurePhotos(photos);
-  return true;
-};
+  return saveSecurePhotos(photos);
+});
 
-export const deletePhotoFromStorage = async (id: string): Promise<boolean> => {
+export const deletePhotoFromStorage = async (id: string): Promise<boolean> => avecVerrou(PHOTOS_ASYNC_KEY, async () => {
   const photos = await getSecurePhotosForWrite();
   const photoToDelete = photos.find(p => p.id === id);
 
@@ -813,7 +827,10 @@ export const deletePhotoFromStorage = async (id: string): Promise<boolean> => {
     return false;
   }
 
-  // Supprimer le fichier physique si possible
+  // 28 octobre 2026 : la liste est reecrite AVANT d'effacer le fichier (avant : fichier efface, puis
+  // une ecriture ratee laissait une photo sans image dans la liste)
+  const filteredPhotos = photos.filter(p => p.id !== id);
+  if (!(await saveSecurePhotos(filteredPhotos))) return false;
   if (Platform.OS !== 'web' && photoToDelete.file_uri && !photoToDelete.file_uri.startsWith('data:')) {
     try {
       const fileInfo = await FileSystem.getInfoAsync(photoToDelete.file_uri);
@@ -824,11 +841,8 @@ export const deletePhotoFromStorage = async (id: string): Promise<boolean> => {
       logger.warn('Erreur suppression fichier photo:', error);
     }
   }
-
-  const filteredPhotos = photos.filter(p => p.id !== id);
-  await saveSecurePhotos(filteredPhotos);
   return true;
-};
+});
 
 export const deleteAllPhotos = async (): Promise<boolean> => {
   const photos = await getSecurePhotosForWrite();
@@ -909,7 +923,10 @@ export const getUserSettingsStrict = async (): Promise<UserSettings> => {
 
 export const saveUserSettings = async (settings: Partial<UserSettings>): Promise<boolean> => {
   try {
-    const currentSettings = await getUserSettings();
+    // 28 octobre 2026 : lecture STRICTE. Avant, une lecture ratee du coffre donnait les reglages par defaut,
+    // et l'enregistrement d'un seul champ effacait taille, objectif, genre, prenom, zones cardiaques...
+    const lu = objetPourEcriture<UserSettings>(await secureStorage.getItemStrict(STORAGE_KEYS.USER_SETTINGS), STORAGE_KEYS.USER_SETTINGS);
+    const currentSettings: UserSettings = lu ?? { weight_unit: 'kg', measurement_unit: 'cm', theme: 'classic' };
     const newSettings = { ...currentSettings, ...settings };
     return await secureStorage.setItem(STORAGE_KEYS.USER_SETTINGS, newSettings);
   } catch (error) {
@@ -971,8 +988,14 @@ export const saveUserClubs = async (clubs: UserClub[]): Promise<boolean> => {
   }
 };
 
+/** 28 octobre 2026 : liste des clubs pour une ecriture. Absente : les clubs par defaut ; illisible : erreur (rien n'est ecrase) */
+const clubsPourEcriture = async (): Promise<UserClub[]> => {
+  const brut = await AsyncStorage.getItem(STORAGE_KEYS.USER_CLUBS);
+  return brut == null ? getUserClubs() : listePourEcriture<UserClub>(brut, STORAGE_KEYS.USER_CLUBS);
+};
+
 export const addUserClub = async (club: Omit<UserClub, 'id' | 'created_at'>): Promise<UserClub> => {
-  const clubs = await getUserClubs();
+  const clubs = await clubsPourEcriture();
   const newClub: UserClub = {
     ...club,
     id: generateId(),
@@ -984,7 +1007,7 @@ export const addUserClub = async (club: Omit<UserClub, 'id' | 'created_at'>): Pr
 };
 
 export const updateUserClub = async (clubId: string, updates: Partial<UserClub>): Promise<boolean> => {
-  const clubs = await getUserClubs();
+  const clubs = await clubsPourEcriture();
   const index = clubs.findIndex(c => c.id === clubId);
   if (index === -1) return false;
   clubs[index] = { ...clubs[index], ...updates };
@@ -993,7 +1016,7 @@ export const updateUserClub = async (clubId: string, updates: Partial<UserClub>)
 };
 
 export const deleteUserClub = async (clubId: string): Promise<boolean> => {
-  const clubs = await getUserClubs();
+  const clubs = await clubsPourEcriture();
   const filtered = clubs.filter(c => c.id !== clubId);
   await saveUserClubs(filtered);
   return true;
@@ -1060,8 +1083,14 @@ export const saveUserGear = async (gear: UserGear[]): Promise<boolean> => {
   }
 };
 
+/** 28 octobre 2026 : meme regle que les clubs */
+const equipementsPourEcriture = async (): Promise<UserGear[]> => {
+  const brut = await AsyncStorage.getItem(STORAGE_KEYS.USER_GEAR);
+  return brut == null ? getUserGear() : listePourEcriture<UserGear>(brut, STORAGE_KEYS.USER_GEAR);
+};
+
 export const addUserGear = async (gear: Omit<UserGear, 'id' | 'created_at'>): Promise<UserGear> => {
-  const gearList = await getUserGear();
+  const gearList = await equipementsPourEcriture();
   const newGear: UserGear = {
     ...gear,
     id: generateId(),
@@ -1073,7 +1102,7 @@ export const addUserGear = async (gear: Omit<UserGear, 'id' | 'created_at'>): Pr
 };
 
 export const updateUserGear = async (gearId: string, updates: Partial<UserGear>): Promise<boolean> => {
-  const gearList = await getUserGear();
+  const gearList = await equipementsPourEcriture();
   const index = gearList.findIndex(g => g.id === gearId);
   if (index === -1) return false;
   gearList[index] = { ...gearList[index], ...updates };
@@ -1082,7 +1111,7 @@ export const updateUserGear = async (gearId: string, updates: Partial<UserGear>)
 };
 
 export const deleteUserGear = async (gearId: string): Promise<boolean> => {
-  const gearList = await getUserGear();
+  const gearList = await equipementsPourEcriture();
   const filtered = gearList.filter(g => g.id !== gearId);
   await saveUserGear(filtered);
   return true;
@@ -1162,8 +1191,8 @@ export const isBadgeUnlocked = async (badgeId: string): Promise<boolean> => {
   return badges.some(b => b.badge_id === badgeId);
 };
 
-export const unlockBadge = async (badgeId: string): Promise<boolean> => {
-  const badges = await getData<UserBadge>(STORAGE_KEYS.USER_BADGES);
+export const unlockBadge = async (badgeId: string): Promise<boolean> => avecVerrou(STORAGE_KEYS.USER_BADGES, async () => {
+  const badges = await lireListePourEcriture<UserBadge>(STORAGE_KEYS.USER_BADGES);
 
   if (badges.some(b => b.badge_id === badgeId)) {
     return false;
@@ -1178,7 +1207,7 @@ export const unlockBadge = async (badgeId: string): Promise<boolean> => {
   await saveData(STORAGE_KEYS.USER_BADGES, badges);
 
   return true;
-};
+});
 
 // ============================================
 // EXPORT / IMPORT (CROSS-PLATFORM)
@@ -1721,7 +1750,9 @@ export const getHydrationSettings = async (): Promise<HydrationSettings> => {
 
 export const saveHydrationSettings = async (settings: Partial<HydrationSettings>): Promise<boolean> => {
   try {
-    const currentSettings = await getHydrationSettings();
+    // 28 octobre 2026 : lecture STRICTE, une lecture ratee n'ecrase plus les reglages de l'eau par les valeurs par defaut
+    const lu = objetPourEcriture<HydrationSettings>(await secureStorage.getItemStrict(STORAGE_KEYS.HYDRATION_SETTINGS), STORAGE_KEYS.HYDRATION_SETTINGS);
+    const currentSettings = lu ? { ...(await getHydrationSettings()), ...lu } : await getHydrationSettings();
     const newSettings = { ...currentSettings, ...settings };
     return await secureStorage.setItem(STORAGE_KEYS.HYDRATION_SETTINGS, newSettings);
   } catch (error) {
@@ -1767,8 +1798,8 @@ export const getTodayHydration = async (): Promise<number> => {
 /**
  * Ajoute une entrée d'hydratation
  */
-export const addHydrationEntry = async (amount: number, date?: string): Promise<HydrationEntry> => {
-  const entries = await getAllHydrationEntries();
+export const addHydrationEntry = async (amount: number, date?: string): Promise<HydrationEntry> => avecVerrou(STORAGE_KEYS.HYDRATION_LOG, async () => {
+  const entries = await lireListePourEcriture<HydrationEntry>(STORAGE_KEYS.HYDRATION_LOG);
   const now = new Date();
 
   const newEntry: HydrationEntry = {
@@ -1781,14 +1812,14 @@ export const addHydrationEntry = async (amount: number, date?: string): Promise<
   entries.push(newEntry);
   await AsyncStorage.setItem(STORAGE_KEYS.HYDRATION_LOG, JSON.stringify(entries));
   return newEntry;
-};
+});
 
 /**
  * Supprime une entrée d'hydratation
  */
-export const deleteHydrationEntry = async (id: string): Promise<boolean> => {
+export const deleteHydrationEntry = async (id: string): Promise<boolean> => avecVerrou(STORAGE_KEYS.HYDRATION_LOG, async () => {
   try {
-    const entries = await getAllHydrationEntries();
+    const entries = await lireListePourEcriture<HydrationEntry>(STORAGE_KEYS.HYDRATION_LOG);
     const filtered = entries.filter(e => e.id !== id);
     await AsyncStorage.setItem(STORAGE_KEYS.HYDRATION_LOG, JSON.stringify(filtered));
     return true;
@@ -1796,7 +1827,7 @@ export const deleteHydrationEntry = async (id: string): Promise<boolean> => {
     logger.error('Erreur suppression hydratation:', error);
     return false;
   }
-};
+});
 
 /**
  * Obtient les données d'hydratation sur une période (en jours)
@@ -1973,9 +2004,11 @@ const saveSecureMoods = async (moods: MoodEntry[]): Promise<boolean> => {
   }
 };
 
-export const saveMood = async (moodData: MoodEntry): Promise<boolean> => {
+export const saveMood = async (moodData: MoodEntry): Promise<boolean> => avecVerrou(STORAGE_KEYS.MOOD_LOG, async () => {
   try {
-    const moods = await getSecureMoods();
+    await migrateMoodToSecureStorage();
+    // 28 octobre 2026 : lecture stricte, une lecture ratee n'efface plus l'historique des humeurs
+    const moods = listePourEcriture<MoodEntry>(await secureStorage.getItemStrict(STORAGE_KEYS.MOOD_LOG), STORAGE_KEYS.MOOD_LOG);
     const newMood: MoodEntry = {
       ...moodData,
       id: generateId(),
@@ -1986,7 +2019,7 @@ export const saveMood = async (moodData: MoodEntry): Promise<boolean> => {
     logger.error('Erreur sauvegarde mood:', error);
     return false;
   }
-};
+});
 
 export const getMoods = async (days?: number): Promise<MoodEntry[]> => {
   try {

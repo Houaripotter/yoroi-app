@@ -23,6 +23,7 @@ import { SportPackProvider } from '@/lib/SportPackContext';
 import FakeStatusBar from '@/components/FakeStatusBar';
 import { SynchroMontre } from '@/lib/v2/montre/SynchroMontre';
 import { LiensWidgets } from '@/lib/v2/widgets/LiensWidgets';
+import { AnnulerSuppression } from '@/components/yoroi/v2/seances/AnnulerSuppression';
 import { AvatarProvider } from '@/lib/AvatarContext';
 import { CreatorGuard } from '@/components/yoroi/v2/studio/CreatorGuard';
 import { FinPremiumGuard } from '@/components/yoroi/v2/premium/FinPremiumGuard';
@@ -502,6 +503,8 @@ function RootLayoutContent() {
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
       {/* Liens des widgets et du Centre de controle : ouvre l'ecran vise une fois l'app prete */}
       <LiensWidgets />
+      {/* 28 octobre 2026 : « Séance supprimée, Annuler », sur tous les ecrans */}
+      <AnnulerSuppression />
       {/* Notification touchee : ouvre son ecran (carte de la seance...) une fois l'app prete */}
       <OuvertureNotifications />
       {/* Studio : coupe les modes de test quand le mode createur n'est pas actif */}

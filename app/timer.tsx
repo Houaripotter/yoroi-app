@@ -8,7 +8,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, DeviceEventEmitter, ScrollView, Vibration, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -39,6 +39,11 @@ import { keepAwakeOn, keepAwakeOff } from '@/lib/keepAwakeSafe';
 import logger from '@/lib/security/logger';
 import { useCreatorMode } from '@/lib/v2/creator/CreatorModeContext';
 import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import {
+  aGarder, chargerBrouillonChrono, effacerBrouillonChrono, finPourEnregistrer, finPrevue, generationChrono, sauverBrouillonChrono,
+  type BrouillonChrono,
+} from '@/lib/v2/carnet/brouillonChrono';
 
 type SeriesItem = { seriesNumber: number; timestamp: Date; restDuration: number; reps?: number; weight?: number };
 
@@ -62,6 +67,15 @@ function haptic(type: 'light' | 'medium' | 'heavy' = 'medium') {
   impactAsync(style).catch(() => {});
 }
 
+/** « il y a 12 min », mêmes textes que la reprise d'une séance */
+function depuisChrono(ms: number): string {
+  const min = Math.max(0, Math.round((Date.now() - ms) / 60000));
+  if (min < 1) return traduire("à l'instant");
+  if (min < 60) return traduire("il y a {0} min", min);
+  const h = Math.floor(min / 60);
+  return traduire("il y a {0} h{1}", h, min % 60 ? ` ${String(min % 60).padStart(2, '0')}` : '');
+}
+
 function safe(fn: () => void) {
   try {
     fn();
@@ -73,7 +87,7 @@ function safe(fn: () => void) {
 export default function TimerScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ mode?: string; test?: string }>();
+  const params = useLocalSearchParams<{ mode?: string; test?: string; resume?: string }>();
   // Studio (mode createur seulement) : ?test=studio regle 3 rounds de 15 s pour entendre claquettes et cloche,
   // sans toucher aux reglages enregistres de l'utilisateur
   const { isCreator } = useCreatorMode();
@@ -244,7 +258,8 @@ export default function TimerScreen() {
           if (trackRepsWeightRef.current) setShowRepsWeight(true);
           else setSeriesHistory((prev) => [...prev, { seriesNumber: seriesCountRef.current, timestamp: new Date(), restDuration: lastRestRef.current }]);
         } else {
-          endedAtRef.current = Date.now();
+          // 28 octobre 2026 : fini pendant que l'app etait fermee, la fin a l'heure prevue (pas a ton retour)
+          endedAtRef.current = e.live ? Date.now() : (engineRef.current?.snapshot().pausedAtMs ?? Date.now());
           if (finishTimer.current) clearTimeout(finishTimer.current);
           finishTimer.current = setTimeout(() => setShowFinish(true), 900);
         }
@@ -271,6 +286,156 @@ export default function TimerScreen() {
   // Live Activity (ecran verrouille et Dynamic Island) : round, phase et compte a rebours, seulement si le module natif existe
   useActiviteChrono(engine, MODES.find((x) => x.id === mode)?.label ?? traduire('Chrono'));
   const status = engine.status;
+
+  // ─── Chrono garde a chaque changement (28 octobre 2026) : app tuee, rien n'est perdu (lib/v2/carnet/brouillonChrono.ts) ───
+  // genRef : la generation du brouillon de CE chrono ; -1 : fige (la saisie apres coup est ouverte, elle l'effacera)
+  const genRef = useRef(generationChrono());
+  const versSaisieRef = useRef<BrouillonChrono['versSaisie'] | null>(null);
+  const garderRef = useRef<() => void>(() => {});
+  garderRef.current = () => {
+    if (genRef.current < 0) return;
+    const eng = engineRef.current;
+    if (!eng) return;
+    const snap = eng.snapshot();
+    const phases = snap.status === 'idle' ? [] : eng.phases.map((ph, i) => ({ ...ph, duration: snap.durations[i] ?? ph.duration }));
+    const b: BrouillonChrono = {
+      v: 1,
+      mode,
+      combatPreset,
+      r: { musculationRest, totalRounds, roundDuration, restDuration, tabataRounds, tabataWork, tabataRest, tabataSets, tabataRestBetweenSets, emomDuration, amrapDuration, forTimeCap, prepa },
+      listes: { emom: emomExercises, amrap: amrapExercises, fortime: forTimeExercises },
+      debutMs: workoutStartTime ? workoutStartTime.getTime() : null,
+      finMs: endedAtRef.current,
+      phases,
+      status: snap.status,
+      index: snap.index,
+      etapeDebutMs: snap.phaseStartMs,
+      pauseMs: snap.status === 'paused' || snap.status === 'holding' ? snap.pausedAtMs : null,
+      seriesCount,
+      series: seriesHistory.map((x) => ({ seriesNumber: x.seriesNumber, timestampMs: x.timestamp.getTime(), restDuration: x.restDuration, ...(x.reps !== undefined ? { reps: x.reps } : {}), ...(x.weight !== undefined ? { weight: x.weight } : {}) })),
+      amrapTours: amrapRoundsCompleted,
+      forTimeSec: forTimeElapsed,
+      phaseMs: [...phaseMsRef.current.entries()],
+      ...(versSaisieRef.current ? { versSaisie: versSaisieRef.current } : {}),
+      majMs: Date.now(),
+    };
+    if (!aGarder(b)) return;
+    void sauverBrouillonChrono(b, genRef.current);
+  };
+  useEffect(() => {
+    garderRef.current();
+  }, [status, engine.index, engine.phases, seriesCount, seriesHistory, amrapRoundsCompleted, forTimeElapsed, workoutStartTime]);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st !== 'active') garderRef.current();
+    });
+    return () => {
+      sub.remove();
+      garderRef.current();
+    };
+  }, []);
+
+  /** Ce chrono est abandonne (arret confirme, compteur remis a zero) : son brouillon part */
+  const oublierChrono = () => {
+    if (genRef.current < 0) return;
+    void effacerBrouillonChrono();
+    genRef.current = generationChrono();
+  };
+
+  /** Remet un chrono garde a l'ecran ; bilan : tout est remis, le moteur reste arrete et le bilan s'ouvre */
+  const restaurerChrono = (b: BrouillonChrono, bilan = false) => {
+    const now = Date.now();
+    genRef.current = generationChrono();
+    versSaisieRef.current = null;
+    modeRef.current = b.mode;
+    setMode(b.mode);
+    setPicked(true);
+    setCombatPreset(b.combatPreset);
+    const r = b.r;
+    const n = (k: string, set: (v: number) => void) => {
+      if (Number.isFinite(r[k])) set(r[k]);
+    };
+    n('musculationRest', setMusculationRest); n('totalRounds', setTotalRounds); n('roundDuration', setRoundDuration); n('restDuration', setRestDuration);
+    n('tabataRounds', setTabataRounds); n('tabataWork', setTabataWork); n('tabataRest', setTabataRest); n('tabataSets', setTabataSets);
+    n('tabataRestBetweenSets', setTabataRestBetweenSets); n('emomDuration', setEmomDuration); n('amrapDuration', setAmrapDuration); n('forTimeCap', setForTimeCap); n('prepa', setPrepa);
+    if (b.listes.emom.length) setEmomExercises(b.listes.emom);
+    if (b.listes.amrap.length) setAmrapExercises(b.listes.amrap);
+    if (b.listes.fortime.length) setForTimeExercises(b.listes.fortime);
+    seriesCountRef.current = b.seriesCount;
+    setSeriesCount(b.seriesCount);
+    setSeriesHistory(b.series.map((x) => ({ seriesNumber: x.seriesNumber, timestamp: new Date(x.timestampMs || now), restDuration: x.restDuration, reps: x.reps, weight: x.weight })));
+    setAmrapRoundsCompleted(b.amrapTours);
+    setForTimeElapsed(b.forTimeSec);
+    setWorkoutStartTime(b.debutMs ? new Date(b.debutMs) : null);
+    endedAtRef.current = b.finMs;
+    phaseMsRef.current = new Map(b.phaseMs);
+    skipMsRef.current = null;
+    setRoundsFaitsN(b.mode === 'combat' && b.phases.length && (b.status === 'finished' || bilan) ? roundsFaits(b.phases, phaseMsRef.current) : null);
+    const prevue = finPrevue(b);
+    const finiPendantAbsence = b.mode !== 'musculation' && prevue !== null && prevue <= now;
+    if (bilan || finiPendantAbsence || (b.status === 'finished' && b.mode !== 'musculation')) {
+      endedAtRef.current = finPourEnregistrer(b, now);
+      if (engineRef.current && engineRef.current.status !== 'idle') engineRef.current.stop();
+      setShowFinish(true);
+      return;
+    }
+    if ((b.status === 'running' || b.status === 'paused' || b.status === 'holding') && b.phases.length && engineRef.current) {
+      engineRef.current.restore(b.phases, b.index, b.etapeDebutMs, b.status === 'running' ? null : (b.pauseMs ?? now));
+    }
+  };
+
+  // A l'ouverture et au retour sur l'ecran : un chrono garde ? (app relancee, saisie apres coup fermee sans enregistrer)
+  const invite = useRef(false);
+  const premiereFois = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      const resume = premiereFois.current && params.resume === '1';
+      premiereFois.current = false;
+      let vivant = true;
+      (async () => {
+        const eng = engineRef.current;
+        if (invite.current || (eng && eng.status !== 'idle') || seriesCountRef.current > 0) return;
+        const b = await chargerBrouillonChrono();
+        if (!vivant || !b || invite.current) return;
+        const nom = MODES.find((x) => x.id === b.mode)?.label ?? traduire('Chrono');
+        const effacer = (retour: () => void) =>
+          appAlert(traduire('Effacer ce chrono ?'), traduire('Ce qui est fait ne sera pas enregistré.'), [
+            { text: traduire('Garder'), style: 'cancel', onPress: retour },
+            { text: traduire('Effacer'), style: 'destructive', onPress: () => { invite.current = false; void effacerBrouillonChrono(); genRef.current = generationChrono(); } },
+          ], { cancelable: false });
+        if (b.versSaisie) {
+          const vs = b.versSaisie;
+          const proposer = () => {
+            invite.current = true;
+            appAlert(traduire('Ton chrono n’est pas encore enregistré'), traduire('{0} : {1}', traduire(nom), vs.notes), [
+              { text: traduire('Effacer'), style: 'destructive', onPress: () => effacer(proposer) },
+              { text: traduire('Enregistrer'), style: 'primary', onPress: () => { invite.current = false; genRef.current = -1; router.push({ pathname: '/seance/deja-faite' as any, params: { sport: vs.sport, duration: String(vs.duration), notes: vs.notes, chrono: '1' } }); } },
+            ], { cancelable: false });
+          };
+          proposer();
+          return;
+        }
+        if (resume) {
+          restaurerChrono(b);
+          return;
+        }
+        const proposer = () => {
+          invite.current = true;
+          appAlert(traduire('Un chrono est en cours'), traduire('{0}, commencé {1}.', traduire(nom), depuisChrono(b.debutMs ?? b.majMs)), [
+            { text: traduire('Effacer'), style: 'destructive', onPress: () => effacer(proposer) },
+            { text: traduire('Enregistrer ce qui est fait'), onPress: () => { invite.current = false; restaurerChrono(b, true); } },
+            { text: traduire('Reprendre'), style: 'primary', onPress: () => { invite.current = false; restaurerChrono(b); } },
+          ], { cancelable: false });
+        };
+        proposer();
+      })();
+      return () => {
+        vivant = false;
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  );
+
   // Lien de widget recu alors que le chrono est deja ouvert (yoroi://w/timer?mode=combat) : passe au mode demande,
   // seulement si aucun chrono ne tourne ; les reglages des rounds restent les derniers utilises
   useEffect(() => {
@@ -397,6 +562,7 @@ export default function TimerScreen() {
   const startTimer = () => {
     haptic('medium');
     setShowFinish(false);
+    if (genRef.current < 0) genRef.current = generationChrono();
     let series = seriesCount;
     if (mode === 'musculation') {
       series = seriesCount + 1;
@@ -431,9 +597,12 @@ export default function TimerScreen() {
     engine.stop();
     timerNotifications.cancelNotification().catch(() => {});
     if (mode === 'amrap') setAmrapRoundsCompleted(0);
+    // repos de musculation : « Réglages » garde tes séries ; les autres chronos : arrêt confirmé, rien à garder
+    if (mode !== 'musculation') oublierChrono();
   };
 
   const resetSeriesCount = () => {
+    oublierChrono();
     setSeriesCount(0);
     setSeriesHistory([]);
     setWorkoutStartTime(null);
@@ -497,12 +666,19 @@ export default function TimerScreen() {
     const notes = sessionNotes();
     const sport = sportForMode(mode, combatPreset);
     await saveEffort();
+    // 28 octobre 2026 : tes séries partent en texte vers la saisie après coup ; le chrono reste gardé (figé)
+    // jusqu'à l'enregistrement de cette saisie, qui l'efface. Fermée sans enregistrer : il est reproposé ici.
+    versSaisieRef.current = { sport, duration, notes };
+    garderRef.current();
+    genRef.current = -1;
+    versSaisieRef.current = null;
+    invite.current = false;
     setShowFinish(false);
     setRpe(null);
     resetTimer();
     resetSeriesCount();
     haptic('medium');
-    router.push({ pathname: '/seance/deja-faite' as any, params: { sport, duration: String(duration), notes } });
+    router.push({ pathname: '/seance/deja-faite' as any, params: { sport, duration: String(duration), notes, chrono: '1' } });
   };
 
   const handleRestart = async () => {

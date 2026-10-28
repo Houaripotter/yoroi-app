@@ -104,7 +104,7 @@ export default function PoidsDetailScreen() {
     if (!shown?.id) return;
     const kg = `${formatKg(Number(shown.weight))} kg`;
     const confirmDelete = () =>
-      appAlert(traduire('Supprimer cette pesée ?'), traduire("{0}, {1}. Elle part pour de bon, avec sa composition.", kg, formatLongDate(pt.date)), [
+      appAlert(traduire('Supprimer cette pesée ?'), traduire("{0}, {1}. Elle reste 30 jours dans la corbeille, avec sa composition.", kg, formatLongDate(pt.date)), [
         { text: traduire('Annuler'), style: 'cancel' },
         {
           text: traduire('Supprimer'),

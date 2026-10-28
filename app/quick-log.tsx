@@ -22,6 +22,10 @@ import { ChoiceRow } from '@/components/yoroi/v2/seance/Sheet';
 import { Stepper } from '@/components/yoroi/v2/seance/Stepper';
 import { DayNav } from '@/components/yoroi/v2/DateChips';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { effacerFormulaire, lireFormulaire, useFormulaireGarde } from '@/lib/v2/seance/formulaireGarde';
+
+/** 28 octobre 2026 : la phrase et ce qui en a été compris, gardés si l'app se ferme (lib/v2/seance/formulaireGarde.ts) */
+const CLE_DICTEE = 'dictee';
 import { getTrainings } from '@/lib/database';
 import type { Training } from '@/lib/database';
 import { logger } from '@/lib/security/logger';
@@ -149,10 +153,48 @@ export default function DicteSeance() {
   const [form, setForm] = useState<Form | null>(null);
   const [favs, setFavs] = useState<string[]>(DEFAULT_SPORTS.slice(0, 6));
   const [saving, setSaving] = useState(false);
+  // 28 octobre 2026 : garde synchrone, deux appuis rapprochés n'enregistrent jamais la séance deux fois
+  const savingRef = useRef(false);
   const [machines, setMachines] = useState(false);
   const [history, setHistory] = useState<Training[]>([]);
   const input = useRef<TextInput>(null);
   const today = isoDay(new Date());
+
+  // ─── Saisie gardée (28 octobre 2026) ───
+  const [prete, setPrete] = useState(false);
+  useFormulaireGarde(CLE_DICTEE, { text, said, form }, prete && !saving && (!!text.trim() || !!form));
+  useEffect(() => {
+    let vivant = true;
+    lireFormulaire<{ text: string; said: string; form: Form | null }>(CLE_DICTEE).then((g) => {
+      if (!vivant) return;
+      const v = g?.valeur;
+      if (!v || (!v.text?.trim() && !v.form)) {
+        setPrete(true);
+        return;
+      }
+      const reprendre = () => {
+        setText(v.text ?? '');
+        setSaid(v.said ?? '');
+        setForm(v.form ?? null);
+        setPrete(true);
+      };
+      appAlert(traduire('Reprendre ta saisie ?'), traduire('Tu avais commencé à noter une séance : {0}.', (v.said || v.text || '').trim().slice(0, 80)), [
+        {
+          text: traduire('Nouvelle saisie'),
+          style: 'destructive',
+          onPress: () =>
+            appAlert(traduire('Effacer la saisie gardée ?'), traduire('Elle ne sera pas enregistrée.'), [
+              { text: traduire('Reprendre'), style: 'cancel', onPress: reprendre },
+              { text: traduire('Effacer'), style: 'destructive', onPress: () => { void effacerFormulaire(CLE_DICTEE); setPrete(true); } },
+            ], { cancelable: false }),
+        },
+        { text: traduire('Reprendre'), style: 'primary', onPress: reprendre },
+      ], { cancelable: false });
+    });
+    return () => {
+      vivant = false;
+    };
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => input.current?.focus(), 300);
@@ -308,7 +350,8 @@ export default function DicteSeance() {
   const themeOf = (f: Form) => f.theme.trim() || f.learned.filter((l) => l.mode !== 'reussi').map((l) => l.label).join(', ');
 
   const save = async () => {
-    if (!form?.sport || saving) return;
+    if (!form?.sport || saving || savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     tap('medium');
     try {
@@ -344,6 +387,7 @@ export default function DicteSeance() {
         };
         for (const k of Object.keys(patch)) if (patch[k] === undefined) delete patch[k];
         const res = await saveSeance(patch as unknown as Training, { editId: twin.id, title: getSportName(twin.sport), sessionTypes: combat && form.type ? [form.type] : undefined, technicalTheme: theme || undefined, methode: 'dictee' });
+        await effacerFormulaire(CLE_DICTEE);
         router.replace({ pathname: '/seance/fin' as any, params: { id: String(res.id) } });
         return;
       }
@@ -373,10 +417,12 @@ export default function DicteSeance() {
         },
         { title: getSportName(form.sport), sessionTypes: combat && form.type ? [form.type] : undefined, technicalTheme: theme || undefined, methode: 'dictee' },
       );
+      await effacerFormulaire(CLE_DICTEE);
       router.replace({ pathname: '/seance/fin' as any, params: { id: String(result.id) } });
     } catch (err) {
       logger.error('Enregistrement de la séance dictée impossible', err);
       appAlert('Oups', traduire('La séance n’a pas pu être enregistrée. Réessaie.'));
+      savingRef.current = false;
       setSaving(false);
     }
   };

@@ -164,6 +164,11 @@ export async function isAutoBackupDue(): Promise<boolean> {
  * la même promise (évite les doubles créations).
  */
 export async function runAutoBackupIfDue(): Promise<boolean> {
+  // 28 octobre 2026 : une fois par lancement, le stockage presque plein est signale (lib/v2/sauvegarde/tailleStockage.ts)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    void (require('./v2/sauvegarde/tailleStockage') as typeof import('./v2/sauvegarde/tailleStockage')).verifierTailleStockage();
+  } catch { /* jamais bloquant */ }
   // 18 octobre 2026 : pendant la visite guidee avec l'exemple, aucune sauvegarde (l'exemple n'est pas tes donnees)
   if (vitrineActive()) return false;
   // Si un backup est déjà en cours, on partage son résultat au lieu d'en lancer un autre.

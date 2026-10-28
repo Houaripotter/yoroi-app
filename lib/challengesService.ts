@@ -4,6 +4,7 @@
 // Défis quotidiens, hebdomadaires et mensuels avec récompenses
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { objetPourEcriture } from '@/lib/v2/sauvegarde/lectureSure';
 import logger from '@/lib/security/logger';
 import { getDailyHydration } from '@/lib/quests';
 import { getSleepEntries } from '@/lib/sleepService';
@@ -220,13 +221,17 @@ export const getChallengeProgress = async (): Promise<Record<string, ChallengePr
 /**
  * Met à jour la progression d'un défi
  */
+/** 28 octobre 2026 : lecture STRICTE avant ecriture (une progression illisible n'est jamais remplacee) */
+const getChallengeProgressForWrite = async (): Promise<Record<string, ChallengeProgress>> =>
+  objetPourEcriture<Record<string, ChallengeProgress>>(await AsyncStorage.getItem(STORAGE_KEYS.CHALLENGE_PROGRESS), STORAGE_KEYS.CHALLENGE_PROGRESS) ?? {};
+
 export const updateChallengeProgress = async (
   challengeId: string,
   current: number,
   target: number
 ): Promise<void> => {
   try {
-    const progress = await getChallengeProgress();
+    const progress = await getChallengeProgressForWrite();
     const challenge = ALL_CHALLENGES.find(c => c.id === challengeId);
     
     const completed = current >= target;
@@ -254,7 +259,7 @@ export const manualCompleteChallenge = async (challengeId: string): Promise<bool
     const challenge = ALL_CHALLENGES.find(c => c.id === challengeId);
     if (!challenge) return false;
 
-    const progress = await getChallengeProgress();
+    const progress = await getChallengeProgressForWrite();
 
     // Si déjà complété, ne rien faire
     if (progress[challengeId]?.completed) return true;
@@ -281,7 +286,7 @@ export const manualCompleteChallenge = async (challengeId: string): Promise<bool
  */
 export const claimChallengeReward = async (challengeId: string): Promise<number> => {
   try {
-    const progress = await getChallengeProgress();
+    const progress = await getChallengeProgressForWrite();
     const challenge = ALL_CHALLENGES.find(c => c.id === challengeId);
     
     if (!challenge || !progress[challengeId]?.completed || progress[challengeId]?.claimed) {
@@ -314,7 +319,7 @@ export const claimChallengeReward = async (challengeId: string): Promise<number>
  */
 export const getActiveChallenges = async (): Promise<ActiveChallenge[]> => {
   try {
-    const progress = await getChallengeProgress();
+    const progress = await getChallengeProgressForWrite();
     
     return ALL_CHALLENGES.map(challenge => ({
       ...challenge,
@@ -356,7 +361,7 @@ let syncInProgress = false;
  */
 const autoResetIfNeeded = async (): Promise<void> => {
   try {
-    const progress = await getChallengeProgress();
+    const progress = await getChallengeProgressForWrite();
     const today = getToday();
     const weekStart = getWeekStartStr();
     const monthStart = getMonthStartStr();
@@ -469,7 +474,7 @@ export const syncAllChallenges = async (): Promise<string[]> => {
     }
 
     // Lire la progression actuelle (pour ne pas ecraser les défis deja claimed)
-    const progress = await getChallengeProgress();
+    const progress = await getChallengeProgressForWrite();
 
     // Helper: met a jour un défi seulement si pas deja claimed
     const syncChallenge = (id: string, current: number, target: number) => {
@@ -631,7 +636,7 @@ export const syncAndGetNewlyCompleted = async (): Promise<{ id: string; title: s
 
 export const resetDailyChallenges = async (): Promise<void> => {
   try {
-    const progress = await getChallengeProgress();
+    const progress = await getChallengeProgressForWrite();
 
     DAILY_CHALLENGES.forEach(challenge => {
       progress[challenge.id] = {

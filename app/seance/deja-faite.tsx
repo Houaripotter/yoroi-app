@@ -34,6 +34,12 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { effacerFormulaire, lireFormulaire, useFormulaireGarde } from '@/lib/v2/seance/formulaireGarde';
+import { effacerBrouillonChrono } from '@/lib/v2/carnet/brouillonChrono';
+
+/** 28 octobre 2026 : la saisie en cours, gardée si l'app se ferme (lib/v2/seance/formulaireGarde.ts) */
+const CLE_FORMULAIRE = 'deja_faite';
+type SaisieDejaFaite = { sport: string; date: string; duration: number; startMin: number; intensity: number | null; notes: string; details: SessionDetails };
 
 const RPE = [
   { value: 3, label: traduire('Facile') },
@@ -55,7 +61,8 @@ export default function SeanceDejaFaite() {
   const c = theme.colors;
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ sport?: string; duration?: string; notes?: string }>();
+  // chrono : venue des Chronos (app/timer.tsx), le chrono gardé est effacé à l'enregistrement
+  const params = useLocalSearchParams<{ sport?: string; duration?: string; notes?: string; chrono?: string }>();
 
   const today = isoDay(new Date());
   const [history, setHistory] = useState<Training[]>([]);
@@ -79,6 +86,60 @@ export default function SeanceDejaFaite() {
   const [saving, setSaving] = useState(false);
   // garde synchrone : deux appuis rapproches n'enregistrent jamais la seance deux fois
   const savingRef = useRef(false);
+
+  // ─── Saisie gardée (28 octobre 2026) ───
+  const valeur: SaisieDejaFaite = { sport, date, duration, startMin, intensity, notes, details };
+  const valeurRef = useRef(valeur);
+  valeurRef.current = valeur;
+  const depart = useRef<string | null>(null);
+  const [prete, setPrete] = useState(false);
+  // gardée dès qu'elle diffère du départ, ou tout de suite si elle vient d'un chrono (tes séries en texte)
+  const changee = prete && (params.chrono === '1' || (depart.current !== null && JSON.stringify(valeur) !== depart.current));
+  useFormulaireGarde(CLE_FORMULAIRE, valeur, changee && !saving);
+  const appliquer = (v: SaisieDejaFaite) => {
+    setSport(v.sport); setDate(v.date); setDuration(v.duration); setStartMin(v.startMin); setIntensity(v.intensity); setNotes(v.notes); setDetails(v.details);
+  };
+  useEffect(() => {
+    let vivant = true;
+    lireFormulaire<SaisieDejaFaite>(CLE_FORMULAIRE).then((g) => {
+      if (!vivant) return;
+      const pret = () => {
+        // le départ : après le choix du sport par défaut (petit délai), pour ne pas garder une saisie intacte
+        setTimeout(() => { depart.current = JSON.stringify(valeurRef.current); setPrete(true); }, 600);
+      };
+      if (!g || !g.valeur) {
+        pret();
+        return;
+      }
+      appAlert(traduire('Reprendre ta saisie ?'), traduire('Tu avais commencé à noter une séance : {0}.', g.valeur.notes?.trim() ? g.valeur.notes.trim().slice(0, 80) : getSportName(g.valeur.sport)), [
+        {
+          text: traduire('Nouvelle saisie'),
+          style: 'destructive',
+          onPress: () =>
+            appAlert(traduire('Effacer la saisie gardée ?'), traduire('Elle ne sera pas enregistrée.'), [
+              { text: traduire('Reprendre'), style: 'cancel', onPress: () => { appliquer(g.valeur); pret(); } },
+              { text: traduire('Effacer'), style: 'destructive', onPress: () => { void effacerFormulaire(CLE_FORMULAIRE); pret(); } },
+            ], { cancelable: false }),
+        },
+        { text: traduire('Reprendre'), style: 'primary', onPress: () => { appliquer(g.valeur); pret(); } },
+      ], { cancelable: false });
+    });
+    return () => {
+      vivant = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  /** Retour : une saisie commencée ne part pas sans le dire */
+  const retour = () => {
+    if (!changee) {
+      router.back();
+      return;
+    }
+    appAlert(traduire('Quitter sans enregistrer ?'), params.chrono === '1' ? traduire('Ton chrono reste gardé, il te sera reproposé.') : traduire('Tes changements ne seront pas gardés.'), [
+      { text: traduire('Rester'), style: 'cancel' },
+      { text: traduire('Quitter'), style: 'destructive', onPress: () => { void effacerFormulaire(CLE_FORMULAIRE); router.back(); } },
+    ]);
+  };
 
   useEffect(() => {
     (async () => {
@@ -143,6 +204,9 @@ export default function SeanceDejaFaite() {
         },
         { title: getSportName(sport), methode: 'deja_faite' },
       );
+      // enregistrée : la saisie gardée et le chrono d'où elle venait partent
+      await effacerFormulaire(CLE_FORMULAIRE);
+      if (params.chrono === '1') await effacerBrouillonChrono();
       router.replace({ pathname: '/seance/fin' as any, params: { id: String(result.id) } });
     } catch (err) {
       logger.error('Enregistrement impossible', err);
@@ -155,7 +219,7 @@ export default function SeanceDejaFaite() {
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingTop: Math.max(insets.top, 24) + 12, paddingHorizontal: 22, paddingBottom: insets.bottom + 110, gap: 14 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" showsVerticalScrollIndicator={false}>
-        <EnTete titre={traduire("Séance déjà faite")} onRetour={() => router.back()} style={{ marginHorizontal: -22, marginTop: -8 }} />
+        <EnTete titre={traduire("Séance déjà faite")} onRetour={retour} style={{ marginHorizontal: -22, marginTop: -8 }} />
 
         <Section title={traduire("Sport")}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>

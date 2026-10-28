@@ -4,6 +4,7 @@
 // Gestion des jours de repos planifiés
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { avecVerrou, lireListePourEcriture } from '@/lib/v2/sauvegarde/lectureSure';
 import { logger } from '@/lib/security/logger';
 
 const REST_DAYS_KEY = '@yoroi_rest_days';
@@ -31,9 +32,10 @@ export const isRestDay = async (date: string): Promise<boolean> => {
 };
 
 // Ajouter un jour de repos
-export const addRestDay = async (date: string, reason?: string): Promise<void> => {
+export const addRestDay = async (date: string, reason?: string): Promise<void> => avecVerrou(REST_DAYS_KEY, async () => {
   try {
-    const restDays = await getRestDays();
+    // 28 octobre 2026 : lecture STRICTE avant ecriture
+    const restDays = await lireListePourEcriture<RestDay>(REST_DAYS_KEY);
     const exists = restDays.find(rd => rd.date === date);
 
     if (!exists) {
@@ -43,18 +45,18 @@ export const addRestDay = async (date: string, reason?: string): Promise<void> =
   } catch (error) {
     logger.error('Erreur ajout jour repos:', error);
   }
-};
+});
 
 // Supprimer un jour de repos
-export const removeRestDay = async (date: string): Promise<void> => {
+export const removeRestDay = async (date: string): Promise<void> => avecVerrou(REST_DAYS_KEY, async () => {
   try {
-    const restDays = await getRestDays();
+    const restDays = await lireListePourEcriture<RestDay>(REST_DAYS_KEY);
     const filtered = restDays.filter(rd => rd.date !== date);
     await AsyncStorage.setItem(REST_DAYS_KEY, JSON.stringify(filtered));
   } catch (error) {
     logger.error('Erreur suppression jour repos:', error);
   }
-};
+});
 
 // Toggle jour de repos
 export const toggleRestDay = async (date: string): Promise<boolean> => {

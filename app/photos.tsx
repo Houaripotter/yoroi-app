@@ -206,7 +206,8 @@ export default function PhotosScreen() {
     setUploading(true);
     const today = pendingDay?.date && pendingDay.date <= todayIso() ? pendingDay.date : todayIso();
     try {
-      await savePhotoToStorage(uri, today, weight, note.trim() || undefined, pose ?? undefined);
+      // 28 octobre 2026 : photo non enregistree (copie ratee), le message est deja affiche : on s'arrete la
+      if (!(await savePhotoToStorage(uri, today, weight, note.trim() || undefined, pose ?? undefined))) return;
       track('photo_ajoutee');
       if (pose) {
         setLastPose(pose);

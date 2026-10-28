@@ -8,6 +8,7 @@ import { format, subDays, differenceInMinutes, parseISO, startOfWeek, endOfWeek 
 import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import logger from '@/lib/security/logger';
 import secureStorage from '@/lib/security/secureStorage';
+import { avecVerrou, lireListePourEcriture } from '@/lib/v2/sauvegarde/lectureSure';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 // ============================================
@@ -125,7 +126,18 @@ const saveSecureSleepEntries = async (entries: SleepEntry[]): Promise<void> => {
     await AsyncStorage.setItem(STORAGE_KEYS.SLEEP_ENTRIES, JSON.stringify(entries));
   } catch (error) {
     logger.error('Erreur sauvegarde sommeil:', error);
+    // 28 octobre 2026 : l'echec remonte (l'appelant le signale au lieu de croire la nuit enregistree)
+    throw error;
   }
+};
+
+/**
+ * 28 octobre 2026 : lecture STRICTE avant une ecriture. Avant, une lecture ratee donnait [] et la nuit
+ * suivante (saisie ou Sante) reecrivait [cette nuit] par dessus tout l'historique du sommeil.
+ */
+const getSleepEntriesForWrite = async (): Promise<SleepEntry[]> => {
+  await migrateFromSecureToAsync();
+  return lireListePourEcriture<SleepEntry>(STORAGE_KEYS.SLEEP_ENTRIES);
 };
 
 // ============================================
@@ -202,7 +214,8 @@ export const addSleepEntry = async (
   }
 
   try {
-    const entries = await getSleepEntries();
+    return await avecVerrou(STORAGE_KEYS.SLEEP_ENTRIES, async () => {
+    const entries = await getSleepEntriesForWrite();
     const today = customDate || format(new Date(), 'yyyy-MM-dd');
 
     // Calculer la durée
@@ -239,6 +252,7 @@ export const addSleepEntry = async (
 
     await saveSecureSleepEntries(entries);
     return newEntry;
+    });
   } catch (error) {
     logger.error('Erreur ajout sommeil:', error);
     throw error;
@@ -548,7 +562,8 @@ export const addSleepEntryFromHealthKit = async (entry: {
   };
 }): Promise<SleepEntry | null> => {
   try {
-    const entries = await getSleepEntries();
+    return await avecVerrou(STORAGE_KEYS.SLEEP_ENTRIES, async () => {
+    const entries = await getSleepEntriesForWrite();
     const existing = entries.find(e => e.date === entry.date);
 
     // Ne pas ecraser une entree manuelle existante
@@ -584,6 +599,7 @@ export const addSleepEntryFromHealthKit = async (entry: {
 
     await saveSecureSleepEntries(entries);
     return newEntry;
+    });
   } catch (error) {
     logger.error('Erreur ajout sommeil HealthKit:', error);
     return null;
@@ -596,11 +612,13 @@ export const addSleepEntryFromHealthKit = async (entry: {
  */
 export const purgerNuitsHealthKit = async (garder: Set<string>, depuis: string): Promise<number> => {
   try {
-    const entries = await getSleepEntries();
+    return await avecVerrou(STORAGE_KEYS.SLEEP_ENTRIES, async () => {
+    const entries = await getSleepEntriesForWrite();
     const reste = entries.filter((e) => !(e.id.startsWith('hk_') && e.date >= depuis && !garder.has(e.date)));
     const n = entries.length - reste.length;
     if (n > 0) await saveSecureSleepEntries(reste);
     return n;
+    });
   } catch (error) {
     logger.error('Erreur purge sommeil HealthKit:', error);
     return 0;
