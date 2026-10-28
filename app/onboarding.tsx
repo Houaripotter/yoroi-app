@@ -886,6 +886,7 @@ export default function OnboardingScreen() {
             sports={d.sports}
             autre={d.gender === 'autre'}
             scene={d.scene ?? null}
+            jours={d.jours}
             onFinish={finish}
             onOpenTerms={() => void safeOpenURL(APPLE_EULA_URL)}
             onOpenPrivacy={() => router.push('/privacy-policy' as any)}
