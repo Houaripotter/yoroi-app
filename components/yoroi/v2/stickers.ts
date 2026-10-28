@@ -346,6 +346,12 @@ export const ANCIENNES: Partial<Record<NomSticker, ImageSourcePropType>> = {
   koi_cascade: require('@/assets/avatars/app/tampons/record.webp'),
   balance_ancienne: require('@/assets/avatars/app/tampons/record_poids.webp'),
   saule: require('@/assets/avatars/app/tampons/frein_blessures.webp'),
+  couronne: require('@/assets/avatars/app/tampons/couronne.webp'),
+  etoile: require('@/assets/avatars/app/tampons/etoile.webp'),
+  soleil: require('@/assets/avatars/app/tampons/soleil.webp'),
+  fleur: require('@/assets/avatars/app/tampons/fleur.webp'),
+  diamant: require('@/assets/avatars/app/tampons/diamant.webp'),
+  arc_en_ciel: require('@/assets/avatars/app/tampons/arc_en_ciel.webp'),
 };
 
 // ============ le reglage Illustrations ============
