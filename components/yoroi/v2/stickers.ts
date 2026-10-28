@@ -305,6 +305,14 @@ export const ANCIENNES: Partial<Record<NomSticker, ImageSourcePropType>> = {
   recherche: require('@/assets/avatars/app/tampons/recherche.webp'),
   mes_sports: require('@/assets/avatars/app/tampons/mes_sports.webp'),
   souffle: require('@/assets/avatars/app/tampons/souffle.webp'),
+  cardio_zone2: require('@/assets/avatars/app/tampons/cardio_zone2.webp'),
+  corps: require('@/assets/avatars/app/tampons/corps.webp'),
+  cou: require('@/assets/avatars/app/tampons/cou.webp'),
+  sport_football: require('@/assets/avatars/app/tampons/sport_football.webp'),
+  sport_marche: require('@/assets/avatars/app/tampons/sport_marche.webp'),
+  sport_nage: require('@/assets/avatars/app/tampons/sport_nage.webp'),
+  sport_velo: require('@/assets/avatars/app/tampons/sport_velo.webp'),
+  sport_raquette: require('@/assets/avatars/app/tampons/sport_raquette.webp'),
 };
 
 // ============ le reglage Illustrations ============
