@@ -10,9 +10,9 @@
  */
 import React from 'react';
 import { View } from 'react-native';
-import Svg, { Circle, Defs, Ellipse, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, Ellipse, Line, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { BARRE_PIERRES, PIERRES_CHEMIN, TORII_CHEMIN, paliersDuChemin, pisteAnneau } from '@/lib/v2/pesee/cheminPierres';
+import { APERCU_CHEMIN, BARRE_PIERRES, PIERRES_CHEMIN, TORII_CHEMIN, PALIERS_CHEMIN, paliersDuChemin, pisteAnneau } from '@/lib/v2/pesee/cheminPierres';
 import { paletteSombre } from '@/components/yoroi/livePalette';
 import { formatKg } from '@/lib/v2/weightStats';
 
@@ -176,6 +176,42 @@ export function CheminPierres({ depart, objectif, part, atteint, fg2, idLanterne
           );
         })}
       </View>
+    </View>
+  );
+}
+
+/**
+ * 28 octobre 2026 (Houari : un grand vide sous « Fixe ton cap ») : l'apercu du chemin quand tu n'as pas encore de cap.
+ * Les memes 4 pierres en pointilles dans leurs couleurs pales, les lanternes eteintes aux paliers, le torii dore en
+ * transparence au bout, sans chiffres : il montre ce qui t'attend, sans rien promettre. Memes mesures que la barre.
+ */
+export function CheminPierresApercu() {
+  const sombre = paletteSombre();
+  const B = BARRE_PIERRES;
+  const A = APERCU_CHEMIN;
+  const marge = B.torii / 2 - 1;
+  const demiJour = B.jour / 2;
+  const y = B.hauteur / 2;
+  return (
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ height: B.hauteur, marginHorizontal: marge }}>
+      {PIERRES_CHEMIN.map((pi, i) => (
+        <View key={i} style={{ position: 'absolute', left: `${i * 25}%`, width: '25%', top: 0, height: B.hauteur, paddingLeft: i === 0 ? 0 : demiJour, paddingRight: demiJour }}>
+          <Svg width="100%" height={B.hauteur}>
+            <Line x1={A.point / 2} y1={y} x2="96%" y2={y} stroke={sombre ? pi.texteSombre : pi.plein} strokeOpacity={sombre ? A.opaciteSombre : A.opacite} strokeWidth={A.point} strokeLinecap="round" strokeDasharray={`0.1 ${A.pas}`} />
+          </Svg>
+        </View>
+      ))}
+      {PALIERS_CHEMIN.map((f) =>
+        f === 1 ? (
+          <View key={f} pointerEvents="none" style={{ position: 'absolute', left: '100%', marginLeft: -B.torii / 2, top: (B.hauteur - B.torii) / 2, width: B.torii, height: B.torii, opacity: A.torii }}>
+            <ToriiDore taille={B.torii} />
+          </View>
+        ) : (
+          <View key={f} style={{ position: 'absolute', left: `${f * 100}%`, marginLeft: -B.lanterneL / 2, top: (B.hauteur - B.lanterneH) / 2, width: B.lanterneL, height: B.lanterneH }}>
+            <LanternePalier allumee={false} sombre={sombre} id={`lanterne-apercu-${Math.round(f * 100)}`} />
+          </View>
+        ),
+      )}
     </View>
   );
 }

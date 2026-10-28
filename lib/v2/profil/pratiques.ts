@@ -256,3 +256,57 @@ export async function ecrirePratiques(etat: EtatPratiques): Promise<void> {
   if (porte?.ceinture) await AsyncStorage.setItem(CLE_CEINTURE_ANCIENNE, porte.ceinture).catch(() => {});
   DeviceEventEmitter.emit(EVENT_PRATIQUES);
 }
+
+// ============ synchronisation entre tes telephones (lib/peerSyncService.ts) ============
+// 28 octobre 2026 : la cle @yoroi_pratiques passe par la meme synchro que tes autres reglages (la plus recente gagne,
+// cle par cle). Les ids des clubs ne valent que sur un telephone (la table clubs est synchronisee, mais chaque
+// telephone donne ses propres numeros) : comme a la restauration, les clubs se retrouvent par leur nom.
+
+/**
+ * Ce qui part vers ton autre telephone : ta liste telle quelle, plus le nom des clubs que tu as retires (ignoresNoms),
+ * leurs ids n'ayant pas de sens la bas. Champ en plus, facultatif : le format reste v 1. Valeur illisible : envoyee telle quelle.
+ */
+export function pratiquesPourEnvoi(raw: string | null, clubs: ClubLeger[]): string | null {
+  if (raw == null) return raw;
+  const e = lireEtat(raw);
+  if (!e) return raw;
+  const ignoresNoms = e.ignores.map((id) => nomPropre(clubs.find((c) => c.id === id)?.name)).filter(Boolean);
+  return JSON.stringify({ v: 1, pratiques: e.pratiques, ignores: e.ignores, ignoresNoms });
+}
+
+/**
+ * Ce qui arrive de ton autre telephone, recale sur les clubs de CE telephone : chaque pratique retrouve son club par
+ * son nom (de preference du meme sport), sinon elle garde le nom sans lien (le club peut arriver plus tard, la lecture
+ * le recale alors) ; les clubs retires sont retrouves par leur nom. null : valeur illisible ou format inconnu (une
+ * version plus recente que v 1) : rien n'est applique, ta liste de ce telephone reste.
+ */
+export function pratiquesRecues(raw: string, clubs: ClubLeger[]): string | null {
+  let o: unknown;
+  try {
+    o = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (o && typeof o === 'object' && !Array.isArray(o) && 'v' in o && (o as { v?: unknown }).v !== 1) return null;
+  const e = lireEtat(raw);
+  if (!e) return null;
+  const locaux = (clubs ?? []).filter((c) => c && c.id != null && nomPropre(c.name));
+  const pris = new Set<number>();
+  const pratiques = e.pratiques
+    .map(pratiquePropre)
+    .filter((p): p is Pratique => !!p)
+    .map((p) => {
+      if (!p.clubNom) return { ...p, clubId: null };
+      const meme = locaux.filter((c) => cleNom(c.name) === cleNom(p.clubNom) && !pris.has(c.id!));
+      const c = meme.find((x) => sportPropre(x.sport) === p.sport) ?? meme[0];
+      if (c) {
+        pris.add(c.id!);
+        return { ...p, clubId: c.id!, clubNom: nomPropre(c.name) };
+      }
+      return { ...p, clubId: null };
+    });
+  const brut = o && typeof o === 'object' ? (o as { ignoresNoms?: unknown }).ignoresNoms : null;
+  const noms = new Set((Array.isArray(brut) ? brut : []).map(cleNom).filter(Boolean));
+  const ignores = locaux.filter((c) => noms.has(cleNom(c.name)) && !pratiques.some((p) => p.clubId === c.id)).map((c) => c.id!);
+  return JSON.stringify({ v: 1, pratiques: unePrincipale(pratiques), ignores });
+}

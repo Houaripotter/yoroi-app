@@ -65,6 +65,7 @@ import {
 } from './v2/sync/appairage';
 import MultipeerBridge, { PeerChangedEvent, DataReceivedEvent } from './multipeerBridge';
 import { openDatabase } from './database';
+import { CLE_PRATIQUES, EVENT_PRATIQUES, pratiquesPourEnvoi, pratiquesRecues, type ClubLeger } from './v2/profil/pratiques';
 import logger from './security/logger';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -126,7 +127,7 @@ const TABLES: Array<[string, TableSpec]> = [
 const TABLE_ORDER = new Map(TABLES.map(([t], i) => [t, i]));
 const SPEC = new Map(TABLES);
 
-// Clés AsyncStorage synchronisées (inchangé depuis la v2)
+// Clés AsyncStorage synchronisées (celles de la v2, puis @yoroi_pratiques le 28 octobre 2026 : un appareil plus ancien l ignore)
 const SYNC_KV_KEYS = [
   '@yoroi_sparring_partners',
   '@yoroi_playbook_custom_gamePlan',
@@ -153,6 +154,8 @@ const SYNC_KV_KEYS = [
   '@yoroi_user_mode',
   '@yoroi_weight_category',
   '@yoroi_belt',
+  // 28 octobre 2026 : tes pratiques (sport, club, ceinture), recalees sur les clubs de chaque telephone par leur nom
+  '@yoroi_pratiques',
 ] as const;
 
 // ============================================
@@ -1430,6 +1433,22 @@ function fastHash(s: string): string {
 const formatKvTs = (ms: number): string =>
   new Date(ms || 0).toISOString().replace('T', ' ').replace('Z', '');
 
+/** Les clubs de ce telephone (id, nom, sport), pour recaler tes pratiques ; [] si la base ne repond pas */
+async function clubsLocaux(): Promise<ClubLeger[]> {
+  try {
+    const db = await openDatabase();
+    return ((await db.getAllAsync('SELECT id, name, sport FROM clubs')) ?? []) as ClubLeger[];
+  } catch {
+    return [];
+  }
+}
+
+/** La valeur d'un reglage telle qu'elle part : tes pratiques emportent le nom des clubs retires, le reste part tel quel */
+async function valeurAEnvoyer(key: string, value: string | null): Promise<string | null> {
+  if (key !== CLE_PRATIQUES || value === null) return value;
+  return pratiquesPourEnvoi(value, await clubsLocaux());
+}
+
 async function collectKVDelta(sinceTs: string): Promise<KVDelta> {
   const result: KVDelta = {};
   try {
@@ -1456,10 +1475,10 @@ async function collectKVDelta(sinceTs: string): Promise<KVDelta> {
         hashes[key] = currentHash;
         timestamps[key] = now;
         anyChange = true;
-        result[key] = { value, updatedAt: now };
+        result[key] = { value: await valeurAEnvoyer(key, value), updatedAt: now };
       } else {
         const keyTs = timestamps[key] ?? '1970-01-01 00:00:00';
-        if (keyTs > sinceTs) result[key] = { value, updatedAt: keyTs };
+        if (keyTs > sinceTs) result[key] = { value: await valeurAEnvoyer(key, value), updatedAt: keyTs };
       }
     }
 
@@ -1478,6 +1497,7 @@ async function collectKVDelta(sinceTs: string): Promise<KVDelta> {
 /** Applique les réglages reçus. Retourne le nombre de clés modifiées. */
 async function applyKVDelta(kv: KVDelta): Promise<number> {
   let applied = 0;
+  let pratiquesChangees = false;
   try {
     const [tsRaw, hashesRaw] = await Promise.all([
       AsyncStorage.getItem(KV_TIMESTAMPS_KEY),
@@ -1490,10 +1510,18 @@ async function applyKVDelta(kv: KVDelta): Promise<number> {
       if (!(SYNC_KV_KEYS as readonly string[]).includes(key)) continue;
       const localTs = timestamps[key] ?? '1970-01-01 00:00:00';
       if (payload.updatedAt > localTs) {
-        if (payload.value === null) await AsyncStorage.removeItem(key);
-        else await AsyncStorage.setItem(key, payload.value);
+        let value = payload.value;
+        // tes pratiques : recalees sur les clubs de ce telephone ; illisibles ou d'un format inconnu, rien n'est applique
+        if (key === CLE_PRATIQUES && value !== null) {
+          value = pratiquesRecues(value, await clubsLocaux());
+          if (value === null) continue;
+          pratiquesChangees = true;
+        }
+        if (value === null) await AsyncStorage.removeItem(key);
+        else await AsyncStorage.setItem(key, value);
         timestamps[key] = payload.updatedAt;
-        hashes[key] = fastHash(payload.value ?? '__null__');
+        // l'empreinte de la valeur enregistree ici : la prochaine synchro n'y voit pas un changement a renvoyer
+        hashes[key] = fastHash(value ?? '__null__');
         applied++;
       }
     }
@@ -1502,6 +1530,8 @@ async function applyKVDelta(kv: KVDelta): Promise<number> {
       AsyncStorage.setItem(KV_TIMESTAMPS_KEY, JSON.stringify(timestamps)),
       AsyncStorage.setItem(KV_HASHES_KEY, JSON.stringify(hashes)),
     ]);
+    // les ecrans de tes pratiques se relisent
+    if (pratiquesChangees) DeviceEventEmitter.emit(EVENT_PRATIQUES);
   } catch (e) {
     logger.warn('[PeerSync] Erreur application réglages:', e);
   }
@@ -1568,6 +1598,8 @@ export const __test__ = {
   handleSyncData,
   sendDeltaTo,
   setDeviceId: (id: string) => { myDeviceId = id; },
+  collectKVDelta,
+  applyKVDelta,
 };
 
 export default { initPeerSync, stopPeerSync, onSyncStatusChange, getSyncStatus, forceSync, getMyDeviceName, isPeerSyncAvailable };

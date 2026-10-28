@@ -38,7 +38,8 @@ import { ScrollView as PagesScroll } from 'react-native-gesture-handler';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { useRouter } from 'expo-router';
 import Svg, { Path, Rect } from 'react-native-svg';
-import { AnneauPierres, CheminPierres } from '@/components/yoroi/v2/charts/CheminPierres';
+import { AnneauPierres, CheminPierres, CheminPierresApercu } from '@/components/yoroi/v2/charts/CheminPierres';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { couleurEtape, paliersDuChemin, PIERRES_CHEMIN, pierreEnCours } from '@/lib/v2/pesee/cheminPierres';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { CourbePoids, POIDS } from '@/components/yoroi/v2/charts/CourbePoids';
@@ -51,7 +52,6 @@ import type { PeriodOption } from '@/components/yoroi/v2/charts/PeriodSwitch';
 import { usePremium } from '@/context/PremiumContext';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
 import { useEspace } from '@/lib/v2/espace/useEspace';
-import { PlusHint } from '@/components/yoroi/v2/PlusHint';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import type { DayWeight } from '@/lib/v2/weightStats';
 import { formatKg } from '@/lib/v2/weightStats';
@@ -225,6 +225,24 @@ export const VOILE_CARTE_POIDS = { clair: '#E9E4FF', clairMilieu: '#F3F0FF', som
 /** le rayon de la carte (CARTE_PASTEL.rayon) */
 const CARTE_POIDS_RAYON = 28;
 
+/** Le voile lilas pastel du haut de la carte, partage par la carte normale et la carte sans pesee */
+function VoileCartePoids({ sombre }: { sombre: boolean }) {
+  return (
+    <View
+      pointerEvents="none"
+      style={{ position: 'absolute', left: VOILE_CARTE_POIDS.bord, right: VOILE_CARTE_POIDS.bord, top: VOILE_CARTE_POIDS.bord, height: VOILE_CARTE_POIDS.hauteur, borderTopLeftRadius: CARTE_POIDS_RAYON - VOILE_CARTE_POIDS.bord, borderTopRightRadius: CARTE_POIDS_RAYON - VOILE_CARTE_POIDS.bord, overflow: 'hidden' }}
+    >
+      <LinearGradient
+        colors={[sombre ? VOILE_CARTE_POIDS.sombre : VOILE_CARTE_POIDS.clair, sombre ? VOILE_CARTE_POIDS.sombreMilieu : VOILE_CARTE_POIDS.clairMilieu, P.white]}
+        locations={[0, 0.55, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+      />
+    </View>
+  );
+}
+
 /** La partie fixe de la page courbe autour de la courbe (titre, panneau, periodes), pour caler sa hauteur sur la page 1 */
 // 28 octobre 2026 (v3) : mesuree sur la page (titre, panneau, periodes : 120 points), puis relue a chaque mise en page ;
 // la page 1 plus compacte, la courbe descend jusqu a 76 (torii atteint, sans pastille) : pas de vide sous ton chemin
@@ -357,21 +375,34 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
   }, [plan.fenetre, targetWeight, today, router]);
 
   if (!last) {
+    // 28 octobre 2026 : sans pesee, la meme carte pastel que d'habitude (voile lilas, liseré), compacte : ton poids
+    // arrive, l'apercu du chemin en pointilles, et le bouton principal pour ta premiere pesee
+    // (version d'avant : _archive_ancien_design_2026-10-09/poids_sans_objectif_2026-10-28/CartePoids.tsx)
+    const sombre0 = paletteSombre();
     return (
-      <Press onPress={() => router.push('/progres' as any)} accessibilityRole="button" accessibilityLabel={traduire("Ton poids. Touche plus pour ta première pesée")}>
-        <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <View style={{ flex: 1, gap: 8 }}>
-            <Ink size={13} weight="extraBold" color={POIDS.softText}>
-              {traduire("Ton poids")}</Ink>
-            <Ink size={20} weight="black" tight>
-              {traduire("Ta courbe démarre à ta première pesée")}</Ink>
-            <PlusHint text={traduire("Touche + pour ta première pesée")} />
+      <View nativeID="carte-poids" testID="carte-poids" style={[{ borderRadius: CARTE_POIDS_RAYON, backgroundColor: P.white }, ombreCarte]}>
+        <View style={{ borderRadius: CARTE_POIDS_RAYON, overflow: 'hidden' }}>
+          <VoileCartePoids sombre={sombre0} />
+          <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 14, gap: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: TETE.anneau, height: TETE.anneau, borderRadius: TETE.anneau / 2, backgroundColor: sombre0 ? '#2C2A55' : '#E9E4FF', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="scale" size={20} color={POIDS.softText} width={2.2} />
+              </View>
+              <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
+                <Ink size={10.5} weight="black" color={P.indigo} numberOfLines={1} style={{ letterSpacing: 1.2, lineHeight: 13 }}>
+                  {traduire('Ton poids').toUpperCase()}
+                </Ink>
+                <Ink size={16} weight="black" tight color={P.ink} style={{ lineHeight: 20 }}>
+                  {traduire("Ta courbe démarre à ta première pesée")}
+                </Ink>
+              </View>
+            </View>
+            <CheminPierresApercu />
+            <BoutonPrincipal label={traduire("Me peser")} onPress={() => router.push('/pesee' as any)} hauteur={44} rayon={14} tailleTexte={15} lignes={1} compact haptique="light" accessibilityLabel={traduire("Ton poids. Touche plus pour ta première pesée")} />
           </View>
-          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: POIDS.soft, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="scale" size={20} color={POIDS.softText} width={2.2} />
-          </View>
-        </Card>
-      </Press>
+          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: CARTE_POIDS_RAYON, borderWidth: 1, borderColor: P.line2 }} />
+        </View>
+      </View>
     );
   }
 
@@ -858,20 +889,24 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
           })()}
         </View>
       ) : goal === null ? (
-        <Press onPress={() => router.push('/profile' as any)} accessibilityRole="button" accessibilityLabel={traduire("Fixer ton cap de poids")}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 10, borderTopWidth: 1, borderColor: P.line2 }}>
-            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: lilas, alignItems: 'center', justifyContent: 'center' }}>
-              <ToriiImage width={22} />
-            </View>
-            <View style={{ flex: 1, gap: 1 }}>
-              <Ink size={16} weight="black" color={fg}>
-                {traduire("Fixe ton cap")}</Ink>
-              <Ink size={12.5} weight="medium" color={fg2}>
-                {traduire("Ton torii et ton rythme prévu apparaissent sur ta courbe")}</Ink>
-            </View>
-            <Icon name="chevron" size={15} color={fg2} width={2.6} />
+        // 28 octobre 2026 (Houari : un grand vide sous « Fixe ton cap ») : une invitation compacte, de la hauteur de la
+        // carte avec chemin (la courbe de la page 2 se cale dessus : plus de vide) : le titre, l'apercu du chemin en
+        // pointilles, et le bouton principal qui ouvre directement le choix de ton objectif
+        <View style={{ gap: 6, paddingTop: 7, borderTopWidth: 1, borderColor: P.line2 }}>
+          <View style={{ gap: 0 }}>
+            <Ink size={16} weight="black" tight color={chiffreC} style={{ lineHeight: 20 }}>
+              {traduire("Fixe ton cap")}</Ink>
+            <Ink size={11.5} weight="bold" color={fg2} numberOfLines={2}>
+              {traduire("Ton chemin vers le torii, en quatre paliers")}</Ink>
           </View>
-        </Press>
+          <Press onPress={() => setFeuille({ quoi: 'objectif' })} haptic="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            <CheminPierresApercu />
+          </Press>
+          {/* 4 points sous le bouton : son ombre douce n'est pas coupee par le bas de la page */}
+          <TourAnchor id="accueil.objectif">
+            <BoutonPrincipal style={{ marginBottom: 4 }} label={traduire("Choisir mon objectif")} onPress={() => setFeuille({ quoi: 'objectif' })} hauteur={44} rayon={14} tailleTexte={15} lignes={1} compact haptique="light" accessibilityLabel={traduire("Fixer ton cap de poids")} />
+          </TourAnchor>
+        </View>
       ) : objectifTxt ? (
         // un objectif sans chemin (maintien) : la ligne de ton objectif reste, avec sa pastille
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 8, borderTopWidth: 1, borderColor: P.line2 }}>
@@ -955,18 +990,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
             27 octobre 2026 nuit (Houari : une marche dans l'angle) : sur iPhone, un degrade ne se coupe pas a des rayons
             differents par coin ; il est donc pose dans une boite qui coupe (overflow hidden), au rayon interieur exact
             (28 moins 5 = 23, deux arcs concentriques), et il s'efface vers le blanc sur trois arrets, sans arete. */}
-        <View
-          pointerEvents="none"
-          style={{ position: 'absolute', left: VOILE_CARTE_POIDS.bord, right: VOILE_CARTE_POIDS.bord, top: VOILE_CARTE_POIDS.bord, height: VOILE_CARTE_POIDS.hauteur, borderTopLeftRadius: CARTE_POIDS_RAYON - VOILE_CARTE_POIDS.bord, borderTopRightRadius: CARTE_POIDS_RAYON - VOILE_CARTE_POIDS.bord, overflow: 'hidden' }}
-        >
-          <LinearGradient
-            colors={[sombre ? VOILE_CARTE_POIDS.sombre : VOILE_CARTE_POIDS.clair, sombre ? VOILE_CARTE_POIDS.sombreMilieu : VOILE_CARTE_POIDS.clairMilieu, P.white]}
-            locations={[0, 0.55, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
-          />
-        </View>
+        <VoileCartePoids sombre={sombre} />
         <PagesScroll
           ref={pagesRef as any}
           horizontal

@@ -40,6 +40,13 @@ export const TORII_CHEMIN = { or: '#F0B323', trait: '#7A4E00', contour: '#FFFFFF
 /** Mesures de la barre : pierres de 11, jour de 14 autour de chaque lanterne, lanterne de 19 sur 27, torii de 26 */
 export const BARRE_PIERRES = { hauteur: 30, pierre: 11, jour: 14, lanterneL: 19, lanterneH: 27, torii: 26, halo: 56, chiffres: 15, ecartChiffres: 2 } as const;
 
+/**
+ * L'apercu du chemin sans cap (28 octobre 2026) : des points ronds de 5 tous les 9 points, dans la couleur de chaque
+ * pierre (a 55 % en clair, 45 % en sombre), et le torii a 55 %. Meme hauteur que la barre (30) : rien ne bouge
+ * quand tu fixes ton cap et que la vraie barre prend sa place.
+ */
+export const APERCU_CHEMIN = { point: 5, pas: 9, opacite: 0.55, opaciteSombre: 0.45, torii: 0.55 } as const;
+
 /** L'etape en cours (0 a 3) pour une part du chemin : la pierre du prochain palier a franchir, la derniere une fois arrive */
 export function pierreEnCours(part: number): number {
   return Math.max(0, Math.min(3, Math.floor(Math.max(0, part) / 0.25 + 1e-6)));
