@@ -85,8 +85,16 @@ export default function Progres() {
   // vague 44 : le bandeau de scene suit legerement le defilement (fil d'animation)
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   // 27 octobre 2026 : la visite guidee remonte l'onglet en haut avant de montrer ta vue d'ensemble
-  useEffect(() => registerTourScroller('progres', { scrollBy: () => {}, scrollToTop: () => (scrollRef.current as any)?.scrollTo?.({ y: 0, animated: true }) }), [scrollRef]);
+  // 28 octobre 2026 : et elle le fait defiler jusqu'a ce qu'elle montre (tes records, tes cinq onglets)
   const scrollY = useRef(0);
+  useEffect(
+    () =>
+      registerTourScroller('progres', {
+        scrollBy: (dy) => (scrollRef.current as any)?.scrollTo?.({ y: Math.max(0, scrollY.current + dy), animated: true }),
+        scrollToTop: () => (scrollRef.current as any)?.scrollTo?.({ y: 0, animated: true }),
+      }),
+    [scrollRef],
+  );
   const tabsY = useRef(0);
   const weights = useWeightData();
   const bio = useBiomarkers();
@@ -134,21 +142,22 @@ export default function Progres() {
 
         {/* Vue d'ensemble : une tuile par facette, chacune ouvre son onglet */}
         {hasData ? (
-          <TourAnchor id="progres.ensemble">
+          // 28 octobre 2026 : la marge sur l'ancre, pour que le cadre de la visite epouse les tuiles
+          <TourAnchor id="progres.ensemble" rayon={22} style={{ marginHorizontal: 16 }}>
           <VueEnsemble
             series={weights.series}
             compo={bio.points}
             measures={measures.points}
             trainings={trainings}
             onOpen={openCible}
-            style={{ marginHorizontal: 16, marginTop: 0 }}
+            style={{ marginTop: 0 }}
           />
           </TourAnchor>
         ) : null}
 
         {/* 25 octobre 2026 : ta semaine et ton mois, tout reuni (app/bilan-periode.tsx) */}
         {hasData ? (
-          <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 16, marginTop: 14 }}>
+          <TourAnchor id="progres.bilans" rayon={20} style={{ flexDirection: 'row', gap: 10, marginHorizontal: 16, marginTop: 14 }}>
             {(['semaine', 'mois'] as const).map((t) => (
               <Pressable
                 key={t}
@@ -163,18 +172,20 @@ export default function Progres() {
                 <Ink size={16} weight="black">{t === 'semaine' ? traduire('Ta semaine') : traduire('Ton mois')}</Ink>
               </Pressable>
             ))}
-          </View>
+          </TourAnchor>
         ) : null}
 
         {/* Tes records, venus de Seances */}
         {trainings.length ? (
-          <View style={{ marginHorizontal: 16, gap: 10 }}>
+          <TourAnchor id="progres.records" rayon={22} retrait={{ haut: 18 }} style={{ marginHorizontal: 16, gap: 10 }}>
             <EnteteSection title={traduire("Tes records")} sub={traduire("Tes meilleures marques du moment")} illus={{ tampon: 'record' }} action={traduire("Tout voir")} onAction={() => router.push('/records' as any)} style={{ marginTop: 18 }} />
             <RecordsCard trainings={trainings} femme={femme} />
-          </View>
+          </TourAnchor>
         ) : null}
 
-        <View
+        <TourAnchor
+          id="progres.onglets"
+          rayon={16}
           onLayout={(e) => {
             tabsY.current = e.nativeEvent.layout.y;
           }}
@@ -194,7 +205,7 @@ export default function Progres() {
               {s === section ? <BrushUnderline color={c.accent} /> : <View style={{ height: 6 }} />}
             </Pressable>
           ))}
-        </View>
+        </TourAnchor>
         <View style={{ height: 1, backgroundColor: c.divider, marginHorizontal: 16 }} />
 
         {/* Titre, phrase et illustration de l'onglet */}

@@ -67,6 +67,7 @@ import { paletteSombre } from '@/components/yoroi/livePalette';
 import { ECART_EAU_KG, etatObjectif, kg1, texteObjectif, texteTendance } from '@/lib/v2/pesee/etatObjectif';
 import { FeuilleObjectif } from '@/components/yoroi/v2/pesee/ObjectifPoids';
 import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
+import { ecouterPagePoids } from '@/lib/v2/visite/pagePoids';
 import type { QuoiObjectif } from '@/components/yoroi/v2/pesee/ObjectifPoids';
 import { Card, Icon, ombreCarte, P, Press } from './kit';
 import { traduire, LANG, DECIMAL } from '@/lib/i18n/tr';
@@ -361,6 +362,18 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
   useEffect(() => {
     onPage?.(page);
   }, [page, onPage]);
+  // 28 octobre 2026 : la visite guidee montre la page 1 (ton poids et ses paliers) puis la page 2 (ta courbe)
+  const largeurRef = useRef(largeurCarte);
+  largeurRef.current = largeurCarte;
+  useEffect(
+    () =>
+      ecouterPagePoids((p) => {
+        const w = Math.max(1, largeurRef.current);
+        (pagesRef.current as any)?.scrollTo?.({ x: p * w, animated: true });
+        setPage(p);
+      }),
+    [],
+  );
   const today = todayProp ?? localISO();
   // vague 42 : jamais de pesee dans le futur (la courbe montrait janvier et le torii octobre)
   const series = useMemo(() => (seriesIn.some((p) => p.date > today) ? seriesIn.filter((p) => p.date <= today) : seriesIn), [seriesIn, today]);

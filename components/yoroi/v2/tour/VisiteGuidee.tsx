@@ -15,7 +15,7 @@
  * Montee dans app/(tabs)/_layout.tsx (TourGate), au-dessus des onglets et de la barre.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { AppState, Image, Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { Easing, FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import Svg, { Path, Rect } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -25,12 +25,15 @@ import { useRouter, useSegments } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import Ajouter from '@/app/ajouter';
 import { getTourScroller, measureTourAnchor } from './TourAnchor';
 import { isVisiteDone, markTourSeen, markVisiteDone } from './keys';
 import { _fenetreCurrent } from '@/components/yoroi/v2/fenetre/api';
-import { ETAPES, ciblesDe, tempsDeLecture, type Onglet } from './etapes';
+import { ETAPES, avecDe, ciblesDe, rangDansPartie, tempsDeLecture, type Onglet, type Partie } from './etapes';
+import { cadreDe, defilementPourMontrer, estimerBulle, hautDeBarre, placerBulle, type Ecran, type Trou } from './placement';
 import { montrerOngletPlus } from '@/lib/v2/visite/ongletPlus';
+import { montrerPagePoids } from '@/lib/v2/visite/pagePoids';
 import { entrerExemple, sortirExemple } from '@/lib/v2/visite/demoVisite';
 import { remiseAZeroAuDemarrage } from '@/lib/v2/visite/vitrine';
 import { appliquerVitesse, libelleVitesse, useVitesseVoix, vitesseCourante } from '@/lib/v2/visite/vitesseVoix';
@@ -117,7 +120,20 @@ export function useVisiteEnCours(): boolean {
 
 // ── Le composant ───────────────────────────────────────────────────────────
 
-type Box = { x: number; y: number; w: number; h: number };
+type Box = { x: number; y: number; w: number; h: number; r: number };
+
+/** 28 octobre 2026 : la partie de l'app, en petites capitales colorees en haut de la bulle */
+const PARTIES: Record<Partie, string> = {
+  accueil: traduire('Accueil'),
+  barre: traduire('Ta barre'),
+  seances: traduire('Séances'),
+  plus: traduire('Le bouton plus'),
+  progres: traduire('Progrès'),
+  dojo: traduire('Dojo'),
+  fin: traduire('À toi'),
+};
+/** Le temps de l'agrandissement d'un onglet ouvert (InkTabBar, LinearTransition de 220 ms), avec de la marge */
+const AGRANDISSEMENT_ONGLET = 320;
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** Une fenetre de l'app est ouverte (rappel, torii...) : la visite attend qu'elle soit fermee (2 minutes au plus) */
@@ -129,6 +145,8 @@ const within = <T,>(p: Promise<T>, ms: number, fallback: T) => Promise.race([p, 
 const ROUTES: Record<Onglet, string> = { index: '/(tabs)', seances: '/(tabs)/seances', progres: '/(tabs)/progres', dojo: '/(tabs)/dojo' };
 /** L'ecran qui defile de chaque onglet (registerTourScroller) */
 const SCROLLERS: Record<string, string> = { index: 'accueil', seances: 'seances', progres: 'progres', dojo: 'dojo' };
+/** Le menu du bouton + defile aussi (app/ajouter.tsx) */
+const SCROLLER_MENU = 'ajouter';
 
 export function VisiteGuidee() {
   const router = useRouter();
@@ -138,6 +156,8 @@ export function VisiteGuidee() {
   const { width: W, height: H } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
+  // 28 octobre 2026 : le sticker de la bulle suit le reglage Illustrations (Stickers ou Encre japonaise)
+  const illus = useIllustrations();
 
   const [active, setActive] = useState(false);
   const [index, setIndex] = useState(0);
@@ -145,6 +165,8 @@ export function VisiteGuidee() {
   const [voile, setVoile] = useState(true);
   const [menu, setMenu] = useState(false);
   const [ready, setReady] = useState(false);
+  // 28 octobre 2026 : la hauteur mesuree de la bulle de l'etape (elle se place avec sa vraie taille)
+  const [bulle, setBulle] = useState<{ i: number; h: number } | null>(null);
   const [voix, setVoix] = useState(true);
   const voixRef = useRef(true);
   const apercuRef = useRef(false);
@@ -163,6 +185,18 @@ export function VisiteGuidee() {
   const [finMessage, setFinMessage] = useState<string | null>(null);
   const [vitesse, vitesseSuivante] = useVitesseVoix();
   const debutRef = useRef(0);
+  // 28 octobre 2026 : la pastille Exemple (la bulle reste dessous) et la page montree de la carte Ton poids
+  const pastilleRef = useRef(true);
+  const pagePoidsRef = useRef(0);
+  /** L'ecran pour placer le cadre et la bulle : sous la pastille Exemple, au dessus du bord bas, et le haut de la barre */
+  const ecranDe = (menuOuvert: boolean): Ecran => ({
+    W,
+    H,
+    haut: insets.top + (pastilleRef.current ? 46 : 8),
+    bas: H - insets.bottom - 10,
+    // le menu + couvre la barre : ses elements descendent jusqu'au bas de l'ecran
+    barre: menuOuvert ? H - insets.bottom - 4 : hautDeBarre(H, insets.bottom),
+  });
 
   // l'onglet ouvert, lu par le deroule
   const seg = segments[0] === '(tabs)' ? (segments[1] ?? 'index') : segments[0] ?? '';
@@ -301,7 +335,13 @@ export function VisiteGuidee() {
     menuRef.current = false;
     setMenu(false);
     setReady(false);
-    getTourScroller('accueil')?.scrollToTop();
+    setBulle(null);
+    // 28 octobre 2026 : tout revient comme avant la visite (la carte Ton poids sur sa premiere page, chaque onglet en haut)
+    if (pagePoidsRef.current !== 0) {
+      pagePoidsRef.current = 0;
+      montrerPagePoids(0);
+    }
+    Object.values(SCROLLERS).forEach((k) => getTourScroller(k)?.scrollToTop());
     if (ongletRef.current !== 'index') router.navigate(ROUTES.index as never);
     if (!apercuRef.current && marquer) {
       // la visite remplace la presentation YOROI 3.0 : elle ne revient plus d'elle-meme
@@ -323,7 +363,7 @@ export function VisiteGuidee() {
     if (!a || !root) return null;
     return within(
       new Promise<Box | null>((resolve) => {
-        root.measureInWindow((rx, ry) => resolve({ x: a.x - (rx || 0), y: a.y - (ry || 0), w: a.width, h: a.height }));
+        root.measureInWindow((rx, ry) => resolve({ x: a.x - (rx || 0), y: a.y - (ry || 0), w: a.width, h: a.height, r: a.rayon }));
       }),
       800,
       null,
@@ -395,6 +435,9 @@ export function VisiteGuidee() {
   // 27 octobre 2026 (Houari : « a l'etape Ton objectif ca bugue, ca descend jusqu'a Sante et plus aucune voix ») :
   // chaque etape est protegee. Une ancre absente ou hors de l'ecran : la bulle s'affiche seule, sans cadre, et la
   // visite continue. Une erreur dans une etape ne coupe jamais la voix ni les etapes suivantes.
+  // 28 octobre 2026 (Houari : « la presentation ne s'adapte pas ») : le cadre prend la forme et la taille du moment de
+  // l'element (rayon de l'ancre, onglet mesure apres son agrandissement), et l'ecran defile (accueil, onglets, menu +)
+  // jusqu'a ce que l'element et sa bulle tiennent ensemble, sans que la bulle le cache (./placement.ts).
   useEffect(() => {
     if (!active) return;
     const id = ++runId.current;
@@ -410,19 +453,38 @@ export function VisiteGuidee() {
     };
 
     const ids = ciblesDe(e);
+    const autres = avecDe(e);
     let cid = ids[0] ?? '';
+    const estOnglet = (k: string) => k.startsWith('onglet.');
+    const ecran = ecranDe(!!e.menuPlus);
+    const hBulle = estimerBulle(e.titre, e.texte, Math.min(W - 24, 440));
 
-    /** Position de l'ancre (et de sa seconde ancre « avec », dans le meme cadre) */
+    /** Position de l'ancre (avec ses ancres « avec » dans le meme cadre, et coupee par son ancre « dans ») */
     const mesurer = async (id0: string): Promise<Box | null> => {
-      const a = await anchorRect(id0);
-      if (!a || !e.avec) return a;
-      const b = await anchorRect(e.avec);
-      if (!b) return a;
-      const x = Math.min(a.x, b.x);
-      const y = Math.min(a.y, b.y);
-      return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y };
+      let a = await anchorRect(id0);
+      if (!a) return null;
+      for (const k of autres) {
+        if (k === id0) continue;
+        const b = await anchorRect(k);
+        if (!b) continue;
+        const x = Math.min(a.x, b.x);
+        const y = Math.min(a.y, b.y);
+        a = { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y, r: Math.min(a.r, b.r) };
+      }
+      if (e.dans && e.dans !== id0) {
+        const d = await anchorRect(e.dans);
+        if (d) {
+          const x = Math.max(a.x, d.x);
+          const y = Math.max(a.y, d.y);
+          const w = Math.min(a.x + a.w, d.x + d.w) - x;
+          const h = Math.min(a.y + a.h, d.y + d.h) - y;
+          if (w <= 0 || h <= 0) return null;
+          a = { x, y, w, h, r: Math.min(a.r, w / 2, h / 2) };
+        }
+      }
+      return a;
     };
-    /** L'ecran bouge encore (defilement, changement d'onglet) : on attend qu'il soit pose */
+    /** L'ecran bouge encore (defilement, onglet qui grandit, changement d'onglet) : on attend qu'il soit pose */
     const poser = async (r: Box | null): Promise<Box | null> => {
       let rect = r;
       for (let k = 0; k < 12 && rect; k++) {
@@ -430,24 +492,39 @@ export function VisiteGuidee() {
         if (!alive()) return null;
         const again = await mesurer(cid);
         if (!again) break;
-        const pose = Math.abs(again.y - rect.y) < 1 && Math.abs(again.x - rect.x) < 1;
+        const pose = Math.abs(again.y - rect.y) < 1 && Math.abs(again.x - rect.x) < 1 && Math.abs(again.w - rect.w) < 1 && Math.abs(again.h - rect.h) < 1;
         rect = again;
         if (pose) break;
       }
       return rect;
     };
-    /** Le cadre autour de l'element */
-    const cadre = (rect: Box): Box => {
-      const pad = 7;
-      const top = Math.max(insets.top * 0.5, rect.y - pad);
-      // une carte plus haute que l'ecran (petit telephone) : le cadre s'arrete au-dessus de la barre d'onglets
-      const surBarre = !!cid && !cid.startsWith('onglet.') && !e.menuPlus;
-      const hautBarre = H - (Math.max(insets.bottom - 8, 0) + 14) - 72;
-      const bottom = Math.min(H - 4, rect.y + rect.h + pad, surBarre && rect.y < hautBarre - 40 ? hautBarre : H);
-      return { x: Math.max(4, rect.x - pad), y: top, w: Math.min(W - 8, rect.w + pad * 2), h: Math.max(20, bottom - top) };
-    };
+    /** Le cadre autour de l'element, a sa forme (rayon de l'ancre plus la marge) */
+    const cadre = (rect: Box): Trou => cadreDe(rect, ecran, { surBarre: !!cid && !estOnglet(cid) && !e.menuPlus, plafond: insets.top * 0.5 });
     /** L'element est vraiment a l'ecran (sinon : bulle seule, jamais un cadre perdu) */
     const aLEcran = (r: Box | null): r is Box => !!r && r.w > 0 && r.h > 0 && r.y < H - 40 && r.y + r.h > Math.max(40, insets.top) && r.x < W - 10 && r.x + r.w > 10;
+    /** L'ecran qui defile pour cette etape : le menu +, sinon l'onglet ouvert */
+    const scrollerDe = () => getTourScroller(e.menuPlus ? SCROLLER_MENU : SCROLLERS[ongletRef.current] ?? 'accueil');
+    /** Amene l'element la ou il tient avec sa bulle (deux essais : le contenu peut finir avant) */
+    const amener = async (r: Box | null): Promise<Box | null> => {
+      if (!r || estOnglet(cid)) return r;
+      let rect = r;
+      for (let k = 0; k < 2; k++) {
+        const dy = defilementPourMontrer(rect, hBulle, ecran);
+        if (Math.abs(dy) < 4) break;
+        const sc = scrollerDe();
+        if (!sc) break;
+        sc.scrollBy(dy);
+        await wait(560);
+        if (!alive()) return null;
+        const again = await poser(await mesurer(cid));
+        if (!again) break;
+        const bouge = Math.abs(again.y - rect.y) >= 2;
+        rect = again;
+        // le bout du contenu : on ne peut pas aller plus loin
+        if (!bouge) break;
+      }
+      return rect;
+    };
 
     const run = async () => {
       setReady(false);
@@ -478,6 +555,16 @@ export function VisiteGuidee() {
         }
         await wait(cid ? 650 : 0);
         if (!alive()) return;
+      }
+      // la carte Ton poids : la page de l'etape (sinon la premiere)
+      const page = e.pagePoids ?? 0;
+      if (page !== pagePoidsRef.current) {
+        pagePoidsRef.current = page;
+        montrerPagePoids(page);
+        if (e.pagePoids !== undefined) {
+          await wait(480);
+          if (!alive()) return;
+        }
       }
       // le menu du bouton +, montre tel quel, sur l'onglet de l'etape
       if (e.menuPlus) {
@@ -522,18 +609,10 @@ export function VisiteGuidee() {
           rect = await poser(await mesurer(cid));
           if (!alive()) return;
         }
-        // l'ancre est plus bas sur l'accueil : on l'amene a l'ecran
-        const basVise = H - (Math.max(insets.bottom - 8, 0) + 14) - 72 - 10;
-        const decalage = rect && e.bulleHaut ? rect.y + rect.h - basVise : 0;
-        if (rect && e.defile && (e.bulleHaut ? Math.abs(decalage) > 6 : rect.y + rect.h > H - 300 || rect.y < insets.top + 20)) {
-          getTourScroller('accueil')?.scrollBy(e.bulleHaut ? decalage : rect.y - (insets.top + 70));
-          await wait(600);
-          if (!alive()) return;
-          rect = await poser(await mesurer(cid));
-          if (!alive()) return;
-        }
+        // l'element et sa bulle doivent tenir ensemble : l'ecran defile jusqu'a lui
+        rect = await amener(rect);
+        if (!alive()) return;
       }
-      if (!alive()) return;
 
       // rien a entourer, ou l'element n'est pas a l'ecran : la bulle seule, la visite continue
       if (!aLEcran(rect)) {
@@ -550,10 +629,11 @@ export function VisiteGuidee() {
       setReady(true);
       say();
 
-      // le doigt rejoint la cible, puis appuie
-      const cx = rect.x + rect.w / 2;
-      const cy = Math.min(H - 40, Math.max(hole0.y + 20, rect.y + Math.min(rect.h / 2, 90)));
+      // le doigt rejoint la cible (la ou elle dit d'appuyer), puis appuie
+      const cx = rect.x + rect.w * (e.doigt?.x ?? 0.5);
+      const cy = Math.min(H - 40, Math.max(hole0.y + 20, e.doigt ? rect.y + rect.h * e.doigt.y : rect.y + Math.min(rect.h / 2, 90)));
       const travel = reduceMotion ? 0 : 650;
+      if (e.sansDoigt) return;
       fOpacity.value = withTiming(1, { duration: 220 });
       fx.value = withTiming(cx, { duration: travel, easing: Easing.out(Easing.cubic) });
       fy.value = withTiming(cy, { duration: travel, easing: Easing.out(Easing.cubic) });
@@ -571,6 +651,11 @@ export function VisiteGuidee() {
           // l'ecran ouvert reste bien visible : plus de voile, le cadre reste autour de l'onglet
           setVoile(false);
           fOpacity.value = withTiming(0, { duration: 300 });
+          // 28 octobre 2026 : l'onglet ouvert s'etire (InkTabBar) ; le cadre suit sa vraie taille une fois pose
+          await wait(AGRANDISSEMENT_ONGLET);
+          if (!alive()) return;
+          const apres = await poser(await mesurer(cid));
+          if (alive() && aLEcran(apres)) setHole(cadre(apres));
         }
         if (e.ouvreMenu) {
           // 27 octobre : le doigt appuie sur +, le menu s'ouvre pour de vrai (sans pouvoir etre touche)
@@ -583,15 +668,16 @@ export function VisiteGuidee() {
           await wait(400);
           if (!alive()) return;
           montrerOngletPlus('seance');
+          getTourScroller(SCROLLER_MENU)?.scrollToTop();
         }
         if (e.puisOngletPlus) {
-          // 27 octobre : on passe d'un onglet du menu + a l'autre, le cadre suit
-          await wait(1400);
+          // 27 octobre : on passe d'un onglet du menu + a l'autre, le cadre suit (28 octobre : quand la voix y arrive)
+          await wait(Math.round(2600 / Math.max(1, vitesseCourante())));
           if (!alive()) return;
           montrerOngletPlus(e.puisOngletPlus);
           await wait(260);
           if (!alive()) return;
-          const apres = await mesurer(cid);
+          const apres = await poser(await mesurer(cid));
           if (alive() && aLEcran(apres)) setHole(cadre(apres));
         }
       }
@@ -697,35 +783,24 @@ export function VisiteGuidee() {
   const e = ETAPES[index];
   // la pastille « Exemple » en haut : la bulle du haut se pose juste dessous
   const pastille = exemple !== 'non';
-  const hautBulle = insets.top + (pastille ? 46 : 8);
+  pastilleRef.current = pastille;
   const last = index === ETAPES.length - 1;
   const first = index === 0;
+  const { n: nPartie, sur: surPartie } = rangDansPartie(index);
 
-  // la bulle : a l'oppose de la cible, sinon en bas
+  // 28 octobre 2026 : la bulle se place avec sa vraie hauteur (mesuree ; estimee le temps de la mesurer), a cote du
+  // cadre, jamais dessus, jamais hors de l'ecran (./placement.ts). Ecran ouvert sans voile : au dessus de l'onglet.
   const bubbleW = Math.min(W - 24, 440);
-  const BULLE = 214;
-  let bubbleTop: number | undefined;
-  let bubbleBottom: number | undefined;
-  if (!hole || !voile) {
-    bubbleBottom = hole && !voile ? H - hole.y + 14 : insets.bottom + 110;
-  } else if (hole.y + hole.h / 2 > H / 2) {
-    bubbleBottom = H - hole.y + 14;
-    if (hole.y - 14 - insets.top < BULLE) bubbleBottom = undefined;
-  } else {
-    bubbleTop = hole.y + hole.h + 14;
-    if (H - bubbleTop - insets.bottom < BULLE) bubbleTop = undefined;
-  }
-  if (bubbleTop === undefined && bubbleBottom === undefined) bubbleBottom = insets.bottom + 16;
-  if (e.bulleHaut && hole && voile) {
-    bubbleTop = hautBulle;
-    bubbleBottom = undefined;
-  }
-  if (!hole && (first || last)) {
-    bubbleTop = undefined;
-    bubbleBottom = Math.max(insets.bottom + 110, (H - BULLE) / 2 - 40);
-  }
+  const ecranBulle = ecranDe(menu);
+  // petit telephone et grande carte (Ton poids sur un iPhone SE) : la bulle se fait compacte (sans la ligne de
+  // progression, sticker plus petit) pour tenir a cote de l'element. Decide sur l'estimation, stable d'un rendu a l'autre.
+  const compact = !!hole && placerBulle(hole, estimerBulle(e.titre, e.texte, bubbleW), ecranBulle).couvre;
+  const mesuree = bulle && bulle.i === index ? bulle.h : null;
+  const hBulle = mesuree ?? estimerBulle(e.titre, e.texte, bubbleW) - (compact ? 38 : 0);
+  const place = placerBulle(hole, hBulle, ecranBulle);
+  const bubbleTop = place.top;
 
-  const r = 18;
+  const r = Math.max(0, hole?.r ?? 18);
   const veil =
     hole && voile
       ? `M0 0H${W}V${H}H0Z M${hole.x + r} ${hole.y}H${hole.x + hole.w - r}Q${hole.x + hole.w} ${hole.y} ${hole.x + hole.w} ${hole.y + r}V${hole.y + hole.h - r}Q${hole.x + hole.w} ${hole.y + hole.h} ${hole.x + hole.w - r} ${hole.y + hole.h}H${hole.x + r}Q${hole.x} ${hole.y + hole.h} ${hole.x} ${hole.y + hole.h - r}V${hole.y + r}Q${hole.x} ${hole.y} ${hole.x + r} ${hole.y}Z`
@@ -753,8 +828,9 @@ export function VisiteGuidee() {
         </Animated.View>
       ) : null}
       {hole ? (
-        <Animated.View key={`${index}-${hole.x}-${hole.y}`} entering={FadeIn.duration(260)} style={StyleSheet.absoluteFill} pointerEvents="none">
+        <Animated.View key={`${index}-${Math.round(hole.x)}-${Math.round(hole.y)}-${Math.round(hole.w)}-${Math.round(hole.h)}`} entering={FadeIn.duration(260)} style={StyleSheet.absoluteFill} pointerEvents="none">
           <Svg width={W} height={H}>
+            {/* le cadre epouse l'element : coins concentriques a ceux de l'element */}
             <Rect x={hole.x - 3} y={hole.y - 3} width={hole.w + 6} height={hole.h + 6} rx={r + 3} fill="none" stroke={c.accent} strokeOpacity={0.35} strokeWidth={6} />
             <Rect x={hole.x} y={hole.y} width={hole.w} height={hole.h} rx={r} fill="none" stroke={isDark ? c.accent : '#FFFFFF'} strokeWidth={1.5} strokeOpacity={0.9} />
             <Rect x={hole.x - 1.5} y={hole.y - 1.5} width={hole.w + 3} height={hole.h + 3} rx={r + 1.5} fill="none" stroke={isDark ? '#FFFFFF' : c.accent} strokeWidth={3} />
@@ -779,42 +855,72 @@ export function VisiteGuidee() {
       ) : null}
 
       {ready ? (
-        <Animated.View
+        // 28 octobre 2026 : la bulle au style de l'app (carte blanche, partie en petites capitales colorees, sticker,
+        // bouton pastel) ; invisible le temps d'etre mesuree, puis posee a sa place
+        <View
           key={index}
+          onLayout={(ev) => {
+            const h = Math.round(ev.nativeEvent.layout.height);
+            if (h > 0 && (!bulle || bulle.i !== index || Math.abs(bulle.h - h) > 1)) setBulle({ i: index, h });
+          }}
+          style={[s.bubbleWrap, { width: bubbleW, left: (W - bubbleW) / 2, top: bubbleTop, opacity: mesuree === null ? 0 : 1 }]}
+        >
+        <Animated.View
           entering={reduceMotion ? FadeIn.duration(160) : FadeInDown.duration(260)}
-          style={[s.bubble, { width: bubbleW, left: (W - bubbleW) / 2, top: bubbleTop, bottom: bubbleBottom, backgroundColor: c.surface, borderColor: c.border, shadowColor: '#000' }]}
+          style={[s.bubble, { backgroundColor: c.surface, borderColor: c.border, shadowColor: '#000' }]}
         >
           <View style={s.head}>
-            <Ink size={12.5} weight="extraBold" color={c.accent}>{traduire("{0} sur {1}", index + 1, ETAPES.length)}</Ink>
-            <View style={[s.track, { backgroundColor: c.accentTint }]}>
-              <View style={{ width: `${((index + 1) / ETAPES.length) * 100}%`, height: '100%', borderRadius: 2, backgroundColor: c.detail }} />
-            </View>
+            <Ink size={11.5} weight="black" color={c.accentText} numberOfLines={1} style={{ flexShrink: 1, letterSpacing: 1.3 }}>
+              {PARTIES[e.partie].toUpperCase()}
+            </Ink>
+            {compact ? (
+              <Ink size={12.5} weight="extraBold" color={c.textSecondary} numberOfLines={1}>
+                {traduire("{0} sur {1}", nPartie, surPartie)}
+              </Ink>
+            ) : null}
+            <View style={{ flex: 1 }} />
             <Pressable onPress={toggleVoix} hitSlop={10} style={[s.voixBtn, { backgroundColor: c.accentTint }]} accessibilityRole="button" accessibilityLabel={voix ? traduire('Couper la voix') : traduire('Remettre la voix')}>
               <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                <Path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" stroke={c.accent} strokeWidth={2} strokeLinejoin="round" />
+                <Path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" stroke={c.accentText} strokeWidth={2} strokeLinejoin="round" />
                 {voix ? (
-                  <Path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" stroke={c.accent} strokeWidth={2} strokeLinecap="round" />
+                  <Path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" stroke={c.accentText} strokeWidth={2} strokeLinecap="round" />
                 ) : (
-                  <Path d="M16 9.5l5 5M21 9.5l-5 5" stroke={c.accent} strokeWidth={2} strokeLinecap="round" />
+                  <Path d="M16 9.5l5 5M21 9.5l-5 5" stroke={c.accentText} strokeWidth={2} strokeLinecap="round" />
                 )}
               </Svg>
             </Pressable>
             {voix ? (
               <Pressable onPress={vitesseSuivante} hitSlop={8} style={[s.vitesseBtn, { backgroundColor: c.accentTint }]} accessibilityRole="button" accessibilityLabel={traduire("Vitesse de la voix : {0}. Changer", libelleVitesse(vitesse))}>
-                <Ink size={13} weight="extraBold" color={c.accent}>{libelleVitesse(vitesse)}</Ink>
+                <Ink size={13} weight="extraBold" color={c.accentText}>{libelleVitesse(vitesse)}</Ink>
               </Pressable>
             ) : null}
             {!last ? (
-              <Pressable onPress={() => finish()} hitSlop={12} accessibilityRole="button" accessibilityLabel={traduire("Quitter la visite")}>
-                <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Passer")}</Ink>
+              // Passer, bien visible : une vraie pilule, pas un texte gris
+              <Pressable onPress={() => finish()} hitSlop={8} style={({ pressed }) => [s.passer, { backgroundColor: pressed ? c.fillSoft : c.surface, borderColor: c.border }]} accessibilityRole="button" accessibilityLabel={traduire("Quitter la visite")}>
+                <Ink size={14} weight="black" color={c.ink}>{traduire("Passer")}</Ink>
               </Pressable>
             ) : null}
           </View>
 
-          <Ink size={19} weight="black" tight color={c.ink} style={{ marginTop: 10 }} accessibilityRole="header">
-            {traduire(e.titre)}
-          </Ink>
-          <Ink size={15} weight="medium" color={c.textSecondary} style={{ marginTop: 4, lineHeight: 21 }}>
+          {/* la progression : ou tu en es dans cette partie, et dans toute la visite */}
+          {!compact ? (
+          <View style={s.progres}>
+            <View style={[s.track, { backgroundColor: c.accentTint }]}>
+              <View style={{ width: `${((index + 1) / ETAPES.length) * 100}%`, height: '100%', borderRadius: 2, backgroundColor: c.detail }} />
+            </View>
+            <Ink size={12.5} weight="extraBold" color={c.textSecondary} accessibilityLabel={traduire("Étape {0} sur {1}", nPartie, surPartie)}>
+              {traduire("{0} sur {1}", nPartie, surPartie)}
+            </Ink>
+          </View>
+          ) : null}
+
+          <View style={s.titreRang}>
+            {e.sticker ? <Image source={illus.img(e.sticker)} style={compact ? s.stickerCompact : s.sticker} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
+            <Ink size={19} weight="black" tight color={c.ink} style={{ flex: 1 }} accessibilityRole="header">
+              {traduire(e.titre)}
+            </Ink>
+          </View>
+          <Ink size={15} weight="medium" color={c.textSecondary} style={{ marginTop: 6, lineHeight: 21 }}>
             {traduire(e.texte)}
           </Ink>
 
@@ -833,13 +939,14 @@ export function VisiteGuidee() {
               accessibilityRole="button"
               accessibilityLabel={last ? traduire('Terminer la visite') : traduire('Étape suivante')}
             >
-              <Ink size={15.5} weight="black" color={c.onPrimary}>{last ? traduire('C’est parti') : first ? 'On y va' : traduire('Suivant')}</Ink>
+              <Ink size={15.5} weight="black" color={c.onPrimary}>{last ? traduire('C’est parti') : first ? traduire('On y va') : traduire('Suivant')}</Ink>
               <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-                <Path d="M5 12h13M13 6l6 6-6 6" stroke={c.onAccent} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+                <Path d="M5 12h13M13 6l6 6-6 6" stroke={c.onPrimary} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
             </Pressable>
           </View>
         </Animated.View>
+        </View>
       ) : null}
     </View>
   );
@@ -866,8 +973,8 @@ const s = StyleSheet.create({
   },
   fingerCore: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: '#FFFFFF' },
   ripple: { position: 'absolute', left: 0, top: 0, width: 72, height: 72, borderRadius: 36, borderWidth: 3, borderColor: '#FFFFFF' },
+  bubbleWrap: { position: 'absolute' },
   bubble: {
-    position: 'absolute',
     borderRadius: 24,
     borderWidth: 1,
     paddingHorizontal: 18,
@@ -878,8 +985,13 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 12 },
     elevation: 12,
   },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  progres: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
   track: { flex: 1, height: 4, borderRadius: 2, overflow: 'hidden' },
+  titreRang: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
+  sticker: { width: 44, height: 44 },
+  stickerCompact: { width: 32, height: 32 },
+  passer: { height: 34, borderRadius: 17, borderWidth: 1.5, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' },
   voixBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   vitesseBtn: { minWidth: 44, height: 34, borderRadius: 17, paddingHorizontal: 9, alignItems: 'center', justifyContent: 'center' },
   pastilleWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },

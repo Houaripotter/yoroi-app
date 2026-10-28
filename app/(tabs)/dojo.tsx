@@ -19,6 +19,7 @@ import { ENTREE } from '@/components/yoroi/v2/accueil/kit';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { TourAnchor, registerTourScroller } from '@/components/yoroi/v2/tour/TourAnchor';
+import { defilementPourMontrer, hautDeBarre } from '@/components/yoroi/v2/tour/placement';
 import { FeatureList } from '@/components/yoroi/v2/FeatureList';
 import { INK_TAB_BAR_SPACE } from '@/components/yoroi/v2/InkTabBar';
 import { ArmureEnConstruction, EtapesPiece } from '@/components/yoroi/v2/dojo/ArmureEnConstruction';
@@ -65,6 +66,8 @@ const shortDay = (iso: string) => {
 
 /** Vague 48 : ancres de la visite du Dojo (la carte a entourer) */
 const ANCRES: Partial<Record<CibleDojo, View | null>> = {};
+/** 28 octobre 2026 : le rayon des coins de chaque carte montree par la visite du Dojo */
+const RAYONS_DOJO: Record<CibleDojo, number> = { hero: 30, aujourdhui: 24, recompense: 22, semaines: 22, sceaux: 22, aide: 23 };
 
 function Section({ i, children, ancre }: { i: number; children: React.ReactNode; ancre?: CibleDojo }) {
   return (
@@ -176,8 +179,16 @@ export default function Dojo() {
   // Vague 48 : la visite du Dojo avec la voix
   const scrollRef = useRef<ScrollView>(null);
   // 27 octobre 2026 : la visite guidee remonte l'onglet en haut avant de montrer ton rang
-  useEffect(() => registerTourScroller('dojo', { scrollBy: () => {}, scrollToTop: () => scrollRef.current?.scrollTo({ y: 0, animated: true }) }), []);
+  // 28 octobre 2026 : et elle le fait defiler jusqu'a ce qu'elle montre (ta serie, ta prochaine recompense)
   const scrollY = useRef(0);
+  useEffect(
+    () =>
+      registerTourScroller('dojo', {
+        scrollBy: (dy) => scrollRef.current?.scrollTo({ y: Math.max(0, scrollY.current + dy), animated: true }),
+        scrollToTop: () => scrollRef.current?.scrollTo({ y: 0, animated: true }),
+      }),
+    [],
+  );
   const [visite, setVisite] = useState(false);
   const [visiteEtat, setVisiteEtat] = useState<'faite' | 'plus_tard' | null>('faite');
   useEffect(() => {
@@ -189,13 +200,16 @@ export default function Dojo() {
     const t = setTimeout(() => setVisite(true), 900);
     return () => clearTimeout(t);
   }, [snap, welcome, celebration, visiteEnCours, visiteEtat]);
-  const mesurer = useCallback(async (cible: CibleDojo): Promise<Rect | null> => {
+  // 28 octobre 2026 : la carte s'arrete la ou elle tient avec sa bulle (components/yoroi/v2/tour/placement.ts), et dit
+  // le rayon de ses coins pour que le cadre de la visite l'epouse
+  const mesurer = useCallback(async (cible: CibleDojo, hBulle: number): Promise<Rect | null> => {
     const v = ANCRES[cible];
     if (!v) return null;
+    const rayon = RAYONS_DOJO[cible];
     const enFenetre = () =>
       new Promise<Rect | null>((resolve) => {
         try {
-          v.measureInWindow((x, y, w, h) => resolve(w > 0 ? { x, y, w, h } : null));
+          v.measureInWindow((x, y, w, h) => resolve(w > 0 ? { x, y, w, h, r: rayon } : null));
         } catch {
           resolve(null);
         }
@@ -206,13 +220,14 @@ export default function Dojo() {
       scrollRef.current?.scrollTo({ y: 0, animated: false });
     } else {
       const r0 = await enFenetre();
-      const visible = r0 && r0.y >= insets.top + 60 && r0.y + r0.h <= winH - 260;
-      if (r0 && !visible) scrollRef.current?.scrollTo({ y: Math.max(0, scrollY.current + r0.y - insets.top - 70), animated: false });
-      if (visible) return r0;
+      const ecran = { W: width, H: winH, haut: insets.top + 8, bas: winH - insets.bottom - 10, barre: hautDeBarre(winH, insets.bottom) };
+      const dy = r0 ? defilementPourMontrer(r0, hBulle, ecran, 8) : 0;
+      if (r0 && Math.abs(dy) >= 4) scrollRef.current?.scrollTo({ y: Math.max(0, scrollY.current + dy), animated: false });
+      else if (r0) return r0;
     }
     await attendre(60);
     return (await enFenetre()) ?? (await attendre(150), enFenetre());
-  }, [insets.top, winH]);
+  }, [insets.top, insets.bottom, winH, width]);
 
   // Vague 47 : le rappel du coffre suit l'etat du jour (rien si les notifications ne sont pas autorisees)
   useEffect(() => {
@@ -318,6 +333,7 @@ export default function Dojo() {
             <Ink size={30} weight="black" tight accessibilityRole="header" style={{ letterSpacing: -0.5 }}>{traduire("Dojo")}</Ink>
           </View>
           {/* vague 48 : la visite du Dojo, a revoir quand on veut */}
+          <TourAnchor id="dojo.aide" rayon="rond">
           <Pressable
             ref={(v) => {
               ANCRES.aide = v as unknown as View | null;
@@ -333,6 +349,7 @@ export default function Dojo() {
             <Ink size={18} weight="black" color={c.accentText}>?</Ink>
             {visiteEtat !== 'faite' ? <View style={{ position: 'absolute', top: 6, right: 6, width: 9, height: 9, borderRadius: 5, backgroundColor: '#E8551E' }} /> : null}
           </Pressable>
+          </TourAnchor>
           <Pressable
             onPress={() => {
               tap();
@@ -349,7 +366,7 @@ export default function Dojo() {
 
         {/* Scene : ton personnage et ton rang */}
         <Section i={0} ancre="hero">
-          <TourAnchor id="dojo.rang">
+          <TourAnchor id="dojo.rang" rayon={30}>
           <Pressable
             onPress={() => {
               tap();
@@ -387,7 +404,9 @@ export default function Dojo() {
         {/* Vague 47 : aujourd'hui, ta serie de jours et ton coffre du jour (la raison de revenir chaque jour) */}
         {st?.serie && st.coffre ? (
           <Section i={1} ancre="aujourdhui">
-            <Aujourdhui serie={st.serie} coffre={st.coffre} onOuvrir={ouvrirCoffre} onVerre={noterVerre} onCadeau={(id) => void mettreScene(id, true)} palier={isPremium ? undefined : textePalier} suite={cons.resteXp > 0 ? traduire("Encore {0}{1}XP pour {2}", formatXp(cons.resteXp), NB, cons.palier) : undefined} />
+            <TourAnchor id="dojo.aujourdhui" rayon={24}>
+              <Aujourdhui serie={st.serie} coffre={st.coffre} onOuvrir={ouvrirCoffre} onVerre={noterVerre} onCadeau={(id) => void mettreScene(id, true)} palier={isPremium ? undefined : textePalier} suite={cons.resteXp > 0 ? traduire("Encore {0}{1}XP pour {2}", formatXp(cons.resteXp), NB, cons.palier) : undefined} />
+            </TourAnchor>
             {/* 18 octobre : ton rang, ton XP et ta serie a l'abri, copie automatique dans ton cloud */}
             <AbriDojo rang={title} xp={xp} serie={st.serie.jours} />
           </Section>
@@ -395,6 +414,7 @@ export default function Dojo() {
 
         {/* Vague 45 : « Ta prochaine recompense », la piece qui se construit et la barre vers le prochain rang, toujours visibles */}
         <Section i={1} ancre="recompense">
+          <TourAnchor id="dojo.recompense" rayon={22}>
           <Pressable
             onPress={() => {
               tap();
@@ -427,6 +447,7 @@ export default function Dojo() {
               </View>
             </View>
           </Pressable>
+          </TourAnchor>
         </Section>
 
         {/* Vague 47 : tes semaines reussies, avec des jokers et une pause faciles a comprendre */}

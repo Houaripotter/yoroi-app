@@ -49,7 +49,8 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
     };
     return (
       <Animated.View key={name} layout={LinearTransition.duration(220)} style={focused ? styles.slotActif : styles.slot}>
-      <TourAnchor id={`onglet.${name}`} style={styles.ancre}>
+      {/* 28 octobre 2026 : l'ancre de la visite suit la taille de l'onglet (petit rond, ou pilule etiree une fois ouvert) */}
+      <TourAnchor id={`onglet.${name}`} rayon="rond" style={styles.ancre}>
       <Pressable
         onPress={onPress}
         accessibilityRole="tab"
@@ -84,9 +85,9 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
   return (
     <View pointerEvents="box-none" style={[styles.outer, { bottom }]}>
       <View style={[styles.shadow, { shadowColor: c.shadow }]}>
-      <View style={[styles.pill, { backgroundColor: c.surface, borderColor: isDark ? c.border : 'rgba(255,255,255,0.9)' }]}>
+      <TourAnchor id="onglet.barre" rayon="rond" style={[styles.pill, { backgroundColor: c.surface, borderColor: isDark ? c.border : 'rgba(255,255,255,0.9)' }]}>
         {LEFT.map(renderTab)}
-        <TourAnchor id="onglet.plus" style={styles.slotPlus}>
+        <TourAnchor id="onglet.plus" rayon="rond" style={styles.slotPlus}>
           <Pressable
             onPress={() => {
               impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
@@ -106,7 +107,7 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
           </Pressable>
         </TourAnchor>
         {RIGHT.map(renderTab)}
-      </View>
+      </TourAnchor>
       </View>
     </View>
   );

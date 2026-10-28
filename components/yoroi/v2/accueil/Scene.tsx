@@ -383,6 +383,10 @@ function SceneCarte({ scene, personnage, rankIndex, largeur, decor }: Props) {
             <Image source={personnageImage(personnage, rankIndex)} style={{ position: 'absolute', left: 0, top: 0, width: charW, height: charH }} resizeMode="contain" accessibilityLabel={traduire("Ton personnage")} />
           </Animated.View>
         ) : null}
+        {/* 28 octobre 2026 : la visite guidee montre ton personnage (la zone qu'on touche pour ouvrir Ton personnage) */}
+        {aUnPersonnage(personnage) ? (
+          <TourAnchor id="accueil.personnage" rayon={20} pointerEvents="none" style={{ position: 'absolute', right: charRight + charW * 0.17, bottom: place.bas, width: charW * 0.62, height: charH * 0.92 }} />
+        ) : null}
         {aUnPersonnage(personnage) ? (
           <Pressable
             onPress={() => router.push(ROUTES_PERSONNALISER.personnage as any)}

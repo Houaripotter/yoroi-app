@@ -117,7 +117,16 @@ export default function Seances() {
   const importSante = importSeancesDisponible();
   const scrollRef = useRef<ScrollView>(null);
   // 27 octobre 2026 : la visite guidee remonte l'onglet en haut avant de montrer ta semaine
-  useEffect(() => registerTourScroller('seances', { scrollBy: () => {}, scrollToTop: () => scrollRef.current?.scrollTo({ y: 0, animated: true }) }), []);
+  // 28 octobre 2026 : elle le fait aussi defiler jusqu'a ce qu'elle montre (ta derniere seance, ton mois, ton historique)
+  const defileY = useRef(0);
+  useEffect(
+    () =>
+      registerTourScroller('seances', {
+        scrollBy: (dy) => scrollRef.current?.scrollTo({ y: Math.max(0, defileY.current + dy), animated: true }),
+        scrollToTop: () => scrollRef.current?.scrollTo({ y: 0, animated: true }),
+      }),
+    [],
+  );
   const historyY = useRef(0);
   const femme = gender === 'femme';
 
@@ -196,6 +205,10 @@ export default function Seances() {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView
         ref={scrollRef}
+        onScroll={(ev) => {
+          defileY.current = ev.nativeEvent.contentOffset.y;
+        }}
+        scrollEventThrottle={32}
         contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: insets.bottom + INK_TAB_BAR_SPACE + 10, paddingHorizontal: 22, gap: 12 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -233,7 +246,7 @@ export default function Seances() {
         {importSante && loaded && trainings.length > 0 && importedCount === 0 ? <CarteImportSeances onPress={() => setImportOpen(true)} /> : null}
 
         {/* La semaine en un coup d'oeil (27 octobre 2026 : ancre de la visite guidee) */}
-        <TourAnchor id="seances.semaine">
+        <TourAnchor id="seances.semaine" rayon={26}>
         <WeekHero
           week={week}
           plates={plates}
@@ -246,6 +259,7 @@ export default function Seances() {
         </TourAnchor>
 
         {/* Prochain entrainement prevu */}
+        <TourAnchor id="seances.prochain" rayon={22}>
         <NextUp
           next={next}
           femme={femme}
@@ -254,9 +268,12 @@ export default function Seances() {
           onPlanning={() => router.push('/planning' as any)}
           onCreate={() => router.push('/slots' as any)}
         />
+        </TourAnchor>
 
         {/* 24 octobre 2026 : programmes d'entrainement, ton programme en cours */}
-        <ProgrammeCard femme={femme} onOpen={() => router.push('/programmes' as any)} />
+        <TourAnchor id="seances.programme" rayon={24}>
+          <ProgrammeCard femme={femme} onOpen={() => router.push('/programmes' as any)} />
+        </TourAnchor>
 
         {/* 25 octobre 2026 : tes seances enregistrees, a refaire en un appui */}
         <MesSeancesCarte />
@@ -265,16 +282,20 @@ export default function Seances() {
         {lastVM && last ? (
           <>
             <SectionTitle title={traduire("Ta dernière séance")} />
-            <LastSessionCard
-              vm={lastVM}
-              onOpen={() => router.push({ pathname: '/workout-detail', params: { id: String(last.id) } } as any)}
-            />
+            <TourAnchor id="seances.derniere" rayon={24}>
+              <LastSessionCard
+                vm={lastVM}
+                onOpen={() => router.push({ pathname: '/workout-detail', params: { id: String(last.id) } } as any)}
+              />
+            </TourAnchor>
           </>
         ) : null}
 
         {/* Ton mois : calendrier du mois, toujours visible */}
         <SectionTitle title={traduire("Ton mois")} />
-        <MonthCard trainings={trainings} competitions={competitions} onOpen={() => router.push('/planning?tab=mois' as any)} />
+        <TourAnchor id="seances.mois" rayon={22}>
+          <MonthCard trainings={trainings} competitions={competitions} onOpen={() => router.push('/planning?tab=mois' as any)} />
+        </TourAnchor>
 
         {/* Muscles travailles */}
         {hasMuscles ? (
@@ -326,7 +347,9 @@ export default function Seances() {
         )}
 
         {/* Historique */}
-        <View
+        <TourAnchor
+          id="seances.historique"
+          rayon={16}
           onLayout={(e) => { historyY.current = e.nativeEvent.layout.y; }}
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4, marginTop: 10, gap: 10 }}
         >
@@ -350,7 +373,7 @@ export default function Seances() {
               <Icon name={searchOpen ? 'close' : 'search'} size={20} color={searchOpen ? c.onPrimary : c.ink} />
             </Pressable>
           ) : null}
-        </View>
+        </TourAnchor>
 
         {searchOpen ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, minHeight: 48, borderRadius: 16, backgroundColor: P.white, borderWidth: 1, borderColor: c.border }}>
@@ -370,11 +393,13 @@ export default function Seances() {
 
         {trainings.length > 0 ? (
           <>
-            <Segments
-              items={[{ key: 'semaine', label: traduire('Par semaine') }, { key: 'mois', label: traduire('Par mois') }]}
-              value={grouping}
-              onChange={(g) => { setGrouping(g); setGroupsShown(g === 'mois' ? 4 : 6); }}
-            />
+            <TourAnchor id="seances.filtres" rayon={16}>
+              <Segments
+                items={[{ key: 'semaine', label: traduire('Par semaine') }, { key: 'mois', label: traduire('Par mois') }]}
+                value={grouping}
+                onChange={(g) => { setGrouping(g); setGroupsShown(g === 'mois' ? 4 : 6); }}
+              />
+            </TourAnchor>
             {sports.length > 1 || importedCount > 0 ? (
               <ChipRow>
                 <Chip label={traduire("Tous")} on={filter.kind === 'tous'} onPress={() => pickFilter({ kind: 'tous' })} />

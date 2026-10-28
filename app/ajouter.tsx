@@ -43,7 +43,7 @@ import { getSanteSource, syncNow } from '@/lib/v2/sante/data';
 import { findNextSlot } from '@/components/yoroi/v2/seances/NextUp';
 import type { NextSlot } from '@/components/yoroi/v2/seances/NextUp';
 import { P } from '@/components/yoroi/livePalette';
-import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
+import { TourAnchor, registerTourScroller } from '@/components/yoroi/v2/tour/TourAnchor';
 import { ecouterOngletPlus } from '@/lib/v2/visite/ongletPlus';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
@@ -97,6 +97,17 @@ export default function Ajouter() {
   // fermer en glissant vers le bas (feuille en haut de son defilement) ou sur le cote
   const glisse = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const enHaut = useRef(true);
+  // 28 octobre 2026 : la visite guidee fait defiler le menu jusqu'a ce qu'elle montre (Autres façons est plus bas)
+  const defileRef = useRef<ScrollView>(null);
+  const defileY = useRef(0);
+  useEffect(
+    () =>
+      registerTourScroller('ajouter', {
+        scrollBy: (dy) => defileRef.current?.scrollTo({ y: Math.max(0, defileY.current + dy), animated: true }),
+        scrollToTop: () => defileRef.current?.scrollTo({ y: 0, animated: true }),
+      }),
+    [],
+  );
   const fermer = () => router.back();
   const geste = useRef(
     PanResponder.create({
@@ -276,7 +287,7 @@ export default function Ajouter() {
       <Animated.View {...geste.panHandlers} style={{ transform: [{ translateX: glisse.x }, { translateY: glisse.y }] }}>
       <Pressable onPress={() => {}} style={{ backgroundColor: P.paper, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingTop: 10, maxHeight: height * 0.92 }}>
         <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: P.pastelEteint, marginBottom: 14 }} accessibilityLabel={traduire('Glisse vers le bas pour fermer')} />
-        <ScrollView bounces={false} showsVerticalScrollIndicator={false} scrollEventThrottle={16} onScroll={(e) => { enHaut.current = e.nativeEvent.contentOffset.y <= 2; }} contentContainerStyle={{ paddingHorizontal: MARGE, paddingBottom: insets.bottom + 24 }}>
+        <ScrollView ref={defileRef} bounces={false} showsVerticalScrollIndicator={false} scrollEventThrottle={16} onScroll={(e) => { defileY.current = e.nativeEvent.contentOffset.y; enHaut.current = e.nativeEvent.contentOffset.y <= 2; }} contentContainerStyle={{ paddingHorizontal: MARGE, paddingBottom: insets.bottom + 24 }}>
           <Ink size={26} weight="black" tight style={{ marginBottom: 14 }} accessibilityRole="header">{traduire("Enregistrer")}</Ink>
 
           {draft ? (
@@ -290,10 +301,12 @@ export default function Ajouter() {
           ) : null}
 
           {/* 1. L'action principale : ton programme du jour, en grande carte lilas */}
-          <CarteDuJour {...carte} image={perso} largeur={width - 2 * MARGE} />
+          <TourAnchor id="ajouter.jour" rayon={26}>
+            <CarteDuJour {...carte} image={perso} largeur={width - 2 * MARGE} />
+          </TourAnchor>
 
           {/* 2. Les trois onglets, en tuiles pastel avec sticker (memes onglets qu'avant, ordre de la maquette) */}
-          <TourAnchor id="ajouter.onglets" style={{ flexDirection: 'row', gap: 10, marginTop: 14 }} accessibilityRole="tablist">
+          <TourAnchor id="ajouter.onglets" rayon={22} style={{ flexDirection: 'row', gap: 10, marginTop: 14 }} accessibilityRole="tablist">
             {([
               { k: 'seance' as const, t: traduire('Séance'), st: 'musculation' as NomSticker, fond: P.primary, texte: P.onPrimary },
               { k: 'poids' as const, t: traduire('Poids'), st: 'balance' as NomSticker, fond: P.tuileMentheFond, texte: P.tuileMentheTexte },
@@ -318,7 +331,7 @@ export default function Ajouter() {
 
           {onglet === 'seance' ? (<>
           {/* 3. Note ta seance du jour : tes sports en pastilles avec sticker */}
-          <TourAnchor id="ajouter.seance" style={{ marginTop: 18 }}>
+          <TourAnchor id="ajouter.seance" rayon={23} style={{ marginTop: 18 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Ink size={15} weight="black" accessibilityRole="header">{traduire("Note ta séance du jour")}</Ink>
               <Pressable onPress={() => open('/seance')} accessibilityRole="button" accessibilityLabel={traduire("Noter une séance faite, choisir le sport")} hitSlop={10}>
@@ -342,14 +355,14 @@ export default function Ajouter() {
           </TourAnchor>
 
           {/* 4. Dicte ta seance et En direct */}
-          <TourAnchor id="ajouter.facons" style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+          <TourAnchor id="ajouter.facons" rayon={22} style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
             <Facon titre={traduire("Dicte ta séance")} sous={traduire("ou colle tes notes")} sticker={illus.img('noter')} a11y={traduire("Dicte ta séance en une phrase")} onPress={() => open('/quick-log')} />
             <Facon titre={traduire("En direct")} sous={traduire("avec le chrono et le repos")} sticker={illus.img('chrono')} a11y={traduire("En direct, démarrer avec le chrono")} onPress={() => open('/seance', { live: '1' })} />
           </TourAnchor>
 
           {/* 5. Autres facons : une liste fine, petit sticker, titre, detail, chevron */}
           <Ink size={15} weight="black" style={{ marginTop: 18 }} accessibilityRole="header">{traduire("Autres façons")}</Ink>
-          <View style={{ marginTop: 8, backgroundColor: P.white, borderRadius: 22, paddingHorizontal: 14, ...ombre }}>
+          <TourAnchor id="ajouter.autres" rayon={22} style={{ marginTop: 8, backgroundColor: P.white, borderRadius: 22, paddingHorizontal: 14, ...ombre }}>
             {autres.map((o, i) => (
               <Pressable
                 key={o.key}
@@ -366,12 +379,12 @@ export default function Ajouter() {
                 {o.key === 'montre' && sync === 'busy' ? <ActivityIndicator size="small" color={P.chevron} /> : <Chevron />}
               </Pressable>
             ))}
-          </View>
+          </TourAnchor>
           </>) : null}
 
           {/* MENSURATIONS (meme style de grande carte, en sable) */}
           {onglet === 'mesures' ? (
-            <TourAnchor id="ajouter.detail" style={{ marginTop: 14 }}>
+            <TourAnchor id="ajouter.detail" rayon={26} style={{ marginTop: 14 }}>
             <Hero
               titre={traduire('Tes mensurations')}
               sous={traduire('taille, bras, cuisses, au ruban')}
@@ -391,7 +404,7 @@ export default function Ajouter() {
 
           {/* POIDS : a la main, par photo de la balance, composition (en menthe) */}
           {onglet === 'poids' ? (
-            <TourAnchor id="ajouter.detail" style={{ marginTop: 14 }}>
+            <TourAnchor id="ajouter.detail" rayon={26} style={{ marginTop: 14 }}>
             <Hero
               titre={traduire('Ta pesée')}
               sous={traduire('ton poids du jour, ta composition')}

@@ -32,7 +32,7 @@ export function EnTeteAccueil({ name, photo, personnage, rankIndex }: { name: st
   };
   return (
     <Animated.View entering={ENTREE} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: ENTETE_PASTEL.rangee }}>
-      <TourAnchor id="accueil.profil">
+      <TourAnchor id="accueil.profil" rayon="rond">
         <RondProfil photo={photo} personnage={personnage} rankIndex={rankIndex} nom={name} taille={ENTETE_PASTEL.rangee} />
       </TourAnchor>
       <View style={{ flex: 1, minWidth: 0 }}>

@@ -58,7 +58,7 @@ import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { SceneHero } from '@/components/yoroi/v2/accueil/Scene';
 import { EnTeteAccueil } from '@/components/yoroi/v2/accueil/EnTeteAccueil';
 import { CarteSemaine } from '@/components/yoroi/v2/accueil/CarteSemaine';
-import { ENTETE_PASTEL, HAUT_VOL_CARTE, hauteurSceneCarte, hautSceneCarte } from '@/lib/v2/saisons/geometrie';
+import { ENTETE_PASTEL, HAUT_VOL_CARTE, hauteurSceneCarte, hautSceneCarte, SCENE_CARTE } from '@/lib/v2/saisons/geometrie';
 import { CartePoids } from '@/components/yoroi/v2/accueil/CartePoids';
 import { RaccourcisDuJour } from '@/components/yoroi/v2/accueil/Raccourcis';
 import {
@@ -317,7 +317,8 @@ export default function Accueil() {
 
         <View style={{ paddingHorizontal: 16, gap: 12, marginTop: ENTETE_PASTEL.ecart }}>
           {/* la scene dans une carte arrondie ; les vols de saison restent dans la carte */}
-          <TourAnchor id="accueil.scene">
+          {/* 28 octobre 2026 : chaque ancre de la visite dit la forme de son element (rayon de la carte) */}
+          <TourAnchor id="accueil.scene" rayon={SCENE_CARTE.rayon}>
             <SceneHero
               carte
               largeur={largeurCarte}
@@ -333,7 +334,7 @@ export default function Accueil() {
 
           {/* Ton poids */}
           <Enter i={0}>
-            <TourAnchor id="accueil.poids">
+            <TourAnchor id="accueil.poids" rayon={28}>
               <CartePoids series={series} targetWeight={data.targetWeight} startWeight={data.startWeight} rankIndex={rankIndex} onPage={setPagePoids} />
               {/* 18 octobre 2026 v4 : decor de saison pose par dessus la carte (position absolue, aucun calcul touche) : citrouilles ou sapins entre le chiffre et l'anneau, toiles et araignees ou guirlande */}
               {saison && series.length && pagePoids === 0 ? <DecorCarte saison={saison} largeur={largeurCarte} scrollY={scrollY} seuil={hautSceneCarte(insets.top) + hauteurScene + 480} /> : null}
@@ -342,7 +343,8 @@ export default function Accueil() {
 
           {/* vague 37 : tes outils, en un toucher. 27 octobre 2026 : sous Ton poids, comme la maquette */}
           <Enter i={0}>
-            <TourAnchor id="accueil.outils">
+            {/* la rangee defile jusqu'au bord de l'ecran : le cadre va jusqu'au bord, sans les marges de la rangee */}
+            <TourAnchor id="accueil.outils" rayon={22} retrait={{ haut: 2, bas: 12, droite: -16 }}>
               <RaccourcisDuJour record={record} />
             </TourAnchor>
           </Enter>
@@ -350,7 +352,9 @@ export default function Accueil() {
           {/* 27 octobre 2026 : Ta semaine, les 7 jours en double anneau (exercice et pas) */}
           {semaineVisible ? (
             <Enter i={1}>
-              <CarteSemaine trainings={data.trainings} goal={goal} series={sante.series} objectifs={objectifsSante} jour={jour} />
+              <TourAnchor id="accueil.semaine" rayon={22}>
+                <CarteSemaine trainings={data.trainings} goal={goal} series={sante.series} objectifs={objectifsSante} jour={jour} />
+              </TourAnchor>
             </Enter>
           ) : null}
 

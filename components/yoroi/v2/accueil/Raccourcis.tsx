@@ -220,7 +220,7 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
               accessibilityLabel={o.key === 'partager' && pastille ? traduire("{0}. Une nouvelle carte t’attend", o.a11y) : o.beta ? traduire('{0}. En bêta', o.a11y) : o.a11y}
             >
               {/* 27 octobre 2026 : le Coach est montre par la visite guidee */}
-              <TourAnchor id={o.key === 'zones' ? 'accueil.coach' : 'accueil.outil'}>
+              <TourAnchor id={o.key === 'zones' ? 'accueil.coach' : 'accueil.outil'} rayon={22}>
               {(() => {
                 // Records : carte blanche (maquette) ; les autres sur leur pastel
                 const blanche = o.key === 'records';

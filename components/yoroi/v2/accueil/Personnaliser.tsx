@@ -350,7 +350,8 @@ export function PersonnaliserAccueil() {
   const router = useRouter();
   return (
     <>
-      <TourAnchor id="accueil.personnaliser">
+      {/* 28 octobre 2026 : la carte (rayon 22) commence 4 points sous l'ancre (sa marge du haut) */}
+      <TourAnchor id="accueil.personnaliser" rayon={22} retrait={{ haut: 4 }}>
         <Card style={[{ padding: 14, gap: 12, marginTop: 4 }, carteNeutre()]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
