@@ -25,7 +25,9 @@ import { useRouter } from 'expo-router';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { illustration } from '@/components/yoroi/v2/stickers';
 import { musclesDeExo } from '@/lib/v2/programmes/musclesExos';
-import { indexGarde, planEffectif, seancesAVenir } from '@/lib/v2/programmes/suivi';
+import { indexGarde, seanceDuPlanLe, seancesAVenir, semaineEffective } from '@/lib/v2/programmes/suivi';
+import { jourDuProgramme, seanceLe, semaineDepuisPlan } from '@/lib/v2/programmes/semaineLibre';
+import type { SemaineLibre } from '@/lib/v2/programmes/semaineLibre';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Programme } from '@/lib/v2/programmes/types';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
@@ -800,13 +802,15 @@ const isoLocal = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).pad
  * 27 octobre 2026 : avec un plan (Tes jours, planJours.ts), chaque jour montre sa séance à lui. `plan` : celui
  * à montrer avant de commencer ; en cours, celui du programme.
  */
-export function rondsDeLaSemaine(p: Programme, actif: ProgrammeActif | null, jours: readonly number[], aujourdhui = new Date(), planAvant?: readonly number[] | null): RondJour[] {
+export function rondsDeLaSemaine(p: Programme, actif: ProgrammeActif | null, jours: readonly number[], aujourdhui = new Date(), planAvant?: readonly number[] | null, semaineAvant?: SemaineLibre | null): RondJour[] {
   const t = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), aujourdhui.getDate(), 12);
   const kAuj = (t.getDay() + 6) % 7;
   const aujIso = isoLocal(t);
   const enCours = !!actif && actif.id === p.id;
   const faitAuj = enCours && actif!.faits.some((f) => f.date === aujIso);
-  const plan = enCours ? planEffectif(actif, p) : planAvant ?? null;
+  // 28 octobre 2026 : ta semaine libre (semaineLibre.ts) : chaque jour montre sa séance, même venue d'un autre programme
+  const sem = enCours ? semaineEffective(actif, p) : semaineAvant ?? (planAvant ? semaineDepuisPlan(p, planAvant) : null);
+  const seanceDu = (d: Date) => (enCours ? seanceDuPlanLe(actif, p, d) : sem ? seanceLe(sem, p, d) : null);
   const suite: { titre: string }[] = [];
   if (enCours) suite.push(...seancesAVenir(actif!, 7).map((x) => x.jour));
   else {
@@ -826,13 +830,13 @@ export function rondsDeLaSemaine(p: Programme, actif: ProgrammeActif | null, jou
     const base = { lettre: nomJour.charAt(0).toLocaleUpperCase(), nomJour };
     const fait = enCours ? actif!.faits.find((f) => f.date === di && f.date >= actif!.debut) : undefined;
     if (fait) {
-      const j = p.jours.find((x) => x.id === fait.jourId);
+      const j = jourDuProgramme(p, fait.jourId);
       return { ...base, etat: 'fait', libelle: j ? nomCourt(traduire(j.titre)) : traduire('Faite') };
     }
-    if (!(plan ? plan.includes(k) : jours.includes(k))) return { ...base, etat: 'repos', libelle: traduire('Repos') };
+    if (!(sem ? !!seanceDu(d) : jours.includes(k))) return { ...base, etat: 'repos', libelle: traduire('Repos') };
     const aVenir = di > aujIso || (di === aujIso && !faitAuj);
     if (!aVenir) return { ...base, etat: enCours && di >= actif!.debut ? 'rate' : 'passe', libelle: enCours && di >= actif!.debut ? traduire('À rattraper') : '' };
-    const j = plan ? p.jours[plan.indexOf(k)] : suite[n++];
+    const j = sem ? seanceDu(d) : suite[n++];
     const etat = prochainVu ? 'prevu' : 'prochain';
     prochainVu = true;
     return { ...base, etat, libelle: j ? nomCourt(traduire(j.titre)) : '' };

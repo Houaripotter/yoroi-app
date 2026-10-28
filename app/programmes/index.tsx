@@ -34,7 +34,7 @@ import type { Equipement } from '@/lib/v2/programmes/materiel';
 import { MessageDuJour } from '@/components/yoroi/v2/programmes/MessageDuJour';
 import { CarteMuscles } from '@/components/yoroi/v2/programmes/CarteMuscles';
 import { PlanningProgramme } from '@/components/yoroi/v2/programmes/PlanningProgramme';
-import { PROGRAMME_CHANGED_EVENT, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, enregistrerMateriel, materielDuLieu, activerSemaineLegere, arreterSemaineLegere, chargerProgrammeActif, estSemaineLegere, faitsCetteSemaine, joursDuProgramme, prochainJour, proposerSemaineLegere, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, enregistrerMateriel, materielDuLieu, activerSemaineLegere, arreterSemaineLegere, chargerProgrammeActif, estSemaineLegere, faitsCetteSemaine, joursDuProgramme, prochainJour, proposerSemaineLegere, semaineDuProgramme, semainesDuProgramme } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Programme } from '@/lib/v2/programmes/types';
 import { Questionnaire } from '@/components/yoroi/v2/programmes/Questionnaire';
@@ -171,7 +171,7 @@ export default function ProgrammesScreen() {
               </HeroJour>
               <TuilesStats
                 tuiles={[
-                  { label: traduire('Semaine'), valeur: String(semaineDuProgramme(actif)), sur: String(p.semaines) },
+                  { label: traduire('Semaine'), valeur: String(semaineDuProgramme(actif)), sur: semainesDuProgramme(actif, p) ? String(semainesDuProgramme(actif, p)) : undefined },
                   { label: traduire('Séances'), valeur: String(faits), sur: String(jours.length), accessibilityLabel: traduire('{0} séances sur {1} cette semaine', faits, jours.length) },
                   tuileCharge(gainMoyen(progresDesCharges(p, trainings, actif.debut)), pal, () => ouvrirProgramme(p.id)),
                 ]}

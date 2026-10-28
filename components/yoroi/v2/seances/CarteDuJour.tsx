@@ -43,7 +43,7 @@ import { estProgrammePerso } from '@/lib/v2/programmes/registrePerso';
 import { chargerProgrammesPerso } from '@/lib/v2/programmes/monProgramme';
 import { messageCoach } from '@/lib/v2/programmes/coach';
 import { infosHero, nomDuProgramme, pourquoiDuJour } from '@/lib/v2/programmes/heroJour';
-import { PROGRAMME_CHANGED_EVENT, chargerMachines, chargerMateriel, chargerProgrammeActif, estSemaineLegere, joursDuProgramme, planEffectif, prochainJour, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, chargerMachines, chargerMateriel, chargerProgrammeActif, estSemaineLegere, joursDuProgramme, planEffectif, prochainJour, semaineDuProgramme, semainesDuProgramme } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { routeDuCreneau } from '@/lib/v2/programmes/agenda';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
@@ -258,7 +258,8 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach }: {
   const vue = useMemo(() => {
     if (!actif || !suite) return null;
     const p = suite.programme;
-    const jour = jourPourToi(p.jours[suite.index], ctx.materiel, unirRegions(ctx.regions, actif.douleurs), ctx.machines, actif.remplacements, { fin: actif.fin, materiel: p.materiel });
+    // 28 octobre 2026 : la séance du jour peut venir d'un autre programme (ta semaine libre) : on prend la séance, pas son rang
+    const jour = jourPourToi(suite.jour, ctx.materiel, unirRegions(ctx.regions, actif.douleurs), ctx.machines, actif.remplacements, { fin: actif.fin, materiel: p.materiel });
     const semaine = semaineDuProgramme(actif);
     const jours = joursDuProgramme(actif, p);
     const message = messageCoach({ programme: p, actif, jours, prochaineSeance: traduire(jour.titre), femme, fixe: !!planEffectif(actif, p) });
@@ -278,8 +279,9 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach }: {
         : message.seanceDuJour ? traduire('Aujourd’hui')
           : message.etat === 'fait' ? traduire('Séance faite, la suivante')
             : traduire('Jour de repos, la suivante');
-    const sem = semaine <= p.semaines ? traduire('semaine {0} sur {1}', semaine, p.semaines) : traduire('semaine {0}', semaine);
-    const sous = `${nomDuProgramme(traduire(p.titre))}, ${sem}, ${traduire('jour {0}', vue.index + 1)}`;
+    const total = semainesDuProgramme(actif, p);
+    const sem = total && semaine <= total ? traduire('semaine {0} sur {1}', semaine, total) : traduire('semaine {0}', semaine);
+    const sous = vue.index >= 0 ? `${nomDuProgramme(traduire(p.titre))}, ${sem}, ${traduire('jour {0}', vue.index + 1)}` : `${nomDuProgramme(traduire(p.titre))}, ${sem}`;
     const nSeries = jour.exos.reduce((n, e) => n + e.series, 0);
     const commencer = () => {
       const r = routeDuJour(p, jour, semaine);

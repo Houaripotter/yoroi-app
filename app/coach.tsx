@@ -27,6 +27,7 @@ import { Capitales, nomCourt, ombrePastel, usePastel } from '@/components/yoroi/
 import type { FamillePastel } from '@/components/yoroi/v2/programmes/Habillage';
 import { MiniSemaine, PuceConseil } from '@/components/yoroi/v2/programmes/ChoixVisuels';
 import { TesJoursEnCours } from '@/components/yoroi/v2/programmes/TesJours';
+import { PointRegularite } from '@/components/yoroi/v2/programmes/GarderProgramme';
 import { BoutonLecture } from '@/components/yoroi/v2/programmes/Lecture';
 import { PROGRAMMES } from '@/lib/v2/programmes/catalogue';
 import { routeDuJour } from '@/lib/v2/programmes/lancer';
@@ -38,7 +39,7 @@ import { chargerProgrammesPerso, joursDuPerso, nomDuPerso, programmesVisibles } 
 import type { ProgrammePerso } from '@/lib/v2/programmes/monProgramme';
 import { estProgrammePerso } from '@/lib/v2/programmes/registrePerso';
 import { libelleHeureRappel } from '@/lib/v2/programmes/rappel';
-import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, joursDuProgramme, prochainJour, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, joursDuProgramme, prochainJour, semaineDuProgramme, semainesDuProgramme } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
@@ -147,7 +148,7 @@ export default function CoachScreen() {
               jours={joursDuProgramme(actif, p)}
               couleur={actifPerso ? pa.creme.barre : pa.bleu.barre}
               titre={actifPerso ? nomPerso(persos.find((x) => x.id === p.id) ?? { nom: '', semaine: [] }) : traduire(p.titre)}
-              sous={actifPerso ? traduire('En cours, semaine {0}', semaineDuProgramme(actif)) : traduire('En cours, semaine {0} sur {1}', Math.min(semaineDuProgramme(actif), p.semaines), p.semaines)}
+              sous={actifPerso || !semainesDuProgramme(actif, p) ? traduire('En cours, semaine {0}', semaineDuProgramme(actif)) : traduire('En cours, semaine {0} sur {1}', Math.min(semaineDuProgramme(actif), semainesDuProgramme(actif, p)!), semainesDuProgramme(actif, p)!)}
               sous2={traduire('Prochaine : {0}', nomCourt(traduire(jour.titre)))}
               onPress={() => { tap(); router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } }); }}
               lancer={() => { const r = routeDuJour(p, jour, semaineDuProgramme(actif)); router.push({ pathname: r.pathname as any, params: r.params }); }}
@@ -211,6 +212,8 @@ export default function CoachScreen() {
         </Animated.View>
 
         {/* « Tes jours » du programme du catalogue en cours, modifiables d'ici (TesJours.tsx) ; le tien se modifie dans sa page */}
+        {/* 28 octobre 2026 : à la fin de chaque cycle, ta régularité (GarderProgramme.tsx), sans rien bloquer */}
+        {p && actif ? <View style={{ marginTop: 10 }}><PointRegularite programme={p} actif={actif} onChanger={() => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } })} /></View> : null}
         {p && !actifPerso ? <View style={{ marginTop: 10 }}><TesJoursEnCours programme={p} /></View> : null}
 
         {/* 3. EXPLORER PAR MUSCLE : la carte musculaire, face et dos ; toucher un muscle le montre et donne sa séance */}

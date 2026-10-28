@@ -78,7 +78,10 @@ import { GROUPES_PROGRAMMES, moduleParId, modulesPossibles, moduleUtile, normali
 import type { ModuleId } from '@/lib/v2/programmes/modules';
 import { chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerMateriel, joursConseilles, materielDuLieu } from '@/lib/v2/programmes/suivi';
 import { joursDuPlan, planParDefaut, planValide } from '@/lib/v2/programmes/planJours';
-import { TesJours } from '@/components/yoroi/v2/programmes/TesJours';
+import { TesJours, semaineAffichee } from '@/components/yoroi/v2/programmes/TesJours';
+import { ChoixDuree } from '@/components/yoroi/v2/programmes/GarderProgramme';
+import { DUREES, joursDeLaLigne } from '@/lib/v2/programmes/semaineLibre';
+import type { SemaineLibre } from '@/lib/v2/programmes/semaineLibre';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Materiel, Niveau, Programme } from '@/lib/v2/programmes/types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
@@ -155,6 +158,9 @@ export default function CoachDepart() {
   const [joursRes, setJoursRes] = useState<number[]>([]);
   // 27 octobre 2026 : le jour de chaque séance, changé à la main pour ce programme (Tes jours) ; sinon tes jours dans l'ordre
   const [planPerso, setPlanPerso] = useState<{ id: string; plan: number[] } | null>(null);
+  // 28 octobre 2026 : ta semaine libre pour ce programme (séances d'autres programmes, A et B), et ta durée
+  const [semainePerso, setSemainePerso] = useState<{ id: string; semaine: SemaineLibre } | null>(null);
+  const [dureeRes, setDureeRes] = useState<number | undefined>(undefined);
   const [minutes, setMinutes] = useState<number>(30);
   const [sansMarche, setSansMarche] = useState(false);
   const [guide, setGuide] = useState(false);
@@ -216,7 +222,9 @@ export default function CoachDepart() {
   // Tes jours du résultat : ton plan pour ce programme, sinon tes jours (ou les jours conseillés) dans l'ordre
   const finRes = sansMarche ? { choix: 'rien' as const, minutes, sansMarche: true } : null;
   const planRes = prog ? (planPerso?.id === prog.id ? planValide(prog, planPerso.plan, finRes) : null) ?? planParDefaut(prog, joursRes, joursConseilles, finRes) : null;
-  const joursEff = planRes ? joursDuPlan(planRes) : joursRes;
+  const semaineRes = prog && semainePerso?.id === prog.id ? semainePerso.semaine : null;
+  const joursSemaine = prog && semaineRes ? joursDeLaLigne(semaineRes, prog, 'a') : [];
+  const joursEff = joursSemaine.length ? joursSemaine : planRes ? joursDuPlan(planRes) : joursRes;
   const img = sportImage(prog ? sportDuProgramme(prog) : 'musculation', femme, 1);
 
   // les étapes du questionnaire, pour la barre de progression
@@ -412,7 +420,7 @@ export default function CoachDepart() {
     if (!prog) return;
     const go = async () => {
       await garderMateriel();
-      const a = await demarrerProgramme(prog.id, joursEff, { choix: 'rien', minutes, ...(sansMarche ? { sansMarche: true } : {}) }, modules.filter((m) => possibles.some((x) => x.id === m)), planRes, chemin === 'quiz' ? { douleurs: regionsGuide } : undefined);
+      const a = await demarrerProgramme(prog.id, joursEff, { choix: 'rien', minutes, ...(sansMarche ? { sansMarche: true } : {}) }, modules.filter((m) => possibles.some((x) => x.id === m)), planRes, { ...(chemin === 'quiz' ? { douleurs: regionsGuide } : {}), semaine: semaineRes, duree: dureeRes });
       if (!a) return;
       await ecrireDepart('fait');
       sortir('coach');
@@ -930,14 +938,21 @@ export default function CoachDepart() {
         ) : null}
 
         {/* 27 octobre 2026 : Tes jours, la séance de chaque jour, préréglés avec tes jours (TesJours.tsx) */}
-        <TesJours
-          programme={prog}
-          plan={planRes}
-          jours={joursRes}
-          fin={finRes}
-          onPlan={(pl) => setPlanPerso({ id: prog.id, plan: pl })}
-          onJours={setJoursRes}
-        />
+        {(() => {
+          const v = semaineAffichee(null, prog, planRes, joursRes);
+          return (
+            <TesJours
+              programme={prog}
+              semaine={semaineRes ?? v.semaine}
+              enBoucle={!semaineRes && v.enBoucle}
+              fin={finRes}
+              onSemaine={(sv) => setSemainePerso({ id: prog.id, semaine: sv })}
+            />
+          );
+        })()}
+        <View style={{ backgroundColor: pa.carte, borderRadius: 24, padding: 18 }}>
+          <ChoixDuree valeur={dureeRes ?? (DUREES.includes(prog.semaines as 8) ? prog.semaines : undefined)} onChange={setDureeRes} />
+        </View>
 
         {possibles.length ? (
           <View style={{ gap: 12 }}>

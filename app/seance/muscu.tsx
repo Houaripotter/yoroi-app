@@ -69,6 +69,7 @@ import { LIBELLE_REGION, regionsDesBlessures, unirRegions } from '@/lib/v2/progr
 import { estProgrammePerso } from '@/lib/v2/programmes/registrePerso';
 import { chargerProgrammesPerso } from '@/lib/v2/programmes/monProgramme';
 import { jourPourToi } from '@/lib/v2/programmes/perso';
+import { besoinDesPerso, jourDuProgramme } from '@/lib/v2/programmes/semaineLibre';
 import { EXPLICATION_PRISE, PRISES, avecPrise, sansPrise } from '@/lib/v2/seance/prise';
 import type { Prise } from '@/lib/v2/seance/prise';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
@@ -218,12 +219,13 @@ export default function SeanceMuscu() {
           let maSeance: string | undefined;
           // 24 octobre 2026 : seance d'un programme, exercices et charges proposes (lib/v2/programmes/progression.ts)
           // 27 octobre 2026 : ton programme construit (« Je construis le mien ») est lu avant d'être cherché
-          if (estProgrammePerso(param1(raw.programme))) await chargerProgrammesPerso().catch(() => []);
+          // 28 octobre 2026 : une séance de tes programmes posée dans ta semaine libre (lib/v2/programmes/semaineLibre.ts)
+          if (estProgrammePerso(param1(raw.programme)) || besoinDesPerso(param1(raw.jour))) await chargerProgrammesPerso().catch(() => []);
           const prog = programmeParId(param1(raw.programme));
-          const jourIdx = prog ? prog.jours.findIndex((j) => j.id === param1(raw.jour)) : -1;
+          const jourDuProg = prog ? jourDuProgramme(prog, param1(raw.jour)) : null;
           // 24 octobre 2026 : « Je ne sais pas quoi faire », la seance des zones touchees sur le corps (lib/v2/programmes/zones.ts)
           const zones = prog ? [] : lireZones(param1(raw.zones));
-          const jourSource = prog && jourIdx >= 0 ? prog.jours[jourIdx] : zones.length ? { id: 'zones', titre: titreZones(zones, traduire), muscles: [], exos: seanceZones(zones) } : null;
+          const jourSource = prog && jourDuProg ? jourDuProg : zones.length ? { id: 'zones', titre: titreZones(zones, traduire), muscles: [], exos: seanceZones(zones) } : null;
           if (jourSource) {
             const [trainings, h, actif, materiel, blessures, machines] = await Promise.all([trainingsP, histP, chargerProgrammeActif(), chargerMateriel(), getActiveInjuries().catch(() => []), chargerMachines()]);
             // ton materiel et tes douleurs declarees : chaque exercice impossible ou qui charge une zone douloureuse

@@ -145,6 +145,16 @@ export function avecFinSeance<J extends JourProgramme>(jour: J, ctx: ContexteFin
  * ---------------------------------------------------------------------------------------------- */
 let actif: { id: string; fin?: FinSeance; modules?: readonly ModuleId[] } | null = null;
 
+/**
+ * 28 octobre 2026 : les séances d'autres programmes posées dans ta semaine (semaineLibre.ts, id « @programme/séance »).
+ * Elles font partie de ton programme : ta fin de séance et tes modules s'y appliquent aussi.
+ */
+const joursAutres = new WeakSet<JourProgramme>();
+export function retenirJourAutre(j: JourProgramme): void {
+  joursAutres.add(j);
+}
+const estAutre = (j: JourProgramme): boolean => typeof j.id === 'string' && j.id.startsWith('@') && joursAutres.has(j);
+
 /** 26 octobre 2026 : les modules (force, grip, cou, mobilite) du programme actif sont retenus avec la fin de seance */
 export function retenirFinActive(id: string | null, fin?: FinSeance, modules?: readonly ModuleId[]): void {
   actif = id ? { id, fin, ...(modules?.length ? { modules: [...modules] } : {}) } : null;
@@ -158,7 +168,7 @@ export function contexteFinPour(jour: JourProgramme): ContexteFin | null {
   const finUtile = !!actif?.fin && actif.fin.choix !== 'rien';
   if (!actif || (!finUtile && !actif.modules?.length)) return null;
   const p = programmeParId(actif.id);
-  if (!p || !p.jours.includes(jour)) return null;
+  if (!p || !(p.jours.includes(jour) || estAutre(jour))) return null;
   return { fin: finUtile ? actif.fin : undefined, materiel: p.materiel, ...(actif.modules?.length ? { modules: actif.modules } : {}), programme: p };
 }
 
@@ -169,7 +179,7 @@ export function contexteFinPour(jour: JourProgramme): ContexteFin | null {
 export function completerContexte(jour: JourProgramme, ctx: ContexteFin | null): ContexteFin | null {
   if (!ctx || ctx.modules !== undefined || !actif?.modules?.length) return ctx;
   const p = programmeParId(actif.id);
-  if (!p || !p.jours.some((j) => j === jour || j.id === jour.id) || (ctx.programme && ctx.programme.id !== p.id)) return ctx;
+  if (!p || !(p.jours.some((j) => j === jour || j.id === jour.id) || estAutre(jour)) || (ctx.programme && ctx.programme.id !== p.id)) return ctx;
   return { ...ctx, modules: actif.modules, programme: ctx.programme ?? p };
 }
 

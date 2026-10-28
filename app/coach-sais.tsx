@@ -21,7 +21,7 @@ import type { FamillePastel, PastelCoach } from '@/components/yoroi/v2/programme
 import { MiniSemaine } from '@/components/yoroi/v2/programmes/ChoixVisuels';
 import { PROGRAMMES, libelleNiveau, programmeParId } from '@/lib/v2/programmes/catalogue';
 import { GROUPES_PROGRAMMES } from '@/lib/v2/programmes/modules';
-import { PROGRAMME_CHANGED_EVENT, basculerFavori, chargerFavoris, chargerProgrammeActif, joursConseilles, joursDuProgramme, prochainJour, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, basculerFavori, chargerFavoris, chargerProgrammeActif, joursConseilles, joursDuProgramme, prochainJour, semaineDuProgramme, semainesDuProgramme } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { estProgrammePerso } from '@/lib/v2/programmes/registrePerso';
 import type { Niveau, Programme } from '@/lib/v2/programmes/types';
@@ -199,7 +199,7 @@ export default function CoachSais() {
                   <View style={{ width: 64 }}><MiniSemaine jours={joursDuProgramme(actif, pEnCours)} couleur={pa.bleu.barre} vide={pa.ligne} hauteur={34} gap={2} /></View>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Ink size={16} weight="black" color={pa.texte} numberOfLines={2}>{traduire(pEnCours.titre)}</Ink>
-                    <Ink size={13} weight="bold" color={pa.texte2}>{traduire('Semaine {0} sur {1}, prochaine : {2}', Math.min(semaineDuProgramme(actif), pEnCours.semaines), pEnCours.semaines, nomCourt(traduire(suite.jour.titre)))}</Ink>
+                    <Ink size={13} weight="bold" color={pa.texte2}>{semainesDuProgramme(actif, pEnCours) ? traduire('Semaine {0} sur {1}, prochaine : {2}', Math.min(semaineDuProgramme(actif), semainesDuProgramme(actif, pEnCours)!), semainesDuProgramme(actif, pEnCours)!, nomCourt(traduire(suite.jour.titre))) : traduire('Semaine {0}, prochaine : {1}', semaineDuProgramme(actif), nomCourt(traduire(suite.jour.titre)))}</Ink>
                   </View>
                   <Icon name="chevron" size={16} color={pa.texte3} />
                 </Pressable>

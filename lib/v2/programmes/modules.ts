@@ -279,8 +279,9 @@ export type GroupeProgrammes = { id: string; label: string; ids: string[] };
 
 export const GROUPES_PROGRAMMES: GroupeProgrammes[] = [
   { id: 'ppl', label: 'PPL', ids: ['ppl-3j', 'ppl-6j', 'ppl-ul-5j'] },
-  { id: 'upper-lower', label: 'Upper Lower', ids: ['haut-bas-4j', 'pp-ul-4j'] },
-  { id: 'push-pull', label: 'Push Pull', ids: ['pp-pp-4j'] },
+  { id: 'upper-lower', label: 'Upper Lower', ids: ['haut-bas-4j'] },
+  // 28 octobre 2026 : Push Pull + Upper Lower (le split de Houari) se range avec les Push Pull, en premier
+  { id: 'push-pull', label: 'Push Pull', ids: ['pp-ul-4j', 'pp-pp-4j'] },
   { id: 'full-body', label: 'Full body', ids: ['debutant-fullbody-3j', 'fullbody-2j', 'halteres-maison-3j', 'maison-3j'] },
   { id: 'split', label: 'Split', ids: ['split-5j'] },
   { id: 'objectif', label: 'Par objectif', ids: ['prise-de-masse-4j', 'pecs-priorite-4j', 'bas-du-corps-4j', 'fessiers-ventre-4j', 'seche-4j', 'perte-poids-4j', 'force-3j'] },

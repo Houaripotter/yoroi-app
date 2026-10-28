@@ -6,6 +6,8 @@
  * Tout est local : rien ne sort du telephone.
  */
 
+import type { SemaineLibre } from './semaineLibre';
+
 export type Niveau = 'debutant' | 'intermediaire' | 'confirme';
 export type Objectif = 'muscle' | 'force' | 'forme' | 'combat' | 'course';
 export type Materiel = 'salle' | 'maison' | 'halteres';
@@ -86,6 +88,10 @@ export type Programme = {
   principes: string[];
   /** ids de lib/v2/programmes/sources.ts */
   sources: string[];
+  /** 28 octobre 2026 : ta semaine (semaines A et B), pour un programme construit ou gardé par toi (monProgramme.ts) */
+  semaineLibre?: SemaineLibre;
+  /** 28 octobre 2026 : sans fin, la semaine se répète (« semaine 14 », jamais « sur 8 ») */
+  sansFin?: boolean;
 };
 
 export type Source = {

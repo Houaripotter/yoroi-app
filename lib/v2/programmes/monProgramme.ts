@@ -19,6 +19,7 @@ import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { dureeEstimee } from './express';
 import { EVENEMENT_PROGRAMME, PREFIXE_PERSO, remplirRegistrePerso } from './registrePerso';
 import type { ExoProgramme, Programme } from './types';
+import type { SemaineLibre } from './semaineLibre';
 
 export const CLE_PROGRAMMES_PERSO = 'yoroi_programmes_perso_v1';
 export const MAX_EXOS_SEANCE = 15;
@@ -44,6 +45,15 @@ export type ProgrammePerso = {
   modifieLe: string;
   /** date de suppression : archivé, jamais effacé */
   archive?: string;
+  /** 28 octobre 2026 (« Garder comme mon programme ») : ta semaine B, gardée même si A et B n'alternent pas */
+  semaineB?: (SeancePerso | null)[];
+  /** les semaines A et B alternent, à partir du lundi `depuis` (une semaine A) */
+  ab?: boolean;
+  depuis?: string;
+  /** durée en semaines (8, 12) ; 0 = sans fin */
+  duree?: number;
+  /** le programme du catalogue d'où il vient */
+  origine?: string;
 };
 
 function jourLocal(d = new Date()): string {
@@ -198,11 +208,23 @@ export function avecJour(pp: ProgrammePerso, jour: number, s: SeancePerso | null
 
 export const idJourPerso = (id: string, jour: number) => `${id}-d${jour}`;
 
+export const idJourPersoB = (id: string, jour: number) => `${id}-b${jour}`;
+
 export function versProgramme(pp: ProgrammePerso): Programme {
   const jours = joursDuPerso(pp).map((d) => {
     const s = pp.semaine[d]!;
     return { id: idJourPerso(pp.id, d), titre: titreDeSeance(s), muscles: musclesDeSeance(s.exos), exos: s.exos.map((e) => ({ ...e })) };
   });
+  // 28 octobre 2026 : ta semaine B, après tes séances de la semaine A ; ta semaine dit quel jour fait quoi
+  const joursB = (pp.semaineB ?? []).map((s, d) => (s && s.exos.length ? { id: idJourPersoB(pp.id, d), titre: titreDeSeance(s), muscles: musclesDeSeance(s.exos), exos: s.exos.map((e) => ({ ...e })) } : null)).filter((j): j is NonNullable<typeof j> => !!j);
+  const semaineLibre: SemaineLibre | undefined = joursB.length
+    ? {
+        a: pp.semaine.map((s, d) => (s && s.exos.length ? { p: pp.id, s: idJourPerso(pp.id, d) } : null)),
+        b: (pp.semaineB ?? semaineVide()).map((s, d) => (s && s.exos.length ? { p: pp.id, s: idJourPersoB(pp.id, d) } : null)),
+        ...(pp.ab && pp.depuis ? { ab: true } : {}),
+        ...(pp.depuis ? { depuis: pp.depuis } : {}),
+      }
+    : undefined;
   const duree = jours.length ? Math.max(...jours.map((j) => dureeEstimee(j.exos))) : 0;
   return {
     id: pp.id,
@@ -217,8 +239,10 @@ export function versProgramme(pp: ProgrammePerso): Programme {
     sport: 'musculation',
     joursParSemaine: jours.length,
     dureeMin: Math.max(15, Math.round(duree / 5) * 5),
-    semaines: 8,
-    jours,
+    semaines: pp.duree && pp.duree > 0 ? pp.duree : 8,
+    ...(pp.duree === 0 ? { sansFin: true } : {}),
+    jours: [...jours, ...joursB],
+    ...(semaineLibre ? { semaineLibre } : {}),
     principes: [],
     sources: [],
   };
@@ -249,14 +273,19 @@ export function nettoyerPerso(x: unknown): ProgrammePerso | null {
   if (!x || typeof x !== 'object') return null;
   const p = x as Partial<ProgrammePerso>;
   if (typeof p.id !== 'string' || !p.id.startsWith(PREFIXE_PERSO)) return null;
-  const brut = Array.isArray(p.semaine) ? p.semaine : [];
-  const semaine = semaineVide().map((_, d) => {
-    const s = brut[d] as SeancePerso | null | undefined;
-    if (!s || typeof s !== 'object' || !Array.isArray(s.exos)) return null;
-    const exos = s.exos.map(nettoyerExo).filter((e): e is ExoProgramme => !!e).slice(0, MAX_EXOS_SEANCE);
-    if (!exos.length) return null;
-    return { ...(typeof s.titre === 'string' && s.titre.trim() ? { titre: s.titre.trim().slice(0, 40) } : {}), exos };
-  });
+  const lireSemainePerso = (v: unknown): (SeancePerso | null)[] => {
+    const brut = Array.isArray(v) ? v : [];
+    return semaineVide().map((_, d) => {
+      const s = brut[d] as SeancePerso | null | undefined;
+      if (!s || typeof s !== 'object' || !Array.isArray(s.exos)) return null;
+      const exos = s.exos.map(nettoyerExo).filter((e): e is ExoProgramme => !!e).slice(0, MAX_EXOS_SEANCE);
+      if (!exos.length) return null;
+      return { ...(typeof s.titre === 'string' && s.titre.trim() ? { titre: s.titre.trim().slice(0, 40) } : {}), exos };
+    });
+  };
+  const semaine = lireSemainePerso(p.semaine);
+  const semaineB = Array.isArray(p.semaineB) ? lireSemainePerso(p.semaineB) : null;
+  const depuis = typeof p.depuis === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.depuis) ? p.depuis : undefined;
   const rappel = p.rappel && typeof p.rappel === 'object' && typeof p.rappel.heure === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(p.rappel.heure) ? { actif: !!p.rappel.actif, heure: p.rappel.heure } : undefined;
   return {
     id: p.id,
@@ -266,6 +295,11 @@ export function nettoyerPerso(x: unknown): ProgrammePerso | null {
     creeLe: typeof p.creeLe === 'string' ? p.creeLe : jourLocal(),
     modifieLe: typeof p.modifieLe === 'string' ? p.modifieLe : jourLocal(),
     ...(typeof p.archive === 'string' ? { archive: p.archive } : {}),
+    ...(semaineB && semaineB.some((x) => !!x) ? { semaineB } : {}),
+    ...(semaineB && p.ab === true && depuis ? { ab: true } : {}),
+    ...(depuis ? { depuis } : {}),
+    ...(p.duree === 0 || p.duree === 8 || p.duree === 12 ? { duree: p.duree } : {}),
+    ...(typeof p.origine === 'string' && p.origine.length <= 120 ? { origine: p.origine } : {}),
   };
 }
 

@@ -47,12 +47,15 @@ import { FicheTechnique } from '@/components/yoroi/v2/programmes/FicheTechnique'
 import { ficheDe } from '@/lib/v2/programmes/fiches';
 import { DUREES_EXPRESS, dureeEstimee, seanceExpress } from '@/lib/v2/programmes/express';
 import { demoDe } from '@/lib/v2/programmes/demos';
-import { PROGRAMME_CHANGED_EVENT, arreterProgramme, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerFin, faitsCetteSemaine, prochainJour, remplacerExercice, joursConseilles, joursDuProgramme, planEffectif, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, arreterProgramme, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerFin, faitsCetteSemaine, prochainJour, remplacerExercice, joursConseilles, joursDuProgramme, planEffectif, semaineDuProgramme, semainesDuProgramme, enregistrerDuree } from '@/lib/v2/programmes/suivi';
+import { DUREES, jourDuProgramme, joursDeLaLigne, planDepuisSemaine } from '@/lib/v2/programmes/semaineLibre';
+import type { SemaineLibre } from '@/lib/v2/programmes/semaineLibre';
+import { ChoixDuree, GarderMonProgramme, PointRegularite } from '@/components/yoroi/v2/programmes/GarderProgramme';
 import { joursDuPlan, planParDefaut } from '@/lib/v2/programmes/planJours';
 import { lireProfilCoach } from '@/lib/v2/programmes/profilCoach';
 import { messageCoach } from '@/lib/v2/programmes/coach';
 import { infosHero } from '@/lib/v2/programmes/heroJour';
-import { TesJours, TesJoursEnCours } from '@/components/yoroi/v2/programmes/TesJours';
+import { TesJours, TesJoursEnCours, semaineAffichee } from '@/components/yoroi/v2/programmes/TesJours';
 import { RappelSeance } from '@/components/yoroi/v2/programmes/RappelSeance';
 import { ChoisirCharge } from '@/components/yoroi/v2/programmes/ChoisirCharge';
 import { CartePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
@@ -117,6 +120,10 @@ export default function ProgrammeDetail() {
   // 27 octobre 2026 : avant de commencer, le jour de chaque séance (Tes jours, planJours.ts) ; tes jours de l'onboarding
   // s'ils sont aussi nombreux que les séances, sinon les jours conseillés
   const [planAvant, setPlanAvant] = useState<number[] | null>(() => (p ? planParDefaut(p, null, joursConseilles) : null));
+  // 28 octobre 2026 : ta semaine libre et ta durée, choisies avant de commencer (TesJours.tsx, GarderProgramme.tsx)
+  const [semaineAvant, setSemaineAvant] = useState<SemaineLibre | null>(null);
+  const [dureeAvant, setDureeAvant] = useState<number | undefined>(undefined);
+  const tesJoursY = useRef<number | null>(null);
   useEffect(() => {
     if (!p) return;
     let vivant = true;
@@ -200,15 +207,17 @@ export default function ProgrammeDetail() {
   const finPossible = aDesJoursMuscu(p) || aDesJoursMarche(p);
   const img = sportImage(sportDuProgramme(p), femme, 1);
   // la prochaine séance (tes jours, ton matériel, tes douleurs et tes modules appliqués), ou le jour 1 avant de commencer
-  const iProchain = enCours && actif ? prochainJour(actif)?.index ?? 0 : 0;
-  const jBrutProchain = p.jours[iProchain];
+  // 28 octobre 2026 : la séance du jour peut venir d'un autre programme (ta semaine libre) : index -1
+  const suiteProchaine = enCours && actif ? prochainJour(actif) : null;
+  const iProchain = suiteProchaine && suiteProchaine.index >= 0 ? suiteProchaine.index : 0;
+  const jBrutProchain = suiteProchaine?.jour ?? p.jours[iProchain];
   const jProchain = jourPourToi(jBrutProchain, materiel, regionsVues, machines, enCours ? actif?.remplacements : null, ctxFin);
   const titreProchain = traduire(jProchain.titre);
   // la séance des pastilles : celle que tu as touchée, sinon la prochaine
   const iVuBrut = jourVu ? p.jours.findIndex((x) => x.id === jourVu) : -1;
   const iVu = iVuBrut >= 0 ? iVuBrut : iProchain;
-  const jBrutVu = p.jours[iVu];
-  const jVu = iVu === iProchain ? jProchain : jourPourToi(jBrutVu, materiel, regionsVues, machines, enCours ? actif?.remplacements : null, ctxFin);
+  const jBrutVu = iVuBrut >= 0 ? p.jours[iVu] : jBrutProchain;
+  const jVu = iVuBrut < 0 || jBrutVu === jBrutProchain ? jProchain : jourPourToi(jBrutVu, materiel, regionsVues, machines, enCours ? actif?.remplacements : null, ctxFin);
   const message = enCours && actif ? messageCoach({ programme: p, actif, jours, prochaineSeance: titreProchain, femme, fixe: !!planEffectif(actif, p) }) : null;
   // 26 octobre 2026 : la carte dit quel programme, pourquoi cette séance et la suite (lib/v2/programmes/heroJour.ts)
   const hero = enCours && actif && message ? infosHero({ programme: p, actif, jour: jProchain, jours, message, semaine }) : null;
@@ -228,7 +237,7 @@ export default function ProgrammeDetail() {
   // les trois tuiles : en cours, tes chiffres ; avant de commencer, ceux du programme
   const tuiles: Tuile[] = enCours && actif
     ? [
-        { label: traduire('Semaine'), valeur: String(semaineDuProgramme(actif)), sur: String(p.semaines) },
+        { label: traduire('Semaine'), valeur: String(semaineDuProgramme(actif)), sur: semainesDuProgramme(actif, p) ? String(semainesDuProgramme(actif, p)) : undefined },
         { label: traduire('Séances'), valeur: String(faitsCetteSemaine(actif)), sur: String(jours.length), accessibilityLabel: traduire('{0} séances sur {1} cette semaine', faitsCetteSemaine(actif), jours.length) },
         tuileCharge(gainMoyen(progresDesCharges(p, trainings, actif.debut)), pal, () => {
           if (progresY.current !== null) defilement.current?.scrollTo({ y: Math.max(0, progresY.current - insets.top - 8), animated: true });
@@ -241,7 +250,7 @@ export default function ProgrammeDetail() {
       ];
 
   const lancerJour = (jourId: string, express?: number) => {
-    const j = p.jours.find((x) => x.id === jourId);
+    const j = jourDuProgramme(p, jourId);
     if (!j) return;
     tap();
     const r = routeDuJour(p, j, semaine);
@@ -263,7 +272,7 @@ export default function ProgrammeDetail() {
   };
 
   const demarrer = async (fin?: FinSeance) => {
-    const a = await demarrerProgramme(p.id, planAvant ? joursDuPlan(planAvant) : jours, fin, undefined, planAvant);
+    const a = await demarrerProgramme(p.id, planAvant ? joursDuPlan(planAvant) : jours, fin, undefined, planAvant, { semaine: semaineAvant, duree: dureeAvant });
     lancerJour((a ? prochainJour(a)?.jour.id : undefined) ?? p.jours[a?.prochain ?? 0].id);
   };
 
@@ -331,7 +340,17 @@ export default function ProgrammeDetail() {
         <TuilesStats tuiles={tuiles} />
 
         {/* 3. TA SEMAINE : fait, prochaine séance, repos */}
-        <SemaineRonds ronds={rondsDeLaSemaine(p, enCours ? actif : null, planAvant && !enCours ? joursDuPlan(planAvant) : jours, undefined, enCours ? undefined : planAvant)} />
+        <SemaineRonds ronds={rondsDeLaSemaine(p, enCours ? actif : null, planAvant && !enCours ? joursDuPlan(planAvant) : jours, undefined, enCours ? undefined : planAvant, enCours ? undefined : semaineAvant)} />
+
+        {/* 28 octobre 2026 : à la fin de chaque cycle, ta régularité, sans rien bloquer */}
+        {enCours ? (
+          <PointRegularite
+            programme={p}
+            actif={actif}
+            gain={gainMoyen(progresDesCharges(p, trainings, actif!.debut))}
+            onChanger={() => { if (tesJoursY.current !== null) defilement.current?.scrollTo({ y: Math.max(0, tesJoursY.current - insets.top - 8), animated: true }); }}
+          />
+        ) : null}
 
         {/* 27 octobre 2026 : Tes jours, la séance de chaque jour (Push lundi, Pull mardi...), modifiable à tout moment */}
         {/* ton programme construit : ses jours se changent dans « Je construis le mien » */}
@@ -348,9 +367,36 @@ export default function ProgrammeDetail() {
             <Icon name="chevron" size={16} color={pal.texte3} />
           </Pressable>
         ) : enCours ? (
-          <TesJoursEnCours programme={p} />
+          <View style={{ gap: 18 }} onLayout={(e) => { tesJoursY.current = e.nativeEvent.layout.y; }}>
+            <TesJoursEnCours programme={p} />
+            <View style={{ backgroundColor: pal.carte, borderRadius: 24, padding: 18 }}>
+              <ChoixDuree valeur={actif?.duree ?? (DUREES.includes(p.semaines as 8) ? p.semaines : undefined)} onChange={(d) => void enregistrerDuree(d)} />
+            </View>
+            <GarderMonProgramme programme={p} actif={actif} onGarde={(nouveau) => router.replace({ pathname: '/programmes/[id]' as any, params: { id: nouveau } })} />
+          </View>
         ) : (
-          <TesJours programme={p} plan={planAvant} jours={jours} onPlan={setPlanAvant} onJours={setJours} />
+          <View style={{ gap: 18 }}>
+            {(() => {
+              const v = semaineAffichee(null, p, planAvant, jours);
+              return (
+                <TesJours
+                  programme={p}
+                  semaine={semaineAvant ?? v.semaine}
+                  enBoucle={!semaineAvant && v.enBoucle}
+                  onSemaine={(sv) => {
+                    setSemaineAvant(sv);
+                    const pl = planDepuisSemaine(p, sv);
+                    if (pl) setPlanAvant(pl);
+                    const j = joursDeLaLigne(sv, p, 'a');
+                    if (j.length) setJours(j);
+                  }}
+                />
+              );
+            })()}
+            <View style={{ backgroundColor: pal.carte, borderRadius: 24, padding: 18 }}>
+              <ChoixDuree valeur={dureeAvant ?? (DUREES.includes(p.semaines as 8) ? p.semaines : undefined)} onChange={setDureeAvant} />
+            </View>
+          </View>
         )}
 
         {/* 4. LES SÉANCES : une pastille par séance, les mêmes cartes d'exercices ; la prochaine au départ */}

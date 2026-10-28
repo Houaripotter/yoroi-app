@@ -9,18 +9,20 @@ import { programmeParId } from './catalogue';
 import { TOUT_LE_MATERIEL } from './materiel';
 import type { Equipement } from './materiel';
 import type { JourProgramme, Programme } from './types';
-import { indexJour, jourRate, joursValides } from './coach';
+import { indexJour, joursValides } from './coach';
 import { estPlanFixe, indicesGardes, joursDuPlan, memePlan, planParDefaut, planValide, REPOS } from './planJours';
-import { avecRemplacement, cleCase } from './perso';
+import { appliquerRemplacements, avecRemplacement, cleCase } from './perso';
 import type { Remplacements } from './perso';
-import { joursRetires, lireFinSeance, retenirFinActive } from './finSeance';
+import { estJourMuscu, joursRetires, lireFinSeance, retenirFinActive } from './finSeance';
 import type { FinSeance } from './finSeance';
 import { extrasDe, finDesModules, lireModules, modulesActifs, normaliserModules } from './modules';
 import type { ModuleId } from './modules';
 import { MACHINE_BY_ID } from '@/lib/v2/seance/machines';
 import { estProgrammePerso } from './registrePerso';
-import { archiverProgrammePerso, chargerProgrammesPerso, joursDuPerso } from './monProgramme';
-import type { ProgrammePerso } from './monProgramme';
+import { CLE_PROGRAMMES_PERSO, archiverProgrammePerso, chargerProgrammesPerso, enregistrerProgrammePerso, idJourPerso, joursDuPerso, nouveauProgrammePerso } from './monProgramme';
+import type { ProgrammePerso, SeancePerso } from './monProgramme';
+import { casesDe, idAutre, jourDeRef, jourDuProgramme, lireDuree, lireSemaine, lundiIso, planDepuisSemaine, planProjete, seanceLe, semaineDepuisBoucle, semaineDepuisPlan, semaineUtile, semaineUtilisePerso } from './semaineLibre';
+import type { CaseSemaine, SemaineLibre } from './semaineLibre';
 import { LIBELLE_REGION } from './blessures';
 import type { Region } from './blessures';
 
@@ -63,6 +65,16 @@ export type ProgrammeActif = {
    * l'infirmerie. Rien n'est écrit dans l'infirmerie.
    */
   douleurs?: Region[];
+  /**
+   * 28 octobre 2026 : ta semaine libre (semaineLibre.ts) : sur chaque jour, une séance de ce programme, d'un autre
+   * programme ou de tes séances, ou repos ; semaines A et B en option. Absente : la semaine vient de `plan`.
+   * `plan` et `jours` restent écrits quand c'est possible, pour les anciennes versions de l'app.
+   */
+  semaine?: SemaineLibre;
+  /** 28 octobre 2026 : durée choisie, 8 ou 12 semaines, 0 = sans fin. Absente : la durée du programme */
+  duree?: number;
+  /** 28 octobre 2026 : les points de régularité déjà vus (numéro du cycle, 1 le premier) */
+  points?: number[];
 };
 
 /** Les zones du Guide, lues sans faire confiance au stockage */
@@ -75,8 +87,10 @@ export function lireDouleurs(v: unknown): Region[] | undefined {
 /** Le plan d'un programme construit par toi : le jour de chaque séance vient de son id (« perso-…-d3 » = jeudi) */
 export function planDuProgrammePerso(p: Programme): number[] | null {
   if (!estProgrammePerso(p.id)) return null;
-  const plan = p.jours.map((j) => Number(/-d(\d)$/.exec(j.id)?.[1] ?? -1));
-  return plan.every((d) => d >= 0 && d <= 6) && new Set(plan).size === plan.length && plan.length ? plan : null;
+  // 28 octobre 2026 : les séances de ta semaine B (« -b3 ») n'ont pas de jour dans le plan, ta semaine les place
+  const plan = p.jours.map((j) => (/-b\d$/.test(j.id) ? REPOS : Number(/-d(\d)$/.exec(j.id)?.[1] ?? -9)));
+  const places = plan.filter((d) => d !== REPOS);
+  return plan.every((d) => d === REPOS || (d >= 0 && d <= 6)) && places.length > 0 && new Set(places).size === places.length ? plan : null;
 }
 
 /**
@@ -121,14 +135,23 @@ export async function chargerProgrammeActif(): Promise<ProgrammeActif | null> {
       return null;
     }
     // fin de seance : absente dans les anciennes versions, illisible = ignoree
-    const { fin: _f, modules: _m, plan: _p, douleurs: _d, ...reste } = brut;
+    const { fin: _f, modules: _m, plan: _p, douleurs: _d, semaine: _s, duree: _du, points: _pt, ...reste } = brut;
     const fin = lireFinSeance(brut.fin);
+    // 28 octobre 2026 : ta semaine libre, lue strictement ; ton programme construit garde la semaine de sa page
+    const semaine = estProgrammePerso(brut.id) ? null : lireSemaine(brut.semaine);
+    if (semaine && semaineUtilisePerso(semaine)) await chargerProgrammesPerso();
+    const duree = lireDuree(brut.duree);
+    const points = Array.isArray(brut.points) ? Array.from(new Set(brut.points.filter((x) => Number.isInteger(x) && x > 0))).slice(-50) : [];
     const modules = lireModules(brut.modules);
     const douleurs = lireDouleurs(brut.douleurs);
     // plan illisible ou d'une autre version du programme : ignoré, tes jours prennent le relais.
     // Ton programme construit : toujours la semaine que tu as construite (modifiée ou non depuis)
     const plan = planDuProgrammePerso(p) ?? planValide(p, brut.plan, fin);
-    const a: ProgrammeActif = { ...reste, ...(fin ? { fin } : {}), ...(modules ? { modules } : {}), ...(douleurs ? { douleurs } : {}), ...(plan ? { plan, jours: joursDuPlan(plan) } : {}), faits: Array.isArray(brut.faits) ? brut.faits : [], prochain: 0 };
+    const a: ProgrammeActif = { ...reste, ...(fin ? { fin } : {}), ...(modules ? { modules } : {}), ...(douleurs ? { douleurs } : {}), ...(plan ? { plan, jours: joursDuPlan(plan) } : {}), ...(semaineUtile(semaine) ? { semaine } : {}), ...(duree !== undefined ? { duree } : {}), ...(points.length ? { points } : {}), faits: Array.isArray(brut.faits) ? brut.faits : [], prochain: 0 };
+    if (a.semaine) {
+      const j = joursDeLaSemaine(a, p, new Date());
+      if (j.length) a.jours = j;
+    }
     a.prochain = indexGarde(p, a, Math.min(Math.max(0, brut.prochain | 0), p.jours.length - 1));
     retenirFinActive(a.id, a.fin, a.modules);
     return a;
@@ -152,7 +175,7 @@ async function ecrire(a: ProgrammeActif | null): Promise<void> {
  * `modules` (26 octobre 2026) : la liste complete choisie au depart (Questionnaire.tsx). Donnee, elle decide aussi
  * des abdos et du cardio ; `fin` garde alors la duree du cardio et les seances de marche.
  */
-async function demarrerProgramme_(id: string, jours?: number[], fin?: FinSeance | null, modules?: readonly ModuleId[] | null, plan?: readonly number[] | null, options?: { douleurs?: readonly Region[] | null }): Promise<ProgrammeActif | null> {
+async function demarrerProgramme_(id: string, jours?: number[], fin?: FinSeance | null, modules?: readonly ModuleId[] | null, plan?: readonly number[] | null, options?: { douleurs?: readonly Region[] | null; semaine?: SemaineLibre | null; duree?: number | null }): Promise<ProgrammeActif | null> {
   if (estProgrammePerso(id)) await chargerProgrammesPerso();
   const p = programmeParId(id);
   if (!p) return null;
@@ -167,6 +190,19 @@ async function demarrerProgramme_(id: string, jours?: number[], fin?: FinSeance 
     a.plan = pl;
     a.jours = joursDuPlan(pl);
   }
+  // 28 octobre 2026 : ta semaine libre, choisie avant de commencer (Tes jours)
+  const sv = estProgrammePerso(id) ? null : lireSemaine(options?.semaine);
+  if (semaineUtile(sv)) {
+    if (semaineUtilisePerso(sv)) await chargerProgrammesPerso();
+    a.semaine = sv;
+    const pl2 = planDepuisSemaine(p, sv, a.fin);
+    if (pl2) a.plan = pl2;
+    else delete a.plan;
+    const j = joursDeLaSemaine(a, p, new Date());
+    if (j.length) a.jours = j;
+  }
+  const d = lireDuree(options?.duree);
+  if (d !== undefined) a.duree = d;
   a.prochain = indexGarde(p, a, 0);
   await ecrire(a);
   return a;
@@ -214,7 +250,7 @@ async function enregistrerJours_(jours: number[]): Promise<void> {
   const a = await chargerProgrammeActif();
   const choisis = joursValides(jours);
   if (!a || !choisis) return;
-  const { plan: _p, ...reste } = a;
+  const { plan: _p, semaine: _s, ...reste } = a;
   await ecrire({ ...reste, jours: choisis });
 }
 
@@ -228,8 +264,182 @@ async function enregistrerPlan_(plan: readonly number[]): Promise<void> {
   if (!a || !p) return;
   const pl = planValide(p, plan, a.fin);
   if (!pl) return;
-  if (memePlan(pl, a.plan) && memePlan(joursDuPlan(pl), a.jours ?? null)) return;
-  await ecrire({ ...a, plan: pl, jours: joursDuPlan(pl) });
+  const sv = lireSemaine(a.semaine);
+  if (!sv && memePlan(pl, a.plan) && memePlan(joursDuPlan(pl), a.jours ?? null)) return;
+  // une semaine libre déjà là : sa semaine A suit ce plan, ta semaine B ne bouge pas
+  await ecrire({ ...a, plan: pl, jours: joursDuPlan(pl), ...(sv ? { semaine: { ...sv, a: semaineDepuisPlan(p, pl).a } } : {}) });
+}
+
+/**
+ * 28 octobre 2026 : ta semaine libre (Tes jours). Chaque case est vérifiée : une séance introuvable, une semaine
+ * sans aucune séance, rien n'est écrit. L'historique, la progression et tes séances faites ne bougent pas.
+ */
+async function enregistrerSemaine_(semaine: SemaineLibre): Promise<boolean> {
+  const a = await chargerProgrammeActif();
+  const p = a && programmeParId(a.id);
+  if (!a || !p || estProgrammePerso(p.id)) return false;
+  const s = lireSemaine(semaine);
+  if (!semaineUtile(s)) return false;
+  if (semaineUtilisePerso(s)) await chargerProgrammesPerso();
+  const cases = [...s.a, ...(s.ab && s.b ? s.b : [])];
+  if (cases.some((c) => !!c && !jourDeRef(c, p.id))) return false;
+  const plan = planDepuisSemaine(p, s, a.fin);
+  const { plan: _p, semaine: _s, ...reste } = a;
+  const suite: ProgrammeActif = { ...reste, semaine: s, ...(plan ? { plan } : {}) };
+  const j = joursDeLaSemaine(suite, p, new Date());
+  if (j.length) suite.jours = j;
+  await ecrire(suite);
+  return true;
+}
+
+/** 28 octobre 2026 : la durée, 8 ou 12 semaines, 0 = sans fin */
+async function enregistrerDuree_(duree: number): Promise<void> {
+  const a = await chargerProgrammeActif();
+  const d = lireDuree(duree);
+  if (!a || d === undefined || a.duree === d) return;
+  await ecrire({ ...a, duree: d });
+}
+
+/** Le point de régularité de ce cycle est vu (« Continuer ») : il ne revient plus */
+async function marquerPointVu_(cycle: number): Promise<void> {
+  const a = await chargerProgrammeActif();
+  if (!a || !Number.isInteger(cycle) || cycle < 1 || (a.points ?? []).includes(cycle)) return;
+  await ecrire({ ...a, points: [...(a.points ?? []), cycle].slice(-50) });
+}
+
+/** La semaine qui compte : la tienne (semaine libre), celle de ton programme construit, sinon celle du plan. null : en boucle */
+export function semaineEffective(a: Pick<ProgrammeActif, 'plan' | 'jours' | 'fin' | 'semaine'> | null, p: Programme): SemaineLibre | null {
+  if (!estProgrammePerso(p.id)) {
+    const s = lireSemaine(a?.semaine);
+    if (semaineUtile(s)) return s;
+  }
+  if (semaineUtile(p.semaineLibre)) return p.semaineLibre;
+  const plan = planDeBase(a, p);
+  return plan ? semaineDepuisPlan(p, plan) : null;
+}
+
+/** La séance de ta semaine ce jour-là ; une marche retirée par ta fin de séance n'y est jamais */
+function seanceDeLaSemaine(a: Pick<ProgrammeActif, 'fin'> | null, p: Programme, s: SemaineLibre, d: Date): JourProgramme | null {
+  const j = seanceLe(s, p, d);
+  if (j && p.jours.includes(j) && joursRetires(p, a?.fin).includes(j.id)) return null;
+  return j;
+}
+
+/** Tes jours d'entraînement de la semaine de cette date (semaines A et B comprises), 0 = lundi */
+function joursDeLaSemaine(a: Pick<ProgrammeActif, 'plan' | 'jours' | 'fin' | 'semaine'>, p: Programme, date: Date): number[] {
+  const s = semaineEffective(a, p);
+  if (!s) return [];
+  const lundi = ajouterJours(date, -indexJour(date));
+  return [0, 1, 2, 3, 4, 5, 6].filter((k) => !!seanceDeLaSemaine(a, p, s, ajouterJours(lundi, k)));
+}
+
+/** Le dernier jour prévu raté (comme coach.ts jourRate), quel que soit le jour de la semaine A ou B */
+function jourRateLe(a: Pick<ProgrammeActif, 'debut' | 'faits'>, prevu: (d: Date) => boolean, aujourdhui: Date): Date | null {
+  const auj = jourLocal(aujourdhui);
+  for (let k = 1; k <= 7; k++) {
+    const d = ajouterJours(aujourdhui, -k);
+    const iso = jourLocal(d);
+    if (iso < a.debut) return null;
+    if (!prevu(d)) continue;
+    return a.faits.some((f) => f.date >= iso && f.date <= auj) ? null : d;
+  }
+  return null;
+}
+
+/** Durée du programme en semaines ; null : sans fin */
+export function semainesDuProgramme(a: Pick<ProgrammeActif, 'duree'> | null, p: Programme): number | null {
+  const d = lireDuree(a?.duree);
+  if (d === 0) return null;
+  if (d) return d;
+  return p.sansFin ? null : p.semaines;
+}
+
+/** « semaine 3 sur 8 », ou « semaine 14 » sans fin (texte traduit par l'appelant : gabarit et valeurs) */
+export function libelleSemaine(a: ProgrammeActif, p: Programme, aujourdhui = new Date()): { gabarit: string; valeurs: number[] } {
+  const n = semaineDuProgramme(a, aujourdhui);
+  const total = semainesDuProgramme(a, p);
+  return total && n <= total ? { gabarit: 'semaine {0} sur {1}', valeurs: [n, total] } : { gabarit: 'semaine {0}', valeurs: [n] };
+}
+
+/**
+ * Le point de régularité (28 octobre 2026) : à la fin de chaque cycle (la durée choisie, sinon celle du programme),
+ * une carte qui ne bloque rien. Que des vraies données : semaines avec au moins une séance faite, séances faites.
+ * null : pas encore la fin d'un cycle, ou déjà vu.
+ */
+export function pointDeRegularite(a: ProgrammeActif, p: Programme, aujourdhui = new Date()): { cycle: number; semaines: number; faites: number } | null {
+  const d = lireDuree(a.duree);
+  const cycle = Math.max(1, d && d > 0 ? d : p.semaines || 8);
+  const k = Math.floor((semaineDuProgramme(a, aujourdhui) - 1) / cycle);
+  if (k < 1 || (a.points ?? []).includes(k)) return null;
+  const faits = a.faits.filter((f) => f.date >= a.debut && /^\d{4}-\d{2}-\d{2}$/.test(f.date));
+  const semaines = new Set(faits.map((f) => lundiIso(new Date(`${f.date}T12:00:00`)))).size;
+  if (!semaines) return null;
+  return { cycle: k, semaines, faites: faits.length };
+}
+
+/** « Garder comme mon programme » est possible : un programme du catalogue, que des séances d'exercices dans ta semaine */
+export function peutGarder(a: ProgrammeActif | null, p: Programme | null | undefined): boolean {
+  if (!a || !p || a.id !== p.id || estProgrammePerso(p.id)) return false;
+  const s = semaineEffective(a, p) ?? semaineDepuisBoucle(p, joursDuProgramme(a, p), a.fin);
+  const cases = [...s.a, ...(s.ab && s.b ? s.b : [])].filter((c): c is NonNullable<CaseSemaine> => !!c);
+  return cases.length > 0 && cases.every((c) => {
+    const j = jourDeRef(c, p.id);
+    return !!j && !j.rounds && !j.cardio && j.exos.length > 0;
+  });
+}
+
+/**
+ * 28 octobre 2026 : « Garder comme mon programme ». Ton programme et ta semaine (A et B comprises), avec tes exercices
+ * changés à la main, deviennent un programme à toi dans « Mes programmes » (monProgramme.ts), modifiable ensuite.
+ * Toujours un nouveau programme : rien n'est écrasé. Il devient ton programme en cours sans rien perdre : même début,
+ * mêmes séances faites, semaines légères, fin de séance et modules. Les charges progressent par nom d'exercice.
+ */
+async function garderCommeMonProgramme_(nom: string, duree?: number | null): Promise<ProgrammeActif | null> {
+  const a = await chargerProgrammeActif();
+  const p = a && programmeParId(a.id);
+  if (!a || !p || !peutGarder(a, p)) return null;
+  const s = semaineEffective(a, p) ?? semaineDepuisBoucle(p, joursDuProgramme(a, p), a.fin);
+  const versSeance = (c: CaseSemaine): SeancePerso | null => {
+    const j = jourDeRef(c, p.id);
+    if (!j || !j.exos.length) return null;
+    const r = appliquerRemplacements(j, a.remplacements);
+    return {
+      titre: j.titre.slice(0, 40),
+      exos: r.exos.map((e) => ({ nom: e.nom, muscle: e.muscle, series: e.series, repsMin: e.repsMin, repsMax: e.repsMax, reposSec: e.reposSec, ...(e.conseil ? { conseil: e.conseil } : {}), ...(e.poidsDuCorps ? { poidsDuCorps: true } : {}), ...(e.secondes ? { secondes: true } : {}) })),
+    };
+  };
+  const d = lireDuree(duree);
+  const base = nouveauProgrammePerso();
+  const ab = !!s.ab && !!s.b;
+  const pp: ProgrammePerso = {
+    ...base,
+    nom: nom.trim().slice(0, 40),
+    semaine: casesDe(s, 'a').map(versSeance),
+    ...(s.b ? { semaineB: s.b.map(versSeance) } : {}),
+    ...(ab ? { ab: true, depuis: s.depuis } : s.depuis ? { depuis: s.depuis } : {}),
+    origine: p.id,
+    ...(d !== undefined ? { duree: d } : {}),
+  };
+  const enr = await enFileProgramme(CLE_PROGRAMMES_PERSO, () => enregistrerProgrammePerso(pp));
+  const q = programmeParId(enr.id);
+  if (!q) return null;
+  const plan = planDuProgrammePerso(q);
+  // tes séances faites gardent leur jour : celle faite un jour qui garde sa séance prend le nouvel id
+  const faits = a.faits.map((f) => {
+    const dt = new Date(`${f.date}T12:00:00`);
+    if (Number.isNaN(dt.getTime())) return f;
+    const k = indexJour(dt);
+    const c = casesDe(s, 'a')[k];
+    const avant = c ? (c.p === p.id ? c.s : idAutre(c)) : null;
+    return avant && avant === f.jourId && enr.semaine[k] ? { ...f, jourId: idJourPerso(enr.id, k) } : f;
+  });
+  const { plan: _p, semaine: _s, remplacements: _r, duree: _d, points: _pt, ...reste } = a;
+  const suite: ProgrammeActif = { ...reste, id: enr.id, faits, ...(plan ? { plan, jours: joursDuPlan(plan) } : {}), ...(d !== undefined ? { duree: d } : a.duree !== undefined ? { duree: a.duree } : {}), ...(a.points?.length ? { points: a.points } : {}) };
+  const j = joursDeLaSemaine(suite, q, new Date());
+  if (j.length) suite.jours = j;
+  suite.prochain = indexGarde(q, suite, 0);
+  await ecrire(suite);
+  return suite;
 }
 
 /**
@@ -237,7 +447,16 @@ async function enregistrerPlan_(plan: readonly number[]): Promise<void> {
  * aussi nombreux que les seances. null : programme en boucle, ou tes jours ne collent pas au nombre de seances
  * (les seances s'enchainent alors dans l'ordre, comme avant).
  */
-export function planEffectif(a: Pick<ProgrammeActif, 'plan' | 'jours' | 'fin'> | null, p: Programme): number[] | null {
+export function planEffectif(a: Pick<ProgrammeActif, 'plan' | 'jours' | 'fin' | 'semaine'> | null, p: Programme): number[] | null {
+  // 28 octobre 2026 : avec ta semaine libre, le plan d'avant quand il peut la dire, sinon où tombe chaque séance cette semaine
+  const s = estProgrammePerso(p.id) ? null : lireSemaine(a?.semaine);
+  if (semaineUtile(s)) return planDepuisSemaine(p, s, a?.fin) ?? planProjete(p, s, new Date());
+  if (semaineUtile(p.semaineLibre)) return planProjete(p, p.semaineLibre, new Date());
+  return planDeBase(a, p);
+}
+
+/** Le plan d'avant la semaine libre (27 octobre 2026) */
+function planDeBase(a: Pick<ProgrammeActif, 'plan' | 'jours' | 'fin'> | null, p: Programme): number[] | null {
   if (!estPlanFixe(p)) return null;
   const v = planValide(p, a?.plan, a?.fin);
   if (v) return v;
@@ -262,42 +481,50 @@ function planSuitLaFin(p: Programme, avant: FinSeance | undefined, a: ProgrammeA
 
 /** Tes jours d'entrainement : ceux du plan, sinon ceux que tu as choisis, sinon les jours conseilles du programme */
 export function joursDuProgramme(a: ProgrammeActif | null, p: Programme): number[] {
-  const plan = a && a.id === p.id ? planEffectif(a, p) : null;
-  if (plan) return joursDuPlan(plan);
+  if (a && a.id === p.id) {
+    const j = joursDeLaSemaine(a, p, new Date());
+    if (j.length) return j;
+  }
   return joursValides(a?.jours) ?? joursConseilles(p.joursParSemaine);
 }
 
 const ajouterJours = (d: Date, n: number): Date => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n, 12);
 
 /**
- * La seance a faire selon ton plan (programme a la semaine) : celle d'aujourd'hui si elle n'est pas faite ;
- * un jour de repos, celle d'un jour prevu rate (on rattrape) ; sinon la prochaine de la semaine. null sans plan.
+ * La seance a faire selon ta semaine (semaine libre ou plan) : celle d'aujourd'hui si elle n'est pas faite ;
+ * un jour de repos, celle d'un jour prevu rate (on rattrape) ; sinon la prochaine. null : programme en boucle.
+ * 28 octobre 2026 : la seance peut venir d'un autre programme (Legs du PPL un mercredi).
  */
-export function indexDuPlan(a: ProgrammeActif, p: Programme, aujourdhui = new Date()): number | null {
-  const plan = planEffectif(a, p);
-  if (!plan) return null;
+export function seanceAFaire(a: ProgrammeActif, p: Programme, aujourdhui = new Date()): JourProgramme | null {
+  const s = semaineEffective(a, p);
+  if (!s) return null;
+  const le = (d: Date) => seanceDeLaSemaine(a, p, s, d);
   const iso = jourLocal(aujourdhui);
-  const iAuj = plan.indexOf(indexJour(aujourdhui));
+  const jAuj = le(aujourdhui);
   const faitAuj = a.faits.some((f) => f.date === iso);
-  if (iAuj >= 0 && !faitAuj) return iAuj;
-  if (iAuj < 0 && !faitAuj) {
-    const rate = jourRate(a, joursDuPlan(plan), aujourdhui);
-    const iRate = rate ? plan.indexOf(indexJour(rate)) : -1;
-    if (iRate >= 0) return iRate;
+  if (jAuj && !faitAuj) return jAuj;
+  if (!jAuj && !faitAuj) {
+    const rate = jourRateLe(a, (d) => !!le(d), aujourdhui);
+    const jr = rate ? le(rate) : null;
+    if (jr) return jr;
   }
-  for (let k = 1; k <= 7; k++) {
-    const i = plan.indexOf(indexJour(ajouterJours(aujourdhui, k)));
-    if (i >= 0) return i;
+  for (let k = 1; k <= 14; k++) {
+    const j = le(ajouterJours(aujourdhui, k));
+    if (j) return j;
   }
   return null;
 }
 
-/** La seance prevue ce jour la par ton plan (null : repos ce jour, ou programme sans plan) */
-export function seanceDuPlanLe(a: Pick<ProgrammeActif, 'plan' | 'jours' | 'fin'> | null, p: Programme, date: Date): JourProgramme | null {
-  const plan = planEffectif(a, p);
-  if (!plan) return null;
-  const i = plan.indexOf(indexJour(date));
-  return i >= 0 ? p.jours[i] : null;
+/** Comme seanceAFaire, en index dans programme.jours (-1 : seance d'un autre programme) ; null sans plan */
+export function indexDuPlan(a: ProgrammeActif, p: Programme, aujourdhui = new Date()): number | null {
+  const j = seanceAFaire(a, p, aujourdhui);
+  return j ? p.jours.indexOf(j) : null;
+}
+
+/** La seance prevue ce jour la par ta semaine (null : repos ce jour, ou programme sans plan) */
+export function seanceDuPlanLe(a: Pick<ProgrammeActif, 'plan' | 'jours' | 'fin' | 'semaine'> | null, p: Programme, date: Date): JourProgramme | null {
+  const s = semaineEffective(a, p);
+  return s ? seanceDeLaSemaine(a, p, s, date) : null;
 }
 
 /**
@@ -308,7 +535,7 @@ async function remplacerExercice_(jourId: string, index: number, nom: string | n
   const a = await chargerProgrammeActif();
   const p = a && programmeParId(a.id);
   if (!a || !p) return;
-  const jour = p.jours.find((j) => j.id === jourId);
+  const jour = jourDuProgramme(p, jourId);
   if (!jour || index < 0 || index >= jour.exos.length) return;
   const remplacements = avecRemplacement(a.remplacements, cleCase(jourId, index), nom, original ?? jour.exos[index].nom);
   const { remplacements: _ancien, ...reste } = a;
@@ -365,12 +592,14 @@ async function marquerJourFait_(programmeId: string, jourId: string, trainingId?
   const a = await chargerProgrammeActif();
   const p = a && programmeParId(a.id);
   if (!a || !p || a.id !== programmeId) return;
-  const idx = p.jours.findIndex((j) => j.id === jourId);
-  if (idx < 0) return;
+  // 28 octobre 2026 : une seance d'un autre programme posee dans ta semaine compte aussi
+  const jourFait = jourDuProgramme(p, jourId);
+  if (!jourFait) return;
+  const idx = p.jours.indexOf(jourFait);
   // la date de la seance (saisie apres coup) compte, pas celle de l'enregistrement
   const jour = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : jourLocal();
   const faits = [...a.faits, { date: jour, jourId, ...(trainingId ? { trainingId } : {}) }].slice(-400);
-  await ecrire({ ...a, faits, prochain: indexGarde(p, a, idx + 1) });
+  await ecrire({ ...a, faits, prochain: idx >= 0 ? indexGarde(p, a, idx + 1) : a.prochain });
 }
 
 /** Semaine du programme (1 la premiere semaine) */
@@ -393,8 +622,9 @@ export function faitsCetteSemaine(a: ProgrammeActif, aujourdhui = new Date()): n
 export function prochainJour(a: ProgrammeActif, aujourdhui = new Date()): { programme: Programme; jour: JourProgramme; index: number } | null {
   const p = programmeParId(a.id);
   if (!p) return null;
-  const duPlan = indexDuPlan(a, p, aujourdhui);
-  const index = duPlan ?? indexGarde(p, a, Math.min(a.prochain, p.jours.length - 1));
+  const duPlan = seanceAFaire(a, p, aujourdhui);
+  if (duPlan) return { programme: p, jour: duPlan, index: p.jours.indexOf(duPlan) };
+  const index = indexGarde(p, a, Math.min(a.prochain, p.jours.length - 1));
   return { programme: p, jour: p.jours[index], index };
 }
 
@@ -515,27 +745,28 @@ export function seancesAVenir(a: ProgrammeActif, n: number, aujourdhui = new Dat
   const p = programmeParId(a.id);
   if (!p) return [];
   const out: { programme: Programme; jour: JourProgramme; semaine: number }[] = [];
-  const plan = planEffectif(a, p);
-  const premier = plan ? indexDuPlan(a, p, aujourdhui) : null;
-  if (plan && premier !== null) {
-    out.push({ programme: p, jour: p.jours[premier], semaine: semaineDuProgramme(a, aujourdhui) });
-    // la suite : les jours du plan apres le jour de cette seance (apres aujourd'hui si elle est rattrapee)
+  const sem = semaineEffective(a, p);
+  const premier = sem ? seanceAFaire(a, p, aujourdhui) : null;
+  if (sem && premier) {
+    const le = (d: Date) => seanceDeLaSemaine(a, p, sem, d);
+    out.push({ programme: p, jour: premier, semaine: semaineDuProgramme(a, aujourdhui) });
+    // la suite : les jours de ta semaine apres le jour de cette seance (apres aujourd'hui si elle est rattrapee)
     const faitAuj = a.faits.some((f) => f.date === jourLocal(aujourdhui));
-    const rattrapee = plan.indexOf(indexJour(aujourdhui)) < 0 && !faitAuj && !!jourRate(a, joursDuPlan(plan), aujourdhui);
+    const rattrapee = !le(aujourdhui) && !faitAuj && !!jourRateLe(a, (d) => !!le(d), aujourdhui);
     let ecart = 0;
     if (!rattrapee) {
-      for (let k = faitAuj ? 1 : 0; k <= 7; k++) {
-        if (plan.indexOf(indexJour(ajouterJours(aujourdhui, k))) === premier) {
+      for (let k = faitAuj ? 1 : 0; k <= 14; k++) {
+        if (le(ajouterJours(aujourdhui, k))?.id === premier.id) {
           ecart = k;
           break;
         }
       }
     }
     const base = ajouterJours(aujourdhui, ecart);
-    for (let k = 1; out.length < n && k <= n * 7; k++) {
+    for (let k = 1; out.length < n && k <= n * 14; k++) {
       const d = ajouterJours(base, k);
-      const i = plan.indexOf(indexJour(d));
-      if (i >= 0) out.push({ programme: p, jour: p.jours[i], semaine: semaineDuProgramme(a, d) });
+      const j = le(d);
+      if (j) out.push({ programme: p, jour: j, semaine: semaineDuProgramme(a, d) });
     }
     return out;
   }
@@ -555,7 +786,7 @@ export function seancesAVenir(a: ProgrammeActif, n: number, aujourdhui = new Dat
 export function seancesAuxDates(a: ProgrammeActif, dates: readonly Date[]): ({ programme: Programme; jour: JourProgramme; semaine: number } | null)[] {
   const p = programmeParId(a.id);
   if (!p) return dates.map(() => null);
-  if (planEffectif(a, p)) {
+  if (semaineEffective(a, p)) {
     return dates.map((d) => {
       const j = seanceDuPlanLe(a, p, d);
       return j ? { programme: p, jour: j, semaine: semaineDuProgramme(a, d) } : null;
@@ -637,6 +868,18 @@ export function enregistrerJours(...a: Parameters<typeof enregistrerJours_>): Re
 }
 export function enregistrerPlan(...a: Parameters<typeof enregistrerPlan_>): ReturnType<typeof enregistrerPlan_> {
   return enFileProgramme(CLE, () => enregistrerPlan_(...a)) as ReturnType<typeof enregistrerPlan_>;
+}
+export function enregistrerSemaine(...a: Parameters<typeof enregistrerSemaine_>): ReturnType<typeof enregistrerSemaine_> {
+  return enFileProgramme(CLE, () => enregistrerSemaine_(...a)) as ReturnType<typeof enregistrerSemaine_>;
+}
+export function enregistrerDuree(...a: Parameters<typeof enregistrerDuree_>): ReturnType<typeof enregistrerDuree_> {
+  return enFileProgramme(CLE, () => enregistrerDuree_(...a)) as ReturnType<typeof enregistrerDuree_>;
+}
+export function marquerPointVu(...a: Parameters<typeof marquerPointVu_>): ReturnType<typeof marquerPointVu_> {
+  return enFileProgramme(CLE, () => marquerPointVu_(...a)) as ReturnType<typeof marquerPointVu_>;
+}
+export function garderCommeMonProgramme(...a: Parameters<typeof garderCommeMonProgramme_>): ReturnType<typeof garderCommeMonProgramme_> {
+  return enFileProgramme(CLE, () => garderCommeMonProgramme_(...a)) as ReturnType<typeof garderCommeMonProgramme_>;
 }
 export function remplacerExercice(...a: Parameters<typeof remplacerExercice_>): ReturnType<typeof remplacerExercice_> {
   return enFileProgramme(CLE, () => remplacerExercice_(...a)) as ReturnType<typeof remplacerExercice_>;

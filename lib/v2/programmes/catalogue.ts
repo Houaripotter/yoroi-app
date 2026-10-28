@@ -326,8 +326,9 @@ const PROGRAMMES_BRUTS: Programme[] = [
   },
   {
     id: 'pp-ul-4j',
-    titre: 'Push Pull + Upper Lower, 4 jours, jambes une fois',
-    accroche: 'Pour ceux dont les jambes travaillent déjà ailleurs, au foot, en sport de combat ou en course : le haut du corps deux fois par semaine, les jambes une fois.',
+    // 28 octobre 2026 : le split de Houari, nommé comme il le dit. Même id (pp-ul-4j) : rien ne change pour qui le suit déjà
+    titre: 'Push Pull + Upper Lower, 4 jours',
+    accroche: 'Push lundi, Pull mardi, repos mercredi, Upper jeudi, Lower vendredi. Le haut du corps deux fois par semaine, les jambes une fois : parfait si ton sport fait déjà travailler tes jambes.',
     niveau: 'intermediaire',
     objectif: 'muscle',
     materiel: 'salle',
@@ -335,7 +336,7 @@ const PROGRAMMES_BRUTS: Programme[] = [
     dureeMin: 60,
     semaines: 8,
     principes: [
-      'Ordre : Push, Pull, un jour de repos, Upper, Lower, puis repos.',
+      'Ordre : Push lundi, Pull mardi, repos mercredi, Upper jeudi, Lower vendredi, repos le week end. Tu changes tes jours quand tu veux.',
       'Place Lower le plus loin possible de ton match ou de ta séance la plus dure. Avec un match le dimanche : Lower le mardi ou le mercredi, jamais la veille ni l’avant veille. Décale la semaine si besoin.',
       'Sois honnête avec toi : tes jambes n’ont qu’une séance par semaine, environ 12 séries. À volume égal, une séance donne autant de muscle que deux, mais tu ne monteras pas aussi haut en volume qu’avec deux séances.',
       'C’est assez quand ton sport fait déjà beaucoup travailler tes jambes. Le but ici : gagner de la force sans arriver au match les jambes lourdes.',
