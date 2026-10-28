@@ -31,7 +31,7 @@ import { getTourScroller, measureTourAnchor } from './TourAnchor';
 import { isVisiteDone, markTourSeen, markVisiteDone } from './keys';
 import { _fenetreCurrent } from '@/components/yoroi/v2/fenetre/api';
 import { ETAPES, avecDe, ciblesDe, rangDansPartie, tempsDeLecture, type Onglet, type Partie } from './etapes';
-import { cadreDe, defilementPourMontrer, estimerBulle, hautDeBarre, placerBulle, type Ecran, type Trou } from './placement';
+import { AIR_BULLE, MARGE_CADRE, cadreDe, defilementPourMontrer, estimerBulle, hautDeBarre, placerBulle, type Ecran, type Trou } from './placement';
 import { montrerOngletPlus } from '@/lib/v2/visite/ongletPlus';
 import { montrerPagePoids } from '@/lib/v2/visite/pagePoids';
 import { entrerExemple, sortirExemple } from '@/lib/v2/visite/demoVisite';
@@ -167,6 +167,7 @@ export function VisiteGuidee() {
   const [ready, setReady] = useState(false);
   // 28 octobre 2026 : la hauteur mesuree de la bulle de l'etape (elle se place avec sa vraie taille)
   const [bulle, setBulle] = useState<{ i: number; h: number } | null>(null);
+  const [tailleRoot, setTailleRoot] = useState({ w: 0, h: 0 });
   const [voix, setVoix] = useState(true);
   const voixRef = useRef(true);
   const apercuRef = useRef(false);
@@ -188,15 +189,29 @@ export function VisiteGuidee() {
   // 28 octobre 2026 : la pastille Exemple (la bulle reste dessous) et la page montree de la carte Ton poids
   const pastilleRef = useRef(true);
   const pagePoidsRef = useRef(0);
+  // 28 octobre 2026 soir (captures de Houari : la bulle sous la Dynamic Island) : tout est place dans le repere de la
+  // visite ; si elle ne commence pas tout en haut de la fenetre, la zone sure (barre d'etat, Dynamic Island) est decalee
+  const rootYRef = useRef(0);
+  // le cadre suit l'element si la page bouge pendant l'etape (defilement par la personne)
+  const suiviRef = useRef<(() => Promise<void>) | null>(null);
+  // element plus grand que la place : la page reste defilable pendant l'etape
+  const [defilable, setDefilable] = useState(false);
+  // la bulle apparait d'un coup, une fois placee (plus d'animation d'entree qui la montre a moitie a la mauvaise place)
+  const bOpacity = useSharedValue(0);
   /** L'ecran pour placer le cadre et la bulle : sous la pastille Exemple, au dessus du bord bas, et le haut de la barre */
-  const ecranDe = (menuOuvert: boolean): Ecran => ({
-    W,
-    H,
-    haut: insets.top + (pastilleRef.current ? 46 : 8),
-    bas: H - insets.bottom - 10,
-    // le menu + couvre la barre : ses elements descendent jusqu'au bas de l'ecran
-    barre: menuOuvert ? H - insets.bottom - 4 : hautDeBarre(H, insets.bottom),
-  });
+  const ecranDe = (menuOuvert: boolean): Ecran => {
+    const dy = rootYRef.current;
+    // jamais sous la barre d etat ni la Dynamic Island ; zone sure encore inconnue (0) : 47 points, la hauteur d un iPhone a encoche
+    const hautSur = insets.top > 0 ? insets.top : Platform.OS === 'ios' ? 47 : 24;
+    return {
+      W,
+      H,
+      haut: hautSur + (pastilleRef.current ? 46 : 10) - dy,
+      bas: H - insets.bottom - 10 - dy,
+      // le menu + couvre la barre : ses elements descendent jusqu'au bas de l'ecran
+      barre: (menuOuvert ? H - insets.bottom - 4 : hautDeBarre(H, insets.bottom)) - dy,
+    };
+  };
 
   // l'onglet ouvert, lu par le deroule
   const seg = segments[0] === '(tabs)' ? (segments[1] ?? 'index') : segments[0] ?? '';
@@ -363,7 +378,10 @@ export function VisiteGuidee() {
     if (!a || !root) return null;
     return within(
       new Promise<Box | null>((resolve) => {
-        root.measureInWindow((rx, ry) => resolve({ x: a.x - (rx || 0), y: a.y - (ry || 0), w: a.width, h: a.height, r: a.rayon }));
+        root.measureInWindow((rx, ry) => {
+          rootYRef.current = ry || 0;
+          resolve({ x: a.x - (rx || 0), y: a.y - (ry || 0), w: a.width, h: a.height, r: a.rayon });
+        });
       }),
       800,
       null,
@@ -499,7 +517,15 @@ export function VisiteGuidee() {
       return rect;
     };
     /** Le cadre autour de l'element, a sa forme (rayon de l'ancre plus la marge) */
-    const cadre = (rect: Box): Trou => cadreDe(rect, ecran, { surBarre: !!cid && !estOnglet(cid) && !e.menuPlus, plafond: insets.top * 0.5 });
+    // 28 octobre 2026 soir : jamais sous la barre d'etat ; un element plus grand que la place : sa partie haute, la bulle dessous
+    const cadre = (rect: Box): Trou => {
+      const t = cadreDe(rect, ecran, { surBarre: !!cid && !estOnglet(cid) && !e.menuPlus, plafond: ecran.haut - 8 });
+      const p = placerBulle(t, hBulle, ecran);
+      if (!p.couvre || estOnglet(cid)) return t;
+      const bas = ecran.bas - hBulle - 12;
+      const h = Math.max(60, bas - t.y);
+      return { ...t, h, r: Math.min(t.r, h / 2) };
+    };
     /** L'element est vraiment a l'ecran (sinon : bulle seule, jamais un cadre perdu) */
     const aLEcran = (r: Box | null): r is Box => !!r && r.w > 0 && r.h > 0 && r.y < H - 40 && r.y + r.h > Math.max(40, insets.top) && r.x < W - 10 && r.x + r.w > 10;
     /** L'ecran qui defile pour cette etape : le menu +, sinon l'onglet ouvert */
@@ -527,7 +553,13 @@ export function VisiteGuidee() {
     };
 
     const run = async () => {
+      // 28 octobre 2026 soir : pendant la transition, voile uni, ni cadre ni bulle ; tout revient ensemble une fois l'ecran pose
       setReady(false);
+      setHole(null);
+      setVoile(true);
+      setDefilable(false);
+      suiviRef.current = null;
+      bOpacity.value = 0;
       stopVoix();
       fOpacity.value = withTiming(0, { duration: 150 });
 
@@ -624,16 +656,27 @@ export function VisiteGuidee() {
       }
 
       const hole0 = cadre(rect);
+      // plus grand que la place laissee a la bulle : la page reste defilable, le cadre suit
+      const grand = rect.h + 2 * MARGE_CADRE + AIR_BULLE + hBulle > ecran.bas - ecran.haut;
+      setDefilable(grand && !estOnglet(cid) && !e.menuPlus);
       setHole(hole0);
       setVoile(true);
       setReady(true);
       say();
+      suiviRef.current = async () => {
+        const r2 = await mesurer(cid);
+        if (!alive() || !aLEcran(r2)) return;
+        const t = cadre(r2);
+        setHole((h) => (h && Math.abs(h.x - t.x) < 1 && Math.abs(h.y - t.y) < 1 && Math.abs(h.w - t.w) < 1 && Math.abs(h.h - t.h) < 1 ? h : t));
+      };
 
-      // le doigt rejoint la cible (la ou elle dit d'appuyer), puis appuie
-      const cx = rect.x + rect.w * (e.doigt?.x ?? 0.5);
-      const cy = Math.min(H - 40, Math.max(hole0.y + 20, e.doigt ? rect.y + rect.h * e.doigt.y : rect.y + Math.min(rect.h / 2, 90)));
+      // 28 octobre 2026 soir : le doigt seulement quand il y a quelque chose a toucher, pose sur l'element lui meme
+      if (e.sansDoigt || !e.appui) return;
+      const cible = (await anchorRect(cid)) ?? rect;
+      if (!alive()) return;
+      const cx = cible.x + cible.w * (e.doigt?.x ?? 0.5);
+      const cy = Math.min(H - 40, Math.max(hole0.y + 20, cible.y + cible.h * (e.doigt?.y ?? 0.5)));
       const travel = reduceMotion ? 0 : 650;
-      if (e.sansDoigt) return;
       fOpacity.value = withTiming(1, { duration: 220 });
       fx.value = withTiming(cx, { duration: travel, easing: Easing.out(Easing.cubic) });
       fy.value = withTiming(cy, { duration: travel, easing: Easing.out(Easing.cubic) });
@@ -648,8 +691,7 @@ export function VisiteGuidee() {
           await wait(380);
           if (!alive()) return;
           router.navigate(ROUTES[e.ouvre] as never);
-          // l'ecran ouvert reste bien visible : plus de voile, le cadre reste autour de l'onglet
-          setVoile(false);
+          // 28 octobre 2026 soir : le voile reste (meme rendu a chaque etape), le cadre reste autour de l'onglet
           fOpacity.value = withTiming(0, { duration: 300 });
           // 28 octobre 2026 : l'onglet ouvert s'etire (InkTabBar) ; le cadre suit sa vraie taille une fois pose
           await wait(AGRANDISSEMENT_ONGLET);
@@ -695,6 +737,21 @@ export function VisiteGuidee() {
   }, [active, index]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => setEnCours(active), [active]);
+
+  // 28 octobre 2026 soir : la bulle se montre d'un coup, une fois mesuree et posee a sa place
+  const placee = ready && bulle?.i === index;
+  useEffect(() => {
+    if (placee) bOpacity.value = withTiming(1, { duration: reduceMotion ? 0 : 180 });
+  }, [placee, index]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // le cadre suit l'element si la page bouge pendant l'etape (element plus grand que l'ecran, defile a la main)
+  useEffect(() => {
+    if (!active || !ready) return;
+    const t = setInterval(() => {
+      void suiviRef.current?.();
+    }, 300);
+    return () => clearInterval(t);
+  }, [active, ready, index]);
 
   // la visite s'arrete proprement si le composant disparait (et l'exemple se ferme)
   useEffect(
@@ -753,6 +810,7 @@ export function VisiteGuidee() {
     setIndex(i);
   };
 
+  const bulleStyle = useAnimatedStyle(() => ({ opacity: bOpacity.value }));
   const fingerStyle = useAnimatedStyle(() => ({
     opacity: fOpacity.value,
     transform: [{ translateX: fx.value - 23 }, { translateY: fy.value - 23 }, { scale: fScale.value }],
@@ -796,19 +854,36 @@ export function VisiteGuidee() {
   // progression, sticker plus petit) pour tenir a cote de l'element. Decide sur l'estimation, stable d'un rendu a l'autre.
   const compact = !!hole && placerBulle(hole, estimerBulle(e.titre, e.texte, bubbleW), ecranBulle).couvre;
   const mesuree = bulle && bulle.i === index ? bulle.h : null;
-  const hBulle = mesuree ?? estimerBulle(e.titre, e.texte, bubbleW) - (compact ? 38 : 0);
+  const estimee = estimerBulle(e.titre, e.texte, bubbleW) - (compact ? 38 : 0);
+  // une mesure aberrante (plus haute que l'ecran) ne doit jamais renvoyer la bulle tout en haut
+  const hBulle = Math.min(mesuree ?? estimee, Math.max(estimee * 1.5, 180), H * 0.7);
   const place = placerBulle(hole, hBulle, ecranBulle);
   const bubbleTop = place.top;
 
   const r = Math.max(0, hole?.r ?? 18);
+  // le voile couvre toute la visite, quelle que soit sa taille reelle
+  const Wv = Math.max(W, tailleRoot.w);
+  const Hv = Math.max(H, tailleRoot.h);
   const veil =
-    hole && voile
-      ? `M0 0H${W}V${H}H0Z M${hole.x + r} ${hole.y}H${hole.x + hole.w - r}Q${hole.x + hole.w} ${hole.y} ${hole.x + hole.w} ${hole.y + r}V${hole.y + hole.h - r}Q${hole.x + hole.w} ${hole.y + hole.h} ${hole.x + hole.w - r} ${hole.y + hole.h}H${hole.x + r}Q${hole.x} ${hole.y + hole.h} ${hole.x} ${hole.y + hole.h - r}V${hole.y + r}Q${hole.x} ${hole.y} ${hole.x + r} ${hole.y}Z`
-      : `M0 0H${W}V${H}H0Z`;
+    hole && voile && ready
+      ? `M0 0H${Wv}V${Hv}H0Z M${hole.x + r} ${hole.y}H${hole.x + hole.w - r}Q${hole.x + hole.w} ${hole.y} ${hole.x + hole.w} ${hole.y + r}V${hole.y + hole.h - r}Q${hole.x + hole.w} ${hole.y + hole.h} ${hole.x + hole.w - r} ${hole.y + hole.h}H${hole.x + r}Q${hole.x} ${hole.y + hole.h} ${hole.x} ${hole.y + hole.h - r}V${hole.y + r}Q${hole.x} ${hole.y} ${hole.x + r} ${hole.y}Z`
+      : `M0 0H${Wv}V${Hv}H0Z`;
   const veilColor = isDark ? 'rgba(6,8,13,0.7)' : 'rgba(14,17,26,0.6)';
 
   return (
-    <View ref={rootRef} collapsable={false} style={StyleSheet.absoluteFill} pointerEvents="auto">
+    <View
+      ref={rootRef}
+      collapsable={false}
+      style={StyleSheet.absoluteFill}
+      pointerEvents={defilable ? 'box-none' : 'auto'}
+      onLayout={(ev) => {
+        const { width: w, height: h } = ev.nativeEvent.layout;
+        if (Math.abs(w - tailleRoot.w) > 1 || Math.abs(h - tailleRoot.h) > 1) setTailleRoot({ w, h });
+        rootRef.current?.measureInWindow((_x, y) => {
+          rootYRef.current = y || 0;
+        });
+      }}
+    >
       {/* le menu du bouton +, tel quel, sans pouvoir le toucher */}
       {menu ? (
         <Animated.View entering={FadeIn.duration(220)} exiting={FadeOut.duration(180)} style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -816,26 +891,27 @@ export function VisiteGuidee() {
         </Animated.View>
       ) : null}
 
-      {/* pendant la visite, l'app derriere ne recoit aucun appui */}
-      <View style={StyleSheet.absoluteFill} onStartShouldSetResponder={() => true} />
+      {/* pendant la visite, l'app derriere ne recoit aucun appui (sauf le defilement quand l'element est plus grand que l'ecran) */}
+      {!defilable ? <View style={StyleSheet.absoluteFill} onStartShouldSetResponder={() => true} /> : null}
 
       {/* voile, avec la decoupe autour de l'element montre */}
+      {/* 28 octobre 2026 soir : le meme voile a chaque etape (uni pendant les transitions, decoupe autour de l'element ensuite) */}
       {voile || !hole ? (
         <Animated.View entering={FadeIn.duration(220)} style={StyleSheet.absoluteFill} pointerEvents="none">
-          <Svg width={W} height={H}>
-            <Path d={veil} fill={hole || first || last ? veilColor : 'rgba(14,17,26,0.35)'} fillRule="evenodd" />
+          <Svg width={Wv} height={Hv}>
+            <Path d={veil} fill={veilColor} fillRule="evenodd" />
           </Svg>
         </Animated.View>
       ) : null}
-      {hole ? (
-        <Animated.View key={`${index}-${Math.round(hole.x)}-${Math.round(hole.y)}-${Math.round(hole.w)}-${Math.round(hole.h)}`} entering={FadeIn.duration(260)} style={StyleSheet.absoluteFill} pointerEvents="none">
-          <Svg width={W} height={H}>
+      {hole && ready ? (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <Svg width={Wv} height={Hv}>
             {/* le cadre epouse l'element : coins concentriques a ceux de l'element */}
             <Rect x={hole.x - 3} y={hole.y - 3} width={hole.w + 6} height={hole.h + 6} rx={r + 3} fill="none" stroke={c.accent} strokeOpacity={0.35} strokeWidth={6} />
             <Rect x={hole.x} y={hole.y} width={hole.w} height={hole.h} rx={r} fill="none" stroke={isDark ? c.accent : '#FFFFFF'} strokeWidth={1.5} strokeOpacity={0.9} />
             <Rect x={hole.x - 1.5} y={hole.y - 1.5} width={hole.w + 3} height={hole.h + 3} rx={r + 1.5} fill="none" stroke={isDark ? '#FFFFFF' : c.accent} strokeWidth={3} />
           </Svg>
-        </Animated.View>
+        </View>
       ) : null}
 
       {/* l'onde de l'appui, puis le doigt */}
@@ -863,12 +939,11 @@ export function VisiteGuidee() {
             const h = Math.round(ev.nativeEvent.layout.height);
             if (h > 0 && (!bulle || bulle.i !== index || Math.abs(bulle.h - h) > 1)) setBulle({ i: index, h });
           }}
-          style={[s.bubbleWrap, { width: bubbleW, left: (W - bubbleW) / 2, top: bubbleTop, opacity: mesuree === null ? 0 : 1 }]}
+          // 28 octobre 2026 soir (captures de Houari : bulle collee en haut) : placee par translation depuis le haut de la
+          // visite, et montree seulement une fois mesuree et placee, d'un fondu simple, sans animation d'entree de mise en page
+          style={[s.bubbleWrap, { width: bubbleW, left: (W - bubbleW) / 2, top: 0, transform: [{ translateY: bubbleTop }] }]}
         >
-        <Animated.View
-          entering={reduceMotion ? FadeIn.duration(160) : FadeInDown.duration(260)}
-          style={[s.bubble, { backgroundColor: c.surface, borderColor: c.border, shadowColor: '#000' }]}
-        >
+        <Animated.View style={[s.bubble, { backgroundColor: c.surface, borderColor: c.border, shadowColor: '#000' }, bulleStyle]}>
           <View style={s.head}>
             <Ink size={11.5} weight="black" color={c.accentText} numberOfLines={1} style={{ flexShrink: 1, letterSpacing: 1.3 }}>
               {PARTIES[e.partie].toUpperCase()}
@@ -903,6 +978,12 @@ export function VisiteGuidee() {
           </View>
 
           {/* la progression : ou tu en es dans cette partie, et dans toute la visite */}
+          {__DEV__ ? (
+            // developpement seulement : les chiffres du placement, lisibles sur une capture (jamais en production)
+            <Ink size={9} weight="medium" color={c.textMuted} style={{ position: 'absolute', right: 18, bottom: 2 }}>
+              {`dev ${Math.round(bubbleTop)} h${Math.round(hBulle)}${mesuree === null ? '?' : ''} ${place.cote} trou ${hole ? `${Math.round(hole.y)}+${Math.round(hole.h)}` : '0'} H${Math.round(H)} in${Math.round(insets.top)}/${Math.round(insets.bottom)} r${Math.round(rootYRef.current)}`}
+            </Ink>
+          ) : null}
           {!compact ? (
           <View style={s.progres}>
             <View style={[s.track, { backgroundColor: c.accentTint }]}>

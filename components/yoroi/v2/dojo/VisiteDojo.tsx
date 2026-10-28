@@ -16,7 +16,7 @@ import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-aud
 import { appliquerVitesse, libelleVitesse, useVitesseVoix } from '@/lib/v2/visite/vitesseVoix';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { tap } from '@/components/yoroi/v2/dojo/parts';
@@ -196,11 +196,12 @@ export function VisiteDojo({ visible, mesurer, onClose }: Props) {
   const voile = 'rgba(14,17,26,0.62)';
   // 28 octobre 2026 : meme geometrie que la visite guidee (components/yoroi/v2/tour/placement.ts) : le cadre epouse la
   // carte (ses coins plus la marge), la bulle se pose a cote avec sa vraie hauteur, jamais dessus, jamais hors de l'ecran
-  const ecran: Ecran = { W: width, H: height, haut: insets.top + 8, bas: height - insets.bottom - 10, barre: hautDeBarre(height, insets.bottom) };
-  const r = rect ? cadreDe({ x: rect.x, y: rect.y, w: rect.w, h: rect.h, r: rect.r ?? 22 }, ecran, { marge: 8, surBarre: e.cible !== 'aide', plafond: insets.top * 0.5 }) : null;
+  const ecran: Ecran = { W: width, H: height, haut: (insets.top > 0 ? insets.top : 47) + 10, bas: height - insets.bottom - 10, barre: hautDeBarre(height, insets.bottom) };
+  const r = rect ? cadreDe({ x: rect.x, y: rect.y, w: rect.w, h: rect.h, r: rect.r ?? 22 }, ecran, { marge: 8, surBarre: e.cible !== 'aide', plafond: ecran.haut - 8 }) : null;
   const bulleW = Math.min(520, width - 32);
   const mesuree = bulle && bulle.i === i ? bulle.h : null;
-  const bulleH = mesuree ?? estimerBulle(e.titre, e.texte, bulleW);
+  const estimee = estimerBulle(e.titre, e.texte, bulleW);
+  const bulleH = Math.min(mesuree ?? estimee, Math.max(estimee * 1.5, 180), height * 0.7);
   const bulleTop = placerBulle(r, bulleH, ecran).top;
   const rr = r?.r ?? 0;
   const trou = r
@@ -226,9 +227,9 @@ export function VisiteDojo({ visible, mesurer, onClose }: Props) {
             const h = Math.round(ev.nativeEvent.layout.height);
             if (h > 0 && (!bulle || bulle.i !== i || Math.abs(bulle.h - h) > 1)) setBulle({ i, h });
           }}
-          style={{ position: 'absolute', width: bulleW, left: (width - bulleW) / 2, top: bulleTop, opacity: mesuree === null ? 0 : 1 }}
+          style={{ position: 'absolute', width: bulleW, left: (width - bulleW) / 2, top: 0, transform: [{ translateY: bulleTop }], opacity: mesuree === null ? 0 : 1 }}
         >
-        <Animated.View entering={FadeIn.duration(160)} style={{ backgroundColor: c.surface, borderRadius: 24, borderWidth: 1, borderColor: c.border, paddingHorizontal: 18, paddingVertical: 14, gap: 10, shadowColor: '#000', shadowOpacity: 0.28, shadowRadius: 26, shadowOffset: { width: 0, height: 12 }, elevation: 12 }}>
+        <Animated.View style={{ backgroundColor: c.surface, borderRadius: 24, borderWidth: 1, borderColor: c.border, paddingHorizontal: 18, paddingVertical: 14, gap: 10, shadowColor: '#000', shadowOpacity: 0.28, shadowRadius: 26, shadowOffset: { width: 0, height: 12 }, elevation: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {/* la partie en petites capitales colorees, et ou tu en es */}
             <Ink size={11.5} weight="black" color={c.accentText} numberOfLines={1} style={{ letterSpacing: 1.3, flexShrink: 1 }}>{traduire('Ton Dojo').toUpperCase()}</Ink>
