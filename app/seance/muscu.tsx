@@ -70,6 +70,7 @@ import { chargerProgrammesPerso } from '@/lib/v2/programmes/monProgramme';
 import { jourPourToi } from '@/lib/v2/programmes/perso';
 import { EXPLICATION_PRISE, PRISES, avecPrise, sansPrise } from '@/lib/v2/seance/prise';
 import type { Prise } from '@/lib/v2/seance/prise';
+import { BoutonCoachVocal, useCoachVocal } from '@/components/yoroi/v2/seance/CoachVocal';
 
 const INTENSITIES = [
   { value: 3, label: 'Facile' },
@@ -722,6 +723,8 @@ export default function SeanceMuscu() {
   // hors programme : la meme double progression que les programmes (calcul garde en memoire, pas a chaque seconde)
   const libreNom = current && !current.cible && !draft?.editId ? current.name : null;
   const libre = useMemo(() => (libreNom ? proposerLibre(seancesDeLExo(toutesSeances, libreNom, 2)) : null), [libreNom, toutesSeances]);
+  // 28 octobre 2026 : coach vocal, une voix dans les écouteurs (lib/v2/coachVocal)
+  useCoachVocal(draft, toutesSeances);
 
   if (!draft) {
     return <View style={{ flex: 1, backgroundColor: c.background }}><Stack.Screen options={{ gestureEnabled: false }} /></View>;
@@ -767,6 +770,7 @@ export default function SeanceMuscu() {
             <Ink size={26} weight="black" style={{ fontVariant: ['tabular-nums'] }}>{fmtClock(elapsedSec)}</Ink>
           </View>
         )}
+        {!draft.form ? <BoutonCoachVocal /> : null}
         <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 46, paddingHorizontal: 18, borderRadius: 16, justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
           <Ink size={15} weight="black" color={c.onPrimary}>{draft.form ? traduire('Enregistrer') : traduire('Terminer')}</Ink>
         </Pressable>

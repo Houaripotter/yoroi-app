@@ -19373,5 +19373,15 @@
 "Course ou vélo (GPX, TCX)": "Run or ride (GPX, TCX)",
 "Tes séances enregistrées par ta montre ou ton téléphone": "Sessions recorded by your watch or phone",
 "Le fichier CSV exporté depuis ses réglages, ou tes notes copiées": "The CSV file exported from its settings, or your copied notes",
-"Un fichier de parcours depuis ta montre ou une app de course": "A route file from your watch or a running app"
+"Un fichier de parcours depuis ta montre ou une app de course": "A route file from your watch or a running app",
+"Motivant": "Motivating",
+"Discret": "Subtle",
+"Coach vocal": "Voice coach",
+"Coach vocal : {0}": "Voice coach: {0}",
+"En plus, des encouragements et ton objectif.": "Plus encouragement and your goal.",
+"Le repos, la dernière série, tes records et la fin.": "Rest, last set, your records and the end.",
+"Aucune voix pendant la séance.": "No voice during the workout.",
+"Les voix arrivent avec une prochaine mise à jour.": "Voices are coming in an upcoming update.",
+"Voix en français seulement pour l’instant.": "Voice in French only for now.",
+"Une voix dans tes écouteurs pendant la séance. Ta musique baisse le temps d’une phrase, puis remonte.": "A voice in your earbuds during the workout. Your music lowers for a sentence, then comes back up."
 }

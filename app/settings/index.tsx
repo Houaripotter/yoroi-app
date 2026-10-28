@@ -55,6 +55,8 @@ import { usePremium } from '@/context/PremiumContext';
 import { isDemoDataActive } from '@/lib/demoDataService';
 import { ecrireBilanAuto, lireBilanAuto } from '@/lib/v2/bilan/reglage';
 import { ecrireSonsActifs, lireSonsActifs } from '@/lib/v2/sons/reglage';
+import { niveauSuivant, useNiveauCoach } from '@/lib/v2/coachVocal/reglages';
+import { detailNiveauCoach, libelleNiveauCoach, remarqueCoach } from '@/components/yoroi/v2/seance/CoachVocal';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { FeuilleLangue, langueEnCours } from '@/components/yoroi/v2/langue/ChoixLangue';
 
@@ -96,6 +98,8 @@ export default function Reglages() {
   const [bilanAuto, setBilanAuto] = useState(true);
   // 27 octobre 2026 : couper tous les sons de l'app (badges, rangs, records, chronos), les vibrations restent
   const [sonsOn, setSonsOn] = useState(true);
+  // 28 octobre 2026 : coach vocal de la seance en direct (lib/v2/coachVocal), chaque appui passe au niveau suivant
+  const [coachVocal, setCoachVocal] = useNiveauCoach();
   useEffect(() => {
     lireBilanAuto().then(setBilanAuto).catch(() => {});
     lireSonsActifs().then(setSonsOn).catch(() => {});
@@ -226,6 +230,7 @@ export default function Reglages() {
           <ValueRow tint={TUILE.ardoise} icon="save" sticker="donnees" label={traduire("Données et sauvegardes")} sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/settings/sauvegardes')} action={<MiniAction label={traduire("Sauvegarder")} onPress={backupNow} busy={backingUp} />} />
           <ValueRow tint={TUILE.bleu} icon="globe" sticker="langue" label={traduire('Langue')} value={langueEnCours()} onPress={() => setLangueOpen(true)} />
           <ValueRow tint={TUILE.or} icon="bell" sticker="gong" label={traduire("Sons de l’app")} sub={traduire("Badges, rangs, records et chronos")} value={sonsOn ? traduire('Activés') : traduire('Coupés')} valueColor={sonsOn ? c.successText : undefined} onPress={() => { const n = !sonsOn; setSonsOn(n); ecrireSonsActifs(n).catch(() => {}); }} />
+          <ValueRow tint={TUILE.indigo} icon="dumbbell" sticker="coach" label={traduire("Coach vocal")} sub={remarqueCoach() ?? detailNiveauCoach(coachVocal)} value={libelleNiveauCoach(coachVocal)} valueColor={coachVocal !== 'off' ? c.successText : undefined} onPress={() => setCoachVocal(niveauSuivant(coachVocal))} />
         </Card>
 
         <Groupe title="YOROI" />

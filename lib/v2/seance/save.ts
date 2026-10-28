@@ -80,6 +80,9 @@ async function writeExtraColumns(id: number, opts: SaveOptions, isEdit: boolean)
   }
 }
 
+/** Une séance en direct vient d'être enregistrée (pas une modification) */
+export const SEANCE_LIVE_ENREGISTREE_EVENT = 'YOROI_SEANCE_LIVE_ENREGISTREE';
+
 export async function saveSeance(training: Training, opts: SaveOptions): Promise<SeanceResult> {
   let before: ArmureState | null = null;
   try {
@@ -153,6 +156,8 @@ export async function saveSeance(training: Training, opts: SaveOptions): Promise
   if (!isEdit) {
     runAfterSave(training, opts.skipHealth === true);
     void mesurerSeance(training.sport, opts.methode ?? 'saisie');
+    // 28 octobre 2026 : le coach vocal dit la fin de séance (lib/v2/coachVocal/useCoachVocal.ts)
+    if (opts.methode === 'live') DeviceEventEmitter.emit(SEANCE_LIVE_ENREGISTREE_EVENT, { sport: training.sport });
   }
   return result;
 }

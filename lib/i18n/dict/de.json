@@ -19373,5 +19373,15 @@
 "Course ou vélo (GPX, TCX)": "Laufen oder Radfahren (GPX, TCX)",
 "Tes séances enregistrées par ta montre ou ton téléphone": "Einheiten, die deine Uhr oder dein Handy aufgezeichnet hat",
 "Le fichier CSV exporté depuis ses réglages, ou tes notes copiées": "Die CSV Datei aus ihren Einstellungen oder deine kopierten Notizen",
-"Un fichier de parcours depuis ta montre ou une app de course": "Eine Streckendatei von deiner Uhr oder einer Lauf App"
+"Un fichier de parcours depuis ta montre ou une app de course": "Eine Streckendatei von deiner Uhr oder einer Lauf App",
+"Motivant": "Motivierend",
+"Discret": "Dezent",
+"Coach vocal": "Sprachcoach",
+"Coach vocal : {0}": "Sprachcoach: {0}",
+"En plus, des encouragements et ton objectif.": "Dazu Anfeuerung und dein Ziel.",
+"Le repos, la dernière série, tes records et la fin.": "Pause, letzter Satz, deine Rekorde und das Ende.",
+"Aucune voix pendant la séance.": "Keine Stimme während des Trainings.",
+"Les voix arrivent avec une prochaine mise à jour.": "Die Stimmen kommen mit einem nächsten Update.",
+"Voix en français seulement pour l’instant.": "Stimme vorerst nur auf Französisch.",
+"Une voix dans tes écouteurs pendant la séance. Ta musique baisse le temps d’une phrase, puis remonte.": "Eine Stimme in deinen Kopfhörern während des Trainings. Deine Musik wird für einen Satz leiser und dann wieder lauter."
 }
