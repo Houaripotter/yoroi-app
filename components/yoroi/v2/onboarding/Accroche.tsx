@@ -705,11 +705,11 @@ function PageScenes({ designW, actif }: { designW: number; actif: boolean }) {
 // 27 octobre 2026 soir (Houari : « des stickers a la place des icones ») : un sticker par ligne (nom : le sticker attendu,
 // remplace : le meilleur existant en attendant, voir _propositions/audit_onboarding_2026-10-27/AUDIT.md)
 const SUR_TEL: { icon: IconName; titre: string; sous: string; encre: EncreId; sticker: NomSticker }[] = [
-  { icon: 'user', encre: 'indigo', sticker: 'play', titre: traduire('Pas de compte à créer'), sous: traduire('Tu ouvres l’app, tu commences.') },
-  { icon: 'shield', encre: 'mousse', sticker: 'boussole', titre: traduire('Ton suivi marche sans réseau'), sous: traduire('À la salle, au dojo, en déplacement.') },
-  { icon: 'lock', encre: 'prune', sticker: 'cle', titre: traduire('Tes données restent chez toi'), sous: traduire('Sur ton téléphone, sans compte en ligne.') },
-  { icon: 'close', encre: 'vermillon', sticker: 'environnement', titre: traduire('Aucune publicité'), sous: traduire('Ni en gratuit, ni en Premium.') },
-  { icon: 'save', encre: 'sarcelle', sticker: 'coffre_ferme', titre: traduire('Ta sauvegarde, quand tu veux'), sous: traduire('À remettre sur un autre téléphone.') },
+  { icon: 'user', encre: 'indigo', sticker: 'sans_compte', titre: traduire('Pas de compte à créer'), sous: traduire('Tu ouvres l’app, tu commences.') },
+  { icon: 'shield', encre: 'mousse', sticker: 'hors_ligne', titre: traduire('Ton suivi marche sans réseau'), sous: traduire('À la salle, au dojo, en déplacement.') },
+  { icon: 'lock', encre: 'prune', sticker: 'donnees_telephone', titre: traduire('Tes données restent chez toi'), sous: traduire('Sur ton téléphone, sans compte en ligne.') },
+  { icon: 'close', encre: 'vermillon', sticker: 'sans_publicite', titre: traduire('Aucune publicité'), sous: traduire('Ni en gratuit, ni en Premium.') },
+  { icon: 'save', encre: 'sarcelle', sticker: 'sauvegarde', titre: traduire('Ta sauvegarde, quand tu veux'), sous: traduire('À remettre sur un autre téléphone.') },
 ];
 
 function PageTel() {
@@ -720,7 +720,7 @@ function PageTel() {
     <PageCarte style={{ paddingVertical: 6 }}>
       {SUR_TEL.map((r, k) => (
         <View key={r.titre} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9, borderTopWidth: k ? 1 : 0, borderTopColor: c.divider }}>
-          <Image source={illus.img(r.sticker, sticker(r.sticker))} style={{ width: 42, height: 42 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+          <Image source={illus.img(r.sticker)} style={{ width: 42, height: 42 }} resizeMode="contain" accessibilityIgnoresInvertColors />
           <View style={{ flex: 1, gap: 1 }}>
             <Ink size={15} weight="black" tight numberOfLines={1}>{traduire(r.titre)}</Ink>
             <Ink size={12.5} weight="medium" color={c.textSecondary} numberOfLines={1}>{r.sous}</Ink>
@@ -998,9 +998,9 @@ export function Accroche({
           {/* vague 30 : les vrais atouts, en grand (plus de « Version gratuite » : l'app est freemium) */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 4, marginHorizontal: -8 }}>
             {/* 27 octobre 2026 (Houari : « trop neutres ») : un sticker et un texte dans sa couleur pastel */}
-            <Atout nom="boussole" encre="#23358F" label={traduire('Hors ligne')} tiny={tiny} />
-            <Atout nom="environnement" encre="#A57A1C" label={traduire("Sans publicité")} tiny={tiny} />
-            <Atout nom="cle" encre="#8A3F78" label={traduire("Données sur ton téléphone")} tiny={tiny} large />
+            <Atout nom="hors_ligne" encre="#23358F" label={traduire('Hors ligne')} tiny={tiny} />
+            <Atout nom="sans_publicite" encre="#A57A1C" label={traduire("Sans publicité")} tiny={tiny} />
+            <Atout nom="donnees_telephone" encre="#8A3F78" label={traduire("Données sur ton téléphone")} tiny={tiny} large />
             <Atout nom="sante_appareils" encre="#1C6B45" label={healthName()} tiny={tiny} large />
           </View>
           <View style={{ alignItems: 'center' }}>
@@ -1035,7 +1035,7 @@ function Atout({ nom, encre, label, tiny, large }: { nom: NomSticker; encre: str
   const t = tiny ? 34 : 42;
   return (
     <View style={{ flex: large ? 1.3 : 1, alignItems: 'center', gap: tiny ? 2 : 4 }} accessible accessibilityLabel={label}>
-      <Image source={illus.img(nom, sticker(nom))} style={{ width: t, height: t }} resizeMode="contain" accessibilityIgnoresInvertColors />
+      <Image source={illus.img(nom)} style={{ width: t, height: t }} resizeMode="contain" accessibilityIgnoresInvertColors />
       <Ink size={tiny ? 11 : 12} weight="black" color={encre} numberOfLines={2} style={{ textAlign: 'center', lineHeight: tiny ? 13 : 15 }}>{label}</Ink>
     </View>
   );

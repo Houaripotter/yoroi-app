@@ -1,5 +1,5 @@
 /**
- * Stickers YOROI (27 octobre 2026) : 144 illustrations facon autocollant (contour blanc, fond transparent),
+ * Stickers YOROI (27 octobre 2026) : 152 illustrations facon autocollant (contour blanc, fond transparent),
  * qui remplacent les anciennes illustrations « icones » de l'app. Sources : _propositions/stickers_2026-10-27/png,
  * converties en webp 512 px dans assets/avatars/app/stickers/. Les anciens fichiers restent en place.
  *
@@ -44,6 +44,7 @@ export const STICKERS = {
   calendrier: require('@/assets/avatars/app/stickers/calendrier.webp'),
   cardio_zone2: require('@/assets/avatars/app/stickers/cardio_zone2.webp'),
   carnet: require('@/assets/avatars/app/stickers/carnet.webp'),
+  carnet_papier: require('@/assets/avatars/app/stickers/carnet_papier.webp'),
   carnet_vide: require('@/assets/avatars/app/stickers/carnet_vide.webp'),
   carte_tresor: require('@/assets/avatars/app/stickers/carte_tresor.webp'),
   ceinture_nouee: require('@/assets/avatars/app/stickers/ceinture_nouee.webp'),
@@ -62,6 +63,7 @@ export const STICKERS = {
   course: require('@/assets/avatars/app/stickers/course.webp'),
   debuter: require('@/assets/avatars/app/stickers/debuter.webp'),
   donnees: require('@/assets/avatars/app/stickers/donnees.webp'),
+  donnees_telephone: require('@/assets/avatars/app/stickers/donnees_telephone.webp'),
   empreintes: require('@/assets/avatars/app/stickers/empreintes.webp'),
   enclume: require('@/assets/avatars/app/stickers/enclume.webp'),
   endurance: require('@/assets/avatars/app/stickers/endurance.webp'),
@@ -80,6 +82,7 @@ export const STICKERS = {
   grand_coffre_ouvert: require('@/assets/avatars/app/stickers/grand_coffre_ouvert.webp'),
   grip: require('@/assets/avatars/app/stickers/grip.webp'),
   gunbai: require('@/assets/avatars/app/stickers/gunbai.webp'),
+  hors_ligne: require('@/assets/avatars/app/stickers/hors_ligne.webp'),
   jjb: require('@/assets/avatars/app/stickers/jjb.webp'),
   kabuto: require('@/assets/avatars/app/stickers/kabuto.webp'),
   katanas: require('@/assets/avatars/app/stickers/katanas.webp'),
@@ -129,8 +132,11 @@ export const STICKERS = {
   sablier: require('@/assets/avatars/app/stickers/sablier.webp'),
   sac: require('@/assets/avatars/app/stickers/sac.webp'),
   sakura: require('@/assets/avatars/app/stickers/sakura.webp'),
+  sans_compte: require('@/assets/avatars/app/stickers/sans_compte.webp'),
+  sans_publicite: require('@/assets/avatars/app/stickers/sans_publicite.webp'),
   sante_appareils: require('@/assets/avatars/app/stickers/sante_appareils.webp'),
   saule: require('@/assets/avatars/app/stickers/saule.webp'),
+  sauvegarde: require('@/assets/avatars/app/stickers/sauvegarde.webp'),
   seance_rapide: require('@/assets/avatars/app/stickers/seance_rapide.webp'),
   seche: require('@/assets/avatars/app/stickers/seche.webp'),
   sentier: require('@/assets/avatars/app/stickers/sentier.webp'),
@@ -161,10 +167,12 @@ export const STICKERS = {
   sport_vitesse: require('@/assets/avatars/app/stickers/sport_vitesse.webp'),
   sport_voile: require('@/assets/avatars/app/stickers/sport_voile.webp'),
   sport_volley: require('@/assets/avatars/app/stickers/sport_volley.webp'),
+  tableur: require('@/assets/avatars/app/stickers/tableur.webp'),
   tapis: require('@/assets/avatars/app/stickers/tapis.webp'),
   techniques: require('@/assets/avatars/app/stickers/techniques.webp'),
   torii: require('@/assets/avatars/app/stickers/torii.webp'),
   torii_courbe: require('@/assets/avatars/app/stickers/torii_courbe.webp'),
+  trois_apps: require('@/assets/avatars/app/stickers/trois_apps.webp'),
   trophee: require('@/assets/avatars/app/stickers/trophee.webp'),
   vague: require('@/assets/avatars/app/stickers/vague.webp'),
   ventre: require('@/assets/avatars/app/stickers/ventre.webp'),
@@ -243,6 +251,15 @@ export const ANCIENNES: Partial<Record<NomSticker, ImageSourcePropType>> = {
   zones_corps: require('@/assets/avatars/app/ornements/zones_corps.webp'),
   coach: require('@/assets/avatars/app/ornements/zones_corps.webp'),
   cle: require('@/assets/avatars/app/sceaux/classique/torii.webp'),
+  // 28 octobre 2026 : les tampons a l'encre des nouveaux stickers (sources : _propositions/stickers_2026-10-27/png_encre)
+  sans_compte: require('@/assets/avatars/app/tampons/sans_compte.webp'),
+  hors_ligne: require('@/assets/avatars/app/tampons/hors_ligne.webp'),
+  donnees_telephone: require('@/assets/avatars/app/tampons/donnees_telephone.webp'),
+  sans_publicite: require('@/assets/avatars/app/tampons/sans_publicite.webp'),
+  sauvegarde: require('@/assets/avatars/app/tampons/sauvegarde.webp'),
+  carnet_papier: require('@/assets/avatars/app/tampons/carnet_papier.webp'),
+  tableur: require('@/assets/avatars/app/tampons/tableur.webp'),
+  trois_apps: require('@/assets/avatars/app/tampons/trois_apps.webp'),
 };
 
 // ============ le reglage Illustrations ============

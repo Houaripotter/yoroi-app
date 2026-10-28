@@ -26,7 +26,7 @@ import { PictoCarnet, PictoTableur, PictoTroisApps } from './PictosEvolution';
 import { MainButton, Riche, Shell, useColors } from './ui';
 import type { Nav } from './types';
 import { traduire } from '@/lib/i18n/tr';
-import { illustration, type NomSticker } from '@/components/yoroi/v2/stickers';
+import { ANCIENNES, illustration, useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 
 /** Rythme du recit (26 octobre 2026) : un etage toutes les 0,9 s, fondu de 0,45 s */
 export const ETAGE_MS = 900;
@@ -37,10 +37,11 @@ const TUILES_MS = 550;
 
 const KABUTO = require('@/assets/avatars/app/ornements/kabuto.webp');
 
-const AVANT: { cle: string; quand: string; titre: string; sous: string; Picto: React.ComponentType<{ size?: number }> }[] = [
-  { cle: 'carnet', quand: traduire('Avant'), titre: traduire('Le carnet papier'), sous: traduire('Des pages qui se perdent.'), Picto: PictoCarnet },
-  { cle: 'tableur', quand: 'Puis', titre: traduire('Le tableur'), sous: traduire('Des colonnes à remplir le soir.'), Picto: PictoTableur },
-  { cle: 'apps', quand: 'Puis', titre: traduire('Trois apps différentes'), sous: traduire('Rien ne se parle.'), Picto: PictoTroisApps },
+// 28 octobre 2026 : un sticker par etage (carnet_papier, tableur, trois_apps) ; en Encre japonaise, son tampon, sinon le picto dessine
+const AVANT: { cle: string; quand: string; titre: string; sous: string; sticker: NomSticker; Picto: React.ComponentType<{ size?: number }> }[] = [
+  { cle: 'carnet', quand: traduire('Avant'), titre: traduire('Le carnet papier'), sous: traduire('Des pages qui se perdent.'), sticker: 'carnet_papier', Picto: PictoCarnet },
+  { cle: 'tableur', quand: 'Puis', titre: traduire('Le tableur'), sous: traduire('Des colonnes à remplir le soir.'), sticker: 'tableur', Picto: PictoTableur },
+  { cle: 'apps', quand: 'Puis', titre: traduire('Trois apps différentes'), sous: traduire('Rien ne se parle.'), sticker: 'trois_apps', Picto: PictoTroisApps },
 ];
 
 /**
@@ -69,8 +70,10 @@ function Lien({ visible, calme }: { visible: boolean; calme: boolean }) {
 }
 
 /** Un etage de l'ancien monde : vignette papier, quand, titre, phrase ; il s'efface un peu quand YOROI arrive */
-function Etage({ quand, titre, sous, Picto, eteint, calme, picto }: { quand: string; titre: string; sous: string; Picto: React.ComponentType<{ size?: number }>; eteint: boolean; calme: boolean; picto: number }) {
+function Etage({ quand, titre, sous, sticker, Picto, eteint, calme, picto }: { quand: string; titre: string; sous: string; sticker: NomSticker; Picto: React.ComponentType<{ size?: number }>; eteint: boolean; calme: boolean; picto: number }) {
   const c = useColors();
+  const illus = useIllustrations();
+  const image = illus.stickers || ANCIENNES[sticker] ? illus.img(sticker) : null;
   const o = useSharedValue(1);
   useEffect(() => {
     o.value = calme ? (eteint ? 0.62 : 1) : withTiming(eteint ? 0.62 : 1, { duration: FONDU_MS });
@@ -84,7 +87,7 @@ function Etage({ quand, titre, sous, Picto, eteint, calme, picto }: { quand: str
       style={[{ flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingVertical: picto < 56 ? 8 : 12, paddingHorizontal: 12 }, anim]}
     >
       <View style={{ width: picto + 12, height: picto + 12, borderRadius: 18, backgroundColor: '#F5F6FB', alignItems: 'center', justifyContent: 'center' }}>
-        <Picto size={picto} />
+        {image ? <Image source={image} style={{ width: picto, height: picto }} resizeMode="contain" accessibilityIgnoresInvertColors /> : <Picto size={picto} />}
       </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Ink size={12} weight="extraBold" color={c.textMuted} style={{ textTransform: 'uppercase', letterSpacing: 1 }}>{quand}</Ink>
@@ -138,7 +141,7 @@ export function Comparaison({ nav, genre = 'h', univers = 'japon', onNext }: { n
       {AVANT.map((e, i) => (
         <React.Fragment key={e.cle}>
           {i > 0 ? <Lien visible={etape > i} calme={calme} /> : null}
-          {etape > i ? <Etage quand={e.quand} titre={e.titre} sous={e.sous} Picto={e.Picto} eteint={yoroi} calme={calme} picto={picto} /> : <View style={{ height: picto + (petit ? 28 : 36) }} />}
+          {etape > i ? <Etage quand={e.quand} titre={e.titre} sous={e.sous} sticker={e.sticker} Picto={e.Picto} eteint={yoroi} calme={calme} picto={picto} /> : <View style={{ height: picto + (petit ? 28 : 36) }} />}
         </React.Fragment>
       ))}
       <Lien visible={yoroi} calme={calme} />
