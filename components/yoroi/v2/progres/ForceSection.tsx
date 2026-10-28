@@ -30,6 +30,7 @@ import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { versUnitePoids, type UnitePoids } from '@/lib/v2/unitePoids';
 import { dayLong, dayShort, daysDiff, monthLong, num, shiftDays, todayIso } from '@/lib/v2/progres/format';
 import { traduire, traduirePluriel, LANG } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 function kilos(v: number): string {
   return `${num(v, v >= 100 ? 0 : 1)}`;
@@ -114,7 +115,7 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
           plusHint={traduire("Touche + pour noter ta séance")}
         >
           <Ink size={14} weight="bold" color={c.textSecondary}>
-            {traduire("{0}, maximum estimé", ex.name)}
+            {traduire("{0}, maximum estimé", sansTiret(ex.name))}
           </Ink>
           <View style={{ marginTop: 8, marginHorizontal: -14 }}>
             <InkLineChart points={ex.points} domaine="seances" height={190} digits={0} minSpan={4} label={traduire("Exemple de courbe de force")} />
@@ -146,7 +147,7 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: GUTTER }}>
         <Pills
           scroll
-          items={lifts.slice(0, 14).map((l) => ({ value: l.key, label: l.name }))}
+          items={lifts.slice(0, 14).map((l) => ({ value: l.key, label: sansTiret(l.name) }))}
           value={lift.key}
           onChange={(k) => {
             setLiftKey(k);
@@ -194,7 +195,7 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
             minSpan={4}
             onScrub={(p) => setScrub(p)}
             onPress={openDetail}
-            label={traduire("Maximum estimé, {0}, de {1} à {2} {3}", lift.name, kilos(cv(first.value)), kilos(cv(last.value)), mot)}
+            label={traduire("Maximum estimé, {0}, de {1} à {2} {3}", sansTiret(lift.name), kilos(cv(first.value)), kilos(cv(last.value)), mot)}
           />
         ) : (
           <View style={{ height: 120, justifyContent: 'center', paddingHorizontal: 14 }}>
@@ -226,7 +227,7 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
           <Ink size={15} weight="extraBold">{traduire('Ce qui stagne')}</Ink>
           {stagnent.map((x) => (
             <View key={x.key} style={{ gap: 2 }}>
-              <Ink size={13} color={c.textSecondary}>{traduire('{0} : pas de nouveau record depuis {1} semaines', traduire(x.name), x.semaines)}</Ink>
+              <Ink size={13} color={c.textSecondary}>{traduire('{0} : pas de nouveau record depuis {1} semaines', sansTiret(traduire(x.name)), x.semaines)}</Ink>
               <Ink size={13} weight="bold">{traduire(ESSAIS[essaiDe(x.key)])}</Ink>
             </View>
           ))}

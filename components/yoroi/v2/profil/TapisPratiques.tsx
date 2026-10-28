@@ -27,6 +27,7 @@ import { logger } from '@/lib/security/logger';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { CeintureNouee, GrandeBarrette } from './CeintureNouee';
 import { LigneRubrique, Rubrique, teinteRubrique } from './Rubriques';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const VERT = '#1C6B45';
 const BOUTON = '#DCE3FF';
@@ -34,7 +35,7 @@ const BOUTON_TEXTE = '#23358F';
 
 /** Nom du sport, traduit, sans trait d'union (« Jiu jitsu brésilien ») */
 export function nomSport(id: string): string {
-  return traduire(getSportName(id)).replace(/-/g, ' ');
+  return sansTiret(traduire(getSportName(id)));
 }
 
 /** Le logo a montrer pour un club : ton logo importe toujours, un logo de marque fourni seulement en demo */

@@ -15,6 +15,7 @@ import type { CompoPoint, SegmentId } from '@/lib/v2/progres/composition';
 import { num } from '@/lib/v2/progres/format';
 import { BALANCE_FIELDS, fmtAutre, fmtBalance } from '@/lib/v2/balance/format';
 import { traduire } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const ROWS: { id: SegmentId; label: string }[] = [
   { id: 'arm_right', label: traduire('Bras droit') },
@@ -153,7 +154,7 @@ export function ExtrasCard({ point, style }: { point: CompoPoint; style?: StyleP
       value: `${fmtBalance(mesures[f.key], f.step)}${f.unit && f.unit !== 'points' ? ` ${traduire(f.unit)}` : f.unit === 'points' ? traduire(' sur 100') : ''}`,
       dot: f.kind ? CORPS[f.kind] : c.textMuted,
     })),
-    ...autres.map((a, i) => ({ id: `autre_${i}`, label: a.nom, value: `${fmtAutre(a.valeur)}${a.unite ? ` ${a.unite}` : ''}`, dot: c.textMuted })),
+    ...autres.map((a, i) => ({ id: `autre_${i}`, label: sansTiret(a.nom), value: `${fmtAutre(a.valeur)}${a.unite ? ` ${a.unite}` : ''}`, dot: c.textMuted })),
   ];
   return (
     <View style={[{ borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider, padding: 16, gap: 6 }, style]}>
