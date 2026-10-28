@@ -23,7 +23,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon as IconEspace } from '@/components/yoroi/v2/espace/ui';
 import { ceQueYoroiFait, type IdPourToi } from '@/lib/v2/premium/pourToi';
 import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
-import { sticker, useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import { guerrierImage } from '@/components/yoroi/v2/espace/assets';
 import { CLASSIQUE_IMAGES } from '@/lib/v2/dojo/personnages';
 import { rangNom } from '@/lib/v2/dojo/univers';
@@ -128,7 +128,7 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
         </View>
         {choses.map((k) => (
           <View key={k.id} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }} accessible accessibilityLabel={k.premium ? traduire('{0}, avec Premium. {1}', k.titre, k.texte) : `${k.titre}. ${k.texte}`}>
-            <Image source={illus.img(STICKER_CHOSE[k.id], k.id === 'coach' ? sticker('coach') : null)} style={{ width: 42, height: 42 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+            <Image source={illus.img(STICKER_CHOSE[k.id])} style={{ width: 42, height: 42 }} resizeMode="contain" accessibilityIgnoresInvertColors />
             <View style={{ flex: 1, gap: 3 }}>
               {k.premium ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', backgroundColor: '#F6EEDD', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
@@ -233,7 +233,7 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
           <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ton Dojo, dès maintenant")}</Ink>
           <ApercuProgres {...apercuProps} partie="dojo" />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 22, backgroundColor: pal.teinte, padding: 14 }}>
-            <Image source={illus.img('coach', sticker('coach'))} style={{ width: 44, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+            <Image source={illus.img('coach')} style={{ width: 44, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
             <Riche size={13} lineHeight={18} color={c.ink} style={{ flex: 1 }} text={traduire('Après la visite de l’app, **ton coach** pourra te proposer un programme sur ces jours, avec tes réponses.')} />
           </View>
         </Animated.View>

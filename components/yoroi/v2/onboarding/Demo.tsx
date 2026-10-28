@@ -34,7 +34,7 @@ import { SemaineCouleurs, familleSport, FAMILLES, sportsDesJours } from './Semai
 import { xpPremiereSemaine } from './ApercuProgres';
 import { sportShortName } from '@/lib/v2/seance/sportVisuals';
 import { JOURS_NOMS } from '@/components/yoroi/v2/espace/JoursPicker';
-import { sticker, useIllustrations } from '@/components/yoroi/v2/stickers';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import { traduire } from '@/lib/i18n/tr';
 
 const WEEKS = 4;
@@ -125,7 +125,7 @@ function CoachJours({ days, sports }: { days: number[]; sports: string[] }) {
     <View style={{ gap: 10 }}>
       <View style={{ borderRadius: 22, backgroundColor: c.surface, padding: 14, gap: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Image source={illus.img('coach', sticker('coach'))} style={{ width: 54, height: 54 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+          <Image source={illus.img('coach')} style={{ width: 54, height: 54 }} resizeMode="contain" accessibilityIgnoresInvertColors />
           <View style={{ flex: 1, gap: 1 }}>
             <Ink size={10.5} weight="black" color="#1C6B45" style={{ letterSpacing: 1.2 }}>{traduire('TON PROGRAMME')}</Ink>
             <Ink size={17} weight="black" tight color={c.ink}>{traduire('Ta première semaine')}</Ink>

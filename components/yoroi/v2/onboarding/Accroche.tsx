@@ -52,7 +52,7 @@ import { P } from '@/components/yoroi/livePalette';
 import { LiensLegaux } from '@/components/yoroi/v2/premium/LiensLegaux';
 import { traduire, LOCALE, DECIMAL } from '@/lib/i18n/tr';
 import { BoutonLangue } from '@/components/yoroi/v2/langue/ChoixLangue';
-import { illustration, sticker, useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+import { illustration, useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import Animated, { FadeIn, FadeOut, useReducedMotion } from 'react-native-reanimated';
 import { SceneAnimee } from '@/components/yoroi/v2/scenes/SceneAnimee';
 import { SCENES_VOYAGES } from '@/lib/v2/espace/voyages';
@@ -161,7 +161,7 @@ const ILLU = {
     return illustration('balance', ILLU_ENCRE.balance);
   },
   get coach(): ImageSourcePropType {
-    return illustration('coach', sticker('coach'));
+    return illustration('coach');
   },
   get kabuto(): ImageSourcePropType {
     return illustration('kabuto');
@@ -632,7 +632,7 @@ function PageCoach() {
   return (
     <View style={{ gap: 10 }}>
       <View style={{ borderRadius: 24, backgroundColor: '#E8ECFF', padding: 16, gap: 10, overflow: 'hidden' }}>
-        <Image source={illus.img('coach', sticker('coach'))} resizeMode="contain" style={{ position: 'absolute', right: 8, top: 8, width: 78, height: 78 }} accessibilityIgnoresInvertColors />
+        <Image source={illus.img('coach')} resizeMode="contain" style={{ position: 'absolute', right: 8, top: 8, width: 78, height: 78 }} accessibilityIgnoresInvertColors />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Ink size={10.5} weight="black" color="#3557D9" style={{ letterSpacing: 1.2 }}>{traduire('SÉANCE DU JOUR')}</Ink>
           <Pastille label={traduire('Exemple')} blanche />

@@ -249,8 +249,8 @@ export const ANCIENNES: Partial<Record<NomSticker, ImageSourcePropType>> = {
   vague: require('@/assets/avatars/app/ornements/vague.webp'),
   videos: require('@/assets/avatars/app/carnet/videos.webp'),
   zones_corps: require('@/assets/avatars/app/ornements/zones_corps.webp'),
-  coach: require('@/assets/avatars/app/ornements/zones_corps.webp'),
-  cle: require('@/assets/avatars/app/sceaux/classique/torii.webp'),
+  coach: require('@/assets/avatars/app/tampons/coach.webp'),
+  cle: require('@/assets/avatars/app/tampons/cle.webp'),
   // 28 octobre 2026 : les tampons a l'encre des nouveaux stickers (sources : _propositions/stickers_2026-10-27/png_encre)
   sans_compte: require('@/assets/avatars/app/tampons/sans_compte.webp'),
   hors_ligne: require('@/assets/avatars/app/tampons/hors_ligne.webp'),
@@ -260,6 +260,12 @@ export const ANCIENNES: Partial<Record<NomSticker, ImageSourcePropType>> = {
   carnet_papier: require('@/assets/avatars/app/tampons/carnet_papier.webp'),
   tableur: require('@/assets/avatars/app/tampons/tableur.webp'),
   trois_apps: require('@/assets/avatars/app/tampons/trois_apps.webp'),
+  calendrier: require('@/assets/avatars/app/tampons/calendrier.webp'),
+  bilan: require('@/assets/avatars/app/tampons/bilan.webp'),
+  sommeil: require('@/assets/avatars/app/tampons/sommeil.webp'),
+  sante_appareils: require('@/assets/avatars/app/tampons/sante_appareils.webp'),
+  coeur: require('@/assets/avatars/app/tampons/coeur.webp'),
+  activite: require('@/assets/avatars/app/tampons/activite.webp'),
 };
 
 // ============ le reglage Illustrations ============
