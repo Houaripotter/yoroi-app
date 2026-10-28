@@ -281,6 +281,14 @@ export const ANCIENNES: Partial<Record<NomSticker, ImageSourcePropType>> = {
   medaille_or: require('@/assets/avatars/app/tampons/medaille_or.webp'),
   medaille_argent: require('@/assets/avatars/app/tampons/medaille_argent.webp'),
   medaille_bronze: require('@/assets/avatars/app/tampons/medaille_bronze.webp'),
+  abdos: require('@/assets/avatars/app/tampons/abdos.webp'),
+  muscle: require('@/assets/avatars/app/tampons/muscle.webp'),
+  pecs: require('@/assets/avatars/app/tampons/pecs.webp'),
+  fessiers: require('@/assets/avatars/app/tampons/fessiers.webp'),
+  grip: require('@/assets/avatars/app/tampons/grip.webp'),
+  masse: require('@/assets/avatars/app/tampons/masse.webp'),
+  ventre: require('@/assets/avatars/app/tampons/ventre.webp'),
+  sac: require('@/assets/avatars/app/tampons/sac.webp'),
 };
 
 // ============ le reglage Illustrations ============
