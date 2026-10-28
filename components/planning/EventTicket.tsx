@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Calendar, MapPin, Bell, Footprints } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 type SportType = 'JJB' | 'MMA' | 'Boxe' | 'MuayThai' | 'Foot' | 'Basket' | 'Hand' | 'Running' | 'Padel' | 'Kickboxing' | 'Judo' | 'Lutte';
 
@@ -87,7 +88,7 @@ const EventTicket: React.FC<EventTicketProps> = ({ event, onPress, onReminderPre
       return (
         <View style={styles.runningContainer}>
           <Text style={[styles.eventName, { color: isDark ? themeColors.textPrimary : colors.dark }]} numberOfLines={1}>
-            {event.name}
+            {sansTiret(event.name)}
           </Text>
           <View style={[styles.distanceBadge, { backgroundColor: isDark ? `${colors.primary}20` : colors.light }]}>
             <Text style={[styles.distanceText, { color: colors.primary }]}>
@@ -102,7 +103,7 @@ const EventTicket: React.FC<EventTicketProps> = ({ event, onPress, onReminderPre
     return (
       <View style={styles.combatContainer}>
         <Text style={[styles.eventName, { color: isDark ? themeColors.textPrimary : colors.dark }]} numberOfLines={1}>
-          {event.name}
+          {sansTiret(event.name)}
         </Text>
         {event.category && (
           <View style={[styles.categoryBadge, { backgroundColor: isDark ? `${colors.primary}20` : colors.light }]}>
@@ -137,7 +138,7 @@ const EventTicket: React.FC<EventTicketProps> = ({ event, onPress, onReminderPre
           ? <Footprints size={22} color="#FFFFFF" style={styles.sportIcon} />
           : <Text style={styles.sportIcon}>{getSportIcon()}</Text>
         }
-        <Text style={styles.sportLabel}>{event.sport}</Text>
+        <Text style={styles.sportLabel}>{sansTiret(event.sport)}</Text>
       </View>
 
       {/* Séparation dentelée */}
@@ -170,7 +171,7 @@ const EventTicket: React.FC<EventTicketProps> = ({ event, onPress, onReminderPre
           </View>
           <View style={styles.detailItem}>
             <MapPin size={14} color={themeColors.textMuted} />
-            <Text style={[styles.detailText, { color: themeColors.textMuted }]} numberOfLines={1}>{event.location}</Text>
+            <Text style={[styles.detailText, { color: themeColors.textMuted }]} numberOfLines={1}>{sansTiret(event.location)}</Text>
           </View>
         </View>
 

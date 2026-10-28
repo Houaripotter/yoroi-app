@@ -15,6 +15,7 @@ import type { CompetitionExtra } from './extras';
 import logger from '@/lib/security/logger';
 import { traduire } from '@/lib/i18n/tr';
 import { sourceNotif, src, type SourceTexte } from '@/lib/notificationLangue';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const PREFIX = 'yoroi-competition-';
 const CHANNEL = 'competitions';
@@ -35,15 +36,15 @@ export function plannedReminders(comp: Competition, extra: CompetitionExtra): Pl
   // sur l'écran verrouillé. Le détail reste dans la fiche compétition.
   const cat = Boolean(comp.categorie_poids);
   const list: Planned[] = [
-    { kind: 'j30', at: at(addDays(day, -30), 9), title: traduire("Dans 30 jours : {0}", comp.nom), body: cat ? traduire('Un mois pour te préparer. Vérifie ton inscription et ta catégorie.') : traduire('Un mois pour te préparer. Pense à vérifier ton inscription.'), src: { titre: src("Dans 30 jours : {0}", comp.nom) } },
-    { kind: 'j7', at: at(addDays(day, -7), 9), title: traduire("Dans 7 jours : {0}", comp.nom), src: { titre: src("Dans 7 jours : {0}", comp.nom) }, body: cat ? traduire('Dernière semaine. Garde un œil sur ta pesée.') : traduire('Dernière semaine. Prépare ton sac et ton trajet.') },
-    { kind: 'veille', at: at(addDays(day, -1), 19), title: traduire("Demain : {0}", comp.nom), body: comp.lieu ? traduire("Direction {0}. Prépare ton sac et va au lit tôt.", comp.lieu) : traduire('Prépare ton sac et va au lit tôt.'), src: { titre: src("Demain : {0}", comp.nom), ...(comp.lieu ? { texte: src("Direction {0}. Prépare ton sac et va au lit tôt.", comp.lieu) } : {}) } },
+    { kind: 'j30', at: at(addDays(day, -30), 9), title: traduire("Dans 30 jours : {0}", sansTiret(comp.nom)), body: cat ? traduire('Un mois pour te préparer. Vérifie ton inscription et ta catégorie.') : traduire('Un mois pour te préparer. Pense à vérifier ton inscription.'), src: { titre: src("Dans 30 jours : {0}", sansTiret(comp.nom)) } },
+    { kind: 'j7', at: at(addDays(day, -7), 9), title: traduire("Dans 7 jours : {0}", sansTiret(comp.nom)), src: { titre: src("Dans 7 jours : {0}", sansTiret(comp.nom)) }, body: cat ? traduire('Dernière semaine. Garde un œil sur ta pesée.') : traduire('Dernière semaine. Prépare ton sac et ton trajet.') },
+    { kind: 'veille', at: at(addDays(day, -1), 19), title: traduire("Demain : {0}", sansTiret(comp.nom)), body: comp.lieu ? traduire("Direction {0}. Prépare ton sac et va au lit tôt.", sansTiret(comp.lieu)) : traduire('Prépare ton sac et va au lit tôt.'), src: { titre: src("Demain : {0}", sansTiret(comp.nom)), ...(comp.lieu ? { texte: src("Direction {0}. Prépare ton sac et va au lit tôt.", sansTiret(comp.lieu)) } : {}) } },
   ];
   if (extra.pesee) {
     const weighDay = extra.pesee === 'veille' ? addDays(day, -1) : day;
-    list.push({ kind: 'pesee', at: at(weighDay, extra.pesee === 'veille' ? 8 : 7), title: traduire("Jour de pesée : {0}", comp.nom), body: traduire('Pesée ce matin pour savoir où tu en es.'), src: { titre: src("Jour de pesée : {0}", comp.nom) } });
+    list.push({ kind: 'pesee', at: at(weighDay, extra.pesee === 'veille' ? 8 : 7), title: traduire("Jour de pesée : {0}", sansTiret(comp.nom)), body: traduire('Pesée ce matin pour savoir où tu en es.'), src: { titre: src("Jour de pesée : {0}", sansTiret(comp.nom)) } });
   }
-  list.push({ kind: 'resultat', at: at(addDays(day, 1), 10), title: traduire(`Comment s’est passée ta compétition ?`), body: traduire("Note ton résultat de {0} : il rejoint ton palmarès.", comp.nom), src: { texte: src("Note ton résultat de {0} : il rejoint ton palmarès.", comp.nom) } });
+  list.push({ kind: 'resultat', at: at(addDays(day, 1), 10), title: traduire(`Comment s’est passée ta compétition ?`), body: traduire("Note ton résultat de {0} : il rejoint ton palmarès.", sansTiret(comp.nom)), src: { texte: src("Note ton résultat de {0} : il rejoint ton palmarès.", sansTiret(comp.nom)) } });
   return list.sort((a, b) => a.at.getTime() - b.at.getTime());
 }
 

@@ -20,6 +20,7 @@ import { ShareStudio } from '@/components/yoroi/v2/partage/ShareStudio';
 import { Stamp, cardWidthFor, paletteOf } from '@/components/yoroi/v2/partage/cardKit';
 import { useStudio } from '@/lib/v2/partage/useStudio';
 import { traduire } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 export default function LastSessionScreen() {
   const { avatarImage: contextAvatar } = useAvatar();
@@ -106,13 +107,13 @@ export default function LastSessionScreen() {
                 // Si on a les séries détaillées, afficher chaque série
                 if (Array.isArray(ex.setsData) && ex.setsData.length > 0) {
                   return ex.setsData.map((set: any, i: number) => ({
-                    label: i === 0 ? (ex.name ?? traduire('Exercice')) : '',
+                    label: i === 0 ? (sansTiret(ex.name) ?? traduire('Exercice')) : '',
                     weight: (set.weight ?? 0) > 0 ? set.weight.toString() : undefined,
                     reps: (set.reps ?? 0) > 0 ? set.reps.toString() : undefined,
                   }));
                 }
                 return [{
-                  label: ex.name ?? traduire('Exercice'),
+                  label: sansTiret(ex.name) ?? traduire('Exercice'),
                   weight: (ex.weight ?? 0) > 0 ? ex.weight.toString() : undefined,
                   reps: (ex.reps ?? 0) > 0 ? ex.reps.toString() : undefined,
                   sets: (ex.sets ?? 0) > 1 ? ex.sets.toString() : undefined,

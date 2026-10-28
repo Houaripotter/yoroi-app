@@ -11,6 +11,7 @@ import { getAllMeasurements } from './storage';
 import { getUnlockedBadges } from './badges';
 import logger from '@/lib/security/logger';
 import { LOCALE } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 export type ReportPeriod = 'month' | 'quarter' | 'year';
 
@@ -105,7 +106,7 @@ function buildHTML(data: ReportData): string {
     .map(t => `
       <tr>
         <td>${new Date(t.date).toLocaleDateString(LOCALE)}</td>
-        <td>${escapeHtml(t.sport || '-')}</td>
+        <td>${escapeHtml(sansTiret(t.sport || ''))}</td>
         <td>${t.duration ?? '-'}</td>
         <td>${t.intensity ?? (t as any).rpe ?? '-'}</td>
       </tr>
@@ -137,7 +138,7 @@ function buildHTML(data: ReportData): string {
       <tr>
         <td>${new Date(c.date).toLocaleDateString(LOCALE)}</td>
         <td>${escapeHtml(c.nom)}</td>
-        <td>${escapeHtml(c.sport)}</td>
+        <td>${escapeHtml(sansTiret(c.sport))}</td>
         <td>${escapeHtml(c.statut || '-')}</td>
       </tr>
     `).join('');

@@ -26,6 +26,7 @@ import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { BackButton, BigButton, Chip, ChipRow, EmptyState, Glass, Hanko, SectionTitle, tap } from '@/components/yoroi/v2/seances/ui';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const SCENE = require('@/assets/avatars/app/monde/scenes/remparts.webp');
 
@@ -172,7 +173,7 @@ export default function PalmaresScreen() {
                 <Pressable key={k.id} onPress={() => { tap(); router.push(`/competition-detail?id=${k.id}` as any); }} accessibilityRole="button" accessibilityLabel={traduire(k.nom)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48 }}>
                   <MedalIcon kind={m} size={30} />
                   <View style={{ flex: 1 }}>
-                    <Ink size={14} weight="extraBold" numberOfLines={2}>{traduire(k.nom)}</Ink>
+                    <Ink size={14} weight="extraBold" numberOfLines={2}>{sansTiret(traduire(k.nom))}</Ink>
                     <Ink size={12} color={c.textSecondary}>{longDate(k.date.slice(0, 10), true)}</Ink>
                   </View>
                   <Icon name="chevron" size={16} color={c.textMuted} />
@@ -196,7 +197,7 @@ export default function PalmaresScreen() {
             <Glass onPress={() => router.push(`/combat-detail?id=${last.id}` as any)} label={traduire("Ton dernier combat")} style={{ gap: 4 }}>
               <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Ton dernier combat, {0}", relativeDay(last.date.slice(0, 10), today))}</Ink>
               <Ink size={18} weight="black" tight>{traduire("{0} contre {1}", last.resultat === 'victoire' ? traduire('Victoire') : last.resultat === 'defaite' ? traduire('Défaite') : traduire('Nul'), last.adversaire_nom || traduire('un adversaire'))}</Ink>
-              <Ink size={13} color={c.textSecondary}>{[last.adversaire_club, last.methode ? METHOD_LABEL[last.methode] ?? last.methode : '', last.technique, last.temps].filter(Boolean).join(', ')}</Ink>
+              <Ink size={13} color={c.textSecondary}>{[last.adversaire_club, last.methode ? METHOD_LABEL[last.methode] ?? last.methode : '', sansTiret(last.technique), last.temps].filter(Boolean).join(', ')}</Ink>
             </Glass>
           ) : null}
 

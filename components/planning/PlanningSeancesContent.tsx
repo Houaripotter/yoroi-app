@@ -856,7 +856,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
                 {training.location_name && (
                   <View style={[styles.tag, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)' }]}>
                     <MaterialCommunityIcons name="map-marker-outline" size={11} color={colors.textMuted} />
-                    <Text style={[styles.tagText, { color: colors.textMuted }]} numberOfLines={1}>{training.location_name}</Text>
+                    <Text style={[styles.tagText, { color: colors.textMuted }]} numberOfLines={1}>{sansTiret(training.location_name)}</Text>
                   </View>
                 )}
                 {training.technical_theme && (

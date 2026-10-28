@@ -14,6 +14,7 @@ import { G, GalerieHeader, Pastille, PastilleRow } from './kit';
 import { INFO_GV, chargerGymvisual, filtrer } from '@/lib/v2/studio/bibliothequesLibres';
 import type { ExoLibre } from '@/lib/v2/studio/bibliothequesLibres';
 import { traduire } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const BLANC = '#FFFFFF';
 
@@ -91,7 +92,7 @@ export function ExercicesLibresGalerie() {
           >
             <DemoPaire images={item.images.map((uri) => ({ uri }))} label={item.nom} largeur={carte} hauteur={carte} arrondi={0} bordure={false} contenir={contenir} fond={BLANC} />
             <View style={{ padding: 10, gap: 2 }}>
-              <Ink size={13} weight="extraBold" numberOfLines={2}>{item.nom}</Ink>
+              <Ink size={13} weight="extraBold" numberOfLines={2}>{sansTiret(item.nom)}</Ink>
               {item.yoroi ? (
                 <Ink size={11} weight="bold" color={c.accent} numberOfLines={1}>{traduire(item.yoroi)}</Ink>
               ) : (
@@ -112,7 +113,7 @@ export function ExercicesLibresGalerie() {
               </View>
               <DemoPaire images={ouvert.images.map((uri) => ({ uri }))} label={ouvert.nom} largeur={width - G * 2} hauteur={Math.min(360, width - G * 2)} arrondi={24} contenir={contenir} fond={BLANC} />
               <View style={{ gap: 4 }}>
-                <Ink size={22} weight="black" tight>{ouvert.nom}</Ink>
+                <Ink size={22} weight="black" tight>{sansTiret(ouvert.nom)}</Ink>
                 {ouvert.autres.length ? <Ink size={13} color={c.textSecondary}>{ouvert.autres.join(' · ')}</Ink> : null}
                 {ouvert.yoroi ? <Ink size={14} weight="bold" color={c.accent}>{traduire('Dans YOROI : {0}', traduire(ouvert.yoroi))}</Ink> : null}
               </View>

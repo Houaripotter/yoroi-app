@@ -18,6 +18,7 @@ import { cleMoment, isoJour, lundiDe, raisonPesee } from './moments';
 import { bilanAnnee, bilanMois, cleExploit, exploitsPesee, exploitsSeance } from './exploits';
 import type { CarteData, Exploit, RecordCarte } from './types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const JOURS = [traduire('Dimanche'), traduire('Lundi'), traduire('Mardi'), traduire('Mercredi'), traduire('Jeudi'), traduire('Vendredi'), traduire('Samedi')];
 const MOIS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
@@ -85,7 +86,7 @@ export async function chargerSeance(id: number): Promise<CarteData | null> {
   try {
     const r = await getSeanceResult(id);
     for (const x of r?.records ?? []) {
-      records.push({ nom: x.name, texte: traduirePluriel(x.reps, x.reps > 1, "{0} kg pour {1} répétition", "{0} kg pour {1} répétitions", nombre(x.weight, 1), x.reps), poids: x.weight, reps: x.reps });
+      records.push({ nom: sansTiret(x.name), texte: traduirePluriel(x.reps, x.reps > 1, "{0} kg pour {1} répétition", "{0} kg pour {1} répétitions", nombre(x.weight, 1), x.reps), poids: x.weight, reps: x.reps });
     }
   } catch {
     // pas de record connu

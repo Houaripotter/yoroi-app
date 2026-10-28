@@ -7,6 +7,7 @@ import { getCompetitions, Competition } from '@/lib/database';
 import { differenceInDays, parseISO } from 'date-fns';
 import logger from '@/lib/security/logger';
 import { useTheme } from '@/lib/ThemeContext';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 interface NextEvent {
   id: number;
@@ -155,8 +156,8 @@ const ObjectiveSwitch = () => {
       </Animated.View>
 
       <View style={styles.content}>
-        <Text style={[styles.labelOn, { color: colors.textPrimary }]} numberOfLines={1}>{nextEvent.name}</Text>
-        <Text style={[styles.subtitleOn, { color: colors.textSecondary }]}>{nextEvent.sport}</Text>
+        <Text style={[styles.labelOn, { color: colors.textPrimary }]} numberOfLines={1}>{sansTiret(nextEvent.name)}</Text>
+        <Text style={[styles.subtitleOn, { color: colors.textSecondary }]}>{sansTiret(nextEvent.sport)}</Text>
       </View>
 
       {/* Toggle switch visuel ON */}

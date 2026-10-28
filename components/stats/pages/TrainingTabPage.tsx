@@ -39,6 +39,7 @@ import { PremiumModal } from '@/components/premium/PremiumModal';
 import { BarChart2, Lock } from 'lucide-react-native';
 import { usePremium } from '@/context/PremiumContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 // Parse date sûr : 'yyyy-MM-dd' en local (évite le jour précédent à l'ouest d'UTC)
 const toLocalDate = (v: any): Date =>
@@ -337,7 +338,7 @@ export const TrainingTabPage: React.FC = React.memo(() => {
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                           <MaterialCommunityIcons name={sportIcon as any} size={16} color={sportColor} />
                           <Text style={{ fontSize: 11, fontWeight: '700', color: sportColor, textTransform: 'uppercase', letterSpacing: 0.5 }} numberOfLines={1}>
-                            {sportInfo?.name || entry.sport}
+                            {sansTiret(sportInfo?.name || entry.sport)}
                           </Text>
                         </View>
                         <Text style={[styles.historyCardDate, { color: colors.textMuted }]}>

@@ -448,7 +448,7 @@ export default function RecordsScreen() {
                   {combat.submissions.slice(0, 8).map((s) => (
                     <View key={s.technique} style={{ paddingVertical: 8, gap: 6 }}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
-                        <Ink size={14} weight="bold" style={{ flex: 1 }} numberOfLines={2}>{s.technique}</Ink>
+                        <Ink size={14} weight="bold" style={{ flex: 1 }} numberOfLines={2}>{sansTiret(s.technique)}</Ink>
                         <Ink size={14} weight="black">{String(s.count)}</Ink>
                       </View>
                       <View style={{ height: 8, borderRadius: 4, backgroundColor: c.fillSubtle, overflow: 'hidden' }}>

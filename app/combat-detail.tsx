@@ -25,6 +25,7 @@ import { BackButton, BigButton, EmptyState, Glass, Hanko, RoundIcon, Stat, tap }
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const METHODE: Record<string, string> = {
   soumission: traduire('par soumission'),
@@ -144,7 +145,7 @@ export default function CombatDetailScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Compétition")}</Ink>
-                <Ink size={16} weight="extraBold" numberOfLines={2}>{traduire(competition.nom)}</Ink>
+                <Ink size={16} weight="extraBold" numberOfLines={2}>{sansTiret(traduire(competition.nom))}</Ink>
               </View>
               <Icon name="chevron" size={18} color={c.textMuted} />
             </Glass>
@@ -159,7 +160,7 @@ export default function CombatDetailScreen() {
           {combat.technique ? (
             <Glass style={{ gap: 4 }}>
               <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Technique")}</Ink>
-              <Ink size={18} weight="extraBold">{combat.technique}</Ink>
+              <Ink size={18} weight="extraBold">{sansTiret(combat.technique)}</Ink>
             </Glass>
           ) : null}
 

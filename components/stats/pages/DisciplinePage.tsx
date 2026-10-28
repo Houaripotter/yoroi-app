@@ -24,6 +24,7 @@ import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { StatsExplanation } from '../StatsExplanation';
 import { logger } from '@/lib/security/logger';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 export const DisciplinePage: React.FC = () => {
   const { colors } = useTheme();
@@ -323,7 +324,7 @@ export const DisciplinePage: React.FC = () => {
                   {disciplineBreakdown.slice(0, 6).map((d, i) => (
                     <View key={d.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
                       <View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                      <Text style={{ flex: 1, fontSize: 12, color: colors.textPrimary ?? colors.text }} numberOfLines={1}>{d.name}</Text>
+                      <Text style={{ flex: 1, fontSize: 12, color: colors.textPrimary ?? colors.text }} numberOfLines={1}>{sansTiret(d.name)}</Text>
                       <Text style={{ fontSize: 12, fontWeight: '800', color: PIE_COLORS[i % PIE_COLORS.length] }}>
                         {Math.round(d.pct * 100)}%
                       </Text>

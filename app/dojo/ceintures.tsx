@@ -20,6 +20,7 @@ import { universDe } from '@/lib/v2/dojo/dojoAffichage';
 import { P } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 export default function Ceintures() {
   const { theme } = useYoroiTheme();
@@ -98,7 +99,7 @@ export default function Ceintures() {
                   </View>
                 )}
                 <View style={{ flex: 1, gap: 3 }}>
-                  <Ink size={17} weight="extraBold" numberOfLines={2}>{traduire(b.sportName)}</Ink>
+                  <Ink size={17} weight="extraBold" numberOfLines={2}>{sansTiret(traduire(b.sportName))}</Ink>
                   <Ink size={13} color={c.textSecondary}>{traduirePluriel(b.count, b.count > 1, "Niveau {0}, {1} séance", "Niveau {0}, {1} séances", b.belt.name, b.count)}</Ink>
                 </View>
                 <LevelPlate color={b.belt.color} edge={b.belt.edge} size={26} />

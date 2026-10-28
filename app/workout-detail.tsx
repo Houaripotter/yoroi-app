@@ -903,7 +903,7 @@ export default function WorkoutDetailScreen() {
             </Modal>
           ) : hasPin ? (
             <>
-              <SectionTitle title={traduire("Lieu")} sub={t.location_name || undefined} />
+              <SectionTitle title={traduire("Lieu")} sub={sansTiret(t.location_name) || undefined} />
               <View style={{ height: 200, borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: c.divider }}>
                 <MapView provider={PROVIDER_DEFAULT} style={{ flex: 1 }} initialRegion={{ latitude: pinLat!, longitude: pinLon!, latitudeDelta: 0.006, longitudeDelta: 0.006 }} scrollEnabled={false} zoomEnabled={false} pitchEnabled={false} rotateEnabled={false}>
                   <Marker coordinate={{ latitude: pinLat!, longitude: pinLon! }} pinColor={c.accent} />

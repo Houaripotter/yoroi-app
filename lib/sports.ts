@@ -1600,7 +1600,7 @@ const SESSION_TYPE_LABELS: Record<string, string> = {
 export const getSessionTypeLabel = (sessionType?: string | null): string => {
   if (!sessionType) return '';
   const key = sessionType.toLowerCase().trim();
-  if (SESSION_TYPE_LABELS[key]) return SESSION_TYPE_LABELS[key];
+  if (SESSION_TYPE_LABELS[key]) return sansTiret(SESSION_TYPE_LABELS[key]);
   // Fallback : remplace _ par espace + Title Case
   const words = key.replace(/[_-]+/g, ' ').trim();
   return words.charAt(0).toUpperCase() + words.slice(1);

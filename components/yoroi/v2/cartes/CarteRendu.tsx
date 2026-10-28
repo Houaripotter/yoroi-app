@@ -36,6 +36,7 @@ import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { chargeGrand, donneesEnUnite, exploitEnUnite, statsEnUnite } from '@/lib/v2/cartes/unite';
 import type { UnitePoids } from '@/lib/v2/unitePoids';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 export const CARTE_W = 360;
 export const HAUTEURS: Record<FormatId, number> = { story: 640, post: 450, carre: 360 };
@@ -293,7 +294,7 @@ function Record({ data, pal, largeur = 300, centre }: { data: CarteData; pal: Pa
   const r = data.seance?.records?.[0];
   if (!r) return null;
   const plus = (data.seance?.records?.length ?? 0) - 1;
-  const texte = plus > 0 ? traduirePluriel(plus, plus > 1, "{0} et {1} autre", "{0} et {1} autres", r.nom, plus) : `${r.nom}, ${r.texte}`;
+  const texte = plus > 0 ? traduirePluriel(plus, plus > 1, "{0} et {1} autre", "{0} et {1} autres", sansTiret(r.nom), plus) : `${sansTiret(r.nom)}, ${r.texte}`;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, maxWidth: largeur, alignSelf: centre ? 'center' : 'flex-start' }}>
       <TropheeRecord size={30} couleurs={{ fond: '#C9A13B', trophee: '#FFFFFF' }} />
@@ -800,7 +801,7 @@ function RecordVue({ d, o, pal, W, titre, fig, padTop, padBas, u }: Ctx) {
             {/* sur une image sombre le rouge se perd : le libelle prend l'or du trophee ; sur clair, le rouge des records */}
             <T size={story ? 16 : 13} weight="black" color={sombre ? '#F2C75C' : pal.record} style={[{ letterSpacing: 0.2 }, pal.shadow]}>{autres > 0 ? traduire('Nouveaux records') : traduire('Nouveau record')}</T>
           </View>
-          <T size={fit(r.nom, L, Math.round(30 * k), 0.58)} weight="black" color={pal.ink} style={[{ letterSpacing: -0.4 }, pal.shadow]}>{traduire(r.nom)}</T>
+          <T size={fit(r.nom, L, Math.round(30 * k), 0.58)} weight="black" color={pal.ink} style={[{ letterSpacing: -0.4 }, pal.shadow]}>{sansTiret(traduire(r.nom))}</T>
           {r.poids ? (
             <Heros g={chargeGrand(r.poids, u)} pal={pal} largeur={L} max={Math.round((carre ? 120 : 140) * k)} />
           ) : (

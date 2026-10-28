@@ -56,6 +56,7 @@ import type { SealContext, SealFamily } from '@/lib/v2/dojo/seals';
 import { BELTS, beltFor } from '@/lib/v2/dojo/belts';
 import type { Belt } from '@/lib/v2/dojo/belts';
 import { traduire, traduirePluriel, DECIMAL, LOCALE } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 // ============================================================
 // Contrat
@@ -1354,7 +1355,7 @@ function buildNextGoals(a: {
   if (belt && belt.next) {
     out.push({
       kind: 'ceinture',
-      title: belt.remaining > 1 ? traduire("Encore {0} séances pour le niveau {1} en {2}", belt.remaining, belt.next.name, belt.sportName) : traduire("Encore 1 séance pour le niveau {0} en {1}", belt.next.name, belt.sportName),
+      title: belt.remaining > 1 ? traduire("Encore {0} séances pour le niveau {1} en {2}", belt.remaining, belt.next.name, sansTiret(belt.sportName)) : traduire("Encore 1 séance pour le niveau {0} en {1}", belt.next.name, belt.sportName),
       detail: traduirePluriel(belt.count, belt.count > 1, "{0} séance de {1} pour l’instant", "{0} séances de {1} pour l’instant", belt.count, belt.sportName),
       href: '/dojo/ceintures',
     });

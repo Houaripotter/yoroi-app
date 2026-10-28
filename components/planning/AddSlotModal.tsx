@@ -25,6 +25,7 @@ import {
 } from '@/lib/database';
 import { SPORTS, SPORTS_BY_CATEGORY, CATEGORY_LABELS, getSportIcon } from '@/lib/sports';
 import { notificationAsync, NotificationFeedbackType, selectionAsync } from 'expo-haptics';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const DAY_LABELS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 const DAY_SHORT = ['L', 'M', 'Me', 'J', 'V', 'S', 'D'];
@@ -338,7 +339,7 @@ export const AddSlotModal: React.FC<AddSlotModalProps> = ({
                                 <MaterialCommunityIcons name={sport.icon as any} size={24} color={isSelected ? colors.accent : sport.color} />
                               </View>
                               <Text style={[styles.sportGridName, { color: colors.textPrimary }]} numberOfLines={2}>
-                                {sport.name}
+                                {sansTiret(sport.name)}
                               </Text>
                               {isSelected && (
                                 <View style={[styles.sportGridCheck, { backgroundColor: colors.accent }]}>

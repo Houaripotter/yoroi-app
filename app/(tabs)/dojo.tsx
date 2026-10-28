@@ -56,6 +56,7 @@ import { PACKS, THEMES, THEME_IMAGES, aUnPersonnage, parsePersonnage, personnage
 import type { Gender } from '@/lib/v2/dojo/personnages';
 import { carteBlanche, ton } from '@/components/yoroi/v2/seance/pastel';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const NB = ' ';
 const SHORT_MONTHS = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
@@ -668,7 +669,7 @@ function SportCard({ b, gender, onPress }: { b: BeltInfo; gender: Gender; onPres
         </View>
       </View>
       <View style={{ paddingHorizontal: 4, gap: 3 }}>
-        <Ink size={14} weight="extraBold" numberOfLines={2}>{traduire(b.sportName)}</Ink>
+        <Ink size={14} weight="extraBold" numberOfLines={2}>{sansTiret(traduire(b.sportName))}</Ink>
         <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2}>{traduirePluriel(b.count, b.count > 1, "{0}, {1} séance", "{0}, {1} séances", b.belt.name, b.count)}</Ink>
         <View style={{ marginTop: 4 }}>
           <Bar progress={b.progress} color={barColor} height={6} />

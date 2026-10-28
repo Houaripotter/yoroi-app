@@ -22,6 +22,7 @@ import { messageDuJour } from '@/lib/v2/programmes/lancer';
 import { getEspace, objectifVise } from '@/lib/v2/espace';
 import { traduire } from '@/lib/i18n/tr';
 import { sourceNotif, src } from '@/lib/notificationLangue';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 // Règle : aucune valeur de santé (poids, kcal, FC, ml, mensurations...) dans
 // le titre ou le corps d'une notification, car elle s'affiche sur l'écran
@@ -1117,6 +1118,8 @@ class NotificationService {
    * Notification apres fin de séance - propose de partager sur les reseaux
    */
   async sendWorkoutCompletedNotification(sport: string, _durationMin: number, _calories?: number, workoutId?: number): Promise<void> {
+    // 28 octobre 2026 : le nom du sport s'affiche sans trait d'union (lib/v2/texte/sansTiret.ts)
+    sport = sansTiret(sport);
     const messages = [
       // Aucune durée ni calorie : seulement le sport et un encouragement
       { title: traduire('Séance notée'), body: traduire("{0} : c’est fait. Ta carte de séance est prête si tu veux la partager.", sport) },

@@ -16,6 +16,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { Trophy, Clock, Flame, Zap, Star } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { getSportName, getSportColor } from '@/lib/sports';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 interface TrainingPoint {
   id?: number;
@@ -166,15 +167,15 @@ const PersonalRecordsCardInner: React.FC<PersonalRecordsCardProps> = ({ training
                 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel={`Record ${r.label} : ${r.value} en ${r.sport} le ${r.date}`}
+              accessibilityLabel={`Record ${sansTiret(r.label)} : ${r.value} en ${sansTiret(r.sport)} le ${r.date}`}
             >
               <View style={[styles.iconBox, { backgroundColor: r.color + '20' }]}>
                 <Icon size={18} color={r.color} strokeWidth={2.5} />
               </View>
-              <Text style={[styles.recordLabel, { color: '#64748B' }]}>{r.label}</Text>
+              <Text style={[styles.recordLabel, { color: '#64748B' }]}>{sansTiret(r.label)}</Text>
               <Text style={[styles.recordValue, { color: r.color }]}>{r.value}</Text>
               <Text style={[styles.recordMeta, { color: '#475569' }]} numberOfLines={1}>
-                {r.sport}, {r.date}
+                {sansTiret(r.sport)}, {r.date}
               </Text>
             </TouchableOpacity>
           );

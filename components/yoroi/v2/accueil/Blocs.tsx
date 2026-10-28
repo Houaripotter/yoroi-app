@@ -23,6 +23,7 @@ import { Torii } from './Ornements';
 import { devNow } from '@/lib/v2/creator/devClock';
 import { paletteSombre } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const DAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
@@ -461,7 +462,7 @@ export function BlocCitation({ text }: { text: string | null }) {
 export function BlocRecords({ record }: { record: LastRecord | null }) {
   const router = useRouter();
   return (
-    <Press onPress={() => router.push('/records' as any)} accessibilityRole="button" accessibilityLabel={record ? `Dernier record : ${record.exercise}` : traduire('Tes records')}>
+    <Press onPress={() => router.push('/records' as any)} accessibilityRole="button" accessibilityLabel={record ? `Dernier record : ${sansTiret(record.exercise)}` : traduire('Tes records')}>
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
         <Hanko size={36} />
         {record ? (
@@ -470,7 +471,7 @@ export function BlocRecords({ record }: { record: LastRecord | null }) {
               {`Dernier record, ${relativeDay(record.date)}`}
             </Ink>
             <Ink size={18} weight="black" tight numberOfLines={1}>
-              {record.exercise}
+              {sansTiret(record.exercise)}
             </Ink>
             <Ink size={14} weight="bold" color={P.accent}>
               {traduire("{0} kg{1}, {2} kg de mieux", formatKg(record.weight, record.weight % 1 === 0 ? 0 : 1), record.reps ? ` × ${record.reps}` : '', formatKg(record.gain, record.gain % 1 === 0 ? 0 : 1))}

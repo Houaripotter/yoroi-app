@@ -38,6 +38,7 @@ import { addClub, updateClub, Club } from '@/lib/database';
 import { setGoal, getGoalBySport } from '@/lib/trainingGoalsService';
 import { logger } from '@/lib/security/logger';
 import * as FileSystem from 'expo-file-system/legacy';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 // Copie une image dans le dossier permanent de l'app pour qu'elle survive aux sauvegardes
 const saveImagePermanently = async (tempUri: string): Promise<string> => {
@@ -534,7 +535,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
                                 ]}
                                 numberOfLines={1}
                               >
-                                {sport.name}
+                                {sansTiret(sport.name)}
                               </Text>
                               {isSelected && (
                                 <View style={[styles.sportGridCheck, { backgroundColor: colors.gold }]}>
