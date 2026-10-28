@@ -28,18 +28,19 @@ function vie(id: string, g: 'h' | 'f', teinte: VarianteTeinte): Tenue[] {
 function serie(g: 'h' | 'f'): Tenue[] {
   const G = GUERRIER_IMAGES[g];
   const C = CLASSIQUE_IMAGES[g];
+  // 28 octobre 2026 (Houari) : on commence par le sport, le kimono arrive plus loin (7e position)
   return [
-    { nom: 'Kimono', image: G[0] },
-    ...vie('pompier', g, 'peau_foncee'),
     { nom: 'Sport', image: C[1] },
     ...vie('basket', g, 'asie'),
-    { nom: 'Samouraï', image: G[2] },
-    ...vie('soignant', g, 'peau_mate'),
+    ...pack('musculation', g, 'Salle'),
+    ...vie('pompier', g, 'peau_foncee'),
     ...pack('boxe', g, 'Boxe'),
+    ...vie('soignant', g, 'peau_mate'),
+    { nom: 'Kimono', image: G[0] },
+    { nom: 'Samouraï', image: G[2] },
     ...vie('foot', g, 'peau_foncee'),
     ...pack('ninja', g, g === 'f' ? 'Kunoichi' : 'Ninja'),
     ...vie('escalade', g, 'peau_mate'),
-    ...pack('musculation', g, 'Salle'),
     ...vie('militaire', g, 'asie'),
     ...pack('jjb', g, 'JJB'),
     ...vie('tennis', g, 'peau_foncee'),

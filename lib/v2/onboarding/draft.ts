@@ -53,7 +53,8 @@ export type Draft = {
   name: string;
   gender: GenreDeclare | null;
   /** 26 octobre 2026 : si gender vaut 'autre', le repere choisi pour les calculs lies au sexe (sinon ignore) */
-  genreRepere: 'homme' | 'femme' | null;
+  /** 28 octobre 2026 : 'neutre', « Je préfère ne pas le dire » : aucun repere genre (genreDeCalcul vaut null) */
+  genreRepere: 'homme' | 'femme' | 'neutre' | null;
   /** 26 octobre 2026 : tranche d'age (ecran facultatif), jamais l'age exact */
   trancheAge: TrancheAge | null;
   /** objectif principal, deduit de goals (lib/v2/onboarding/objectifs.ts) pour les appelants qui n'en lisent qu'un */
@@ -159,7 +160,7 @@ export async function loadDraft(): Promise<Draft | null> {
       v: 6,
       page,
       gender: d.gender === 'homme' || d.gender === 'femme' || d.gender === 'autre' ? d.gender : null,
-      genreRepere: d.genreRepere === 'homme' || d.genreRepere === 'femme' ? d.genreRepere : null,
+      genreRepere: d.genreRepere === 'homme' || d.genreRepere === 'femme' || d.genreRepere === 'neutre' ? d.genreRepere : null,
       trancheAge: isTrancheAge(d.trancheAge) ? d.trancheAge : null,
       univers: isChoixUnivers(d.univers) ? d.univers : 'japon',
       sports: Array.isArray(d.sports) ? d.sports : [],

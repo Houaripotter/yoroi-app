@@ -96,9 +96,9 @@ export function Toi({ nav, name = '', gender, repere = null, onPick, onRepere, o
   name?: string;
   gender: GenreDeclare | null;
   /** 26 octobre 2026 : repere des calculs quand gender vaut 'autre' */
-  repere?: 'homme' | 'femme' | null;
+  repere?: 'homme' | 'femme' | 'neutre' | null;
   onPick: (g: GenreDeclare) => void;
-  onRepere?: (r: 'homme' | 'femme') => void;
+  onRepere?: (r: 'homme' | 'femme' | 'neutre') => void;
   onNext: () => void;
 }) {
   const c = useColors();
@@ -122,6 +122,11 @@ export function Toi({ nav, name = '', gender, repere = null, onPick, onRepere, o
             <Chip label={traduire('Homme')} on={repere === 'homme'} onPress={() => onRepere?.('homme')} />
             <Chip label={traduire('Femme')} on={repere === 'femme'} onPress={() => onRepere?.('femme')} />
           </View>
+          {/* 28 octobre 2026 (Houari) : une troisieme reponse ; YOROI n'a pas de reperes neutres, on le dit franchement */}
+          <Chip label={traduire('Je préfère ne pas le dire')} on={repere === 'neutre'} onPress={() => onRepere?.('neutre')} />
+          {repere === 'neutre' ? (
+            <Ink size={13} weight="medium" color={c.textSecondary} style={{ lineHeight: 18 }}>{traduire('D’accord. YOROI n’a pas encore de repères neutres : ta masse grasse et ton métabolisme seront estimés sans repère personnalisé, donc moins précis. Tu pourras choisir plus tard dans ton profil.')}</Ink>
+          ) : null}
         </Animated.View>
       ) : null}
     </Shell>
