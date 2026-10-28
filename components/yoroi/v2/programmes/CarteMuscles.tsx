@@ -4,8 +4,8 @@
  * très doux, la zone choisie dans une seule couleur franche avec un léger halo : jamais d'arc en ciel.
  * Le toucher passe par une table d'ellipses en pourcentages (lib/v2/programmes/carteMuscles.ts, TOUCHER).
  *
- * Illustration dessinée : quand face.webp et dos.webp existent (assets/avatars/app/muscles/), remplacer les null
- * d'IMAGES_MUSCLES par leurs require : l'image remplace le dessin, les mêmes zones de toucher restent par dessus,
+ * Illustration dessinée (28 octobre 2026) : face.webp et dos.webp (assets/avatars/app/muscles/) remplacent le dessin,
+ * avec leurs reperes de toucher (TOUCHER_IMAGE) par dessus :
  * la zone choisie prend son calque en surbrillance s'il est fourni (CALQUES_MUSCLES), sinon un halo doux.
  */
 import React from 'react';
@@ -15,13 +15,16 @@ import Svg, { Ellipse, Path } from 'react-native-svg';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { usePastel } from '@/components/yoroi/v2/programmes/Habillage';
-import { CONTOUR, DETAILS, HAUTEUR_CORPS, LARGEUR_CORPS, MUSCLES, TETE, TOUCHER, zoneAuPoint } from '@/lib/v2/programmes/carteMuscles';
+import { CONTOUR, DETAILS, HAUTEUR_CORPS, LARGEUR_CORPS, MUSCLES, TETE, TOUCHER, TOUCHER_IMAGE, zoneAuPoint } from '@/lib/v2/programmes/carteMuscles';
 import type { VueCorps } from '@/lib/v2/programmes/carteMuscles';
 import type { ZoneId } from '@/lib/v2/programmes/zones';
 import { traduire } from '@/lib/i18n/tr';
 
 /** L'illustration dessinée, face et dos (fond transparent, 1000 x 2200), quand elle existe */
-export const IMAGES_MUSCLES: Record<VueCorps, ImageSourcePropType | null> = { face: null, dos: null };
+export const IMAGES_MUSCLES: Record<VueCorps, ImageSourcePropType | null> = {
+  face: require('@/assets/avatars/app/muscles/face.webp'),
+  dos: require('@/assets/avatars/app/muscles/dos.webp'),
+};
 /** La même illustration avec une seule zone en surbrillance, si elle est fournie */
 export const CALQUES_MUSCLES: Record<VueCorps, Partial<Record<ZoneId, ImageSourcePropType>>> = { face: {}, dos: {} };
 
@@ -47,10 +50,13 @@ export function CarteMuscles({ vue, largeur, choisies = [], onToggle, accent = A
 }) {
   const pa = usePastel();
   const hauteur = Math.round(largeur * RATIO);
-  const image = IMAGES_MUSCLES[vue];
+  // la petite silhouette des douleurs (muscles false, un point dans le repere 200 x 440) garde le dessin
+  const image = muscles ? IMAGES_MUSCLES[vue] : null;
+  // l'illustration a ses propres reperes de toucher (TOUCHER_IMAGE), le dessin les siens
+  const table = image ? TOUCHER_IMAGE[vue] : TOUCHER[vue];
   const toucher = (e: GestureResponderEvent) => {
     if (!onToggle) return;
-    const z = zoneAuPoint(vue, (e.nativeEvent.locationX / largeur) * 100, (e.nativeEvent.locationY / hauteur) * 100);
+    const z = zoneAuPoint(vue, (e.nativeEvent.locationX / largeur) * 100, (e.nativeEvent.locationY / hauteur) * 100, table);
     if (!z) return;
     impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
     onToggle(z);
@@ -66,7 +72,7 @@ export function CarteMuscles({ vue, largeur, choisies = [], onToggle, accent = A
       })}
       {/* sans calque : un halo doux sur les zones choisies */}
       <Svg width={largeur} height={hauteur} viewBox="0 0 100 100" preserveAspectRatio="none" style={plein} pointerEvents="none">
-        {TOUCHER[vue].filter((t) => choisies.includes(t.zone) && !CALQUES_MUSCLES[vue][t.zone]).map((t, k) => (
+        {table.filter((t) => choisies.includes(t.zone) && !CALQUES_MUSCLES[vue][t.zone]).map((t, k) => (
           <Ellipse key={k} cx={t.x} cy={t.y} rx={t.rx} ry={t.ry} fill={accent} fillOpacity={0.28} stroke={accent} strokeOpacity={0.5} strokeWidth={0.6} />
         ))}
       </Svg>

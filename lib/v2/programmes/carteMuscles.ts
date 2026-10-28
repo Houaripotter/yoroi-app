@@ -90,6 +90,30 @@ export const TOUCHER: Record<VueCorps, ZoneToucher[]> = {
 };
 
 /**
+ * Le toucher sur l'illustration dessinée (28 octobre 2026, assets/avatars/app/muscles/face.webp et dos.webp, 1000 x 2200) :
+ * les centres des muscles relevés sur l'image, en % de sa largeur et de sa hauteur. Source et planche de contrôle :
+ * _propositions/muscles_2026-10-28 (ancres_image.json, toucher_muscles.jpg). Mêmes tailles d'ellipse que le dessin.
+ */
+export const ANCRES_IMAGE: Record<VueCorps, [ZoneId, number, number][]> = {
+  face: [
+    ['epaules', 26, 29], ['epaules', 73, 29], ['pectoraux', 40, 30], ['pectoraux', 60, 30],
+    ['bras', 25.5, 36], ['bras', 75, 36], ['avantbras', 19, 45], ['avantbras', 80, 45],
+    ['abdos', 45, 40], ['abdos', 55, 40], ['abdos', 45, 44.5], ['abdos', 55, 44.5], ['abdos', 50, 49], ['abdos', 38, 42], ['abdos', 63, 42],
+    ['quadriceps', 39, 61], ['quadriceps', 61, 61], ['mollets', 35, 77], ['mollets', 64, 77],
+  ],
+  dos: [
+    ['dos', 50, 24], ['dos', 39, 35], ['dos', 62, 35], ['dos', 50, 42],
+    ['epaules', 28, 28], ['epaules', 73, 28], ['bras', 25, 35], ['bras', 76, 35], ['avantbras', 19, 45], ['avantbras', 82, 45],
+    ['fessiers', 41.5, 50.5], ['fessiers', 58.7, 50.5], ['ischios', 41, 62.5], ['ischios', 60.5, 62.5], ['mollets', 37.6, 75], ['mollets', 63, 75],
+  ],
+};
+
+export const TOUCHER_IMAGE: Record<VueCorps, ZoneToucher[]> = {
+  face: ANCRES_IMAGE.face.map(([zone, x, y]) => ({ zone, x, y, rx: TAILLE[zone]?.[0] ?? 8, ry: TAILLE[zone]?.[1] ?? 6 })),
+  dos: ANCRES_IMAGE.dos.map(([zone, x, y]) => ({ zone, x, y, rx: TAILLE[zone]?.[0] ?? 8, ry: TAILLE[zone]?.[1] ?? 6 })),
+};
+
+/**
  * La zone sous le doigt, x et y en % de l'image : l'ellipse la plus proche (distance rapportée à sa taille),
  * acceptée jusqu'à 1,8 fois sa taille. Des zones généreuses, sans avoir à viser le muscle exactement.
  */
