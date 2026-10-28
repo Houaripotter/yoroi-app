@@ -190,7 +190,7 @@ function Fenetre({ req }: { req: FenetreRequest }) {
         label={b.text ?? 'OK'}
         hauteur={52}
         rayon={16}
-        tailleTexte={15.5}
+        tailleTexte={TAILLE_TEXTE_BOUTON}
         style={!stacked ? styles.buttonRow : undefined}
       />
     ) : (
@@ -212,7 +212,7 @@ function Fenetre({ req }: { req: FenetreRequest }) {
       {({ pressed }) => {
         const t = toneStyle(tone, pressed);
         return (
-          <Ink size={15.5} weight={t.weight} color={t.fg} numberOfLines={2} style={styles.center}>
+          <Ink size={TAILLE_TEXTE_BOUTON} weight={t.weight} color={t.fg} numberOfLines={2} style={styles.center}>
             {b.text ?? 'OK'}
           </Ink>
         );
@@ -314,6 +314,9 @@ function Fenetre({ req }: { req: FenetreRequest }) {
   }
   return <View style={[StyleSheet.absoluteFill, { zIndex: 10000 }]}>{body}</View>;
 }
+
+/** meme taille de texte pour Annuler et pour le bouton principal (28 octobre 2026) */
+export const TAILLE_TEXTE_BOUTON = 16;
 
 const styles = StyleSheet.create({
   place: {

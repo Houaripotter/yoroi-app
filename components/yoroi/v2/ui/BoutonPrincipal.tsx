@@ -6,8 +6,8 @@
  * Les boutons secondaires (blanc ou pastel clair) ne passent pas par ici.
  */
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import type { StyleProp, ViewStyle } from 'react-native';
+import { ActivityIndicator, PixelRatio, Pressable, StyleSheet, View } from 'react-native';
+import type { LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
@@ -20,6 +20,67 @@ export const BOUTON_PRINCIPAL = {
   fondDesactive: '#E4E7F1',
   texteDesactive: '#7D8299',
 } as const;
+
+/**
+ * Taille du libelle (28 octobre 2026, fenetre « Revenir a tes donnees ? » du Studio).
+ * Avant : adjustsFontSizeToFit natif. Sous la nouvelle architecture iOS, dans une rangee de boutons en flex 1,
+ * le texte est d'abord mesure dans une largeur nulle ou minuscule, la police est reduite a ce moment la
+ * et minimumFontScale n'est pas respecte : « Revenir » finissait a un tiers de sa taille.
+ * Maintenant la taille est calculee ici, a partir de la largeur reelle du bouton :
+ * taille normale tant que le texte tient, deux lignes avant de reduire, jamais sous 80 %.
+ */
+export const ECHELLE_MIN_LIBELLE = 0.8;
+/** largeur moyenne d'un caractere en Archivo extra gras, en fraction de la taille de police (valeur prudente) */
+const LARGEUR_CARACTERE = 0.6;
+const LARGEUR_ESPACE = 0.28;
+const PAS_ECHELLE = [1, 0.95, 0.9, 0.85, ECHELLE_MIN_LIBELLE];
+
+function lignesNecessaires(texte: string, largeur: number, police: number): number {
+  const espace = police * LARGEUR_ESPACE;
+  let lignes = 1;
+  let courante = 0;
+  for (const mot of texte.trim().split(/\s+/)) {
+    const l = mot.length * police * LARGEUR_CARACTERE;
+    if (l > largeur) {
+      // mot plus long que la ligne : il est coupe sur plusieurs lignes
+      if (courante > 0) lignes += 1;
+      lignes += Math.ceil(l / largeur) - 1;
+      courante = l - (Math.ceil(l / largeur) - 1) * largeur;
+    } else if (courante === 0) {
+      courante = l;
+    } else if (courante + espace + l <= largeur) {
+      courante += espace + l;
+    } else {
+      lignes += 1;
+      courante = l;
+    }
+  }
+  return lignes;
+}
+
+/**
+ * Taille de police du libelle pour une largeur disponible (en points).
+ * Largeur inconnue (0, avant la premiere mesure) : taille normale, jamais de reduction a l'aveugle.
+ */
+export function tailleLibelle({
+  texte,
+  largeur,
+  taille,
+  lignes = 2,
+  echelleSysteme = 1,
+}: {
+  texte: string;
+  largeur: number;
+  taille: number;
+  lignes?: number;
+  echelleSysteme?: number;
+}): number {
+  if (!texte || !(largeur > 0)) return taille;
+  for (const e of PAS_ECHELLE) {
+    if (lignesNecessaires(texte, largeur, taille * e * echelleSysteme) <= lignes) return Math.round(taille * e * 10) / 10;
+  }
+  return Math.round(taille * ECHELLE_MIN_LIBELLE * 10) / 10;
+}
 
 /** Couleurs du bouton principal pour le theme en cours (fond, texte), utile pour un bouton dessine a la main */
 export function useCouleursBoutonPrincipal(disabled?: boolean) {
@@ -49,7 +110,7 @@ export type BoutonPrincipalProps = {
   rayon?: number;
   compact?: boolean;
   tailleTexte?: number;
-  /** nombre de lignes du libelle (2 par defaut). Le texte se reduit pour tenir en entier : jamais de libelle coupe. */
+  /** nombre de lignes du libelle (2 par defaut). Le texte passe d'abord a la ligne, puis se reduit, jamais sous 80 %. */
   lignes?: number;
   haptique?: 'light' | 'medium' | 'none';
   /** style du cadre exterieur (flex, marges, largeur) */
@@ -80,6 +141,19 @@ export function BoutonPrincipal({
 }: BoutonPrincipalProps) {
   const { fort, fond, texte } = useCouleursBoutonPrincipal(disabled);
   const actif = !disabled && !loading;
+  const [largeur, setLargeur] = React.useState(0);
+  const padding = compact ? 12 : 18;
+  const plat = StyleSheet.flatten(styleBouton) ?? {};
+  const padG = Number(plat.paddingLeft ?? plat.paddingHorizontal ?? plat.padding ?? padding) || 0;
+  const padD = Number(plat.paddingRight ?? plat.paddingHorizontal ?? plat.padding ?? padding) || 0;
+  const place = largeur > 0 ? largeur - padG - padD - (icone ? 20 + (Number(plat.gap) || (compact ? 7 : 10)) : 0) : 0;
+  const taille = label
+    ? tailleLibelle({ texte: label, largeur: place, taille: tailleTexte, lignes, echelleSysteme: Math.min(PixelRatio.getFontScale() || 1, 1.4) })
+    : tailleTexte;
+  const surMesure = (e: LayoutChangeEvent) => {
+    const w = Math.round(e.nativeEvent.layout.width);
+    if (w > 0 && w !== largeur) setLargeur(w);
+  };
   return (
     <Pressable
       testID={testID}
@@ -106,11 +180,14 @@ export function BoutonPrincipal({
     >
       {({ pressed }) => (
         <View
+          onLayout={surMesure}
           style={[
             {
+              // flexGrow : dans une rangee, le bouton prend la hauteur du voisin (meme hauteur qu'Annuler)
+              flexGrow: 1,
               minHeight: hauteur,
               borderRadius: rayon,
-              paddingHorizontal: compact ? 12 : 18,
+              paddingHorizontal: padding,
               flexDirection: 'row',
               gap: compact ? 7 : 10,
               alignItems: 'center',
@@ -148,12 +225,11 @@ export function BoutonPrincipal({
               {icone ? icone(texte) : null}
               {label ? (
                 <Ink
-                  size={tailleTexte}
+                  testID={testID ? `${testID}-libelle` : 'bouton-principal-libelle'}
+                  size={taille}
                   weight="extraBold"
                   color={texte}
                   numberOfLines={lignes}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.68}
                   style={{ flexShrink: 1, textAlign: 'center' }}
                 >
                   {label}
