@@ -61,6 +61,8 @@ export function ProfileHeader({ profile, espace, rankIndex, onPress, onEditPhoto
   const cible = cibleKg
     ? traduire("objectif {0} kg", String(Math.round(cibleKg * 10) / 10).replace('.', DECIMAL)) + (atteint ? traduire(', atteint') : '')
     : null;
+  // 28 octobre 2026 : la taille et l'objectif en pastilles sur la carte (l'objectif atteint en menthe, coche)
+  const objectif = cibleKg ? traduire('Objectif {0} kg', String(Math.round(cibleKg * 10) / 10).replace('.', DECIMAL)) : null;
   const details = [taille, cible].filter(Boolean).join(', ') || (sports.length ? sports.join(', ') : traduire('Ta taille et ton objectif de poids'));
 
   const rond = showPhoto ? (
@@ -80,6 +82,9 @@ export function ProfileHeader({ profile, espace, rankIndex, onPress, onEditPhoto
       name={name}
       ceinture={pratiqueACeinture(pratiques)}
       details={details}
+      taille={taille}
+      objectif={objectif}
+      atteint={atteint}
       onPress={onPress}
       onPhoto={onEditPhoto}
     />

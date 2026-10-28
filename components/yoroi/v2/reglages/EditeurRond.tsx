@@ -14,11 +14,12 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { P } from '@/components/yoroi/livePalette';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
-import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import {
   BADGES,
   CONTOURS,
   EPAISSEURS,
+  FAMILLES_BADGE,
   FAMILLES_CONTOUR,
   FORMES,
   RondCadre,
@@ -227,39 +228,52 @@ export function EditeurRond({ style: st, onChange, contenu, scene, prenom, resum
         </Carte>
       ) : null}
 
-      {/* Deco : le carrousel des badges */}
+      {/* Deco : les badges par famille, chacune en carrousel, et Aucun en haut */}
       {onglet === 'deco' ? (
         <Carte>
-          <View style={{ gap: 2 }}>
-            <Titre texte={traduire('Badge')} couleur={P.tuileSableTexte} />
-            <Ink size={12} color={c.textMuted}>{traduire('Un petit sticker posé en haut à droite de ton rond')}</Ink>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Titre texte={traduire('Badge')} couleur={P.tuileSableTexte} />
+              <Ink size={12} color={c.textMuted}>{traduire('Un petit sticker posé en haut à droite de ton rond')}</Ink>
+            </View>
+            <Pressable
+              onPress={() => { if (st.badge) choisir({ badgeRond: 'aucun' }); }}
+              accessibilityRole="button"
+              accessibilityState={{ selected: !st.badge }}
+              accessibilityLabel={traduire('Sans badge')}
+              hitSlop={6}
+              style={({ pressed }) => ({ height: 34, paddingHorizontal: 12, borderRadius: 17, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: !st.badge ? c.accentTint : pressed ? c.fillSoft : P.bande, borderWidth: 2, borderColor: !st.badge ? P.accent : c.divider })}
+            >
+              {!st.badge ? <Icon name="check" size={12} color={P.accent} stroke={3} /> : null}
+              <Ink size={12.5} weight="extraBold" color={!st.badge ? P.accent : c.textSecondary}>{traduire('Sans badge')}</Ink>
+            </Pressable>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -14 }} contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}>
-            {[null, ...BADGES.map((x) => x.id)].map((id: NomSticker | null) => {
-              const on = (st.badge ?? null) === id;
-              const nom = id ? BADGES.find((x) => x.id === id)?.nom ?? '' : traduire('Aucun');
-              return (
-                <Pressable
-                  key={id ?? 'aucun'}
-                  onPress={() => { if (!on) choisir({ badgeRond: id ?? 'aucun' }); }}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: on }}
-                  accessibilityLabel={traduire('Badge {0}', nom)}
-                  style={({ pressed }) => ({ width: 70, alignItems: 'center', gap: 5, transform: [{ scale: pressed ? 0.95 : 1 }] })}
-                >
-                  <View style={{ width: 66, height: 66, borderRadius: 20, backgroundColor: on ? c.accentTint : P.bande, borderWidth: 2.5, borderColor: on ? P.accent : c.divider, alignItems: 'center', justifyContent: 'center' }}>
-                    {id ? (
-                      <Image source={img(id)} style={{ width: 46, height: 46 }} resizeMode="contain" accessibilityIgnoresInvertColors />
-                    ) : (
-                      <View style={{ width: 30, height: 2.5, borderRadius: 2, backgroundColor: c.textMuted, transform: [{ rotate: '-45deg' }] }} />
-                    )}
-                    {on ? <View style={{ position: 'absolute', right: -5, top: -5 }}><Coche size={20} /></View> : null}
-                  </View>
-                  <Ink size={11.5} weight={on ? 'extraBold' : 'bold'} color={on ? P.accent : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{nom}</Ink>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+          {FAMILLES_BADGE.map((fam, i) => (
+            <View key={fam.id} style={{ gap: 8 }}>
+              <Titre texte={fam.nom} couleur={[P.accent, P.etiquettePrune, P.tuileSableTexte, P.tuileMentheTexte, P.etiquettePrune][i % 5]} />
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -14 }} contentContainerStyle={{ paddingHorizontal: 14, paddingTop: 4, gap: 10 }}>
+                {BADGES.filter((x) => x.famille === fam.id).map((x) => {
+                  const on = st.badge === x.id;
+                  return (
+                    <Pressable
+                      key={x.id}
+                      onPress={() => { if (!on) choisir({ badgeRond: x.id }); }}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: on }}
+                      accessibilityLabel={traduire('Badge {0}', x.nom)}
+                      style={({ pressed }) => ({ width: 64, alignItems: 'center', gap: 5, transform: [{ scale: pressed ? 0.95 : 1 }] })}
+                    >
+                      <View style={{ width: 60, height: 60, borderRadius: 18, backgroundColor: on ? c.accentTint : P.bande, borderWidth: 2.5, borderColor: on ? P.accent : c.divider, alignItems: 'center', justifyContent: 'center' }}>
+                        <Image source={img(x.id)} style={{ width: 42, height: 42 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+                        {on ? <View style={{ position: 'absolute', right: -5, top: -5 }}><Coche size={20} /></View> : null}
+                      </View>
+                      <Ink size={11} weight={on ? 'extraBold' : 'bold'} color={on ? P.accent : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{x.nom}</Ink>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          ))}
         </Carte>
       ) : null}
     </View>

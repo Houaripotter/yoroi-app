@@ -17,6 +17,8 @@
  *  Tout vaut pour la photo comme pour le personnage ou les initiales, partout ou le rond s'affiche (styleRondDe).
  *  Les formes Hexagone et Ecusson se decoupent sans paquet natif : des cadres tournes qui coupent leurs enfants
  *  (overflow hidden), le visage reste entier au centre.
+ * 28 octobre 2026 (retours de Houari) : l'anneau colle a la photo (plus de lisere blanc entre les deux), et des
+ *  badges de partout ranges par famille (Sport, Energie, Recompenses, Nature, Japon).
  */
 import React from 'react';
 import { Image, View } from 'react-native';
@@ -67,22 +69,61 @@ export const EPAISSEURS: { id: EpaisseurRond; nom: string }[] = [
   { id: 'epaisse', nom: traduire('Épaisse') },
 ];
 
-/** 28 octobre 2026 : les badges, des stickers de l'app (ou leur version encre selon le reglage Illustrations) */
-export const BADGES: { id: NomSticker; nom: string }[] = [
-  { id: 'coeur', nom: traduire('Cœur') },
-  { id: 'flamme', nom: 'Flamme' },
-  { id: 'torii', nom: 'Torii' },
-  { id: 'ceinture_nouee', nom: 'Ceinture' },
-  { id: 'sakura', nom: 'Sakura' },
-  { id: 'medaille_or', nom: traduire('Médaille') },
-  { id: 'trophee', nom: traduire('Trophée') },
-  { id: 'gants', nom: 'Gants' },
-  { id: 'poing', nom: 'Poing' },
-  { id: 'kabuto', nom: 'Kabuto' },
-  { id: 'koi', nom: 'Koi' },
-  { id: 'fuji', nom: 'Fuji' },
-  { id: 'lune_soleil', nom: 'Lune' },
-  { id: 'force_eclair', nom: traduire('Éclair') },
+export type FamilleBadge = 'sport' | 'energie' | 'recompenses' | 'nature' | 'japon';
+
+/** 28 octobre 2026 : les familles de badges (Houari : « des utilisateurs de partout, pas seulement le Japon ») */
+export const FAMILLES_BADGE: { id: FamilleBadge; nom: string }[] = [
+  { id: 'sport', nom: 'Sport' },
+  { id: 'energie', nom: traduire('Énergie') },
+  { id: 'recompenses', nom: traduire('Récompenses') },
+  { id: 'nature', nom: 'Nature' },
+  { id: 'japon', nom: 'Japon' },
+];
+
+/**
+ * Les badges, des stickers de l'app (ou leur version encre selon le reglage Illustrations), ranges par famille.
+ * Les ids deja enregistres restent valables (coeur, flamme, torii, ceinture_nouee, sakura, medaille_or, trophee, gants,
+ * poing, kabuto, koi, fuji, lune_soleil, force_eclair).
+ */
+export const BADGES: { id: NomSticker; nom: string; famille: FamilleBadge }[] = [
+  { id: 'musculation', nom: traduire('Haltère'), famille: 'sport' },
+  { id: 'kettlebell', nom: 'Kettlebell', famille: 'sport' },
+  { id: 'gants', nom: 'Gants', famille: 'sport' },
+  { id: 'jjb', nom: 'Kimono', famille: 'sport' },
+  { id: 'course', nom: 'Course', famille: 'sport' },
+  { id: 'sport_football', nom: 'Football', famille: 'sport' },
+  { id: 'sport_ballon', nom: 'Basket', famille: 'sport' },
+  { id: 'sport_volley', nom: 'Volley', famille: 'sport' },
+  { id: 'sport_raquette', nom: 'Tennis', famille: 'sport' },
+  { id: 'sport_velo', nom: traduire('Vélo'), famille: 'sport' },
+  { id: 'sport_nage', nom: 'Natation', famille: 'sport' },
+  { id: 'sport_danse', nom: 'Danse', famille: 'sport' },
+  { id: 'sport_neige', nom: 'Ski', famille: 'sport' },
+  { id: 'coeur', nom: traduire('Cœur'), famille: 'energie' },
+  { id: 'flamme', nom: 'Flamme', famille: 'energie' },
+  { id: 'force_eclair', nom: traduire('Éclair'), famille: 'energie' },
+  { id: 'muscle', nom: 'Muscle', famille: 'energie' },
+  { id: 'poing', nom: 'Poing', famille: 'energie' },
+  { id: 'energie', nom: traduire('Fusée'), famille: 'energie' },
+  { id: 'chrono', nom: 'Chrono', famille: 'energie' },
+  { id: 'medaille_or', nom: traduire('Médaille'), famille: 'recompenses' },
+  { id: 'medaille_argent', nom: 'Argent', famille: 'recompenses' },
+  { id: 'trophee', nom: traduire('Trophée'), famille: 'recompenses' },
+  { id: 'objectifs', nom: 'Cible', famille: 'recompenses' },
+  { id: 'montagne_drapeau', nom: 'Sommet', famille: 'recompenses' },
+  { id: 'ceinture_nouee', nom: 'Ceinture', famille: 'recompenses' },
+  { id: 'erable', nom: 'Feuille', famille: 'nature' },
+  { id: 'vague', nom: 'Vague', famille: 'nature' },
+  { id: 'sentier', nom: 'Chemin', famille: 'nature' },
+  { id: 'sport_nature', nom: 'Camping', famille: 'nature' },
+  { id: 'rocher', nom: 'Rocher', famille: 'nature' },
+  { id: 'torii', nom: 'Torii', famille: 'japon' },
+  { id: 'sakura', nom: 'Sakura', famille: 'japon' },
+  { id: 'kabuto', nom: 'Kabuto', famille: 'japon' },
+  { id: 'koi', nom: 'Koi', famille: 'japon' },
+  { id: 'fuji', nom: 'Fuji', famille: 'japon' },
+  { id: 'lune_soleil', nom: 'Lune', famille: 'japon' },
+  { id: 'bonsai', nom: traduire('Bonsaï'), famille: 'japon' },
 ];
 
 /** Les anneaux de couleur : franche (papier clair et scene) et lumineuse (papier sombre) */
@@ -337,40 +378,31 @@ function Cadre({ size, contour: contourBrut, forme: formeBrute, epaisseur, fond,
             : '#3D5D9E');
   // le noir la nuit ou sur la scene, le blanc sur le papier clair ou la scene : un fin lisere exterieur pour se voir
   const lisere = contour === 'noir' && (nuit || fond === 'scene') ? 'rgba(242,241,236,0.62)' : contour === 'blanc' && !nuit ? 'rgba(29,32,41,0.22)' : null;
-  // le lisere interieur du blanc est gris clair (blanc sur blanc ne se verrait pas)
-  const lisereInt = contour === 'blanc' ? 'rgba(29,32,41,0.14)' : '#FFFFFF';
   const L = lisere ? 1 : 0;
   const S = size - L * 2;
-  const gap = size >= 60 ? 2 : 1.5;
-  const ring = epais ? 4.5 : deg ? 2.5 : 2;
-  const liseW = contour === 'blanc' ? 1 : size >= 60 ? 2.5 : 2;
+  // 28 octobre 2026 (Houari : « un liseré blanc s'ajoute entre la photo et le contour ») : l'anneau touche la photo,
+  // sans espace ni lisere blanc, quelle que soit la couleur et la forme ; son epaisseur suit la taille du rond
+  const ring = Math.round(Math.max(epais ? 3.5 : 2, size * (epais ? 0.06 : 0.03)) * 2) / 2;
 
   if (bordable && !deg) {
-    // le rendu d'avant (rond) et le meme en carre arrondi
-    const inner = S - ring * 2 - gap * 2;
+    // rond et carre arrondi : l'anneau est le bord meme du cadre, la photo commence juste dedans
     const rS = forme === 'rond' ? S / 2 : S * CARRE_R;
-    const rI = forme === 'rond' ? inner / 2 : inner * CARRE_R;
     const cadre = (
-      <View style={{ width: S, height: S, borderRadius: rS, borderWidth: ring, borderColor: anneau, padding: gap, backgroundColor: contour === 'blanc' ? anneau : fond === 'scene' ? 'rgba(255,255,255,0.35)' : 'transparent' }}>
-        <View style={{ width: inner, height: inner, borderRadius: rI, borderWidth: liseW, borderColor: lisereInt, overflow: 'hidden', backgroundColor: disque, alignItems: 'center', justifyContent: 'center' }}>
-          {children}
-        </View>
+      <View style={{ width: S, height: S, borderRadius: rS, borderWidth: ring, borderColor: anneau, overflow: 'hidden', backgroundColor: disque, alignItems: 'center', justifyContent: 'center' }}>
+        {children}
       </View>
     );
     if (!lisere) return cadre;
     return <View style={{ width: size, height: size, borderRadius: radius, borderWidth: L, borderColor: lisere }}>{cadre}</View>;
   }
 
-  // formes decoupees et degrades : des couches pleines, de l'exterieur vers la photo
-  // (l'espace entre l'anneau et le lisere devient un blanc doux, la forme ne peut pas laisser voir le fond)
-  const blanc = contour === 'blanc' ? anneau : 'rgba(255,255,255,0.92)';
-  const tailles = [size, size - 2 * L, size - 2 * L - 2 * ring, size - 2 * L - 2 * ring - 2 * (gap + liseW)];
+  // formes decoupees et degrades : des couches pleines, l'anneau puis la photo collee dedans
+  const tailles = [size, size - 2 * L, size - 2 * L - 2 * ring];
   return (
     <View style={{ width: size, height: size }}>
       {lisere ? <Couche forme={forme} size={tailles[0]} total={size} couleur={lisere} /> : null}
       <Couche forme={forme} size={tailles[1]} total={size} couleur={anneau} degrade={deg} />
-      <Couche forme={forme} size={tailles[2]} total={size} couleur={contour === 'blanc' ? lisereInt : blanc} />
-      <Couche forme={forme} size={tailles[3]} total={size} couleur={disque}>
+      <Couche forme={forme} size={tailles[2]} total={size} couleur={disque}>
         {children}
       </Couche>
     </View>
