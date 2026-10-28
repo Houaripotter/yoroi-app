@@ -33,6 +33,8 @@ import { healthConnect } from '@/lib/healthConnect';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DECIMAL, LOCALE } from '@/lib/i18n/tr';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
+// 28 octobre 2026 : couleur de zone prise dans la palette unique, pas celle gardee avec la seance
+import { couleurZone } from '@/lib/v2/zones/couleursZones';
 
 interface PlanningSeancesContentProps {
   workouts: Training[];
@@ -972,7 +974,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
                       const pct = (z.durationSeconds / totalZ) * 100;
                       if (pct < 1) return null;
                       return (
-                        <View key={i} style={[styles.zoneSegment, { flex: pct, backgroundColor: z.color }]} />
+                        <View key={i} style={[styles.zoneSegment, { flex: pct, backgroundColor: couleurZone(z.zone).plein }]} />
                       );
                     })}
                   </View>
@@ -982,7 +984,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
                       const mins = Math.floor(z.durationSeconds / 60);
                       return (
                         <View key={i} style={styles.zoneLegendItem}>
-                          <View style={[styles.zoneDot, { backgroundColor: z.color }]} />
+                          <View style={[styles.zoneDot, { backgroundColor: couleurZone(z.zone).plein }]} />
                           <Text style={[styles.zoneLegendText, { color: colors.textMuted }]}>
                             Z{z.zone} {pct}% ({mins}min)
                           </Text>

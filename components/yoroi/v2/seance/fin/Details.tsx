@@ -8,8 +8,9 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import type { BilanSeance } from '@/lib/v2/bilan/texte';
 import { traduire } from '@/lib/i18n/tr';
+// 28 octobre 2026 : temps par zone dans la palette unique des zones
+import { couleurZone } from '@/lib/v2/zones/couleursZones';
 
-const ZONE_TEINTES = [0.25, 0.4, 0.58, 0.78, 1];
 
 function Chiffre({ v, l }: { v: string; l: string }) {
   const { theme } = useYoroiTheme();
@@ -42,7 +43,7 @@ export function DetailsSeance({ b }: { b: BilanSeance }) {
           {coeur?.zones ? (
             <View style={{ gap: 6 }}>
               <View style={{ flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden', backgroundColor: c.fillSubtle }}>
-                {coeur.zones.map((z) => (z.part > 0 ? <View key={z.zone} style={{ flex: z.part, backgroundColor: c.indigo, opacity: ZONE_TEINTES[z.zone - 1] }} /> : null))}
+                {coeur.zones.map((z) => (z.part > 0 ? <View key={z.zone} style={{ flex: z.part, backgroundColor: couleurZone(z.zone).plein }} /> : null))}
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 {coeur.zones.map((z) => (

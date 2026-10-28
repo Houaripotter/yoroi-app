@@ -16,7 +16,7 @@
 
 import { getUserSettings } from './storage';
 import { getLatestHealthData, getProfile } from './database';
-import { INTENSITES } from './v2/intensite';
+import { ZONES_PLEIN } from './v2/zones/couleursZones';
 import { lowerBounds, zoneOf, zoneTimes, zonesFromLowers } from './v2/seances/workoutMath';
 import { zonesCommeApple } from './v2/zones/zonesApple';
 import type { Interval } from './v2/seances/workoutMath';
@@ -48,8 +48,8 @@ export interface HRZone {
   pct?: number;      // pourcentage de la FC de réserve (Karvonen)
 }
 
-// Vague 32 : couleurs de l'echelle d'intensite commune (lib/v2/intensite.ts), plus de rouge.
-export const ZONE_COLORS = [INTENSITES[0].fill, INTENSITES[1].fill, INTENSITES[2].fill, INTENSITES[3].fill, INTENSITES[4].fill] as const;
+// 28 octobre 2026 : la palette unique des zones (lib/v2/zones/couleursZones.ts)
+export const ZONE_COLORS = [ZONES_PLEIN[0], ZONES_PLEIN[1], ZONES_PLEIN[2], ZONES_PLEIN[3], ZONES_PLEIN[4]] as const;
 export const ZONE_NAMES  = ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'Zone 5'] as const;
 export const ZONE_LABELS = ['Récupération', 'Endurance', 'Tempo', 'Seuil', 'Max'] as const;
 

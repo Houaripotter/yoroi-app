@@ -26,6 +26,8 @@ import type { IconName } from '@/components/yoroi/v2/seance/Icon';
 import { Hanko } from '@/components/yoroi/v2/seance/Hanko';
 import { dateCourte, kg1, nb, signe } from '@/lib/v2/bilan/texte';
 import { traduire } from '@/lib/i18n/tr';
+// 28 octobre 2026 : temps par zone dans la palette unique des zones
+import { couleurZone } from '@/lib/v2/zones/couleursZones';
 
 const GUT = 20;
 
@@ -457,7 +459,6 @@ export function BilanSeanceChiffres({ b }: { b: BilanSeance }) {
   );
 }
 
-const ZONE_TEINTES = [0.25, 0.4, 0.58, 0.78, 1];
 
 /** Le bilan d'une seance, sans l'en-tete (la fin de seance a deja le sien) */
 export function BilanSeanceSections({ b }: { b: BilanSeance }) {
@@ -514,7 +515,7 @@ export function BilanSeanceSections({ b }: { b: BilanSeance }) {
           {b.coeur.zones ? (
             <View style={{ gap: 6 }}>
               <View style={{ flexDirection: 'row', height: 12, borderRadius: 6, overflow: 'hidden', backgroundColor: c.fillSubtle }}>
-                {b.coeur.zones.map((z) => (z.part > 0 ? <View key={z.zone} style={{ flex: z.part, backgroundColor: c.indigo, opacity: ZONE_TEINTES[z.zone - 1] }} /> : null))}
+                {b.coeur.zones.map((z) => (z.part > 0 ? <View key={z.zone} style={{ flex: z.part, backgroundColor: couleurZone(z.zone).plein }} /> : null))}
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 {b.coeur.zones.map((z) => (

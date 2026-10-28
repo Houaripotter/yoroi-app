@@ -1,21 +1,16 @@
 /**
  * Echelle d'intensite commune a toute l'app (vague 32) : charge d'entrainement, effort ressenti (RPE),
  * zones cardio, intensite des rounds, douleur, forme et recuperation. Une seule progression, du calme
- * vers l'intense, comme une temperature : bleu, vert, or, orange, braise. Jamais de rouge (reserve aux
- * records et aux erreurs), et toujours un libelle a cote de la couleur.
+ * vers l'intense. Depuis le 28 octobre 2026, ce sont les couleurs des zones cardiaques
+ * (lib/v2/zones/couleursZones.ts) : bleu ciel, menthe, jaune soleil, orange corail, rose rouge vif.
+ * Toujours un libelle a cote de la couleur.
  *
- * Coherente avec les statuts de la courbe de poids : vert « Sur ta ligne » (#17704A sur #E2F3EA),
- * bleu « Au-dessus de ta ligne », orange « Plus vite que prevu » (#9A4A00 sur #FFEBD9).
- *
- * Verifie (scratchpad plan32/cvd.py, simulation de Machado 2009) :
- *  - la clarte baisse de l'or a la braise (71, 47, 28) : les trois niveaux chauds restent distincts en
- *    deuteranopie et protanopie, ou l'or et l'orange se confondraient sinon ;
- *  - texte sur sa teinte, sur blanc et sur le papier : contraste AA (4,5 et plus) pour les cinq niveaux ;
- *  - onFill : couleur du texte pose sur la couleur pleine, AA elle aussi.
+ * Contrastes verifies dans couleursZones.ts : texte AA sur blanc et sur sa teinte, onFill AA sur la couleur pleine.
  */
 
 import { paletteSombre } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
+import { ZONES_CLAIR, ZONES_SOMBRE } from '@/lib/v2/zones/couleursZones';
 
 export type NiveauIntensite = 1 | 2 | 3 | 4 | 5;
 
@@ -34,22 +29,25 @@ export type Intensite = {
   onFill: string;
 };
 
-export const INTENSITES: readonly Intensite[] = [
-  { niveau: 1, id: 'calme', nom: traduire('Calme'), fill: '#5A8AD0', text: '#2D5A96', tint: '#E6EEF9', onFill: '#1D2029' },
-  { niveau: 2, id: 'leger', nom: traduire('Léger'), fill: '#3A9A5B', text: '#17704A', tint: '#E2F3EA', onFill: '#1D2029' },
-  { niveau: 3, id: 'soutenu', nom: 'Soutenu', fill: '#D6A630', text: '#7A5A06', tint: '#F7EED3', onFill: '#1D2029' },
-  { niveau: 4, id: 'intense', nom: traduire('Intense'), fill: '#B84F08', text: '#9A4A00', tint: '#FFEBD9', onFill: '#FFFFFF' },
-  { niveau: 5, id: 'maximal', nom: 'Maximal', fill: '#74290A', text: '#74290A', tint: '#F4E2D8', onFill: '#FFFFFF' },
+// 28 octobre 2026 : memes couleurs que les zones cardiaques, partout (lib/v2/zones/couleursZones.ts)
+const BASE: readonly { niveau: NiveauIntensite; id: Intensite['id']; nom: string }[] = [
+  { niveau: 1, id: 'calme', nom: traduire('Calme') },
+  { niveau: 2, id: 'leger', nom: traduire('Léger') },
+  { niveau: 3, id: 'soutenu', nom: 'Soutenu' },
+  { niveau: 4, id: 'intense', nom: traduire('Intense') },
+  { niveau: 5, id: 'maximal', nom: 'Maximal' },
 ];
 
+export const INTENSITES: readonly Intensite[] = BASE.map((b, i) => ({
+  ...b,
+  fill: ZONES_CLAIR[i].plein,
+  text: ZONES_CLAIR[i].texte,
+  tint: ZONES_CLAIR[i].doux,
+  onFill: ZONES_CLAIR[i].surPlein,
+}));
+
 /** Audit 43 : en sombre, le texte s'eclaircit et la pastille fonce (memes teintes, lisibles sur l'encre de nuit) */
-const NUIT: readonly { text: string; tint: string }[] = [
-  { text: '#8FB0E6', tint: '#1E2537' },
-  { text: '#6CC48A', tint: '#1C2A22' },
-  { text: '#E3C065', tint: '#2F2A1C' },
-  { text: '#F0965A', tint: '#33241A' },
-  { text: '#E58B6C', tint: '#33201B' },
-];
+const NUIT: readonly { fill: string; text: string; tint: string }[] = ZONES_SOMBRE.map((z) => ({ fill: z.plein, text: z.texte, tint: z.doux }));
 
 export function intensite(niveau: number): Intensite {
   const n = Math.max(1, Math.min(5, Math.round(niveau || 1)));

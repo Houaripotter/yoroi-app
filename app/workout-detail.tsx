@@ -48,7 +48,7 @@ import { appleTemperature, appleHumidity, clockOf, zoneClock, zoneRangeLabel } f
 import { BackButton, BigButton, EmptyState, Glass, Hanko, RoundIcon, SectionTitle, Stat, tap } from '@/components/yoroi/v2/seances/ui';
 import { EnregistrerSeance } from '@/components/yoroi/v2/seance/fin/EnregistrerSeance';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
-import { INTENSITES } from '@/lib/v2/intensite';
+import { couleurZone } from '@/lib/v2/zones/couleursZones';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
 import { traduire, traduirePluriel, LANG, LOCALE, DECIMAL } from '@/lib/i18n/tr';
@@ -56,8 +56,6 @@ import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1500;
-// Vague 32 : zones sur l'echelle d'intensite commune (lib/v2/intensite.ts), plus de rouge
-const ZONE_INK = INTENSITES.map((x) => x.fill);
 const ZONE_LABEL = [traduire('Récupération'), traduire('Endurance'), traduire('Tempo'), traduire('Seuil'), traduire('Maximum')];
 
 // Exemple de course, uniquement pour demo=1 (captures d'ecran). 14 octobre 2026 : reprend la course
@@ -755,7 +753,7 @@ export default function WorkoutDetailScreen() {
                       <Ink size={13} weight="extraBold" color={c.textSecondary} style={{ minWidth: 44, textAlign: 'right' }}>{zoneClock(z.durationSeconds || 0)}</Ink>
                     </View>
                     <View style={{ height: 10, borderRadius: 5, backgroundColor: c.fillSubtle, overflow: 'hidden' }}>
-                      <View style={{ width: `${Math.round(pct * 100)}%`, height: '100%', borderRadius: 5, backgroundColor: ZONE_INK[zi] }} />
+                      <View style={{ width: `${Math.round(pct * 100)}%`, height: '100%', borderRadius: 5, backgroundColor: couleurZone(zi + 1).plein }} />
                     </View>
                   </View>
                 );

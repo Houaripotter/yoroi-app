@@ -40,26 +40,12 @@ import type { ResultatImport } from '@/lib/v2/zones/zonesApple';
 import { importerZones, lireMemoireImport, lireValeursCoeur } from '@/lib/v2/zones/importZones';
 import type { MemoireImport } from '@/lib/v2/zones/importZones';
 import { traduire } from '@/lib/i18n/tr';
+// 28 octobre 2026 : couleurs des 5 zones, la palette unique de l'app
+import { ZONES_CLAIR, ZONES_SOMBRE } from '@/lib/v2/zones/couleursZones';
 
 const GOUTTIERE = 20;
 const ANDROID = Platform.OS === 'android';
 const NOM_SANTE = ANDROID ? 'Health Connect' : 'Apple Santé';
-
-/** Couleurs pastel des 5 zones : plein (arc, anneau), texte lisible, fond doux. Pas de marron ni de rouge sang. */
-const ZONES_CLAIR = [
-  { plein: '#8CC4F2', texte: '#225C93', doux: '#E6F2FC' },
-  { plein: '#86D5AE', texte: '#17704A', doux: '#E2F5EB' },
-  { plein: '#F3D26E', texte: '#7A5A06', doux: '#FBF3D6' },
-  { plein: '#F6AE85', texte: '#A04A1A', doux: '#FDEBDF' },
-  { plein: '#F08A82', texte: '#A8362F', doux: '#FCE4E1' },
-] as const;
-const ZONES_SOMBRE = [
-  { plein: '#7DB4E6', texte: '#A9CCF0', doux: '#1E2A3A' },
-  { plein: '#72C49C', texte: '#8FD9B4', doux: '#1C2D25' },
-  { plein: '#E3C062', texte: '#EBCF7E', doux: '#302A1A' },
-  { plein: '#E89C74', texte: '#F2B08C', doux: '#36261C' },
-  { plein: '#E07D76', texte: '#F09A92', doux: '#38211F' },
-] as const;
 
 const NOMS = ['Récupération', 'Endurance', 'Tempo', 'Seuil', 'Maximum'] as const;
 const EFFETS = [

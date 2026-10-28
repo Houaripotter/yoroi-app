@@ -37,6 +37,7 @@ import { chargeGrand, donneesEnUnite, exploitEnUnite, statsEnUnite } from '@/lib
 import type { UnitePoids } from '@/lib/v2/unitePoids';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
+import { ZONES_PLEIN } from '@/lib/v2/zones/couleursZones';
 
 export const CARTE_W = 360;
 export const HAUTEURS: Record<FormatId, number> = { story: 640, post: 450, carre: 360 };
@@ -254,7 +255,8 @@ function Chiffre({ s, size, pal, largeur, align = 'flex-start', labelEnHaut, her
   );
 }
 
-const ZONE_COULEURS = ['#B9C6DF', '#7E98CC', '#4A69A8', '#D2B064', '#A8832F'];
+// 28 octobre 2026 : la palette unique des zones (lib/v2/zones/couleursZones.ts)
+const ZONE_COULEURS = ZONES_PLEIN;
 
 function Zones({ z, largeur, pal }: { z: number[]; largeur: number; pal: Palette }) {
   const total = z.reduce((a, b) => a + b, 0) || 1;
