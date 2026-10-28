@@ -7,16 +7,22 @@
  * Illustration dessinée (28 octobre 2026) : face.webp et dos.webp (assets/avatars/app/muscles/) remplacent le dessin,
  * avec leurs reperes de toucher (TOUCHER_IMAGE) par dessus :
  * la zone choisie prend son calque en surbrillance s'il est fourni (CALQUES_MUSCLES), sinon un halo doux.
+ *
+ * 28 octobre 2026 (soir), Houari sur les halos ronds : « c'est moche, pas pro, ça ne donne pas envie ». Plus aucun cercle :
+ * chaque zone a son calque rouge découpé pixel par pixel dans l'illustration elle même (assets/avatars/app/muscles/calques,
+ * script _propositions/muscles_rouge_2026-10-28), posé pile sur les muscles avec un fondu doux. Les autres zones restent
+ * en lavande. Le toucher lit le masque de chaque muscle (zoneDansGrille) : c'est le muscle sous le doigt qui est choisi.
  */
 import React from 'react';
 import { Image, Pressable, View } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import type { GestureResponderEvent, ImageSourcePropType } from 'react-native';
-import Svg, { Ellipse, Path } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { useYoroiTheme } from '@/components/yoroi';
 import { usePastel } from '@/components/yoroi/v2/programmes/Habillage';
-import { CONTOUR, DETAILS, HAUTEUR_CORPS, LARGEUR_CORPS, MUSCLES, TETE, TOUCHER, TOUCHER_IMAGE, zoneAuPoint } from '@/lib/v2/programmes/carteMuscles';
+import { CONTOUR, DETAILS, HAUTEUR_CORPS, LARGEUR_CORPS, MUSCLES, TETE, TOUCHER, zoneAuPoint, zoneDansGrille } from '@/lib/v2/programmes/carteMuscles';
 import type { VueCorps } from '@/lib/v2/programmes/carteMuscles';
 import type { ZoneId } from '@/lib/v2/programmes/zones';
 import { traduire } from '@/lib/i18n/tr';
@@ -26,20 +32,43 @@ export const IMAGES_MUSCLES: Record<VueCorps, ImageSourcePropType | null> = {
   face: require('@/assets/avatars/app/muscles/face.webp'),
   dos: require('@/assets/avatars/app/muscles/dos.webp'),
 };
-/** La même illustration avec une seule zone en surbrillance, si elle est fournie */
-export const CALQUES_MUSCLES: Record<VueCorps, Partial<Record<ZoneId, ImageSourcePropType>>> = { face: {}, dos: {} };
+/**
+ * Le calque rouge de chaque zone (1000 x 2200, même cadrage que l'illustration) : seulement les pixels de ses muscles,
+ * dégradé rouge, léger reflet en haut, fine lueur autour. Une zone absente d'une vue n'y a pas de calque (les abdos au dos).
+ */
+export const CALQUES_MUSCLES: Record<VueCorps, Partial<Record<ZoneId, ImageSourcePropType>>> = {
+  face: {
+    trapezes: require('@/assets/avatars/app/muscles/calques/face_trapezes.webp'),
+    epaules: require('@/assets/avatars/app/muscles/calques/face_epaules.webp'),
+    pectoraux: require('@/assets/avatars/app/muscles/calques/face_pectoraux.webp'),
+    bras: require('@/assets/avatars/app/muscles/calques/face_bras.webp'),
+    avantbras: require('@/assets/avatars/app/muscles/calques/face_avantbras.webp'),
+    abdos: require('@/assets/avatars/app/muscles/calques/face_abdos.webp'),
+    quadriceps: require('@/assets/avatars/app/muscles/calques/face_quadriceps.webp'),
+    mollets: require('@/assets/avatars/app/muscles/calques/face_mollets.webp'),
+  },
+  dos: {
+    trapezes: require('@/assets/avatars/app/muscles/calques/dos_trapezes.webp'),
+    dos: require('@/assets/avatars/app/muscles/calques/dos_dos.webp'),
+    epaules: require('@/assets/avatars/app/muscles/calques/dos_epaules.webp'),
+    bras: require('@/assets/avatars/app/muscles/calques/dos_bras.webp'),
+    avantbras: require('@/assets/avatars/app/muscles/calques/dos_avantbras.webp'),
+    fessiers: require('@/assets/avatars/app/muscles/calques/dos_fessiers.webp'),
+    quadriceps: require('@/assets/avatars/app/muscles/calques/dos_quadriceps.webp'),
+    ischios: require('@/assets/avatars/app/muscles/calques/dos_ischios.webp'),
+    mollets: require('@/assets/avatars/app/muscles/calques/dos_mollets.webp'),
+  },
+};
 
 const CORPS = '#E6ECF8';
 const LISERE = '#C9D3EA';
 const REPOS = '#D6DEF2';
 export const ACCENT_MUSCLES = '#6684F2';
 /**
- * 28 octobre 2026, mode sombre : l'illustration (tres claire) eblouissait sur le fond nuit et le halo bleu se perdait
- * dans les muscles bleutes. En sombre : un fond de carte un cran plus clair derriere le corps, l'illustration un peu
- * adoucie, et un halo plus franc (bleu plus clair, contour blanc, lueur autour).
+ * 28 octobre 2026, mode sombre : l'illustration (tres claire) eblouissait sur le fond nuit. En sombre : un fond de carte
+ * un cran plus clair derriere le corps et l'illustration un peu adoucie ; le calque rouge, lui, reste plein.
  */
 const FOND_SOMBRE = '#222838';
-const ACCENT_SOMBRE = '#9DB1FF';
 const RATIO = HAUTEUR_CORPS / LARGEUR_CORPS;
 
 export function CarteMuscles({ vue, largeur, choisies = [], onToggle, accent = ACCENT_MUSCLES, muscles = true, point, libelle }: {
@@ -58,15 +87,15 @@ export function CarteMuscles({ vue, largeur, choisies = [], onToggle, accent = A
 }) {
   const pa = usePastel();
   const { isDark } = useYoroiTheme();
-  const teinte = isDark && accent === ACCENT_MUSCLES ? ACCENT_SOMBRE : accent;
   const hauteur = Math.round(largeur * RATIO);
   // la petite silhouette des douleurs (muscles false, un point dans le repere 200 x 440) garde le dessin
   const image = muscles ? IMAGES_MUSCLES[vue] : null;
-  // l'illustration a ses propres reperes de toucher (TOUCHER_IMAGE), le dessin les siens
-  const table = image ? TOUCHER_IMAGE[vue] : TOUCHER[vue];
+  // l'illustration : le masque du muscle sous le doigt ; le dessin : ses ellipses
   const toucher = (e: GestureResponderEvent) => {
     if (!onToggle) return;
-    const z = zoneAuPoint(vue, (e.nativeEvent.locationX / largeur) * 100, (e.nativeEvent.locationY / hauteur) * 100, table);
+    const x = (e.nativeEvent.locationX / largeur) * 100;
+    const y = (e.nativeEvent.locationY / hauteur) * 100;
+    const z = image ? zoneDansGrille(vue, x, y) : zoneAuPoint(vue, x, y, TOUCHER[vue]);
     if (!z) return;
     impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
     onToggle(z);
@@ -76,20 +105,16 @@ export function CarteMuscles({ vue, largeur, choisies = [], onToggle, accent = A
     <>
       {isDark ? <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: largeur, height: hauteur, borderRadius: Math.min(24, largeur * 0.16), backgroundColor: FOND_SOMBRE }} /> : null}
       <Image source={image} style={[plein, isDark ? { opacity: 0.86 } : null]} resizeMode="contain" accessibilityIgnoresInvertColors />
+      {/* la zone choisie : son calque rouge pile sur ses muscles, en fondu doux ; rien de rond par dessus */}
       {choisies.map((z) => {
         const calque = CALQUES_MUSCLES[vue][z];
-        if (calque) return <Image key={z} source={calque} style={plein} resizeMode="contain" />;
-        return null;
+        if (!calque) return null;
+        return (
+          <Animated.View key={z} entering={FadeIn.duration(260)} exiting={FadeOut.duration(160)} pointerEvents="none" style={plein}>
+            <Image source={calque} style={{ width: largeur, height: hauteur }} resizeMode="contain" accessibilityIgnoresInvertColors />
+          </Animated.View>
+        );
       })}
-      {/* sans calque : un halo doux sur les zones choisies */}
-      <Svg width={largeur} height={hauteur} viewBox="0 0 100 100" preserveAspectRatio="none" style={plein} pointerEvents="none">
-        {table.filter((t) => choisies.includes(t.zone) && !CALQUES_MUSCLES[vue][t.zone]).map((t, k) => (
-          <React.Fragment key={k}>
-            {isDark ? <Ellipse cx={t.x} cy={t.y} rx={t.rx + 2.2} ry={t.ry + 1.4} fill={teinte} fillOpacity={0.16} /> : null}
-            <Ellipse cx={t.x} cy={t.y} rx={t.rx} ry={t.ry} fill={teinte} fillOpacity={isDark ? 0.5 : 0.28} stroke={isDark ? '#FFFFFF' : accent} strokeOpacity={isDark ? 0.85 : 0.5} strokeWidth={isDark ? 0.7 : 0.6} />
-          </React.Fragment>
-        ))}
-      </Svg>
     </>
   ) : (
     <Svg width={largeur} height={hauteur} viewBox={`0 0 ${LARGEUR_CORPS} ${HAUTEUR_CORPS}`}>

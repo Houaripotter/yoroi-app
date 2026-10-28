@@ -10,7 +10,7 @@
  */
 import type { ExoProgramme } from './types';
 
-export type ZoneId = 'epaules' | 'pectoraux' | 'bras' | 'avantbras' | 'abdos' | 'dos' | 'fessiers' | 'quadriceps' | 'ischios' | 'mollets';
+export type ZoneId = 'epaules' | 'trapezes' | 'pectoraux' | 'bras' | 'avantbras' | 'abdos' | 'dos' | 'fessiers' | 'quadriceps' | 'ischios' | 'mollets';
 
 export type Zone = {
   id: ZoneId;
@@ -161,6 +161,22 @@ export const ZONES: Zone[] = [
       e('Tirage Menton (Upright Row)', 'ÉPAULES', 10, 12, 'Arrête quand les coudes arrivent à hauteur des épaules, puis redescends lentement.'),
       e('Élévations Latérales (Machine)', 'ÉPAULES', 12, 15, 'L’extérieur des bras contre les coussins, monte les bras sur les côtés jusqu’à hauteur des épaules.'),
       e('Y Raises', 'ÉPAULES', 10, 15, 'Monte les bras tendus devant toi en Y, pouces vers le haut, jusqu’à l’alignement avec le buste.'),
+    ],
+  },
+  {
+    // 28 octobre 2026, Houari : « il manque les trapèzes ». Exercices pris dans la bibliothèque, avec fiche et animation.
+    id: 'trapezes',
+    nom: 'Trapèzes',
+    role: 'Le haut du dos et la nuque : des épaules qui tiennent, une nuque solide au combat et une meilleure posture.',
+    muscles: ['dos', 'epaules'],
+    exos: [
+      e('Shrugs Haltères (Trapèzes)', 'ÉPAULES', 10, 15, 'Haltères le long du corps, monte les épaules droit vers les oreilles, tiens une seconde, redescends lentement.'),
+      e('Face Pull', 'DOS', 12, 15, 'Tire la corde vers ton front en écartant les mains, coudes hauts.'),
+      e('Shrugs Barre (Trapèzes)', 'ÉPAULES', 10, 12, 'Barre devant les cuisses, bras tendus : monte les épaules vers les oreilles, sans rouler les épaules.'),
+      e('Tirage Menton (Upright Row)', 'ÉPAULES', 10, 12, 'Arrête quand les coudes arrivent à hauteur des épaules, puis redescends lentement.'),
+      e('Rowing Barre (Bent Over)', 'DOS', 8, 12, 'Buste penché, dos plat, tire la barre vers le bas du ventre et serre les omoplates en haut.'),
+      e('Farmer Walk', 'AVANT-BRAS', 30, 45, 'Porte lourd, bras tendus, épaules fixes et le buste droit : tes trapèzes travaillent pour ne pas laisser tomber la charge. Petits pas.', { secondes: true }),
+      e('Y Raises', 'ÉPAULES', 10, 15, 'Monte les bras tendus devant toi en Y, pouces vers le haut : c’est le bas des trapèzes qui travaille.'),
     ],
   },
   {

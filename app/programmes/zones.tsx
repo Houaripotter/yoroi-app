@@ -42,13 +42,15 @@ const CLE = 'yoroi_zones_choisies_v1';
 
 /** les muscles ranges par region, de la tete aux pieds */
 const GROUPES: { titre: string; ids: ZoneId[] }[] = [
-  { titre: 'Haut du corps', ids: ['epaules', 'pectoraux', 'dos', 'bras', 'avantbras', 'abdos'] },
+  { titre: 'Haut du corps', ids: ['epaules', 'trapezes', 'pectoraux', 'dos', 'bras', 'avantbras', 'abdos'] },
   { titre: 'Bas du corps', ids: ['fessiers', 'quadriceps', 'ischios', 'mollets'] },
 ];
 
 /** une image par muscle, la zone en rouge (decoupee des illustrations du corps, assets/corps/vignettes) */
 const VIGNETTES: Record<ZoneId, ImageSourcePropType> = {
   epaules: require('@/assets/corps/vignettes/epaules.webp'),
+  // 28 octobre 2026 : les trapèzes, découpés de la vignette du dos (même dessin, seule la zone en rouge)
+  trapezes: require('@/assets/corps/vignettes/trapezes.webp'),
   pectoraux: require('@/assets/corps/vignettes/pectoraux.webp'),
   dos: require('@/assets/corps/vignettes/dos.webp'),
   bras: require('@/assets/corps/vignettes/bras.webp'),

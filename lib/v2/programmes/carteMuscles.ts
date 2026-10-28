@@ -8,6 +8,8 @@
  * __tests__/unit/carteMuscles.test.ts. Le dessin est dans components/yoroi/v2/programmes/CarteMuscles.tsx.
  */
 import type { ZoneId } from './zones';
+import { CENTRES_GRILLE, GRILLE_DOS, GRILLE_FACE } from './carteMusclesGrille';
+import type { GrilleMuscles } from './carteMusclesGrille';
 
 export type VueCorps = 'face' | 'dos';
 
@@ -48,10 +50,13 @@ export const MUSCLES: Record<VueCorps, Partial<Record<ZoneId, string>>> = {
 /** Le centre de chaque forme, pour le toucher : [zone, x, y] */
 export const ANCRES: Record<VueCorps, [ZoneId, number, number][]> = {"face": [["epaules", 56, 101], ["epaules", 144, 101], ["pectoraux", 80, 112], ["pectoraux", 120, 112], ["bras", 46, 154], ["bras", 154, 154], ["avantbras", 37, 218], ["avantbras", 163, 218], ["abdos", 91, 145], ["abdos", 109, 145], ["abdos", 91, 164], ["abdos", 109, 164], ["abdos", 90, 183], ["abdos", 110, 183], ["abdos", 92, 212], ["abdos", 108, 212], ["abdos", 76, 169], ["abdos", 124, 169], ["quadriceps", 68, 273], ["quadriceps", 132, 273], ["quadriceps", 84, 278], ["quadriceps", 116, 278], ["mollets", 71, 367], ["mollets", 129, 367]], "dos": [["dos", 91, 91], ["dos", 109, 91], ["dos", 80, 150], ["dos", 120, 150], ["dos", 92, 198], ["dos", 108, 198], ["epaules", 56, 101], ["epaules", 144, 101], ["bras", 47, 151], ["bras", 153, 151], ["avantbras", 37, 218], ["avantbras", 163, 218], ["fessiers", 81, 240], ["fessiers", 119, 240], ["ischios", 70, 294], ["ischios", 130, 294], ["ischios", 86, 290], ["ischios", 114, 290], ["mollets", 70, 360], ["mollets", 130, 360], ["mollets", 84, 358], ["mollets", 116, 358]]};
 
-/** Les zones visibles de chaque côté */
+/** Les masques des vraies illustrations, en grille (lib/v2/programmes/carteMusclesGrille.ts) */
+export const GRILLES: Record<VueCorps, GrilleMuscles> = { face: GRILLE_FACE, dos: GRILLE_DOS };
+
+/** Les zones visibles de chaque côté de l'illustration (28 octobre 2026 : les trapèzes en plus) */
 export const ZONES_VUE: Record<VueCorps, ZoneId[]> = {
-  face: Object.keys(MUSCLES.face) as ZoneId[],
-  dos: Object.keys(MUSCLES.dos) as ZoneId[],
+  face: [...GRILLE_FACE.ids],
+  dos: [...GRILLE_DOS.ids],
 };
 
 /**
@@ -80,7 +85,7 @@ export function zoneSousLeDoigt(vue: VueCorps, x: number, y: number): ZoneId | n
 export type ZoneToucher = { zone: ZoneId; x: number; y: number; rx: number; ry: number };
 
 const TAILLE: Partial<Record<ZoneId, [number, number]>> = {
-  epaules: [8, 4.5], pectoraux: [10, 4.5], bras: [6, 6], avantbras: [6, 7], abdos: [7, 6], dos: [11, 6],
+  epaules: [8, 4.5], trapezes: [7, 4], pectoraux: [10, 4.5], bras: [6, 6], avantbras: [6, 7], abdos: [7, 6], dos: [11, 6],
   fessiers: [10, 5], quadriceps: [9, 9], ischios: [8, 7.5], mollets: [7, 7],
 };
 
@@ -90,23 +95,11 @@ export const TOUCHER: Record<VueCorps, ZoneToucher[]> = {
 };
 
 /**
- * Le toucher sur l'illustration dessinée (28 octobre 2026, assets/avatars/app/muscles/face.webp et dos.webp, 1000 x 2200) :
- * les centres des muscles relevés sur l'image, en % de sa largeur et de sa hauteur. Source et planche de contrôle :
- * _propositions/muscles_2026-10-28 (ancres_image.json, toucher_muscles.jpg). Mêmes tailles d'ellipse que le dessin.
+ * Le toucher sur l'illustration dessinée (assets/avatars/app/muscles/face.webp et dos.webp, 1000 x 2200).
+ * Recalé le 28 octobre 2026 (soir) sur les vrais masques des muscles : un point bien au milieu de chaque zone,
+ * en % de l'image (CENTRES_GRILLE). Le vrai toucher passe par zoneDansGrille, ces repères servent de secours.
  */
-export const ANCRES_IMAGE: Record<VueCorps, [ZoneId, number, number][]> = {
-  face: [
-    ['epaules', 26, 29], ['epaules', 73, 29], ['pectoraux', 40, 30], ['pectoraux', 60, 30],
-    ['bras', 25.5, 36], ['bras', 75, 36], ['avantbras', 19, 45], ['avantbras', 80, 45],
-    ['abdos', 45, 40], ['abdos', 55, 40], ['abdos', 45, 44.5], ['abdos', 55, 44.5], ['abdos', 50, 49], ['abdos', 38, 42], ['abdos', 63, 42],
-    ['quadriceps', 39, 61], ['quadriceps', 61, 61], ['mollets', 35, 77], ['mollets', 64, 77],
-  ],
-  dos: [
-    ['dos', 50, 24], ['dos', 39, 35], ['dos', 62, 35], ['dos', 50, 42],
-    ['epaules', 28, 28], ['epaules', 73, 28], ['bras', 25, 35], ['bras', 76, 35], ['avantbras', 19, 45], ['avantbras', 82, 45],
-    ['fessiers', 41.5, 50.5], ['fessiers', 58.7, 50.5], ['ischios', 41, 62.5], ['ischios', 60.5, 62.5], ['mollets', 37.6, 75], ['mollets', 63, 75],
-  ],
-};
+export const ANCRES_IMAGE: Record<VueCorps, [ZoneId, number, number][]> = CENTRES_GRILLE;
 
 export const TOUCHER_IMAGE: Record<VueCorps, ZoneToucher[]> = {
   face: ANCRES_IMAGE.face.map(([zone, x, y]) => ({ zone, x, y, rx: TAILLE[zone]?.[0] ?? 8, ry: TAILLE[zone]?.[1] ?? 6 })),
@@ -127,6 +120,35 @@ export function zoneAuPoint(vue: VueCorps, xPct: number, yPct: number, table: re
     if (v < d) {
       d = v;
       meilleur = t.zone;
+    }
+  }
+  return meilleur;
+}
+
+/**
+ * La zone sous le doigt sur l'illustration (28 octobre 2026, soir), x et y en % de l'image : le muscle exact sous le
+ * doigt, lu dans le masque basse résolution de chaque zone (GRILLES). Juste à côté d'un muscle (un liseré, un sillon),
+ * la case de muscle la plus proche à moins de 2 cases, environ 4 % de la largeur. Loin du corps : rien.
+ */
+export function zoneDansGrille(vue: VueCorps, xPct: number, yPct: number, rayon = 2): ZoneId | null {
+  const g = GRILLES[vue];
+  if (!Number.isFinite(xPct) || !Number.isFinite(yPct)) return null;
+  const c = Math.floor((xPct / 100) * g.colonnes);
+  const r = Math.floor((yPct / 100) * g.rangees);
+  if (c < 0 || r < 0 || c >= g.colonnes || r >= g.rangees) return null;
+  let meilleur: ZoneId | null = null;
+  let d2 = Infinity;
+  for (let dr = -rayon; dr <= rayon; dr++) {
+    const ligne = g.grille[r + dr];
+    if (!ligne) continue;
+    for (let dc = -rayon; dc <= rayon; dc++) {
+      const ch = ligne[c + dc];
+      if (!ch || ch === '.') continue;
+      const d = dr * dr + dc * dc;
+      if (d < d2) {
+        d2 = d;
+        meilleur = g.ids[ch.charCodeAt(0) - 97] ?? null;
+      }
     }
   }
   return meilleur;
