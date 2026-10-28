@@ -40,7 +40,7 @@ import { useRouter } from 'expo-router';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { AnneauPierres, CheminPierres, CheminPierresApercu } from '@/components/yoroi/v2/charts/CheminPierres';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
-import { couleurEtape, paliersDuChemin, PIERRES_CHEMIN, pierreEnCours } from '@/lib/v2/pesee/cheminPierres';
+import { couleurEtape, paliersDuChemin, PIERRES_CHEMIN, pierreEnCours, texteEtatsChemin } from '@/lib/v2/pesee/cheminPierres';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { CourbePoids, POIDS } from '@/components/yoroi/v2/charts/CourbePoids';
 import type { ScrubPoids } from '@/components/yoroi/v2/charts/CourbePoids';
@@ -856,7 +856,8 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
             </Press>
             {pastilleObjectif}
           </View>
-          <Press onPress={openDetail} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("Voir le détail de ton poids")}>
+          {/* 28 octobre 2026 soir : le lecteur d'ecran dit l'etat de chaque palier (franchi, en cours, a venir) */}
+          <Press onPress={openDetail} haptic="none" accessibilityRole="button" accessibilityLabel={goal !== null ? traduire("{0}. Voir le détail", texteEtatsChemin(start, goal, chemin.part, atteint)) : traduire("Voir le détail de ton poids")}>
             {goal !== null ? <CheminPierres depart={start} objectif={goal} part={chemin.part} atteint={atteint} fg2={fg2} idLanterne="accueil" /> : null}
           </Press>
           {(() => {
