@@ -329,6 +329,9 @@ export const ANCIENNES: Partial<Record<NomSticker, ImageSourcePropType>> = {
   sport_pagaie: require('@/assets/avatars/app/tampons/sport_pagaie.webp'),
   sport_peche: require('@/assets/avatars/app/tampons/sport_peche.webp'),
   sport_souffle: require('@/assets/avatars/app/tampons/sport_souffle.webp'),
+  sport_vitesse: require('@/assets/avatars/app/tampons/sport_vitesse.webp'),
+  sport_voile: require('@/assets/avatars/app/tampons/sport_voile.webp'),
+  sport_volley: require('@/assets/avatars/app/tampons/sport_volley.webp'),
 };
 
 // ============ le reglage Illustrations ============
