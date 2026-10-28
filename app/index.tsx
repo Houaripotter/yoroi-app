@@ -8,8 +8,10 @@ import { getLatestWeight, getProfile, getTrainingsCount } from "@/lib/database";
 import logger from '@/lib/security/logger';
 import { NOUVEAUTES_30_KEY, choisirParcours, type Parcours } from '@/lib/v2/onboarding/parcours';
 import { TOUR_DONE_KEY, etatUtilisateur as etatOuverture } from '@/lib/v2/onboarding/etatOuverture';
+import { ONBOARDING_VU_VERSION_KEY, doitRevoirOnboarding } from '@/lib/v2/onboarding/retour';
 
-type Destination = Parcours;
+/** 28 octobre 2026 : 'retour', l'onboarding revu une fois par un utilisateur existant (lib/v2/onboarding/retour.ts) */
+type Destination = Parcours | 'retour';
 
 /**
  * Attend que l'app soit réellement au premier plan.
@@ -69,8 +71,15 @@ export default function Index() {
         } catch {
           nouveautesVues = undefined;
         }
+        // 28 octobre 2026 : la version de l'onboarding deja vue (null : jamais, undefined : lecture ratee)
+        let versionVue: string | null | undefined;
+        try {
+          versionVue = await AsyncStorage.getItem(ONBOARDING_VU_VERSION_KEY);
+        } catch {
+          versionVue = undefined;
+        }
         let demo = false;
-        if (etat.existant && nouveautesVues === false) {
+        if (etat.existant) {
           try {
             demo = await (await import('@/lib/demoDataService')).isDemoDataActive();
           } catch {
@@ -78,6 +87,8 @@ export default function Index() {
           }
         }
         dest = choisirParcours({ existant: etat.existant, lectureRatee: etat.lectureRatee, nouveautesVues, demo });
+        // 28 octobre 2026 : tout utilisateur existant revoit l'onboarding de la 3.0, une seule fois (il remplace les nouveautes)
+        if (dest !== 'onboarding' && doitRevoirOnboarding({ existant: etat.existant, lectureRatee: etat.lectureRatee, demo, versionVue })) dest = 'retour';
         logger.info(`[Index] Ouverture : ${etat.raison}, parcours ${dest}`);
         // 18 octobre 2026 : seulement pour un utilisateur existant reconnu (une lecture ratee ne pose aucune trace)
         if (dest !== 'onboarding' && etat.existant) {
@@ -114,6 +125,10 @@ export default function Index() {
 
   if (destination === 'onboarding') {
     return <Redirect href="/onboarding" />;
+  }
+
+  if (destination === 'retour') {
+    return <Redirect href={'/onboarding?mode=retour' as never} />;
   }
 
   if (destination === 'nouveautes') {

@@ -33,6 +33,7 @@ import { genreDeCalcul } from './draft';
 import { objectifsDuBrouillon, weightGoalDe } from './objectifs';
 import { NOUVEAUTES_30_KEY } from './parcours';
 import { peseeAConserver, profilFusionne } from './fusion';
+import { ONBOARDING_VU_VERSION_KEY, VERSION_ONBOARDING } from './retour';
 import { connecterSante } from '@/lib/v2/sante/connecter';
 import type { IssueConnexion } from '@/lib/v2/sante/connexion';
 
@@ -236,6 +237,8 @@ export async function saveOnboarding(d: Draft): Promise<void> {
   await AsyncStorage.setItem('@yoroi_onboarding_tour_done', 'true').catch(() => {});
   // 14 octobre 2026 : l'onboarding complet contient deja les etapes de la 3.0 (univers, Sante) : pas de « Nouveautes »
   await AsyncStorage.setItem(NOUVEAUTES_30_KEY, 'true').catch(() => {});
+  // 28 octobre 2026 : un nouvel utilisateur a vu l'onboarding de cette version, pas de mode retour ensuite
+  await AsyncStorage.setItem(ONBOARDING_VU_VERSION_KEY, VERSION_ONBOARDING).catch(() => {});
   await Promise.all([markTourSeen(), markWhatsNewSeen()]);
   DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
   logger.info('Onboarding completed', { step: 'all' });

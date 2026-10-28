@@ -21,6 +21,9 @@
  *   sport, alimentation et les deux (sources.ts) et montre un apercu gamifie. Tes objectifs, tes jours et tes sports
  *   sont repris par le coach (lib/v2/programmes/profilCoach.ts) : il ne les redemande pas.
  * 26 octobre 2026 (soir) : la fin mene a l'accueil et a la visite guidee ; le coach est propose ensuite, une fois.
+ * 28 octobre 2026 : mode retour de la 3.0 (/onboarding?mode=retour, lib/v2/onboarding/retour.ts) : un utilisateur existant
+ *   revoit l'onboarding une fois, tout est prerempli avec ses vraies donnees, rien n'est ecrit sauf ce qu'il change,
+ *   « Plus tard » en haut de chaque ecran, Sante seulement si jamais demandee, Premium seulement s'il n'est pas abonne.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, BackHandler, Platform, StyleSheet, View } from 'react-native';
@@ -103,6 +106,11 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { kg } from '@/components/yoroi/v2/onboarding/ui';
 import { ecrireIllustrations, forcerIllustrations } from '@/components/yoroi/v2/stickers';
+import { Retour } from '@/components/yoroi/v2/onboarding/Retour';
+import { brouillonRetour, enregistrerRetour, marquerRetourVu, peseeRetourAEcrire } from '@/lib/v2/onboarding/retour';
+import { chargerSourcesRetour, portsRetourAppareil } from '@/lib/v2/onboarding/retourAppareil';
+import { getDemandeSante } from '@/lib/v2/sante/demande';
+import { usePremium } from '@/context/PremiumContext';
 
 const APPLE_EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 
@@ -134,16 +142,21 @@ const PREMIUM = 19;
 // 27 octobre 2026 (Houari) : Ta scene, juste apres Ton univers ; numero a la fin pour ne pas decaler les autres ecrans
 const SCENE = 20;
 const DERNIER_NUMERO = SCENE;
+// 28 octobre 2026 : l'accueil du mode retour de la 3.0, en tete (hors apercu du Studio)
+const ACCUEIL_RETOUR = 21;
 /** l'ordre reel du parcours (Ta scene apres Ton univers, Sante apres Ton plan), pour le sens de l'animation et la mesure */
-const ordreDe = (p: number) => (p === SCENE ? UNIVERS + 0.5 : p === SANTE ? RESULTAT + 0.5 : p);
-const NAMES = ['ouverture', 'prenom', 'toi', 'age', 'univers', 'objectif', 'frein', 'affirmation', 'sport', 'sante', 'poids', 'taille', 'cap', 'rythme', 'moment_pesee', 'demonstration', 'comparaison', 'preparation', 'plan', 'premium', 'scene'];
+const ordreDe = (p: number) => (p === ACCUEIL_RETOUR ? -1 : p === SCENE ? UNIVERS + 0.5 : p === SANTE ? RESULTAT + 0.5 : p);
+const NAMES = ['ouverture', 'prenom', 'toi', 'age', 'univers', 'objectif', 'frein', 'affirmation', 'sport', 'sante', 'poids', 'taille', 'cap', 'rythme', 'moment_pesee', 'demonstration', 'comparaison', 'preparation', 'plan', 'premium', 'scene', 'retour_accueil'];
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
 
 export default function OnboardingScreen() {
   const { theme } = useYoroiTheme();
-  const params = useLocalSearchParams<{ preview?: string; page?: string }>();
+  const params = useLocalSearchParams<{ preview?: string; page?: string; mode?: string }>();
   const isPreview = params.preview === 'true';
+  // 28 octobre 2026 : mode retour de la 3.0 (jamais en apercu)
+  const retour = params.mode === 'retour' && !isPreview;
+  const { isPremium } = usePremium();
   setApercuOnboarding(isPreview);
   const { isCreator } = useCreatorMode();
   // en apercu, aucun achat ni restauration ne passe, quel que soit l'ecran
@@ -162,6 +175,12 @@ export default function OnboardingScreen() {
   useEffect(() => fermerPresentation, [fermerPresentation]);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finished = useRef(false);
+  // mode retour : les reponses de depart (tes vraies donnees), pour n'ecrire que ce que tu changes
+  const departRef = useRef<Draft | null>(null);
+  // mode retour : le poids n'est enregistre que si tu as bouge la regle
+  const poidsTouche = useRef(false);
+  // mode retour : Sante n'est proposee que si elle n'a jamais ete demandee
+  const [santeJamais, setSanteJamais] = useState(false);
 
   // Ecran Poids
   const [healthAvailable, setHealthAvailable] = useState(false);
@@ -183,11 +202,12 @@ export default function OnboardingScreen() {
   // ===== Brouillon =====
   const persist = useCallback(
     (next: Draft) => {
-      if (isPreview || finished.current) return;
+      // mode retour : aucun brouillon (il est refait a partir de tes vraies donnees a chaque ouverture)
+      if (isPreview || retour || finished.current) return;
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => void saveDraft(next), 250);
     },
-    [isPreview],
+    [isPreview, retour],
   );
 
   const patch = useCallback(
@@ -204,6 +224,30 @@ export default function OnboardingScreen() {
     if (isPreview) return;
     let alive = true;
     (async () => {
+      if (retour) {
+        // 28 octobre 2026 : mode retour, tout est prerempli avec tes vraies donnees ; rien n'est ecrit ici
+        try {
+          const src = await chargerSourcesRetour();
+          if (!alive) return;
+          const pre = brouillonRetour(src);
+          departRef.current = pre;
+          draftRef.current = { ...pre, page: ACCUEIL_RETOUR };
+          setD(draftRef.current);
+          setPage(ACCUEIL_RETOUR);
+          getDemandeSante()
+            .then((x) => alive && setSanteJamais(x.statut === 'jamais' && !x.fenetreSysteme))
+            .catch(() => undefined);
+          onboardingEvent('reprise', { ecran: 'retour_accueil' });
+        } catch (e) {
+          // lecture impossible : rien n'est ecrit ni marque, la decision est refaite au prochain lancement
+          logger.warn('[Onboarding] mode retour : lecture impossible, accueil', e);
+          finished.current = true;
+          router.replace('/(tabs)');
+          return;
+        }
+        if (alive) setLoaded(true);
+        return;
+      }
       const saved = await loadDraft();
       if (!alive) return;
       if (saved && saved.page > OUVERTURE) {
@@ -234,7 +278,7 @@ export default function OnboardingScreen() {
     return () => {
       alive = false;
     };
-  }, [isPreview]);
+  }, [isPreview, retour]);
 
   // ecran affiche
   useEffect(() => {
@@ -268,7 +312,7 @@ export default function OnboardingScreen() {
   // ===== Navigation =====
   const goTo = useCallback(
     (p: number) => {
-      const target = Math.max(0, Math.min(DERNIER_NUMERO, p));
+      const target = Math.max(0, Math.min(Math.max(DERNIER_NUMERO, ACCUEIL_RETOUR), p));
       // mesure : les choix de l'ecran quitte partent seulement quand on avance
       if (ordreDe(target) > ordreDe(draftRef.current.page)) choixOnboarding(NAMES[draftRef.current.page], draftRef.current);
       setDir(ordreDe(target) >= ordreDe(draftRef.current.page) ? 1 : -1);
@@ -285,6 +329,7 @@ export default function OnboardingScreen() {
 
   const prevOf = (p: number): number => {
     // 27 octobre 2026 : Sante passe a la fin, juste avant Premium
+    if (p === PRENOM && retour) return ACCUEIL_RETOUR;
     if (p === POIDS) return SPORT;
     if (p === SANTE) return RESULTAT;
     if (p === SCENE) return UNIVERS;
@@ -298,7 +343,7 @@ export default function OnboardingScreen() {
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (page === FORGE) return true;
+      if (page === FORGE || page === ACCUEIL_RETOUR) return true;
       if (page > OUVERTURE) {
         goTo(prevOf(page));
         return true;
@@ -319,12 +364,27 @@ export default function OnboardingScreen() {
     goTo(to);
   };
 
+  // ===== Mode retour : « Plus tard », le drapeau seulement, rien d'autre n'est ecrit =====
+  const plusTard = () => {
+    if (!retour) return;
+    // apres la preparation, tes changements et le drapeau sont deja enregistres : on rejoint l'accueil
+    if (finished.current) {
+      router.replace('/(tabs)');
+      return;
+    }
+    finished.current = true;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    onboardingEvent('passer', { ecran: NAMES[draftRef.current.page] });
+    void marquerRetourVu({ setItem: (k, v) => AsyncStorage.setItem(k, v) }).finally(() => router.replace('/(tabs)'));
+  };
+
   const firstAnswered = validators.username(d.name.trim()).valid;
   const nav = (opts: { back?: boolean; skip?: () => void } = {}): Nav => ({
     progress: progressOf(page, firstAnswered, PRENOM, RESULTAT),
     onBack: opts.back === false ? undefined : back,
     onSkip: opts.skip,
     onClose: isPreview ? closePreview : undefined,
+    onPlusTard: retour ? plusTard : undefined,
   });
 
   // 26 octobre 2026 : « autre » suit son repere (homme ou femme) pour le personnage et les calculs
@@ -372,6 +432,8 @@ export default function OnboardingScreen() {
       await AsyncStorage.setItem('@yoroi_onboarding_tour_done', 'true').catch(() => {});
       // 14 octobre 2026 : pas de « Nouveautes de la 3.0 » non plus ; Sante sera proposee par la carte de l'Accueil
       await AsyncStorage.setItem(NOUVEAUTES_30_KEY, 'true').catch(() => {});
+      // 28 octobre 2026 : pas de mode retour juste apres une restauration
+      await marquerRetourVu({ setItem: (k, v) => AsyncStorage.setItem(k, v) });
       // il passe par l'onboarding : pas de visite guidee ni de nouveautes en plus
       await Promise.all([markTourSeen(), markWhatsNewSeen()]);
       finished.current = true;
@@ -433,7 +495,8 @@ export default function OnboardingScreen() {
       goTo(RYTHME);
       return;
     }
-    if (cibleCoherente(cur, cur.weight ?? weight) == null) patch({ target: presetTarget(goalsDe(cur)) });
+    // mode retour : un cap deja enregistre n'est jamais remplace d'office (seulement si tu bouges la regle)
+    if (cibleCoherente(cur, cur.weight ?? weight) == null && !(retour && cur.target != null)) patch({ target: presetTarget(goalsDe(cur)) });
     goTo(CAP);
   };
 
@@ -469,6 +532,7 @@ export default function OnboardingScreen() {
       }
       setHealthDay(day);
       tap('success');
+      poidsTouche.current = true;
       patch({ weight: day.weight, weightOrigin: 'health', healthDate: day.date });
     } catch (e) {
       logger.warn('[Onboarding] lecture de la derniere pesee impossible', e);
@@ -497,7 +561,13 @@ export default function OnboardingScreen() {
     } finally {
       setSanteBusy(false);
     }
-    goTo(PREMIUM);
+    versPremium();
+  };
+
+  // mode retour : Premium seulement si tu n'es pas abonne
+  const versPremium = () => {
+    if (retour && isPremium) finish('premium');
+    else goTo(PREMIUM);
   };
 
   const healthLabel = d.weightOrigin === 'health' && d.healthDate
@@ -510,6 +580,11 @@ export default function OnboardingScreen() {
     if (cur.weight == null) patch({ weight: w });
     onboardingEvent('reponse', { ecran: 'poids', question: 'poids' });
     if (isPreview) {
+      afterWeight();
+      return;
+    }
+    // mode retour : aucune nouvelle pesee si tu n'as pas change la valeur
+    if (retour && !cur.weighIn && !peseeRetourAEcrire(departRef.current?.weight ?? null, cur.weight, poidsTouche.current)) {
       afterWeight();
       return;
     }
@@ -545,6 +620,19 @@ export default function OnboardingScreen() {
   const runFinal = async () => {
     if (isPreview) {
       await new Promise((r) => setTimeout(r, 200));
+      return;
+    }
+    if (retour && departRef.current) {
+      // 28 octobre 2026 : seulement les champs que tu as changes (lib/v2/onboarding/retour.ts)
+      const ch = await enregistrerRetour(departRef.current, draftRef.current, portsRetourAppareil());
+      logger.info('[Onboarding] mode retour enregistre', { champs: ch.join(',') || 'aucun' });
+      const snapR = await syncArmure(true).catch(() => null);
+      if (snapR) {
+        const pl = snapR.state.plates;
+        setArmure({ rankIndex: snapR.state.rank.index ?? 0, plates: pl ? pl.progress * pl.total : 0 });
+      }
+      finished.current = true;
+      setForged(true);
       return;
     }
     const cur = draftRef.current;
@@ -589,6 +677,10 @@ export default function OnboardingScreen() {
     }
     // rappel doux de la pesee : programme seulement si les notifications sont deja autorisees
     void planifierRappelPesee();
+    if (retour) {
+      router.replace('/(tabs)');
+      return;
+    }
     // 26 octobre 2026 (soir, Houari : « il vient de télécharger l'app, ne le noie pas ») : l'accueil, ou la visite
     // guidee part d'elle-meme. Le coach n'est propose qu'apres, une seule fois, par une carte de l'accueil
     // (lib/v2/onboarding/propositionCoach.ts). Rien ne lance une seance.
@@ -634,6 +726,8 @@ export default function OnboardingScreen() {
   // ===== Rendu =====
   const render = () => {
     switch (page) {
+      case ACCUEIL_RETOUR:
+        return <Retour name={d.name} onContinue={() => { onboardingEvent('reponse', { ecran: 'retour_accueil', question: 'continuer' }); goTo(PRENOM); }} onPlusTard={plusTard} />;
       case OUVERTURE:
         return (
           <Accroche
@@ -740,7 +834,7 @@ export default function OnboardingScreen() {
             onLater={() => {
               onboardingEvent('passer', { ecran: 'sante' });
               if (!isPreview) void passerAccesSante();
-              goTo(PREMIUM);
+              versPremium();
             }}
           />
         );
@@ -749,7 +843,10 @@ export default function OnboardingScreen() {
           <Poids
             nav={nav()}
             value={weight}
-            onChange={(v, fromUser) => patch({ weight: v, ...(fromUser ? { weightOrigin: 'manual' as const } : {}) })}
+            onChange={(v, fromUser) => {
+              if (fromUser) poidsTouche.current = true;
+              patch({ weight: v, ...(fromUser ? { weightOrigin: 'manual' as const } : {}) });
+            }}
             origin={d.weightOrigin}
             healthLabel={healthLabel}
             healthAvailable={healthAvailable}
@@ -790,7 +887,7 @@ export default function OnboardingScreen() {
             height={d.height}
             onTarget={(v) => patch({ target: round1(v) })}
             onNext={() => {
-              if (cibleCoherente(draftRef.current, weight) == null) patch({ target: presetTarget(goalsDe(draftRef.current)) ?? weight });
+              if (cibleCoherente(draftRef.current, weight) == null && !(retour && draftRef.current.target != null)) patch({ target: presetTarget(goalsDe(draftRef.current)) ?? weight });
               onboardingEvent('reponse', { ecran: 'cap', question: 'cap' });
               toRythme();
             }}
@@ -865,7 +962,7 @@ export default function OnboardingScreen() {
             height={d.height}
             sports={d.sports}
             scene={d.scene ?? null}
-            onNext={() => goTo(santeOff ? SANTE : PREMIUM)}
+            onNext={() => (santeOff && (!retour || santeJamais) ? goTo(SANTE) : versPremium())}
           />
         );
       default:

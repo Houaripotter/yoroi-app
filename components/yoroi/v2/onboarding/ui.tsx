@@ -199,6 +199,7 @@ export function Shell({
   onBack,
   onSkip,
   onClose,
+  onPlusTard,
   title,
   sub,
   children,
@@ -214,6 +215,8 @@ export function Shell({
   onBack?: () => void;
   onSkip?: () => void;
   onClose?: () => void;
+  /** 28 octobre 2026 : mode retour de la 3.0, « Plus tard » discret en haut */
+  onPlusTard?: () => void;
   title?: string;
   sub?: string;
   children?: React.ReactNode;
@@ -250,6 +253,7 @@ export function Shell({
         {apercu ? null : progress != null ? <ProgressBar value={progress} /> : <View style={{ flex: 1 }} />}
         {onSkip ? <SkipLink onPress={onSkip} /> : <View style={{ width: 44 }} />}
         {onClose ? <RoundIcon name="close" label={traduire("Fermer l’aperçu")} onPress={onClose} /> : null}
+        {onPlusTard ? <SkipLink onPress={onPlusTard} label={traduire('Plus tard')} /> : null}
       </View>
       {scroll ? (
         <ScrollView
