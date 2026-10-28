@@ -27,11 +27,17 @@ export function statusTone(s: StatusWord, successText: string): { fg: string; ba
   return { fg: GOLD_TEXT, bar: CHART_COLORS.gold, bg: 'rgba(168,131,47,0.15)' };
 }
 
-export function partColor(k: BarPart['key'], c: { textMuted: string; fillSubtle: string }): string {
+/**
+ * 28 octobre 2026 (maquette C de Progres) : une palette peut remplacer celle de lib/v2/progres/couleursCorps.ts
+ * (l'onglet Progres passe les teintes harmonisees bleu, peche, creme). Sans palette : les couleurs de toute l'app.
+ */
+export type PaletteCorps = { muscle: string; graisse: string; os: string; eau: string };
+
+export function partColor(k: BarPart['key'], c: { textMuted: string; fillSubtle: string }, palette: PaletteCorps = CORPS): string {
   // vague 45 : couleurs de lib/v2/progres/couleursCorps.ts
-  if (k === 'muscle' || k === 'lean') return CORPS.muscle;
-  if (k === 'fat') return CORPS.graisse;
-  if (k === 'bone') return CORPS.os;
+  if (k === 'muscle' || k === 'lean') return palette.muscle;
+  if (k === 'fat') return palette.graisse;
+  if (k === 'bone') return palette.os;
   return c.fillSubtle;
 }
 
@@ -214,7 +220,7 @@ export function BioListCard({
 }
 
 /** Barre empilee muscle, graisse, os, et la part d'eau a part (elle se superpose aux autres) */
-export function CompositionBar({ point, style }: { point: CompoPoint; style?: StyleProp<ViewStyle> }) {
+export function CompositionBar({ point, style, palette = CORPS }: { point: CompoPoint; style?: StyleProp<ViewStyle>; palette?: PaletteCorps }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const parts = compositionBar(point);
@@ -229,7 +235,7 @@ export function CompositionBar({ point, style }: { point: CompoPoint; style?: St
             accessibilityLabel={parts.map((p) => `${p.label} ${num(p.pct, 1)} %`).join(', ')}
           >
             {parts.map((p) => (
-              <View key={p.key} style={{ flex: p.pct, backgroundColor: partColor(p.key, c) }} />
+              <View key={p.key} style={{ flex: p.pct, backgroundColor: partColor(p.key, c, palette) }} />
             ))}
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 12, rowGap: 10 }}>
@@ -238,7 +244,7 @@ export function CompositionBar({ point, style }: { point: CompoPoint; style?: St
               .map((p) => (
                 <View key={p.key} style={{ width: '33.33%', gap: 2, paddingRight: 6 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: partColor(p.key, c) }} />
+                    <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: partColor(p.key, c, palette) }} />
                     <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2} style={{ flexShrink: 1 }}>
                       {traduire(p.label)}
                     </Ink>
@@ -255,14 +261,14 @@ export function CompositionBar({ point, style }: { point: CompoPoint; style?: St
         <View style={{ marginTop: parts.length ? 16 : 0, gap: 6 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
-              <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: CORPS.eau }} />
+              <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: palette.eau }} />
               <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2} style={{ flexShrink: 1 }}>
                 {traduire("Eau, présente dans les muscles et les organes")}</Ink>
             </View>
             <Ink size={15} weight="black" numberOfLines={1} style={{ flexShrink: 0 }}>{`${num(point.water, 1)}\u00A0%`}</Ink>
           </View>
           <View style={{ height: 8, borderRadius: 4, backgroundColor: c.fillSubtle, overflow: 'hidden' }}>
-            <View style={{ width: `${Math.min(100, point.water)}%`, height: 8, borderRadius: 4, backgroundColor: CORPS.eau }} />
+            <View style={{ width: `${Math.min(100, point.water)}%`, height: 8, borderRadius: 4, backgroundColor: palette.eau }} />
           </View>
         </View>
       ) : null}
@@ -271,7 +277,7 @@ export function CompositionBar({ point, style }: { point: CompoPoint; style?: St
 }
 
 /** Carte d'une mesure : date, tendance honnete, barre de composition */
-export function CompositionCard({ point, trend, onPress, showDate = true, style }: { point: CompoPoint; trend: Trend | null; onPress?: () => void; showDate?: boolean; style?: StyleProp<ViewStyle> }) {
+export function CompositionCard({ point, trend, onPress, showDate = true, style, palette, carte }: { point: CompoPoint; trend: Trend | null; onPress?: () => void; showDate?: boolean; style?: StyleProp<ViewStyle>; palette?: PaletteCorps; /** 28 octobre 2026 : le style de la carte (Progres : carte blanche a ombre douce) */ carte?: ViewStyle }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const thisYear = todayIso().slice(0, 4);
@@ -297,10 +303,10 @@ export function CompositionCard({ point, trend, onPress, showDate = true, style 
           </>
         ) : null}
       </View>
-      <CompositionBar point={point} />
+      <CompositionBar point={point} palette={palette} />
     </View>
   );
-  const base: ViewStyle = { borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider };
+  const base: ViewStyle = carte ?? { borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider };
   if (!onPress) return <View style={[base, style]}>{content}</View>;
   return (
     <Pressable
@@ -370,14 +376,14 @@ function Spark({ values, color }: { values: number[]; color: string }) {
 }
 
 /** Deux cartes cote a cote : masse musculaire et masse grasse en kg, ecart et petite courbe */
-export function KeyMassCards({ masses, onPress, style }: { masses: KeyMass[]; onPress?: (k: KeyMass['key']) => void; style?: StyleProp<ViewStyle> }) {
+export function KeyMassCards({ masses, onPress, style, palette = CORPS, carte, neutre = false }: { masses: KeyMass[]; onPress?: (k: KeyMass['key']) => void; style?: StyleProp<ViewStyle>; palette?: PaletteCorps; carte?: ViewStyle; /** 28 octobre 2026 : reperes neutres (moyenne homme et femme), dit sous le statut */ neutre?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   if (!masses.length) return null;
   return (
     <View style={[{ flexDirection: 'row', gap: 10 }, style]}>
       {masses.map((m) => {
-        const color = m.key === 'muscleKg' ? CORPS.muscle : CORPS.graisse;
+        const color = m.key === 'muscleKg' ? palette.muscle : palette.graisse;
         const stable = m.diff !== undefined && Math.abs(m.diff) < 0.05;
         const good = m.diff !== undefined && !stable && ((m.good === 'up' && m.diff > 0) || (m.good === 'down' && m.diff < 0));
         const deltaText = m.diff === undefined ? traduire('Première mesure') : stable ? 'Stable' : `${m.diff > 0 ? '+' : '-'}${num(Math.abs(m.diff), 1)} kg`;
@@ -402,13 +408,18 @@ export function KeyMassCards({ masses, onPress, style }: { masses: KeyMass[]; on
             </Ink>
             {m.spark.length >= 2 ? <Spark values={m.spark} color={color} /> : <View style={{ height: 34, justifyContent: 'center' }}><Ink size={11} color={c.textMuted} numberOfLines={2}>{traduire("La courbe vient avec la mesure suivante.")}</Ink></View>}
             {m.status ? (
-              <View style={{ alignSelf: 'flex-start' }}>
+              <View style={{ alignSelf: 'flex-start', gap: 3 }}>
                 <StatusPill status={m.status} />
+                {neutre ? (
+                  <Ink size={11} weight="bold" color={c.textMuted} numberOfLines={1}>
+                    {traduire('repères neutres')}
+                  </Ink>
+                ) : null}
               </View>
             ) : null}
           </View>
         );
-        const base: ViewStyle = { flex: 1, borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider, overflow: 'hidden' };
+        const base: ViewStyle = { flex: 1, overflow: 'hidden', ...(carte ?? { borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider }) };
         if (!onPress) return <View key={m.key} style={base}>{body}</View>;
         return (
           <Pressable

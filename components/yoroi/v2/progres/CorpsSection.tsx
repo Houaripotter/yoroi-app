@@ -5,6 +5,9 @@
  * Sans donnees, chaque bloc montre un apercu d'exemple en filigrane.
  * Vague 40 : part='corps' (composition, courbes, mensurations, historique) ou part='photos'
  * (photos et transformation) pour les onglets Corps et Photos de Progres ; sans part, tout.
+ * 28 octobre 2026 (maquette C de Progres) : pastel, les titres en petites capitales creme, la composition aux teintes
+ * harmonisees (bleu, peche, creme), le choix de periode pastel, cartes blanches a ombre douce, « repères neutres »
+ * sous le statut de masse grasse quand ton genre de calcul est neutre. Avant : _archive_ancien_design_2026-10-09/progres_C_2026-10-28.
  */
 import React, { useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
@@ -31,6 +34,8 @@ import type { CompoKey } from '@/lib/v2/progres/composition';
 import { VIEW_FIELDS, viewSeries } from '@/lib/v2/progres/measures';
 import { dayLong, dayShort, num, sinceText, todayIso } from '@/lib/v2/progres/format';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { CarteB, Capitales, CORPS_PASTEL, couleurPastelCorps, LigneDetail, SelecteurPeriode, teinte } from './ThemesProgres';
+import { carteBlanche } from '../seance/pastel';
 
 export const SERIES_COLORS = [...SERIES_ORDER];
 
@@ -172,7 +177,7 @@ function EyeIcon({ color, off }: { color: string; off?: boolean }) {
   );
 }
 
-export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
+export function CorpsSection({ part, pastel = false }: { part?: 'corps' | 'photos'; /** 28 octobre 2026 : l'habit de l'onglet Progres (maquette C) */ pastel?: boolean } = {}) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const router = useRouter();
@@ -195,9 +200,14 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
   const compoGroups = useMemo(() => {
     const body = bodyGroup([], bio.points, bio.ctx, nav, c.ink);
     const more = compositionGroup(bio.points, bio.ctx, nav);
-    return [{ ...body, title: 'Masse grasse, muscle, eau', aside: undefined }, { ...more, title: 'Tes biomarqueurs' }].filter((g) => g.curves.length > 0);
+    const groupes = [{ ...body, title: 'Masse grasse, muscle, eau', aside: undefined }, { ...more, title: 'Tes biomarqueurs' }].filter((g) => g.curves.length > 0);
+    // Progres : les courbes aux teintes harmonisees
+    return pastel ? groupes.map((g) => ({ ...g, curves: g.curves.map((cv) => ({ ...cv, color: couleurPastelCorps(cv.key) ?? cv.color })) })) : groupes;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bio.points, bio.ctx, c.ink]);
+  }, [bio.points, bio.ctx, c.ink, pastel]);
+  const creme = teinte('creme').encre;
+  const carteP = pastel ? { ...carteBlanche(c.surface, c.border), borderRadius: 22 } : undefined;
+  const neutre = bio.ctx.sex === 'neutral';
 
   const silhouette = useMemo(() => {
     const items: SilhouetteItem[] = [];
@@ -224,13 +234,17 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
   const showPhotos = part !== 'corps';
 
   return (
-    <View style={{ paddingTop: part ? 12 : 22, gap: 30 }}>
+    <View style={{ paddingTop: pastel ? 4 : part ? 12 : 22, gap: pastel ? 24 : 30 }}>
       {/* Derniere mesure : tendance, barre de composition, biomarqueurs */}
       {showCorps && lastPoint ? (
         <View style={{ paddingHorizontal: GUTTER }}>
-          <SectionHead title={traduire("Ta composition")} aside={traduire("Chaque mesure")} onPress={() => router.push({ pathname: '/composition-detail', params: { mode: 'mesure' } } as any)} />
-          <CompositionCard point={lastPoint} trend={trend} style={{ marginTop: 10 }} onPress={() => router.push({ pathname: '/composition-detail', params: { mode: 'mesure' } } as any)} />
-          <KeyMassCards masses={masses} style={{ marginTop: 10 }} onPress={(k) => router.push({ pathname: '/composition-detail', params: { metric: k === 'fatKg' ? 'fat' : 'muscleKg' } } as any)} />
+          {pastel ? (
+            <Capitales texte={traduire('Ta composition')} couleur={creme} action={traduire('Chaque mesure')} onAction={() => router.push({ pathname: '/composition-detail', params: { mode: 'mesure' } } as any)} />
+          ) : (
+            <SectionHead title={traduire("Ta composition")} aside={traduire("Chaque mesure")} onPress={() => router.push({ pathname: '/composition-detail', params: { mode: 'mesure' } } as any)} />
+          )}
+          <CompositionCard point={lastPoint} trend={trend} style={{ marginTop: 10 }} palette={pastel ? CORPS_PASTEL.barre : undefined} carte={carteP} onPress={() => router.push({ pathname: '/composition-detail', params: { mode: 'mesure' } } as any)} />
+          <KeyMassCards masses={masses} style={{ marginTop: 10 }} palette={pastel ? CORPS_PASTEL.trait : undefined} carte={carteP} neutre={neutre} onPress={(k) => router.push({ pathname: '/composition-detail', params: { metric: k === 'fatKg' ? 'fat' : 'muscleKg' } } as any)} />
         </View>
       ) : null}
 
@@ -253,11 +267,15 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
       ) : hasCompo ? (
         <View>
           <View style={{ paddingHorizontal: GUTTER, gap: 6 }}>
-            <SectionHead title={traduire("Tes courbes")} aside={traduire("Le détail")} onPress={() => router.push('/composition-detail' as any)} />
-            <Ink size={14} color={c.textSecondary} style={{ marginTop: -4 }}>
+            {pastel ? (
+              <Capitales texte={traduire('Tes courbes')} couleur={creme} action={traduire('Le détail')} onAction={() => router.push('/composition-detail' as any)} />
+            ) : (
+              <SectionHead title={traduire("Tes courbes")} aside={traduire("Le détail")} onPress={() => router.push('/composition-detail' as any)} />
+            )}
+            <Ink size={14} color={c.textSecondary} style={{ marginTop: pastel ? 0 : -4 }}>
               {traduire("Mesurées par ta balance, {0}. Touche une carte pour son détail.", periodPhrase(period))}
             </Ink>
-            <PeriodSwitch value={period} onChange={setPeriod} options={SHORT_PERIODS} style={{ marginTop: 6 }} />
+            {pastel ? <SelecteurPeriode value={period} onChange={setPeriod} options={SHORT_PERIODS} style={{ marginTop: 6 }} /> : <PeriodSwitch value={period} onChange={setPeriod} options={SHORT_PERIODS} style={{ marginTop: 6 }} />}
           </View>
           <MiniCurveGrid groups={compoGroups} period={period} today={today} style={{ marginTop: 16 }} />
         </View>
@@ -266,7 +284,11 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
       {/* Mensurations */}
       {showCorps ? (
       <View style={{ paddingHorizontal: GUTTER }}>
-        <SectionHead title={traduire("Mensurations")} aside={silhouette.items.length ? traduire('L’évolution') : undefined} onPress={silhouette.items.length ? () => router.push('/measurements-detail' as any) : undefined} />
+        {pastel ? (
+          <Capitales texte={traduire('Mensurations')} couleur={creme} action={silhouette.items.length ? traduire('L’évolution') : undefined} onAction={silhouette.items.length ? () => router.push('/measurements-detail' as any) : undefined} />
+        ) : (
+          <SectionHead title={traduire("Mensurations")} aside={silhouette.items.length ? traduire('L’évolution') : undefined} onPress={silhouette.items.length ? () => router.push('/measurements-detail' as any) : undefined} />
+        )}
         {!measures.loading && silhouette.items.length === 0 ? (
           <ExamplePreview
             flush
@@ -381,9 +403,18 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
 
       {/* Historique corporel : chaque mesure, une par une */}
       {showCorps ? (
-        <View style={{ paddingHorizontal: GUTTER - 4 }}>
-          <FeatureList title={traduire("Ton historique")} items={[{ label: traduire('Ton corps, mesure par mesure'), sub: traduire('poids, graisse, muscle, eau, mensurations'), href: '/body-history' }]} />
-        </View>
+        pastel ? (
+          <View style={{ paddingHorizontal: GUTTER }}>
+            <Capitales texte={traduire('Ton historique')} couleur={creme} />
+            <CarteB style={{ marginTop: 8 }}>
+              <LigneDetail premiere sticker="carnet" fond={teinte('creme').fond} titre={traduire('Ton corps, mesure par mesure')} sous={traduire('poids, graisse, muscle, eau, mensurations')} onPress={() => router.push('/body-history' as any)} />
+            </CarteB>
+          </View>
+        ) : (
+          <View style={{ paddingHorizontal: GUTTER - 4 }}>
+            <FeatureList title={traduire("Ton historique")} items={[{ label: traduire('Ton corps, mesure par mesure'), sub: traduire('poids, graisse, muscle, eau, mensurations'), href: '/body-history' }]} />
+          </View>
+        )
       ) : null}
     </View>
   );
