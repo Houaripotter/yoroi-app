@@ -35,6 +35,7 @@ import type { CompoField, CompoValues } from '@/lib/v2/pesee/fields';
 import { pendingImport, readHealthWeighIns, sourceText } from '@/lib/v2/pesee/health';
 import type { HealthRead } from '@/lib/v2/pesee/health';
 import { importHealthDay, saveWeighIn } from '@/lib/v2/pesee/save';
+import { weighTime } from '@/lib/v2/progres/weighTime';
 import { proposerNotificationsApresReussite } from '@/lib/v2/notifications/permission';
 import { apresMesure } from '@/lib/v2/bilan/reglage';
 import { traduire } from '@/lib/i18n/tr';
@@ -172,12 +173,19 @@ export default function Pesee() {
     scrollRef.current?.scrollTo({ x: offsetFor(v), animated: true });
   };
 
-  // La pesee deja enregistree ce jour-la : on la complete au lieu d'en creer une deuxieme
+  // La pesee a completer : celle qu'on modifie, ou une pesee IMPORTEE ce jour-la (balance, Apple Sante).
+  // 28 octobre 2026 : une pesee saisie a la main n'est plus jamais remplacee par une nouvelle du meme jour ;
+  // chacune reste avec son heure, le poids du jour suit lib/v2/pesee/poidsDuJour.ts. Pour la corriger : la toucher
+  // dans l'historique (editId).
   const row = useMemo<Weight | undefined>(() => {
     if (editId) return history.find((w) => w.id === editId);
-    const same = history.filter((w) => w.date.slice(0, 10) === date);
-    return same.find((w) => (w.source ?? 'manual') === 'manual') ?? same[0];
+    return history.find((w) => w.date.slice(0, 10) === date && (w.source ?? 'manual') !== 'manual');
   }, [history, date, editId]);
+  // une pesee a la main deja faite ce jour-la : on dit qu'elle reste (la plus recente)
+  const dejaCeJour = useMemo<Weight | undefined>(
+    () => (editId || row ? undefined : history.filter((w) => w.date.slice(0, 10) === date && (w.source ?? 'manual') === 'manual').sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0]),
+    [history, date, editId, row],
+  );
   const healthDay = health?.days[date] ?? null;
 
   // Pre-remplissage : suit le jour choisi, sans toucher a ce que tu as deja modifie
@@ -289,7 +297,11 @@ export default function Pesee() {
         ? editId
           ? traduire('tu corriges cette pesée')
           : traduire('déjà enregistrée ce jour, tu la corriges')
-        : null;
+        : dejaCeJour
+          ? weighTime(dejaCeJour)
+            ? traduire('nouvelle pesée, celle de {0} reste enregistrée', weighTime(dejaCeJour) as string)
+            : traduire('nouvelle pesée, la précédente de ce jour reste enregistrée')
+          : null;
 
   const bmi = useMemo<{ value: number; from: 'health' | 'calc' } | undefined>(() => {
     if (healthDay?.bmi && healthDay.weight && Math.abs(healthDay.weight - value) < 0.05) return { value: healthDay.bmi, from: 'health' };

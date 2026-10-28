@@ -1,10 +1,12 @@
 /**
  * NUIT 14 : la ligne d'historique d'une pesee (ecran du poids).
- * Le grand chiffre est le poids mesure de la pesee montree ce jour-la (la plus recente, comme la courbe).
+ * Le grand chiffre est le poids mesure de la pesee montree ce jour-la (le poids du jour, comme la courbe :
+ * lib/v2/pesee/poidsDuJour.ts).
  * La legende dit d'ou elle vient (la source de CETTE pesee, plus celle d'une autre du meme jour),
  * puis la tendance en petit, puis les autres pesees du meme jour avec leur poids : rien n'est cache.
  */
 import type { Weight } from '@/lib/database';
+import { peseesDuJourOrdonnees } from './poidsDuJour';
 import { formatKg } from '@/lib/v2/weightStats';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -22,11 +24,12 @@ export const WEIGHT_SOURCES: Record<string, string> = {
 
 export const sourceLabel = (s?: string | null): string => WEIGHT_SOURCES[s ?? 'manual'] ?? traduire('importée');
 
-/** Les pesees d'un jour, la plus recente d'abord (celle que montrent la courbe et l'accueil) */
+/**
+ * Les pesees d'un jour, le poids du jour d'abord (celui que montrent la courbe et l'accueil, regle de
+ * lib/v2/pesee/poidsDuJour.ts), puis les autres de la plus recente a la plus ancienne
+ */
 export function weighInsOfDay(raw: Weight[], day: string): Weight[] {
-  return raw
-    .filter((w) => String(w.date).slice(0, 10) === day && Number(w.weight) > 0)
-    .sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+  return peseesDuJourOrdonnees(raw, day);
 }
 
 /** « balance (photo), tendance 91,3 kg, autre pesée ce jour-là : 91,8 kg (saisie à la main) » */

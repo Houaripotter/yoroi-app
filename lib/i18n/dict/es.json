@@ -19537,5 +19537,8 @@
 "Refalo MC et al.": "Refalo MC et al.",
 ", à ": ", en ",
 "seul": "solo",
-"seule": "sola"
+"seule": "sola",
+"nouvelle pesée, celle de {0} reste enregistrée": "nuevo pesaje, el de las {0} sigue guardado",
+"nouvelle pesée, la précédente de ce jour reste enregistrée": "nuevo pesaje, el anterior de este día sigue guardado",
+"{0}, le poids retenu parmi les {1} pesées de ce jour.": "{0}, el peso elegido entre los {1} pesajes de este día."
 }

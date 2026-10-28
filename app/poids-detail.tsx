@@ -119,7 +119,7 @@ export default function PoidsDetailScreen() {
           },
         },
       ]);
-    appChoices(formatLongDate(pt.date), day.length > 1 ? traduire("{0}, la plus récente des {1} pesées de ce jour.", kg, day.length) : kg, [
+    appChoices(formatLongDate(pt.date), day.length > 1 ? traduire("{0}, le poids retenu parmi les {1} pesées de ce jour.", kg, day.length) : kg, [
       { text: traduire('Voir le bilan'), onPress: () => router.push(lienBilan({ type: 'corps', date: pt.date, origine: 'detail' }) as never) },
       { text: traduire('Modifier'), onPress: () => router.push({ pathname: '/pesee', params: { id: String(shown.id), date: pt.date, value: String(shown.weight) } } as any) },
       { text: traduire('Supprimer'), style: 'destructive', onPress: confirmDelete },

@@ -285,9 +285,10 @@ function BodyComposition() {
     setError(null);
     setSaving(true);
     try {
-      // Une pesee existe deja ce jour-la (saisie ou venue de la balance) : on la complete, sans doublon
-      const same = rawWeights.filter((w) => String(w.date).slice(0, 10) === date);
-      const row = same.find((w) => (w.source ?? 'manual') === 'manual') ?? same.find((w) => Math.abs(Number(w.weight) - weight) < 0.05);
+      // La meme pesee existe deja ce jour-la (meme poids, saisie ou venue de la balance) : on la complete, sans doublon.
+      // 28 octobre 2026 : un autre poids est une nouvelle pesee, celle du matin n'est plus remplacee (lib/v2/pesee/poidsDuJour.ts)
+      const same = rawWeights.filter((w) => String(w.date).slice(0, 10) === date && Math.abs(Number(w.weight) - weight) < 0.05);
+      const row = same.find((w) => (w.source ?? 'manual') === 'manual') ?? same[0];
       await saveWeighIn(
         {
           date,

@@ -79,3 +79,20 @@ export function groupesDoublonsPesees(rows: LignePesee[]): Array<{ garder: Ligne
   }
   return out;
 }
+
+/**
+ * upsertWeight : quelle pesee existante completer (28 octobre 2026, lib/v2/pesee/poidsDuJour.ts).
+ * - saisie a la main : seulement le VRAI doublon (meme jour, meme poids a 50 g pres, ex. le meme fichier
+ *   recolle) ; une deuxieme pesee du jour avec un autre poids est une NOUVELLE pesee, jamais un remplacement ;
+ * - imports (Apple Sante, Health Connect, balance...) : comme avant, meme jour et meme source.
+ */
+export function requetePeseeExistante(data: { date: string; source?: string | null; weight?: number | null }): { sql: string; values: (string | number)[] } {
+  const source = data.source || 'manual';
+  if (source === 'manual') {
+    return {
+      sql: 'SELECT id FROM weights WHERE date = ? AND source = ? AND ABS(weight - ?) < 0.05 ORDER BY id ASC LIMIT 1',
+      values: [data.date, source, Number(data.weight) || 0],
+    };
+  }
+  return { sql: 'SELECT id FROM weights WHERE date = ? AND source = ? LIMIT 1', values: [data.date, source] };
+}

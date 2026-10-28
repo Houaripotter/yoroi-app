@@ -19537,5 +19537,8 @@
 "Refalo MC et al.": "Refalo MC et al.",
 ", à ": ", ",
 "seul": "de enige",
-"seule": "de enige"
+"seule": "de enige",
+"nouvelle pesée, celle de {0} reste enregistrée": "nieuwe weging, die van {0} blijft bewaard",
+"nouvelle pesée, la précédente de ce jour reste enregistrée": "nieuwe weging, de vorige van deze dag blijft bewaard",
+"{0}, le poids retenu parmi les {1} pesées de ce jour.": "{0}, het gekozen gewicht van de {1} wegingen van deze dag."
 }

@@ -4,6 +4,7 @@
  * c'est elle qu'on montre en premier, les pesees brutes restent visibles en points.
  */
 import type { Weight } from '@/lib/database';
+import { unePeseeParJour } from '@/lib/v2/pesee/poidsDuJour';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export type DayWeight = {
@@ -17,15 +18,10 @@ export type DayWeight = {
 const ALPHA = 0.2;
 
 export function toDailySeries(weights: Weight[]): DayWeight[] {
-  const byDate = new Map<string, Weight>();
-  for (const w of weights) {
-    if (!w || !w.date || !(w.weight > 0)) continue;
-    const day = w.date.slice(0, 10);
-    const prev = byDate.get(day);
-    // Une pesee par jour : on garde la plus recente saisie
-    if (!prev || (w.id ?? 0) > (prev.id ?? 0)) byDate.set(day, w);
-  }
-  const days = Array.from(byDate.entries()).sort((a, b) => (a[0] < b[0] ? -1 : 1));
+  // Une pesee par jour : le poids du jour (la premiere avant midi, sinon la derniere), lib/v2/pesee/poidsDuJour.ts
+  const days = unePeseeParJour(weights.filter((w) => !!w && !!w.date && w.weight > 0))
+    .map((w) => [w.date.slice(0, 10), w] as const)
+    .reverse();
   let trend = 0;
   return days.map(([date, w], i) => {
     trend = i === 0 ? w.weight : trend + ALPHA * (w.weight - trend);

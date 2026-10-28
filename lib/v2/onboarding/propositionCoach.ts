@@ -11,10 +11,13 @@
  * app/coach-depart.tsx, qui garde sa propre logique. Rien ne lance une séance.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DeviceEventEmitter } from 'react-native';
 import { ecrireDepart, lireDepart } from '@/lib/v2/programmes/depart';
 import type { EtatDepart } from '@/lib/v2/programmes/depart';
 
 export const CLE_PROPOSITION_COACH = 'yoroi_coach_proposition_v1';
+/** emis apres une reponse : la carte de copie dans le cloud (BackupNotice) peut venir ensuite, jamais en meme temps */
+export const PROPOSITION_COACH_EVENT = 'yoroi:proposition_coach_repondue';
 export type EtatProposition = 'a_proposer' | 'repondu';
 
 /** La regle, sans stockage : la carte se montre seulement si tout est reuni */
@@ -52,5 +55,10 @@ export async function repondreProposition(choix: 'oui' | 'plus_tard'): Promise<v
   if (choix === 'plus_tard') {
     const d = await lireDepart().catch(() => null);
     if (d !== 'fait') await ecrireDepart('plus_tard');
+  }
+  try {
+    DeviceEventEmitter.emit(PROPOSITION_COACH_EVENT);
+  } catch {
+    // sans importance : la carte de copie se relit au prochain retour sur l'accueil
   }
 }

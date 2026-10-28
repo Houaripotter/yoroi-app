@@ -9,7 +9,8 @@ import { snapshotBeforeMigrations, recordMigrationResult, snapshotBeforeImport }
 import { rebaseLocalUri } from '@/lib/v2/sauvegarde/chemins';
 import { reprendrePeseesDuCoffre } from './databaseReprisePesees';
 import { traduire } from '@/lib/i18n/tr';
-import { groupesDoublonsPesees, requeteMiseAJourPesee } from '@/lib/v2/pesee/miseAJourPesee';
+import { groupesDoublonsPesees, requeteMiseAJourPesee, requetePeseeExistante } from '@/lib/v2/pesee/miseAJourPesee';
+import { joursDeSuitePesee, poidsDuJour, poidsDuJourDabord } from '@/lib/v2/pesee/poidsDuJour';
 import type { LignePesee, ModifPesee } from '@/lib/v2/pesee/miseAJourPesee';
 
 /** 28 octobre 2026 : copie de securite locale avant une suppression groupee. Jamais bloquante. */
@@ -1053,12 +1054,13 @@ export const getWeights = async (days?: number): Promise<Weight[]> => {
   const database = await openDatabase();
   if (days) {
     const safeDays = Math.max(1, Math.min(Math.floor(Number(days)), 3650));
-    return await database.getAllAsync<Weight>(
-      `SELECT * FROM weights WHERE date >= date('now', '-' || ? || ' days') ORDER BY date DESC`,
+    return poidsDuJourDabord(await database.getAllAsync<Weight>(
+      `SELECT * FROM weights WHERE date >= date('now', '-' || ? || ' days') ORDER BY substr(date, 1, 10) DESC, id DESC`,
       [safeDays]
-    );
+    ));
   }
-  return await database.getAllAsync<Weight>(`SELECT * FROM weights ORDER BY date DESC`);
+  // 28 octobre 2026 : dans chaque jour, le poids du jour d'abord (lib/v2/pesee/poidsDuJour.ts)
+  return poidsDuJourDabord(await database.getAllAsync<Weight>(`SELECT * FROM weights ORDER BY substr(date, 1, 10) DESC, id DESC`));
 };
 
 // Alias pour getAllWeights (utilisé par certains composants)
@@ -1066,12 +1068,13 @@ export const getAllWeights = async (): Promise<Weight[]> => {
   return getWeights(); // Retourne tous les poids sans limite de jours
 };
 
+/** Le poids du jour le plus recent : plusieurs pesees ce jour-la, la regle de lib/v2/pesee/poidsDuJour.ts */
 export const getLatestWeight = async (): Promise<Weight | null> => {
   const database = await openDatabase();
-  const result = await database.getFirstAsync<Weight>(
-    'SELECT * FROM weights ORDER BY date DESC LIMIT 1'
+  const rows = await database.getAllAsync<Weight>(
+    `SELECT * FROM weights WHERE weight > 0 AND substr(date, 1, 10) = (SELECT substr(MAX(date), 1, 10) FROM weights WHERE weight > 0) ORDER BY id ASC`
   );
-  return result || null;
+  return poidsDuJour(rows ?? []);
 };
 
 // Récupérer l'historique de composition corporelle
@@ -1957,29 +1960,10 @@ export const getInjuryStats = async (): Promise<{
 // ============================================
 
 export const calculateStreak = async (): Promise<number> => {
-  // Limiter à 365 entrées (streak max possible) - DB trie déjà par date DESC
+  // 28 octobre 2026 : jours de suite avec une pesee, deux pesees le meme jour comptent pour un jour
+  // (avant, la deuxieme pesee du jour cassait la serie). lib/v2/pesee/poidsDuJour.ts
   const weights = await getWeights(365);
-  if (weights.length === 0) return 0;
-
-  let streak = 0;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  for (let i = 0; i < weights.length; i++) {
-    const measureDate = new Date(weights[i].date);
-    measureDate.setHours(0, 0, 0, 0);
-
-    const expectedDate = new Date(today);
-    expectedDate.setDate(today.getDate() - i);
-
-    if (measureDate.getTime() === expectedDate.getTime()) {
-      streak++;
-    } else {
-      break;
-    }
-  }
-
-  return streak;
+  return joursDeSuitePesee(weights ?? []);
 };
 
 export const getWeightProgress = async (): Promise<{
@@ -2809,7 +2793,8 @@ export const updateWeight = async (id: number, data: Partial<Weight>): Promise<v
  * Insère ou met à jour une entrée de poids de manière idempotente.
  * Utilisé par l'import CSV pour éviter les doublons quand l'utilisateur
  * importe plusieurs fois le même fichier (ou un fichier avec des lignes dupliquées).
- * Une entrée existante est repérée par (date, source). Si trouvée, on met à jour
+ * Une entrée existante est repérée par (date, source) pour les imports, et par (date, source, même poids)
+ * pour une saisie à la main (deux pesées du jour restent deux pesées). Si trouvée, on met à jour
  * les colonnes non-nulles du nouveau enregistrement. Sinon, on insère.
  *
  * @returns { action: 'inserted' | 'updated', id: number }
@@ -2820,10 +2805,9 @@ export const upsertWeight = async (
   const database = await openDatabase();
   const source = data.source || 'manual';
 
-  const existing = await database.getFirstAsync<{ id: number }>(
-    'SELECT id FROM weights WHERE date = ? AND source = ? LIMIT 1',
-    [data.date, source]
-  );
+  // 28 octobre 2026 : une pesee a la main n'est plus remplacee par la suivante du meme jour (requetePeseeExistante)
+  const q = requetePeseeExistante({ date: data.date, source, weight: data.weight });
+  const existing = await database.getFirstAsync<{ id: number }>(q.sql, q.values);
 
   if (existing?.id) {
     // UPDATE : ne remplace que les colonnes non-nulles du nouveau record

@@ -1,28 +1,15 @@
 /**
  * Heure d'une pesee, pour distinguer deux pesees du meme jour.
- * Lit l'heure dans la date (AAAA-MM-JJTHH:MM) ou, a defaut, dans created_at.
+ * Lit l'heure dans la date (AAAA-MM-JJTHH:MM) ou, a defaut, dans created_at (seulement s'il tombe ce jour-la).
  */
 import type { Weight } from '@/lib/database';
 import { traduire } from '@/lib/i18n/tr';
+import { heurePesee } from '@/lib/v2/pesee/poidsDuJour';
 
-function hhmm(raw: string | undefined, utc: boolean): string | null {
-  if (!raw) return null;
-  const m = raw.match(/[T ](\d{2}):(\d{2})/);
-  if (!m) return null;
-  let h = Number(m[1]);
-  let min = Number(m[2]);
-  if (utc && !/[+-]\d{2}:?\d{2}$/.test(raw)) {
-    // created_at de SQLite est en temps universel
-    const d = new Date(Date.UTC(2000, 0, 1, h, min));
-    h = d.getHours();
-    min = d.getMinutes();
-  }
-  if (h === 0 && min === 0) return null;
-  return `${h} h ${String(min).padStart(2, '0')}`;
-}
-
+/** 28 octobre 2026 : meme lecture de l'heure que le poids du jour (lib/v2/pesee/poidsDuJour.ts) */
 export function weighTime(w: Weight): string | null {
-  return hhmm(w.date, false) ?? hhmm(w.created_at, true);
+  const t = heurePesee(w);
+  return t ? `${t.h} h ${String(t.m).padStart(2, '0')}` : null;
 }
 
 /** Jours qui comptent plus d'une pesee (cle AAAA-MM-JJ) */

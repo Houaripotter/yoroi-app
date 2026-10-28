@@ -6,6 +6,8 @@
  * - pas encore reliee (ou en panne) : une carte propose de l'activer, un seul geste (lib/v2/sauvegarde/copieAuto.ts) ;
  * - pas de module natif (web) : la copie a la main.
  * La sauvegarde ajoute une copie : elle n'efface ni ne remplace rien sur le telephone.
+ * 28 octobre 2026 : la proposition (pas la copie silencieuse) suit lib/v2/sauvegarde/momentCopie.ts : jamais le
+ * meme jour que la carte de l'accueil, et pas dans les 7 jours apres un « Plus tard ».
  */
 import React, { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
@@ -14,6 +16,8 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { activerCopieAuto, copierMaintenant, etatProtection, lireProtection, nomDuCloud } from '@/lib/v2/sauvegarde/copieAuto';
 import type { EtatProtection } from '@/lib/v2/sauvegarde/copieAuto';
 import { traduire } from '@/lib/i18n/tr';
+import { lireMontreeAccueil, lirePlusTard, montrerFinSeance, noterMontreeFinSeance } from '@/lib/v2/sauvegarde/momentCopie';
+import { localISO } from '@/lib/v2/accueil/hydration';
 
 type Etat = 'lecture' | EtatProtection | 'copie' | 'copiee' | 'echec';
 
@@ -27,7 +31,11 @@ export function CopieCloud() {
     let vivant = true;
     (async () => {
       const e = etatProtection(await lireProtection());
+      const aujourdhui = localISO();
+      const [plusTardLe, autreCarteLe] = await Promise.all([lirePlusTard(), lireMontreeAccueil()]);
       if (!vivant) return;
+      if (!montrerFinSeance({ etat: e, plusTardLe, autreCarteLe, aujourdhui })) return;
+      if (e !== 'protege') void noterMontreeFinSeance(aujourdhui);
       if (e === 'protege') {
         setEtat('copie');
         const ok = await copierMaintenant();
