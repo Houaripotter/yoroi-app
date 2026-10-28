@@ -32,7 +32,17 @@ function bannerHeight(top: number): number {
 
 const PHOTO = 132;
 
-export function ProfilEcran({ hero, children, footer }: { hero: (top: number) => React.ReactNode; children: React.ReactNode; footer?: React.ReactNode }) {
+export function ProfilEcran({ hero, children, footer, gutter = GUTTER, gap = 18, fondDes, scrollRef }: {
+  hero: (top: number) => React.ReactNode;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  /** 28 octobre 2026 (maquette « le melange ») : marges de 16 et rubriques serrees */
+  gutter?: number;
+  gap?: number;
+  /** defilement a partir duquel le fond de la barre du haut apparait */
+  fondDes?: number;
+  scrollRef?: React.RefObject<React.ComponentRef<typeof Animated.ScrollView> | null>;
+}) {
   const router = useRouter();
   const { theme } = useYoroiTheme();
   const c = theme.colors;
@@ -41,7 +51,7 @@ export function ProfilEcran({ hero, children, footer }: { hero: (top: number) =>
   const onScroll = useAnimatedScrollHandler((e) => {
     y.value = e.contentOffset.y;
   });
-  const fadeStart = Math.max(30, bannerHeight(insets.top) - insets.top - 150);
+  const fadeStart = fondDes ?? Math.max(30, bannerHeight(insets.top) - insets.top - 150);
   const barStyle = useAnimatedStyle(() => ({
     opacity: interpolate(y.value, [fadeStart, fadeStart + 60], [0, 1], Extrapolation.CLAMP),
   }));
@@ -52,6 +62,7 @@ export function ProfilEcran({ hero, children, footer }: { hero: (top: number) =>
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <Animated.ScrollView
+        ref={scrollRef}
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingBottom: footer ? 24 : insets.bottom + 40 }}
@@ -60,7 +71,7 @@ export function ProfilEcran({ hero, children, footer }: { hero: (top: number) =>
         automaticallyAdjustKeyboardInsets
       >
         {hero(insets.top)}
-        <View style={{ paddingHorizontal: GUTTER, gap: 18, paddingTop: 6 }}>{children}</View>
+        <View style={{ paddingHorizontal: gutter, gap, paddingTop: 6 }}>{children}</View>
       </Animated.ScrollView>
 
       {/* barre du haut fixe : fond papier qui masque la zone de l'heure des que le contenu defile */}
@@ -75,7 +86,7 @@ export function ProfilEcran({ hero, children, footer }: { hero: (top: number) =>
       </View>
 
       {footer ? (
-        <View style={{ paddingHorizontal: GUTTER, paddingTop: 10, paddingBottom: insets.bottom + 12, backgroundColor: c.background, borderTopWidth: 1, borderColor: c.divider }}>
+        <View style={{ paddingHorizontal: gutter, paddingTop: 10, paddingBottom: insets.bottom + 12, backgroundColor: c.background, borderTopWidth: 1, borderColor: c.divider }}>
           {footer}
         </View>
       ) : null}

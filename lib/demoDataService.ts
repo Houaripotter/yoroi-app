@@ -85,6 +85,8 @@ const DEMO_SECURE_KEYS = [
 // Clés AsyncStorage touchées par la démo : mises de côté puis rendues
 const DEMO_ASYNC_KEYS = [
   '@yoroi_user_settings',
+  // 28 octobre 2026 : tes pratiques (sport, club, ceinture) mises de cote pendant la demo, rendues ensuite
+  '@yoroi_pratiques',
   '@yoroi_user_height',
   '@yoroi_user_sport',
   '@yoroi_user_mode',
@@ -1504,6 +1506,15 @@ async function injectHeny(opts: { logoMarque?: boolean } = {}): Promise<HenyStat
     { id: gbClubId, name: CLUB_JJB_DEMO, sport: 'jjb', color: '#1D2029', sessions_per_week: 3 },
     { id: bfClubId, name: CLUB_MUSCU_DEMO, sport: 'musculation', color: '#2C4A84', sessions_per_week: 4 },
   ]));
+  // 28 octobre 2026 : les pratiques de Heny (page Ton profil) : JJB ceinture bleue 2 degres, son sport principal, et la musculation en salle
+  await AsyncStorage.setItem('@yoroi_pratiques', JSON.stringify({
+    v: 1,
+    pratiques: [
+      { id: 'demo_jjb', sport: 'jjb', clubId: gbClubId, clubNom: CLUB_JJB_DEMO, ceinture: 'bleue', degres: 2, principale: true },
+      { id: 'demo_muscu', sport: 'musculation', clubId: bfClubId, clubNom: CLUB_MUSCU_DEMO, ceinture: null, degres: 0, principale: false },
+    ],
+    ignores: [],
+  }));
 
   // ========== EMPLOI DU TEMPS (0 = lundi) ==========
   // 17 octobre (Houari) : JJB lundi, mardi et jeudi a midi ; musculation lundi, mardi, jeudi et vendredi a 18 h ;

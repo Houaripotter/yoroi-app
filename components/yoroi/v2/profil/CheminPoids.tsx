@@ -89,8 +89,8 @@ export function CheminPoids({ start, current, target, progress, fmt }: {
   const pct = progress === null ? null : Math.round(Math.max(0, Math.min(1, progress)) * 100);
   const reached = progress !== null && progress >= 1;
   const message = progress === null
-    ? current ? traduire('Indique ton poids de départ et ton objectif pour suivre ta progression.') : traduire('Pèse-toi une première fois pour voir ta progression.')
-    : reached ? traduire('Objectif atteint. Bravo, fixe-toi le prochain.') : traduire('du chemin parcouru');
+    ? current ? traduire('Indique ton poids de départ et ton objectif pour suivre ta progression.') : traduire('Pèse toi une première fois pour voir ta progression.')
+    : reached ? traduire('Objectif atteint. Bravo, fixe toi le prochain.') : traduire('du chemin parcouru');
 
   return (
     <Card style={{ padding: 16, gap: 10 }}>
