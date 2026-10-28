@@ -96,9 +96,9 @@ export function Diagnostic() {
     try {
       await Clipboard.setStringAsync(appInfoText(extra));
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-      appAlert(traduire('Copié'), traduire('Les infos de l’appareil sont dans le presse-papiers.'));
+      appAlert(traduire('Copié'), traduire('Les infos de l’appareil sont copiées.'));
     } catch {
-      appAlert(traduire('Oups'), traduire('Le presse-papiers est indisponible.'));
+      appAlert(traduire('Oups'), traduire('La copie est indisponible.'));
     }
   };
 
@@ -106,9 +106,9 @@ export function Diagnostic() {
     const text = logs.map((l) => `${new Date(l.at).toLocaleTimeString(LOCALE)} ${l.level} ${l.message}`).join('\n');
     try {
       await Clipboard.setStringAsync(text || 'Journal vide');
-      appAlert(traduire('Copié'), traduire('Le journal est dans le presse-papiers. Rien n’a été envoyé.'));
+      appAlert(traduire('Copié'), traduire('Le journal est copié. Rien n’a été envoyé.'));
     } catch {
-      appAlert(traduire('Oups'), traduire('Le presse-papiers est indisponible.'));
+      appAlert(traduire('Oups'), traduire('La copie est indisponible.'));
     }
   };
 

@@ -220,21 +220,21 @@ export const getRICEProtocol = () => {
       letter: 'R',
       title: traduire('Repos'),
       description: traduire('Arrêter l\'activité immédiatement'),
-      duration: '48-72h minimum',
+      duration: '48 à 72h minimum',
       icon: '',
     },
     {
       letter: 'I',
       title: 'Ice (Glace)',
       description: traduire('Appliquer de la glace'),
-      duration: traduire('15-20 min toutes les 2-3h'),
+      duration: traduire('15 à 20 min toutes les 2 à 3h'),
       icon: '',
     },
     {
       letter: 'C',
       title: 'Compression',
       description: traduire('Bander la zone affectée'),
-      duration: traduire('Pendant 48-72h'),
+      duration: traduire('Pendant 48 à 72h'),
       icon: '',
     },
     {
@@ -521,7 +521,7 @@ export const getInjuryRecommendation = (
   }
 
   // Pas de douleur
-  return traduire('Aucune douleur - Blessure guérie');
+  return traduire('Aucune douleur, blessure guérie');
 };
 
 export default {

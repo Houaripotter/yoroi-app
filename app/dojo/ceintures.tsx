@@ -5,7 +5,7 @@
  * (Route historique /dojo/ceintures conservee. Ce ne sont pas des grades officiels.)
  */
 import React from 'react';
-import { Image, Pressable, ScrollView, View } from 'react-native';
+import { Image, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
@@ -19,6 +19,7 @@ import { PACKS, parsePersonnage, THEME_IMAGES } from '@/lib/v2/dojo/personnages'
 import { universDe } from '@/lib/v2/dojo/dojoAffichage';
 import { P } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 export default function Ceintures() {
   const { theme } = useYoroiTheme();
@@ -67,16 +68,16 @@ export default function Ceintures() {
             <LevelPlate color="#FFFFFF" edge="#D9D3CA" size={34} />
             <Ink size={18} weight="black">{traduire("Ton premier niveau t’attend")}</Ink>
             <Ink size={14} color={c.textSecondary}>{traduire('Chaque sport a son niveau. Il monte tout seul avec tes séances\u00A0: Initié à 10, Motivé à 25, Maître à 365.')}</Ink>
-            <Pressable
+            <BoutonPrincipal
               onPress={() => {
                 tap();
                 router.push('/ajouter' as any);
               }}
-              accessibilityRole="button"
-              style={({ pressed }) => ({ alignSelf: 'stretch', minHeight: 56, paddingHorizontal: 20, borderRadius: 18, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.98 : 1 }] })}
-            >
-              <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Enregistrer une séance")}</Ink>
-            </Pressable>
+              haptique="none"
+              label={traduire("Enregistrer une séance")}
+              tailleTexte={16}
+              style={{ alignSelf: 'stretch' }}
+            />
           </View>
         ) : null}
 

@@ -175,10 +175,10 @@ export const nomSante = (platform: string = Platform.OS) => (platform === 'andro
 /** Les etapes pour rouvrir l'acces quand la fenetre du systeme ne revient plus */
 export function etapesReglages(platform: string = Platform.OS): string[] {
   if (platform === 'android') {
-    return [traduire('Ouvre Health Connect (le bouton ci-dessous).'), traduire('Touche Autorisations des applis, puis YOROI.'), traduire('Active ce que tu veux partager, puis reviens ici.')];
+    return [traduire('Ouvre Health Connect (le bouton plus bas).'), traduire('Touche Autorisations des applis, puis YOROI.'), traduire('Active ce que tu veux partager, puis reviens ici.')];
   }
   return [
-    traduire('Ouvre l’app Santé (le bouton ci-dessous).'),
+    traduire('Ouvre l’app Santé (le bouton plus bas).'),
     traduire('Touche ta photo en haut à droite, puis Apps, puis YOROI.'),
     traduire('Active les données à partager, puis reviens ici.'),
   ];

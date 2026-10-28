@@ -338,7 +338,7 @@ function phraseBrute(p: Prevision, u: Unite): string {
   const dansUnMois = mois ? poidsTexte(mois.valeur, u) : '';
   if (p.auCap && p.cap != null) return traduire("Tu es à ton cap. Si tu le tiens, tu restes autour de {0} {1}", rond(p.cap, u), u);
   if (p.cap != null && p.versCap) {
-    const sous = p.cap < p.ajustement.niveau ? traduire('tu passes sous') : traduire('tu passes au-dessus de');
+    const sous = p.cap < p.ajustement.niveau ? traduire('tu passes sous') : traduire('tu dépasses');
     if (p.arrivee) return traduire("À ce rythme, {0} {1} {2} vers le {3}", sous, rond(p.cap, u), u, jourCourt(p.arrivee.date));
     return traduire("À ce rythme, ton cap est encore à plus d’un an. Dans un mois : environ {0}", dansUnMois);
   }
@@ -363,15 +363,15 @@ export function phraseTorii(p: Prevision): string | null {
 
 /** Version courte pour la carte de l'accueil : « sous 80 kg vers le 10 déc. » ou « 79,6 kg dans 1 mois » */
 export function resumeCourt(p: Prevision, u: Unite = 'kg'): string {
-  if (p.cap != null && p.versCap && p.arrivee) return p.cap < p.ajustement.niveau ? traduire("Sous {0} {1} vers le {2}", rond(p.cap, u), u, jourCourt(p.arrivee.date)) : traduire("Au-dessus de {0} {1} vers le {2}", rond(p.cap, u), u, jourCourt(p.arrivee.date));
+  if (p.cap != null && p.versCap && p.arrivee) return p.cap < p.ajustement.niveau ? traduire("Sous {0} {1} vers le {2}", rond(p.cap, u), u, jourCourt(p.arrivee.date)) : traduire("Au dessus de {0} {1} vers le {2}", rond(p.cap, u), u, jourCourt(p.arrivee.date));
   const mois = p.dates.find((d) => d.id === '1m');
   return mois ? traduire("{0} dans 1 mois", poidsTexte(mois.valeur, u)) : '';
 }
 
 /** Ce qu'il manque, en mots */
 export function texteManque(m: Manque): { titre: string; texte: string } {
-  if (m.raison === 'aucune') return { titre: traduire('Pas encore de pesée'), texte: traduire("Pour prévoir ta courbe, il faut au moins {0} pesées étalées sur {1} jours. Pèse-toi le matin, à jeun.", MIN_PESEES, MIN_JOURS) };
-  if (m.raison === 'ancien') return { titre: traduire('Ta dernière pesée date un peu'), texte: traduire("Ta dernière pesée a plus de {0} jours. Pèse-toi quelques matins de suite et ta prévision revient.", MAX_ANCIENNETE) };
+  if (m.raison === 'aucune') return { titre: traduire('Pas encore de pesée'), texte: traduire("Pour prévoir ta courbe, il faut au moins {0} pesées étalées sur {1} jours. Monte sur la balance le matin, à jeun.", MIN_PESEES, MIN_JOURS) };
+  if (m.raison === 'ancien') return { titre: traduire('Ta dernière pesée date un peu'), texte: traduire("Ta dernière pesée a plus de {0} jours. Monte sur la balance quelques matins de suite et ta prévision revient.", MAX_ANCIENNETE) };
   if (m.raison === 'peu') {
     const n = m.manquePesees;
     return { titre: traduire('Encore quelques pesées'), texte: traduirePluriel(n, n > 1, "Il te manque {0} pesée : il en faut au moins {1} sur {2} jours pour une prévision honnête.", "Il te manque {0} pesées : il en faut au moins {1} sur {2} jours pour une prévision honnête.", n, MIN_PESEES, MIN_JOURS) };

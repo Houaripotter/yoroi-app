@@ -21,8 +21,8 @@ export async function annoncerEchecMiseAJour(err: unknown): Promise<void> {
   appAlert(
     traduire('Tes données sont à l’abri'),
     copie
-      ? traduire('YOROI n’a pas réussi à préparer tes données pour cette version. Rien n’a été effacé, et une copie de sécurité a été faite sur ce téléphone juste avant. Ferme YOROI et rouvre-le. Si ce message revient, garde cette copie dans ton cloud et écris-nous (Réglages, Aide et questions).')
-      : traduire('YOROI n’a pas réussi à préparer tes données pour cette version. Rien n’a été effacé. Ferme YOROI et rouvre-le. Si ce message revient, écris-nous avant de supprimer l’app (Réglages, Aide et questions).'),
+      ? traduire('YOROI n’a pas réussi à préparer tes données pour cette version. Rien n’a été effacé, et une copie de sécurité a été faite sur ce téléphone juste avant. Ferme YOROI, puis ouvre YOROI de nouveau. Si ce message revient, garde cette copie dans ton cloud et écris nous un mot (Réglages, Aide et questions).')
+      : traduire('YOROI n’a pas réussi à préparer tes données pour cette version. Rien n’a été effacé. Ferme YOROI, puis ouvre YOROI de nouveau. Si ce message revient, contacte nous avant de supprimer l’app (Réglages, Aide et questions).'),
     copie
       ? [
           { text: 'OK', style: 'cancel' },

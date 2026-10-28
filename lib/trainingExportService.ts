@@ -125,7 +125,7 @@ export const generateTrainingTextReport = async (): Promise<string | null> => {
     const items = getProgressionItems();
 
     let report = '========================================\n';
-    report += traduire('YOROI - RAPPORT D\'ENTRAÎNEMENT\n');
+    report += traduire('YOROI : RAPPORT D\'ENTRAÎNEMENT\n');
     report += '========================================\n\n';
     report += traduire("Date du rapport : {0}\n\n", new Date().toLocaleDateString(LOCALE));
 

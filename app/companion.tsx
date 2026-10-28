@@ -28,6 +28,7 @@ import { ChargementBloc } from '@/components/yoroi/v2/chargement/Chargement';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 type Row = { date: string; weight?: Weight; measurement?: Measurement; composition?: BodyComposition };
 
@@ -222,9 +223,7 @@ export default function TableauCorps() {
               <Glyph kind="sakura" size={44} color={c.indigo} />
               <Ink size={22} weight="black" tight>{traduire("Ton tableau est vide")}</Ink>
               <Ink size={14} color={c.textSecondary}>{traduire("Ajoute une ligne à la main, ou importe ton historique depuis un fichier CSV.")}</Ink>
-              <Pressable onPress={() => setAdding(true)} accessibilityRole="button" style={({ pressed }) => ({ marginTop: 6, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
-                <Ink size={15} weight="extraBold" color={c.onPrimary}>{traduire("Ajouter une ligne")}</Ink>
-              </Pressable>
+              <BoutonPrincipal onPress={() => setAdding(true)} haptique="light" label={traduire("Ajouter une ligne")} hauteur={50} rayon={16} tailleTexte={15} style={{ marginTop: 6 }} />
             </View>
           ) : tab === 'table' ? (
             <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, overflow: 'hidden', flexDirection: 'row' }}>
@@ -342,9 +341,7 @@ function AddRowSheet({ visible, onClose, onSave }: { visible: boolean; onClose: 
         ))}
       </View>
       {error ? <Ink size={13} weight="bold" color={c.danger} style={{ paddingHorizontal: 4 }}>{error}</Ink> : null}
-      <Pressable onPress={submit} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
-        <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Ajouter")}</Ink>
-      </Pressable>
+      <BoutonPrincipal onPress={submit} haptique="light" label={traduire("Ajouter")} hauteur={54} tailleTexte={16} />
     </Sheet>
   );
 }

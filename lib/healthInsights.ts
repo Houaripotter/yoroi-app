@@ -62,7 +62,7 @@ export class HealthInsightsGenerator {
         type: 'warning',
         title: traduire('Récupération en baisse'),
         message:
-          traduire('Ta variabilité cardiaque a nettement baissé. Ton corps a peut-être besoin de repos : séance légère ou jour off.'),
+          traduire('Ta variabilité cardiaque a nettement baissé. Ton corps a sans doute besoin de repos : séance légère ou jour off.'),
         metric: `${recentAvg.toFixed(0)} ms`,
         change,
       });

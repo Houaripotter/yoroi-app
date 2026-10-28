@@ -71,7 +71,7 @@ const SafetyBackupRestoreButtonInner: React.FC = () => {
       }
     } catch (e) {
       logger.error('[SafetyBackupRestore] Erreur:', e);
-      appAlert(traduire('Restauration impossible'), traduire('Le fichier est peut-être abîmé.'));
+      appAlert(traduire('Restauration impossible'), traduire('Le fichier est sans doute abîmé.'));
     } finally {
       setRestoring(false);
     }

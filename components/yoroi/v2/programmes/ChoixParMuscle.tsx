@@ -17,6 +17,7 @@ import type { ZoneId } from '@/lib/v2/programmes/zones';
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import type { ExoProgramme } from '@/lib/v2/programmes/types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 /** « 3 × 8 à 12 », « 3 × 30 à 45 s » */
 export function seriesTexte(e: Pick<ExoProgramme, 'series' | 'repsMin' | 'repsMax' | 'secondes'>): string {
@@ -93,9 +94,7 @@ export function ChoixParMuscle({ visible, titre, exos, onBasculer, onClose }: { 
               <Ink size={15} weight="black" color={pa.texte} numberOfLines={1}>{titre}</Ink>
               <Ink size={12.5} weight="bold" color={pa.texte2}>{traduirePluriel(n, n > 1, '{0} exercice choisi', '{0} exercices choisis', n)}</Ink>
             </View>
-            <Pressable onPress={() => { tap(); onClose(); }} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 50, paddingHorizontal: 24, borderRadius: 25, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? pa.boutonAppui : pa.bouton })}>
-              <Ink size={16} weight="black" color={pa.surBouton}>{traduire('Terminé')}</Ink>
-            </Pressable>
+            <BoutonPrincipal onPress={() => { tap(); onClose(); }} haptique="none" label={traduire('Terminé')} hauteur={50} rayon={25} tailleTexte={16} styleBouton={{ paddingHorizontal: 24 }} />
           </View>
         </View>
       </View>

@@ -27,6 +27,7 @@ import { enregistrerCarnet } from '@/lib/v2/import/enregistrerCarnet';
 import type { BilanImport } from '@/lib/v2/import/enregistrerCarnet';
 import { logger } from '@/lib/security/logger';
 import { traduire, traduirePluriel, DECIMAL, LOCALE } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 // la bibliotheque, une fois : nom exact (enregistre) et nom francais (cherche)
 let BIBLIO: ExoCherchable[] | null = null;
@@ -135,9 +136,7 @@ export default function ImporterCarnet() {
             </View>
 
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Pressable onPress={() => void coller()} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
-                <Ink size={15} weight="extraBold" color={c.onPrimary}>{traduire('Coller mes notes')}</Ink>
-              </Pressable>
+              <BoutonPrincipal onPress={() => void coller()} haptique="light" label={traduire('Coller mes notes')} hauteur={52} rayon={16} tailleTexte={15} style={{ flex: 1 }} />
               <Pressable onPress={() => void fichier()} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: c.accent, backgroundColor: pressed ? c.accentTint : 'transparent' })}>
                 <Ink size={15} weight="extraBold" color={c.accent}>{traduire('Fichier CSV')}</Ink>
               </Pressable>

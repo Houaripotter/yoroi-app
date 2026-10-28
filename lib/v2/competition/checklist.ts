@@ -20,9 +20,9 @@ export type PrepStep = {
 export const CHECKLIST_KEY_PREFIX = '@yoroi_comp_checklist_';
 
 const STEPS: Omit<PrepStep, 'checked'>[] = [
-  { id: 'weight_check', label: traduire('Pesée de contrôle'), description: traduire('Pèse-toi chaque matin à jeun. Ajuste sans paniquer.'), icon: 'scale', fromDays: 14 },
+  { id: 'weight_check', label: traduire('Pesée de contrôle'), description: traduire('Pesée chaque matin à jeun. Ajuste sans paniquer.'), icon: 'scale', fromDays: 14 },
   { id: 'train_taper', label: traduire('Affûtage technique'), description: traduire('Réduis le volume. Garde l’intensité. Répète ton plan de combat.'), icon: 'bolt', fromDays: 7 },
-  { id: 'sleep_8h', label: traduire('Huit heures de sommeil'), description: traduire('Couche-toi tôt. La récupération de la nuit est ton arme secrète.'), icon: 'moon', fromDays: 7 },
+  { id: 'sleep_8h', label: traduire('Huit heures de sommeil'), description: traduire('Au lit tôt. La récupération de la nuit est ton arme secrète.'), icon: 'moon', fromDays: 7 },
   { id: 'hydration', label: traduire('Hydratation réglée'), description: traduire('Deux à trois litres par jour. Pas d’excès d’eau la veille.'), icon: 'drop', fromDays: 7 },
   { id: 'nutrition', label: traduire('Repas d’avant compétition'), description: traduire('Glucides complexes et protéines. Aucun aliment nouveau.'), icon: 'heart', fromDays: 3 },
   { id: 'gear', label: traduire('Matériel prêt'), description: traduire('Kimono ou tenue, protections, encas, eau : vérifie la veille.'), icon: 'shield', fromDays: 2 },

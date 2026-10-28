@@ -24,6 +24,7 @@ import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import { MES_SEANCES_EVENT, chargerMesSeances, dupliquerMaSeance, modifierMaSeance, supprimerMaSeance, totalSeries } from '@/lib/v2/seance/mesSeances';
 import type { MaSeance } from '@/lib/v2/seance/mesSeances';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 export default function MesSeances() {
   const { theme } = useYoroiTheme();
@@ -116,16 +117,16 @@ export default function MesSeances() {
 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <Ink size={12.5} weight="bold" color={c.textMuted} style={{ flex: 1 }} numberOfLines={2}>{quand}</Ink>
-                <Pressable
+                <BoutonPrincipal
                   onPress={() => commencer(s)}
                   disabled={s.exos.length === 0}
-                  accessibilityRole="button"
                   accessibilityLabel={traduire('Commencer {0}', s.nom)}
-                  style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 18, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: s.exos.length === 0 ? c.fillSoft : pressed ? c.primaryPressed : c.primary })}
-                >
-                  <Icon name="play" size={16} color={c.onPrimary} />
-                  <Ink size={15} weight="extraBold" color={c.onPrimary}>{traduire('Commencer')}</Ink>
-                </Pressable>
+                  label={traduire('Commencer')}
+                  hauteur={48}
+                  tailleTexte={15}
+                  lignes={1}
+                  icone={(col) => <Icon name="play" size={16} color={col} />}
+                />
               </View>
             </View>
           );
@@ -134,16 +135,18 @@ export default function MesSeances() {
         {liste && liste.length > 0 ? (
           <>
             {/* 27 octobre 2026 : le meme bouton plein pastel que « Ajouter un exercice » */}
-            <Pressable
+            <BoutonPrincipal
               onPress={() => modifier(null)}
-              accessibilityRole="button"
-              style={({ pressed }) => ({ marginTop: 4, height: 60, borderRadius: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: pressed ? c.primaryPressed : c.primary })}
-            >
-              <View style={{ width: 30, height: 30, borderRadius: 11, backgroundColor: blancA(0.7), alignItems: 'center', justifyContent: 'center' }}>
-                <PlusPastille />
-              </View>
-              <Ink size={16} weight="black" color={c.onPrimary}>{traduire('Créer une séance')}</Ink>
-            </Pressable>
+              label={traduire('Créer une séance')}
+              hauteur={60}
+              rayon={22}
+              style={{ marginTop: 4 }}
+              icone={() => (
+                <View style={{ width: 30, height: 30, borderRadius: 11, backgroundColor: blancA(0.7), alignItems: 'center', justifyContent: 'center' }}>
+                  <PlusPastille />
+                </View>
+              )}
+            />
             <Ink size={12} color={c.textMuted} style={{ textAlign: 'center', paddingHorizontal: 12 }}>
               {traduire('Astuce : à la fin de chaque séance, « Enregistrer cette séance » l’ajoute ici.')}
             </Ink>

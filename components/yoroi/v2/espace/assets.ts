@@ -18,7 +18,7 @@ export const SCENES: SceneMeta[] = [
   { id: 'bambous', nom: 'Bambouseraie', phrase: traduire('Le sentier sous les bambous'), premium: false, image: require('@/assets/avatars/app/monde/scenes/bambous.webp') },
   { id: 'village', nom: traduire('Village aux lanternes'), phrase: traduire('La rue du soir sous les lanternes'), premium: false, image: require('@/assets/avatars/app/monde/scenes/village.webp') },
   { id: 'jardin', nom: 'Jardin zen', phrase: traduire('Le sable ratissé devant le pavillon'), premium: false, image: require('@/assets/avatars/app/monde/scenes/jardin.webp') },
-  { id: 'sommet', nom: traduire('Sommet des nuages'), phrase: traduire('Le torii au-dessus des nuages'), premium: true, annuel: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/sommet.webp') },
+  { id: 'sommet', nom: traduire('Sommet des nuages'), phrase: traduire('Le torii sur les nuages'), premium: true, annuel: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/sommet.webp') },
   { id: 'machiya_aube', nom: traduire('Ruelle à l’aube'), phrase: traduire('La brume sur les pavés'), premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/machiya_aube.webp') },
   { id: 'machiya_couchant', nom: traduire('Ruelle au couchant'), phrase: traduire('Le soir sur la pagode'), premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/machiya_couchant.webp') },
   { id: 'machiya_nuit', nom: traduire('Ruelle de nuit'), phrase: traduire('Les lanternes allumées'), premium: false, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/machiya_nuit.webp') },

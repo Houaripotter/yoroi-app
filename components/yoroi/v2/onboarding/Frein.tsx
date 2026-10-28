@@ -40,7 +40,7 @@ export function Frein({ nav, value, onToggle, onNext }: { nav: Nav; value: Frein
   const c = useColors();
   const petit = useWindowDimensions().width < 380;
   return (
-    <Shell {...nav} title={traduire("Qu’est-ce qui t’a **freiné** jusqu’ici ?")} sub={traduire("Choisis tout ce qui te parle, la suite s’adapte à ta réponse.")} gap={10} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={value.length === 0} />}>
+    <Shell {...nav} title={traduire("Qu’est ce qui t’a **freiné** jusqu’ici ?")} sub={traduire("Choisis tout ce qui te parle, la suite s’adapte à ta réponse.")} gap={10} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={value.length === 0} />}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 }}>
         {FREINS.map((f) => {
           const on = value.includes(f.id);

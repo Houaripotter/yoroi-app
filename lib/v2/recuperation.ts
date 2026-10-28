@@ -143,7 +143,7 @@ export function messageScoreIncomplet(manqueNuit: boolean): string {
 export function phraseRecup(score: number): string {
   const id = recupLevelId(score);
   if (id === 'top') return traduire('Prêt à pousser');
-  if (id === 'bien') return traduire('Entraîne-toi normalement');
-  if (id === 'moyen' || id === 'bas') return 'Vas-y doucement';
+  if (id === 'bien') return traduire('Séance normale');
+  if (id === 'moyen' || id === 'bas') return 'Doucement aujourd’hui';
   return traduire('Récupère aujourd’hui');
 }

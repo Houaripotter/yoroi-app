@@ -184,7 +184,7 @@ export default function CompetitorProfileScreen() {
           </Enter>
 
           <Enter i={3} style={{ gap: 10 }}>
-            <SectionTitle>{traduire("Ceinture de jiu-jitsu")}</SectionTitle>
+            <SectionTitle>{traduire("Ceinture de jiu jitsu")}</SectionTitle>
             <Card style={{ padding: 8, gap: 0 }}>
               {BJJ_BELTS.map((b, i) => {
                 const on = profile.belt === b.id;

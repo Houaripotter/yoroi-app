@@ -94,7 +94,7 @@ export const DAILY_CHALLENGES: Challenge[] = [
     type: 'daily',
     category: 'weight',
     title: 'Discipline Matinale',
-    description: 'Pèse-toi ce matin',
+    description: 'Pesée ce matin',
     icon: 'scale', // Icône lucide
     target: 1,
     reward: { xp: 10 },

@@ -119,7 +119,7 @@ export default function EditCompetitionScreen() {
   if (missing || !draft) {
     return (
       <DetailScreen title={traduire("Modifier")}>
-        <EmptyState title={traduire("Compétition introuvable")} text={traduire("Elle a peut-être été supprimée. Reviens à tes compétitions.")} action={traduire("Mes compétitions")} onAction={() => router.replace('/competitions' as any)} />
+        <EmptyState title={traduire("Compétition introuvable")} text={traduire("Elle a sans doute été supprimée. Reviens à tes compétitions.")} action={traduire("Mes compétitions")} onAction={() => router.replace('/competitions' as any)} />
       </DetailScreen>
     );
   }

@@ -218,7 +218,7 @@ const ACTIVITY_FR: Record<string, string> = {
   swimming: 'Natation',
   hiking: traduire('Randonnée'),
   boxing: 'Boxe',
-  kickboxing: 'Kick-boxing',
+  kickboxing: 'Kickboxing',
   martialarts: 'Arts martiaux',
   wrestling: 'Lutte',
   traditionalstrengthtraining: 'Musculation',

@@ -53,7 +53,7 @@ export function phraseSentier({ depart, cap, actuel, mode, torii, atteint }: Omi
     const ecart = actuel - cap;
     const marge = cap * MARGE_STABLE;
     if (Math.abs(ecart) <= marge) return { pct: null, parts: [{ t: traduire('Dans ta zone de forme'), k: 'ok' }, { t: traduire(', à ') }, { t: `${kg1(Math.abs(ecart))} kg`, k: 'kg' }, { t: traduire(" de ton poids de forme de {0} kg.", kg1(cap)) }] };
-    return { pct: null, parts: [{ t: `${kg1(Math.abs(ecart))} kg`, k: 'kg' }, { t: ecart > 0 ? traduire(" au-dessus de ton poids de forme de {0} kg, ta zone va de {1} à {2} kg.", kg1(cap), kg1(cap - marge), kg1(cap + marge)) : traduire(" en dessous de ton poids de forme de {0} kg, ta zone va de {1} à {2} kg.", kg1(cap), kg1(cap - marge), kg1(cap + marge)) }] };
+    return { pct: null, parts: [{ t: `${kg1(Math.abs(ecart))} kg`, k: 'kg' }, { t: ecart > 0 ? traduire(" de plus que ton poids de forme de {0} kg, ta zone va de {1} à {2} kg.", kg1(cap), kg1(cap - marge), kg1(cap + marge)) : traduire(" en dessous de ton poids de forme de {0} kg, ta zone va de {1} à {2} kg.", kg1(cap), kg1(cap - marge), kg1(cap + marge)) }] };
   }
   const perte = mode === 'perte';
   const span = Math.abs(depart - cap);

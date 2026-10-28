@@ -44,14 +44,14 @@ const HYDRATION_LEVELS: HydrationLevel[] = [
     color: '#D4A520',
     status: 'attention',
     statusLabel: 'DÉSHYDRATATION MODÉRÉE',
-    advice: 'Jaune ambré. Boire 500-750ml d\'eau dans l\'heure.',
+    advice: 'Jaune ambré. Boire 500 à 750ml d\'eau dans l\'heure.',
   },
   {
     level: 6,
     color: '#B8860B',
     status: 'danger',
     statusLabel: 'DÉSHYDRATATION SÉVÈRE',
-    advice: 'Jaune-brun foncé. Boire 1L d\'eau progressivement + électrolytes.',
+    advice: 'Jaune brun foncé. Boire 1L d\'eau progressivement + électrolytes.',
   },
   {
     level: 7,

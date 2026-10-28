@@ -38,6 +38,7 @@ import type { ExoSeance } from '@/lib/v2/seance/mesSeances';
 import { seanceZones, titreZones, ZONES } from '@/lib/v2/programmes/zones';
 import type { ZoneId } from '@/lib/v2/programmes/zones';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 type Ligne = ExoSeance & { cle: string };
 
@@ -257,29 +258,24 @@ export default function ModifierMaSeance() {
 
         {/* bouton plein pastel (Houari ne voulait plus du bouton en pointilles) */}
         {lignes.length < MAX_EXOS ? (
-          <Pressable
+          <BoutonPrincipal
             onPress={() => { tap(); setPicker(true); }}
-            accessibilityRole="button"
-            style={({ pressed }) => ({ marginTop: 14, height: 60, borderRadius: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: pressed ? c.primaryPressed : c.primary })}
-          >
-            <View style={{ width: 30, height: 30, borderRadius: 11, backgroundColor: blancA(0.7), alignItems: 'center', justifyContent: 'center' }}>
-              <PlusPastille />
-            </View>
-            <Ink size={16} weight="black" color={c.onPrimary}>{traduire('Ajouter un exercice')}</Ink>
-          </Pressable>
+            haptique="none"
+            label={traduire('Ajouter un exercice')}
+            hauteur={60}
+            rayon={22}
+            style={{ marginTop: 14 }}
+            icone={() => (
+              <View style={{ width: 30, height: 30, borderRadius: 11, backgroundColor: blancA(0.7), alignItems: 'center', justifyContent: 'center' }}>
+                <PlusPastille />
+              </View>
+            )}
+          />
         ) : null}
       </ScrollView>
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 16, backgroundColor: c.background }}>
-        <Pressable
-          onPress={enregistrer}
-          disabled={vide}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: vide }}
-          style={({ pressed }) => ({ height: 60, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: vide ? c.fillSoft : pressed ? c.primaryPressed : c.primary })}
-        >
-          <Ink size={17} weight="black" color={vide ? c.textMuted : c.onPrimary}>{traduire('Enregistrer')}</Ink>
-        </Pressable>
+        <BoutonPrincipal onPress={enregistrer} disabled={vide} label={traduire('Enregistrer')} hauteur={60} rayon={22} tailleTexte={17} />
       </View>
 
       <ExercisePicker visible={picker} onClose={() => setPicker(false)} onPick={ajouter} history={hist.map} recent={hist.recent} already={lignes.map((l) => l.nom)} />

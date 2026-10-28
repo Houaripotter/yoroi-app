@@ -17,6 +17,7 @@ import { PROTECTION_CHANGED_EVENT, etatProtection, lireProtection, type EtatProt
 import { texteAbri } from '@/lib/v2/sauvegarde/textesCopie';
 import { lancerCopieAuto } from '@/components/yoroi/v2/sauvegarde/lancerCopieAuto';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const PLUS_TARD = '@yoroi_abri_dojo_plus_tard';
 const INSTALL = '@yoroi_install_date';
@@ -68,16 +69,17 @@ export function AbriDojo({ rang, xp, serie }: { rang: string; xp: number; serie:
           <Ink size={13} color={c.textSecondary}>{traduire(t.texte)}</Ink>
         </View>
       </View>
-      <Pressable
+      <BoutonPrincipal
         onPress={() => {
           tap();
           lancerCopieAuto(() => void charger());
         }}
-        accessibilityRole="button"
-        style={({ pressed }) => ({ minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentTint : c.primary })}
-      >
-        <Ink size={15} weight="extraBold" color={c.onPrimary}>{etat === 'en_panne' ? traduire('Choisir le dossier') : traduire('Activer la copie automatique')}</Ink>
-      </Pressable>
+        haptique="none"
+        label={etat === 'en_panne' ? traduire('Choisir le dossier') : traduire('Activer la copie automatique')}
+        hauteur={48}
+        rayon={16}
+        tailleTexte={15}
+      />
       <Pressable onPress={plusTard} accessibilityRole="button" hitSlop={6} style={{ alignSelf: 'center', minHeight: 32, justifyContent: 'center' }}>
         <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Plus tard")}</Ink>
       </Pressable>

@@ -27,7 +27,7 @@ const FAQ: FaqItem[] = [
   },
   {
     q: traduire("Comment ça marche automatiquement ?"),
-    a: traduire("Yoroi crée un backup silencieux chaque jour à l'ouverture de l'app (si ça fait plus de 24h depuis le dernier). Si tu as configuré iCloud/Google Drive, il est auto-poussé vers le cloud. Zéro action de ta part."),
+    a: traduire("Yoroi crée un backup silencieux chaque jour à l'ouverture de l'app (si ça fait plus de 24h depuis le dernier). Si tu as configuré iCloud/Google Drive, il est auto poussé vers le cloud. Zéro action de ta part."),
   },
   {
     q: traduire("Où sont stockés mes backups ?"),
@@ -38,7 +38,7 @@ const FAQ: FaqItem[] = [
     a: traduire("Oui, toutes les photos (profil, clubs, transformation, sparring partners, avatars custom…) sont converties en base64 et incluses dans le fichier JSON. Tu retrouves tout à l'identique à la restauration."),
   },
   {
-    q: traduire("Puis-je utiliser Yoroi sur iPhone ET iPad ?"),
+    q: traduire("Yoroi marche sur iPhone ET iPad ?"),
     a: traduire("Oui. Quand les 2 devices sont proches (même WiFi ou Bluetooth), la sync est instantanée (peerSync). Sinon, via iCloud : le prochain device qui ouvre l'app voit le nouveau backup et propose de synchroniser."),
   },
   {
@@ -46,7 +46,7 @@ const FAQ: FaqItem[] = [
     a: traduire("Va dans « Mes sauvegardes » → « Migrer vers un autre appareil ». Crée un backup léger (sans photos, ~300 KB), envoie le fichier par email ou WhatsApp, tu l’ouvres sur l'autre téléphone : import automatique."),
   },
   {
-    q: traduire("Qu'est-ce que le chiffrement AES-256 ?"),
+    q: traduire("Le chiffrement AES 256, c'est quoi ?"),
     a: traduire("Option pour protéger tes backups avec un mot de passe. Personne ne peut lire le fichier sans ce mot de passe, même s'il fuite. Utile si tu stockes tes backups sur un cloud public. Attention : si tu oublies le mot de passe, les backups chiffrés sont irrécupérables."),
   },
   {

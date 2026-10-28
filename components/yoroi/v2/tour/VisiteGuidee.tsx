@@ -38,6 +38,7 @@ import { entrerExemple, sortirExemple } from '@/lib/v2/visite/demoVisite';
 import { remiseAZeroAuDemarrage } from '@/lib/v2/visite/vitrine';
 import { appliquerVitesse, libelleVitesse, useVitesseVoix, vitesseCourante } from '@/lib/v2/visite/vitesseVoix';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const ONBOARDING_DONE_KEY = 'yoroi_onboarding_done';
 
@@ -1014,17 +1015,23 @@ export function VisiteGuidee() {
               </Pressable>
             ) : null}
             <View style={{ flex: 1 }} />
-            <Pressable
+            <BoutonPrincipal
               onPress={() => (last ? finish() : go(index + 1))}
-              style={({ pressed }) => [s.cta, { backgroundColor: pressed ? c.primaryPressed : c.primary }]}
-              accessibilityRole="button"
+              haptique="light"
               accessibilityLabel={last ? traduire('Terminer la visite') : traduire('Étape suivante')}
+              hauteur={46}
+              rayon={23}
+              styleBouton={{ gap: 8, paddingHorizontal: 22 }}
             >
-              <Ink size={15.5} weight="black" color={c.onPrimary}>{last ? traduire('C’est parti') : first ? traduire('On y va') : traduire('Suivant')}</Ink>
-              <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-                <Path d="M5 12h13M13 6l6 6-6 6" stroke={c.onPrimary} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
-            </Pressable>
+              {(col) => (
+                <>
+                  <Ink size={15.5} weight="black" color={col}>{last ? traduire('C’est parti') : first ? traduire('On y va') : traduire('Suivant')}</Ink>
+                  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                    <Path d="M5 12h13M13 6l6 6-6 6" stroke={col} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
+                </>
+              )}
+            </BoutonPrincipal>
           </View>
         </Animated.View>
         </View>

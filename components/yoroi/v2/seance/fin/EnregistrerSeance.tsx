@@ -23,6 +23,7 @@ import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import type { ExoSeance, MaSeance } from '@/lib/v2/seance/mesSeances';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 type Etat =
   | { cas: 'rien' }
@@ -168,15 +169,10 @@ export function EnregistrerSeance({ trainingId, maSeanceId, marge = 22 }: { trai
           <Pressable onPress={() => setEtat({ cas: 'dedans', seance: changee })} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.fillSoft })}>
             <Ink size={14} weight="extraBold">{traduire('Garder comme avant')}</Ink>
           </Pressable>
-          <Pressable onPress={() => mettreAJour(changee)} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
-            <Ink size={14} weight="extraBold" color={c.onPrimary}>{traduire('Mettre à jour')}</Ink>
-          </Pressable>
+          <BoutonPrincipal onPress={() => mettreAJour(changee)} label={traduire('Mettre à jour')} hauteur={50} tailleTexte={14} compact style={{ flex: 1 }} />
         </View>
       ) : (
-        <Pressable onPress={() => setNommer(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 54, borderRadius: 20, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
-          <Icon name="bookmark" size={18} color={c.onPrimary} />
-          <Ink size={15} weight="extraBold" color={c.onPrimary}>{traduire('Enregistrer cette séance')}</Ink>
-        </Pressable>
+        <BoutonPrincipal onPress={() => setNommer(true)} label={traduire('Enregistrer cette séance')} hauteur={54} rayon={20} tailleTexte={15} icone={(col) => <Icon name="bookmark" size={18} color={col} />} />
       )}
     </View>
     {feuille}

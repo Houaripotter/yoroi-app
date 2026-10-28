@@ -8,7 +8,7 @@
  * le personnage quand l'utilisateur a choisi « Sans personnage » (la piece seule).
  */
 import React, { useEffect, useRef } from 'react';
-import { Animated, Image, Modal, Pressable, ScrollView, View } from 'react-native';
+import { Animated, Image, Modal, ScrollView, View } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -22,12 +22,12 @@ import { libelleConstruction, rangNom, rangTenue, universCourant } from '@/lib/v
 import type { Univers } from '@/lib/v2/dojo/univers';
 import { nomSceau } from '@/lib/v2/dojo/dojoAffichage';
 import { DOJO } from './parts';
-import { useYoroiTheme } from '@/components/yoroi';
 import type { ArmureRank, SealView } from '@/lib/v2/armure';
 import { familyOf } from '@/lib/v2/dojo/seals';
 import { FondEpoque } from '@/components/yoroi/v2/fonds/FondEpoque';
 import { traduire } from '@/lib/i18n/tr';
 import { playBadgeSound, playLevelUpSound, playPlaqueSound } from '@/lib/soundManager';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 type Props = {
   visible: boolean;
@@ -50,8 +50,6 @@ type Props = {
 
 export function Celebration({ visible, rankUp, seals, recap, plate, xp = 0, image, univers, avecPersonnage = true, onClose }: Props) {
   const insets = useSafeAreaInsets();
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
   const rise = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -159,14 +157,7 @@ export function Celebration({ visible, rankUp, seals, recap, plate, xp = 0, imag
           ) : null}
         </ScrollView>
         <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 20, backgroundColor: 'transparent' }}>
-          <Pressable
-            onPress={onClose}
-            accessibilityRole="button"
-            accessibilityLabel={traduire("Continuer")}
-            style={({ pressed }) => ({ height: 56, borderRadius: 18, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}
-          >
-            <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Continuer")}</Ink>
-          </Pressable>
+          <BoutonPrincipal onPress={onClose} label={traduire("Continuer")} tailleTexte={16} />
         </View>
       </View>
     </Modal>

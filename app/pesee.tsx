@@ -38,6 +38,7 @@ import { importHealthDay, saveWeighIn } from '@/lib/v2/pesee/save';
 import { proposerNotificationsApresReussite } from '@/lib/v2/notifications/permission';
 import { apresMesure } from '@/lib/v2/bilan/reglage';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const TICK = 12; // pixels pour 0,1 kg
 const SPAN = 30; // kilos de part et d'autre
@@ -406,15 +407,7 @@ export default function Pesee() {
                 {traduire("{0} a envoyé {1} kg à {2} le {3}{4}.", pending.sourceLabel ? traduire("Ta {0}", pending.sourceLabel) : traduire('Ta balance'), formatKg(pending.weight ?? 0), provider, formatLongDate(pending.date), pending.fat ? traduire(", masse grasse {0} %", fmtValue(pending.fat)) : '')}
               </Ink>
             </View>
-            <Pressable
-              onPress={doImport}
-              disabled={importing}
-              accessibilityRole="button"
-              accessibilityLabel={traduire("Importer depuis {0}", provider)}
-              style={({ pressed }) => ({ height: 48, borderRadius: 16, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center', opacity: importing ? 0.5 : 1 })}
-            >
-              <Ink size={15} weight="extraBold" color={c.onPrimary}>{importing ? traduire('Import en cours') : traduire("Importer depuis {0}", provider)}</Ink>
-            </Pressable>
+            <BoutonPrincipal onPress={doImport} disabled={importing} accessibilityLabel={traduire("Importer depuis {0}", provider)} label={importing ? traduire('Import en cours') : traduire("Importer depuis {0}", provider)} hauteur={48} rayon={16} tailleTexte={15} />
           </View>
         ) : null}
         {notice ? (
@@ -497,7 +490,7 @@ export default function Pesee() {
           />
           {health?.mode === 'off' ? (
             <Pressable onPress={() => router.push('/health-connect' as any)} accessibilityRole="link" style={{ minHeight: 44, justifyContent: 'center', marginTop: 6 }}>
-              <Ink size={13} weight="bold" color={c.indigo}>{traduire("Relie {0} pour pré-remplir ta pesée avec ta balance", provider)}</Ink>
+              <Ink size={13} weight="bold" color={c.indigo}>{traduire("Relie {0} pour remplir d’avance ta pesée avec ta balance", provider)}</Ink>
             </Pressable>
           ) : null}
         </View>

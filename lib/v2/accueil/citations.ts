@@ -14,7 +14,7 @@ export const CITATIONS: readonly string[] = [
   traduire('Un pas de plus que hier.'),
   traduire('La discipline forge le guerrier.'),
   traduire('Le dojo t’attend.'),
-  traduire('Tombe sept fois, relève-toi huit.'),
+  traduire('Sept fois à terre, huit fois debout.'),
   traduire('Chaque séance compte.'),
   traduire('La lame s’aiguise chaque jour.'),
   'Petit effort, grand chemin.',
@@ -24,7 +24,7 @@ export const CITATIONS: readonly string[] = [
   traduire('La régularité bat le talent.'),
   'Respire. Puis recommence.',
   traduire('Le sabre suit l’esprit.'),
-  traduire('Fais-le, même à moitié.'),
+  traduire('Même à moitié, fais ta séance.'),
   traduire('Le chemin se fait en marchant.'),
   traduire('Un round de plus.'),
   traduire('La sueur d’aujourd’hui paie demain.'),
@@ -42,7 +42,7 @@ export const CITATIONS: readonly string[] = [
   traduire('Doucement, mais chaque jour.'),
   traduire('Le bambou plie, il ne casse pas.'),
   traduire('La victoire aime la préparation.'),
-  traduire('Lève-toi, le dojo est ouvert.'),
+  traduire('Debout, le dojo est ouvert.'),
   traduire('Un souffle, un geste, un pas.'),
   traduire('Ton effort parle pour toi.'),
   traduire('La ceinture se gagne au tapis.'),
@@ -70,7 +70,7 @@ export const CITATIONS: readonly string[] = [
   traduire('Un vrai guerrier se repose aussi.'),
   traduire('Ta constance est ta force.'),
   traduire('Le premier pas est le plus beau.'),
-  traduire('Bats-toi pour toi.'),
+  traduire('Ton combat, c’est pour toi.'),
 ];
 
 const DAY = 86400000;

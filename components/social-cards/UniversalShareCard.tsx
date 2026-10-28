@@ -21,11 +21,11 @@ const DRAW  = '#9CA3AF';
 // ─── Sport config (toutes variantes orthographiques) ────────────────────────
 
 const SPORT_CFG: Record<string, { color: string; label: string; cat: 'combat' | 'running' | 'cycling' | 'strength' | 'generic' }> = {
-  bjj:                { color: '#3B82F6', label: traduire('JIU-JITSU BRÉSILIEN'), cat: 'combat'   },
-  jjb:                { color: '#3B82F6', label: traduire('JIU-JITSU BRÉSILIEN'), cat: 'combat'   },
-  jiujitsu:           { color: '#3B82F6', label: traduire('JIU-JITSU BRÉSILIEN'), cat: 'combat'   },
-  jiujitsubrasileiro: { color: '#3B82F6', label: traduire('JIU-JITSU BRÉSILIEN'), cat: 'combat'   },
-  jiujitsub:          { color: '#3B82F6', label: traduire('JIU-JITSU BRÉSILIEN'), cat: 'combat'   },
+  bjj:                { color: '#3B82F6', label: traduire('JIU JITSU BRÉSILIEN'), cat: 'combat'   },
+  jjb:                { color: '#3B82F6', label: traduire('JIU JITSU BRÉSILIEN'), cat: 'combat'   },
+  jiujitsu:           { color: '#3B82F6', label: traduire('JIU JITSU BRÉSILIEN'), cat: 'combat'   },
+  jiujitsubrasileiro: { color: '#3B82F6', label: traduire('JIU JITSU BRÉSILIEN'), cat: 'combat'   },
+  jiujitsub:          { color: '#3B82F6', label: traduire('JIU JITSU BRÉSILIEN'), cat: 'combat'   },
   judo:               { color: '#2563EB', label: traduire('JUDO'),                cat: 'combat'   },
   mma:                { color: '#EF4444', label: 'MMA',                 cat: 'combat'   },
   muaythai:           { color: '#A855F7', label: traduire('MUAY THAI'),           cat: 'combat'   },
@@ -156,7 +156,7 @@ export const UniversalShareCard = React.memo(
           const distNum = training.distance!;
           return {
             heroNum: km, heroSub: traduire('KILOMÈTRES'),
-            badge: distNum >= 42.195 ? 'MARATHON' : distNum >= 21.1 ? 'SEMI-MARATHON' : distNum >= 10 ? '10 KM+' : null,
+            badge: distNum >= 42.195 ? 'MARATHON' : distNum >= 21.1 ? 'SEMI MARATHON' : distNum >= 10 ? '10 KM+' : null,
             stats: [
               { v: fmtDur(training.duration_minutes ?? training.duration), l: 'DURÉE' },
               fmtPace(training.speed)  ? { v: fmtPace(training.speed)!,    l: 'ALLURE' }   : null,
@@ -457,7 +457,7 @@ export const UniversalShareCard = React.memo(
               </View>
               <View>
                 <Text style={{ color: GOLD, fontSize: 13 * s, fontWeight: '900', letterSpacing: 2.5 }}>YOROI</Text>
-                <Text style={{ color: 'rgba(255,255,255,0.40)', fontSize: 6.5 * s, fontWeight: '700', letterSpacing: 0.5 }}>{traduire("SUIVI SPORT & BIEN-ÊTRE")}</Text>
+                <Text style={{ color: 'rgba(255,255,255,0.40)', fontSize: 6.5 * s, fontWeight: '700', letterSpacing: 0.5 }}>{traduire("SUIVI SPORT & BIEN ÊTRE")}</Text>
               </View>
             </View>
 

@@ -126,7 +126,7 @@ export default function CompetitionCountdownScreen() {
 
       {daysLeft >= 0 ? (
         <Enter i={1} style={{ gap: 10 }}>
-          <SectionTitle>{traduire("Check-list de préparation")}</SectionTitle>
+          <SectionTitle>{traduire("liste de préparation")}</SectionTitle>
           {relevant.length > 0 ? (
             <Glass style={{ gap: 4, padding: 14 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 4, paddingBottom: 8 }}>
@@ -156,7 +156,7 @@ export default function CompetitionCountdownScreen() {
               ))}
             </Glass>
           ) : (
-            <EmptyState title={traduire("Rien à cocher pour l'instant")} text={traduire("La check-list se déploie au fil des jours. Les premières étapes arrivent deux semaines avant.")} />
+            <EmptyState title={traduire("Rien à cocher pour l'instant")} text={traduire("La liste se déploie au fil des jours. Les premières étapes arrivent deux semaines avant.")} />
           )}
           {upcomingSteps.length > 0 ? (
             <Card style={{ gap: 10 }}>

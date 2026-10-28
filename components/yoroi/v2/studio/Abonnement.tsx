@@ -96,9 +96,9 @@ export function Abonnement() {
     try {
       await Clipboard.setStringAsync(appUserId);
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-      appAlert(traduire('Copié'), traduire('L’identifiant client RevenueCat est dans le presse-papiers.'));
+      appAlert(traduire('Copié'), traduire('L’identifiant client RevenueCat est copié.'));
     } catch {
-      appAlert(traduire('Oups'), traduire('Le presse-papiers est indisponible.'));
+      appAlert(traduire('Oups'), traduire('La copie est indisponible.'));
     }
   };
 

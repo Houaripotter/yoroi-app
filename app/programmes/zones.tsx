@@ -32,6 +32,7 @@ import type { ZoneId } from '@/lib/v2/programmes/zones';
 import { dureeEstimee } from '@/lib/v2/programmes/express';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { illustration } from '@/components/yoroi/v2/stickers';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 // la carte programme : le torii, le chemin (meme image que le tampon « Quoi faire »)
 const TORII: ImageSourcePropType = require('@/assets/avatars/app/ornements/torii.webp');
@@ -208,7 +209,7 @@ export default function ZonesScreen() {
               </Pressable>
             ) : null}
 
-            <Ink size={22} weight="black" tight accessibilityRole="header" style={{ marginTop: 6 }}>{traduire('Qu’est-ce que tu veux travailler ?')}</Ink>
+            <Ink size={22} weight="black" tight accessibilityRole="header" style={{ marginTop: 6 }}>{traduire('Tu veux travailler quoi ?')}</Ink>
             {presets.filter((r) => r.id !== 'grip').map((r) => (
               <Pressable
                 key={r.id}
@@ -255,25 +256,31 @@ export default function ZonesScreen() {
             {/* ou tu fais ta seance toi meme */}
             <Ink size={12} weight="black" color={c.textSecondary} style={{ letterSpacing: 0.6, marginTop: 6 }}>{traduire('À TA FAÇON')}</Ink>
             {/* creer sa propre seance : tu choisis tes exercices, tu lui donnes un nom, elle va dans Mes seances */}
-            <Pressable
+            <BoutonPrincipal
               onPress={() => { tap(); router.push('/mes-seances/modifier' as any); }}
-              accessibilityRole="button"
+              haptique="none"
               accessibilityLabel={traduire('Je crée ma séance')}
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 92, paddingVertical: 16, paddingLeft: 18, paddingRight: 14, borderRadius: 24, backgroundColor: pressed ? c.primaryPressed : c.primary, overflow: 'hidden' })}
+              hauteur={92}
+              rayon={24}
+              styleBouton={{ justifyContent: 'flex-start', gap: 14, paddingVertical: 16, paddingLeft: 18, paddingRight: 14 }}
             >
-              <View style={{ flex: 1, gap: 4 }}>
-                <Ink size={18} weight="black" tight color={c.onPrimary}>{traduire('Je crée ma séance')}</Ink>
-                <Ink size={13} weight="bold" color={c.onPrimary} style={{ opacity: 0.8 }}>{traduire('Tu choisis tes exercices, tu lui donnes un nom')}</Ink>
-              </View>
-              <View style={{ flexDirection: 'row' }}>
-                {(['epaules', 'abdos', 'fessiers'] as ZoneId[]).map((id, i) => (
-                  <View key={id} style={{ width: 46, height: 46, borderRadius: 23, overflow: 'hidden', borderWidth: 2, borderColor: P.white, backgroundColor: P.white, marginLeft: i ? -14 : 0 }}>
-                    <Image source={VIGNETTES[id]} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
+              {(col) => (
+                <>
+                  <View style={{ flex: 1, gap: 4 }}>
+                    <Ink size={18} weight="black" tight color={col}>{traduire('Je crée ma séance')}</Ink>
+                    <Ink size={13} weight="bold" color={col} style={{ opacity: 0.82 }}>{traduire('Tu choisis tes exercices, tu lui donnes un nom')}</Ink>
                   </View>
-                ))}
-              </View>
-              <Icon name="chevron" size={18} color={c.onPrimary} />
-            </Pressable>
+                  <View style={{ flexDirection: 'row' }}>
+                    {(['epaules', 'abdos', 'fessiers'] as ZoneId[]).map((id, i) => (
+                      <View key={id} style={{ width: 46, height: 46, borderRadius: 23, overflow: 'hidden', borderWidth: 2, borderColor: P.white, backgroundColor: P.white, marginLeft: i ? -14 : 0 }}>
+                        <Image source={VIGNETTES[id]} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
+                      </View>
+                    ))}
+                  </View>
+                  <Icon name="chevron" size={18} color={col} />
+                </>
+              )}
+            </BoutonPrincipal>
 
             {/* ou YOROI propose les exercices pour les muscles choisis */}
             <Pressable
@@ -414,25 +421,23 @@ export default function ZonesScreen() {
       {/* le bouton, en bas, des qu'on a choisi */}
       {mode !== 'choix' ? (
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingTop: 10, paddingBottom: insets.bottom + 10, backgroundColor: c.background }}>
-          <Pressable
-            onPress={commencer}
-            disabled={!exos.length}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: !exos.length }}
-            style={({ pressed }) => ({ minHeight: 62, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, backgroundColor: !exos.length ? c.fillSoft : pressed ? c.primaryPressed : c.primary })}
-          >
-            <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: blancA(0.7), alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="play" size={20} color={exos.length ? c.onPrimary : c.textMuted} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Ink size={17} weight="black" color={exos.length ? c.onPrimary : c.textMuted}>{exos.length ? traduire('Commencer ma séance') : traduire('Choisis au moins un muscle')}</Ink>
-              {exos.length ? (
-                <Ink size={13} weight="bold" color={c.onPrimary} style={{ opacity: 0.8 }} numberOfLines={1}>
-                  {traduirePluriel(exos.length, exos.length > 1, '{0} exercice, environ {1} min', '{0} exercices, environ {1} min', exos.length, minutes)}
-                </Ink>
-              ) : null}
-            </View>
-          </Pressable>
+          <BoutonPrincipal onPress={commencer} disabled={!exos.length} hauteur={62} rayon={22} styleBouton={{ justifyContent: 'flex-start', gap: 12, paddingHorizontal: 16 }}>
+            {(col) => (
+              <>
+                <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: exos.length ? 'rgba(255,255,255,0.18)' : blancA(0.7), alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="play" size={20} color={col} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Ink size={17} weight="black" color={col}>{exos.length ? traduire('Commencer ma séance') : traduire('Choisis au moins un muscle')}</Ink>
+                  {exos.length ? (
+                    <Ink size={13} weight="bold" color={col} style={{ opacity: 0.82 }} numberOfLines={1}>
+                      {traduirePluriel(exos.length, exos.length > 1, '{0} exercice, environ {1} min', '{0} exercices, environ {1} min', exos.length, minutes)}
+                    </Ink>
+                  ) : null}
+                </View>
+              </>
+            )}
+          </BoutonPrincipal>
         </View>
       ) : null}
     </View>

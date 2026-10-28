@@ -62,6 +62,7 @@ import { choisirTuiles, ligneComparaison } from '@/components/yoroi/v2/seance/fi
 import type { CleTuile } from '@/components/yoroi/v2/seance/fin/logique';
 import { LANG, traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 type Reward = { xp: number; records: string[]; weekHeld: boolean; weekXp: number; state: ArmureState };
 type RankParty = { data: CelebrationData; personnage: string };
@@ -214,7 +215,7 @@ export default function SeanceFin() {
   const weekLine = goal <= 0
     ? traduire('Tu peux te fixer un objectif de séances dans les réglages, si tu veux.')
     : reached
-      ? sessions > goal ? traduire("{0} séances cette semaine, au-delà de ton objectif", sessions) : traduire('Objectif de la semaine atteint')
+      ? sessions > goal ? traduire("{0} séances cette semaine, plus que ton objectif", sessions) : traduire('Objectif de la semaine atteint')
       : traduire("Encore {0} pour ton objectif de la semaine", goal - sessions);
 
   // Les grands chiffres : la duree, puis ce qui compte pour ce sport (au plus trois)
@@ -275,14 +276,7 @@ export default function SeanceFin() {
         <Ornement name="kabuto" size={96} />
         <Ink size={26} weight="black" tight style={{ textAlign: 'center' }}>{traduire("Séance introuvable")}</Ink>
         <Ink size={15} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire("Cette séance n’existe plus ou n’a pas été enregistrée. Retrouve toutes tes séances dans l’onglet Séances.")}</Ink>
-        <Pressable
-          onPress={() => router.replace('/(tabs)/seances' as any)}
-          accessibilityRole="button"
-          accessibilityLabel={traduire("Voir mes séances")}
-          style={({ pressed }) => ({ alignSelf: 'stretch', marginTop: 10, height: 60, borderRadius: 22, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}
-        >
-          <Ink size={17} weight="black" color={c.onPrimary}>{traduire("Voir mes séances")}</Ink>
-        </Pressable>
+        <BoutonPrincipal onPress={() => router.replace('/(tabs)/seances' as any)} label={traduire("Voir mes séances")} hauteur={60} rayon={22} tailleTexte={17} style={{ alignSelf: 'stretch', marginTop: 10 }} />
         <Pressable onPress={close} accessibilityRole="button" accessibilityLabel={traduire("Retour à l’accueil")} style={[carteBlanche(c.surface, c.divider), { alignSelf: 'stretch', height: 60, alignItems: 'center', justifyContent: 'center' }]}>
           <Ink size={16} weight="extraBold">{traduire("Retour à l’accueil")}</Ink>
         </Pressable>
@@ -356,9 +350,7 @@ export default function SeanceFin() {
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 22, paddingTop: 12, paddingBottom: insets.bottom + 16, backgroundColor: c.background, flexDirection: 'row', gap: 10 }}>
         <BoutonCarte onPress={() => router.push((bilan?.carte ? lienCarteBilan(`seance:${id}`) : `/carte?moment=seance&id=${id}`) as any)} />
-        <Pressable onPress={close} accessibilityRole="button" accessibilityLabel={traduire("Terminer")} style={({ pressed }) => ({ flex: 1, height: 58, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
-          <Ink size={17} weight="black" color={c.onPrimary}>{traduire("Terminer")}</Ink>
-        </Pressable>
+        <BoutonPrincipal onPress={close} label={traduire("Terminer")} hauteur={58} rayon={22} tailleTexte={17} style={{ flex: 1 }} />
       </View>
 
       {party ? (

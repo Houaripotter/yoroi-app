@@ -36,7 +36,7 @@ const DEFAULT_POSITIONS: BJJPosition[] = [
   { id: 'back', name: 'Dos', x: 82, y: 24, color: '#6E8C3A', submissions: [], timeMinutes: 0 },
   { id: 'turtle', name: 'Tortue', x: 18, y: 24, color: '#A8832F', submissions: [], timeMinutes: 0 },
   { id: 'side_control', name: 'Contrôle latéral', x: 76, y: 46, color: '#6E8C3A', submissions: [], timeMinutes: 0 },
-  { id: 'half_guard', name: 'Demi-garde', x: 24, y: 46, color: '#3D5D9E', submissions: [], timeMinutes: 0 },
+  { id: 'half_guard', name: 'Demi garde', x: 24, y: 46, color: '#3D5D9E', submissions: [], timeMinutes: 0 },
   { id: 'guard', name: 'Garde fermée', x: 50, y: 58, color: '#3D5D9E', submissions: [], timeMinutes: 0 },
   { id: 'butterfly', name: 'Papillon', x: 50, y: 74, color: '#3D5D9E', submissions: [], timeMinutes: 0 },
   { id: 'standing', name: 'Debout', x: 50, y: 90, color: '#A8832F', submissions: [], timeMinutes: 0 },

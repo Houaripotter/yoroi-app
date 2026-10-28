@@ -17,7 +17,7 @@ const ENDURANCE = new Set(sportsInPack('endurance'));
 const DISTANCES = [
   { label: traduire('5 km'), km: 5, tolerance: 0.5 },
   { label: '10 km', km: 10, tolerance: 1 },
-  { label: 'Semi-marathon', km: 21.1, tolerance: 2 },
+  { label: 'Semi marathon', km: 21.1, tolerance: 2 },
   { label: 'Marathon', km: 42.195, tolerance: 3 },
 ];
 

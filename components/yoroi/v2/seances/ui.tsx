@@ -20,6 +20,7 @@ import type { OrnementKey } from '@/components/yoroi/v2/ornements/images';
 import { P } from '@/components/yoroi/livePalette';
 import { Pastille } from '@/components/yoroi/v2/dojo/Kozane';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 export const tap = () => {
   impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
@@ -181,6 +182,10 @@ export function BigButton({ label, onPress, tone = 'accent', icon, style }: { la
   // 27 octobre 2026 (refonte Pastel) : le bouton principal en pastel, texte bleu nuit
   const bg = tone === 'accent' ? c.primary : tone === 'ink' ? c.ink : tone === 'danger' ? c.dangerTint : c.fillSubtle;
   const fg = tone === 'accent' ? c.onPrimary : tone === 'ink' ? c.background : tone === 'danger' ? c.danger : c.ink;
+  // 28 octobre 2026 : l'action principale prend le bouton partage (degrade bleu nuit, texte blanc)
+  if (tone === 'accent') {
+    return <BoutonPrincipal label={label} onPress={onPress} style={style} tailleTexte={16} lignes={1} icone={icon ? (col) => <Icon name={icon} size={20} color={col} strokeWidth={2.6} /> : undefined} />;
+  }
   return (
     <Pressable
       onPress={() => {
@@ -190,12 +195,11 @@ export function BigButton({ label, onPress, tone = 'accent', icon, style }: { la
       accessibilityRole="button"
       style={({ pressed }) => [
         { minHeight: 56, borderRadius: 18, backgroundColor: bg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 18, opacity: pressed ? 0.88 : 1 },
-        tone === 'accent' ? { shadowColor: '#1B2A44', shadowOpacity: 0.1, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 3 } : null,
         style,
       ]}
     >
       {icon ? <Icon name={icon} size={20} color={fg} strokeWidth={2.6} /> : null}
-      <Ink size={16} weight="extraBold" color={fg} numberOfLines={1} style={{ flexShrink: 1 }}>{label}</Ink>
+      <Ink size={16} weight="extraBold" color={fg} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.68} style={{ flexShrink: 1 }}>{label}</Ink>
     </Pressable>
   );
 }

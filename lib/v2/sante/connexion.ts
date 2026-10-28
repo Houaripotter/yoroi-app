@@ -180,7 +180,7 @@ export function messageConnexion(issue: IssueConnexion, plateforme: string): Mes
     case 'abandon':
       return {
         titre: traduire('La fenêtre n’a pas été validée'),
-        texte: android ? traduire('Réessaie, ou ouvre l’accès toi-même :\n') + etapes : traduire('Réessaie et touche Autoriser en haut à droite. Ou ouvre l’accès toi-même :\n') + etapes,
+        texte: android ? traduire('Réessaie, ou ouvre l’accès à la main :\n') + etapes : traduire('Réessaie et touche Autoriser en haut à droite. Ou ouvre l’accès toi même :\n') + etapes,
         reglages: true,
       };
     case 'indisponible':

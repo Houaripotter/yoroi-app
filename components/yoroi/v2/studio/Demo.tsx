@@ -36,7 +36,7 @@ export function emitAllData() {
 /** Ce que contient Heny, dit simplement */
 export const HENY_LINES = [
   traduire('Musculation quatre fois par semaine à 18 h à la salle de musculation (poussée, tirage, jambes, haut du corps)'),
-  traduire('Jiu-jitsu brésilien lundi, mardi et jeudi à midi au club de JJB : cours, drilling et sparring'),
+  traduire('Jiu jitsu brésilien lundi, mardi et jeudi à midi au club de JJB : cours, drilling et sparring'),
   traduire('Course sur la Corniche le samedi matin, avec trace et zones cardiaques, et foot à 5 un dimanche soir sur deux ou trois'),
   traduire('Ceinture bleue, rounds de sparring avec six partenaires et leurs fiches'),
   traduire('Pesées de 86,4 à 81,6 kg, composition du corps et mensurations'),
@@ -148,7 +148,7 @@ export function Demo() {
                 </View>
               ) : null}
             </View>
-            <Ink size={13} color={c.textSecondary}>{traduire("Musculation et jiu-jitsu brésilien, 30 ans, 1,78 m, ceinture bleue. Sept mois d’historique.")}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire("Musculation et jiu jitsu brésilien, 30 ans, 1,78 m, ceinture bleue. Sept mois d’historique.")}</Ink>
           </View>
           {working ? <ActivityIndicator color={c.accent} /> : null}
         </View>
@@ -176,7 +176,7 @@ export function Demo() {
           <KV first label={traduire("Dans l’app")} value={traduire("Tes vraies données")} />
         )}
       </Card>
-      <Note>{traduire("Avant Heny, chaque table de la base est copiée dans la base elle-même, avec tes réglages, ton XP et tes clés sécurisées. Au retour, tout est remis ligne par ligne, puis les copies sont effacées. La synchro entre appareils est coupée pendant la démo.")}</Note>
+      <Note>{traduire("Avant Heny, chaque table de la base est copiée dans la même base, avec tes réglages, ton XP et tes clés sécurisées. Au retour, tout est remis ligne par ligne, puis les copies sont effacées. La synchro entre appareils est coupée pendant la démo.")}</Note>
 
       <SubTitle>Captures</SubTitle>
       <Card>

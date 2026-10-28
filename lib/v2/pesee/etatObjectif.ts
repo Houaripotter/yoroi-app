@@ -329,9 +329,9 @@ export function texteTendance(e: Pick<EtatObjectif, 'tendance' | 'ecartTendance'
   const valeur = traduire("Ta tendance : {0} kg", kg1(e.tendance.poids));
   const d = e.ecartTendance;
   if (d == null || Math.abs(d) < ECART_EAU_KG) return { valeur, note: traduire('ta dernière pesée est dans ta tendance') };
-  if (Math.abs(d) >= 2) return { valeur, note: d > 0 ? traduire("ta dernière pesée est {0} kg au-dessus : vérifie ta balance ou ta saisie", kg1(d)) : traduire("ta dernière pesée est {0} kg en dessous : vérifie ta balance ou ta saisie", kg1(d)) };
+  if (Math.abs(d) >= 2) return { valeur, note: d > 0 ? traduire("ta dernière pesée est {0} kg de plus : vérifie ta balance ou ta saisie", kg1(d)) : traduire("ta dernière pesée est {0} kg en dessous : vérifie ta balance ou ta saisie", kg1(d)) };
   return d > 0
-    ? { valeur, note: traduire("ta dernière pesée est {0} kg au-dessus : sans doute de l’eau (sel, glucides, entraînement, cycle), elle repart en général en quelques jours", kg1(d)) }
+    ? { valeur, note: traduire("ta dernière pesée est {0} kg de plus : sans doute de l’eau (sel, glucides, entraînement, cycle), elle repart en général en quelques jours", kg1(d)) }
     : { valeur, note: traduire("ta dernière pesée est {0} kg en dessous : une partie est sans doute de l’eau, elle peut revenir", kg1(d)) };
 }
 

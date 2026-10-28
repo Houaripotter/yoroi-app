@@ -373,7 +373,7 @@ export default function WorkoutDetailScreen() {
             ))}
           </View>
         ) : (
-          <EmptyState title={traduire("Séance introuvable")} text={traduire("Elle a peut-être été supprimée. Retrouve tes autres séances dans l’historique.")} action={traduire("Voir mes séances")} onAction={() => router.replace('/(tabs)/seances' as any)} />
+          <EmptyState title={traduire("Séance introuvable")} text={traduire("Elle a sans doute été supprimée. Retrouve tes autres séances dans l’historique.")} action={traduire("Voir mes séances")} onAction={() => router.replace('/(tabs)/seances' as any)} />
         )}
       </View>
     );

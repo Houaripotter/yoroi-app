@@ -19,6 +19,7 @@ import type { TamponId } from '@/components/yoroi/v2/tampons/table';
 import { P } from '@/components/yoroi/livePalette';
 import { carteBlanche, OMBRE_CARTE } from '@/components/yoroi/v2/seance/pastel';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 // 27 octobre 2026 (maquettes Pastel) : 16 points des bords, comme l'accueil
 export const GUTTER = 16;
@@ -158,6 +159,10 @@ export function PrimaryButton({ label, onPress, disabled, tone = 'accent', style
   // 27 octobre 2026 (refonte Pastel) : le bouton principal en pastel, texte bleu nuit
   const bg = tone === 'accent' ? c.primary : c.ink;
   const pressedBg = tone === 'accent' ? c.primaryPressed : '#000000';
+  // 28 octobre 2026 : l'action principale prend le bouton partage (degrade bleu nuit, texte blanc)
+  if (tone === 'accent') {
+    return <BoutonPrincipal label={label} onPress={onPress} disabled={disabled} style={style} tailleTexte={16} haptique="light" />;
+  }
   return (
     <Pressable
       onPress={() => {
@@ -168,7 +173,7 @@ export function PrimaryButton({ label, onPress, disabled, tone = 'accent', style
       accessibilityRole="button"
       style={({ pressed }) => [{ height: 56, borderRadius: 18, backgroundColor: pressed ? pressedBg : bg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, opacity: disabled ? 0.5 : 1 }, style]}
     >
-      <Ink size={16} weight="extraBold" color={tone === 'accent' ? c.onPrimary : c.background}>
+      <Ink size={16} weight="extraBold" color={c.background}>
         {label}
       </Ink>
     </Pressable>
@@ -187,7 +192,7 @@ export function GhostButton({ label, onPress, style }: { label: string; onPress:
       accessibilityRole="button"
       style={({ pressed }) => [{ ...carteBlanche(c.surface, c.border), height: 56, borderRadius: 18, backgroundColor: pressed ? c.fillSoft : c.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 }, style]}
     >
-      <Ink size={14} weight="extraBold" numberOfLines={1} style={{ flexShrink: 1 }}>
+      <Ink size={14} weight="extraBold" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72} style={{ flexShrink: 1 }}>
         {label}
       </Ink>
     </Pressable>

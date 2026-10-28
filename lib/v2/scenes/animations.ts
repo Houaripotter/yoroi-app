@@ -283,7 +283,7 @@ const MOUVEMENT_SCENE: Record<SceneAnimeeId, MouvementScene> = {
     ],
   },
   moto_tour_eiffel: {
-    mouvement: traduire('Un bateau-mouche passe sur la Seine devant la tour Eiffel, l’eau scintille (vidéo en boucle).'),
+    mouvement: traduire('Un bateau mouche passe sur la Seine devant la tour Eiffel, l’eau scintille (vidéo en boucle).'),
     // la video (video/sc02.mp4) montre le bateau et l'eau : plus de calque bateau, plus de reflets en code.
     // Calque d'avant la video, a remettre si on retire la video :
     // { image: 'sc02_bateau', zone: { x: 33.75, y: 58.209, l: 19.167, h: 10.448 }, mouvement: { type: 'traversee', de: { x: 43.333, y: 63.433 }, vers: { x: -11.667, y: 68.358 }, echelle: [0.42, 1.05], duree: 24, intervalle: 45, depart: 3 } },
@@ -479,7 +479,7 @@ export const SCENES_ANIMEES_CODE: ConfigScene[] = [
     id: 'aile_avion',
     numero: 7,
     fichier: 'sc07_aile_avion.webp',
-    nom: traduire('Aile au-dessus des nuages'),
+    nom: traduire('Aile sur les nuages'),
     ...MOUVEMENT_SCENE.aile_avion,
     fond: ['#B88790', '#D3A482', '#B3826F'],
     effets: [

@@ -116,7 +116,7 @@ export const TEXTE_EFFACE =
 export function texteResteEnDehors(os: string): string {
   const sante = os === 'android' ? 'Health Connect' : os === 'ios' ? 'Apple Santé' : null;
   const debut = sante ? traduire("ce qui a été écrit dans {0}, ", sante) : '';
-  return traduire("Restent en dehors de YOROI : {0}tes sauvegardes copiées dans ton dossier cloud, et les images enregistrées dans ta galerie. Tu peux les supprimer toi-même.", debut);
+  return traduire("Restent en dehors de YOROI : {0}tes sauvegardes copiées dans ton dossier cloud, et les images enregistrées dans ta galerie. Tu peux les supprimer à la main.", debut);
 }
 
 /** Les deux paragraphes ensemble, pour une fenetre de confirmation */

@@ -524,7 +524,7 @@ export default function ProgrammeDetail() {
         {p.jours.some((x) => x.exos.length) ? <QuestionsCoach /> : null}
 
         <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>
-          {traduire('Si tu as un problème de santé, une douleur ou une blessure, demande l’avis d’un médecin avant de commencer. Le questionnaire PAR-Q+ t’aide à savoir si c’est nécessaire.')}
+          {traduire('Si tu as un problème de santé, une douleur ou une blessure, demande l’avis d’un médecin avant de commencer. Le questionnaire PAR Q+ t’aide à savoir si c’est nécessaire.')}
         </Ink>
         {enCours ? (
           <Pressable onPress={arreter} accessibilityRole="button" style={{ minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>

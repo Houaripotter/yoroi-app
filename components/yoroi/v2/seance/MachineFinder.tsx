@@ -21,6 +21,7 @@ import type { Machine, MachineBlock, MachineGroupe } from '@/lib/v2/seance/machi
 import { machineArt } from '@/lib/v2/seance/machinesArt';
 import { Icon } from './Icon';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 type Props = {
   visible: boolean;
@@ -301,11 +302,11 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
       {etape(3, traduire('Colle sa réponse ici'), traduire("Elle commence par {0} et finit par FIN.", MACHINE_HEADER))}
       {clipFound && !bloc ? (
         <Pressable onPress={() => lire(clipFound)} accessibilityRole="button" style={({ pressed }) => ({ borderRadius: 16, padding: 14, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1.5, borderColor: c.accent, gap: 2 })}>
-          <Ink size={15} weight="extraBold" color={c.accent}>{traduire("Réponse trouvée dans le presse-papiers")}</Ink>
+          <Ink size={15} weight="extraBold" color={c.accent}>{traduire("Réponse copiée trouvée")}</Ink>
           <Ink size={13} color={c.textSecondary}>{traduire("Touche pour la lire")}</Ink>
         </Pressable>
       ) : null}
-      <PrimaryButton label={traduire("Coller depuis le presse-papiers")} tone="ink" onPress={() => void coller()} />
+      <PrimaryButton label={traduire("Coller ce que j’ai copié")} tone="ink" onPress={() => void coller()} />
       <TextInput
         value={reponse}
         onChangeText={lire}
@@ -357,14 +358,18 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
         columnWrapperStyle={{ gap: GAP }}
         contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: insets.bottom + 30, gap: 16 }}
         ListHeaderComponent={
-          <Pressable onPress={() => setPhoto(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 60, borderRadius: 18, paddingHorizontal: 16, marginBottom: 2, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.primaryPressed : c.primary })}>
-            <CameraGlyph color={c.onPrimary} />
-            <View style={{ flex: 1 }}>
-              <Ink size={16} weight="extraBold" color={c.onPrimary} numberOfLines={1}>{traduire("Prendre la machine en photo")}</Ink>
-              <Ink size={12} color={c.onPrimary} numberOfLines={1} style={{ opacity: 0.85 }}>{traduire("Ton IA la reconnaît pour toi")}</Ink>
-            </View>
-            <Icon name="chevron" size={18} color={c.onPrimary} />
-          </Pressable>
+          <BoutonPrincipal onPress={() => setPhoto(true)} haptique="light" hauteur={60} style={{ marginBottom: 2 }} styleBouton={{ justifyContent: 'flex-start', gap: 12, paddingHorizontal: 16 }}>
+            {(col) => (
+              <>
+                <CameraGlyph color={col} />
+                <View style={{ flex: 1 }}>
+                  <Ink size={16} weight="extraBold" color={col} numberOfLines={1}>{traduire("Prendre la machine en photo")}</Ink>
+                  <Ink size={12} color={col} numberOfLines={1} style={{ opacity: 0.85 }}>{traduire("Ton IA la reconnaît pour toi")}</Ink>
+                </View>
+                <Icon name="chevron" size={18} color={col} />
+              </>
+            )}
+          </BoutonPrincipal>
         }
         ListEmptyComponent={
           <View style={{ paddingVertical: 40, alignItems: 'center', gap: 6 }}>

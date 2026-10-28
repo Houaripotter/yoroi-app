@@ -307,7 +307,7 @@ export const RADAR_REFERENCES = {
   },
   technique: {
     title: traduire('Technique'),
-    description: traduire('Basé sur tes auto-évaluations après chaque séance (1 à 5 étoiles).'),
+    description: traduire('Basé sur tes auto évaluations après chaque séance (1 à 5 étoiles).'),
     reference: traduire("Noter tes séances t'aide à voir ce qui progresse et ce qui coince."),
   },
   souplesse: {

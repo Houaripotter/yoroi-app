@@ -208,7 +208,7 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
       return {
         text: 'Bon sommeil, quelques axes d\'amélioration possibles.',
         tips: [
-          avgHours < 7 ? 'Vise 7-9h de sommeil par nuit' : null,
+          avgHours < 7 ? 'Vise 7 à 9h de sommeil par nuit' : null,
           sleepPhasesData.avgDeep < 60 ? 'Ton sommeil profond est un peu court, évite les écrans 1h avant de dormir' : null,
           sleepPhasesData.avgRem < 90 ? 'Peu de sommeil REM : essaie de te coucher plus tôt' : null,
         ].filter(Boolean) as string[],
@@ -221,7 +221,7 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
           avgHours < 6 ? 'Tu dors trop peu, vise au minimum 7h par nuit' : null,
           'Garde des heures fixes pour le coucher et le lever',
           'Évite la caféine après 14h et l\'alcool le soir',
-          'Maintiens ta chambre fraîche (18-20°C) et sombre',
+          'Maintiens ta chambre fraîche (18 à 20°C) et sombre',
         ].filter(Boolean) as string[],
       };
     }

@@ -316,7 +316,7 @@ export const calculatePrediction = async (): Promise<PredictionResult | null> =>
     const tips: string[] = [];
 
     if (weeklyLoss > 1) {
-      warnings.push('Attention, cette perte est peut-etre trop rapide (> 1 kg/sem). Risque d\'effet yoyo.');
+      warnings.push('Attention, cette perte est sans doute trop rapide (> 1 kg/sem). Risque d\'effet yoyo.');
     }
 
     if (weeklyLoss > 1.5) {
@@ -343,7 +343,7 @@ export const calculatePrediction = async (): Promise<PredictionResult | null> =>
     }
 
     if (regression.r2 < 0.3 && dataForRegression.length >= 7) {
-      tips.push('Tes pesees varient beaucoup. Pese-toi toujours dans les memes conditions.');
+      tips.push('Tes pesees varient beaucoup. Monte sur la balance toujours dans les memes conditions.');
     }
 
     // Determiner la confiance

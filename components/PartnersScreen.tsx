@@ -75,7 +75,7 @@ const partnersData: PartnerData[] = [
   {
     id: '5',
     name: "Team Sorel",
-    role: "Club Multi-Disciplines",
+    role: "Club Multi Disciplines",
     description: "Club emblématique de Marseille dirigé par Yvan Sorel. Une équipe soudée qui pratique le JJB, le Grappling et le MMA. Un esprit de famille et une ambiance de guerriers.",
     images: [],
     location: "Marseille",
@@ -85,7 +85,7 @@ const partnersData: PartnerData[] = [
     id: '6',
     name: "Younes, Kiné & Hijama",
     role: "Expert Médical & Pratiquant JJB",
-    description: "Expert dans le domaine Kiné du Sport et Cupping (Hijama). Il connait les besoins des combattants car il est lui-même pratiquant de JJB. Le partenaire idéal pour la récupération.",
+    description: "Expert dans le domaine Kiné du Sport et Cupping (Hijama). Il connait les besoins des combattants car il pratique aussi le JJB. Le partenaire idéal pour la récupération.",
     images: [],
     location: "Cabinet Kiné Santé Sport",
     instagram: 'kinesantesport16'

@@ -169,7 +169,7 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, totalP
                   {isWeekend && (
                     <View style={styles.weekendBadge}>
                       <Zap size={8} color="#F59E0B" fill="#F59E0B" />
-                      <Text style={styles.weekendBadgeText}>Week-end +50% XP</Text>
+                      <Text style={styles.weekendBadgeText}>Fin de semaine +50% XP</Text>
                     </View>
                   )}
                 </View>

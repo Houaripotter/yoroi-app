@@ -469,7 +469,7 @@ function CutForm({ current, initial, competition, onSaved, onCancel }: { current
       }
     };
     if (z?.zone === 'danger' || risk === 'danger') {
-      appAlert(traduire('Objectif dangereux'), traduire('Cet objectif dépasse les limites de sécurité. Le mieux est d’en parler à un médecin du sport ou de viser la catégorie au-dessus.'), [
+      appAlert(traduire('Objectif dangereux'), traduire('Cet objectif dépasse les limites de sécurité. Le mieux est d’en parler à un médecin du sport ou de viser la catégorie supérieure.'), [
         { text: traduire('Revoir'), style: 'cancel' },
         { text: traduire('Garder quand même'), style: 'destructive', onPress: doSave },
       ]);
@@ -592,7 +592,7 @@ function Simulator({ defaultCurrent, defaultTarget, defaultDays }: { defaultCurr
   return (
     <>
       <Enter i={0}>
-        <H2 sub={traduire("Pré-rempli avec ta dernière pesée et ta coupe")}>{traduire("Tes paramètres")}</H2>
+        <H2 sub={traduire("Déjà rempli avec ta dernière pesée et ta coupe")}>{traduire("Tes paramètres")}</H2>
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
           <NumField label={traduire("Poids actuel")} value={cur} onChange={setCur} unit="kg" placeholder="80" />
           <NumField label={traduire("Poids cible")} value={tgt} onChange={setTgt} unit="kg" placeholder="77" />

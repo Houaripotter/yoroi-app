@@ -333,7 +333,7 @@ export function HydrationScale() {
       ))}
       <View style={{ borderRadius: 16, backgroundColor: P.paper, padding: 12, gap: 6 }}>
         <Ink size={13} weight="medium" color={P.ink} style={{ lineHeight: 19 }}>
-          {traduire("Un jaune pâle (niveaux 1 à 3) indique une bonne hydratation. Au-delà du niveau 5, tes performances et ta concentration peuvent baisser.")}</Ink>
+          {traduire("Un jaune pâle (niveaux 1 à 3) indique une bonne hydratation. Après le niveau 5, tes performances et ta concentration peuvent baisser.")}</Ink>
         <Ink size={11} weight="medium" color={P.muted}>
           {traduire("Armstrong et al. (1994). Urinary Indices of Hydration Status. Int J Sport Nutr 4(3) : 265 à 279. DOI 10.1123/ijsn.4.3.265")}</Ink>
       </View>

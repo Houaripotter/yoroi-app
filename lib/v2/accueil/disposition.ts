@@ -34,7 +34,7 @@ export const BLOCS_ACCUEIL: { id: BlocAccueil; titre: string; aide: string }[] =
   // 16 octobre (agent MANGÉ) : une ligne discrète, seulement si ton app de repas écrit dans Santé ; sinon rien
   { id: 'mange', titre: traduire('Mangé aujourd’hui'), aide: traduire('calories et protéines de ton app de repas, seulement si elle écrit dans Santé') },
   { id: 'rendezvous', titre: traduire('Ta compétition'), aide: traduire('seulement quand tu as ajouté une compétition à venir') },
-  { id: 'conseil', titre: traduire('Ta citation du jour'), aide: traduire('une phrase sous tes outils ; touche-la pour le conseil du jour') },
+  { id: 'conseil', titre: traduire('Ta citation du jour'), aide: traduire('une phrase sous tes outils ; touche cette phrase pour le conseil du jour') },
   { id: 'mois', titre: traduire('Ton mois'), aide: traduire('ton calendrier, le logo de ton club sur chaque séance') },
   // 16 octobre : blocs en plus ; 17 octobre : affiches par defaut, avec un etat vide utile tant que l'app n'a pas la donnee
   { id: 'progres', titre: traduire('Records et régularité'), aide: traduire('ton dernier record, tes semaines d’affilée à l’objectif') },

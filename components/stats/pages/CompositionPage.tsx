@@ -33,6 +33,7 @@ import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { StatsExplanation } from '../StatsExplanation';
 import { logger } from '@/lib/security/logger';
+import { genreDesReglages, type GenreFormule } from '@/lib/genreCalcul';
 
 export const CompositionPage: React.FC = () => {
   const { colors } = useTheme();
@@ -50,7 +51,7 @@ export const CompositionPage: React.FC = () => {
   }>({ bodyFat: [], muscle: [], water: [] });
 
   // Données utilisateur pour les ranges
-  const [userGender, setUserGender] = useState<'male' | 'female'>('male');
+  const [userGender, setUserGender] = useState<GenreFormule>('male');
   const [userWeight, setUserWeight] = useState(75);
   const [userHeight, setUserHeight] = useState(175);
   const [userAge, setUserAge] = useState(30);
@@ -78,7 +79,7 @@ export const CompositionPage: React.FC = () => {
       ]);
 
       if (settings?.gender) {
-        setUserGender(settings.gender as 'male' | 'female');
+        setUserGender(genreDesReglages(settings) ?? 'male');
       }
       if (settings?.weight_goal) {
         setUserWeight(settings.weight_goal);

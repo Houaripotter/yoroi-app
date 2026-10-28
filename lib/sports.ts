@@ -1508,7 +1508,7 @@ export const SPORTS_BY_CATEGORY = {
 
 // Labels français pour les catégories
 export const CATEGORY_LABELS: Record<string, string> = {
-  combat_striking: traduire('Combat pieds-poings'),
+  combat_striking: traduire('Combat pieds poings'),
   combat_grappling: traduire('Combat au sol'),
   fitness: traduire('Musculation et fitness'),
   cardio: 'Cardio',
@@ -1537,7 +1537,7 @@ export const MUSCLES: Muscle[] = [
   { id: 'abdos', name: 'Abdos', icon: 'human-male' },
   { id: 'jambes', name: 'Jambes', icon: 'human-handsdown' },
   { id: 'mollets', name: 'Mollets', icon: 'foot-print' },
-  { id: 'avant_bras', name: 'Avant-bras', icon: 'arm-flex' },
+  { id: 'avant_bras', name: 'Avant bras', icon: 'arm-flex' },
   { id: 'fessiers', name: 'Fessiers', icon: 'human-handsdown' },
 ];
 

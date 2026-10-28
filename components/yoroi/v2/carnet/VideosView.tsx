@@ -28,7 +28,7 @@ export const MUSCLE_OPTIONS = [
   { label: 'Fessiers', key: 'Fessiers' },
   { label: 'Mollets', key: 'Mollets' },
   { label: traduire('Abdos / Core'), key: 'Abdos / Core' },
-  { label: 'Avant-bras', key: 'Avant-bras' },
+  { label: 'Avant bras', key: 'Avant-bras' },
 ];
 
 /** Ouvre une video : dans YOROI si elle est sur le telephone, dans son application si c'est un lien */

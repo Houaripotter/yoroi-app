@@ -11,6 +11,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { GUTTER, P, Press, softShadow } from '@/components/yoroi/v2/accueil/kit';
 import { Icon as EIcon } from '@/components/yoroi/v2/espace/ui';
 import { blancA } from '@/components/yoroi/livePalette';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 /** Progression en traits */
 export function Traits({ total, current }: { total: number; current: number }) {
@@ -90,6 +91,10 @@ export function StepScreen({
 export function InkButton({ label, onPress, disabled, tone = 'red', loading }: { label: string; onPress: () => void; disabled?: boolean; tone?: 'ink' | 'red' | 'light'; loading?: boolean }) {
   const bg = tone === 'ink' ? P.ink : tone === 'red' ? P.primary : P.white;
   const fg = tone === 'light' ? P.ink : tone === 'red' ? P.onPrimary : P.white;
+  // 28 octobre 2026 : l'action principale prend le bouton partage (degrade bleu nuit, texte blanc)
+  if (tone === 'red') {
+    return <BoutonPrincipal label={loading ? 'Un instant' : label} onPress={onPress} disabled={disabled || loading} tailleTexte={16} />;
+  }
   return (
     <Press onPress={disabled || loading ? undefined : onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: !!disabled }}>
       <View style={{ minHeight: 56, borderRadius: 18, backgroundColor: bg, borderWidth: tone === 'light' ? 1 : 0, borderColor: P.line2, alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.35 : 1 }}>

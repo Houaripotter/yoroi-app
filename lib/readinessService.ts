@@ -302,7 +302,7 @@ export const calculateRecoveryBedtime = async (daysToRecover: number = 3): Promi
     return {
       recommendedBedtime,
       hoursToSleep: Math.round(targetSleepHours * 10) / 10,
-      message: `Pour résorber ${formatHoursHM(debtHours)} de dette en ${daysToRecover} jours, couche-toi à ${recommendedBedtime} (${formatHoursHM(targetSleepHours)} de sommeil).`,
+      message: `Pour résorber ${formatHoursHM(debtHours)} de dette en ${daysToRecover} jours, va au lit à ${recommendedBedtime} (${formatHoursHM(targetSleepHours)} de sommeil).`,
     };
   } catch (error) {
     logger.error('Erreur calcul récupération:', error);

@@ -141,7 +141,7 @@ export function Gamification() {
       ) : (
         <Card style={{ padding: 16, gap: 10 }}>
           <Ink size={15} weight="extraBold">{traduire("Charge Heny pour régler les XP")}</Ink>
-          <Ink size={13} color={c.textSecondary}>{traduire("XP, rang, dan, avatar et reprise se règlent seulement sur Heny, pour ne jamais toucher à tes vraies XP. Elles reviennent intactes quand tu remets tes vraies données. Les animations ci-dessous marchent sans elle.")}</Ink>
+          <Ink size={13} color={c.textSecondary}>{traduire("XP, rang, dan, avatar et reprise se règlent seulement sur Heny, pour ne jamais toucher à tes vraies XP. Elles reviennent intactes quand tu remets tes vraies données. Les animations plus bas marchent sans elle.")}</Ink>
           <Button tone="ghost" label={traduire("Aller à Démo et captures")} onPress={() => openSection('demo')} small />
         </Card>
       )}

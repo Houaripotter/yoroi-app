@@ -19,6 +19,7 @@ import { BigButton, BrushRing, Card, CIcon, D, Enter, Field, Glass, IconBtn, N, 
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { useAlignedNow } from '@/lib/v2/carnet/useAlignedNow';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 type EventType = 'takedown' | 'guard_pass' | 'sweep' | 'mount' | 'back_control' | 'sub_attempt' | 'tap' | 'advantage' | 'penalty' | 'points_custom';
 interface MatchEvent {
@@ -247,12 +248,7 @@ export default function MatchTrackerScreen() {
       <View style={{ flex: 1, backgroundColor: P.paper }}>
         <View style={{ paddingTop: insets.top + 6, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <IconBtn icon="close" label={traduire("Quitter le match")} onPress={() => appAlert(traduire('Quitter le match ?'), traduire('Les actions notées seront perdues.'), [{ text: 'Rester', style: 'cancel' }, { text: 'Quitter', style: 'destructive', onPress: back }])} />
-          <Press onPress={end} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Terminer le match")}>
-            <View style={{ height: 44, paddingHorizontal: 18, borderRadius: 14, backgroundColor: P.ink, justifyContent: 'center' }}>
-              <Ink size={15} weight="extraBold" color={P.paper}>
-                {traduire("Terminer")}</Ink>
-            </View>
-          </Press>
+          <BoutonPrincipal onPress={end} accessibilityLabel={traduire("Terminer le match")} label={traduire("Terminer")} hauteur={44} rayon={14} tailleTexte={15} lignes={1} compact />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, paddingTop: 8 }}>
           <View style={{ alignItems: 'center', flex: 1 }}>

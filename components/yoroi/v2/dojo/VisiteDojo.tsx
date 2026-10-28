@@ -23,6 +23,7 @@ import { tap } from '@/components/yoroi/v2/dojo/parts';
 import { traduire } from '@/lib/i18n/tr';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import { cadreDe, estimerBulle, hautDeBarre, placerBulle, type Ecran } from '@/components/yoroi/v2/tour/placement';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 export type CibleDojo = 'hero' | 'aujourdhui' | 'recompense' | 'semaines' | 'sceaux' | 'aide';
 /** r : le rayon des coins de la carte (28 octobre 2026 : le cadre epouse la carte) */
@@ -260,17 +261,20 @@ export function VisiteDojo({ visible, mesurer, onClose }: Props) {
                 <Ink size={15} weight="extraBold" color={c.textSecondary}>{traduire("Plus tard")}</Ink>
               </Pressable>
             ) : null}
-            <Pressable
+            <BoutonPrincipal
               onPress={() => {
                 tap();
                 if (derniere) fermer(true);
                 else setI(i + 1);
               }}
-              accessibilityRole="button"
-              style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}
-            >
-              <Ink size={15.5} weight="black" color={c.onPrimary}>{premiere ? traduire('C’est parti') : derniere ? traduire('Terminer') : traduire('Suivant')}</Ink>
-            </Pressable>
+              haptique="none"
+              label={premiere ? traduire('C’est parti') : derniere ? traduire('Terminer') : traduire('Suivant')}
+              hauteur={46}
+              rayon={23}
+              tailleTexte={15.5}
+              lignes={1}
+              style={{ flex: 1 }}
+            />
           </View>
           {premiere ? <Ink size={12} color={c.textMuted} style={{ textAlign: 'center' }}>{traduire("Tu pourras la revoir avec le bouton « ? » en haut du Dojo.")}</Ink> : null}
         </Animated.View>

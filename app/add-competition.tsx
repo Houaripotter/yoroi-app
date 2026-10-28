@@ -125,7 +125,7 @@ export default function AddCompetitionScreen() {
   };
 
   return (
-    <DetailScreen title={traduire("Nouvelle compétition")} subtitle={traduire("Ton prochain rendez-vous sur le tapis")} footer={blocked ? <BigButton label={traduire("Voir YOROI Premium")} onPress={() => ouvrirPaywall('competitions_limite', upcoming)} /> : <BigButton label={saving ? 'Enregistrement' : traduire('Enregistrer')} icon="check" onPress={save} disabled={saving} />}>
+    <DetailScreen title={traduire("Nouvelle compétition")} subtitle={traduire("Ta prochaine compétition")} footer={blocked ? <BigButton label={traduire("Voir YOROI Premium")} onPress={() => ouvrirPaywall('competitions_limite', upcoming)} /> : <BigButton label={saving ? 'Enregistrement' : traduire('Enregistrer')} icon="check" onPress={save} disabled={saving} />}>
       {blocked && upcoming !== null ? <LimitNotice limit="upcomingCompetitions" count={upcoming} /> : null}
       <CompetitionForm draft={draft} onChange={setDraft} gender={gender} lastWeight={lastWeight?.weight} minimumDate={startOfToday()} />
     </DetailScreen>

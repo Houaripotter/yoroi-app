@@ -21,6 +21,7 @@ import { useFondTaScene } from '@/components/yoroi/v2/espace/apercuScene';
 import { pickSportArt } from '@/lib/v2/seance/sportArt';
 import { carteBlanche, OMBRE_CARTE, ton } from '@/components/yoroi/v2/seance/pastel';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 /**
  * Vague 45 (Houari : « c'est beau mais c'est fade ») : chaque chrono a sa couleur et son illustration de sport.
@@ -248,6 +249,24 @@ export function HugeButton({ title, sub, icon = 'play', onPress, tone = 'accent'
   const ink = tone === 'ink';
   const bg = ink ? P.ink : P.primary;
   const fg = ink ? P.white : P.onPrimary;
+  // 28 octobre 2026 : le grand bouton accent prend le bouton principal partage (degrade bleu nuit, texte blanc)
+  if (!ink) {
+    return (
+      <BoutonPrincipal onPress={onPress} accessibilityLabel={sub ? `${title}, ${sub}` : title} hauteur={sub ? 78 : 64} rayon={24} styleBouton={{ justifyContent: 'flex-start', gap: 14 }}>
+        {(col) => (
+          <>
+            <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
+              <CIcon name={icon} size={24} color={col} width={2.8} />
+            </View>
+            <View style={{ flex: 1, gap: 1 }}>
+              <Ink size={20} weight="black" tight color={col} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{title}</Ink>
+              {sub ? <Ink size={13} weight="bold" color={col} style={{ opacity: 0.82 }} numberOfLines={1}>{sub}</Ink> : null}
+            </View>
+          </>
+        )}
+      </BoutonPrincipal>
+    );
+  }
   return (
     <Press onPress={onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={sub ? `${title}, ${sub}` : title}>
       <View style={{ minHeight: sub ? 78 : 64, borderRadius: 24, backgroundColor: bg, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18, ...OMBRE_CARTE }}>

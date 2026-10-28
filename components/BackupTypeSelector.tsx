@@ -53,7 +53,7 @@ const BackupTypeSelectorInner: React.FC = () => {
         <View style={{ flex: 1 }}>
           <Text style={[styles.optionTitle, { color: colors.text }]}>{traduire("Complète (avec photos)")}</Text>
           <Text style={[styles.optionSub, { color: colors.textMuted ?? '#888' }]}>
-            {traduire("Tout : données + photos profil/clubs/transformation. Taille : 5-50 MB.")}</Text>
+            {traduire("Tout : données + photos profil/clubs/transformation. Taille : 5 à 50 MB.")}</Text>
         </View>
         {exporting === 'full' ? (
           <ActivityIndicator color="#0EA5E9" size="small" />
@@ -77,7 +77,7 @@ const BackupTypeSelectorInner: React.FC = () => {
         <View style={{ flex: 1 }}>
           <Text style={[styles.optionTitle, { color: colors.text }]}>{traduire("Légère (sans photos)")}</Text>
           <Text style={[styles.optionSub, { color: colors.textMuted ?? '#888' }]}>
-            {traduire("Seulement les données. Taille : 100-500 KB. Idéal pour email.")}</Text>
+            {traduire("Seulement les données. Taille : 100 à 500 KB. Idéal pour email.")}</Text>
         </View>
         {exporting === 'light' ? (
           <ActivityIndicator color="#8B5CF6" size="small" />

@@ -19,6 +19,7 @@ import { useCarte } from '@/components/yoroi/v2/cartes/useCarte';
 import { chiffresParDefaut } from '@/lib/v2/cartes/chiffres';
 import type { CarteData } from '@/lib/v2/cartes/types';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const VIGNETTE = 118;
 
@@ -163,16 +164,18 @@ function Apercu({ data, retour, personnaliser }: { data: CarteData; retour: () =
           <Icon name={k.saved ? 'check' : 'download'} size={19} color={k.saved ? c.successText : c.ink} />
           <Ink size={16} weight="extraBold" color={k.saved ? c.successText : c.ink}>{k.busy === 'save' ? traduire('Un instant') : k.saved ? traduire('Enregistrée') : traduire('Enregistrer')}</Ink>
         </Pressable>
-        <Pressable
+        <BoutonPrincipal
           onPress={() => { setErreur(null); void k.partager(onErreur); }}
+          haptique="light"
           disabled={!!k.busy}
-          accessibilityRole="button"
           accessibilityLabel={traduire("Partager la carte")}
-          style={({ pressed }) => ({ flex: 1.2, height: 54, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}
-        >
-          <Icon name="share" size={19} color={c.onPrimary} />
-          <Ink size={16} weight="extraBold" color={c.onPrimary}>{k.busy === 'share' ? traduire('Un instant') : traduire('Partager')}</Ink>
-        </Pressable>
+          label={k.busy === 'share' ? traduire('Un instant') : traduire('Partager')}
+          hauteur={54}
+          tailleTexte={16}
+          lignes={1}
+          style={{ flex: 1.2 }}
+          icone={(col) => <Icon name="share" size={19} color={col} />}
+        />
       </View>
       {erreur ? <Ink size={13} weight="bold" color={c.danger}>{erreur}</Ink> : null}
       <Pressable onPress={personnaliser} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>

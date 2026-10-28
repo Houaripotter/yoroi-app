@@ -288,7 +288,7 @@ export default function CompetitionDetailScreen() {
       {upcoming ? (
         <Enter i={2}>
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <AccessTile title="Check-list" text={traduire("Ce qu'il te reste à préparer")} tone="ink" onPress={() => router.push(`/competition-countdown?compId=${id}` as any)} />
+            <AccessTile title="liste" text={traduire("Ce qu'il te reste à préparer")} tone="ink" onPress={() => router.push(`/competition-countdown?compId=${id}` as any)} />
             <AccessTile title={traduire("Camp")} text={traduire("Ton plan semaine par semaine")} onPress={() => router.push(`/competition-camp?compId=${id}` as any)} />
           </View>
         </Enter>

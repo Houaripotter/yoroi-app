@@ -62,7 +62,7 @@ export const GUIDES: Guide[] = [
           'Au moins 1,6 g de protéines par kilo et par jour, réparties en repas de 20 à 40 g.',
           'En déficit avec entraînement, 2,4 g par kilo ont gardé plus de muscle et fait perdre plus de gras que 1,2 g.',
           'En régime, dormir 5 h 30 au lieu de 8 h 30 a fait perdre deux fois moins de gras et plus de muscle.',
-          'Si tu as des antécédents de troubles alimentaires ou un problème de santé, fais-toi accompagner par un professionnel.',
+          'Si tu as des antécédents de troubles alimentaires ou un problème de santé, demande l’aide d’un professionnel.',
         ],
       },
     ],
@@ -141,10 +141,10 @@ export const GUIDES: Guide[] = [
       {
         titre: 'Protéger tes mains',
         points: [
-          'Chez les boxeurs de l’équipe de Grande-Bretagne, la main est la zone la plus souvent blessée.',
+          'Chez les boxeurs de l’équipe de Grande Bretagne, la main est la zone la plus souvent blessée.',
           'Bande tes mains et mets des gants à chaque séance. Aucune étude ne compare avec et sans bandes, mais le risque est connu.',
           'Frappe avec les deux premières jointures, poignet aligné.',
-          'Douleur à la main qui ne passe pas en quelques jours : fais-la examiner.',
+          'Douleur à la main qui ne passe pas en quelques jours : montre ta main à un médecin.',
         ],
       },
     ],
@@ -206,7 +206,7 @@ export const GUIDES: Guide[] = [
         points: [
           'Charges légères ou lourdes : autant de muscle si tu finis près de l’échec.',
           '6 à 12 répétitions sur les gros mouvements, 10 à 15 en isolation : pratique et efficace.',
-          'Plus de 90 secondes de repos : au-delà, peu de différence pour le muscle.',
+          'Plus de 90 secondes de repos : après, peu de différence pour le muscle.',
         ],
       },
       {

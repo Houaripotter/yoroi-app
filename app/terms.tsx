@@ -121,7 +121,7 @@ function sections(): Section[] {
           {
             title: traduire('Contrat de licence Apple'),
             icon: 'doc' as IconName,
-            content: [traduire('Sur iPhone et iPad, le contrat de licence standard d’Apple pour les apps (EULA) s’applique aussi. Tu le trouves sur le site d’Apple, avec le lien ci-dessous.')],
+            content: [traduire('Sur iPhone et iPad, le contrat de licence standard d’Apple pour les apps (EULA) s’applique aussi. Tu le trouves sur le site d’Apple, avec le lien plus bas.')],
             link: { label: traduire('Lire le contrat de licence Apple (EULA)'), url: APPLE_EULA_URL },
           },
         ]

@@ -780,8 +780,8 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
     const fort = Math.abs(dT) >= 2;
     const n = kg1(dT);
     const fr = fort
-      ? dT > 0 ? 'Pesée à vérifier : {0} kg au-dessus de ta tendance' : 'Pesée à vérifier : {0} kg sous ta tendance'
-      : dT > 0 ? 'Eau probable : {0} kg au-dessus de ta tendance' : 'Eau probable : {0} kg sous ta tendance';
+      ? dT > 0 ? 'Pesée à vérifier : {0} kg de plus que ta tendance' : 'Pesée à vérifier : {0} kg sous ta tendance'
+      : dT > 0 ? 'Eau probable : {0} kg de plus que ta tendance' : 'Eau probable : {0} kg sous ta tendance';
     // une langue qui n'a pas encore la phrase courte : « Your trend: 80.4 kg, −5.4 kg » (deja traduit), une ligne aussi
     if (LANG !== 'fr' && traduire(fr) === fr) return { fort, n: `${dT > 0 ? '+' : '−'}${n} kg`, avant: `${tendTxt?.valeur ?? ''}, `, apres: '', trouve: true };
     const texte = traduire(fr, n);

@@ -26,7 +26,7 @@ const ALL_MUSCLES: Array<{ id: MuscleId; label: string }> = [
   { id: 'pectoraux',    label: 'Pectoraux' },
   { id: 'deltoide_ant', label: 'Épaules' },
   { id: 'biceps',       label: 'Biceps' },
-  { id: 'avant_bras',   label: 'Avant-bras' },
+  { id: 'avant_bras',   label: 'Avant bras' },
   { id: 'abdominaux',   label: 'Abdominaux' },
   { id: 'obliques',     label: 'Obliques' },
   { id: 'quadriceps',   label: 'Quadriceps' },
@@ -39,7 +39,7 @@ const ALL_MUSCLES: Array<{ id: MuscleId; label: string }> = [
   { id: 'triceps',         label: 'Triceps' },
   { id: 'lombaires',       label: 'Lombaires' },
   { id: 'fessiers',        label: 'Fessiers' },
-  { id: 'ischio_jambiers', label: 'Ischio-jamb.' },
+  { id: 'ischio_jambiers', label: 'Ischio jamb.' },
   { id: 'mollets',         label: 'Mollets' },
 ];
 
@@ -262,7 +262,7 @@ const FRONT_LABELS: Array<{ id: MuscleId; label: string }> = [
   { id: 'pectoraux',    label: 'Pectoraux' },
   { id: 'deltoide_ant', label: 'Épaules' },
   { id: 'biceps',       label: 'Biceps' },
-  { id: 'avant_bras',   label: 'Avant-bras' },
+  { id: 'avant_bras',   label: 'Avant bras' },
   { id: 'abdominaux',   label: 'Abdominaux' },
   { id: 'obliques',     label: 'Obliques' },
   { id: 'quadriceps',   label: 'Quadriceps' },
@@ -275,7 +275,7 @@ const BACK_LABELS: Array<{ id: MuscleId; label: string }> = [
   { id: 'triceps',         label: 'Triceps' },
   { id: 'lombaires',       label: 'Lombaires' },
   { id: 'fessiers',        label: 'Fessiers' },
-  { id: 'ischio_jambiers', label: 'Ischio-jamb.' },
+  { id: 'ischio_jambiers', label: 'Ischio jamb.' },
   { id: 'mollets',         label: 'Mollets' },
 ];
 

@@ -170,7 +170,7 @@ export function partiesAllure(l: Ligne | null | undefined, torii: string | null 
   if (st.id === 'avant') return null;
   const m = medianeA(l, torii ?? null, d);
   if (m == null || !isFinite(m)) return null;
-  const quand = passe ? traduire('ce jour-là') : d === today ? traduire('aujourd’hui') : traduire("le {0}", jourCourt(d));
+  const quand = passe ? traduire('ce jour') : d === today ? traduire('aujourd’hui') : traduire("le {0}", jourCourt(d));
   // 16 octobre (Houari) : plus d'ecart « toi +0,3 kg », la phrase de statut au dessus le dit deja
   return { debut: traduire("Ton allure {0}", quand), valeur: `${kgUn(m)} kg`, ton: st.ton };
 }

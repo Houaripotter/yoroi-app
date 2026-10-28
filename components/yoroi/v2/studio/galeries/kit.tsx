@@ -17,6 +17,7 @@ import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
 import { useCreatorMode } from '@/lib/v2/creator/CreatorModeContext';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 export const G = 22;
 
@@ -200,6 +201,10 @@ export function Lignes({ children }: { children: React.ReactNode }) {
 export function Bouton({ label, icon, onPress, light, disabled }: { label: string; icon?: IconName; onPress: () => void; light?: boolean; disabled?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  // 28 octobre 2026 : le bouton plein prend le bouton principal partage
+  if (!light) {
+    return <BoutonPrincipal label={label} onPress={onPress} disabled={disabled} hauteur={50} rayon={16} tailleTexte={15} haptique="light" icone={icon ? (col) => <Icon name={icon} size={18} color={col} stroke={2.4} /> : undefined} />;
+  }
   return (
     <Pressable
       disabled={disabled}

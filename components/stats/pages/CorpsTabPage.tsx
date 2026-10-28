@@ -40,6 +40,7 @@ import { StatsInsightBanner } from '../StatsInsightBanner';
 import { StreakBadge } from '../StreakBadge';
 import { generateInsights, type Insight } from '@/lib/statsInsights';
 import { SkeletonGrid } from '../SkeletonCard';
+import { genreDesReglages, type GenreFormule } from '@/lib/genreCalcul';
 
 // Parse date sûr : 'yyyy-MM-dd' en local (évite le jour précédent à l'ouest d'UTC)
 const toLocalDate = (v: any): Date =>
@@ -98,7 +99,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
   });
 
   // --- User data ---
-  const [userGender, setUserGender] = useState<'male' | 'female'>('male');
+  const [userGender, setUserGender] = useState<GenreFormule>('male');
 
   // --- Modal ---
   const [selectedMetric, setSelectedMetric] = useState<{
@@ -114,7 +115,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
   const translatedBMIRanges = useMemo(() => {
     const zones = BMI_RANGES.zones.map(zone => ({
       ...zone,
-      label: zone.label === 'Sous-poids' ? t('stats.bmiUnderweight') :
+      label: zone.label === 'Sous poids' ? t('stats.bmiUnderweight') :
              zone.label === 'Normal' ? t('stats.bmiNormal') :
              zone.label === 'Surpoids' ? t('stats.bmiOverweight') :
              zone.label === 'Obésité' ? t('stats.bmiObese') : zone.label
@@ -250,7 +251,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
 
       // Un seul re-render pour tout mettre à jour
       unstable_batchedUpdates(() => {
-        if (settings?.gender) setUserGender(settings.gender as 'male' | 'female');
+        if (settings?.gender) setUserGender(genreDesReglages(settings) ?? 'male');
         if (resolvedGoal) setTargetWeight(resolvedGoal);
         setWeightData(data);
         if (allWeights?.length > 0) setAllWeightsData(allWeights);

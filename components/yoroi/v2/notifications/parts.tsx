@@ -16,6 +16,7 @@ import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { Sheet } from '@/components/yoroi/v2/seance/Sheet';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire, LOCALE } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const NBSP = ' ';
 
@@ -47,7 +48,7 @@ export function sayDays(days: number[]): string {
   const set = new Set(days);
   if (set.size === 7) return traduire('tous les jours');
   if (set.size === 5 && WEEKDAYS.every((d) => set.has(d))) return traduire('en semaine');
-  if (set.size === 2 && set.has(0) && set.has(6)) return traduire('le week-end');
+  if (set.size === 2 && set.has(0) && set.has(6)) return traduire('samedi et dimanche');
   if (set.size === 1) {
     const d = WEEK_DAYS.find((x) => set.has(x.js));
     return d ? traduire("le {0}", d.name) : '';
@@ -158,17 +159,16 @@ export function TimeField({ label, value, onChange }: { label: string; value: st
           <View style={{ alignItems: 'center' }}>
             <DateTimePicker value={draft} mode="time" display="spinner" is24Hour locale={LOCALE} minuteInterval={5} themeVariant="light" onChange={(_, d) => d && setDraft(d)} />
           </View>
-          <Pressable
+          <BoutonPrincipal
             onPress={() => {
               hap();
               onChange(toHhmm(draft));
               setOpen(false);
             }}
-            accessibilityRole="button"
-            style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}
-          >
-            <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Valider {0}", sayTime(toHhmm(draft)))}</Ink>
-          </Pressable>
+            haptique="none"
+            label={traduire("Valider {0}", sayTime(toHhmm(draft)))}
+            tailleTexte={16}
+          />
         </Sheet>
       ) : null}
     </View>
@@ -186,7 +186,7 @@ export function DaysPicker({ value, onChange }: { value: number[]; onChange: (v:
   const presets: { label: string; days: number[] }[] = [
     { label: traduire('Tous les jours'), days: EVERY_DAY },
     { label: traduire('En semaine'), days: WEEKDAYS },
-    { label: 'Week-end', days: [0, 6] },
+    { label: 'Fin de semaine', days: [0, 6] },
   ];
   return (
     <View style={{ gap: 10 }}>

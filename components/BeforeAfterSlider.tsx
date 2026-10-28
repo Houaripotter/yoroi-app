@@ -146,7 +146,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
 
       showPopup(
         'Partager',
-        'Que veux-tu faire ?',
+        'Tu veux faire quoi ?',
         [
           {
             text: 'Partager',

@@ -131,7 +131,7 @@ export function FenetresGalerie() {
         <Ligne
           icon="star"
           label={traduire("Avec pictogramme")}
-          sub={traduire("Petite image au-dessus du titre")}
+          sub={traduire("Petite image avant le titre")}
           onPress={() =>
             appAlert(traduire('Objectif atteint'), traduire('Tu as fait tes 3 séances de la semaine.'), [{ text: traduire('Super'), onPress: dit(traduire('Super')) }], {
               icon: <Icon name="trophy" size={26} color={c.accent} />,
@@ -170,7 +170,7 @@ export function FenetresGalerie() {
 
       <Rubrique title={traduire("Saisie")} sub={traduire("appPrompt et appPassword")} />
       <Lignes>
-        <Ligne first icon="text" label={traduire("Texte libre")} sub={traduire("Renommer quelque chose")} onPress={() => appPrompt(traduire('Renommer le club'), traduire('Le nouveau nom s’affiche partout.'), (v) => setDernier(traduire("OK avec « {0} »", v)), 'plain-text', 'First Jiu-Jitsu Academy')} />
+        <Ligne first icon="text" label={traduire("Texte libre")} sub={traduire("Renommer quelque chose")} onPress={() => appPrompt(traduire('Renommer le club'), traduire('Le nouveau nom s’affiche partout.'), (v) => setDernier(traduire("OK avec « {0} »", v)), 'plain-text', 'First Jiu Jitsu Academy')} />
         <Ligne
           icon="scale"
           label={traduire("Nombre")}

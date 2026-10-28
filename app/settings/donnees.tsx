@@ -90,7 +90,7 @@ export default function MesDonnees() {
   };
 
   const handleDedupe = () => {
-    showPopup(traduire('Nettoyer les doublons'), traduire("Les séances en double venues {0} seront supprimées. Celles que tu as créées toi-même ne bougent pas.\n\nFais une sauvegarde avant, par sécurité.", Platform.OS === 'android' ? traduire('de Health Connect') : traduire('d’Apple Santé')), [
+    showPopup(traduire('Nettoyer les doublons'), traduire("Les séances en double venues {0} seront supprimées. Celles que tu as créées ne bougent pas.\n\nFais une sauvegarde avant, par sécurité.", Platform.OS === 'android' ? traduire('de Health Connect') : traduire('d’Apple Santé')), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
         text: traduire('Nettoyer'),
@@ -349,7 +349,7 @@ export default function MesDonnees() {
           <>
             <View style={{ backgroundColor: c.successTint, borderRadius: 18, padding: 14, gap: 4 }}>
               <Ink size={15} weight="extraBold" color={c.successText}>{traduire("Données effacées")}</Ink>
-              <Ink size={14} color={c.textSecondary}>{Platform.OS === 'ios' ? traduire('Il reste deux étapes, à faire toi-même.') : traduire('Il reste une étape, à faire toi-même.')}</Ink>
+              <Ink size={14} color={c.textSecondary}>{Platform.OS === 'ios' ? traduire('Il reste deux étapes, à faire de ton côté.') : traduire('Il reste une étape, à faire de ton côté.')}</Ink>
             </View>
             {Platform.OS === 'ios' ? (
               <>

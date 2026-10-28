@@ -151,7 +151,7 @@ export async function getCoachSuggestionOfTheDay(): Promise<CoachSuggestion> {
         category: 'streak_push',
         icon: 'Flame',
         title: 'Continue ta serie',
-        message: 'Tu t\'es entraine hier. Une session aujourd\'hui, et demain c\'est du quasi-automatique.',
+        message: 'Tu t\'es entraine hier. Une session aujourd\'hui, et demain c\'est du quasi automatique.',
         actionLabel: 'Nouvelle seance',
         actionRoute: '/timer',
         color: '#EF4444',

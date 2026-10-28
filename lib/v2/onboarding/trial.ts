@@ -77,9 +77,9 @@ export async function scheduleTrialReminder(end: Date): Promise<boolean> {
     const id = await Notifications.scheduleNotificationAsync({
       content: {
         title: traduire('Ton essai Premium se termine bientôt'),
-        body: traduire("Il prend fin le {0}. Pour ne pas être débité, annule-le avant dans les réglages de ton compte {1}.", longDate(end), storeName()),
+        body: traduire("Il prend fin le {0}. Pour ne pas être débité, annule avant dans les réglages de ton compte {1}.", longDate(end), storeName()),
         // de quoi réafficher l'historique dans une autre langue (la date reste écrite dans la langue d'origine)
-        data: { type: 'trial_reminder', ...sourceNotif(null, src("Il prend fin le {0}. Pour ne pas être débité, annule-le avant dans les réglages de ton compte {1}.", longDate(end), storeName())) },
+        data: { type: 'trial_reminder', ...sourceNotif(null, src("Il prend fin le {0}. Pour ne pas être débité, annule avant dans les réglages de ton compte {1}.", longDate(end), storeName())) },
       },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at },
     });

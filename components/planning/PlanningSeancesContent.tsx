@@ -779,7 +779,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
             const endMin = sh * 60 + sm + duration;
             const eh = Math.floor(endMin / 60) % 24;
             const em = endMin % 60;
-            timeStr = `${sh.toString().padStart(2, '0')}:${sm.toString().padStart(2, '0')} – ${eh.toString().padStart(2, '0')}:${em.toString().padStart(2, '0')}`;
+            timeStr = `${sh.toString().padStart(2, '0')}:${sm.toString().padStart(2, '0')} à ${eh.toString().padStart(2, '0')}:${em.toString().padStart(2, '0')}`;
           }
         } catch { dateStr = training.date; }
 

@@ -5,7 +5,7 @@
 
 export const MOTIVATIONAL_QUOTES = [
   "La discipline bat le talent quand le talent ne travaille pas.",
-  "Chaque pesée est une victoire sur toi-même.",
+  "Chaque pesée est une victoire sur toi.",
   "Le corps atteint ce que l'esprit croit.",
   "Ta seule limite, c'est toi.",
   "Un champion n'abandonne jamais.",
@@ -17,7 +17,7 @@ export const MOTIVATIONAL_QUOTES = [
   "Le succès est la somme de petits efforts répétés.",
   "Ne compte pas les jours, fais que les jours comptent.",
   "La sueur d'aujourd'hui est le succès de demain.",
-  "Deviens la meilleure version de toi-même.",
+  "Deviens ta meilleure version.",
   "Le changement commence quand tu décides.",
   "Ton corps peut presque tout. C'est ton esprit qu'il faut convaincre.",
   "Chaque rep compte. Chaque gramme compte.",
@@ -32,7 +32,7 @@ export const MOTIVATIONAL_QUOTES = [
   "La victoire appartient aux persévérants.",
   "Forge ton corps, forge ton esprit.",
   "Le chemin du champion est fait de discipline.",
-  "Ton seul adversaire, c'est toi-même.",
+  "Ton seul adversaire, c'est toi.",
   "La vraie force se mesure à la régularité.",
 ];
 

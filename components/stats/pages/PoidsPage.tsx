@@ -39,7 +39,7 @@ export const PoidsPage: React.FC = () => {
   // Traduire les labels des zones BMI
   const translatedBMIZones = BMI_RANGES.zones.map(zone => ({
     ...zone,
-    label: zone.label === 'Sous-poids' ? t('stats.bmiUnderweight') :
+    label: zone.label === 'Sous poids' ? t('stats.bmiUnderweight') :
            zone.label === 'Normal' ? t('stats.bmiNormal') :
            zone.label === 'Surpoids' ? t('stats.bmiOverweight') :
            zone.label === 'Obésité' ? t('stats.bmiObese') : zone.label

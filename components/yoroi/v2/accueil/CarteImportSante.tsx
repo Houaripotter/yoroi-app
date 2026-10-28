@@ -155,7 +155,7 @@ export function CarteImportSante({ controle, onImporte }: { controle: Controle; 
     }
 
     if (longue) {
-      appAlert(traduire('Import en cours'), traduire('L’import continue en arrière-plan. Tes données arrivent d’ici quelques minutes.'));
+      appAlert(traduire('Import en cours'), traduire('L’import continue en arrière plan. Tes données arrivent d’ici quelques minutes.'));
       return;
     }
     const m = messageImport(issue, Platform.OS, compte);

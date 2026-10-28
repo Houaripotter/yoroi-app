@@ -17,7 +17,7 @@ const MOTIVATIONS = [
   "Le succès commence par la décision d'essayer.",
   "Ta seule limite, c'est toi.",
   "L'armure se forge dans l'effort.",
-  "Deviens la meilleure version de toi-même.",
+  "Deviens ta meilleure version.",
   "Chaque jour est une chance de progresser.",
   "Le champion se construit jour après jour.",
 ];

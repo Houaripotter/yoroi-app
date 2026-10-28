@@ -16,6 +16,7 @@ import { RecordSeal } from '@/components/yoroi/v2/ornements/RecordSeal';
 import { Tampon } from '@/components/yoroi/v2/tampons/Tampon';
 import { P } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 // ============================================
 // ICONES (traits SVG, pas de dependance externe)
@@ -387,6 +388,10 @@ export function Button({ label, onPress, tone = 'ink', loading, disabled, icon, 
   const bg = tone === 'ink' ? c.ink : tone === 'accent' ? c.primary : tone === 'danger' ? c.danger : tone === 'gold' ? c.goldLight : c.fillSoft;
   // vague 45 : en sombre, l'accent et le rouge sont eclaircis : texte encre dessus (c.onAccent), plus de blanc delave
   const fg = tone === 'ink' ? c.background : tone === 'accent' ? c.onPrimary : tone === 'danger' ? c.onAccent : c.ink;
+  // 28 octobre 2026 : l'action principale (accent, taille normale) prend le bouton partage
+  if (tone === 'accent' && !small) {
+    return <BoutonPrincipal label={label} onPress={onPress} disabled={disabled} loading={loading} tailleTexte={16} haptique="light" icone={icon ? (col) => <Icon name={icon} size={18} color={col} stroke={2.4} /> : undefined} />;
+  }
   return (
     <Pressable
       onPress={() => {

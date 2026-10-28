@@ -45,6 +45,7 @@ import { chargerProgrammeActif, suivreProgrammePerso, supprimerProgrammePerso } 
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { ExoProgramme } from '@/lib/v2/programmes/types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 const NOMS_SEANCE = ['Haut du corps', 'Bas du corps', 'Corps entier', 'Push', 'Pull', 'Jambes'];
@@ -251,14 +252,17 @@ export default function CoachConstruire() {
         {/* TA SEMAINE */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 20 }}>
           <Ink size={22} weight="black" color={pa.texte} accessibilityRole="header" style={{ flex: 1 }}>{traduire('Ta semaine')}</Ink>
-          <Pressable
+          <BoutonPrincipal
             onPress={() => void enregistrer()}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: !peutEnregistrer(pp), busy: occupe }}
-            style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 18, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? pa.boutonAppui : pa.bouton, opacity: peutEnregistrer(pp) ? 1 : 0.55 })}
-          >
-            <Ink size={15} weight="black" color={pa.surBouton}>{traduire('Enregistrer')}</Ink>
-          </Pressable>
+            haptique="none"
+            loading={occupe}
+            label={traduire('Enregistrer')}
+            hauteur={44}
+            rayon={22}
+            tailleTexte={15}
+            lignes={1}
+            styleBouton={{ opacity: peutEnregistrer(pp) ? 1 : 0.55 }}
+          />
         </View>
         <Ink size={13} weight="bold" color={pa.texte2} style={{ marginTop: 2, marginBottom: 10, marginHorizontal: 1 }}>
           {n ? traduirePluriel(n, n > 1, '{0} séance, touche un jour pour le remplir', '{0} séances, touche un jour pour le remplir', n) : traduire('Touche un jour pour le remplir')}
@@ -415,13 +419,15 @@ export default function CoachConstruire() {
               <Ink size={14} weight="bold" color={pa.texte2} style={{ textAlign: 'center', lineHeight: 20 }}>
                 {traduirePluriel(fete.n, fete.n > 1, '{0} séance par semaine. Première séance {1}.', '{0} séances par semaine. Première séance {1}.', fete.n, traduire(fete.premier))}
               </Ink>
-              <Pressable
+              <BoutonPrincipal
                 onPress={() => { tap(); const id = fete.id; setFete(null); router.replace({ pathname: '/programmes/[id]' as any, params: { id } }); }}
-                accessibilityRole="button"
-                style={({ pressed }) => [{ alignSelf: 'stretch', minHeight: 54, marginTop: 8, borderRadius: 27, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? pa.boutonAppui : pa.bouton }, ombrePastel(pa.ombre)]}
-              >
-                <Ink size={16} weight="black" color={pa.surBouton}>{traduire('Voir mon programme')}</Ink>
-              </Pressable>
+                haptique="none"
+                label={traduire('Voir mon programme')}
+                hauteur={54}
+                rayon={27}
+                tailleTexte={16}
+                style={{ alignSelf: 'stretch', marginTop: 8 }}
+              />
               <Pressable onPress={() => { tap(); setFete(null); if (router.canGoBack()) router.back(); else router.replace('/coach' as any); }} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 44, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                 <Ink size={14} weight="extraBold" color={pa.surBouton}>{traduire('Retour au coach')}</Ink>
               </Pressable>

@@ -30,7 +30,7 @@ import { traduire } from '@/lib/i18n/tr';
 
 type Slot = { enabled: boolean; time: string; amount: number };
 type SlotKey = 'morning' | 'afternoon' | 'evening';
-const SLOT_LABEL: Record<SlotKey, string> = { morning: traduire('Matin'), afternoon: traduire('Après-midi'), evening: traduire('Soir') };
+const SLOT_LABEL: Record<SlotKey, string> = { morning: traduire('Matin'), afternoon: traduire('Après midi'), evening: traduire('Soir') };
 const DEFAULT_SLOTS: Record<SlotKey, Slot> = {
   morning: { enabled: true, time: '09:00', amount: 750 },
   afternoon: { enabled: true, time: '14:00', amount: 750 },
@@ -327,7 +327,7 @@ export default function Hydratation() {
               <Ink size={15} weight="extraBold">
                 {traduire("Penser à boire")}</Ink>
               <Ink size={13} weight="medium" color={P.ink2}>
-                {traduire("Un rappel le matin, l’après-midi et le soir.")}</Ink>
+                {traduire("Un rappel le matin, l’après midi et le soir.")}</Ink>
             </View>
             <Toggle value={notif} onChange={toggleNotif} label={traduire("Rappels d’hydratation")} />
           </View>

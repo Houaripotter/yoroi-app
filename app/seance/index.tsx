@@ -42,6 +42,7 @@ import { routeDuCreneau } from '@/lib/v2/programmes/agenda';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { OMBRE_CARTE, carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { HabillageBoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 type Hero = {
   over: string;
@@ -310,9 +311,9 @@ export default function OnSentraine() {
               <Ink size={24} weight="black" tight numberOfLines={2}>{traduire(hero.title)}</Ink>
               <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={1}>{traduire(hero.sub)}</Ink>
             </View>
-            <View style={{ position: 'absolute', left: 18, bottom: 16, minHeight: 46, paddingHorizontal: 18, borderRadius: 16, backgroundColor: c.primary, justifyContent: 'center' }}>
-              <Ink size={15} weight="black" color={c.onPrimary}>{hero.cta}</Ink>
-            </View>
+            <HabillageBoutonPrincipal style={{ position: 'absolute', left: 18, bottom: 16, minHeight: 46, paddingHorizontal: 18, justifyContent: 'center' }}>
+              {(col) => <Ink size={15} weight="black" color={col}>{hero.cta}</Ink>}
+            </HabillageBoutonPrincipal>
           </Pressable>
         ) : null}
 

@@ -140,7 +140,7 @@ export default function InjuryEvaluationScreen() {
 
         {eva >= 7 ? (
           <Enter i={2}>
-            <Notice tone="red" title={traduire("Douleur forte")} text={traduire("Mets la zone au repos. Si la douleur ne baisse pas ou si l’un des signes ci-dessous apparaît, consulte rapidement.")} />
+            <Notice tone="red" title={traduire("Douleur forte")} text={traduire("Mets la zone au repos. Si la douleur ne baisse pas ou si l’un des signes plus bas apparaît, consulte rapidement.")} />
           </Enter>
         ) : null}
 

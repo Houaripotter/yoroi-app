@@ -30,8 +30,8 @@ export const BODY_ZONES_FRONT: BodyZone[] = [
   { id: 'abdomen', name: 'Abdomen', x: 50, y: 40, size: 14, injuries: ['Contracture', traduire('Déchirure'), 'Contusion'] },
   { id: 'elbow_l', name: 'Coude Gauche', x: 85, y: 42, size: 8, injuries: ['Tennis elbow', 'Golf elbow', 'Bursite', 'Contusion'] },
   { id: 'elbow_r', name: 'Coude Droit', x: 15, y: 42, size: 8, injuries: ['Tennis elbow', 'Golf elbow', 'Bursite', 'Contusion'] },
-  { id: 'forearm_l', name: 'Avant-bras Gauche', x: 90, y: 52, size: 8, injuries: ['Tendinite', 'Contracture', 'Contusion'] },
-  { id: 'forearm_r', name: 'Avant-bras Droit', x: 10, y: 52, size: 8, injuries: ['Tendinite', 'Contracture', 'Contusion'] },
+  { id: 'forearm_l', name: 'Avant bras Gauche', x: 90, y: 52, size: 8, injuries: ['Tendinite', 'Contracture', 'Contusion'] },
+  { id: 'forearm_r', name: 'Avant bras Droit', x: 10, y: 52, size: 8, injuries: ['Tendinite', 'Contracture', 'Contusion'] },
   { id: 'pubis', name: 'Pubis / Bassin', x: 50, y: 53, size: 14, injuries: ['Pubalgie', 'Tendinite', 'Bursite'] },
 
   // MAINS DÉTAILLÉES (zones qui se chevauchent)
@@ -145,7 +145,7 @@ export const TREATMENT_TYPES: { id: TreatmentType; label: string; icon: string }
   { id: 'compression', label: 'Compression', icon: 'CircleDot' },
   { id: 'elevation', label: traduire('Élévation'), icon: 'ArrowUp' },
   { id: 'stretch', label: traduire('Étirements'), icon: 'Move' },
-  { id: 'medication', label: 'Anti-inflammatoire', icon: 'Pill' },
+  { id: 'medication', label: 'Anti inflammatoire', icon: 'Pill' },
   { id: 'physio', label: traduire('Kiné'), icon: 'Stethoscope' },
   { id: 'massage', label: 'Massage', icon: 'Hand' },
   { id: 'custom', label: traduire('Personnalisé'), icon: 'Edit3' },
@@ -193,7 +193,7 @@ export const FIT_FOR_DUTY_STATUS: Record<FitForDutyStatus, FitForDutyInfo> = {
     icon: '',
     title: traduire('ATTENTION'),
     subtitle: traduire('Douleur importante'),
-    advice: traduire('Douleur intense enregistrée - consulter un professionnel de santé'),
+    advice: traduire('Douleur intense enregistrée : consulte un professionnel de santé'),
   },
 };
 

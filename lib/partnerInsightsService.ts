@@ -84,7 +84,7 @@ export function computeGlobalInsights(stats: PartnerStats[]): GlobalInsight[] {
       id: 'archetype_weakness',
       type: 'archetype_weakness',
       title: traduire(`Style qui te pose probleme`),
-      text: traduire("Contre les {0}s : {1}% de victoires. Travaille ce contre-style.", worst.arch, worst.winrate),
+      text: traduire("Contre les {0}s : {1}% de victoires. Travaille ce contre style.", worst.arch, worst.winrate),
       color: '#F59E0B',
     });
   }

@@ -65,8 +65,8 @@ const PHASES: Phase[] = [
     tone: 'indigo',
     description: traduire('Laisse ton corps se réparer'),
     meals: [
-      { timing: traduire('Petit-déjeuner'), title: traduire('Riche en protéines'), foods: [traduire('Œufs'), 'Avocat', 'Pain complet', 'Fruits'], macros: { protein: 30, carbs: 40, fat: 25 }, tips: [traduire('Protéines pour réparer'), traduire('Bonnes graisses')] },
-      { timing: traduire('Déjeuner'), title: traduire('Repas équilibré'), foods: [traduire('Saumon ou poulet'), traduire('Quinoa ou riz complet'), traduire('Légumes'), 'Huile d’olive'], macros: { protein: 40, carbs: 50, fat: 20 }, tips: [traduire('Oméga-3'), traduire('Glucides complexes')] },
+      { timing: traduire('Petit déjeuner'), title: traduire('Riche en protéines'), foods: [traduire('Œufs'), 'Avocat', 'Pain complet', 'Fruits'], macros: { protein: 30, carbs: 40, fat: 25 }, tips: [traduire('Protéines pour réparer'), traduire('Bonnes graisses')] },
+      { timing: traduire('Déjeuner'), title: traduire('Repas équilibré'), foods: [traduire('Saumon ou poulet'), traduire('Quinoa ou riz complet'), traduire('Légumes'), 'Huile d’olive'], macros: { protein: 40, carbs: 50, fat: 20 }, tips: [traduire('Oméga 3'), traduire('Glucides complexes')] },
       { timing: traduire('Dîner'), title: traduire('Repas léger'), foods: ['Poisson blanc', traduire('Légumes vapeur'), 'Riz', 'Yaourt grec'], macros: { protein: 35, carbs: 40, fat: 10 }, tips: ['Digestion facile', traduire('Caséine pour la nuit')] },
     ],
   },
@@ -212,8 +212,8 @@ export default function QuickNutritionScreen() {
           </View>
           <Ink size={12} weight="medium" color={P.ink2} style={{ marginTop: 8, paddingHorizontal: 4 }}>
             {age
-              ? traduire("Calories estimées avec la formule Mifflin-St Jeor, version homme, et ton âge. Pour un calcul complet, ouvre le plan nutritionnel.")
-              : traduire("Calories estimées avec la formule Mifflin-St Jeor, version homme, pour un âge de 30 ans. Pour un calcul complet, ouvre le plan nutritionnel.")}</Ink>
+              ? traduire("Calories estimées avec la formule Mifflin St Jeor, version homme, et ton âge. Pour un calcul complet, ouvre le plan nutritionnel.")
+              : traduire("Calories estimées avec la formule Mifflin St Jeor, version homme, pour un âge de 30 ans. Pour un calcul complet, ouvre le plan nutritionnel.")}</Ink>
         </Enter>
 
         {/* CONSEILS */}

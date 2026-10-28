@@ -100,7 +100,7 @@ export default function CombatDetailScreen() {
         {loading ? (
           <View style={{ height: 220, borderRadius: 24, backgroundColor: c.fillSubtle, opacity: 0.6 }} />
         ) : (
-          <EmptyState title={traduire("Combat introuvable")} text={traduire("Il a peut-être été supprimé. Retrouve tes combats dans ton palmarès.")} action={traduire("Voir mon palmarès")} onAction={() => router.replace('/palmares' as any)} />
+          <EmptyState title={traduire("Combat introuvable")} text={traduire("Il a sans doute été supprimé. Retrouve tes combats dans ton palmarès.")} action={traduire("Voir mon palmarès")} onAction={() => router.replace('/palmares' as any)} />
         )}
       </View>
     );

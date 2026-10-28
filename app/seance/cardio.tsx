@@ -38,6 +38,7 @@ import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
 import { programmeParId } from '@/lib/v2/programmes/catalogue';
 import { marquerJourFait } from '@/lib/v2/programmes/suivi';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const RPE = [
   { value: 3, label: traduire('Facile') },
@@ -88,7 +89,7 @@ export default function SeanceCardio() {
         if (params.editId) {
           const t = await loadTrainingForEdit(params.editId);
           if (!t) {
-            appAlert(traduire('Séance introuvable'), traduire('Elle a peut-être été supprimée.'));
+            appAlert(traduire('Séance introuvable'), traduire('Elle a sans doute été supprimée.'));
             router.back();
             return;
           }
@@ -321,9 +322,7 @@ export default function SeanceCardio() {
           {draft.form && draft.details ? <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={1}>{draft.editId ? traduire('Modifier ta séance') : dayLabel(draft.details.date)}</Ink> : null}
           <Ink size={22} weight="black" tight numberOfLines={1}>{draft.label || sportName}</Ink>
         </View>
-        <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
-          <Ink size={15} weight="black" color={c.onPrimary}>{draft.form ? traduire('Enregistrer') : traduire('Terminer')}</Ink>
-        </Pressable>
+        <BoutonPrincipal onPress={() => setFinishOpen(true)} hauteur={44} rayon={14} compact tailleTexte={15} lignes={1} label={draft.form ? traduire('Enregistrer') : traduire('Terminer')} />
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 18, paddingBottom: insets.bottom + 40, gap: 12 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" showsVerticalScrollIndicator={false}>
@@ -461,9 +460,7 @@ export default function SeanceCardio() {
           {calories > 0 ? <MiniStat label="calories" value={String(Math.round(calories))} /> : null}
         </View>
         {draft.details ? <SessionDetailsForm value={draft.details} onChange={setDetails} sport={draft.sport} showWhen={!!draft.form} hideDuration /> : null}
-        <Pressable onPress={save} disabled={saving} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary, opacity: saving ? 0.6 : 1 })}>
-          <Ink size={16} weight="black" color={c.onPrimary}>{saving ? 'Enregistrement...' : draft.editId ? traduire('Enregistrer les changements') : traduire('Enregistrer la séance')}</Ink>
-        </Pressable>
+        <BoutonPrincipal onPress={save} disabled={saving} loading={saving} label={draft.editId ? traduire('Enregistrer les changements') : traduire('Enregistrer la séance')} />
         <Pressable onPress={abandon} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
           <Ink size={14} weight="bold" color={c.textMuted}>{draft.form ? traduire('Quitter sans enregistrer') : traduire('Abandonner la séance')}</Ink>
         </Pressable>

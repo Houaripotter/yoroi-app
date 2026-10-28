@@ -3,7 +3,7 @@
  * Vague 45 : le rang et le palier suivant s'affichent dans l'univers du personnage (Japon ou Classique).
  */
 import React, { useMemo } from 'react';
-import { Pressable, SectionList, View } from 'react-native';
+import { SectionList, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
@@ -21,6 +21,7 @@ import { rangTitre } from '@/lib/v2/dojo/univers';
 import { texteUnivers, universDe } from '@/lib/v2/dojo/dojoAffichage';
 import { P } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const SOURCE_COLORS: Record<XpSource, string> = {
   seance: DOJO.indigo,
@@ -104,16 +105,16 @@ export default function Journal() {
             <Hanko size={84} color={c.accent} tampon="toro" />
             <Ink size={18} weight="black">{traduire("Ton journal est vierge")}</Ink>
             <Ink size={14} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire("Une séance, c’est {0} XP. Une pesée, {1} XP. Tout s’inscrit ici.", XP_VALUES.seance, XP_VALUES.pesee)}</Ink>
-            <Pressable
+            <BoutonPrincipal
               onPress={() => {
                 tap();
                 router.push('/ajouter' as any);
               }}
-              accessibilityRole="button"
-              style={({ pressed }) => ({ alignSelf: 'stretch', marginTop: 6, minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.98 : 1 }] })}
-            >
-              <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Enregistrer une séance")}</Ink>
-            </Pressable>
+              haptique="none"
+              label={traduire("Enregistrer une séance")}
+              tailleTexte={16}
+              style={{ alignSelf: 'stretch', marginTop: 6 }}
+            />
           </View>
         }
         renderSectionHeader={({ section }) => (

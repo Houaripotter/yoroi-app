@@ -31,10 +31,15 @@ import { aUnPersonnage } from '@/lib/v2/dojo/personnages';
 import { genreDuPersonnage } from '@/lib/v2/dojo/choisirUnivers';
 import { choisirPhoto, ouvrirReglagesTelephone, retirerPhoto } from '@/lib/v2/espace/photoProfil';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 function BoutonPhoto({ icon, label, onPress, disabled, principal }: { icon: IconName; label: string; onPress: () => void; disabled?: boolean; principal?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  // 28 octobre 2026 : l'action principale prend le bouton principal partage
+  if (principal) {
+    return <BoutonPrincipal onPress={onPress} disabled={disabled} accessibilityLabel={label} label={label} hauteur={48} rayon={16} tailleTexte={14} lignes={1} compact haptique="light" style={{ flex: 1 }} icone={(col) => <Icon name={icon} size={18} color={col} />} />;
+  }
   return (
     <Pressable
       onPress={onPress}

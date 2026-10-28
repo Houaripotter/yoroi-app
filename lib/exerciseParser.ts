@@ -216,7 +216,7 @@ export function validateExerciseFormat(notes: string): { valid: boolean; errors:
 
     // Vérifier que la ligne commence par un bullet point
     if (!/^\s*[•\-*]/.test(line)) {
-      errors.push(traduire("Ligne {0}: Doit commencer par • ou - ou *", i + 1));
+      errors.push(traduire("Ligne {0}: Doit commencer par • ou *", i + 1));
     }
 
     // Vérifier la présence de parenthèses si des stats sont attendues

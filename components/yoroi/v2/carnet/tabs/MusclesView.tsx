@@ -22,7 +22,7 @@ const GROUPS = [
   { key: 'fessiers', label: 'Fessiers', kw: ['fessiers', 'fesses', 'glutes', 'hip thrust', 'hip-thrust'] },
   { key: 'mollets', label: 'Mollets', kw: ['mollets', 'mollet', 'calves', 'calf'] },
   { key: 'abdos', label: 'Abdos / Core', kw: ['abdos', 'abs', 'core', 'gainage', 'planche', 'crunch'] },
-  { key: 'avant_bras', label: 'Avant-bras', kw: ['avant-bras', 'avant bras', 'grip', 'forearm'] },
+  { key: 'avant_bras', label: 'Avant bras', kw: ['avant-bras', 'avant bras', 'grip', 'forearm'] },
 ];
 
 export function MusclesView({ refreshKey, hideEmpty }: { refreshKey: number; hideEmpty?: boolean }) {

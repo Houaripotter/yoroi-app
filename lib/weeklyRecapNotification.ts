@@ -29,7 +29,7 @@ const buildRecapContent = async (): Promise<{ title: string; body: string } | nu
     if (sessions.length === 0) {
       return {
         title: traduire('Semaine sans séance'),
-        body: traduire('Une semaine calme. La suivante commence : fixe-toi un petit objectif.'),
+        body: traduire('Une semaine calme. La suivante commence : choisis un petit objectif.'),
       };
     }
     const h = Math.floor(totalMin / 60);

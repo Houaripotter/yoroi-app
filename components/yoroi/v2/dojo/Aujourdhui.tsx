@@ -18,6 +18,7 @@ import { OuvertureCoffre, imageCoffre, type ResultatCoffre } from '@/components/
 import { rappelCoffreActif, setRappelCoffre } from '@/lib/v2/dojo/rappelCoffre';
 import { traduire } from '@/lib/i18n/tr';
 import { useIllustrations } from '@/components/yoroi/v2/stickers';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const NB = ' ';
 const JOURS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
@@ -199,25 +200,9 @@ export function Aujourdhui({ serie, coffre, onOuvrir, onVerre, suite, onCadeau, 
       </View>
 
       {coffre.etat === 'pret' ? (
-        <Pressable
-          onPress={ouvrir}
-          disabled={busy}
-          accessibilityRole="button"
-          accessibilityLabel={traduire("Ouvrir ton coffre")}
-          style={({ pressed }) => ({ minHeight: 50, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: c.ink, opacity: pressed ? 0.88 : 1 })}
-        >
-          <Ink size={15.5} weight="black" color={c.background}>{traduire("Ouvrir mon coffre")}</Ink>
-        </Pressable>
+        <BoutonPrincipal onPress={ouvrir} disabled={busy} accessibilityLabel={traduire("Ouvrir ton coffre")} label={traduire("Ouvrir mon coffre")} hauteur={50} tailleTexte={15.5} />
       ) : coffre.etat === 'verrouille' ? (
-        <Pressable
-          onPress={verre}
-          disabled={busy}
-          accessibilityRole="button"
-          accessibilityLabel={traduire("Noter un verre d’eau, 25 centilitres")}
-          style={({ pressed }) => ({ minHeight: 48, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}
-        >
-          <Ink size={15} weight="extraBold" color={c.onPrimary}>{traduire("Noter un verre d’eau")}</Ink>
-        </Pressable>
+        <BoutonPrincipal onPress={verre} disabled={busy} accessibilityLabel={traduire("Noter un verre d’eau, 25 centilitres")} label={traduire("Noter un verre d’eau")} hauteur={48} tailleTexte={15} />
       ) : null}
     </View>
       <OuvertureCoffre visible={ouverture} grand={coffre.grand} serie={serie.jours} ouvrir={ouvrirVraiment} suite={suite} onCadeau={onCadeau} onClose={() => setOuverture(false)} />

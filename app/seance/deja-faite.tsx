@@ -33,6 +33,7 @@ import { DEFAULT_SPORTS, sportShortName, sportTint } from '@/lib/v2/seance/sport
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const RPE = [
   { value: 3, label: traduire('Facile') },
@@ -220,9 +221,7 @@ export default function SeanceDejaFaite() {
       </ScrollView>
 
       <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 18 }}>
-        <Pressable onPress={save} disabled={!sport || saving} accessibilityRole="button" style={({ pressed }) => ({ height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: !sport ? c.border : pressed ? c.primaryPressed : c.primary, opacity: saving ? 0.6 : 1, shadowColor: c.shadow, shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 4 })}>
-          <Ink size={16} weight="black" color={c.onPrimary}>{saving ? 'Enregistrement...' : traduire('Enregistrer la séance')}</Ink>
-        </Pressable>
+        <BoutonPrincipal onPress={save} disabled={!sport} loading={saving} label={traduire('Enregistrer la séance')} hauteur={58} />
       </View>
     </View>
   );

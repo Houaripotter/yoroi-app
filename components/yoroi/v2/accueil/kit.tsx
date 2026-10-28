@@ -21,6 +21,7 @@ import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 
 import { P } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 /** Palette v2 : vivante depuis la vague 35 (claire ou sombre, voir components/yoroi/livePalette.ts) */
 export { P };
 
@@ -390,11 +391,15 @@ export function BigButton({ label, onPress, tone = 'red', icon, disabled, compac
   // 27 octobre 2026 (Houari : « le bleu plein est trop fort ») : le bouton principal passe en pastel, texte bleu nuit
   const bg = tone === 'red' ? P.primary : tone === 'ink' ? P.ink : P.white;
   const fg = tone === 'light' ? P.ink : tone === 'red' ? P.onPrimary : P.white;
+  // 28 octobre 2026 : l'action principale prend le bouton partage (degrade bleu nuit, texte blanc)
+  if (tone === 'red') {
+    return <BoutonPrincipal label={label} onPress={onPress} disabled={disabled} compact={compact} tailleTexte={16} lignes={1} icone={icon ? (col) => <Icon name={icon} size={compact ? 18 : 20} color={col} /> : undefined} />;
+  }
   return (
     <Press onPress={disabled ? undefined : onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={label} disabled={disabled}>
-      <View style={[{ minHeight: 56, paddingHorizontal: compact ? 12 : 18, borderRadius: 18, backgroundColor: bg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: compact ? 7 : 10, opacity: disabled ? 0.5 : 1, borderWidth: tone === 'light' ? 1 : 0, borderColor: P.line2 }, tone === 'red' ? ombreBouton : null]}>
+      <View style={[{ minHeight: 56, paddingHorizontal: compact ? 12 : 18, borderRadius: 18, backgroundColor: bg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: compact ? 7 : 10, opacity: disabled ? 0.5 : 1, borderWidth: tone === 'light' ? 1 : 0, borderColor: P.line2 }]}>
         {icon ? <Icon name={icon} size={compact ? 18 : 20} color={fg} /> : null}
-        <Ink size={16} weight="extraBold" color={fg} numberOfLines={1} style={{ flexShrink: 1, textAlign: 'center' }}>
+        <Ink size={16} weight="extraBold" color={fg} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.68} style={{ flexShrink: 1, textAlign: 'center' }}>
           {label}
         </Ink>
       </View>

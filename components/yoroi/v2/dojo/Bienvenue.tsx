@@ -5,7 +5,7 @@
  * Uniquement des chiffres calcules par lib/v2/armure.ts.
  */
 import React from 'react';
-import { Image, Modal, Pressable, ScrollView, View } from 'react-native';
+import { Image, Modal, ScrollView, View } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +16,7 @@ import { CheckIcon, formatXp } from './parts';
 import { beltFor } from '@/lib/v2/dojo/belts';
 import { imageCoffre } from './OuvertureCoffre';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 type Props = {
   visible: boolean;
@@ -106,14 +107,7 @@ export function Bienvenue({ visible, summary, image, scene, onClose }: Props) {
           </View>
         </ScrollView>
         <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 20, backgroundColor: c.background }}>
-          <Pressable
-            onPress={onClose}
-            accessibilityRole="button"
-            accessibilityLabel={traduire("Entrer dans le Dojo")}
-            style={({ pressed }) => ({ height: 56, borderRadius: 18, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}
-          >
-            <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Entrer dans le Dojo")}</Ink>
-          </Pressable>
+          <BoutonPrincipal onPress={onClose} label={traduire("Entrer dans le Dojo")} tailleTexte={16} />
         </View>
       </View>
     </Modal>

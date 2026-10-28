@@ -220,7 +220,7 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
               )}
 
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-                {[{ label: '< 60 Excellent', color: '#22C55E' }, { label: '60-80 Normal', color: '#3B82F6' }, { label: '80-90 Élevé', color: '#F59E0B' }, { label: '> 90 Très élevé', color: '#EF4444' }].map(c => (
+                {[{ label: '< 60 Excellent', color: '#22C55E' }, { label: '60 à 80 Normal', color: '#3B82F6' }, { label: '80 à 90 Élevé', color: '#F59E0B' }, { label: '> 90 Très élevé', color: '#EF4444' }].map(c => (
                   <View key={c.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <View style={{ width: 18, height: 5, borderRadius: 2.5, backgroundColor: c.color }} />
                     <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted }}>{c.label}</Text>
@@ -337,7 +337,7 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
                 <Text style={[styles.heroUnit, { color: colors.textMuted }]}> resp/min</Text>
               </View>
               <Text style={[styles.statusBadge, { color: respRate >= 12 && respRate <= 20 ? '#22C55E' : '#F59E0B' }]}>
-                {respRate >= 12 && respRate <= 20 ? 'Normal (12-20)' : 'Hors norme'}
+                {respRate >= 12 && respRate <= 20 ? 'Normal (12 à 20)' : 'Hors norme'}
               </Text>
             </TouchableOpacity>
           )}

@@ -23,6 +23,7 @@ import { ChargementBloc } from '@/components/yoroi/v2/chargement/Chargement';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel, LOCALE } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 export default function CorpsParMesure() {
   const { theme } = useYoroiTheme();
@@ -172,9 +173,7 @@ export default function CorpsParMesure() {
               <View style={{ padding: 22, borderRadius: 26, backgroundColor: blancA(0.8), borderWidth: 1, borderColor: P.white, gap: 8 }}>
                 <Ink size={22} weight="black" tight>{traduire("{0} : rien pour l’instant", metric.label)}</Ink>
                 <Ink size={14} color={c.textSecondary}>{metric.group === 'measurements' ? traduire('Un mètre ruban, une minute, et tu suis ce qui change vraiment.') : traduire('Une balance à impédance ou une saisie à la main, et la courbe démarre.')}</Ink>
-                <Pressable onPress={() => setEdit('new')} accessibilityRole="button" style={({ pressed }) => ({ marginTop: 6, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
-                  <Ink size={15} weight="extraBold" color={c.onPrimary}>{traduire("Ajouter une valeur")}</Ink>
-                </Pressable>
+                <BoutonPrincipal onPress={() => setEdit('new')} haptique="light" label={traduire("Ajouter une valeur")} hauteur={50} rayon={16} tailleTexte={15} style={{ marginTop: 6 }} />
               </View>
             ) : (
               <>

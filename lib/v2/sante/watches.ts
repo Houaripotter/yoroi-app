@@ -124,7 +124,7 @@ export const WATCHES: Watch[] = [
     android: {
       ok: true,
       app: 'Google Health',
-      steps: ['Ouvre l’app Google Health (l’ancienne app Fitbit).', 'Touche Connexions, puis Apps partenaires.', traduire('Touche Synchroniser tes apps santé, puis Configurer.'), traduire('Choisis les données, puis autorise l’historique et l’arrière-plan.')],
+      steps: ['Ouvre l’app Google Health (l’ancienne app Fitbit).', 'Touche Connexions, puis Apps partenaires.', traduire('Touche Synchroniser tes apps santé, puis Configurer.'), traduire('Choisis les données, puis autorise l’historique et l’arrière plan.')],
       keys: ['pas', 'vitesse', 'cadence-pas', 'vo2max', 'etages', 'distance', 'denivele', 'temperature', 'sommeil', 'glycemie', 'frequence-cardiaque', 'vfc', 'respiration', 'fc-repos', 'poids', 'masse-grasse', 'eau', 'calories-mangees', 'proteines', 'glucides', 'lipides'],
       extra: [traduire('Séances et tracés GPS'), traduire('Calories totales'), traduire('Température de la peau')],
       missing: ['oxygene'],

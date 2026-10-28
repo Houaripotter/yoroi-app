@@ -84,7 +84,7 @@ export function CarteSante({ sante }: { sante: SanteVue }) {
   const reglages = guide || modeDemande(etat, Platform.OS) === 'reglages';
   const titre = etat.lectureVide ? traduire("YOROI ne reçoit rien de {0}", nom) : traduire("Relie {0} à YOROI", nom);
   const texte = reglages
-    ? traduire('La fenêtre d’autorisation ne revient pas d’elle-même. Ça se règle en trois touches :')
+    ? traduire('La fenêtre d’autorisation ne revient pas toute seule. Ça se règle en trois touches :')
     : traduire('Tes pesées, tes pas et tes séances arrivent tout seuls. Rien ne quitte ton téléphone.');
 
   const autoriser = async () => {

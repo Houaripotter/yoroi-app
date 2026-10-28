@@ -13,7 +13,7 @@ export type RecordFamily = 'muscu' | 'course' | 'cross' | 'cardio' | 'autre';
 export const FAMILY_LABEL: Record<RecordFamily, string> = {
   muscu: traduire('Musculation'),
   course: traduire('Course'),
-  cross: traduire('Cross-training'),
+  cross: traduire('Cross training'),
   cardio: traduire('Cardio'),
   autre: traduire('Autre'),
 };

@@ -73,7 +73,7 @@ export const HEALTH_TIPS: HealthTip[] = [
   {
     id: "w7",
     title: traduire("Bien te peser"),
-    content: traduire("Pèse-toi toujours dans les mêmes conditions : le matin, à jeun, après être passé aux toilettes."),
+    content: traduire("Monte sur la balance toujours dans les mêmes conditions : le matin, à jeun, après être passé aux toilettes."),
     category: 'weight',
   },
 
@@ -81,7 +81,7 @@ export const HEALTH_TIPS: HealthTip[] = [
   {
     id: "n1",
     title: traduire("Protéines"),
-    content: traduire("Les protéines calent bien et protègent ton muscle quand tu surveilles ton poids. Mets-en une source à chaque repas."),
+    content: traduire("Les protéines calent bien et protègent ton muscle quand tu surveilles ton poids. Prévois une source à chaque repas."),
     category: 'nutrition',
   },
   {
@@ -149,7 +149,7 @@ export const HEALTH_TIPS: HealthTip[] = [
   {
     id: "s4",
     title: traduire("Heures fixes"),
-    content: traduire("Te coucher et te lever à heures fixes aide ton sommeil, week-end compris."),
+    content: traduire("Te coucher et te lever à heures fixes aide ton sommeil, fin de semaine compris."),
     category: 'sleep',
   },
   {
@@ -175,7 +175,7 @@ export const HEALTH_TIPS: HealthTip[] = [
   {
     id: "e3",
     title: traduire("Fractionné"),
-    content: traduire("Le fractionné intense donne beaucoup en peu de temps. Garde-le pour une ou deux séances par semaine, il fatigue vite."),
+    content: traduire("Le fractionné intense donne beaucoup en peu de temps. Garde le fractionné pour une ou deux séances par semaine, il fatigue vite."),
     category: 'exercise',
   },
   {

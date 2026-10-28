@@ -31,6 +31,7 @@ import { Card, Icon, P, Press, useAccent } from './kit';
 import { carteNeutre } from './domaines';
 import { ApercuAccueil } from './ApercuAccueil';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 /** Hauteur d'une ligne de la liste (maquette : 52) */
 const H = 52;
@@ -395,13 +396,7 @@ export function PersonnaliserAccueil() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                     <Ink size={26} weight="black" tight accessibilityRole="header">
                       {traduire("Ton accueil")}</Ink>
-                    <Press onPress={() => setOpen(false)} accessibilityRole="button" accessibilityLabel={traduire("Fermer")} hitSlop={6}>
-                      <View style={{ height: 40, paddingHorizontal: 18, borderRadius: 20, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center' }}>
-                        <Ink size={15} weight="black" color={P.onPrimary}>
-                          OK
-                        </Ink>
-                      </View>
-                    </Press>
+                    <BoutonPrincipal onPress={() => setOpen(false)} haptique="light" accessibilityLabel={traduire("Fermer")} label="OK" hauteur={40} rayon={20} tailleTexte={15} lignes={1} compact />
                   </View>
                   <DispositionEditor onGlisse={(g) => setDefile(!g)} />
                 </ScrollView>

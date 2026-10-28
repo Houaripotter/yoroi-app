@@ -20,7 +20,7 @@ export function joursTexte(jours: number[]): string {
   if (l.length === 0) return '';
   if (l.length === 7) return traduire('tous les jours');
   if (l.length === 5 && l.every((j, i) => j === i)) return traduire('du lundi au vendredi');
-  if (l.length === 2 && l[0] === 5 && l[1] === 6) return traduire('le week-end');
+  if (l.length === 2 && l[0] === 5 && l[1] === 6) return traduire('samedi et dimanche');
   const noms = l.map((j) => JOURS_NOMS[j]);
   return noms.length === 1 ? noms[0] : traduire("{0} et {1}", noms.slice(0, -1).join(', '), noms[noms.length - 1]);
 }

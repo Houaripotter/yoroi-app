@@ -19,6 +19,7 @@ import { getProfile } from '@/lib/database';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { logger } from '@/lib/security/logger';
 import { parseISO } from 'date-fns';
+import { genreDesReglages, type GenreFormule } from '@/lib/genreCalcul';
 
 // Métriques où une baisse est positive (vert)
 const LOWER_IS_BETTER = ['weight', 'fat_percent', 'visceral_fat', 'metabolic_age', 'bmi', 'waist', 'resting_hr', 'heart_rate'];
@@ -113,7 +114,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
   const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('tout');
-  const [userGender, setUserGender] = useState<'male' | 'female'>('male');
+  const [userGender, setUserGender] = useState<GenreFormule>('male');
   const [userAge, setUserAge] = useState(30);
   const [userWeight, setUserWeight] = useState(75);
   const [userHeight, setUserHeight] = useState<number | null>(null);
@@ -132,7 +133,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
         const settings = _cachedSettings;
         const profile = _cachedProfile;
 
-        setUserGender(settings.gender as 'male' | 'female' || 'male');
+        setUserGender(genreDesReglages(settings) ?? 'male');
         setUserWeight(settings.weight_goal || 75);
 
         if (profile?.height_cm) {

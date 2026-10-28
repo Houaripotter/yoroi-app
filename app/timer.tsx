@@ -890,7 +890,7 @@ function ExerciseList({ title, hint, items, numbered, onEdit }: { title: string;
 function RepsWeightSheet({ visible, series, reps, weight, onReps, onWeight, onSave, onSkip }: { visible: boolean; series: number; reps: number; weight: number; onReps: (v: number) => void; onWeight: (v: number) => void; onSave: () => void; onSkip: () => void }) {
   return (
     <Sheet visible={visible} onClose={onSkip} title={traduire("Série {0}", series)}>
-      <Ink size={14} weight="medium" color={P.ink2}>{traduire("Pré-rempli avec ta dernière série. Ajuste si besoin.")}</Ink>
+      <Ink size={14} weight="medium" color={P.ink2}>{traduire("Déjà rempli avec ta dernière série. Ajuste si besoin.")}</Ink>
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <View style={{ flex: 1, alignItems: 'center', gap: 6, padding: 12, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
           <Ink size={13} weight="bold" color={P.ink2}>{traduire("Répétitions")}</Ink>

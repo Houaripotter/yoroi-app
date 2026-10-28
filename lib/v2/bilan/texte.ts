@@ -185,7 +185,7 @@ export const MESURES: { key: MesureCle; label: string; bon: 'up' | 'down' | 'non
   { key: 'chest', label: traduire('tour de poitrine'), bon: 'up' },
   { key: 'shoulders', label: traduire('tour d’épaules'), bon: 'up' },
   { key: 'arm', label: traduire('tour de bras'), bon: 'up' },
-  { key: 'forearm', label: traduire('tour d’avant-bras'), bon: 'up' },
+  { key: 'forearm', label: traduire('tour d’avant bras'), bon: 'up' },
   { key: 'thigh', label: traduire('tour de cuisse'), bon: 'none' },
   { key: 'calf', label: traduire('tour de mollet'), bon: 'none' },
   { key: 'neck', label: traduire('tour de cou'), bon: 'none' },
@@ -445,7 +445,7 @@ export function bilanCorps(e: EntreeCorps): BilanCorps {
     const bougent = lignes.filter((l) => l.ecart !== null && !l.bruit).sort((a, b) => Math.abs(b.ecart as number) - Math.abs(a.ecart as number));
     const avecPrec = lignes.filter((l) => l.ecart !== null);
     if (!avecPrec.length) phrase = traduire("Tes premières mensurations sont notées{0}. La prochaine fois, tu verras les écarts.", lignes.length ? ` (${liste(lignes.slice(0, 3).map((l) => `${l.label} ${nb(l.valeur)} cm`))})` : '');
-    else if (!bougent.length) phrase = traduire('Tes mensurations n’ont pas bougé au-delà d’un demi-centimètre : c’est la précision d’un mètre ruban.');
+    else if (!bougent.length) phrase = traduire('Tes mensurations n’ont pas bougé de plus d’un demi centimètre : c’est la précision d’un mètre ruban.');
     else {
       const top = bougent.slice(0, 2).map((l) => (l.ecart as number) < 0 ? traduire("ton {0} a perdu {1} cm", l.label, nb(l.ecart as number)) : traduire("ton {0} a pris {1} cm", l.label, nb(l.ecart as number)));
       phrase = traduire("{0} depuis le {1}.", maj(liste(top)), dateCourte(bougent[0].depuis as string));
@@ -484,7 +484,7 @@ export function bilanCorps(e: EntreeCorps): BilanCorps {
   if (repas) topo.push(riche('repas', repas));
 
   // une seule pesee de reference ou une variation faible : un repere simple pour la suite
-  if (cible && cp && cp.bruit && !tendance) topo.push(riche('conseil', traduire('Pèse-toi dans les mêmes conditions, le matin au réveil, pour des écarts plus parlants.')));
+  if (cible && cp && cp.bruit && !tendance) topo.push(riche('conseil', traduire('Monte sur la balance dans les mêmes conditions, le matin au réveil, pour des écarts plus parlants.')));
   const fin = finirTopo(topo, true);
 
   const titre = e.origine === 'mensurations' ? 'Tes mensurations' : e.origine === 'composition' || e.origine === 'photo' ? traduire('Ta composition') : traduire('Ta pesée');

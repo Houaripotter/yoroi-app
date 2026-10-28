@@ -134,7 +134,7 @@ const BackupEncryptionToggleInner: React.FC = () => {
           {enabled ? <Lock size={18} color={accent} /> : <Unlock size={18} color={accent} />}
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: colors.text }]}>{traduire("Chiffrement AES-256")}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{traduire("Chiffrement AES 256")}</Text>
           <Text style={[styles.sub, { color: colors.textMuted ?? '#888' }]}>
             {enabled
               ? traduire('Tes backups sont protégés par mot de passe')

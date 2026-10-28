@@ -82,7 +82,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   cardio: 'Cardio',
   fitness: 'Musculation & Fitness',
   combat_grappling: 'Combat (Grappling)',
-  combat_striking: 'Combat (Pieds-Poings)',
+  combat_striking: 'Combat (Pieds Poings)',
   danse: 'Danse',
   collectif: 'Sports Collectifs',
   raquettes: 'Raquettes',

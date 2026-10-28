@@ -28,6 +28,7 @@ import { musclesDeExo } from '@/lib/v2/programmes/musclesExos';
 import { indexGarde, planEffectif, seancesAVenir } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Programme } from '@/lib/v2/programmes/types';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 /** La grande carte indigo, comme « Note ta séance » : texte à gauche, personnage à droite. onPress : l'appelant fait le retour haptique. */
 export function CarteIllustree({ surtitre, titre, texte, puces, image, children, onPress, label, style }: {
@@ -688,7 +689,21 @@ export function HeroJour({ pastille, nom, muscles, infos, texte, image, bouton, 
         {texte ? <Ink size={13} weight="bold" color={c.ink} style={{ lineHeight: 18 }} numberOfLines={4}>{texte}</Ink> : null}
         {ensuite ? <Ink size={12} weight="extraBold" color={c.textSecondary} numberOfLines={2}>{ensuite}</Ink> : null}
       </View>
-      {bouton ? (
+      {bouton && !bouton.discret ? (
+        <BoutonPrincipal
+          onPress={bouton.onPress}
+          haptique="none"
+          accessibilityLabel={bouton.accessibilityLabel ?? bouton.label}
+          label={bouton.label}
+          hauteur={48}
+          rayon={24}
+          tailleTexte={15}
+          lignes={1}
+          style={{ alignSelf: 'flex-start', maxWidth: image ? '62%' : '100%' }}
+          styleBouton={{ paddingHorizontal: 20, gap: 8 }}
+          icone={(col) => <Icon name={bouton.icone ?? 'play'} size={14} color={col} fill={bouton.icone && bouton.icone !== 'play' ? undefined : col} />}
+        />
+      ) : bouton ? (
         <Pressable
           onPress={bouton.onPress}
           accessibilityRole="button"

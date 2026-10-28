@@ -191,7 +191,7 @@ export function groupHistory(trainings: Training[], today: string, mode: 'semain
     } else {
       const m = Number(k.slice(5, 7)) - 1;
       const name = MONTHS[m].charAt(0).toUpperCase() + MONTHS[m].slice(1);
-      title = k === thisMonth ? traduire("{0}, ce mois-ci", name) : k.slice(0, 4) !== year ? `${name} ${k.slice(0, 4)}` : name;
+      title = k === thisMonth ? traduire("{0}, ce mois", name) : k.slice(0, 4) !== year ? `${name} ${k.slice(0, 4)}` : name;
     }
     return summarize(k, title, items);
   });

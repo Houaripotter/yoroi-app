@@ -30,7 +30,7 @@ export const COULEURS_COURBE: { id: CouleurCourbe; nom: string; phrase: string }
 
 export const STYLES_COURBE: { id: StyleCourbe; nom: string; phrase: string }[] = [
   { id: 1, nom: traduire('Le grand chiffre suit ton doigt'), phrase: traduire('Le chiffre en haut devient la pesée touchée') },
-  { id: 2, nom: traduire('Une bulle au-dessus du doigt'), phrase: traduire('Le passé reste en couleur, la suite s’efface') },
+  { id: 2, nom: traduire('Une bulle près du doigt'), phrase: traduire('Le passé reste en couleur, la suite s’efface') },
   { id: 3, nom: traduire('Une barre par pesée'), phrase: traduire('Une barre par semaine sur 6 mois et 1 an') },
   { id: 4, nom: traduire('Ton chemin vers le cap'), phrase: traduire('La courbe continue en pointillés jusqu’au torii') },
 ];

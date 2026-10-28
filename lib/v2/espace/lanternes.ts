@@ -25,7 +25,7 @@ export const SCENES_LANTERNES: SceneLanterne[] = [
   { id: 'lanternes_ryokan', nom: traduire('Auberge de la rivière'), phrase: traduire('Les balcons sur l’eau'), description: traduire('Le ryokan et ses reflets dans la rivière'), focus: 0.4, image: require('@/assets/avatars/app/monde/scenes/lanternes_ryokan.webp') },
   { id: 'lanternes_chateau', nom: traduire('Rue du château'), phrase: traduire('Les murs blancs sous la lune'), description: traduire('Les demeures de samouraïs devant le château'), focus: 0.42, image: require('@/assets/avatars/app/monde/scenes/lanternes_chateau.webp') },
   { id: 'lanternes_jardin', nom: traduire('Jardin de nuit'), phrase: traduire('L’étang et les lanternes de pierre'), description: traduire('Le pavillon de thé au bord de l’étang'), focus: 0.36, image: require('@/assets/avatars/app/monde/scenes/lanternes_jardin.webp') },
-  { id: 'lanternes_festival', nom: traduire('Soir de fête'), phrase: traduire('Les guirlandes de lanternes'), description: traduire('Les lanternes rouges et blanches au-dessus de la rue'), focus: 0.4, image: require('@/assets/avatars/app/monde/scenes/lanternes_festival.webp') },
+  { id: 'lanternes_festival', nom: traduire('Soir de fête'), phrase: traduire('Les guirlandes de lanternes'), description: traduire('Les lanternes rouges et blanches sur la rue'), focus: 0.4, image: require('@/assets/avatars/app/monde/scenes/lanternes_festival.webp') },
   { id: 'lanternes_samourai', nom: traduire('Cour du samouraï'), phrase: traduire('Le gravier ratissé, le pin'), description: traduire('La porte ouverte sur la cour de la maison'), focus: 0.42, image: require('@/assets/avatars/app/monde/scenes/lanternes_samourai.webp') },
 ];
 

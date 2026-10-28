@@ -62,7 +62,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ─── PARTENAIRES ───
   { id: 'partners-5',      title: traduire('Social'), description: traduire('5 partenaires différents'), emoji: '', color: '#06B6D4', category: 'milestone', check: s => s.uniquePartners >= 5 },
   { id: 'partners-20',     title: traduire('Réseau'), description: traduire('20 partenaires différents'), emoji: '', color: '#06B6D4', category: 'milestone', check: s => s.uniquePartners >= 20 },
-  { id: 'beat-black-belt', title: traduire('Tombeur d\'élite'), description: traduire('Battu un partenaire noté 9-10/10'), emoji: '', color: '#9333EA', category: 'legendary', check: s => s.partnersBeaten10 >= 1 },
+  { id: 'beat-black-belt', title: traduire('Tombeur d\'élite'), description: traduire('Battu un partenaire noté 9 à 10/10'), emoji: '', color: '#9333EA', category: 'legendary', check: s => s.partnersBeaten10 >= 1 },
   { id: 'comeback',        title: traduire('Comeback Kid'), description: traduire('Gagné contre un partenaire après 3 défaites d\'affilée'), emoji: '', color: '#EC4899', category: 'legendary', check: s => s.comebacks >= 1 },
 
   // ─── TECHNIQUES ───
@@ -89,7 +89,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'gp-10',           title: traduire('Penseur'), description: traduire('10 game plans notés'), emoji: '', color: '#8B5CF6', category: 'mental', check: s => s.gamePlansFilled >= 10 },
   { id: 'gp-executed',     title: traduire('Plan parfait'), description: traduire('Un game plan exécuté avec succès'), emoji: '', color: '#22C55E', category: 'mental', check: s => s.gamePlansExecuted >= 1 },
   { id: 'gp-10-executed',  title: traduire('Exécutant'), description: traduire('10 game plans exécutés avec succès'), emoji: '', color: '#22C55E', category: 'mental', check: s => s.gamePlansExecuted >= 10 },
-  { id: 'perfect-round',   title: traduire('Round parfait'), description: traduire('Auto-rating 10/10 sur un round'), emoji: '', color: '#EAB308', category: 'mental', check: s => s.maxSelfRating >= 10 },
+  { id: 'perfect-round',   title: traduire('Round parfait'), description: traduire('Auto rating 10/10 sur un round'), emoji: '', color: '#EAB308', category: 'mental', check: s => s.maxSelfRating >= 10 },
   { id: 'round-analyzed',  title: traduire('Introspectif'), description: traduire('Un round analysé à fond (5 champs remplis)'), emoji: '', color: '#8B5CF6', category: 'mental', check: s => s.roundsAnalysedFull >= 1 },
   { id: 'analyst',         title: 'Analyste', description: traduire('20 rounds analysés à fond'), emoji: '', color: '#9333EA', category: 'legendary', check: s => s.roundsAnalysedFull >= 20 },
 

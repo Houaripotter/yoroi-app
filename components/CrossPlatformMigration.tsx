@@ -28,12 +28,12 @@ const STEPS = [
   {
     num: '1',
     title: traduire('Crée un backup sur cet appareil'),
-    body: traduire("Tape le bouton ci-dessous. L'app crée un fichier .json qui contient toutes tes données."),
+    body: traduire("Tape le bouton plus bas. L'app crée un fichier .json qui contient toutes tes données."),
   },
   {
     num: '2',
     title: traduire('Envoie le fichier sur ton autre appareil'),
-    body: traduire("Un écran de partage s'ouvre. Choisis comment envoyer :\n• Email (à toi-même)\n• WhatsApp (à toi-même)\n• Google Drive / iCloud Drive\n• AirDrop (entre iPhone et iPad / Mac)"),
+    body: traduire("Un écran de partage s'ouvre. Choisis comment envoyer :\n• Email (à ton adresse)\n• WhatsApp (à ton numéro)\n• Google Drive / iCloud Drive\n• AirDrop (entre iPhone et iPad / Mac)"),
   },
   {
     num: '3',
@@ -154,7 +154,7 @@ export const CrossPlatformMigration: React.FC<Props> = ({ visible, onClose }) =>
           </View>
 
           <Text style={[styles.warn, { color: colors.textMuted ?? '#666' }]}>
-            {traduire("Le backup est chiffré avec AES-256 si tu as activé le chiffrement. Sinon il est en clair.")}</Text>
+            {traduire("Le backup est chiffré avec AES 256 si tu as activé le chiffrement. Sinon il est en clair.")}</Text>
         </ScrollView>
       </View>
     </Modal>

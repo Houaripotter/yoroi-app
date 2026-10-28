@@ -12,7 +12,7 @@ const NB = '\u00a0';
 export function etapesSelecteur(os: string = Platform.OS): string {
   return os === 'android'
     ? traduire('Dans la fenêtre qui s’ouvre : touche le menu, choisis Google Drive, crée un dossier « YOROI », puis « Utiliser ce dossier » et « Autoriser ».')
-    : traduire('Dans la fenêtre qui s’ouvre : choisis iCloud Drive, crée un dossier « YOROI » (icône dossier en haut), ouvre-le puis touche « Ouvrir ».');
+    : traduire('Dans la fenêtre qui s’ouvre : choisis iCloud Drive, crée un dossier « YOROI » (icône dossier en haut), ouvre ce dossier puis touche « Ouvrir ».');
 }
 
 /** Textes de la copie automatique (a activer, ou qui ne passe plus) */

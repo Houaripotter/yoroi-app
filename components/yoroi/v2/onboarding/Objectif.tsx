@@ -32,7 +32,7 @@ export function Objectif({ nav, name = '', goals, onChange, onNext }: { nav: Nav
   const phrase = note ?? phraseCombinaison(goals);
   const petit = useWindowDimensions().height < 720;
   return (
-    <Shell {...nav} title={name.trim() ? traduire("Qu’est-ce que tu **vises**, {0} ?", name.trim()) : traduire('Qu’est-ce que tu **vises** ?')} sub={traduire("Ce que tu viens chercher dans YOROI. Choisis-en un ou plusieurs.")} gap={petit ? 8 : 12} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={!goals.length} />}>
+    <Shell {...nav} title={name.trim() ? traduire("Qu’est ce que tu **vises**, {0} ?", name.trim()) : traduire('Qu’est ce que tu **vises** ?')} sub={traduire("Ce que tu viens chercher dans YOROI. Un choix ou plusieurs.")} gap={petit ? 8 : 12} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={!goals.length} />}>
       {GOALS.map((g) => {
         const on = goals.includes(g.id);
         return (

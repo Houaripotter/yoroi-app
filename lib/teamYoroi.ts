@@ -48,7 +48,7 @@ export const YOROI_VOCAB = {
 export const ONBOARDING_MESSAGES = {
   welcome: "Bienvenue dans la Team Yoroi, champion.",
   start: "Ton parcours de combattant commence maintenant.",
-  ready: "Es-tu prêt à forger ton armure ?",
+  ready: "Tu es prêt à forger ton armure ?",
   letsGo: "En avant, champion !",
 };
 
@@ -86,7 +86,7 @@ export const ENCOURAGEMENT_MESSAGES = [
   "On est ensemble. La Team compte sur toi.",
   "Chaque chute te forge plus fort.",
   "Le chemin de l'athlète est semé d'obstacles. Continue !",
-  "Tu ne restes jamais à terre. Relève-toi !",
+  "Tu ne restes jamais à terre. Debout !",
 ];
 
 // ═══════════════════════════════════════════════

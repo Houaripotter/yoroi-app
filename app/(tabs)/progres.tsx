@@ -166,7 +166,7 @@ export default function Progres() {
                   style={({ pressed }) => ({ flex: 1, minHeight: 68, borderRadius: 20, paddingLeft: 14, paddingRight: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: tt.fond, opacity: pressed ? 0.85 : 1 })}
                 >
                   <View style={{ flex: 1, gap: 1, minWidth: 0 }}>
-                    <Ink size={12.5} weight="extraBold" color={tt.encre} numberOfLines={1}>{t === 'semaine' ? traduire('Bilan') : traduire('Rendez-vous')}</Ink>
+                    <Ink size={12.5} weight="extraBold" color={tt.encre} numberOfLines={1}>{t === 'semaine' ? traduire('Bilan') : traduire('Chaque mois')}</Ink>
                     <Ink size={16} weight="black" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{t === 'semaine' ? traduire('Ta semaine') : traduire('Ton mois')}</Ink>
                   </View>
                   <Image source={illus.img(t === 'semaine' ? 'calendrier' : 'bilan')} style={{ width: 38, height: 38 }} resizeMode="contain" accessibilityIgnoresInvertColors />

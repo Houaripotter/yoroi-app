@@ -163,7 +163,7 @@ export function useWeekStats(targetDate?: Date) {
           weekNumber: getWeekNumber(weekStart),
           weekStart,
           weekEnd,
-          weekLabel: traduire("Semaine {0} • 12-18 Janvier", getWeekNumber(weekStart)),
+          weekLabel: traduire("Semaine {0} • 12 à 18 Janvier", getWeekNumber(weekStart)),
           activeDays: 5,
           totalSessions: 6,
           totalDays: 7,

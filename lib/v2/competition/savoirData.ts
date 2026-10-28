@@ -39,9 +39,9 @@ export const scienceData: ScienceCard[] = [
     icon: "slope-uphill",
     category: "Cardio",
     content: {
-      what: traduire("Marcher sur un tapis avec une inclinaison (12-15%) à vitesse modérée (4-5 km/h)."),
+      what: traduire("Marcher sur un tapis avec une inclinaison (12 à 15%) à vitesse modérée (4 à 5 km/h)."),
       why: traduire("Marcher en pente fait travailler ton cœur à intensité modérée, sans les chocs de la course. Une étude sur 12 adultes en surpoids montre qu'en marchant plus lentement avec de la pente (2,7 km/h sur 6°), l'effort reste modéré et la charge sur le genou baisse de 19 à 26 % par rapport à une marche rapide à plat. L'étude est petite."),
-      how: traduire("Protocole '12-3-30' ou variante : 12% de pente, 5 km/h, 30 min. Idéal en fin de séance musculation."),
+      how: traduire("Protocole '12 3 30' ou variante : 12% de pente, 5 km/h, 30 min. Idéal en fin de séance musculation."),
       sourceName: traduire("Étude : Ehlen et al. (2011), Med Sci Sports Exerc"),
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/21200344/"
     }
@@ -67,7 +67,7 @@ export const scienceData: ScienceCard[] = [
     content: {
       what: traduire("L'intensité où le lactate reste stable (< 2 mmol/L). Tu peux tenir une conversation."),
       why: traduire("San Millán et Brooks ont comparé des cyclistes professionnels, des personnes modérément actives et des personnes avec un syndrome métabolique. Plus le lactate monte à l'effort, moins le corps utilise le gras. Le lactate reflète donc ta 'flexibilité métabolique' : la capacité de tes cellules à utiliser le gras comme carburant. L'étude compare des profils, elle ne teste pas un programme d'entraînement."),
-      how: traduire("45-60 min en continu, 1 à 2 fois/semaine. Reste strict : si tu es essoufflé, tu n'es plus en zone 2."),
+      how: traduire("45 à 60 min en continu, 1 à 2 fois/semaine. Reste strict : si tu es essoufflé, tu n'es plus en zone 2."),
       sourceName: traduire("Étude : San Millán & Brooks (2018), Sports Med"),
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/28623613/"
     }
@@ -79,7 +79,7 @@ export const scienceData: ScienceCard[] = [
     category: traduire("Nutrition"),
     content: {
       what: traduire("Le macronutriment bâtisseur."),
-      why: traduire("L'Effet Thermique (TEF) des protéines est de 20-30%. Pour 100kcal ingérées, 25 sont brûlées par la digestion (contre 3% pour le gras). De plus, elles sont les plus rassasiantes via la sécrétion de l'hormone PYY."),
+      why: traduire("L'Effet Thermique (TEF) des protéines est de 20 à 30%. Pour 100kcal ingérées, 25 sont brûlées par la digestion (contre 3% pour le gras). De plus, elles sont les plus rassasiantes via la sécrétion de l'hormone PYY."),
       how: traduire("Vise 1,4 à 2 g par kg de poids et par jour. Une source à chaque repas."),
       sourceName: "Consensus : ISSN Position Stand (2017)",
       sourceUrl: "https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0177-8"
@@ -92,7 +92,7 @@ export const scienceData: ScienceCard[] = [
     category: traduire("Nutrition"),
     content: {
       what: traduire("Glucides non digestibles présents dans les végétaux."),
-      why: traduire("Les fibres solubles gonflent dans l'estomac et déclenchent la libération de GLP-1 (l'hormone de satiété imitée par un médicament contre le diabète utilisé pour maigrir). Elles nourrissent aussi le microbiote qui régule le poids."),
+      why: traduire("Les fibres solubles gonflent dans l'estomac et déclenchent la libération de GLP 1 (l'hormone de satiété imitée par un médicament contre le diabète utilisé pour maigrir). Elles nourrissent aussi le microbiote qui régule le poids."),
       how: traduire("Mange 30g de fibres par jour (Légumes verts, avoine, graines de chia, pommes). Mange tes légumes en premier dans le repas."),
       sourceName: "Recherche : Slavin (2005), Nutrition",
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/15797686/"
@@ -118,7 +118,7 @@ export const scienceData: ScienceCard[] = [
     category: traduire("Métabolisme"),
     content: {
       what: traduire("L'impact de l'eau sur la dépense énergétique."),
-      why: traduire("Boire de l'eau augmente un peu ta dépense d'énergie, mais l'effet est faible. Une première étude sur 14 personnes avait trouvé +30 % après 500 ml d'eau. Ce chiffre n'a pas été reproduit : une étude suivante a mesuré environ +4,5 % sur une heure avec de l'eau froide, et aucun effet avec de l'eau à température ambiante. Au-delà d'une perte de 2 % de ton poids en eau, tes performances d'endurance baissent, surtout à la chaleur (ACSM, 2007)."),
+      why: traduire("Boire de l'eau augmente un peu ta dépense d'énergie, mais l'effet est faible. Une première étude sur 14 personnes avait trouvé +30 % après 500 ml d'eau. Ce chiffre n'a pas été reproduit : une étude suivante a mesuré environ +4,5 % sur une heure avec de l'eau froide, et aucun effet avec de l'eau à température ambiante. Au delà d'une perte de 2 % de ton poids en eau, tes performances d'endurance baissent, surtout à la chaleur (ACSM, 2007)."),
       how: traduire("Bois 500ml d'eau dès le réveil. Bois 1 verre avant chaque repas."),
       sourceName: traduire("Études : Boschmann et al. (2003) et Brown et al. (2006), J Clin Endocrinol Metab"),
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/16822824/"
@@ -130,9 +130,9 @@ export const scienceData: ScienceCard[] = [
     icon: "walk",
     category: traduire("Activité"),
     content: {
-      what: traduire("Non-Exercise Activity Thermogenesis (Activité hors sport)."),
+      what: traduire("Non Exercise Activity Thermogenesis (Activité hors sport)."),
       why: traduire("Le Dr Levine a observé que des personnes sédentaires en légère obésité restaient assises environ 2 h de plus par jour que des personnes minces. Bouger autant qu'elles représenterait environ 350 kcal de plus par jour. L'étude est petite (20 personnes)."),
-      how: traduire("Téléphone debout. Gare-toi loin. Prends les escaliers. Vise 8000 pas hors séance."),
+      how: traduire("Téléphone debout. Stationne loin. Prends les escaliers. Vise 8000 pas hors séance."),
       sourceName: "Recherche : Levine et al. (2005), Science",
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/15681386/"
     }
@@ -144,9 +144,9 @@ export const scienceData: ScienceCard[] = [
     category: "Force",
     content: {
       what: traduire("La musculation régulière est associée à une vie plus longue."),
-      why: traduire("Une méta-analyse de 2022 (16 études d'observation) montre que la musculation est associée à un risque de mortalité toutes causes environ 15 % plus bas. Le plus grand bénéfice apparaît vers 30 à 60 min par semaine. Elle préserve la masse musculaire (sarcopénie) et améliore la sensibilité à l'insuline."),
-      how: traduire("2 séances minimum par semaine. Travaille tous les groupes musculaires. 3 séries de 8-12 répétitions."),
-      sourceName: traduire("Méta-analyse : Momma et al. (2022), Br J Sports Med"),
+      why: traduire("Une méta analyse de 2022 (16 études d'observation) montre que la musculation est associée à un risque de mortalité toutes causes environ 15 % plus bas. Le plus grand bénéfice apparaît vers 30 à 60 min par semaine. Elle préserve la masse musculaire (sarcopénie) et améliore la sensibilité à l'insuline."),
+      how: traduire("2 séances minimum par semaine. Travaille tous les groupes musculaires. 3 séries de 8 à 12 répétitions."),
+      sourceName: traduire("Méta analyse : Momma et al. (2022), Br J Sports Med"),
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/35228201/"
     }
   },
@@ -165,13 +165,13 @@ export const scienceData: ScienceCard[] = [
   },
   {
     id: '11',
-    title: traduire("Repos Inter-Séries : La Durée Compte"),
+    title: traduire("Repos Inter Séries : La Durée Compte"),
     icon: "clock",
     category: "Force",
     content: {
       what: traduire("Le temps de repos entre les séries influence l'hypertrophie."),
       why: traduire("Dans une étude de Schoenfeld sur 21 hommes entraînés pendant 8 semaines, ceux qui se reposaient 3 minutes ont gagné plus de force que ceux qui se reposaient 1 minute, avec une tendance à plus de muscle. L'étude est petite. Le repos permet la restauration des phosphocréatines et maintient l'intensité."),
-      how: traduire("Force (1-5 reps) : 3-5 min. Hypertrophie (8-12 reps) : 2-3 min. Endurance (15+ reps) : 1-2 min."),
+      how: traduire("Force (1 à 5 reps) : 3 à 5 min. Hypertrophie (8 à 12 reps) : 2 à 3 min. Endurance (15+ reps) : 1 à 2 min."),
       sourceName: traduire("Étude : Schoenfeld et al. (2016), J Strength Cond Res"),
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/26605807/"
     }
@@ -182,9 +182,9 @@ export const scienceData: ScienceCard[] = [
     icon: "food-steak",
     category: traduire("Nutrition"),
     content: {
-      what: traduire("La 'fenêtre anabolique' post-training est surestimée."),
-      why: traduire("Aragon & Schoenfeld montrent que le TOTAL protéique quotidien compte plus que le timing. La fenêtre est en réalité de 4-6h, pas 30 minutes."),
-      how: traduire("Assure ton quota journalier (1.6-2.2g/kg). Répartis sur 3-4 repas. Le shake post-training n'est pas obligatoire."),
+      what: traduire("La 'fenêtre anabolique' post training est surestimée."),
+      why: traduire("Aragon & Schoenfeld montrent que le TOTAL protéique quotidien compte plus que le timing. La fenêtre est en réalité de 4 à 6h, pas 30 minutes."),
+      how: traduire("Assure ton quota journalier (1.6 à 2.2g/kg). Répartis sur 3 à 4 repas. Le shake post training n'est pas obligatoire."),
       sourceName: "Review : Aragon & Schoenfeld (2013), J Int Soc Sports Nutr",
       sourceUrl: "https://jissn.biomedcentral.com/articles/10.1186/1550-2783-10-5"
     }
@@ -197,7 +197,7 @@ export const scienceData: ScienceCard[] = [
     content: {
       what: traduire("Bouger légèrement après un effort intense aide à éliminer le lactate."),
       why: traduire("Après un effort intense, une récupération active (footing ou vélo léger) fait baisser le lactate dans le sang plus vite que rester assis. Dans une petite étude sur 10 hommes, l'élimination la plus rapide venait d'une intensité proche du seuil lactique."),
-      how: traduire("Jour de repos = 20-30 min de marche ou vélo très léger (Zone 1). Évite le repos total complet."),
+      how: traduire("Jour de repos = 20 à 30 min de marche ou vélo très léger (Zone 1). Évite le repos total complet."),
       sourceName: traduire("Étude : Menzies et al. (2010), J Sports Sci"),
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/20544484/"
     }
@@ -223,7 +223,7 @@ export const scienceData: ScienceCard[] = [
     content: {
       what: traduire("Le muscle brûle des calories même au repos."),
       why: traduire("Au repos, 1 kg de muscle brûle environ 13 kcal par jour, contre 4,5 kcal pour la graisse. Gagner 5 kg de muscle représente environ 65 kcal de plus par jour. C'est modeste : le vrai bénéfice du muscle, c'est ta santé et ta force."),
-      how: traduire("Programme force 3x/semaine. Surplus calorique modéré (+200-300 kcal). Patience : 0.5-1kg muscle/mois max."),
+      how: traduire("Programme force 3x/semaine. Surplus calorique modéré (+200 à 300 kcal). Patience : 0.5 à 1kg muscle/mois max."),
       sourceName: traduire("Recherche : Wang et al. (2010), Am J Clin Nutr"),
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/20962155/"
     }
@@ -235,8 +235,8 @@ export const scienceData: ScienceCard[] = [
     category: traduire("Performance"),
     content: {
       what: traduire("La caféine est l'ergogène légal le plus puissant."),
-      why: traduire("3-6 mg/kg de caféine améliore la performance d'endurance d'environ 2 à 4 % en moyenne. Les effets sur la force et le sprint existent aussi, mais varient plus. Bloque l'adénosine = moins de fatigue perçue."),
-      how: traduire("200-400mg (2-4 expressos) 45-60 min avant l'effort. Évite si sensible ou entraînement soir."),
+      why: traduire("3 à 6 mg/kg de caféine améliore la performance d'endurance d'environ 2 à 4 % en moyenne. Les effets sur la force et le sprint existent aussi, mais varient plus. Bloque l'adénosine = moins de fatigue perçue."),
+      how: traduire("200 à 400mg (2 à 4 expressos) 45 à 60 min avant l'effort. Évite si sensible ou entraînement soir."),
       sourceName: "Position Stand : ISSN (2021), J Int Soc Sports Nutr",
       sourceUrl: "https://jissn.biomedcentral.com/articles/10.1186/s12970-020-00383-4"
     }
@@ -249,7 +249,7 @@ export const scienceData: ScienceCard[] = [
     content: {
       what: traduire("Le principe fondamental de tous les gains en force et masse."),
       why: traduire("Sans augmentation du stimulus (poids, reps, volume), le muscle s'adapte et stagne. La surcharge est LA loi de l'adaptation musculaire."),
-      how: traduire("Chaque semaine : ajoute 1-2 reps OU +2.5kg OU 1 série supplémentaire. Tiens un carnet d'entraînement."),
+      how: traduire("Chaque semaine : ajoute 1 à 2 reps OU +2.5kg OU 1 série supplémentaire. Tiens un carnet d'entraînement."),
       sourceName: "Principe : Kraemer & Ratamess (2004), Med Sci Sports Exerc",
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/15064596/"
     }
@@ -288,7 +288,7 @@ export const scienceData: ScienceCard[] = [
     content: {
       what: traduire("Le sommeil profond (stade N3) est la phase où ton corps récupère le plus physiquement. Une grande partie de l'hormone de croissance de la journée est sécrétée pendant cette phase, surtout en début de nuit."),
       why: traduire("Le sommeil fixe les gestes techniques appris dans la journée. Dans une étude de Walker (2002), une séquence de doigts apprise le soir était environ 20 % plus rapide après une nuit de sommeil, contre presque rien après 12 h éveillé. Ce gain était surtout lié au sommeil léger de fin de nuit (stade 2) : une nuit complète compte. Chez la souris, le sommeil aide aussi le cerveau à évacuer ses déchets."),
-      how: traduire("Évite l'alcool le soir : il fragmente la fin de nuit et réduit le sommeil paradoxal. Fais du sport, mais évite un effort intense juste avant de dormir. Maintiens une routine horaire. La température idéale est 18-19°C."),
+      how: traduire("Évite l'alcool le soir : il fragmente la fin de nuit et réduit le sommeil paradoxal. Fais du sport, mais évite un effort intense juste avant de dormir. Maintiens une routine horaire. La température idéale est 18 à 19°C."),
       sourceName: "Étude : Walker et al. (2002), Neuron",
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/12123620/"
     }
@@ -343,7 +343,7 @@ export const scienceData: ScienceCard[] = [
     category: traduire("Combat"),
     content: {
       what: traduire("2 points pour placer son genou sur l'estomac/ventre de l'adversaire en position de contrôle. L'adversaire est au sol, tu es en appui avec ton genou posé sur son abdomen et ton autre pied au sol. Position maintenue 3 secondes minimum."),
-      why: traduire("Position de transition stratégique entre side control et montée. Elle force l'adversaire à réagir, créant des opportunités de finition ou de progression vers les 4 pts. Très efficace en no-gi pour dicter le rythme."),
+      why: traduire("Position de transition stratégique entre side control et montée. Elle force l'adversaire à réagir, créant des opportunités de finition ou de progression vers les 4 pts. Très efficace en no gi pour dicter le rythme."),
       how: traduire("Chaîne classique : side control → genou sur l'estomac (2 pts) → montée (4 pts). Contrôle la ceinture + col/nuque pour maintenir la pression. Attention : le genou doit être SUR l'estomac, s'il glisse sur le côté, les points ne sont pas accordés."),
       sourceName: "Règlement international de JJB, art. 4.3",
       sourceUrl: "https://ibjjf.com/books-videos"
@@ -355,9 +355,9 @@ export const scienceData: ScienceCard[] = [
     icon: "swords",
     category: traduire("Combat"),
     content: {
-      what: traduire("3 points pour dépasser la garde de l'adversaire et stabiliser une position de contrôle latéral (side control, north-south) pendant 3 secondes. L'adversaire ne doit plus être capable d'utiliser ses jambes pour protéger ou attaquer."),
+      what: traduire("3 points pour dépasser la garde de l'adversaire et stabiliser une position de contrôle latéral (side control, north south) pendant 3 secondes. L'adversaire ne doit plus être capable d'utiliser ses jambes pour protéger ou attaquer."),
       why: traduire("Action la plus fréquente en compétition, porte d'entrée vers les positions dominantes 4 pts. 3 pts vs 2 pts = avantage potentiellement décisif. En bas niveau, beaucoup de matchs se gagnent uniquement sur les passages de garde."),
-      how: traduire("Techniques clés : toreando, leg drag, knee cut, smash pass, over-under, stack pass, bull fighter, headquarters. Clé : stabiliser 3 secondes complètes SANS que l'adversaire récupère sa garde, sinon les points sont refusés."),
+      how: traduire("Techniques clés : toreando, leg drag, knee cut, smash pass, over under, stack pass, bull fighter, headquarters. Clé : stabiliser 3 secondes complètes SANS que l'adversaire récupère sa garde, sinon les points sont refusés."),
       sourceName: "Règlement international de JJB",
       sourceUrl: "https://ibjjf.com/books-videos"
     }
@@ -381,9 +381,9 @@ export const scienceData: ScienceCard[] = [
     icon: "shield",
     category: traduire("Combat"),
     content: {
-      what: traduire("L'avantage est un tiebreaker, il ne s'additionne PAS au score principal. Accordé pour quasi-actions non finalisées : quasi-soumission, quasi-renversement, quasi-passage de garde, quasi-takedown. Si égalité de points en fin de match, le joueur avec le plus d'avantages gagne."),
+      what: traduire("L'avantage est un tiebreaker, il ne s'additionne PAS au score principal. Accordé pour quasi actions non finalisées : quasi soumission, quasi renversement, quasi passage de garde, quasi takedown. Si égalité de points en fin de match, le joueur avec le plus d'avantages gagne."),
       why: traduire("Décisifs en compétition, beaucoup de matchs haut niveau se terminent à égalité de points. Un avantage obtenu à la 1ère minute peut décider du résultat à la dernière seconde. Ne jamais les négliger."),
-      how: traduire("Obtenir un avantage : tenter une soumission (même ratée), menacer une passe de garde sans finaliser, quasi-sweep. Rappel : 2ème pénalité adversaire = +1 avantage pour toi. Stratégie fin de match : si tu as 1 avantage d'avance sur égalité, joue la montre légalement."),
+      how: traduire("Obtenir un avantage : tenter une soumission (même ratée), menacer une passe de garde sans finaliser, quasi sweep. Rappel : 2ème pénalité adversaire = +1 avantage pour toi. Stratégie fin de match : si tu as 1 avantage d'avance sur égalité, joue la montre légalement."),
       sourceName: "Règlement international de JJB, avantages",
       sourceUrl: "https://ibjjf.com/books-videos"
     }
@@ -395,7 +395,7 @@ export const scienceData: ScienceCard[] = [
     category: traduire("Combat"),
     content: {
       what: traduire("Système progressif en 4 niveaux. 1ère pénalité : avertissement simple (aucun point accordé). 2ème pénalité : +1 avantage accordé à l'adversaire. 3ème pénalité : +2 points accordés à l'adversaire. 4ème pénalité : disqualification (DQ) immédiate."),
-      why: traduire("Conçues pour punir la passivité, la fuite, les prises dangereuses ou déloyales. Un compétiteur qui accumule 3 pénalités offre 2 pts à l'adversaire, ce qui peut inverser un match jusque-là gagné."),
+      why: traduire("Conçues pour punir la passivité, la fuite, les prises dangereuses ou déloyales. Un compétiteur qui accumule 3 pénalités offre 2 pts à l'adversaire, ce qui peut inverser un match jusqu’ici gagné."),
       how: traduire("Éviter : passivité prolongée, fuir hors du tapis, retarder intentionnellement, techniques interdites à son grade. Surveiller les pénalités adversaire : à sa 2ème, tu gagnes un avantage, à sa 3ème, tu gagnes 2 pts. Adapte ta stratégie en conséquence."),
       sourceName: traduire("Règlement international de JJB, pénalités"),
       sourceUrl: "https://ibjjf.com/books-videos"
@@ -407,7 +407,7 @@ export const scienceData: ScienceCard[] = [
     icon: "shield",
     category: traduire("Combat"),
     content: {
-      what: traduire("Les techniques autorisées varient selon le grade. Chez les adultes, en blanche : étranglements, clés de bras (armbar, kimura, americana, omoplata) et clé de cheville droite. Dès la bleue, la clé de poignet s'ajoute. En bleue et violette, kneebar et toe hold restent interdits. Marron et noire : + kneebar, toe hold, calf slicer et bicep slicer. Heel hooks, clés de genou en torsion et reaping : seulement en no-gi, catégorie adulte, ceinture marron et noire."),
+      what: traduire("Les techniques autorisées varient selon le grade. Chez les adultes, en blanche : étranglements, clés de bras (armbar, kimura, americana, omoplata) et clé de cheville droite. Dès la bleue, la clé de poignet s'ajoute. En bleue et violette, kneebar et toe hold restent interdits. Marron et noire : + kneebar, toe hold, calf slicer et bicep slicer. Heel hooks, clés de genou en torsion et reaping : seulement en no gi, catégorie adulte, ceinture marron et noire."),
       why: traduire("Appliquer une technique interdite à son grade = disqualification immédiate, même si c'est involontaire. En plus, certaines soumissions peuvent blesser un partenaire non préparé à les défendre."),
       how: traduire("Règle pratique : jusqu'à la violette, la seule attaque de jambe permise est la clé de cheville droite. Kneebar et toe hold attendent la marron. Le heel hook reste interdit en kimono, à tous les grades. Chaque tournoi peut avoir son propre règlement, vérifie toujours avant de t'inscrire."),
       sourceName: traduire("Règlement international de JJB, techniques interdites par grade"),
@@ -428,13 +428,13 @@ export const protocolData: ProtocolCard[] = [
       duration: traduire("4 minutes"),
       protocol: [
         traduire("Choisis un exercice (burpees, sprints, vélo, rameur)"),
-        traduire("20 secondes ALL-OUT (intensité maximale)"),
+        traduire("20 secondes ALL OUT (intensité maximale)"),
         traduire("10 secondes de repos"),
         traduire("Répète 8 fois (= 4 minutes)"),
-        traduire("Retour au calme : 2-3 min de marche")
+        traduire("Retour au calme : 2 à 3 min de marche")
       ],
-      frequency: traduire("2-3x par semaine (pas de jours consécutifs)"),
-      notes: traduire("Nécessite une bonne condition physique. Échauffement obligatoire 5-10 min.")
+      frequency: traduire("2 à 3x par semaine (pas de jours consécutifs)"),
+      notes: traduire("Nécessite une bonne condition physique. Échauffement obligatoire 5 à 10 min.")
     }
   },
   {
@@ -445,12 +445,12 @@ export const protocolData: ProtocolCard[] = [
     difficulty: 'Débutant',
     content: {
       objective: traduire("Gagner en force pure avec un programme connu de 5 séries de 5, simple et progressif."),
-      duration: traduire("45-60 minutes"),
+      duration: traduire("45 à 60 minutes"),
       protocol: [
         traduire("Séance A : Squat 5×5, Bench Press 5×5, Rowing Barre 5×5"),
         traduire("Séance B : Squat 5×5, Overhead Press 5×5, Deadlift 1×5"),
         traduire("Alterner A/B/A puis B/A/B chaque semaine"),
-        traduire("Repos 3-5 min entre les séries"),
+        traduire("Repos 3 à 5 min entre les séries"),
         traduire("Ajoute +2.5kg chaque séance réussie")
       ],
       frequency: traduire("3x par semaine (Lun/Mer/Ven)"),
@@ -459,7 +459,7 @@ export const protocolData: ProtocolCard[] = [
   },
   {
     id: 'p3',
-    title: traduire("12-3-30 Marche Inclinée"),
+    title: traduire("Marche Inclinée 12 3 30"),
     icon: "slope-uphill",
     category: "Cardio",
     difficulty: 'Débutant',
@@ -473,7 +473,7 @@ export const protocolData: ProtocolCard[] = [
         traduire("Garde le dos droit, ne te tiens pas à la barre"),
         traduire("Tu dois pouvoir tenir une conversation")
       ],
-      frequency: traduire("4-5x par semaine (ou après musculation)"),
+      frequency: traduire("4 à 5x par semaine (ou après musculation)"),
       notes: traduire("Populaire sur les réseaux sociaux. Doux pour les articulations. Garde la musculation à côté pour conserver ton muscle.")
     }
   },
@@ -485,13 +485,13 @@ export const protocolData: ProtocolCard[] = [
     difficulty: 'Intermédiaire',
     content: {
       objective: traduire("Programme complet pour hypertrophie musculaire équilibrée."),
-      duration: traduire("60-75 minutes"),
+      duration: traduire("60 à 75 minutes"),
       protocol: [
-        traduire("PUSH : Pectoraux, Épaules, Triceps (8-12 reps)"),
-        traduire("PULL : Dos, Trapèzes, Biceps (8-12 reps)"),
-        "LEGS : Quadriceps, Ischio, Mollets, Abdos (8-15 reps)",
-        traduire("3-4 exercices par groupe musculaire"),
-        traduire("3-4 séries par exercice, 2-3 min de repos")
+        traduire("PUSH : Pectoraux, Épaules, Triceps (8 à 12 reps)"),
+        traduire("PULL : Dos, Trapèzes, Biceps (8 à 12 reps)"),
+        "LEGS : Quadriceps, Ischio, Mollets, Abdos (8 à 15 reps)",
+        traduire("3 à 4 exercices par groupe musculaire"),
+        traduire("3 à 4 séries par exercice, 2 à 3 min de repos")
       ],
       frequency: traduire("6x par semaine (PPL/PPL) ou 3x (P/P/L)"),
       notes: traduire("Excellent pour gagner du volume. Nécessite une bonne récupération.")
@@ -505,15 +505,15 @@ export const protocolData: ProtocolCard[] = [
     difficulty: 'Débutant',
     content: {
       objective: traduire("Améliorer la capacité à brûler les graisses et la santé métabolique."),
-      duration: traduire("45-60 minutes"),
+      duration: traduire("45 à 60 minutes"),
       protocol: [
         traduire("Trouve ton seuil : tu peux parler en phrases complètes"),
-        traduire("Fréquence cardiaque : 60-70% de ta FC max"),
+        traduire("Fréquence cardiaque : 60 à 70% de ta FC max"),
         traduire("Reste STRICT sur l'intensité (pas plus haut)"),
         traduire("Course, vélo, rameur, natation"),
         "Respiration nasale uniquement (test)"
       ],
-      frequency: traduire("1-2x par semaine"),
+      frequency: traduire("1 à 2x par semaine"),
       notes: traduire("C'est l'entraînement préféré des athlètes d'endurance pour la base aérobie.")
     }
   },
@@ -525,16 +525,16 @@ export const protocolData: ProtocolCard[] = [
     difficulty: 'Débutant',
     content: {
       objective: traduire("Accélérer la récupération musculaire entre les séances intenses."),
-      duration: traduire("20-30 minutes"),
+      duration: traduire("20 à 30 minutes"),
       protocol: [
         traduire("Marche tranquille ou vélo très léger"),
-        traduire("Intensité : Zone 1 (50-60% FC max)"),
-        traduire("Ajoute des étirements dynamiques (5-10 min)"),
+        traduire("Intensité : Zone 1 (50 à 60% FC max)"),
+        traduire("Ajoute des étirements dynamiques (5 à 10 min)"),
         traduire("Foam roller sur les zones tendues"),
         traduire("Mobilité articulaire (hanches, épaules)")
       ],
       frequency: traduire("Jours de repos entre les séances"),
-      notes: traduire("Ne sous-estime pas l'importance du repos actif pour les gains à long terme.")
+      notes: traduire("Ne néglige pas l'importance du repos actif pour les gains à long terme.")
     }
   },
   {
@@ -545,9 +545,9 @@ export const protocolData: ProtocolCard[] = [
     difficulty: 'Débutant',
     content: {
       objective: traduire("Préparer le corps à l'effort et réduire le risque de blessure."),
-      duration: traduire("10-15 minutes"),
+      duration: traduire("10 à 15 minutes"),
       protocol: [
-        traduire("Cardio léger : 3-5 min (vélo, rameur, corde à sauter)"),
+        traduire("Cardio léger : 3 à 5 min (vélo, rameur, corde à sauter)"),
         traduire("Mobilité articulaire : cercles bras/jambes (2 min)"),
         traduire("Étirements dynamiques : fentes marchées, leg swings (3 min)"),
         traduire("Activation musculaire : bandes élastiques (2 min)"),
@@ -559,16 +559,16 @@ export const protocolData: ProtocolCard[] = [
   },
   {
     id: 'p8',
-    title: traduire("Étirements Post-Training"),
+    title: traduire("Étirements Post Training"),
     icon: "stretch",
     category: traduire("Mobilité"),
     difficulty: 'Débutant',
     content: {
       objective: traduire("Améliorer la flexibilité et accélérer la récupération musculaire."),
-      duration: traduire("10-15 minutes"),
+      duration: traduire("10 à 15 minutes"),
       protocol: [
-        traduire("Attends 5-10 min après la fin de la séance"),
-        traduire("Étirements statiques : 30-60 secondes par muscle"),
+        traduire("Attends 5 à 10 min après la fin de la séance"),
+        traduire("Étirements statiques : 30 à 60 secondes par muscle"),
         traduire("Cible les groupes travaillés dans la séance"),
         traduire("Respire profondément, ne force pas"),
         traduire("Focus : ischios, fléchisseurs hanches, pectoraux, dorsaux")
@@ -593,8 +593,8 @@ export const protocolData: ProtocolCard[] = [
         traduire("Pendant le jeûne : eau, thé, café noir (sans sucre)"),
         traduire("Casse le jeûne avec des protéines + légumes")
       ],
-      frequency: traduire("5-7 jours par semaine"),
-      notes: traduire("Consulte un médecin si tu as des problèmes de santé. Hydrate-toi bien.")
+      frequency: traduire("5 à 7 jours par semaine"),
+      notes: traduire("Consulte un médecin si tu as des problèmes de santé. Bois bien.")
     }
   },
   {
@@ -607,14 +607,14 @@ export const protocolData: ProtocolCard[] = [
       objective: traduire("Optimiser la performance et la récupération par une hydratation stratégique."),
       duration: traduire("Toute la journée"),
       protocol: [
-        traduire("PRÉ-TRAINING : 500ml d'eau 2h avant + 250ml juste avant"),
-        traduire("PER-TRAINING : 150-250ml toutes les 15-20 min"),
-        traduire("POST-TRAINING : 1.5L par kg de poids perdu"),
+        traduire("PRÉ TRAINING : 500ml d'eau 2h avant + 250ml juste avant"),
+        traduire("PER TRAINING : 150 à 250ml toutes les 15 à 20 min"),
+        traduire("POST TRAINING : 1.5L par kg de poids perdu"),
         traduire("Ajoute une pincée de sel si séance > 60 min"),
         traduire("Urine claire = bien hydraté, jaune foncé = déshydraté")
       ],
       frequency: traduire("À chaque séance"),
-      notes: traduire("Au-delà de 2 % de ton poids perdu en eau, ta performance d'endurance baisse, surtout à la chaleur. Ne sous-estime pas l'eau.")
+      notes: traduire("Passé 2 % de ton poids perdu en eau, ta performance d'endurance baisse, surtout à la chaleur. Ne néglige pas l'eau.")
     }
   },
   {
@@ -625,17 +625,17 @@ export const protocolData: ProtocolCard[] = [
     difficulty: 'Avancé',
     content: {
       objective: traduire("Développer force, puissance et capacité de travail sous fatigue."),
-      duration: traduire("10-20 minutes"),
+      duration: traduire("10 à 20 minutes"),
       protocol: [
-        traduire("Choisis 1-3 exercices (ex: thrusters, pull-ups, box jumps)"),
+        traduire("Choisis 1 à 3 exercices (ex: thrusters, pull ups, box jumps)"),
         traduire("Définis un nombre de reps (ex: 10 thrusters)"),
         traduire("Démarre le chrono : fais tes reps en début de minute"),
-        traduire("Repose-toi le temps restant"),
+        traduire("Repos le temps restant"),
         traduire("Chaque nouvelle minute = nouvelle série"),
-        traduire("Continue pendant 10-20 min")
+        traduire("Continue pendant 10 à 20 min")
       ],
-      frequency: traduire("1-2x par semaine"),
-      notes: traduire("Si tu ne peux plus finir dans la minute, arrête-toi. Très intense.")
+      frequency: traduire("1 à 2x par semaine"),
+      notes: traduire("Si tu ne peux plus finir dans la minute, arrête. Très intense.")
     }
   },
   {
@@ -653,7 +653,7 @@ export const protocolData: ProtocolCard[] = [
         traduire("Série 3 : 8 reps à 80% 1RM"),
         traduire("Série 4 : 6 reps à 85% 1RM"),
         "Redescends : 8 reps → 10 reps → 12 reps",
-        traduire("Repos : 2-3 min entre séries")
+        traduire("Repos : 2 à 3 min entre séries")
       ],
       frequency: traduire("1 exercice majeur par séance"),
       notes: traduire("Excellent pour casser la routine et choquer le muscle.")
@@ -661,20 +661,20 @@ export const protocolData: ProtocolCard[] = [
   },
   {
     id: 'p13',
-    title: traduire("Protocole Pré-Sommeil"),
+    title: traduire("Protocole Pré Sommeil"),
     icon: "bed-clock",
     category: traduire("Récupération"),
     difficulty: 'Débutant',
     content: {
       objective: traduire("Optimiser la qualité du sommeil et la récupération nocturne."),
-      duration: traduire("60-90 min avant coucher"),
+      duration: traduire("60 à 90 min avant coucher"),
       protocol: [
-        traduire("Température chambre entre 16-19°C"),
+        traduire("Température chambre entre 16 et 19°C"),
         traduire("Arrêt des écrans 60 min avant coucher (lumière bleue)"),
         traduire("Dernière prise de caféine > 6h avant"),
-        traduire("Dîner terminé > 2-3h avant coucher"),
+        traduire("Dîner terminé > 2 à 3h avant coucher"),
         traduire("Éviter l'alcool (perturbe la fin de nuit et le sommeil paradoxal)"),
-        traduire("5-10 min de respiration diaphragmatique ou méditation")
+        traduire("5 à 10 min de respiration diaphragmatique ou méditation")
       ],
       frequency: traduire("Tous les soirs"),
       notes: traduire("Dormir < 8h = risque de blessure x1.7 (Milewski et al., 2014)")
@@ -690,12 +690,12 @@ export const protocolData: ProtocolCard[] = [
       objective: traduire("Préparer le corps et l'esprit pour une performance optimale le jour J."),
       duration: traduire("Les 4h avant compétition"),
       protocol: [
-        traduire("Dernier repas solide 3-4h avant la compétition"),
-        traduire("Hydratation : 5-7ml/kg dans les 4h précédentes"),
-        traduire("Échauffement progressif 15-20 min (aérobie léger)"),
+        traduire("Dernier repas solide 3 à 4h avant la compétition"),
+        traduire("Hydratation : 5 à 7ml/kg dans les 4h précédentes"),
+        traduire("Échauffement progressif 15 à 20 min (aérobie léger)"),
         traduire("Activation musculaire spécifique au sport"),
         traduire("Routine de visualisation mentale 5 min"),
-        traduire("Dernière prise de glucides 30-60 min avant (si endurance)")
+        traduire("Dernière prise de glucides 30 à 60 min avant (si endurance)")
       ],
       frequency: traduire("Chaque jour de compétition"),
       notes: traduire("Sources : Thomas et al. (2016), ACSM Position Stand (2007)")
@@ -703,18 +703,18 @@ export const protocolData: ProtocolCard[] = [
   },
   {
     id: 'p15',
-    title: traduire("Protocole Récupération Post-Séance"),
+    title: traduire("Protocole Récupération Post Séance"),
     icon: "activity",
     category: traduire("Récupération"),
     difficulty: 'Débutant',
     content: {
       objective: traduire("Maximiser la récupération après un entraînement intense."),
-      duration: "2h post-training",
+      duration: "2h post training",
       protocol: [
         traduire("Réhydratation : 1.5L par kg de poids perdu"),
-        traduire("Protéines : 20-40g dans les 2h post-effort"),
-        traduire("Glucides : uniquement si re-compétition < 24h"),
-        traduire("Étirements légers ou mobilité 5-10 min"),
+        traduire("Protéines : 20 à 40g dans les 2h post effort"),
+        traduire("Glucides : uniquement si re compétition < 24h"),
+        traduire("Étirements légers ou mobilité 5 à 10 min"),
         traduire("Bain froid/contraste (si entraînement intense)"),
         traduire("Coucher avant 23h pour maximiser GH nocturne")
       ],

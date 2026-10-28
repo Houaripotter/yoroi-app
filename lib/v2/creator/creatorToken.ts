@@ -119,15 +119,15 @@ export function verifyCreatorToken(raw: unknown, now: number = Date.now()): Toke
 export function tokenErrorMessage(reason: TokenRefus): string {
   switch (reason) {
     case 'expire':
-      return 'Ce jeton a expiré. Génère-en un nouveau sur ton ordinateur.';
+      return 'Ce jeton a expiré. Crée un nouveau jeton sur ton ordinateur.';
     case 'futur':
       return 'Ce jeton n’est pas encore valable. Vérifie la date de ton téléphone.';
     case 'version':
-      return 'Ce jeton vient d’une autre version. Génère-en un nouveau.';
+      return 'Ce jeton vient d’une autre version. Crée un nouveau jeton.';
     case 'signature':
     case 'contenu':
       return 'Ce jeton n’est pas valide.';
     default:
-      return traduire('Jeton illisible. Colle-le en entier, sans rien ajouter.');
+      return traduire('Jeton illisible. Colle le jeton en entier, sans rien ajouter.');
   }
 }

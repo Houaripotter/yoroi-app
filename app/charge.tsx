@@ -68,9 +68,9 @@ function verdictOf(load: number, habit: number): Verdict {
   if (ratio >= 1.5) {
     if (idx >= 3) {
       const l = LEVELS[4];
-      return { idx: 4, n: l.n, name: l.name, color: l.color, description: traduire("Bien au-dessus de ton habitude : {0} % de plus que tes quatre semaines précédentes.", pct), advice: traduire('Risque de surentraînement. Prévois des jours de repos.') };
+      return { idx: 4, n: l.n, name: l.name, color: l.color, description: traduire("Bien plus haut que ton habitude : {0} % de plus que tes quatre semaines précédentes.", pct), advice: traduire('Risque de surentraînement. Prévois des jours de repos.') };
     }
-    return { idx, n: 4, name: 'Forte hausse', get color() { return intensite(4).text; }, description: traduire("Bien au-dessus de ton habitude : {0} % de plus que tes quatre semaines précédentes.", pct), advice: traduire('Monte en charge progressivement et garde un jour de repos.') };
+    return { idx, n: 4, name: 'Forte hausse', get color() { return intensite(4).text; }, description: traduire("Bien plus haut que ton habitude : {0} % de plus que tes quatre semaines précédentes.", pct), advice: traduire('Monte en charge progressivement et garde un jour de repos.') };
   }
   if (ratio >= 1.25) {
     return { idx: Math.min(idx, 3), n: 3, name: 'Au-dessus de ton habitude', get color() { return intensite(3).text; }, description: traduire("Un peu plus chargé que d’habitude : {0} % de plus.", pct), advice: traduire('Soigne ton sommeil et ta récupération cette semaine.') };

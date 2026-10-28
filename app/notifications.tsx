@@ -48,6 +48,7 @@ import { choixDepuisServices } from '@/lib/v2/notifications/discipline';
 import type { ChoixRappels } from '@/lib/v2/notifications/discipline';
 import { appliquerChoixRappels } from '@/lib/v2/notifications/rappels';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const NB = ' ';
 
@@ -334,17 +335,18 @@ export default function TesNotifications() {
               <Ink size={13} color={c.textSecondary}>{traduire("Tant qu’elles le sont, aucun rappel ne peut arriver{0}: il suffit de les autoriser une fois.", NB)}</Ink>
             </View>
           </View>
-          <Pressable
+          <BoutonPrincipal
             onPress={async () => {
               const ok = await requestNotificationPermissions();
               if (ok) setAllowed(true);
               else Linking.openSettings().catch(() => {});
             }}
-            accessibilityRole="button"
-            style={({ pressed }) => ({ minHeight: 48, borderRadius: 14, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}
-          >
-            <Ink size={15} weight="extraBold" color={c.onPrimary}>{traduire("Autoriser les notifications")}</Ink>
-          </Pressable>
+            haptique="light"
+            label={traduire("Autoriser les notifications")}
+            hauteur={48}
+            rayon={14}
+            tailleTexte={15}
+          />
         </Animated.View>
       ) : null}
 
@@ -368,7 +370,7 @@ export default function TesNotifications() {
             </View>
           </View>
         ) : (
-          <Ink size={14} color={c.textSecondary}>{traduire("Allume un rappel ci-dessous : tu vois tout de suite quand il arrivera et à quoi il ressemble.")}</Ink>
+          <Ink size={14} color={c.textSecondary}>{traduire("Allume un rappel plus bas : tu vois tout de suite quand il arrivera et à quoi il ressemble.")}</Ink>
         )}
         <Pressable
           onPress={() => router.push('/notification-center' as any)}

@@ -49,12 +49,12 @@ const PAR_FREIN: Record<string, Conseil[]> = {
     { picto: 'repeat', title: traduire('Le même créneau'), text: traduire('Garde le même moment pour t’entraîner. L’habitude fait le travail à ta place.'), tone: 'gold' },
   ],
   progres: [
-    { picto: 'scale', title: traduire('Ta courbe parle'), text: traduire('Une pesée seule ne dit pas grand-chose. Ta tendance sur plusieurs semaines, si.'), action: traduire('Voir ma courbe'), href: '/poids-detail', tone: 'indigo' },
+    { picto: 'scale', title: traduire('Ta courbe parle'), text: traduire('Une pesée seule ne dit pas grand chose. Ta tendance sur plusieurs semaines, si.'), action: traduire('Voir ma courbe'), href: '/poids-detail', tone: 'indigo' },
     { picto: 'target', title: traduire('Note tes charges'), text: traduire('Une charge notée aujourd’hui, c’est un record à battre la prochaine fois.'), action: traduire('Mes records'), href: '/records', tone: 'indigo' },
   ],
   motivation: [
     { picto: 'flame', title: traduire('Regarde le chemin'), text: traduire('Les jours sans envie, relis ce que tu as déjà fait. Chaque séance notée compte.'), action: traduire('Mes séances'), href: '/seances', tone: 'red' },
-    { picto: 'steps', title: traduire('Juste commencer'), text: traduire('Dis-toi dix minutes. Une fois lancé, le reste suit souvent.'), tone: 'gold' },
+    { picto: 'steps', title: traduire('Juste commencer'), text: traduire('Juste dix minutes. Une fois lancé, le reste suit souvent.'), tone: 'gold' },
   ],
   blessures: [
     { picto: 'moon', title: traduire('Écoute ton corps'), text: traduire('Une douleur qui revient mérite du repos. Ta récupération du jour t’aide à choisir.'), action: traduire('Voir ta récupération'), href: '/readiness-detail', tone: 'indigo' },

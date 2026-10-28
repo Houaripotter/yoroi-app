@@ -23,6 +23,7 @@ import { fondAjouter, PlusPastille } from '@/components/yoroi/v2/accueil/kit';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { traduire } from '@/lib/i18n/tr';
 import { noterRecherche } from '@/lib/v2/seance/recherchesIntrouvables';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 type Item = { key: string; name: string; autre?: string; muscle: string; history?: ExerciseHistory; count?: number; rang?: number };
 type Ligne = { kind: 'titre'; key: string; muscle: string; n: number } | { kind: 'exo'; key: string; item: Item };
@@ -221,10 +222,7 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
                   <Ink size={16} weight="extraBold" style={{ textAlign: 'center' }}>{traduire("Aucun exercice pour « {0} »", query.trim())}</Ink>
                   <Ink size={13} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire("Essaie un autre mot, en français ou en anglais, ou crée l’exercice tel quel.")}</Ink>
                 </View>
-                <Pressable onPress={ajouterPerso} accessibilityRole="button" accessibilityLabel={traduire("Créer l’exercice {0}", query.trim())} style={({ pressed }) => ({ alignSelf: 'stretch', minHeight: 56, borderRadius: 18, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: pressed ? c.primaryPressed : c.primary })}>
-                  <Icon name="plus" size={20} color={c.onPrimary} strokeWidth={2.8} />
-                  <Ink size={16} weight="extraBold" color={c.onPrimary} numberOfLines={1} style={{ flexShrink: 1 }}>{traduire("Ajouter « {0} » comme exercice", query.trim())}</Ink>
-                </Pressable>
+                <BoutonPrincipal onPress={ajouterPerso} haptique="none" accessibilityLabel={traduire("Créer l’exercice {0}", query.trim())} label={traduire("Ajouter « {0} » comme exercice", query.trim())} tailleTexte={16} lignes={1} style={{ alignSelf: 'stretch' }} icone={(col) => <Icon name="plus" size={20} color={col} strokeWidth={2.8} />} />
               </View>
             ) : (
               <View style={{ paddingVertical: 40, alignItems: 'center' }}>

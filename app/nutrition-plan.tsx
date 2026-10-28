@@ -30,7 +30,7 @@ export default function NutritionPlanScreen() {
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
   const [age, setAge] = useState('');
-  const [gender, setGender] = useState<'male' | 'female'>('male');
+  const [gender, setGender] = useState<'male' | 'female' | 'neutral'>('male');
   const [activity, setActivity] = useState('moderate');
   const [goal, setGoal] = useState('maintain');
   const [macroProfile, setMacroProfile] = useState('high_protein');
@@ -170,7 +170,7 @@ export default function NutritionPlanScreen() {
 
           {/* DETAIL DU CALCUL */}
           <Enter i={7}>
-            <H2 sub={traduire("Formule Mifflin-St Jeor (1990)")}>{traduire("Le détail du calcul")}</H2>
+            <H2 sub={traduire("Formule Mifflin St Jeor (1990)")}>{traduire("Le détail du calcul")}</H2>
             <Card style={{ marginTop: 10, paddingVertical: 6 }}>
               <KV label={traduire("Métabolisme de base")} value={`${plan.bmr} kcal`} />
               <KV label={traduire("Activité : {0}", act?.name ?? '')} value={`× ${String(act?.multiplier ?? '').replace('.', DECIMAL)}`} />

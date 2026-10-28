@@ -92,6 +92,7 @@ import type { Douleur, Experience } from '@/lib/v2/programmes/guide';
 import { EQUIPEMENTS } from '@/lib/v2/programmes/materiel';
 import type { Equipement } from '@/lib/v2/programmes/materiel';
 import { LIBELLE_REGION } from '@/lib/v2/programmes/blessures';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 type Etape = 'attente' | 'intro' | 'experience' | 'objectifs' | 'jours' | 'temps' | 'lieu' | 'douleur' | 'sport' | 'liste' | 'resultat'
   // 27 octobre 2026 : avant la liste (preselection.ts)
@@ -1199,19 +1200,10 @@ function Segment({ label, on, onPress }: { label: string; on: boolean; onPress: 
   );
 }
 
-/** Le bouton principal du bas : pastel, texte bleu nuit (27 octobre 2026, « le bleu plein est trop fort ») */
+/** Le bouton principal du bas : le bouton partage (28 octobre 2026, degrade bleu nuit, texte blanc) */
 function BoutonPlein({ label, onPress, grand, icone }: { label: string; onPress: () => void; grand?: boolean; icone?: IconName }) {
-  const pa = usePastel();
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      style={({ pressed }) => [{ minHeight: grand ? 58 : 56, borderRadius: 999, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? pa.boutonAppui : pa.bouton, transform: [{ scale: pressed ? 0.98 : 1 }] }, ombrePastel(pa.ombre)]}
-    >
-      {icone ? <Icon name={icone} size={17} color={pa.surBouton} /> : null}
-      <Ink size={grand ? 17 : 16} weight="black" color={pa.surBouton}>{label}</Ink>
-    </Pressable>
+    <BoutonPrincipal onPress={onPress} haptique="none" label={label} hauteur={grand ? 58 : 56} rayon={29} tailleTexte={grand ? 17 : 16} icone={icone ? (col) => <Icon name={icone} size={17} color={col} /> : undefined} />
   );
 }
 

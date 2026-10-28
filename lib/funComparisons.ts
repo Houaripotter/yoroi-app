@@ -123,7 +123,7 @@ const durationComparison = (minutes: number): FunComparison | null => {
   if (hours >= 1000) {
     return {
       id: 'time-days',
-      text: `${fmtNum(hours, 0)} h d'entraînement = ${days.toFixed(0)} jours non-stop`,
+      text: `${fmtNum(hours, 0)} h d'entraînement = ${days.toFixed(0)} jours sans pause`,
       emoji: '',
       color: '#3B82F6',
     };
@@ -181,7 +181,7 @@ const liftedComparison = (tons: number): FunComparison | null => {
     { t: 1, label: 'une voiture compacte' },
     { t: 5, label: 'un éléphant adulte' },
     { t: 12, label: 'un bus parisien' },
-    { t: 40, label: 'un camion semi-remorque' },
+    { t: 40, label: 'un camion semi remorque' },
     { t: 200, label: 'la statue de la Liberté' },
   ];
   for (let i = refs.length - 1; i >= 0; i--) {

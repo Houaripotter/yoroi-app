@@ -170,7 +170,7 @@ export const ZONES: Zone[] = [
     muscles: ['biceps', 'triceps'],
     exos: [
       e('Curl Larry Scott (Pupitre)', 'BICEPS', 10, 12, 'Bras posés sur le pupitre, descends jusqu’aux bras presque tendus et contrôle bien le bas du mouvement.'),
-      e('Overhead Extension Poulie', 'TRICEPS', 10, 15, 'Dos à la poulie, coudes pointés vers le haut, tends les bras au-dessus de la tête puis redescends en étirant bien l’arrière du bras.'),
+      e('Overhead Extension Poulie', 'TRICEPS', 10, 15, 'Dos à la poulie, coudes pointés vers le haut, tends les bras vers le haut puis redescends en étirant bien l’arrière du bras.'),
       // 25 octobre 2026 (Houari : « plein d'exercices avec les images ») : tous animés, conseil tiré de la fiche technique
       e('Extension Triceps Poulie (Corde)', 'TRICEPS', 10, 15, 'Tends les bras vers le bas et écarte la corde en fin de mouvement.'),
       e('Curl Marteau (Hammer)', 'BICEPS', 10, 12, 'Monte les haltères en gardant les paumes face à face, coudes fixes.'),
@@ -193,19 +193,19 @@ export const ZONES: Zone[] = [
   {
     // 24 octobre 2026, Houari : « il y a aussi les avant-bras, ne les oublie pas »
     id: 'avantbras',
-    nom: 'Avant-bras',
-    role: 'Les avant-bras : la poigne pour tenir les charges, porter, s’accrocher, saisir au combat.',
+    nom: 'Avant bras',
+    role: 'Les avant bras : la poigne pour tenir les charges, porter, s’accrocher, saisir au combat.',
     muscles: ['avant_bras'],
     exos: [
       // 25 octobre 2026, section Grip demandée par Houari. Ordre de la séance Grip (les 5 premiers) :
       // porter lourd, pincer, se suspendre, d'après Dojo en ligne (traversée de disque, tractions serviette,
       // manches de kumi kata), Wodandgo (7 exercices de grip) et Jiu Jitsu Legacy (grip pour le JJB).
-      e('Farmer Walk', 'AVANT-BRAS', 30, 45, 'Tu marches en portant lourd : tes mains serrent fort pour ne rien lâcher, c’est ça qui muscle tes avant-bras. Bras tendus, épaules basses, petits pas.', { secondes: true }),
+      e('Farmer Walk', 'AVANT-BRAS', 30, 45, 'Tu marches en portant lourd : tes mains serrent fort pour ne rien lâcher, c’est ça qui muscle tes avant bras. Bras tendus, épaules basses, petits pas.', { secondes: true }),
       e('Traversée de Disques (Pince)', 'AVANT-BRAS', 20, 40, 'Garde le dos droit, serre les abdos et marche lentement sur un parcours court.', { secondes: true }),
       e('Dead Hang', 'AVANT-BRAS', 20, 40, 'Serre la barre et respire calmement pendant toute la tenue.', { secondes: true }),
       e('Pince Haltère (par la tête)', 'AVANT-BRAS', 15, 30, 'Bras tendus le long du corps, garde tout dans les doigts, pas dans la paume.', { secondes: true }),
       e('Gripper / Hand Grip', 'AVANT-BRAS', 10, 15, 'Place la pince au creux de la main, poignée fixe contre la paume.'),
-      e('Suspension Serviette', 'AVANT-BRAS', 15, 30, 'Passe une serviette ou une veste de kimono par-dessus la barre de traction.', { secondes: true }),
+      e('Suspension Serviette', 'AVANT-BRAS', 15, 30, 'Passe une serviette ou une veste de kimono sur la barre de traction.', { secondes: true }),
       e('Wrist Roller', 'AVANT-BRAS', 3, 5, 'Bras tendus devant toi, enroule la corde en tournant les poignets jusqu’à remonter le poids, puis redescends lentement. Une montée et une descente font une répétition.'),
       e('Plate Pinch', 'AVANT-BRAS', 20, 30, 'Deux disques lisses face contre face, tenus par la tranche entre le pouce et les doigts.', { secondes: true }),
       e('Curl Disque', 'AVANT-BRAS', 10, 15, 'Debout, un disque tenu par les côtés avec les deux mains, bras le long du corps.'),

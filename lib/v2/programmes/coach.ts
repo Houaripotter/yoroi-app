@@ -52,7 +52,7 @@ export function champion(femme: boolean): string {
 
 const MOTS_JOUR = [
   'C’est jour d’entraînement. Tu as choisi ce jour : tiens parole. Allez, {0}, on y va.',
-  'Ta séance t’attend. Les résultats viennent à ceux qui se présentent. Présente-toi, {0}.',
+  'Ta séance t’attend. Les résultats viennent à ceux qui se présentent. Viens, {0}.',
   'Pas besoin d’avoir envie. Il faut juste commencer, le reste suit. Go, {0}.',
   'Une séance de plus, c’est un pas de plus vers le corps que tu veux. À toi de jouer, {0}.',
   'La discipline, c’est faire ce que tu as prévu, même quand c’est dur. Aujourd’hui, tu le fais, {0}.',
@@ -61,7 +61,7 @@ const MOTS_JOUR = [
 const MOTS_FAIT = [
   'Séance faite. Tu as tenu parole aujourd’hui. Respect, {0}.',
   'C’est dans la boîte. Chaque séance faite te rapproche du résultat. Bravo, {0}.',
-  'Bien joué, {0}. Repose-toi bien : demain, ton corps sera plus solide.',
+  'Bien joué, {0}. Récupère bien : demain, ton corps sera plus solide.',
   'Une de plus. C’est comme ça qu’on change un corps : une séance après l’autre.',
 ];
 
@@ -74,12 +74,12 @@ const MOTS_REPOS = [
 const MOTS_RATTRAPE = [
   'Ça arrive à tout le monde. Ce qui compte, c’est de revenir. Ceux qui lâchent ne voient jamais le résultat. Toi, tu ne lâches pas, {0}.',
   'Une séance ratée ne casse rien. Deux de suite, si. Reviens aujourd’hui, ne laisse pas l’excuse gagner.',
-  'N’abandonne pas. Tu as commencé pour une raison : souviens-toi d’elle, et reviens aujourd’hui, {0}.',
+  'N’abandonne pas. Tu as commencé pour une raison : garde cette raison en tête, et reviens aujourd’hui, {0}.',
   'Les faibles lâchent au premier raté. Pas toi. Une séance aujourd’hui, et c’est reparti, {0}.',
 ];
 
 const MOTS_DEBUT = [
-  'La première séance est la plus dure. Fais-la, et le reste suivra. Allez, {0}.',
+  'La première séance est la plus dure. Fais cette séance, et le reste suivra. Allez, {0}.',
   'Aujourd’hui, tu commences. Dans quelques semaines, tu verras la différence. Go, {0}.',
 ];
 

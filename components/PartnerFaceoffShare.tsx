@@ -63,9 +63,9 @@ export const PartnerFaceoffShare: React.FC<Props> = ({
       const uri = await captureRef(shotRef, { format: 'png', quality: 1.0, result: 'tmpfile' });
       const canShare = await Sharing.isAvailableAsync();
       if (canShare) {
-        await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Face-a-face Yoroi' });
+        await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Face à face Yoroi' });
       } else {
-        await Share.share({ url: uri, title: 'Face-a-face Yoroi' });
+        await Share.share({ url: uri, title: 'Face à face Yoroi' });
       }
       successHaptic().catch(() => {});
     } catch (e) {
@@ -85,7 +85,7 @@ export const PartnerFaceoffShare: React.FC<Props> = ({
         style={[styles.trigger, { backgroundColor: archColor + '20', borderColor: archColor + '50' }]}
       >
         <Swords size={16} color={archColor} />
-        <Text style={[styles.triggerText, { color: archColor }]}>Face-a-face shareable</Text>
+        <Text style={[styles.triggerText, { color: archColor }]}>Face à face shareable</Text>
       </TouchableOpacity>
 
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
@@ -94,7 +94,7 @@ export const PartnerFaceoffShare: React.FC<Props> = ({
             <TouchableOpacity onPress={() => setOpen(false)}>
               <X size={26} color="#fff" />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Face-a-face</Text>
+            <Text style={styles.modalTitle}>Face à face</Text>
             <View style={{ width: 26 }} />
           </View>
 

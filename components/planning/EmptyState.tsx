@@ -64,7 +64,7 @@ const EMPTY_STATE_CONFIG = {
     icon: Trophy,
     gradient: ['#F59E0B', '#D97706'] as const,
     title: 'Trouve ta prochaine compétition',
-    message: 'Fixe-toi un objectif et inscris-toi à ton premier événement',
+    message: 'Choisis un objectif et ton premier événement',
     actionLabel: 'Découvrir les événements',
   },
 };

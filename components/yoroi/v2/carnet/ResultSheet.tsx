@@ -88,7 +88,7 @@ export function ResultSheet({ result, onShare, onClose }: { result: ResultInfo |
                 {result.isPR && result.recordText && !result.gain ? <Ink size={13} weight="medium" color={P.ink2}>{`Ancien record : ${result.recordText}`}</Ink> : null}
                 {result.isPR && result.first ? <Ink size={13} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>{traduire("C’est ta référence. Chaque fois que tu la bats, un tampon rouge se pose.")}</Ink> : null}
                 {!result.isPR && result.recordText ? (
-                  <Ink size={13} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>{traduire("Ton record reste {0}. La prochaine fois peut-être.", result.recordText)}</Ink>
+                  <Ink size={13} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>{traduire("Ton record reste {0}. Ce sera pour la prochaine fois.", result.recordText)}</Ink>
                 ) : null}
               </View>
 

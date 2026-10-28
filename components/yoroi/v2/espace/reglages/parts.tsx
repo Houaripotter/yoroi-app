@@ -12,7 +12,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import type { Profile } from '@/lib/database';
 import type { Espace } from '@/lib/v2/espace';
-import { RondCadre, styleRondDe } from '@/components/yoroi/v2/reglages/contour';
+import { styleRondDe } from '@/components/yoroi/v2/reglages/contour';
 import { getSportName } from '@/lib/sports';
 import { personnageImage } from '../assets';
 import { RondInitiales } from '../RondInitiales';
@@ -21,94 +21,68 @@ import { BusteRond } from '@/components/yoroi/v2/espace/BusteRond';
 import { Icon, RoundButton } from '../ui';
 import type { IconName } from '../ui';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { getWeightProgress } from '@/lib/database';
+import { MiniCarteAthlete } from '@/components/yoroi/v2/profil/MiniCarteAthlete';
+import { usePratiques } from '@/lib/v2/profil/usePratiques';
+import { pratiqueACeinture } from '@/lib/v2/profil/pratiques';
+import { gammeDe } from '@/lib/v2/profil/gammes';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 // ============================================
 // EN-TETE DU PROFIL (haut des Reglages)
 // ============================================
 
 /**
- * Le profil en haut des Reglages : photo ou personnage (decor, sans rang ni XP) dans le rond
- * au contour choisi, prenom, sports, taille et objectif de poids. Un appui ouvre le profil.
+ * Le profil en haut des Reglages. 28 octobre 2026 (maquette validee « le melange ») : la mini carte d'athlete,
+ * ta scene, ton rond au contour choisi (photo, personnage ou initiales), ton prenom, la ceinture de ton sport
+ * principal et une ligne de details (taille, objectif, atteint ou non ; sinon tes sports). Un appui ouvre le profil,
+ * un appui sur le rond ouvre Photo et contour.
  */
-export function ProfileHeader({ profile, espace, rankIndex, onPress, onEditPhoto }: { profile: Profile | null; espace: Espace; rankIndex: number; onPress: () => void; /** 16 octobre 2026 : le crayon sur la photo ouvre Photo et contour */ onEditPhoto?: () => void }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
+export function ProfileHeader({ profile, espace, rankIndex, onPress, onEditPhoto }: { profile: Profile | null; espace: Espace; rankIndex: number; onPress: () => void; /** 16 octobre 2026 : le rond ouvre Photo et contour */ onEditPhoto?: () => void }) {
   const perso = personnageImage(espace.personnage, rankIndex, profile?.avatar_gender === 'femme' ? 'f' : 'h');
   const name = profile?.name?.trim() || '';
   // Vague 45 : « Sans personnage », la photo si elle existe, sinon les initiales (le rond n'est jamais vide)
   const sansPerso = !aUnPersonnage(espace.personnage);
   const showPhoto = (espace.identite === 'photo' || sansPerso) && !!profile?.profile_photo;
-  const sports = espace.sportsFavoris.slice(0, 3).map((id) => getSportName(id));
+  const { pratiques } = usePratiques(espace.sportsFavoris.find((id) => !!gammeDe(id)) ?? null);
+  const [actuel, setActuel] = React.useState<number | null>(null);
+  React.useEffect(() => {
+    let vivant = true;
+    getWeightProgress().then((w) => vivant && setActuel(w.current ?? null)).catch(() => {});
+    return () => { vivant = false; };
+  }, [profile]);
+  const sports = espace.sportsFavoris.slice(0, 3).map((id) => getSportName(id).replace(/-/g, ' '));
   const taille = profile?.height_cm ? `${profile.height_cm} cm` : null;
   // 18 octobre 2026 : le poids du corps reste en kilos partout (la pesee se saisit en kilos)
-  const cible = profile?.target_weight
-    ? traduire("objectif {0} kg", String(Math.round(profile.target_weight * 10) / 10).replace('.', DECIMAL))
+  const cibleKg = profile?.target_weight ?? null;
+  const depart = profile?.start_weight ?? null;
+  const atteint = !!(cibleKg && actuel && (depart && depart < cibleKg ? actuel >= cibleKg - 0.05 : actuel <= cibleKg + 0.05));
+  const cible = cibleKg
+    ? traduire("objectif {0} kg", String(Math.round(cibleKg * 10) / 10).replace('.', DECIMAL)) + (atteint ? traduire(', atteint') : '')
     : null;
-  const details = [taille, cible].filter(Boolean).join(', ');
+  const details = [taille, cible].filter(Boolean).join(', ') || (sports.length ? sports.join(', ') : traduire('Ta taille et ton objectif de poids'));
 
-  const rond = (
-    <RondCadre size={72} {...styleRondDe(espace)} fond="papier" fill="#F5F6FB">
-      {showPhoto ? (
-        <Image source={{ uri: profile!.profile_photo! }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-      ) : sansPerso ? (
-        <RondInitiales size={72} nom={name} />
-      ) : (
-        // 16 octobre : le buste cadre sur la marge mesuree de chaque image (avant, tete et bas coupes)
-        <BusteRond source={perso} />
-      )}
-    </RondCadre>
-  );
-  const texte = (
-    <>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Ink size={22} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{name || traduire('Ton prénom')}</Ink>
-        <Ink size={13} weight="bold" color={sports.length ? c.textSecondary : c.accent} numberOfLines={2}>
-          {sports.length ? sports.join(', ') : traduire('Choisis tes sports')}
-        </Ink>
-        <Ink size={13} weight="medium" color={c.textMuted} numberOfLines={1}>{details || traduire('Ta taille et ton objectif de poids')}</Ink>
-      </View>
-      <Icon name="chevron" size={16} color={c.textMuted} stroke={2.4} />
-    </>
+  const rond = showPhoto ? (
+    <Image source={{ uri: profile!.profile_photo! }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+  ) : sansPerso ? (
+    <RondInitiales size={84} nom={name} />
+  ) : (
+    // 16 octobre : le buste cadre sur la marge mesuree de chaque image (avant, tete et bas coupes)
+    <BusteRond source={perso} />
   );
 
-  if (!onEditPhoto) {
-    return (
-      <Pressable
-        onPress={() => { selectionAsync().catch(() => {}); onPress(); }}
-        accessibilityRole="button"
-        accessibilityLabel={traduire("Ton profil, {0}. Modifier", name || traduire('à compléter'))}
-        style={({ pressed }) => ({ flexDirection: 'row', gap: 14, alignItems: 'center', padding: 14, borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, transform: [{ scale: pressed ? 0.99 : 1 }] })}
-      >
-        {rond}
-        {texte}
-      </Pressable>
-    );
-  }
-
-  // 16 octobre 2026 : la photo et son crayon ouvrent Photo et contour, le reste de la carte ouvre le profil
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
-      <Pressable
-        onPress={() => { selectionAsync().catch(() => {}); onEditPhoto(); }}
-        accessibilityRole="button"
-        accessibilityLabel={traduire("Modifier ta photo et son contour")}
-        style={({ pressed }) => ({ paddingLeft: 14, paddingVertical: 14, paddingRight: 4, transform: [{ scale: pressed ? 0.96 : 1 }] })}
-      >
-        {rond}
-        <View pointerEvents="none" style={{ position: 'absolute', right: -2, bottom: 10, width: 30, height: 30, borderRadius: 15, backgroundColor: c.primary, borderWidth: 2.5, borderColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="pencil" size={14} color={c.onPrimary} stroke={2.4} />
-        </View>
-      </Pressable>
-      <Pressable
-        onPress={() => { selectionAsync().catch(() => {}); onPress(); }}
-        accessibilityRole="button"
-        accessibilityLabel={traduire("Ton profil, {0}. Modifier", name || traduire('à compléter'))}
-        style={({ pressed }) => ({ flex: 1, flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 14, paddingLeft: 10, paddingRight: 14, alignSelf: 'stretch', transform: [{ scale: pressed ? 0.99 : 1 }] })}
-      >
-        {texte}
-      </Pressable>
-    </View>
+    <MiniCarteAthlete
+      scene={espace.scene}
+      rond={rond}
+      styleRond={styleRondDe(espace)}
+      name={name}
+      ceinture={pratiqueACeinture(pratiques)}
+      details={details}
+      onPress={onPress}
+      onPhoto={onEditPhoto}
+    />
   );
 }
 
@@ -154,18 +128,9 @@ export function StatusRow({ icon, title, detail, tone = 'neutral', first, onPres
 
 /** Petit bouton d'action dans une ligne (44 points de haut) */
 export function MiniAction({ label, onPress, busy }: { label: string; onPress: () => void; busy?: boolean }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
+  // 28 octobre 2026 : bouton principal partage
   return (
-    <Pressable
-      onPress={() => { selectionAsync().catch(() => {}); onPress(); }}
-      disabled={busy}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.6 : 1 })}
-    >
-      <Ink size={13} weight="extraBold" color={c.onPrimary} numberOfLines={1}>{busy ? traduire('En cours') : label}</Ink>
-    </Pressable>
+    <BoutonPrincipal onPress={() => { selectionAsync().catch(() => {}); onPress(); }} haptique="none" disabled={busy} accessibilityLabel={label} label={busy ? traduire('En cours') : label} hauteur={44} rayon={14} tailleTexte={13} lignes={1} compact />
   );
 }
 

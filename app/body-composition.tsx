@@ -385,7 +385,7 @@ function BodyComposition() {
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 120 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
         <DetailHeader
           title={traduire("Ta composition")}
-          sub={traduire("Pré-remplie avec ta dernière mesure : ajuste avec ce qu’affiche ta balance.")}
+          sub={traduire("Déjà remplie avec ta dernière mesure : ajuste avec ce qu’affiche ta balance.")}
           right={
             <>
               <IconButton label={traduire("Tes courbes de composition")} onPress={() => router.push('/composition-detail' as any)}>

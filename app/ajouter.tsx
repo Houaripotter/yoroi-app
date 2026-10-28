@@ -55,6 +55,7 @@ import { LETTRES_JOURS, semaineDe } from '@/lib/v2/sante/anneauxJours';
 import { personnageImage } from '@/components/yoroi/v2/espace/assets';
 import { useIdentite } from '@/lib/v2/espace/useIdentite';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 // 26 octobre 2026 : illustrations des cartes Poids et Mensurations (Gemini) ; le personnage en attendant
 const IMG_PESEE: ImageSourcePropType | null = null;
@@ -291,13 +292,17 @@ export default function Ajouter() {
           <Ink size={26} weight="black" tight style={{ marginBottom: 14 }} accessibilityRole="header">{traduire("Enregistrer")}</Ink>
 
           {draft ? (
-            <Pressable onPress={() => open(draftRoute(draft), { resume: '1' })} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 60, borderRadius: 22, paddingHorizontal: 16, marginBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? P.primaryPressed : P.primary })}>
-              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: P.onPrimary }} />
-              <View style={{ flex: 1 }}>
-                <Ink size={13} weight="bold" color={P.onPrimary} style={{ opacity: 0.8 }}>{traduire("Séance en cours, {0}", fmtClock((Date.now() - draft.startedAt) / 1000))}</Ink>
-                <Ink size={17} weight="black" color={P.onPrimary} numberOfLines={2}>{traduire("Reprendre : {0}", draftTitle(draft))}</Ink>
-              </View>
-            </Pressable>
+            <BoutonPrincipal onPress={() => open(draftRoute(draft), { resume: '1' })} haptique="light" hauteur={60} rayon={22} style={{ marginBottom: 14 }} styleBouton={{ justifyContent: 'flex-start', gap: 12, paddingHorizontal: 16 }}>
+              {(col) => (
+                <>
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: col }} />
+                  <View style={{ flex: 1 }}>
+                    <Ink size={13} weight="bold" color={col} style={{ opacity: 0.82 }}>{traduire("Séance en cours, {0}", fmtClock((Date.now() - draft.startedAt) / 1000))}</Ink>
+                    <Ink size={17} weight="black" color={col} numberOfLines={2}>{traduire("Reprendre : {0}", draftTitle(draft))}</Ink>
+                  </View>
+                </>
+              )}
+            </BoutonPrincipal>
           ) : null}
 
           {/* 1. L'action principale : ton programme du jour, en grande carte lilas */}

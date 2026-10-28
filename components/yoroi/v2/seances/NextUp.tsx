@@ -18,6 +18,7 @@ import { tap } from './ui';
 import { P } from '@/components/yoroi/livePalette';
 import { ombreBouton } from '@/components/yoroi/v2/accueil/kit';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 export type NextSlot = { slot: WeeklyPlan; dayOffset: number };
 
@@ -124,15 +125,19 @@ export function NextUp({
       </Pressable>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         {onStart ? (
-          <Pressable
+          <BoutonPrincipal
             onPress={() => { tap(); onStart(next); }}
-            accessibilityRole="button"
+            haptique="none"
             accessibilityLabel={traduire("Commencer {0}", title)}
-            style={({ pressed }) => ({ flex: 1, minHeight: 48, borderRadius: 15, backgroundColor: pressed ? c.primaryPressed : c.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 14 })}
-          >
-            <Icon name="play" size={16} color={c.onPrimary} fill={c.onPrimary} />
-            <Ink size={15} weight="extraBold" color={c.onPrimary} numberOfLines={1}>{traduire("Lancer ce créneau")}</Ink>
-          </Pressable>
+            label={traduire("Lancer ce créneau")}
+            hauteur={48}
+            rayon={15}
+            tailleTexte={15}
+            lignes={1}
+            compact
+            style={{ flex: 1 }}
+            icone={(col) => <Icon name="play" size={16} color={col} fill={col} />}
+          />
         ) : (
           <View style={{ flex: 1 }}>{calendarLink}</View>
         )}

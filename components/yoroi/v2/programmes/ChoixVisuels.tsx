@@ -29,6 +29,7 @@ import { joursConseilles } from '@/lib/v2/programmes/suivi';
 import type { Programme } from '@/lib/v2/programmes/types';
 import { traduire } from '@/lib/i18n/tr';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 export type Teinte = { fond: string; encre: string };
 
@@ -576,20 +577,10 @@ export function PucesProgramme({ p }: { p: Programme }) {
   );
 }
 
-/** Le grand bouton du bas (« C'est parti », « Commencer ») : pastel, texte bleu nuit (27 octobre 2026) */
+/** Le grand bouton du bas (« C’est parti », « Commencer ») */
 export function BoutonIndigo({ label, onPress, icone }: { label: string; onPress: () => void; icone?: IconName }) {
-  const pa = usePastel();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      style={({ pressed }) => [{ minHeight: 56, borderRadius: 28, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? pa.boutonAppui : pa.bouton, transform: [{ scale: pressed ? 0.98 : 1 }] }, ombrePastel(pa.ombre)]}
-    >
-      {icone ? <Icon name={icone} size={18} color={pa.surBouton} /> : null}
-      <Ink size={16} weight="black" color={pa.surBouton}>{label}</Ink>
-    </Pressable>
-  );
+  // 28 octobre 2026 : le grand bouton du bas prend le bouton principal partage (degrade bleu nuit, texte blanc)
+  return <BoutonPrincipal label={label} onPress={onPress} haptique="none" tailleTexte={16} icone={icone ? (col) => <Icon name={icone} size={18} color={col} /> : undefined} />;
 }
 
 /** Le nombre de jours par semaine : grands ronds, le chiffre en grand */

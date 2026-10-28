@@ -214,7 +214,7 @@ const CARTE_SEMAINE: CarteData = {
     jours: [true, false, true, false, true, true, false],
     seances: 4,
     minutes: 290,
-    sports: [{ nom: 'Jiu-jitsu brésilien', n: 2 }, { nom: 'Musculation', n: 1 }, { nom: traduire('Course à pied'), n: 1 }],
+    sports: [{ nom: 'Jiu jitsu brésilien', n: 2 }, { nom: 'Musculation', n: 1 }, { nom: traduire('Course à pied'), n: 1 }],
     poidsFin: null,
     poidsEcart: null,
     objectif: 4,

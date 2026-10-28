@@ -193,13 +193,13 @@ export function statutLigne(l: Ligne, iso: string, poids: number, torii?: string
   if (!b) return { id: 'avant', label: traduire('Avant ton plan'), ton: 'gris' };
   const t = TOLERANCE_KG;
   if (l.mode === 'perte') {
-    if (poids > b.haut + t) return { id: 'lent', label: traduire('Au-dessus de ton rythme prévu'), ton: 'bleu' };
+    if (poids > b.haut + t) return { id: 'lent', label: traduire('Plus haut que ton rythme prévu'), ton: 'bleu' };
     if (poids < b.bas - t) return { id: 'vite', label: traduire('Plus vite que prévu'), ton: 'orange' };
   } else if (l.mode === 'prise') {
     if (poids < b.bas - t) return { id: 'lent', label: traduire('En dessous de ton rythme prévu'), ton: 'bleu' };
     if (poids > b.haut + t) return { id: 'vite', label: traduire('Plus vite que prévu'), ton: 'orange' };
   } else {
-    if (poids > b.haut + t) return { id: 'dessus', label: traduire('Au-dessus de ta zone de forme'), ton: 'bleu' };
+    if (poids > b.haut + t) return { id: 'dessus', label: traduire('Plus haut que ta zone de forme'), ton: 'bleu' };
     if (poids < b.bas - t) return { id: 'dessous', label: traduire('En dessous de ta zone de forme'), ton: 'bleu' };
     return { id: 'sur', label: traduire('Dans ta zone de forme'), ton: 'vert' };
   }
@@ -224,19 +224,19 @@ export function phraseStatut(l: Ligne, iso: string, poids: number, torii?: strin
   const st = statutLigne(l, iso, poids, torii);
   const m = medianeA(l, torii ?? null, iso);
   const ecart = m == null ? 0 : poids - m;
-  const tu = passe ? traduire('Ce jour-là, tu étais ') : traduire('Tu es ');
-  if (st.id === 'avant') return { ton: 'gris', avant: passe ? traduire('Ce jour-là, ') : '', cle: passe ? 'avant le début de ton plan' : 'Avant le début de ton plan', apres: '' };
+  const tu = passe ? traduire('Ce jour, tu étais ') : traduire('Tu es ');
+  if (st.id === 'avant') return { ton: 'gris', avant: passe ? traduire('Ce jour, ') : '', cle: passe ? 'avant le début de ton plan' : 'Avant le début de ton plan', apres: '' };
   if (l.mode === 'maintien' || l.mode === 'recompo') {
-    if (st.id === 'sur') return { ton: 'vert', avant: passe ? traduire('Ce jour-là, ') : '', cle: passe ? 'dans ta zone de forme' : 'Dans ta zone de forme', apres: '' };
+    if (st.id === 'sur') return { ton: 'vert', avant: passe ? traduire('Ce jour, ') : '', cle: passe ? 'dans ta zone de forme' : 'Dans ta zone de forme', apres: '' };
     return { ton: 'bleu', avant: tu, cle: `${kgPhrase(ecart)} ${ecart > 0 ? 'au-dessus' : 'en dessous'}`, apres: traduire(' de ton poids de forme') };
   }
   if (st.id === 'lent') return { ton: 'bleu', avant: tu, cle: `${kgPhrase(ecart)} ${l.mode === 'perte' ? 'au-dessus' : 'en dessous'}`, apres: traduire(' de ton rythme prévu') };
   if (st.id === 'vite') {
-    const verbe = l.mode === 'perte' ? (passe ? traduire('Ce jour-là, tu descendais ') : traduire('Tu descends ')) : passe ? traduire('Ce jour-là, tu montais ') : traduire('Tu montes ');
+    const verbe = l.mode === 'perte' ? (passe ? traduire('Ce jour, tu descendais ') : traduire('Tu descends ')) : passe ? traduire('Ce jour, tu montais ') : traduire('Tu montes ');
     return { ton: 'orange', avant: verbe, cle: 'plus vite que prévu', apres: passe ? '' : traduire(', ralentis un peu') };
   }
-  if (Math.abs(ecart) <= TOLERANCE_KG) return { ton: 'vert', avant: passe ? traduire('Ce jour-là, ') : '', cle: passe ? 'pile sur ton rythme prévu' : 'Pile sur ton rythme prévu', apres: '' };
-  return { ton: 'vert', avant: passe ? traduire('Ce jour-là, ') : '', cle: passe ? 'sur ton rythme prévu' : 'Sur ton rythme prévu', apres: traduire(", à {0} près", kgPhrase(ecart)) };
+  if (Math.abs(ecart) <= TOLERANCE_KG) return { ton: 'vert', avant: passe ? traduire('Ce jour, ') : '', cle: passe ? 'pile sur ton rythme prévu' : 'Pile sur ton rythme prévu', apres: '' };
+  return { ton: 'vert', avant: passe ? traduire('Ce jour, ') : '', cle: passe ? 'sur ton rythme prévu' : 'Sur ton rythme prévu', apres: traduire(", à {0} près", kgPhrase(ecart)) };
 }
 
 /**

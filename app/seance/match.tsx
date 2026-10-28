@@ -26,6 +26,7 @@ import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const RESULTS: { value: CombatResultat; label: string }[] = [
   { value: 'victoire', label: traduire('Victoire') },
@@ -216,16 +217,14 @@ export default function SeanceMatch() {
               <Stepper value={dayWeight} step={0.1} max={250} decimals unit={traduire("kilos le jour du combat")} layout="stack" size={26} button={44} format={(v) => String(v).replace('.', DECIMAL)} onChange={setDayWeight} />
             </View>
           </View>
-          <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire("Pré-rempli avec ta dernière pesée. Touche un chiffre pour le taper.")}</Ink>
+          <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire("Déjà rempli avec ta dernière pesée. Touche un chiffre pour le taper.")}</Ink>
         </Section>
 
         <TextInput value={notes} onChangeText={setNotes} placeholder={traduire("Ce que tu retiens de ce combat")} placeholderTextColor={c.textMuted} multiline accessibilityLabel="Notes" style={[fontStyle('medium'), { minHeight: 90, fontSize: 15, color: c.ink, padding: 14, borderRadius: 18, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border, textAlignVertical: 'top' }]} />
       </ScrollView>
 
       <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 18 }}>
-        <Pressable onPress={save} disabled={saving} accessibilityRole="button" style={({ pressed }) => ({ height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary, opacity: saving ? 0.6 : 1, shadowColor: c.shadow, shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 4 })}>
-          <Ink size={16} weight="black" color={c.onPrimary}>{saving ? 'Enregistrement...' : traduire('Enregistrer ce combat')}</Ink>
-        </Pressable>
+        <BoutonPrincipal onPress={save} disabled={saving} loading={saving} label={traduire('Enregistrer ce combat')} hauteur={58} />
       </View>
     </View>
   );

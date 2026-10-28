@@ -34,6 +34,7 @@ import {
   type FenetreRequest,
 } from './api';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const VEIL = 'rgba(29,32,41,0.38)';
 const IN_MS = 160;
@@ -178,7 +179,21 @@ function Fenetre({ req }: { req: FenetreRequest }) {
     }
   };
 
-  const renderButton = ({ b, tone }: { b: AppAlertButton; tone: Tone }, i: number) => (
+  const renderButton = ({ b, tone }: { b: AppAlertButton; tone: Tone }, i: number) =>
+    // 28 octobre 2026 : le bouton principal de la fenetre prend le bouton partage (degrade bleu nuit, texte blanc)
+    tone === 'main' ? (
+      <BoutonPrincipal
+        key={`${i}-${b.text ?? 'OK'}`}
+        onPress={() => finish(b)}
+        haptique="none"
+        accessibilityLabel={b.text ?? 'OK'}
+        label={b.text ?? 'OK'}
+        hauteur={52}
+        rayon={16}
+        tailleTexte={15.5}
+        style={!stacked ? styles.buttonRow : undefined}
+      />
+    ) : (
     <Pressable
       key={`${i}-${b.text ?? 'OK'}`}
       onPress={() => finish(b)}
@@ -203,7 +218,7 @@ function Fenetre({ req }: { req: FenetreRequest }) {
         );
       }}
     </Pressable>
-  );
+    );
 
   const hasHeader = !!req.title || !!req.message || !!req.options?.icon || !!req.options?.illustration;
 

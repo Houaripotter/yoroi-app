@@ -121,7 +121,7 @@ export default function TesSports() {
         </Card>
       ) : (
         <Card style={{ padding: 16, gap: 4 }}>
-          <Ink size={16} weight="extraBold">{traduire("Qu’est-ce que tu pratiques ?")}</Ink>
+          <Ink size={16} weight="extraBold">{traduire("Tu pratiques quoi ?")}</Ink>
           <Ink size={14} color={c.textSecondary}>{traduire("Choisis un ou plusieurs sports. Ils passeront en premier quand tu ajoutes une séance.")}</Ink>
         </Card>
       )}

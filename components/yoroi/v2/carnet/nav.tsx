@@ -15,6 +15,7 @@ import type { CarnetIllus } from './images';
 import { P, Press, CIcon, tap } from './ui';
 import { blancA } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 export type CarnetSection = 'records' | 'techniques' | 'videos' | 'combat';
 
@@ -152,14 +153,7 @@ export function CarnetEmpty({ illus, title, text, action, onAction, compact }: {
         {text}
       </Ink>
       {action && onAction ? (
-        <Press onPress={onAction} haptic="medium" accessibilityRole="button" accessibilityLabel={action} style={{ alignSelf: 'stretch', marginTop: 4 }}>
-          <View style={{ minHeight: 56, borderRadius: 18, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, paddingHorizontal: 16 }}>
-            <CIcon name="plus" size={20} color={P.onPrimary} width={2.6} />
-            <Ink size={16} weight="extraBold" color={P.onPrimary} numberOfLines={1} style={{ flexShrink: 1 }}>
-              {action}
-            </Ink>
-          </View>
-        </Press>
+        <BoutonPrincipal onPress={onAction} accessibilityLabel={action} label={action} tailleTexte={16} lignes={1} style={{ alignSelf: 'stretch', marginTop: 4 }} icone={(col) => <CIcon name="plus" size={20} color={col} width={2.6} />} />
       ) : null}
     </View>
   );

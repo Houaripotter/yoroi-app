@@ -102,7 +102,7 @@ export type NewMetricKey =
   | 'vitamine-k';
 
 const NUTRITION_APPS = traduire('Apps de nutrition (MyFitnessPal, Yazio, Cronometer, Samsung Health)');
-const ALERT_READ = traduire("Une alerte de ta montre n'est pas un diagnostic. Si elles se répètent ou si tu te sens mal, parles-en à un médecin.");
+const ALERT_READ = traduire("Une alerte de ta montre n'est pas un diagnostic. Si elles se répètent ou si tu te sens mal, demande l’avis d’un médecin.");
 
 type NutrientArgs = { key: NewMetricKey; label: string; unit: string; what: string; digits?: number; androidOnly?: boolean; iosOnly?: boolean; upIsGood?: boolean | null; norm?: MetricDef['norm']; howToRead?: string };
 
@@ -410,7 +410,7 @@ export const MORE_METRICS: MetricDef[] = [
     ext: true,
     iosOnly: true,
     what: traduire("La note d'effort de 1 à 10 que ta montre propose à la fin de la séance, selon ton cœur et ton allure."),
-    howToRead: traduire('Compare-la à ton ressenti : un écart régulier peut signaler de la fatigue.'),
+    howToRead: traduire('Compare cette valeur à ton ressenti : un écart régulier peut signaler de la fatigue.'),
     devices: traduire('Apple Watch (watchOS 11 et plus récent)'),
   },
   // ============ MOBILITÉ ============
@@ -498,7 +498,7 @@ export const MORE_METRICS: MetricDef[] = [
     ext: true,
     iosOnly: true,
     what: traduire('La vitesse à laquelle tu montes un escalier, mesurée par la hauteur gagnée.'),
-    howToRead: traduire('Elle reflète la force de tes jambes. Compare-toi à toi-même.'),
+    howToRead: traduire('Elle reflète la force de tes jambes. Compare tes valeurs entre elles.'),
     devices: traduire('iPhone (en poche ou à la ceinture)'),
   },
   {
@@ -512,7 +512,7 @@ export const MORE_METRICS: MetricDef[] = [
     ext: true,
     iosOnly: true,
     what: traduire('La vitesse à laquelle tu descends un escalier.'),
-    howToRead: traduire('Elle reflète ton contrôle et ton équilibre. Compare-toi à toi-même.'),
+    howToRead: traduire('Elle reflète ton contrôle et ton équilibre. Compare tes valeurs entre elles.'),
     devices: traduire('iPhone (en poche ou à la ceinture)'),
   },
   {
@@ -571,7 +571,7 @@ export const MORE_METRICS: MetricDef[] = [
     ext: true,
     iosOnly: true,
     event: true,
-    what: traduire('Les moments où ta montre a vu ton cœur rester au-dessus de ton seuil pendant au moins 10 minutes, alors que tu semblais au repos.'),
+    what: traduire('Les moments où ta montre a vu ton cœur rester plus haut que ton seuil pendant au moins 10 minutes, alors que tu semblais au repos.'),
     howToRead: ALERT_READ,
     devices: 'Apple Watch',
   },
@@ -689,7 +689,7 @@ export const MORE_METRICS: MetricDef[] = [
     ext: true,
     iosOnly: true,
     what: traduire("La vitesse maximale de ton souffle, mesurée avec un débitmètre de pointe."),
-    howToRead: traduire("Utile pour suivre un asthme : compare-le à ta meilleure valeur personnelle."),
+    howToRead: traduire("Utile pour suivre un asthme : compare cette valeur à ta meilleure valeur personnelle."),
     devices: traduire('Débitmètres de pointe connectés'),
   },
   // ============ SOMMEIL ============
@@ -705,7 +705,7 @@ export const MORE_METRICS: MetricDef[] = [
     iosOnly: true,
     event: true,
     what: traduire("Les notifications de ta montre quand ta respiration a été souvent perturbée la nuit pendant 30 jours."),
-    howToRead: traduire("Seul un médecin peut diagnostiquer une apnée du sommeil. Elle pèse lourd sur la récupération : parles-en si l'alerte arrive."),
+    howToRead: traduire("Seul un médecin peut diagnostiquer une apnée du sommeil. Elle pèse lourd sur la récupération : demande son avis si l'alerte arrive."),
     devices: traduire('Apple Watch Series 9, Ultra 2 et plus récentes'),
   },
   // ============ RÉCUPÉRATION ============
@@ -783,7 +783,7 @@ export const MORE_METRICS: MetricDef[] = [
     iosOnly: true,
     event: true,
     what: traduire('Les avertissements de ta montre quand le bruit autour de toi est resté trop fort.'),
-    howToRead: traduire('Éloigne-toi de la source ou porte des protections.'),
+    howToRead: traduire('Prends de la distance avec la source ou porte des protections.'),
     devices: traduire('Apple Watch Series 4 et plus récentes'),
   },
   {
@@ -858,7 +858,7 @@ export const MORE_METRICS: MetricDef[] = [
   }),
   nutrient({ key: 'sucres', label: traduire('Sucres'), unit: 'g', what: traduire('Les sucres mangés dans la journée, ceux des fruits compris.'), upIsGood: false }),
   nutrient({ key: 'graisses-saturees', label: traduire('Graisses saturées'), unit: 'g', what: traduire('Les graisses saturées de la journée : beurre, fromage, charcuterie, viandes grasses.'), upIsGood: false }),
-  nutrient({ key: 'graisses-mono', label: traduire('Graisses mono-insaturées'), unit: 'g', what: traduire("Les graisses mono-insaturées de la journée : huile d'olive, avocat, amandes.") }),
+  nutrient({ key: 'graisses-mono', label: traduire('Graisses mono insaturées'), unit: 'g', what: traduire("Les graisses mono insaturées de la journée : huile d'olive, avocat, amandes.") }),
   nutrient({ key: 'graisses-poly', label: traduire('Graisses polyinsaturées'), unit: 'g', what: traduire('Les graisses polyinsaturées de la journée : poissons gras, noix, huiles de colza et de lin.') }),
   nutrient({ key: 'cholesterol', label: traduire('Cholestérol'), unit: 'mg', what: traduire('Le cholestérol apporté par ce que tu as mangé : œufs, abats, produits animaux.') }),
   nutrient({

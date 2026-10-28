@@ -256,14 +256,14 @@ export const VALIDATION_RULES: Record<string, ValidationRule> = {
     min: 15,
     max: 50,
     required: false,
-    errorMessage: traduire('Avant-bras gauche entre 15 et 50 cm')
+    errorMessage: traduire('Avant bras gauche entre 15 et 50 cm')
   },
   right_forearm: {
     type: 'number',
     min: 15,
     max: 50,
     required: false,
-    errorMessage: traduire('Avant-bras droit entre 15 et 50 cm')
+    errorMessage: traduire('Avant bras droit entre 15 et 50 cm')
   },
   navel: {
     type: 'number',

@@ -394,7 +394,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
       </View>
 
       <FormSheet visible={noteOpen} onClose={() => setNoteOpen(false)} title={traduire("Note sur {0}", p.name)} sub={traduire("Tape ou dicte avec le micro du clavier, pendant que c'est frais.")}>
-        <Field value={noteDraft} onChangeText={setNoteDraft} multiline autoFocus placeholder={traduire("Qu'est-ce qui s'est passé contre {0} aujourd'hui ?", p.name)} />
+        <Field value={noteDraft} onChangeText={setNoteDraft} multiline autoFocus placeholder={traduire("Qu'est ce qui s'est passé contre {0} aujourd'hui ?", p.name)} />
         <BigButton
           label={traduire("Enregistrer la note")}
           onPress={() => {

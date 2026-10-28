@@ -447,7 +447,7 @@ export const getSleepAdvice = (debtHours: number): { message: string; severity: 
     };
   } else if (debtHours <= 5) {
     return {
-      message: traduire("Tu as {0}h de dette. Couche-toi plus tôt ce soir.", debtHours),
+      message: traduire("Tu as {0}h de dette. Va au lit plus tôt ce soir.", debtHours),
       severity: 'warning',
     };
   } else if (debtHours <= 10) {
@@ -498,7 +498,7 @@ export const generateSleepShareText = async (): Promise<string> => {
     const stats = await getSleepStats();
     const goal = await getSleepGoal();
 
-    let text = traduire('Mes Stats Sommeil - YOROI\n\n');
+    let text = traduire('Mes Stats Sommeil, YOROI\n\n');
 
     if (stats.currentStreak > 0) {
       text += traduirePluriel(stats.currentStreak, stats.currentStreak > 1, "Streak actuel : {0} jour\n", "Streak actuel : {0} jours\n", stats.currentStreak);

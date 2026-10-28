@@ -34,7 +34,7 @@ export const RANKS: Rank[] = [
   {
     id: 'bushi',
     name: 'Bushi',
-    nameFemale: 'Onna-Bugeisha',
+    nameFemale: 'Onna Bugeisha',
     nameJp: '武士 (Bushi)',
     icon: 'shield',
     minPoints: 500,
@@ -46,7 +46,7 @@ export const RANKS: Rank[] = [
   {
     id: 'samurai',
     name: 'Samourai',
-    nameFemale: 'Onna-Musha',
+    nameFemale: 'Onna Musha',
     nameJp: '侍 (Samurai)',
     icon: 'sword',
     minPoints: 2000,
@@ -70,7 +70,7 @@ export const RANKS: Rank[] = [
   {
     id: 'shogun',
     name: 'Shogun',
-    nameFemale: 'Onna-Shogun',
+    nameFemale: 'Onna Shogun',
     nameJp: '将軍 (Shogun)',
     icon: 'crown',
     minPoints: 10000,

@@ -41,6 +41,7 @@ import { libelleHeureRappel } from '@/lib/v2/programmes/rappel';
 import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, joursDuProgramme, prochainJour, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 /** Les séances toutes faites, chacune dans sa teinte */
 const TEINTE_RACCOURCI: Record<string, 'bleu' | 'lilas' | 'creme' | 'menthe' | 'peche'> = { haut: 'bleu', bas: 'peche', fessiers_abdos: 'lilas', entier: 'menthe', grip: 'creme' };
@@ -222,9 +223,7 @@ export default function CoachScreen() {
                 <Ink size={17} weight="black" tight color={pa.texte}>{traduire(zoneParId(muscle)?.nom ?? muscle)}</Ink>
                 <Ink size={13} weight="bold" color={pa.texte2}>{traduirePluriel(zoneParId(muscle)?.exos.length ?? 0, (zoneParId(muscle)?.exos.length ?? 0) > 1, '{0} exercice', '{0} exercices', zoneParId(muscle)?.exos.length ?? 0)}</Ink>
               </View>
-              <Pressable onPress={() => { tap(); router.push({ pathname: '/programmes/zones' as any, params: { zone: muscle } }); }} accessibilityRole="button" style={({ pressed }) => [{ minHeight: 44, paddingHorizontal: 16, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? pa.boutonAppui : pa.bouton }, ombrePastel(pa.ombre)]}>
-                <Ink size={14} weight="black" color={pa.surBouton}>{traduire('Voir la séance')}</Ink>
-              </Pressable>
+              <BoutonPrincipal onPress={() => { tap(); router.push({ pathname: '/programmes/zones' as any, params: { zone: muscle } }); }} haptique="none" label={traduire('Voir la séance')} hauteur={44} rayon={22} tailleTexte={14} compact lignes={1} />
             </Animated.View>
           ) : (
             <Ink size={13} weight="bold" color={pa.texte2} style={{ textAlign: 'center' }}>{traduire('Touche un muscle pour voir sa séance')}</Ink>

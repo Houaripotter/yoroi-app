@@ -86,8 +86,8 @@ export const INITIAL_DATA: { front: BodyZone[]; back: BodyZone[] } = {
     { id: 'elbow_r', label: traduire('Coude D'), x: 32, y: 36, w: 11, h: 6, injuries: ['Tennis elbow', 'Golf elbow', 'Bursite', 'Hygroma'] },
     
     // === AVANT-BRAS ===
-    { id: 'forearm_l', label: traduire('Avant-bras G'), x: 71, y: 42, w: 11, h: 8, injuries: ['Tendinite', 'Contracture', 'Fracture'] },
-    { id: 'forearm_r', label: traduire('Avant-bras D'), x: 32, y: 41, w: 8, h: 10, injuries: ['Tendinite', 'Contracture', 'Fracture'] },
+    { id: 'forearm_l', label: traduire('Avant bras G'), x: 71, y: 42, w: 11, h: 8, injuries: ['Tendinite', 'Contracture', 'Fracture'] },
+    { id: 'forearm_r', label: traduire('Avant bras D'), x: 32, y: 41, w: 8, h: 10, injuries: ['Tendinite', 'Contracture', 'Fracture'] },
     
     // === POIGNETS ===
     { id: 'wrist_l', label: traduire('Poignet G'), x: 75, y: 48, w: 9, h: 4, injuries: ['Entorse', traduire('Fracture scaphoïde'), 'Tendinite', 'Kyste synovial'] },
@@ -148,8 +148,8 @@ export const INITIAL_DATA: { front: BodyZone[]; back: BodyZone[] } = {
     // === TRAPÈZES & ÉPAULES ===
     { id: 'trap_l', label: traduire('Trapèze G'), x: 58, y: 18, w: 10, h: 5, injuries: ['Contracture', 'Tension', 'Point trigger'] },
     { id: 'trap_r', label: traduire('Trapèze D'), x: 43, y: 18, w: 10, h: 4, injuries: ['Contracture', 'Tension', 'Point trigger'] },
-    { id: 'shoulder_back_l', label: traduire('Épaule G (arr)'), x: 66, y: 22, w: 12, h: 8, injuries: [traduire('Tendinite infra-épineux'), 'Bursite', 'SLAP'] },
-    { id: 'shoulder_back_r', label: traduire('Épaule D (arr)'), x: 37, y: 22, w: 12, h: 8, injuries: [traduire('Tendinite infra-épineux'), 'Bursite', 'SLAP'] },
+    { id: 'shoulder_back_l', label: traduire('Épaule G (arr)'), x: 66, y: 22, w: 12, h: 8, injuries: [traduire('Tendinite infra épineux'), 'Bursite', 'SLAP'] },
+    { id: 'shoulder_back_r', label: traduire('Épaule D (arr)'), x: 37, y: 22, w: 12, h: 8, injuries: [traduire('Tendinite infra épineux'), 'Bursite', 'SLAP'] },
     
     // === DOS HAUT ===
     { id: 'rhomboid_l', label: traduire('Rhomboïde G'), x: 57, y: 21, w: 16, h: 10, injuries: ['Contracture', traduire('Élongation'), 'Point douloureux'] },

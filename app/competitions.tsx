@@ -162,7 +162,7 @@ export default function CompetitionsScreen() {
           </View>
           <View style={{ position: 'absolute', left: 16, bottom: 14, maxWidth: '60%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, backgroundColor: blancA(0.86), borderWidth: 1, borderColor: P.white }}>
             <Ink size={28} weight="black" tight accessibilityRole="header" numberOfLines={1}>{traduire("Compétitions")}</Ink>
-            <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Tes rendez-vous sur le tapis")}</Ink>
+            <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Tes compétitions à venir")}</Ink>
           </View>
         </ImageBackground>
 
@@ -186,7 +186,7 @@ export default function CompetitionsScreen() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: gap <= 0 ? c.successTint : c.dangerTint }}>
                     <Icon name="scale" size={16} color={gap <= 0 ? c.successText : c.danger} />
                     <Ink size={13} weight="extraBold" color={gap <= 0 ? c.successText : c.danger} style={{ flexShrink: 1 }}>
-                      {gap <= 0 ? traduire("Dans ta catégorie, {0} kg de marge", formatKg(-gap)) : traduire("{0} kg au-dessus de ta catégorie", formatKg(gap))}
+                      {gap <= 0 ? traduire("Dans ta catégorie, {0} kg de marge", formatKg(-gap)) : traduire("{0} kg de plus que ta catégorie", formatKg(gap))}
                     </Ink>
                   </View>
                 ) : null}

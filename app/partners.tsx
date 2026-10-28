@@ -185,7 +185,7 @@ export default function PartnersScreen() {
                   {selected.phone ? <ContactTile icon="phone" label={traduire("Appeler")} tone={P.mossText} onPress={() => openPhone(selected.phone!)} /> : null}
                   {selected.instagram && !Array.isArray(selected.instagram) ? <ContactTile icon="share" label={traduire("Instagram")} tone={P.accent} onPress={() => openInstagram(selected.instagram as string)} /> : null}
                   {selected.website ? <ContactTile icon="globe" label={traduire("Site web")} tone={P.indigo} onPress={() => safeOpenURL(selected.website!)} /> : null}
-                  {selected.email ? <ContactTile icon="mail" label="E-mail" tone={P.goldDark} onPress={() => openEmail(selected.email)} /> : null}
+                  {selected.email ? <ContactTile icon="mail" label="Email" tone={P.goldDark} onPress={() => openEmail(selected.email)} /> : null}
                   {selected.facebook ? <ContactTile icon="users" label={traduire("Facebook")} tone={P.water} onPress={() => openFacebook(selected.facebook!)} /> : null}
                   {isCoach(selected) && selected.youtube ? <ContactTile icon="play" label={traduire("YouTube")} tone={P.accentDark} onPress={() => openYoutube(selected.youtube!)} /> : null}
                 </View>

@@ -40,6 +40,7 @@ import { RANKS } from '@/lib/v2/armure';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
 import { traduire, LOCALE } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 export default function Pack() {
   const { theme } = useYoroiTheme();
@@ -191,27 +192,19 @@ export default function Pack() {
 
       <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 14 }}>
         {has ? (
-          <Pressable
-            onPress={equip}
-            disabled={equipped}
-            accessibilityRole="button"
-            style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, backgroundColor: equipped ? c.fillSubtle : pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}
-          >
-            <Ink size={16} weight="extraBold" color={equipped ? c.textSecondary : c.onPrimary}>{equipped ? traduire('Équipé') : traduire('Équiper ce personnage')}</Ink>
-          </Pressable>
+          <BoutonPrincipal onPress={equip} disabled={equipped} label={equipped ? traduire('Équipé') : traduire('Équiper ce personnage')} tailleTexte={16} />
         ) : (
-          <Pressable
+          <BoutonPrincipal
             onPress={() => {
               tap();
               ouvrirPaywall('personnages');
             }}
-            accessibilityRole="button"
+            haptique="none"
             accessibilityLabel={monde ? traduire("Débloquer avec Premium, ou atteins le rang {0}", unlockRankName(pack)) : traduire('Débloquer avec Premium')}
-            style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10 })}
-          >
-            <LockIcon size={18} color={c.onPrimary} />
-            <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Débloquer avec Premium")}</Ink>
-          </Pressable>
+            label={traduire("Débloquer avec Premium")}
+            tailleTexte={16}
+            icone={(col) => <LockIcon size={18} color={col} />}
+          />
         )}
       </View>
     </View>

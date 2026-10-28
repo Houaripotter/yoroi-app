@@ -220,12 +220,12 @@ const BRIEFING_MOTIVATIONS = [
   traduire('La régularité fait la différence.'),
   traduire('Ta séance du jour t’attend.'),
   traduire('Tu construis ta forme jour après jour.'),
-  traduire('Fais simple aujourd’hui, mais fais-le.'),
+  traduire('Fais simple aujourd’hui, mais fais ta séance.'),
 ];
 
 // Messages pour rappels intelligents (UNIVERSELS)
 const SMART_MISSED_TRAINING_MESSAGES = [
-  { title: 'C’est {day}', body: traduire('D’habitude tu t’entraînes ce jour-là. Une séance aujourd’hui ?') },
+  { title: 'C’est {day}', body: traduire('D’habitude tu t’entraînes ce jour. Une séance aujourd’hui ?') },
   { title: traduire('Ton jour d’entraînement'), body: traduire('Tu t’entraînes souvent le {day}. Toujours partant ?') },
   { title: traduire('Une séance ce {day} ?'), body: traduire('C’est souvent ton jour. Même une séance courte compte.') },
 ];

@@ -24,9 +24,9 @@ import { traduire, traduirePluriel, DECIMAL, LOCALE } from '@/lib/i18n/tr';
 const SUBMISSION_NAME_MAP: Record<string, string> = {
   rnc: 'RNC', bowarrow: 'Bow and Arrow', bodytri: 'Body Triangle', reartri: traduire('Triangle arrière'),
   crucifix: 'Crucifix', triangle: 'Triangle', triangleinv: traduire('Triangle inversé'), montedtri: traduire('Triangle monté'),
-  guillotine: 'Guillotine', guillarmin: 'Arm-in Guillotine', marcelo: 'Guillotine haute',
+  guillotine: 'Guillotine', guillarmin: 'Arm in Guillotine', marcelo: 'Guillotine haute',
   hipbumpguil: 'Hip Bump Guillotine', darce: "D'Arce", anaconda: traduire('Anaconda'), armtri: 'Arm Triangle',
-  northsouth: 'Nord-Sud', ezekiel: traduire('Ezekiel'), buggy: 'Buggy Choke', loop: 'Loop Choke',
+  northsouth: 'Nord Sud', ezekiel: traduire('Ezekiel'), buggy: 'Buggy Choke', loop: 'Loop Choke',
   baseball: 'Baseball Bat', papercutter: 'Paper Cutter', brabo: 'Brabo', clockchoke: 'Clock Choke',
   vonflue: 'Von Flue', peruvian: 'Peruvian Necktie', gogoplata: 'Gogoplata', twister: 'Twister',
   lapelchoke: 'Lapel Choke', daratine: 'Daratine', katahajime: 'Kata Ha Jime',

@@ -9,6 +9,7 @@ import { fontStyle } from '@/components/yoroi/fonts';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Sheet } from '@/components/yoroi/v2/seance/Sheet';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 /** Des idées de noms, touchables, pour ne pas chercher */
 const IDEES = ['Push', 'Pull', 'Jambes', 'Haut du corps', 'Bas du corps', 'Full body'];
@@ -63,15 +64,7 @@ export function NomSeanceSheet({
           </Pressable>
         ))}
       </View>
-      <Pressable
-        onPress={() => ok && onValider(nom.trim())}
-        disabled={!ok}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: !ok }}
-        style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: !ok ? c.fillSoft : pressed ? c.primaryPressed : c.primary })}
-      >
-        <Ink size={16} weight="extraBold" color={ok ? c.onPrimary : c.textMuted}>{action}</Ink>
-      </Pressable>
+      <BoutonPrincipal onPress={() => onValider(nom.trim())} disabled={!ok} label={action} tailleTexte={16} />
     </Sheet>
   );
 }

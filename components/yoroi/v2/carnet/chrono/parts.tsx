@@ -12,6 +12,7 @@ import { useAccent } from '@/components/yoroi/v2/accueil/kit';
 import { RPE_CHOICES } from '@/lib/v2/carnet/chrono';
 import { blancA, paletteSombre } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { HabillageBoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 /** Reglage plus et moins, appui long pour aller vite. Une phase par ligne, pastille de sa couleur. */
 export function SettingRow({ label, value, onMinus, onPlus, hint, accent = P.ink, dot }: { label: string; value: string; onMinus: () => void; onPlus: () => void; hint?: string; accent?: string; dot?: string }) {
@@ -138,9 +139,9 @@ export function ControlBar({ running, onToggle, onStop, onSkip, onReset, color: 
       {side('stop', traduire('Arrêter'), onStop)}
       <View style={{ alignItems: 'center', gap: 6 }}>
         <Press onPress={onToggle} haptic="medium" accessibilityRole="button" accessibilityLabel={running ? traduire('Pause') : traduire('Reprendre')}>
-          <View style={{ width: 92, height: 92, borderRadius: 32, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center', shadowColor: '#1B2A44', shadowOpacity: 0.1, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}>
-            <CIcon name={running ? 'pause' : 'play'} size={36} color={P.onPrimary} />
-          </View>
+          <HabillageBoutonPrincipal rayon={32} style={{ width: 92, height: 92, alignItems: 'center', justifyContent: 'center' }}>
+            {(col) => <CIcon name={running ? 'pause' : 'play'} size={36} color={col} />}
+          </HabillageBoutonPrincipal>
         </Press>
         <Ink size={14} weight="black" color={P.ink}>{running ? traduire('Pause') : traduire('Reprendre')}</Ink>
       </View>

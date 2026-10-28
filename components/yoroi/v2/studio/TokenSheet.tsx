@@ -74,12 +74,12 @@ export function TokenSheet({ visible, onClose, onUnlocked }: { visible: boolean;
     try {
       const text = await Clipboard.getStringAsync();
       if (!text) {
-        setMessage(traduire('Le presse-papiers est vide. Copie d’abord ton jeton.'));
+        setMessage(traduire('Rien n’est copié. Copie d’abord ton jeton.'));
         return;
       }
       await submit(text, true);
     } catch {
-      setMessage(traduire('Le presse-papiers est illisible. Colle le jeton dans le champ.'));
+      setMessage(traduire('Ce que tu as copié est illisible. Colle le jeton dans le champ.'));
     }
   };
 

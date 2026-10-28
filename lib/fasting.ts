@@ -240,7 +240,7 @@ export const FASTING_MODES: FastingMode[] = [
     category: 'advanced',
     fastingHours: 24,
     eatingHours: 0,
-    description: traduire('Jeune de 24h, 1-2 fois par semaine.'),
+    description: traduire('Jeune de 24h, 1 à 2 fois par semaine.'),
     special: 'weekly',
   },
   {

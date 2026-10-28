@@ -279,7 +279,7 @@ export default function TransformationScreen() {
             <Ink size={15} weight="extraBold">{traduire("Ces deux photos sont du même jour")}</Ink>
             <Ink size={13} color={c.textSecondary}>
               {asc.length > 2 && daysDiff(asc[0].date.slice(0, 10), asc[asc.length - 1].date.slice(0, 10)) > 0
-                ? traduire('Choisis une photo plus ancienne dans le bandeau ci-dessous pour voir ton chemin.')
+                ? traduire('Choisis une photo plus ancienne dans le bandeau plus bas pour voir ton chemin.')
                 : traduire('Reprends une photo dans 3 ou 4 semaines, même lumière et même cadrage : c’est là que la différence se verra.')}
             </Ink>
           </View>

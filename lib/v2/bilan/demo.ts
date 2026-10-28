@@ -55,8 +55,8 @@ export function demoBilanCorps(origine: 'pesee' | 'mensurations' | 'composition'
 
 export function demoBilanSeance(): BilanSeance {
   return bilanSeance({
-    seance: { id: 1, date: JOUR, sport: 'jjb', nomSport: 'Jiu-jitsu brésilien', dureeMin: 95, intensite: 8, fcMoy: 142, fcMax: 178, calories: 820, rounds: 8, zones: [300, 900, 1500, 1800, 600] },
-    precedente: { id: 0, date: '2026-10-13', sport: 'jjb', nomSport: 'Jiu-jitsu brésilien', dureeMin: 80, intensite: 7, fcMoy: 138, rounds: 6 },
+    seance: { id: 1, date: JOUR, sport: 'jjb', nomSport: 'Jiu jitsu brésilien', dureeMin: 95, intensite: 8, fcMoy: 142, fcMax: 178, calories: 820, rounds: 8, zones: [300, 900, 1500, 1800, 600] },
+    precedente: { id: 0, date: '2026-10-13', sport: 'jjb', nomSport: 'Jiu jitsu brésilien', dureeMin: 80, intensite: 7, fcMoy: 138, rounds: 6 },
     compteurs: { jour: 1, semaine: 3, mois: 12, annee: 178, total: 412 },
     objectifSemaine: 4,
     annee: { fait: 178, total: 208, ecart: 15 },

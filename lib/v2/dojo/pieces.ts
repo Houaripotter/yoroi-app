@@ -24,7 +24,7 @@ export type PieceArmure = {
 
 export const PIECES: Record<PieceId, PieceArmure> = {
   bushi: { id: 'bushi', nom: traduire('Le plastron'), etapes: [traduire('les plaques de la jupe'), traduire('le plastron laqué'), traduire('les épaulières et le blason')], image: require('@/assets/avatars/app/armure/bushi.webp'), ratio: 336 / 480 },
-  samourai: { id: 'samourai', nom: traduire('Le casque'), etapes: [traduire('le couvre-nuque'), traduire('la bombe du casque'), traduire('le cimier doré')], image: require('@/assets/avatars/app/armure/samourai.webp'), ratio: 490 / 480 },
+  samourai: { id: 'samourai', nom: traduire('Le casque'), etapes: [traduire('le couvre nuque'), traduire('la bombe du casque'), traduire('le cimier doré')], image: require('@/assets/avatars/app/armure/samourai.webp'), ratio: 490 / 480 },
   ronin: { id: 'ronin', nom: traduire('Le chapeau et la cape'), etapes: [traduire('la cape pliée'), traduire('le bord du chapeau'), traduire('la pointe du chapeau')], image: require('@/assets/avatars/app/armure/ronin.webp'), ratio: 476 / 480 },
   shogun: { id: 'shogun', nom: 'L’armure d’apparat', etapes: [traduire('le socle et la jupe'), traduire('le plastron et les épaules'), traduire('le casque et son cimier')], image: require('@/assets/avatars/app/armure/shogun.webp'), ratio: 284 / 480 },
   dan: { id: 'dan', nom: traduire('L’éventail de commandement'), etapes: [traduire('le manche et les glands'), traduire('le corps de l’éventail'), traduire('le soleil d’or')], image: require('@/assets/avatars/app/armure/dan.webp'), ratio: 249 / 480 },
@@ -34,7 +34,7 @@ export const PIECES: Record<PieceId, PieceArmure> = {
 export const PIECES_CLASSIQUE: Record<PieceId, PieceArmure> = {
   bushi: { id: 'bushi', nom: traduire('La veste d’entraînement'), etapes: [traduire('le bas de la veste'), traduire('les manches'), traduire('le col et la fermeture')], image: require('@/assets/avatars/app/classique/tenue/veste.webp'), ratio: 441 / 480 },
   samourai: { id: 'samourai', nom: traduire('Les baskets de compétition'), etapes: [traduire('la semelle'), traduire('le corps de la chaussure'), traduire('les lacets')], image: require('@/assets/avatars/app/classique/tenue/baskets.webp'), ratio: 796 / 480 },
-  ronin: { id: 'ronin', nom: traduire('Le coupe-vent et le sac'), etapes: [traduire('le sac de sport'), traduire('le coupe-vent plié'), traduire('la casquette')], image: require('@/assets/avatars/app/classique/tenue/sac.webp'), ratio: 560 / 480 },
+  ronin: { id: 'ronin', nom: traduire('Le coupe vent et le sac'), etapes: [traduire('le sac de sport'), traduire('le coupe vent plié'), traduire('la casquette')], image: require('@/assets/avatars/app/classique/tenue/sac.webp'), ratio: 560 / 480 },
   shogun: { id: 'shogun', nom: traduire('La tenue de champion'), etapes: [traduire('le short'), traduire('le maillot'), traduire('les bandes dorées')], image: require('@/assets/avatars/app/classique/tenue/champion.webp'), ratio: 327 / 480 },
   dan: { id: 'dan', nom: traduire('La médaille d’or'), etapes: [traduire('le ruban'), traduire('le disque'), traduire('l’éclat doré')], image: require('@/assets/avatars/app/classique/tenue/medaille.webp'), ratio: 219 / 480 },
 };

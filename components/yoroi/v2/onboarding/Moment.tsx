@@ -215,7 +215,7 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
   const reste = freq != null && n < freq ? freq - n : 0;
   const ready = !!value && value !== 'inconnu' && n > 0;
   return (
-    <Shell {...nav} title={traduire("Ton **rendez-vous** avec la balance")} echelle={0.91} gap={12} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={!ready} />}>
+    <Shell {...nav} title={traduire("Ton **moment** avec la balance")} echelle={0.91} gap={12} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={!ready} />}>
       <Animated.View entering={FadeIn.duration(260)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 22, backgroundColor: ENCRES.sarcelle.fond, paddingVertical: 10, paddingHorizontal: 13 }}>
         <Tampon name="objectif_perdre" size={58} rotate={-8} ink={ENCRES.sarcelle.ink} animate accessibilityLabel={null} />
         <Riche
@@ -296,7 +296,7 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
       <Animated.View entering={FadeInDown.delay(240).duration(300)} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 11, borderRadius: 20, backgroundColor: c.accentTint, padding: 12 }}>
         <Image source={illustration('rappels')} style={{ width: 34, height: 34 }} resizeMode="contain" accessibilityIgnoresInvertColors />
         <Riche
-          text={traduire("**Un seul rappel doux**, environ 2{0}h après, seulement ces jours-là et si ta pesée manque. Tu peux tout changer dans Réglages, Rappels.", NB)}
+          text={traduire("**Un seul rappel doux**, environ 2{0}h après, seulement ces jours et si ta pesée manque. Tu peux tout changer dans Réglages, Rappels.", NB)}
           size={12.5}
           lineHeight={18}
           color={c.ink}

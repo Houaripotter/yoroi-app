@@ -386,7 +386,7 @@ export const METRICS: MetricDef[] = [
     ext: true,
     iosOnly: true,
     what: traduire('Ta fréquence cardiaque moyenne quand tu marches. Elle baisse quand ton cardio progresse.'),
-    howToRead: traduire('Compare-toi à toi-même sur plusieurs semaines : une baisse régulière montre un cœur plus efficace.'),
+    howToRead: traduire('Compare tes valeurs sur plusieurs semaines : une baisse régulière montre un cœur plus efficace.'),
     devices: 'Apple Watch',
   },
   {
@@ -452,7 +452,7 @@ export const METRICS: MetricDef[] = [
     upIsGood: true,
     store: 'hrv',
     what: traduire("L'écart entre deux battements change sans cesse. Quand ces écarts varient beaucoup, ton corps est reposé."),
-    howToRead: traduire("Pas de bonne valeur pour tout le monde : elle dépend de l'âge et de chacun. Compare-toi à toi-même. Une baisse nette sur plusieurs jours signale fatigue, stress ou maladie qui arrive."),
+    howToRead: traduire("Pas de bonne valeur pour tout le monde : elle dépend de l'âge et de chacun. Compare tes valeurs entre elles. Une baisse nette sur plusieurs jours signale fatigue, stress ou maladie qui arrive."),
     devices: 'Apple Watch, Oura (Android), Google Fitbit (Android)',
   },
   {
@@ -635,7 +635,7 @@ export const METRICS: MetricDef[] = [
     ext: true,
     androidOnly: true,
     what: traduire("La quantité d'eau dans ton corps, estimée par ta balance."),
-    howToRead: traduire("Elle varie avec ce que tu bois et transpires. Pèse-toi à la même heure pour comparer."),
+    howToRead: traduire("Elle varie avec ce que tu bois et transpires. Monte sur la balance à la même heure pour comparer."),
     devices: traduire('Balances connectées sur Health Connect'),
   },
   {
@@ -650,7 +650,7 @@ export const METRICS: MetricDef[] = [
     iosOnly: true,
     what: traduire('Le tour de ta taille, au niveau du nombril.'),
     norm: {
-      text: traduire('Le risque cardiovasculaire augmente au-delà de 94 cm chez l’homme et de 80 cm chez la femme.'),
+      text: traduire('Le risque cardiovasculaire augmente quand il dépasse 94 cm chez l’homme et 80 cm chez la femme.'),
       source: traduire('Organisation mondiale de la santé, 2008'),
     },
     devices: traduire('Saisie dans Santé, rubans connectés'),
@@ -715,7 +715,7 @@ export const METRICS: MetricDef[] = [
     upIsGood: null,
     ext: true,
     what: traduire('Ce que tu as mangé, noté dans une app de nutrition.'),
-    howToRead: traduire('Compare-les à tes calories actives et au repos pour voir si tu es en déficit ou en surplus.'),
+    howToRead: traduire('Compare ces valeurs à tes calories actives et au repos pour voir si tu es en déficit ou en surplus.'),
     devices: 'MyFitnessPal, Yazio, Samsung, Google Fitbit',
   },
   {

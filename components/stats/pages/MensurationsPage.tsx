@@ -21,6 +21,7 @@ import { getWaistCircumferenceRange, getMetricStatus } from '@/lib/healthRanges'
 import { getUserSettings } from '@/lib/storage';
 import { useScrollContext } from '@/lib/ScrollContext';
 import { logger } from '@/lib/security/logger';
+import { genreDesReglages, type GenreFormule } from '@/lib/genreCalcul';
 
 export const MensurationsPage: React.FC = () => {
   const { colors } = useTheme();
@@ -31,7 +32,7 @@ export const MensurationsPage: React.FC = () => {
   const [latestMeasurement, setLatestMeasurement] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [allMeasurementsData, setAllMeasurementsData] = useState<any[]>([]);
-  const [userGender, setUserGender] = useState<'male' | 'female'>('male');
+  const [userGender, setUserGender] = useState<GenreFormule>('male');
 
   // État pour le modal
   const [selectedMetric, setSelectedMetric] = useState<{
@@ -79,7 +80,7 @@ export const MensurationsPage: React.FC = () => {
       setLatestMeasurement(measurement);
 
       if (settings?.gender) {
-        setUserGender(settings.gender as 'male' | 'female');
+        setUserGender(genreDesReglages(settings) ?? 'male');
       }
 
       // Sauvegarder toutes les données pour le modal

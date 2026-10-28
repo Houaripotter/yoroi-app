@@ -74,7 +74,7 @@ export async function triggerDailyLoginBonus(currentPoints: number): Promise<num
     await AsyncStorage.setItem(KEY_LOGIN_BONUS_XP_TOTAL, total.toString());
 
     await saveNotification(
-      '+10 XP - Bonus de connexion',
+      '+10 XP, bonus de connexion',
       'Tu es la chaque jour. C\'est ca la discipline.',
       'gamification',
       { screen: 'gamification' }
@@ -266,7 +266,7 @@ export async function triggerWeekendBoostMessage(): Promise<void> {
     );
 
     await saveNotification(
-      'Boost weekend actif - x1.5 XP',
+      'Boost de fin de semaine actif, x1.5 XP',
       'Profite du weekend ! Tous tes XP sont multiplies par 1.5 aujourd\'hui.',
       'gamification',
       { screen: 'gamification' }

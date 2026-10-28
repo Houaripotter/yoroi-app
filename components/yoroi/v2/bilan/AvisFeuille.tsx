@@ -18,6 +18,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { ouvrirFicheStore } from '@/lib/appConfig';
 import { logger } from '@/lib/security/logger';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const LOGO = require('@/assets/logo d\'app/yoroi-logo2.png');
 const TAILLE_LOGO = 108;
@@ -160,17 +161,7 @@ export function AvisFeuille({ visible, onNoter, onPlusTard }: { visible: boolean
             {traduire(' suffisent. Merci à toi.')}
           </Ink>
 
-          <Pressable
-            onPress={onNoter}
-            accessibilityRole="button"
-            accessibilityLabel={bouton}
-            style={({ pressed }) => ({ alignSelf: 'stretch', marginTop: 22, height: 58, borderRadius: 20, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10, backgroundColor: pressed ? c.primaryPressed : c.primary })}
-          >
-            <Etoile fill={c.onAccent} stroke={c.onAccent} size={19} />
-            <Ink size={17} weight="extraBold" color={c.onPrimary}>
-              {bouton}
-            </Ink>
-          </Pressable>
+          <BoutonPrincipal onPress={onNoter} haptique="light" accessibilityLabel={bouton} label={bouton} hauteur={58} rayon={20} tailleTexte={17} style={{ alignSelf: 'stretch', marginTop: 22 }} icone={(col) => <Etoile fill={col} stroke={col} size={19} />} />
           <Pressable
             onPress={onPlusTard}
             accessibilityRole="button"

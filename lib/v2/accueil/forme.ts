@@ -62,7 +62,7 @@ export function levelFor(score: number): FormeLevel {
   const id = recupLevelId(score);
   if (id === 'top') return { id, label: traduire('Prêt à tout donner'), advice: traduire('Ton corps est frais. C’est le jour pour une séance intense.'), color: intensite(2).text };
   if (id === 'bien') return { id, label: traduire('En forme'), advice: traduire('Tu peux t’entraîner normalement.'), color: intensite(2).text };
-  if (id === 'moyen') return { id, label: traduire('Écoute ton corps'), advice: traduire('Entraîne-toi, mais garde une marge sur l’intensité.'), color: intensite(3).text };
+  if (id === 'moyen') return { id, label: traduire('Écoute ton corps'), advice: traduire('Séance possible, mais garde une marge sur l’intensité.'), color: intensite(3).text };
   if (id === 'bas') return { id, label: traduire('Récupère'), advice: traduire('Privilégie une séance légère, de la mobilité ou de la technique.'), color: intensite(4).text };
   return { id, label: traduire('Repos'), advice: traduire('Une vraie journée de repos te fera gagner du terrain.'), color: intensite(5).text };
 }

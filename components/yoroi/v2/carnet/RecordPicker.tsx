@@ -206,7 +206,7 @@ export function RecordPicker({ visible, onClose, busy, onPickTemplate, onCreateC
             })}
           </ScrollView>
           {cat === 'running' || cat === 'trail' ? (
-            <MiniChips items={['5km', '10km', 'Semi-Marathon', 'Marathon'].map((n) => ({ key: n, label: n.replace('km', ' km').replace('Semi-Marathon', 'Semi-marathon') }))} value={name} onChange={(k) => { setName(k); setUnit('time'); }} />
+            <MiniChips items={['5km', '10km', 'Semi Marathon', 'Marathon'].map((n) => ({ key: n, label: n.replace('km', ' km').replace('Semi Marathon', 'Semi marathon') }))} value={name} onChange={(k) => { setName(k); setUnit('time'); }} />
           ) : null}
           {cat === 'force' ? (
             <MiniChips items={['Squat', 'Développé Couché', 'Soulevé de Terre'].map((n) => ({ key: n, label: n.charAt(0) + n.slice(1).toLowerCase() }))} value={name} onChange={(k) => { setName(k); setUnit('kg'); }} />

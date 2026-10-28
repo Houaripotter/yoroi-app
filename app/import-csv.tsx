@@ -229,7 +229,7 @@ export default function ImportCSVScreen() {
                 ? traduire('Range le fichier dans iCloud Drive sur ton Mac, il apparaît dans Fichiers sur ton iPhone. AirDrop et mail marchent aussi.')
                 : traduire('Range le fichier dans Google Drive sur ton ordinateur, puis ouvre le fichier depuis Fichiers. WhatsApp et mail marchent aussi.')}
             </Ink>
-            <Ink size={12} color={P.ink2}>{traduire("Les fichiers des anciennes versions sont acceptés. Séparateurs virgule ou point-virgule, dates JJ/MM/AAAA ou AAAA-MM-JJ.")}</Ink>
+            <Ink size={12} color={P.ink2}>{traduire("Les fichiers des anciennes versions sont acceptés. Séparateurs virgule ou point virgule, dates JJ/MM/AAAA ou AAAA-MM-JJ.")}</Ink>
           </Card>
         </>
       ) : null}

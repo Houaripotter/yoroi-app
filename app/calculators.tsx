@@ -160,7 +160,7 @@ export default function CalculatorsScreen() {
           >
             {ideal && w > 0 ? (
               <Ink size={13} weight="extraBold" color={w > ideal.max ? P.goldDark : w < ideal.min ? P.indigo : P.mossText}>
-                {w > ideal.max ? traduire("{0} kg au-dessus de la fourchette", fmt(w - ideal.max)) : w < ideal.min ? traduire("{0} kg en dessous de la fourchette", fmt(ideal.min - w)) : traduire('Tu es dans la fourchette')}
+                {w > ideal.max ? traduire("{0} kg de plus que la fourchette", fmt(w - ideal.max)) : w < ideal.min ? traduire("{0} kg en dessous de la fourchette", fmt(ideal.min - w)) : traduire('Tu es dans la fourchette')}
               </Ink>
             ) : null}
           </CalcCard>
@@ -242,7 +242,7 @@ export default function CalculatorsScreen() {
                 {traduire("{0} fois ton poids de corps", fmt(level.ratio, 2))}
               </Ink>
             ) : null}
-            {reps > 10 ? <Notice tone="gold" text={traduire("Au-delà de 10 répétitions, l’estimation devient moins fiable.")} /> : null}
+            {reps > 10 ? <Notice tone="gold" text={traduire("Après 10 répétitions, l’estimation devient moins fiable.")} /> : null}
           </CalcCard>
         </Enter>
         <Enter i={12}>
@@ -270,7 +270,7 @@ export default function CalculatorsScreen() {
             <Formula lines={[traduire('Homme : 1,20 × IMC + 0,23 × âge − 10,8 − 5,4'), traduire('Femme : 1,20 × IMC + 0,23 × âge − 5,4')]} />
             <Card style={{ paddingVertical: 6 }}>
               <Ink size={13} weight="extraBold" color={P.ink2} style={{ paddingTop: 8 }}>
-                {gender === 'male' ? traduire("Plages de référence, homme") : traduire("Plages de référence, femme")}
+                {gender === 'male' ? traduire("Plages de référence, homme") : gender === 'neutral' ? traduire('Plages de référence neutres, moyenne homme et femme') : traduire("Plages de référence, femme")}
               </Ink>
               {IMG_RANGES[gender].map((r, i) => (
                 <KV key={r.range} label={traduire(r.label)} value={r.range} last={i === IMG_RANGES[gender].length - 1} />
@@ -323,7 +323,7 @@ export default function CalculatorsScreen() {
                 <KV key={k} label={traduire(MACROS_BY_GOAL[k].label)} value={`P ${MACROS_BY_GOAL[k].protein} %, G ${MACROS_BY_GOAL[k].carbs} %, L ${MACROS_BY_GOAL[k].fat} %`} strong={k === goal} last={i === arr.length - 1} />
               ))}
             </Card>
-            <Notice tone="indigo" text={traduire("Ces pourcentages sont un repère courant, pas une recommandation officielle. Pour les protéines, vise plutôt 1,4 à 2 g par kilo et par jour, selon la source ci-dessous.")} />
+            <Notice tone="indigo" text={traduire("Ces pourcentages sont un repère courant, pas une recommandation officielle. Pour les protéines, vise plutôt 1,4 à 2 g par kilo et par jour, selon la source plus bas.")} />
             <SourceRow source={SOURCES.mifflin} />
             <SourceRow source={SOURCES.protein} />
           </>
@@ -337,7 +337,7 @@ export default function CalculatorsScreen() {
                 <KV label={traduire("Avec ton exercice")} value={`${fmt(vWater.withExercise)} L`} strong last />
               </Card>
             ) : null}
-            <Notice tone="indigo" text={traduire("Repère simple et courant, pas une recommandation officielle. Adapte ce repère à ta transpiration et à la chaleur. Pendant l’effort, évite de perdre plus de 2 % de ton poids, selon la source ci-dessous.")} />
+            <Notice tone="indigo" text={traduire("Repère simple et courant, pas une recommandation officielle. Adapte ce repère à ta transpiration et à la chaleur. Pendant l’effort, évite de perdre plus de 2 % de ton poids, selon la source plus bas.")} />
             <SourceRow source={SOURCES.hydration} />
           </>
         ) : null}

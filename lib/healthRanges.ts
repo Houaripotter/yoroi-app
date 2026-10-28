@@ -59,21 +59,21 @@ export const BODY_FAT_RANGES_MALE: MetricRangeWithTranslation = {
   explanation: traduire(`Le pourcentage de masse grasse mesure la proportion de graisse par rapport au poids total.
 
 CLASSIFICATION (Gallagher et al. 2000, n=1626 sujets):
-- 3-13% : Athlete - Niveau competition
-- 14-17% : Forme - Excellente condition
-- 18-24% : Moyen - Population generale en bonne santé
-- 25%+ : Eleve - Risques metaboliques accrus
+• 3 à 13% : Athlete, niveau competition
+• 14 à 17% : Forme, excellente condition
+• 18 à 24% : Moyen, population generale en bonne santé
+• 25%+ : Eleve, risques metaboliques accrus
 
 PREUVES SCIENTIFIQUES:
-- >25% chez l'homme = risque diabete type 2 x2.5 (Prospective Studies Collaboration, Lancet 2009)
-- <5% chronique = dysfonction hormonale, immunite affaiblie
+• >25% chez l'homme = risque diabete type 2 x2.5 (Prospective Studies Collaboration, Lancet 2009)
+• <5% chronique = dysfonction hormonale, immunite affaiblie
 
 PRECISION DES MESURES:
-- Impedancemetrie: +/-3-5% d'erreur (Kyle et al. 2004)
-- DEXA: +/-1-2% (reference clinique)
+• Impedancemetrie: plus ou moins 3 à 5% d'erreur (Kyle et al. 2004)
+• DEXA: plus ou moins 1 à 2% (reference clinique)
 
 CONSEIL:
-Suis la TENDANCE sur 4-8 semaines plutot que les variations quotidiennes.`),
+Suis la TENDANCE sur 4 à 8 semaines plutot que les variations quotidiennes.`),
   zones: [
     { label: 'athlete', start: 3, end: 13, color: '#22C55E', status: 'optimal' },
     { label: 'fit', start: 14, end: 17, color: '#EAB308', status: 'good' },
@@ -93,20 +93,20 @@ export const BODY_FAT_RANGES_FEMALE: MetricRangeWithTranslation = {
   explanation: traduire(`Le pourcentage de masse grasse mesure la proportion de graisse par rapport au poids total.
 
 CLASSIFICATION (Gallagher et al. 2000):
-- 10-20% : Athlete - Niveau competition
-- 21-24% : Forme - Excellente condition
-- 25-31% : Moyen - Population generale
-- 32%+ : Eleve - Risques metaboliques accrus
+• 10 à 20% : Athlete, niveau competition
+• 21 à 24% : Forme, excellente condition
+• 25 à 31% : Moyen, population generale
+• 32%+ : Eleve, risques metaboliques accrus
 
 DIFFERENCE BIOLOGIQUE HOMMES/FEMMES:
-Les femmes ont naturellement 8-12% de graisse de plus que les hommes (seins, hanches, reserve reproductive). C'est NORMAL et SAIN.
+Les femmes ont naturellement 8 à 12% de graisse de plus que les hommes (seins, hanches, reserve reproductive). C'est NORMAL et SAIN.
 
 PREUVES SCIENTIFIQUES:
-- <15% prolonge = amenorrhee, infertilite (Loucks AB, J Sports Sci 2004)
-- >32% = risque diabete/cardiovasculaire augmente
+• <15% prolonge = amenorrhee, infertilite (Loucks AB, J Sports Sci 2004)
+• >32% = risque diabete/cardiovasculaire augmente
 
 CONSEIL:
-Une perte de 0.5-1% par mois est un rythme sain et durable.`),
+Une perte de 0.5 à 1% par mois est un rythme sain et durable.`),
   zones: [
     { label: 'athlete', start: 10, end: 20, color: '#22C55E', status: 'optimal' },
     { label: 'fit', start: 21, end: 24, color: '#EAB308', status: 'good' },
@@ -126,22 +126,22 @@ export const MUSCLE_MASS_RANGES_MALE: MetricRangeWithTranslation = {
   explanation: traduire(`La masse musculaire squelettique (SMM) represente les muscles volontaires de ton corps.
 
 CLASSIFICATION (Janssen et al. 2000, etude IRM sur 468 sujets):
-- <38% : Faible - Sarcopenie probable
-- 38-44% : Normal - Population sedentaire
-- 44-52% : Bon - Activité physique reguliere
-- 52%+ : Excellent - Niveau sportif
+• <38% : Faible, sarcopenie probable
+• 38 à 44% : Normal, population sedentaire
+• 44 à 52% : Bon, activité physique reguliere
+• 52%+ : Excellent, niveau sportif
 
 PREUVES SCIENTIFIQUES:
-- +10% de masse musculaire = -11% risque de mortalite toutes causes (Srikanthan P, Am J Med 2016)
-- Muscle = organe metabolique: secrete myokines anti-inflammatoires
-- Sensibilite a l'insuline correlee positivement
+• +10% de masse musculaire = -11% risque de mortalite toutes causes (Srikanthan P, Am J Med 2016)
+• Muscle = organe metabolique: secrete myokines anti inflammatoires
+• Sensibilite a l'insuline correlee positivement
 
-SARCOPENIE (Cruz-Jentoft AJ, Lancet 2019):
-Perte de 3-8% de muscle par decennie apres 30 ans.
+SARCOPENIE (Cruz Jentoft AJ, Lancet 2019):
+Perte de 3 à 8% de muscle par decennie apres 30 ans.
 La musculation est le traitement n°1 valide scientifiquement.
 
 RECOMMANDATIONS (ACSM):
-2-3 séances de musculation/semaine, tous les groupes musculaires.`),
+2 à 3 séances de musculation/semaine, tous les groupes musculaires.`),
   zones: [
     { label: 'low', start: 30, end: 38, color: '#EF4444', status: 'attention' },
     { label: 'normal', start: 39, end: 44, color: '#F97316', status: 'moderate' },
@@ -161,21 +161,21 @@ export const MUSCLE_MASS_RANGES_FEMALE: MetricRangeWithTranslation = {
   explanation: traduire(`La masse musculaire squelettique (SMM) represente les muscles volontaires de ton corps.
 
 CLASSIFICATION (Janssen et al. 2000):
-- <31% : Faible - Sarcopenie probable
-- 31-36% : Normal - Population sedentaire
-- 36-42% : Bon - Activité physique reguliere
-- 42%+ : Excellent - Niveau sportif
+• <31% : Faible, sarcopenie probable
+• 31 à 36% : Normal, population sedentaire
+• 36 à 42% : Bon, activité physique reguliere
+• 42%+ : Excellent, niveau sportif
 
 DIFFERENCE BIOLOGIQUE:
-Les femmes ont naturellement 30-40% moins de masse musculaire que les hommes (testosterone 10-20x plus basse). C'est NORMAL.
+Les femmes ont naturellement 30 à 40% moins de masse musculaire que les hommes (testosterone 10 à 20x plus basse). C'est NORMAL.
 
 PREUVES SCIENTIFIQUES:
-- Musculation = prevention osteoporose post-menopause (Kohrt WM, Med Sci Sports 2004)
-- Pas de "prise de volume" chez les femmes sans steroides
-- Ameliore sensibilite insuline et metabolisme
+• Musculation = prevention osteoporose post menopause (Kohrt WM, Med Sci Sports 2004)
+• Pas de "prise de volume" chez les femmes sans steroides
+• Ameliore sensibilite insuline et metabolisme
 
 RECOMMANDATIONS (ACSM):
-2-3 séances de musculation/semaine. Les charges lourdes sont sures et efficaces.`),
+2 à 3 séances de musculation/semaine. Les charges lourdes sont sures et efficaces.`),
   zones: [
     { label: 'low', start: 25, end: 33, color: '#EF4444', status: 'attention' },
     { label: 'normal', start: 34, end: 39, color: '#F97316', status: 'moderate' },
@@ -191,27 +191,27 @@ export const WATER_PERCENTAGE_RANGES: MetricRangeWithTranslation = {
   source: 'Watson PE et al. Am J Clin Nutr 1980, PMID 6986753',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/6986753/',
   translationKey: 'waterPercentage',
-  explanation: traduire(`L'eau corporelle totale (TBW) represente environ 60% du poids chez l'homme adulte et 50-55% chez la femme.
+  explanation: traduire(`L'eau corporelle totale (TBW) represente environ 60% du poids chez l'homme adulte et 50 à 55% chez la femme.
 
 CLASSIFICATION (Watson et al. 1980):
-- <50% : Deshydratation probable
-- 50-54% : Legerement bas
-- 55-60% : Normal
-- 61-70% : Optimal - Excellente hydratation
+• <50% : Deshydratation probable
+• 50 à 54% : Legerement bas
+• 55 à 60% : Normal
+• 61 à 70% : Optimal, excellente hydratation
 
 PREUVES SCIENTIFIQUES:
-- Muscle = 73% d'eau, Graisse = 10% d'eau (Wang Z, Am J Clin Nutr 1999)
-- Deshydratation de 2% = -10-20% de performance (Sawka MN, Med Sci Sports 2007)
+• Muscle = 73% d'eau, Graisse = 10% d'eau (Wang Z, Am J Clin Nutr 1999)
+• Deshydratation de 2% = -10 20% de performance (Sawka MN, Med Sci Sports 2007)
 
 CE QUI INFLUENCE LA MESURE:
-- Moment de la journee
-- Repas recents
-- Exercice, temperature
-- Cafeine, alcool
+• Moment de la journee
+• Repas recents
+• Exercice, temperature
+• Cafeine, alcool
 
 BESOINS QUOTIDIENS (IOM 2004):
-- Hommes: environ 3.7L/jour (toutes sources)
-- Femmes: environ 2.7L/jour (toutes sources)
+• Hommes: environ 3.7L/jour (toutes sources)
+• Femmes: environ 2.7L/jour (toutes sources)
 
 CONSEIL:
 Surveille la couleur de l'urine: jaune pale = bien hydrate.`),
@@ -233,20 +233,20 @@ export const VISCERAL_FAT_RANGES: MetricRangeWithTranslation = {
   explanation: traduire(`La graisse viscerale est la graisse profonde qui entoure les organes (foie, intestins, coeur).
 
 CLASSIFICATION SCIENTIFIQUE:
-- Score 1-9 : Optimal - Risque cardiometabolique minimal
-- Score 10-14 : Eleve - Syndrome metabolique probable
-- Score 15+ : Tres eleve - Risque cardiovasculaire significatif
+• Score 1 à 9 : Optimal, risque cardiometabolique minimal
+• Score 10 à 14 : Eleve, syndrome metabolique probable
+• Score 15+ : Tres eleve, risque cardiovasculaire significatif
 
 PREUVES SCIENTIFIQUES (Despres et al. 2008):
 La graisse viscerale est le facteur n°1 du "syndrome metabolique":
-- Augmente l'inflammation systemique (CRP, IL-6)
-- Resistance a l'insuline conduisant au prediabete
-- Risque cardiovasculaire x2 a x3
+• Augmente l'inflammation systemique (CRP, IL 6)
+• Resistance a l'insuline conduisant au prediabete
+• Risque cardiovasculaire x2 a x3
 
-CE QUI FONCTIONNE (meta-analyses):
-- Exercice aerobie: reduction moyenne de 6.1% (Vissers et al. 2013)
-- Deficit calorique modere: cible en priorite la graisse viscerale
-- Reduction du stress (cortisol = stockage visceral)
+CE QUI FONCTIONNE (meta analyses):
+• Exercice aerobie: reduction moyenne de 6.1% (Vissers et al. 2013)
+• Deficit calorique modere: cible en priorite la graisse viscerale
+• Reduction du stress (cortisol = stockage visceral)
 
 MESURE:
 L'IRM reste la reference. L'impedancemetrie donne une estimation correlee mais pas exacte.`),
@@ -271,32 +271,32 @@ export const HRV_RANGES: MetricRangeWithTranslation = {
   explanation: traduire(`La VFC (HRV) mesure les variations entre chaque battement cardiaque en millisecondes.
 
 CLASSIFICATION (RMSSD, valeurs moyennes):
-- 70+ ms : Excellent - Récupération optimale
-- 50-69 ms : Bon - Bonne adaptation
-- 30-49 ms : Normal - Récupération en cours
-- 10-29 ms : Fatigue - Stress physiologique
+• 70+ ms : Excellent, récupération optimale
+• 50 à 69 ms : Bon, bonne adaptation
+• 30 à 49 ms : Normal, récupération en cours
+• 10 à 29 ms : Fatigue, stress physiologique
 
 VARIABILITE INDIVIDUELLE:
-Compare a TA moyenne sur 7-14 jours. Les valeurs absolues varient selon l'age, la forme physique, la genetique.
+Compare a TA moyenne sur 7 à 14 jours. Les valeurs absolues varient selon l'age, la forme physique, la genetique.
 
-PREUVES (Task Force 1996 + meta-analyses):
-- HRV bas = predicteur independant de mortalite CV (Thayer JF, Neurosci Biobehav Rev 2012)
-- HRV reflete l'equilibre sympathique/parasympathique
+PREUVES (Task Force 1996 + meta analyses):
+• HRV bas = predicteur independant de mortalite CV (Thayer JF, Neurosci Biobehav Rev 2012)
+• HRV reflete l'equilibre sympathique/parasympathique
 
 CE QUI BAISSE L'HRV:
-- Surentrainement
-- Alcool (meme modere)
-- Stress chronique
-- Infection/maladie
-- Manque de sommeil
+• Surentrainement
+• Alcool (meme modere)
+• Stress chronique
+• Infection/maladie
+• Manque de sommeil
 
 AMELIORATION:
-- Entraînement aerobie regulier
-- Respiration lente (6/min)
-- Sommeil 7-9h
+• Entraînement aerobie regulier
+• Respiration lente (6/min)
+• Sommeil 7 à 9h
 
 MESURE:
-Matin au reveil, memes conditions, pendant 1-5 min.`),
+Matin au reveil, memes conditions, pendant 1 à 5 min.`),
   zones: [
     { label: 'poor', start: 10, end: 29, color: '#EF4444', status: 'attention' },
     { label: 'normal', start: 30, end: 49, color: '#F97316', status: 'moderate' },
@@ -314,19 +314,19 @@ export const RESTING_HEART_RATE_RANGES: MetricRangeWithTranslation = {
   translationKey: 'restingHeartRate',
   explanation: traduire(`La fréquence cardiaque au repos est un predicteur independant de mortalite cardiovasculaire.
 
-CLASSIFICATION (Fox et al. 2007, meta-analyse 46 etudes):
-- 40-60 bpm : Athlete - Coeur tres efficace
-- 61-70 bpm : Excellent
-- 71-80 bpm : Normal - Moyenne population
-- 81-100 bpm : Eleve - Risque CV augmente
+CLASSIFICATION (Fox et al. 2007, meta analyse 46 etudes):
+• 40 à 60 bpm : Athlete, coeur tres efficace
+• 61 à 70 bpm : Excellent
+• 71 à 80 bpm : Normal, moyenne population
+• 81 à 100 bpm : Eleve, risque CV augmente
 
 PREUVES SCIENTIFIQUES:
-- +10 bpm de FC repos = +20% risque mortalite CV (Cooney MT, Eur J Prev Cardiol 2010)
-- FC <60 bpm associee a meilleure survie long terme
+• +10 bpm de FC repos = +20% risque mortalite CV (Cooney MT, Eur J Prev Cardiol 2010)
+• FC <60 bpm associee a meilleure survie long terme
 
 EFFET DE L'ENTRAÎNEMENT:
-- Endurance reguliere: -10 a -15 bpm en 3-6 mois
-- Athletes elite: 35-45 bpm (bradycardie physiologique)
+• Endurance reguliere: -10 a -15 bpm en 3 à 6 mois
+• Athletes elite: 35 à 45 bpm (bradycardie physiologique)
 
 FACTEURS AIGUS:
 Stress, cafeine, deshydratation, fievre, manque de sommeil
@@ -350,27 +350,27 @@ export const SLEEP_DURATION_RANGES: MetricRangeWithTranslation = {
   translationKey: 'sleepDuration',
   explanation: traduire(`La durée de sommeil optimale pour la santé.
 
-CLASSIFICATION (Cappuccio et al. 2010, meta-analyse 16 etudes):
-- <6h : Insuffisant - +48% risque mortalite
-- 6-7h : Court - Risque legerement augmente
-- 7-9h : Optimal - Mortalite minimale
-- >9h : Long - +30% mortalite (peut indiquer pathologie)
+CLASSIFICATION (Cappuccio et al. 2010, meta analyse 16 etudes):
+• <6h : Insuffisant, +48% risque mortalite
+• 6 à 7h : Court, risque legerement augmente
+• 7 à 9h : Optimal, mortalite minimale
+• >9h : Long, +30% mortalite (peut indiquer pathologie)
 
 PREUVES SCIENTIFIQUES:
 1.3 million de sujets analyses:
-- <5h/nuit = +52% risque cardiovasculaire
-- 6-8h = risque minimal
-- >9h = associe a depression, inflammation
+• <5h/nuit = +52% risque cardiovasculaire
+• 6 à 8h = risque minimal
+• >9h = associe a depression, inflammation
 
 BESOINS INDIVIDUELS:
-- Athletes: 9-10h pour récupération optimale (Mah CD, Sleep 2011)
-- Genetique: 3-5% sont "short sleepers" vrais
+• Athletes: 9 à 10h pour récupération optimale (Mah CD, Sleep 2011)
+• Genetique: 3 à 5% sont "short sleepers" vrais
 
 HYGIENE DU SOMMEIL:
-- Horaires reguliers
-- Pas d'ecrans 1h avant
-- Chambre 18-20 degres C
-- Eviter cafeine apres 14h`),
+• Horaires reguliers
+• Pas d'ecrans 1h avant
+• Chambre 18 à 20 degres C
+• Eviter cafeine apres 14h`),
   zones: [
     { label: 'danger', start: 4, end: 6, color: '#EF4444', status: 'danger' },
     { label: 'low', start: 6.1, end: 6.9, color: '#F97316', status: 'moderate' },
@@ -389,20 +389,20 @@ export const RECOVERY_SCORE_RANGES: MetricRangeWithTranslation = {
   explanation: traduire(`Le score de récupération estime ta capacite a performer et t'entrainer.
 
 CLASSIFICATION:
-- 0-33% : Rouge - Repos recommande
-- 34-66% : Jaune - Entraînement modere possible
-- 67-100% : Vert - Capacite optimale
+• 0 à 33% : Rouge, repos recommande
+• 34 à 66% : Jaune, entraînement modere possible
+• 67 à 100% : Vert, capacite optimale
 
 BASE SCIENTIFIQUE (Plews et al. 2013):
 Le score combine plusieurs indicateurs:
-- HRV (variabilite cardiaque)
-- Qualité du sommeil
-- FC repos
-- Fatigue percue
+• HRV (variabilite cardiaque)
+• Qualité du sommeil
+• FC repos
+• Fatigue percue
 
 INTERPRETATION:
-- Score bas occasionnel = normal apres effort intense
-- Score bas chronique = risque de surentrainement
+• Score bas occasionnel = normal apres effort intense
+• Score bas chronique = risque de surentrainement
 
 CONSEIL:
 Adapte l'intensite de ton entraînement a ton score de récupération.`),
@@ -427,19 +427,19 @@ export const BMI_RANGES: MetricRangeWithTranslation = {
   explanation: traduire(`L'Indice de Masse Corporelle (IMC) = Poids (kg) / Taille au carre (m2)
 
 CLASSIFICATION (Prospective Studies Collaboration 2009):
-Meta-analyse de 57 etudes, 894 576 sujets:
-- < 18.5 : Sous-poids - Mortalite augmentee
-- 18.5-25 : Normal - Mortalite minimale
-- 25-30 : Surpoids - +30% environ mortalite
-- 30+ : Obesite - +70% environ mortalite
+Meta analyse de 57 etudes, 894 576 sujets:
+• < 18.5 : Sous poids, mortalite augmentee
+• 18.5 à 25 : Normal, mortalite minimale
+• 25 à 30 : Surpoids, +30% environ mortalite
+• 30+ : Obesite, +70% environ mortalite
 
 PREUVES SCIENTIFIQUES:
-- IMC optimal = 22.5-25 pour mortalite minimale
-- +5 kg/m2 au-dessus de 25 = +30% mortalite cardiovasculaire
+• IMC optimal = 22.5 à 25 pour mortalite minimale
+• +5 kg/m2 au dessus de 25 = +30% mortalite cardiovasculaire
 
 LIMITES RECONNUES:
-- Ne distingue pas muscle/graisse
-- Moins fiable: athletes, personnes agees, ethnies asiatiques
+• Ne distingue pas muscle/graisse
+• Moins fiable: athletes, personnes agees, ethnies asiatiques
 
 CONSEIL:
 Complete avec tour de taille (WHtR) et pourcentage de masse grasse pour une evaluation complete.`),
@@ -467,19 +467,19 @@ export const WAIST_CIRCUMFERENCE_RANGES_MALE: MetricRangeWithTranslation = {
 
 ATTENTION: Les seuils absolus (90cm, 102cm) sont des reperes GENERAUX.
 
-METHODE PLUS PRECISE - Ratio Tour de taille/Taille (WHtR):
+METHODE PLUS PRECISE, ratio Tour de taille/Taille (WHtR):
 Divise ton tour de taille par ta taille:
-- < 0.4 : Sous-poids possible
-- 0.4-0.5 : Zone ideale
-- 0.5-0.6 : Risque modere
-- > 0.6 : Risque eleve
+• < 0.4 : Sous poids possible
+• 0.4 à 0.5 : Zone ideale
+• 0.5 à 0.6 : Risque modere
+• > 0.6 : Risque eleve
 
 EXEMPLES CONCRETS:
-- 1m75 de taille --> Tour de taille ideal: 70-87cm
-- 1m90 de taille --> Tour de taille ideal: 76-95cm
-- 2m10 de taille --> Tour de taille ideal: 84-105cm
+• 1m75 de taille --> Tour de taille ideal: 70 à 87cm
+• 1m90 de taille --> Tour de taille ideal: 76 à 95cm
+• 2m10 de taille --> Tour de taille ideal: 84 à 105cm
 
-PREUVES (Ashwell et al. 2012, meta-analyse):
+PREUVES (Ashwell et al. 2012, meta analyse):
 Le WHtR predit MIEUX le risque cardiometabolique que l'IMC ou le tour de taille seul.
 "Keep your waist to less than half your height"
 
@@ -504,17 +504,17 @@ export const WAIST_CIRCUMFERENCE_RANGES_FEMALE: MetricRangeWithTranslation = {
 
 ATTENTION: Les seuils absolus (80cm, 88cm) sont des reperes GENERAUX.
 
-METHODE PLUS PRECISE - Ratio Tour de taille/Taille (WHtR):
+METHODE PLUS PRECISE, ratio Tour de taille/Taille (WHtR):
 Divise ton tour de taille par ta taille:
-- < 0.4 : Sous-poids possible
-- 0.4-0.5 : Zone ideale
-- 0.5-0.6 : Risque modere
-- > 0.6 : Risque eleve
+• < 0.4 : Sous poids possible
+• 0.4 à 0.5 : Zone ideale
+• 0.5 à 0.6 : Risque modere
+• > 0.6 : Risque eleve
 
 EXEMPLES CONCRETS:
-- 1m60 de taille --> Tour de taille ideal: 64-80cm
-- 1m70 de taille --> Tour de taille ideal: 68-85cm
-- 1m80 de taille --> Tour de taille ideal: 72-90cm
+• 1m60 de taille --> Tour de taille ideal: 64 à 80cm
+• 1m70 de taille --> Tour de taille ideal: 68 à 85cm
+• 1m80 de taille --> Tour de taille ideal: 72 à 90cm
 
 PREUVES (Ashwell et al. 2012):
 Le WHtR est un meilleur predicteur du risque cardiometabolique que l'IMC ou le tour de taille seul.
@@ -543,24 +543,24 @@ export const BONE_MASS_RANGES_MALE: MetricRangeWithTranslation = {
   explanation: traduire(`La masse osseuse represente le poids mineral de ton squelette.
 
 CLASSIFICATION (proportionnelle au poids corporel):
-- <2.8 kg : Faible - Risque osteoporotique
-- 2.8-3.2 kg : Normal
-- >3.2 kg : Bon - Densite optimale
+• <2.8 kg : Faible, risque osteoporotique
+• 2.8 à 3.2 kg : Normal
+• >3.2 kg : Bon, densite optimale
 
 VARIATION SELON LE POIDS:
-- 60kg = environ 2.6 kg d'os attendu (environ 4.3%)
-- 80kg = environ 3.3 kg d'os attendu
-- 100kg = environ 3.8 kg d'os attendu
+• 60kg = environ 2.6 kg d'os attendu (environ 4.3%)
+• 80kg = environ 3.3 kg d'os attendu
+• 100kg = environ 3.8 kg d'os attendu
 
 PREUVES SCIENTIFIQUES (Kanis et al. Lancet 2002):
-- Pic de masse osseuse atteint vers 25-30 ans
-- Perte de 0.5-1% par an apres 40 ans
-- Osteoporose = T-score < -2.5 (DEXA)
+• Pic de masse osseuse atteint vers 25 à 30 ans
+• Perte de 0.5 à 1% par an apres 40 ans
+• Osteoporose = T score < -2.5 (DEXA)
 
 INTERVENTIONS VALIDEES:
-- Musculation: +1-3% de densite osseuse (Martyn-St James M, Br J Sports Med 2009)
-- Calcium 1000-1200mg/j + Vitamine D 800-1000 UI/j
-- Sports d'impact: course, sauts
+• Musculation: +1 à 3% de densite osseuse (Martyn St James M, Br J Sports Med 2009)
+• Calcium 1000 à 1200mg/j + Vitamine D 800 à 1000 UI/j
+• Sports d'impact: course, sauts
 
 LIMITES:
 L'impedancemetrie estime la masse, pas la densite. DEXA = reference.`),
@@ -582,24 +582,24 @@ export const BONE_MASS_RANGES_FEMALE: MetricRangeWithTranslation = {
   explanation: traduire(`La masse osseuse represente le poids mineral de ton squelette.
 
 CLASSIFICATION (proportionnelle au poids corporel):
-- <2.2 kg : Faible - Risque osteoporotique
-- 2.2-2.5 kg : Normal
-- >2.5 kg : Bon - Densite optimale
+• <2.2 kg : Faible, risque osteoporotique
+• 2.2 à 2.5 kg : Normal
+• >2.5 kg : Bon, densite optimale
 
 RISQUE FEMININ (Kanis et al. Lancet 2002):
-- 1 femme sur 3 aura une fracture osteoporotique apres 50 ans
-- Chute d'oestrogenes a la menopause = perte de 2-3%/an pendant 5-10 ans
+• 1 femme sur 3 aura une fracture osteoporotique apres 50 ans
+• Chute d'oestrogenes a la menopause = perte de 2 à 3%/an pendant 5 à 10 ans
 
 PREUVES SCIENTIFIQUES:
-- Pic de masse osseuse: 25-30 ans
-- Musculation = intervention n1 validee
-- Calcium + Vitamine D = essentiels
+• Pic de masse osseuse: 25 à 30 ans
+• Musculation = intervention n1 validee
+• Calcium + Vitamine D = essentiels
 
 PREVENTION:
-- Musculation avec charges 2-3x/semaine
-- Calcium 1000-1200mg/j
-- Vitamine D 800-1000 UI/j
-- Eviter regimes hypocaloriques prolonges
+• Musculation avec charges 2 à 3x/semaine
+• Calcium 1000 à 1200mg/j
+• Vitamine D 800 à 1000 UI/j
+• Eviter regimes hypocaloriques prolonges
 
 CONSEIL:
 Construis ta "banque osseuse" avant 30 ans. Apres, l'objectif est de MAINTENIR.`),
@@ -662,14 +662,14 @@ export const INTENSITY_RANGES: MetricRangeWithTranslation = {
   explanation: traduire(`L'intensite d'entraînement mesure l'effort relatif par rapport a ta capacite maximale.
 
 CLASSIFICATION (Banister TRIMP model):
-- 0-50% : Leger - Récupération active
-- 50-70% : Modere - Zone aerobie, endurance fondamentale
-- 70-85% : Intense - Zone seuil lactique
-- 85-100% : Maximal - Zone anaerobie
+• 0 à 50% : Leger, récupération active
+• 50 à 70% : Modere, zone aerobie, endurance fondamentale
+• 70 à 85% : Intense, zone seuil lactique
+• 85 à 100% : Maximal, zone anaerobie
 
 PREUVES SCIENTIFIQUES:
-- 80% du volume en zone 1-2 + 20% en zone 4-5 = distribution polarisee optimale (Seiler S, Int J Sports Physiol 2010)
-- Surentrainement = trop de volume en zone 3 (no man's land)
+• 80% du volume en zone 1 à 2 + 20% en zone 4 à 5 = distribution polarisee optimale (Seiler S, Int J Sports Physiol 2010)
+• Surentrainement = trop de volume en zone 3 (no man's land)
 
 CONSEIL:
 La majorite de tes entraînements devraient etre en zone facile (conversation possible).`),

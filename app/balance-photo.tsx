@@ -341,10 +341,10 @@ export default function BalancePhotoScreen() {
       const t = await Clipboard.getStringAsync();
       if (t && t.trim() && isOwnPrompt(t)) setError(traduire('C’est la consigne de YOROI qui est copiée. Dans ton IA, copie sa réponse, puis reviens ici.'));
       else if (t && t.trim()) importText(t);
-      else setError(traduire('Le presse-papiers est vide. Copie la réponse de ton IA, puis réessaie.'));
+      else setError(traduire('Rien n’est copié pour l’instant. Copie la réponse de ton IA, puis réessaie.'));
     } catch (err) {
       logger.warn('[Balance photo] lecture du presse-papiers impossible', err);
-      setError(traduire('Lecture du presse-papiers impossible. Colle la réponse dans le champ.'));
+      setError(traduire('Impossible de lire ce que tu as copié. Colle la réponse dans le champ.'));
     }
   };
 
@@ -988,7 +988,7 @@ export default function BalancePhotoScreen() {
                 </View>
               </View>
             ) : null}
-            <PrimaryButton label={traduire("Coller depuis le presse-papiers")} onPress={() => void paste()} />
+            <PrimaryButton label={traduire("Coller ce que j’ai copié")} onPress={() => void paste()} />
             <Ink size={12} color={c.textSecondary}>{traduire("Ou colle la réponse dans le champ :")}</Ink>
             <TextInput
               value={text}

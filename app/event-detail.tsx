@@ -121,7 +121,7 @@ export default function EventDetailScreen() {
     <DetailScreen
       title={traduire("Événement")}
       subtitle={traduire(meta.label)}
-      right={<RoundAction icon="bookmark" label={isSaved ? traduire('Retirer de mes rendez-vous') : traduire('Ajouter à mes rendez-vous')} tint={isSaved ? P.accent : P.ink} onPress={toggleSaved} />}
+      right={<RoundAction icon="bookmark" label={isSaved ? traduire('Retirer de mes événements') : traduire('Ajouter à mes événements')} tint={isSaved ? P.accent : P.ink} onPress={toggleSaved} />}
       footer={params.registration_link ? <BigButton label={traduire("S'inscrire en ligne")} icon="share" onPress={openRegistration} /> : undefined}
     >
       <Enter i={0}>
@@ -169,11 +169,11 @@ export default function EventDetailScreen() {
       ) : null}
 
       <Enter i={3}>
-        <Press onPress={toggleSaved} accessibilityRole="button" accessibilityLabel={isSaved ? traduire('Retirer de mes rendez-vous') : traduire('Ajouter à mes rendez-vous')}>
+        <Press onPress={toggleSaved} accessibilityRole="button" accessibilityLabel={isSaved ? traduire('Retirer de mes événements') : traduire('Ajouter à mes événements')}>
           <View style={{ minHeight: 60, borderRadius: 20, backgroundColor: isSaved ? P.accentSoft : P.white, borderWidth: 1, borderColor: isSaved ? P.accent : P.line2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
             <XIcon name="bookmark" size={20} color={isSaved ? P.accent : P.ink} />
             <Ink size={16} weight="extraBold" color={isSaved ? P.accent : P.ink}>
-              {isSaved ? traduire('Dans mes rendez-vous') : traduire('Ajouter à mes rendez-vous')}
+              {isSaved ? traduire('Dans mes événements') : traduire('Ajouter à mes événements')}
             </Ink>
           </View>
         </Press>

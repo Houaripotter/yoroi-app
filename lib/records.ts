@@ -601,7 +601,7 @@ export const generateRecordShareText = (type: RecordType, value: number): string
     longestStreak: traduire("Nouveau record de streak ! {0} jours consecutifs", value),
     lowestWaist: traduire("Record tour de taille ! {0} cm atteints", value),
     maxWeeklyWorkouts: traduire("{0} entraînements cette semaine ! Nouveau record", value),
-    bestMonthRegularity: traduire("{0}% de régularité ce mois-ci !", value),
+    bestMonthRegularity: traduire("{0}% de régularité ce mois !", value),
     bestEnergyStreak: traduire("{0} jours d'énergie au top !", value),
   };
   return texts[type] + '\n\n#Yoroi #Transformation #Record';

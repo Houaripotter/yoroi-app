@@ -18,6 +18,7 @@ import { isoDay } from '@/lib/v2/seance/format';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 export function CorpsHeader({ title, sub, right }: { title: string; sub?: string; right?: React.ReactNode; kanji?: string }) {
   const router = useRouter();
@@ -106,9 +107,7 @@ export function ValueSheet({
         />
       </View>
       {error ? <Ink size={13} weight="bold" color={c.danger} style={{ paddingHorizontal: 4 }}>{error}</Ink> : null}
-      <Pressable onPress={submit} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
-        <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Enregistrer")}</Ink>
-      </Pressable>
+      <BoutonPrincipal onPress={submit} label={traduire("Enregistrer")} hauteur={54} tailleTexte={16} />
       {onDelete ? (
         <Pressable onPress={onDelete} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
           <Ink size={14} weight="bold" color={c.danger}>{traduire("Supprimer")}</Ink>

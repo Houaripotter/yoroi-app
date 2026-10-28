@@ -18,6 +18,7 @@ import { Sheet } from './reglages/parts';
 import { JoursPicker, joursTexte } from './JoursPicker';
 import { ajusterAFrequence, joursTries, synchroniserOrdre, toucherJour } from '@/lib/v2/joursFrequence';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 export function ObjectifSheet({ visible, onClose, espace, onSave }: {
   visible: boolean;
@@ -78,9 +79,7 @@ export function ObjectifSheet({ visible, onClose, espace, onSave }: {
             {jours.length ? traduire("Prévu : {0}. Ton planning, s’il a des créneaux, passe avant.", joursTexte(jours)) : traduire('Aucun jour imposé. Touche tes jours pour les voir marqués sur Ta semaine.')}
           </Ink>
         </View>
-        <Pressable onPress={onClose} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 52, borderRadius: 16, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}>
-          <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("C’est bon")}</Ink>
-        </Pressable>
+        <BoutonPrincipal onPress={onClose} label={traduire("C’est bon")} hauteur={52} rayon={16} tailleTexte={16} />
       </View>
     </Sheet>
   );

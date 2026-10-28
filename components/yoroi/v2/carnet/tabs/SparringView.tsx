@@ -526,7 +526,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
                 })}
                 highlightLast={false}
               />
-              <Ink size={12} weight="medium" color={P.muted}>{traduire("Hauteur : nombre de séances. Couleur : taux de victoire (vert au-dessus de 60 %, or entre 40 et 60, rouge en dessous).")}</Ink>
+              <Ink size={12} weight="medium" color={P.muted}>{traduire("Hauteur : nombre de séances. Couleur : taux de victoire (vert à plus de 60 %, or entre 40 et 60, rouge en dessous).")}</Ink>
             </Sheet2>
           ) : null}
 

@@ -180,7 +180,7 @@ function CompetitionsVide() {
         <ImageBackground source={SCENE_COMPETITIONS} resizeMode="cover" style={{ height: 228, overflow: 'hidden' }}>
           <View style={{ position: 'absolute', left: 16, bottom: 14, maxWidth: '60%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, backgroundColor: blancA(0.86), borderWidth: 1, borderColor: P.white }}>
             <Ink size={28} weight="black" tight numberOfLines={1}>{traduire("Compétitions")}</Ink>
-            <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Tes rendez-vous sur le tapis")}</Ink>
+            <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Tes compétitions à venir")}</Ink>
           </View>
         </ImageBackground>
       </Fige>

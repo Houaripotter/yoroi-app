@@ -74,6 +74,7 @@ import { CollectionBientot } from '@/components/yoroi/v2/dojo/CollectionBientot'
 import { CATEGORIES_VIE, PACKS_VIE_PRETS } from '@/lib/v2/dojo/packsVie';
 import type { CategorieVie } from '@/lib/v2/dojo/packsVie';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 type Tab = 'monde' | 'classique' | 'vie' | 'sport' | 'legende' | 'themes';
 type Teinte = VarianteTeinte | 'origine';
@@ -424,14 +425,7 @@ export default function Boutique() {
             </View>
             {previewing ? (
               <Animated.View entering={FadeIn.duration(180)} style={{ position: 'absolute', left: 10, bottom: 10, flexDirection: 'row', gap: 8 }}>
-                <Pressable
-                  onPress={valider}
-                  accessibilityRole="button"
-                  accessibilityLabel={bouton === 'Débloquer' ? traduire('Débloquer avec Premium') : bouton}
-                  style={({ pressed }) => ({ minHeight: 42, borderRadius: 14, paddingHorizontal: 16, justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary, transform: [{ scale: pressed ? 0.97 : 1 }] })}
-                >
-                  <Ink size={14} weight="extraBold" color={c.onPrimary}>{bouton}</Ink>
-                </Pressable>
+                <BoutonPrincipal onPress={valider} haptique="none" accessibilityLabel={bouton === 'Débloquer' ? traduire('Débloquer avec Premium') : bouton} label={bouton} hauteur={42} rayon={14} tailleTexte={14} lignes={1} compact />
                 <Pressable
                   onPress={() => {
                     tap();

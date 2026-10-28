@@ -234,7 +234,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
 
       showPopup(
         'Partager',
-        'Que veux-tu faire ?',
+        'Tu veux faire quoi ?',
         [
           {
             text: 'Partager',

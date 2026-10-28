@@ -125,8 +125,8 @@ const generatePDFHTML = async (period: ExportPeriod): Promise<string> => {
     ${generateMeasurementRow('Cou', firstMeasurement?.neck, lastMeasurement.neck)}
     ${generateMeasurementRow('Bras gauche', firstMeasurement?.left_arm, lastMeasurement.left_arm)}
     ${generateMeasurementRow('Bras droit', firstMeasurement?.right_arm, lastMeasurement.right_arm)}
-    ${generateMeasurementRow(traduire('Avant-bras gauche'), firstMeasurement?.left_forearm, lastMeasurement.left_forearm)}
-    ${generateMeasurementRow(traduire('Avant-bras droit'), firstMeasurement?.right_forearm, lastMeasurement.right_forearm)}
+    ${generateMeasurementRow(traduire('Avant bras gauche'), firstMeasurement?.left_forearm, lastMeasurement.left_forearm)}
+    ${generateMeasurementRow(traduire('Avant bras droit'), firstMeasurement?.right_forearm, lastMeasurement.right_forearm)}
     ${generateMeasurementRow('Cuisse gauche', firstMeasurement?.left_thigh, lastMeasurement.left_thigh)}
     ${generateMeasurementRow('Cuisse droite', firstMeasurement?.right_thigh, lastMeasurement.right_thigh)}
     ${generateMeasurementRow('Mollet gauche', firstMeasurement?.left_calf, lastMeasurement.left_calf)}
@@ -149,7 +149,7 @@ const generateMeasurementRow = (label: string, first?: number, last?: number): s
       <div class="measurement-values">
         <span class="measurement-value" style="width: 80px;">${first ? first.toFixed(0) + ' cm' : '-'}</span>
         <span class="measurement-value" style="width: 80px;"><strong>${last ? last.toFixed(0) + ' cm' : '-'}</strong></span>
-        <span class="measurement-value delta ${deltaClass}" style="width: 60px;">${delta !== 0 ? (delta > 0 ? '+' : '') + delta.toFixed(0) + ' cm' : '-'}</span>
+        <span class="measurement value delta ${deltaClass}" style="width: 60px;">${delta !== 0 ? (delta > 0 ? '+' : '') + delta.toFixed(0) + ' cm' : '-'}</span>
       </div>
     </div>
   `;

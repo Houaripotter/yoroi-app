@@ -23,6 +23,7 @@ import { poidsAuDebut } from '@/lib/v2/pesee/debutObjectif';
 import { jourCourt } from '@/lib/v2/pesee/ligneDirectrice';
 import { plusJours } from '@/lib/v2/pesee/predictions';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 export type QuoiObjectif = 'debut' | 'objectif' | 'date';
 type PeseeJour = { date: string; value: number; trend?: number };
@@ -76,6 +77,8 @@ export function CarteObjectif({ etat, onChanger, style }: { etat: EtatObjectif; 
 function Bouton({ libelle, onPress, plein = true }: { libelle: string; onPress: () => void; plein?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  // 28 octobre 2026 : le bouton plein prend le bouton principal partage
+  if (plein) return <BoutonPrincipal onPress={onPress} label={libelle} tailleTexte={16} haptique="light" />;
   return (
     <Pressable
       onPress={onPress}
@@ -208,7 +211,7 @@ export function FeuilleObjectif({ visible, quoi: quoiInitial, onClose, etat, ser
           <Pas value={cap} onChange={setCap} pas={PAS_KG} clamp={clamp} />
           {actuel != null ? (
             <Ink size={12.5} weight="medium" color={c.textSecondary}>
-              {traduire("Ton poids actuel : {0} kg. Au-dessus de ton début, c’est une prise de masse ; en dessous, une perte.", kg1(actuel))}
+              {traduire("Ton poids actuel : {0} kg. Plus haut que ton début, c’est une prise de masse ; en dessous, une perte.", kg1(actuel))}
             </Ink>
           ) : null}
           {erreur ? <Ink size={13} weight="bold" color={c.danger}>{erreur}</Ink> : null}

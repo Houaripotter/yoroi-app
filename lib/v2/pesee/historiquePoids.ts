@@ -35,7 +35,7 @@ export function historyCaption(p: { id?: number; date: string; trend: number }, 
   const shown = day.find((w) => w.id === p.id) ?? day[0];
   const parts = [shown ? sourceLabel(shown.source) : '', `tendance ${formatKg(p.trend)} kg`].filter(Boolean);
   const others = day.filter((w) => w !== shown);
-  if (others.length === 1) parts.push(traduire("autre pesée ce jour-là : {0} kg ({1})", formatKg(Number(others[0].weight)), sourceLabel(others[0].source)));
-  else if (others.length > 1) parts.push(traduire("{0} autres pesées ce jour-là : {1}", others.length, others.map((w) => `${formatKg(Number(w.weight))} kg`).join(', ')));
+  if (others.length === 1) parts.push(traduire("autre pesée ce jour : {0} kg ({1})", formatKg(Number(others[0].weight)), sourceLabel(others[0].source)));
+  else if (others.length > 1) parts.push(traduire("{0} autres pesées ce jour : {1}", others.length, others.map((w) => `${formatKg(Number(w.weight))} kg`).join(', ')));
   return parts.join(', ');
 }

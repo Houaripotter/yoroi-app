@@ -11,13 +11,14 @@ import ratingService from '@/lib/ratingService';
 import { RatingPopup } from '@/components/RatingPopup';
 import { logger } from '@/lib/security/logger';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { BigButton, Card, Glass, P, Press, tap } from '@/components/yoroi/v2/accueil/kit';
+import { BigButton, Card, Glass, P, tap } from '@/components/yoroi/v2/accueil/kit';
 import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
 import { Icon as EIcon } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { Stamp, paletteOf } from '@/components/yoroi/v2/partage/cardKit';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const STEPS: { icon: IconName; title: string; text: string }[] = [
   { icon: 'archive', title: traduire('Crée un dossier'), text: traduire('Nomme le dossier Yoroi_Backup dans ton cloud.') },
@@ -111,11 +112,7 @@ export default function BackupStepScreen() {
             <Ink size={26} weight="black" tight style={{ textAlign: 'center' }}>{traduire("Sauvegarde prête")}</Ink>
             <Ink size={14} color={P.ink2} style={{ textAlign: 'center' }}>{traduire("Tes données sont protégées en cas de perte, de vol ou de changement de téléphone.")}</Ink>
             <Ink size={13} weight="bold" color={P.muted} style={{ textAlign: 'center' }}>{traduire("Range le fichier dans ton cloud préféré : iCloud, Google Drive ou Dropbox.")}</Ink>
-            <Press onPress={() => { setShowSuccessModal(false); successHaptic(); }} accessibilityRole="button" accessibilityLabel={traduire("Parfait")} style={{ alignSelf: 'stretch' }}>
-              <View style={{ height: 56, borderRadius: 18, backgroundColor: P.primary, alignItems: 'center', justifyContent: 'center' }}>
-                <Ink size={16} weight="extraBold" color={P.onPrimary}>{traduire("Parfait")}</Ink>
-              </View>
-            </Press>
+            <BoutonPrincipal onPress={() => { setShowSuccessModal(false); successHaptic(); }} haptique="none" label={traduire("Parfait")} tailleTexte={16} style={{ alignSelf: 'stretch' }} />
           </View>
         </View>
       </Modal>

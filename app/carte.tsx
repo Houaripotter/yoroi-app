@@ -49,6 +49,7 @@ import { dateCourte } from '@/lib/v2/photos/outils';
 import type { CarteData, FondId, FormatId, Masque, OptionsCarte, PhotoCarte } from '@/lib/v2/cartes/types';
 import { logger } from '@/lib/security/logger';
 import { traduire } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 /** Formats expliques par usage : le ratio reste en petit, les apps aident a choisir */
 const FORMATS: { id: FormatId; nom: string; apps: string; ratio: string; forme: { w: number; h: number } }[] = [
@@ -327,9 +328,7 @@ export default function CarteEditeur() {
         <RoundButton icon="back" label={traduire("Retour")} onPress={() => router.back()} />
         <Ink size={26} weight="black" tight>{traduire("Pas de carte ici")}</Ink>
         <Ink size={15} color={c.textSecondary}>{aa ? traduire('Il te faut au moins 2 photos de corps pour faire ta carte Avant après. Tu peux les ajouter dans tes photos de forme.') : traduire('Ce moment n’a pas encore de chiffres à montrer. Retrouve tes séances, tes pesées et tes semaines dans Mes cartes.')}</Ink>
-        <Pressable onPress={() => router.replace('/mes-cartes' as never)} accessibilityRole="button" style={{ height: 54, borderRadius: 18, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
-          <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Mes cartes")}</Ink>
-        </Pressable>
+        <BoutonPrincipal onPress={() => router.replace('/mes-cartes' as never)} haptique="none" label={traduire("Mes cartes")} hauteur={54} tailleTexte={16} />
       </View>
     );
   }
@@ -592,10 +591,7 @@ export default function CarteEditeur() {
           <Icon name={k.saved ? 'check' : 'download'} size={19} color={k.saved ? c.successText : c.ink} />
           <Ink size={16} weight="extraBold" color={k.saved ? c.successText : c.ink}>{k.busy === 'save' ? traduire('Un instant') : k.saved ? traduire('Enregistrée') : traduire('Enregistrer')}</Ink>
         </Pressable>
-        <Pressable onPress={() => void partager()} disabled={!data || !!k.busy} accessibilityRole="button" accessibilityLabel={traduire("Partager la carte")} style={({ pressed }) => ({ flex: 1.2, height: 56, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}>
-          <Icon name="share" size={19} color={c.onPrimary} />
-          <Ink size={16} weight="extraBold" color={c.onPrimary}>{k.busy === 'share' ? traduire('Un instant') : traduire('Partager')}</Ink>
-        </Pressable>
+        <BoutonPrincipal onPress={() => void partager()} haptique="none" disabled={!data || !!k.busy} accessibilityLabel={traduire("Partager la carte")} label={k.busy === 'share' ? traduire('Un instant') : traduire('Partager')} tailleTexte={16} lignes={1} style={{ flex: 1.2 }} icone={(col) => <Icon name="share" size={19} color={col} />} />
       </View>
     </View>
   );

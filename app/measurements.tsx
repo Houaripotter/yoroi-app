@@ -161,7 +161,7 @@ export default function MeasurementsScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 120 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <DetailHeader
           title="Tes mensurations"
-          sub={traduire("Pré-remplies avec ta dernière mesure. Touche une zone, ajuste, enregistre.")}
+          sub={traduire("Déjà remplies avec ta dernière mesure. Touche une zone, ajuste, enregistre.")}
           right={
             <IconButton label={traduire("Voir l’évolution")} onPress={() => router.push('/measurements-detail' as any)}>
               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
@@ -209,7 +209,7 @@ export default function MeasurementsScreen() {
               <View key={k} style={{ gap: 8 }}>
                 {zoneKeys.length > 1 ? <Ink size={14} weight="bold" color={c.textSecondary}>{labelOf(k)}</Ink> : null}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <Pressable onPress={() => step(k, -0.5)} accessibilityRole="button" accessibilityLabel={traduire("{0}, moins un demi-centimètre", labelOf(k))} style={({ pressed }) => [styles.round, { backgroundColor: pressed ? c.fillSoft : c.fillSubtle }]}>
+                  <Pressable onPress={() => step(k, -0.5)} accessibilityRole="button" accessibilityLabel={traduire("{0}, moins un demi centimètre", labelOf(k))} style={({ pressed }) => [styles.round, { backgroundColor: pressed ? c.fillSoft : c.fillSubtle }]}>
                     <MinusPlus kind="minus" color={c.ink} />
                   </Pressable>
                   <Pressable
@@ -244,7 +244,7 @@ export default function MeasurementsScreen() {
                       {touched[k] ? (prev ? traduire("{0} que la dernière fois", cmDelta(v - prev)) : traduire('centimètres, nouvelle mesure')) : prev ? traduire('centimètres, la dernière fois') : traduire('centimètres, à mesurer')}
                     </Ink>
                   </Pressable>
-                  <Pressable onPress={() => step(k, 0.5)} accessibilityRole="button" accessibilityLabel={traduire("{0}, plus un demi-centimètre", labelOf(k))} style={({ pressed }) => [styles.round, { backgroundColor: pressed ? c.fillSoft : c.fillSubtle }]}>
+                  <Pressable onPress={() => step(k, 0.5)} accessibilityRole="button" accessibilityLabel={traduire("{0}, plus un demi centimètre", labelOf(k))} style={({ pressed }) => [styles.round, { backgroundColor: pressed ? c.fillSoft : c.fillSubtle }]}>
                     <MinusPlus kind="plus" color={c.ink} />
                   </Pressable>
                 </View>

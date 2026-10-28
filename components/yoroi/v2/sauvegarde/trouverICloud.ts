@@ -32,7 +32,7 @@ export async function choisirSauvegardeICloud(): Promise<string | 'annule' | und
   if (choix === 'autre') return undefined;
   const chemin = await preparerICloud(derniere.name);
   if (!chemin) {
-    appAlert(traduire('Pas encore téléchargée'), traduire('La sauvegarde est encore dans iCloud. Vérifie ta connexion, puis réessaie dans un instant. Tu peux aussi choisir le fichier toi-même.'));
+    appAlert(traduire('Pas encore téléchargée'), traduire('La sauvegarde est encore dans iCloud. Vérifie ta connexion, puis réessaie dans un instant. Tu peux aussi choisir le fichier à la main.'));
     return 'annule';
   }
   return chemin;

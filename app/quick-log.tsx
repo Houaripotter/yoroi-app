@@ -36,6 +36,7 @@ import { deposerTexteCarnet, ressembleCarnet } from '@/lib/v2/import/texteEnAtte
 import { RESULTS, SESSION_TYPES } from '@/lib/v2/seance/combat';
 import { DEFAULT_SPORTS, seanceKindFor, seanceRoute, sportShortName, sportTint } from '@/lib/v2/seance/sportVisuals';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const EXAMPLES = [
   'JJB ce soir, 5 rounds de 6 minutes, 2 contre Paul gagnés par triangle, les 3 autres avec Marc',
@@ -397,7 +398,7 @@ export default function DicteSeance() {
 
   const dayText = form ? (form.date === today ? traduire('Aujourd’hui') : longDay(form.date).charAt(0).toUpperCase() + longDay(form.date).slice(1)) : '';
   const momentStart: Record<string, number> = { matin: 8 * 60, midi: 12 * 60, 'apres-midi': 15 * 60, soir: 19 * 60 };
-  const momentText: Record<string, string> = { matin: traduire('le matin'), midi: traduire('le midi'), 'apres-midi': traduire('l’après-midi'), soir: traduire('le soir') };
+  const momentText: Record<string, string> = { matin: traduire('le matin'), midi: traduire('le midi'), 'apres-midi': traduire('l’après midi'), soir: traduire('le soir') };
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -981,10 +982,7 @@ function GuessCard({ g, onAnswer }: { g: DicteeGuess; onAnswer: (name: string | 
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {g.guess ? (
-          <Pressable onPress={() => onAnswer(null)} accessibilityRole="button" accessibilityLabel={traduire("Oui, {0}", g.guess)} style={{ minHeight: 44, paddingHorizontal: 18, borderRadius: 14, backgroundColor: P.primary, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Icon name="check" size={16} color={P.onPrimary} />
-            <Ink size={14} weight="extraBold" color={P.onPrimary}>{traduire("Oui")}</Ink>
-          </Pressable>
+          <BoutonPrincipal onPress={() => onAnswer(null)} haptique="light" accessibilityLabel={traduire("Oui, {0}", g.guess)} label={traduire("Oui")} hauteur={44} rayon={14} tailleTexte={14} lignes={1} compact styleBouton={{ paddingHorizontal: 18, gap: 6 }} icone={(col) => <Icon name="check" size={16} color={col} />} />
         ) : null}
         {g.options.map((o) => (
           <Pressable key={o} onPress={() => onAnswer(o)} accessibilityRole="button" accessibilityLabel={g.guess ? traduire("Non, {0}", o) : o} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: P.line2, backgroundColor: P.paper, justifyContent: 'center', flexShrink: 1 }}>
@@ -1026,10 +1024,7 @@ function TwinCard({ twin, linked, open, onLink, onNew, onUndo }: { twin: Trainin
         </Pressable>
       ) : (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          <Pressable onPress={onLink} accessibilityRole="button" accessibilityLabel={traduire("Relier à cette séance")} style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, backgroundColor: P.primary, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Icon name="check" size={16} color={P.onPrimary} />
-            <Ink size={14} weight="extraBold" color={P.onPrimary}>Relier</Ink>
-          </Pressable>
+          <BoutonPrincipal onPress={onLink} haptique="light" accessibilityLabel={traduire("Relier à cette séance")} label="Relier" hauteur={44} rayon={14} tailleTexte={14} lignes={1} compact styleBouton={{ paddingHorizontal: 16, gap: 6 }} icone={(col) => <Icon name="check" size={16} color={col} />} />
           <Pressable onPress={onNew} accessibilityRole="button" accessibilityLabel={traduire("Créer une autre séance")} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: P.line2, backgroundColor: P.paper, justifyContent: 'center' }}>
             <Ink size={14} weight="bold">{traduire("C’est une autre séance")}</Ink>
           </Pressable>

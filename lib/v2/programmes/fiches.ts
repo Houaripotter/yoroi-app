@@ -502,7 +502,7 @@ export const FICHES_EXO: Record<string, FicheExo> = {
     ],
     erreurs: [
       'Décoller les coudes du pupitre pour monter.',
-      'S’arrêter à mi-chemin en bas du mouvement.',
+      'S’arrêter à mi course en bas du mouvement.',
     ],
     securite: 'Ne laisse jamais la charge tomber bras tendus : le coude est en position fragile en bas.',
   },
@@ -1629,7 +1629,7 @@ export const FICHES_EXO: Record<string, FicheExo> = {
       'Serrer avec la paume au lieu des doigts.',
       'Prendre des disques trop lourds dès le début.',
     ],
-    securite: 'Tiens les disques au-dessus du sol, pas au-dessus de tes pieds.',
+    securite: 'Tiens les disques à côté de tes pieds, jamais à leur aplomb.',
   },
   'Traversée de Disques (Pince)': {
     consignes: [
@@ -1653,12 +1653,12 @@ export const FICHES_EXO: Record<string, FicheExo> = {
       'Laisser l’haltère glisser dans le creux de la main.',
       'Hausser les épaules pendant la tenue.',
     ],
-    securite: 'Tiens les haltères au-dessus du sol, jamais au-dessus de tes pieds.',
+    securite: 'Tiens les haltères à côté de tes pieds, jamais à leur aplomb.',
   },
   'Suspension Serviette': {
     consignes: [
-      'Passe une serviette ou une veste de kimono par-dessus la barre de traction.',
-      'Saisis les deux pans à pleines mains et suspends-toi, bras tendus.',
+      'Passe une serviette ou une veste de kimono sur la barre de traction.',
+      'Saisis les deux pans à pleines mains et reste suspendu, bras tendus.',
       'Tiens le temps prévu en respirant calmement, puis redescends en douceur.',
     ],
     erreurs: [
