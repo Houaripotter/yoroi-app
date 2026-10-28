@@ -90,17 +90,22 @@ export function outilsAccueil(): Outil[] {
  * ligne principale en 15 ; la pastille Beta quitte la ligne du titre et se pose a cheval sur le bord haut de la carte
  * (PastilleBeta.tsx) : la carte ne coupe plus rien (le clip est sur une boite interieure), la rangee garde 16 points
  * en haut pour la pastille et son ombre. Version d'avant : _archive_ancien_design_2026-10-09/accueil_compact_2026-10-28.
+ * 28 octobre 2026, soir (Houari : « resserre les cartes outils ») : 148 sur 96, meme sticker de 52 et meme texte ; le
+ * sticker remonte a 6 du haut, la rangee garde 8 points sous elle au lieu de 12 (la place de l ombre douce de la carte Records). La ligne au dessus de la principale
+ * (le nom du record) s'arrete avant le sticker. Version d'avant : _archive_ancien_design_2026-10-09/carte_poids_v3_2026-10-28.
  */
 const CARTE_L = 148;
-const CARTE_H = 112;
+const CARTE_H = 96;
 const MARGE = 12;
 const STICKER = 52;
-const STICKER_HAUT = 8;
+const STICKER_HAUT = 6;
 const STICKER_DROITE = 6;
 /** la place laissee en haut de la rangee pour ce qui depasse de la pastille Beta (12) et son ombre ; les cartes commencent 6 points sous le haut de la rangee d'avant, la pastille reste a 6 points de Ton poids */
 const HAUT_RANGEE = 16;
 /** la colonne du titre s'arrete avant le sticker, avec 6 points d'air */
 const TITRE_L = CARTE_L - MARGE - STICKER_DROITE - STICKER - 6;
+/** la ligne au dessus de la principale (le nom du record) est a la hauteur du bas du sticker : elle s'arrete avant lui */
+const SOUS_L = CARTE_L - MARGE - STICKER_DROITE - STICKER - 4;
 
 /** Deux cartes a partager en eventail : l'apercu de Partager */
 function ApercuPartage() {
@@ -204,7 +209,7 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
         horizontal
         showsHorizontalScrollIndicator={false}
         style={{ marginHorizontal: -16, marginTop: 6 - HAUT_RANGEE }}
-        contentContainerStyle={{ paddingLeft: 16, paddingRight: 16, paddingTop: HAUT_RANGEE, paddingBottom: 12, gap: 10 }}
+        contentContainerStyle={{ paddingLeft: 16, paddingRight: 16, paddingTop: HAUT_RANGEE, paddingBottom: 8, gap: 10 }}
         accessibilityLabel={traduire("Tes outils")}
       >
         {outils.map((o) => {
@@ -262,7 +267,7 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
                     {/* la ligne principale, en bas a gauche : meme marge et meme ligne de base partout */}
                     <View style={{ marginTop: 'auto' }}>
                       {sous ? (
-                        <Ink size={11.5} weight="bold" color={douce} numberOfLines={1} style={{ lineHeight: 15, marginBottom: 1 }}>
+                        <Ink size={11.5} weight="bold" color={douce} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ lineHeight: 15, marginBottom: 1, maxWidth: SOUS_L }}>
                           {sous}
                         </Ink>
                       ) : null}

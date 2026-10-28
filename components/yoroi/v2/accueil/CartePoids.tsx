@@ -37,7 +37,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView as PagesScroll } from 'react-native-gesture-handler';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { useRouter } from 'expo-router';
-import Svg, { Circle, Defs, Ellipse, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Path, Rect } from 'react-native-svg';
+import { AnneauPierres, CheminPierres } from '@/components/yoroi/v2/charts/CheminPierres';
+import { couleurEtape, paliersDuChemin, PIERRES_CHEMIN, pierreEnCours } from '@/lib/v2/pesee/cheminPierres';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { CourbePoids, POIDS } from '@/components/yoroi/v2/charts/CourbePoids';
 import type { ScrubPoids } from '@/components/yoroi/v2/charts/CourbePoids';
@@ -189,8 +191,8 @@ function SegmentsPeriode({ value, onChange, options }: { value: number; onChange
   );
 }
 
-/** 27 octobre 2026 nuit : la hauteur des petites pastilles sous ton poids */
-const HAUT_PASTILLE = 26;
+/** 27 octobre 2026 nuit : la hauteur des petites pastilles sous ton poids ; 28 octobre 2026 : 22 au lieu de 26 */
+const HAUT_PASTILLE = 22;
 
 /** Fond et texte d'une pastille de la page 1, lisibles (AA) en clair et en sombre */
 function teintePastille(ton: Statut['ton'], sombre: boolean): { fond: string; texte: string } {
@@ -217,43 +219,6 @@ type Props = {
   onPage?: (page: number) => void;
 };
 
-/**
- * 27 octobre 2026 soir (Houari : « la page 1 fait doublon ») : l'anneau du chemin en haut a droite de la page 1,
- * 62 points (la place prevue pour les citrouilles et les sapins), ton torii au centre ; le pourcentage est ecrit en toutes
- * lettres juste dessous (« 86 % du chemin »), il n'est donc plus repete dans l'anneau.
- */
-// 28 octobre 2026 (version C « chemin de pierres », choisie par Houari) : l'anneau decoupe en 4 arcs, des couleurs des
-// 4 pierres de la barre ; chaque arc se remplit a mesure que tu avances dans sa pierre. Ancienne version (un seul arc
-// violet) : _archive_ancien_design_2026-10-09/accueil_compact_2026-10-28/CartePoids.tsx.
-function AnneauChemin({ part }: { part: number }) {
-  const T = 44;
-  const r = 17.1;
-  const ep = 4.9;
-  const tour = 2 * Math.PI * r;
-  const quart = tour / 4;
-  // 7 points de jour entre deux arcs (les bouts arrondis compris)
-  const arc = quart - 7;
-  const p = Math.max(0, Math.min(1, part));
-  const sombre = paletteSombre();
-  return (
-    <View style={{ width: T, height: T, alignItems: 'center', justifyContent: 'center' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Svg width={T} height={T} style={{ position: 'absolute' }}>
-        {PIERRES_CHEMIN.map((pi, i) => {
-          const loc = Math.max(0, Math.min(1, (p - i * 0.25) / 0.25));
-          const rot = `rotate(${-90 + i * 90 + 6} ${T / 2} ${T / 2})`;
-          return (
-            <React.Fragment key={i}>
-              <Circle cx={T / 2} cy={T / 2} r={r} stroke={sombre ? pi.paleSombre : pi.pale} strokeWidth={ep} fill="none" strokeLinecap="round" strokeDasharray={`${arc} ${tour}`} transform={rot} />
-              {loc > 0 ? <Circle cx={T / 2} cy={T / 2} r={r} stroke={pi.plein} strokeWidth={ep} fill="none" strokeLinecap="round" strokeDasharray={`${arc * loc} ${tour}`} transform={rot} /> : null}
-            </React.Fragment>
-          );
-        })}
-      </Svg>
-      <ToriiImage width={18} />
-    </View>
-  );
-}
-
 /** 27 octobre 2026 soir : la carte en blanc pur, un voile lilas pastel en haut qui s'efface vers le blanc */
 // 27 octobre 2026 nuit : un arret au milieu (le voile s'efface en douceur) et le bord blanc de 5 autour
 export const VOILE_CARTE_POIDS = { clair: '#E9E4FF', clairMilieu: '#F3F0FF', sombre: '#262449', sombreMilieu: '#20223A', hauteur: 150, bord: 5 } as const;
@@ -261,144 +226,26 @@ export const VOILE_CARTE_POIDS = { clair: '#E9E4FF', clairMilieu: '#F3F0FF', som
 const CARTE_POIDS_RAYON = 28;
 
 /** La partie fixe de la page courbe autour de la courbe (titre, panneau, periodes), pour caler sa hauteur sur la page 1 */
-const CHROME_PAGE_COURBE = 102;
-const COURBE_MIN = 136;
+// 28 octobre 2026 (v3) : mesuree sur la page (titre, panneau, periodes : 120 points), puis relue a chaque mise en page ;
+// la page 1 plus compacte, la courbe descend jusqu a 76 (torii atteint, sans pastille) : pas de vide sous ton chemin
+const CHROME_PAGE_COURBE = 120;
+const COURBE_MIN = 76;
 const COURBE_MAX = 196;
-/** Les paliers du chemin : 25, 50, 75 et 100 % (le dernier, ton objectif, porte le torii) */
-export const PALIERS_CHEMIN = [0.25, 0.5, 0.75, 1] as const;
+/**
+ * 28 octobre 2026 : le chemin (paliers, couleurs, mesures) a une seule source, lib/v2/pesee/cheminPierres.ts, et un seul
+ * dessin, components/yoroi/v2/charts/CheminPierres.tsx (aussi utilise par Progres). Ces noms restent exportes d'ici.
+ */
+export { PALIERS_CHEMIN, paliersDuChemin, PIERRES_CHEMIN, BARRE_PIERRES, pierreEnCours } from '@/lib/v2/pesee/cheminPierres';
 
 /**
- * Decoupage en paliers, pour l'affichage seulement : le poids de chaque palier entre ton debut et ton objectif,
- * s'il est franchi (ta part du chemin l'a atteint) et le prochain a franchir, avec ce qu'il reste jusqu'a lui.
+ * 28 octobre 2026 (v3) : la ligne du haut de la page 1 : la colonne « TON POIDS / HIER » de 78 au plus, l'anneau de 38,
+ * 5 points entre le pourcentage et l'anneau. Memes valeurs que CARTE_PASTEL de la geometrie de l'accueil (verifie par
+ * le test), ou le decor pose par dessus la carte se cale sans que la carte le connaisse.
  */
-export function paliersDuChemin(depart: number, objectif: number, actuel: number, part: number): { part: number; kg: number; franchi: boolean }[] & { prochain?: { kg: number; encore: number; dernier: boolean } | null } {
-  const l = PALIERS_CHEMIN.map((f) => ({ part: f, kg: Math.round((depart + (objectif - depart) * f) * 10) / 10, franchi: part >= f - 1e-6 }));
-  const suivant = l.find((x) => !x.franchi);
-  return Object.assign(l, { prochain: suivant ? { kg: suivant.kg, encore: Math.max(0, Math.round(Math.abs(actuel - suivant.kg) * 10) / 10), dernier: suivant.part === 1 } : null });
-}
+const TETE = { titre: 78, anneau: 38, ecartAnneau: 5 } as const;
 
-/**
- * 28 octobre 2026 (version C « chemin de pierres », choisie par Houari, maquette Barre-C) : les 4 pierres pastel du
- * chemin, une par quart (menthe, bleu, lilas, peche). plein : la pierre remplie ; pale : la pierre a venir (clair, sombre) ;
- * texte : le chiffre du palier franchi et la pastille « Prochain palier » de la pierre en cours (clair, sombre).
- */
-export const PIERRES_CHEMIN = [
-  { plein: '#8FD9B6', pale: '#D3EFE1', paleSombre: '#1F3A31', texte: '#1C6B45', texteSombre: '#8FD9B6' },
-  { plein: '#9FB3F7', pale: '#D9E2FC', paleSombre: '#232D4D', texte: '#2F50B8', texteSombre: '#A9BCFA' },
-  { plein: '#C9B3E6', pale: '#E7DCF4', paleSombre: '#33294A', texte: '#6E3F8E', texteSombre: '#D3BFEE' },
-  { plein: '#F4A38C', pale: '#FBDCD1', paleSombre: '#43282A', texte: '#B8432F', texteSombre: '#F6B09C' },
-] as const;
-
-/** Mesures de la barre : pierres de 11, jour de 14 autour de chaque lanterne, lanterne de 19 sur 27, torii de 26 */
-export const BARRE_PIERRES = { hauteur: 32, pierre: 11, jour: 14, lanterneL: 19, lanterneH: 27, torii: 26, chiffres: 16, ecartChiffres: 3 } as const;
-
-/** La pierre en cours (0 a 3) pour une part du chemin : celle du prochain palier a franchir */
-export function pierreEnCours(part: number): number {
-  return Math.max(0, Math.min(3, Math.floor(Math.max(0, part) / 0.25 + 1e-6)));
-}
-
-/** Une lanterne de pierre : grise tant que le palier n'est pas franchi, ambre allumee (avec son halo) ensuite */
-function LanternePalier({ allumee, sombre, id }: { allumee: boolean; sombre: boolean; id: string }) {
-  const corps = allumee ? '#F4C27A' : sombre ? '#3E4466' : '#DCDDEB';
-  const chapeau = allumee ? '#8A5A2B' : sombre ? '#5A6088' : '#A3A7BF';
-  const contour = sombre ? '#1A1E29' : '#FFFFFF';
-  return (
-    <Svg width={BARRE_PIERRES.lanterneL} height={BARRE_PIERRES.lanterneH} viewBox="0 0 24 34" style={{ overflow: 'visible' }}>
-      {allumee ? (
-        <>
-          <Defs>
-            <RadialGradient id={id} cx="50%" cy="50%" r="50%">
-              <Stop offset="0" stopColor="#F6C46A" stopOpacity={0.75} />
-              <Stop offset="1" stopColor="#F6C46A" stopOpacity={0} />
-            </RadialGradient>
-          </Defs>
-          <Ellipse cx={12} cy={17} rx={11} ry={12} fill={`url(#${id})`} opacity={0.9} />
-        </>
-      ) : null}
-      <Path d="M12 0V5" stroke={chapeau} strokeWidth={2} strokeLinecap="round" />
-      <Rect x={6} y={4} width={12} height={4} rx={1.5} fill={chapeau} />
-      <Rect x={3} y={7} width={18} height={21} rx={8} fill={corps} stroke={contour} strokeWidth={2} />
-      {allumee ? (
-        <>
-          <Path d="M7 13H17M7 18H17M7 23H17" stroke="#FFFFFF" strokeWidth={1.2} opacity={0.55} />
-          <Ellipse cx={9} cy={13} rx={2.2} ry={3.4} fill="#FFFFFF" opacity={0.55} />
-        </>
-      ) : (
-        <Path d="M7 13H17M7 18H17M7 23H17" stroke={sombre ? '#4E5578' : '#C7C9DA'} strokeWidth={1.2} />
-      )}
-      <Rect x={6} y={27} width={12} height={4} rx={1.5} fill={chapeau} />
-    </Svg>
-  );
-}
-
-/**
- * La barre du chemin en 4 pierres pastel separees qui se remplissent a mesure que tu avances, une lanterne a chaque
- * palier (grise, puis ambre allumee une fois franchi), le torii vermillon au bout ; les kilos dessous, chaque palier
- * franchi dans la couleur de sa pierre, ton objectif toujours dans celle de la derniere.
- */
-function BarrePaliers({ depart, objectif, part, atteint, fg2 }: { depart: number; objectif: number; part: number; atteint: boolean; fg2: string }) {
-  const sombre = paletteSombre();
-  const l = paliersDuChemin(depart, objectif, depart, atteint ? 1 : part);
-  const p = Math.max(0, Math.min(1, atteint ? 1 : part));
-  const B = BARRE_PIERRES;
-  const marge = B.torii / 2 - 1;
-  const demiJour = B.jour / 2;
-  return (
-    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <View style={{ height: B.hauteur, marginHorizontal: marge }}>
-        {PIERRES_CHEMIN.map((pi, i) => {
-          const loc = Math.max(0, Math.min(1, (p - i * 0.25) / 0.25));
-          return (
-            <View key={i} style={{ position: 'absolute', left: `${i * 25}%`, width: '25%', top: (B.hauteur - B.pierre) / 2, height: B.pierre, paddingLeft: i === 0 ? 0 : demiJour, paddingRight: demiJour }}>
-              <View style={{ flex: 1, borderRadius: B.pierre / 2, backgroundColor: sombre ? pi.paleSombre : pi.pale, overflow: 'hidden' }}>
-                {loc > 0 ? (
-                  <View style={{ width: `${Math.round(loc * 1000) / 10}%`, height: B.pierre, borderRadius: B.pierre / 2, backgroundColor: pi.plein }}>
-                    {/* le reflet clair sur le haut de la pierre */}
-                    <View style={{ position: 'absolute', left: 3, right: 3, top: 1.5, height: 2, borderRadius: 1, backgroundColor: 'rgba(255,255,255,0.45)' }} />
-                  </View>
-                ) : null}
-              </View>
-            </View>
-          );
-        })}
-        {l.map((x) =>
-          x.part === 1 ? (
-            <View key={x.part} style={{ position: 'absolute', left: '100%', marginLeft: -B.torii / 2, top: (B.hauteur - B.torii) / 2, width: B.torii, height: B.torii, alignItems: 'center', justifyContent: 'center' }}>
-              <ToriiImage width={B.torii} />
-            </View>
-          ) : (
-            <View key={x.part} style={{ position: 'absolute', left: `${x.part * 100}%`, marginLeft: -B.lanterneL / 2, top: (B.hauteur - B.lanterneH) / 2, width: B.lanterneL, height: B.lanterneH }}>
-              <LanternePalier allumee={x.franchi} sombre={sombre} id={`lanterne-palier-${Math.round(x.part * 100)}`} />
-            </View>
-          ),
-        )}
-      </View>
-      {/* les kilos : ton debut a gauche, chaque palier sous sa lanterne, ton objectif sous le torii */}
-      <View style={{ height: B.chiffres, marginHorizontal: marge, marginTop: B.ecartChiffres }}>
-        <Ink size={11.5} weight="bold" color={fg2} numberOfLines={1} style={{ position: 'absolute', left: -marge, width: 60, fontVariant: ['tabular-nums'] }}>
-          {formatKg(depart)}
-        </Ink>
-        {l.map((x, i) => {
-          const pi = PIERRES_CHEMIN[i];
-          const fort = x.franchi || x.part === 1;
-          const couleur = fort ? (sombre ? pi.texteSombre : pi.texte) : fg2;
-          return (
-            <Ink
-              key={x.part}
-              size={11.5}
-              weight={x.part === 1 ? 'black' : fort ? 'extraBold' : 'bold'}
-              color={couleur}
-              numberOfLines={1}
-              style={[{ fontVariant: ['tabular-nums'] }, x.part === 1 ? { position: 'absolute', right: -marge, width: 60, textAlign: 'right' } : { position: 'absolute', left: `${x.part * 100}%`, marginLeft: -30, width: 60, textAlign: 'center' }]}
-            >
-              {formatKg(x.kg)}
-            </Ink>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
+/** 28 octobre 2026 : la hauteur de la pastille Objectif, sur la ligne du titre du chemin */
+const HAUT_OBJECTIF = 26;
 
 /** Les petits points de pagination du carrousel */
 function PointsPages({ nb, page, couleur, inactif }: { nb: number; page: number; couleur: string; inactif: string }) {
@@ -424,6 +271,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
   const [largeurCarte, setLargeurCarte] = useState(largeur - 32);
   // 27 octobre 2026 soir : la hauteur mesuree de la page 1, pour caler la courbe de la page 2 dessus
   const [hautPage1, setHautPage1] = useState(0);
+  const [chromeCourbe, setChromeCourbe] = useState(CHROME_PAGE_COURBE);
   const pagesRef = useRef<React.ElementRef<typeof PagesScroll>>(null);
   useEffect(() => {
     onPage?.(page);
@@ -790,7 +638,6 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
   // #E8ECFF se confondait avec le fond de l'app. Memes calculs qu'avant.
   const fg = P.ink;
   const fg2 = P.ink2;
-  const fg3 = P.muted;
   const chiffreC = theme.colors.accentText;
   const sombre = paletteSombre();
   const lilas = sombre ? '#2C2A55' : '#EEEBFF';
@@ -799,7 +646,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
   const pageVue = Math.min(page, nbPages - 1);
   const W = Math.max(1, largeurCarte);
   // la courbe prend la hauteur laissee par la page 1, entre 136 et 196 points : pas de grand vide sous la courbe
-  const hCourbe = Math.round(Math.max(COURBE_MIN, Math.min(COURBE_MAX, hautPage1 - CHROME_PAGE_COURBE - (fond ? 4 : 0))));
+  const hCourbe = Math.round(Math.max(COURBE_MIN, Math.min(COURBE_MAX, hautPage1 - chromeCourbe)));
 
   // 27 octobre 2026 nuit (Houari : « fais moi un beau truc ») : les chiffres de ton poids dans le violet de la carte
   // (POIDS.softText, celui de l'anneau et du voile lilas, AA sur le voile), la virgule et « kg » en encre neutre.
@@ -815,19 +662,24 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
   const variation = etat.variation;
   const versDebut = variation != null && goal !== null && mode !== 'maintien' && ((lossGoal && variation < 0) || (!lossGoal && variation > 0));
   const tDebut = teintePastille(follow && scrub ? 'gris' : versDebut ? 'vert' : 'gris', sombre);
+  // 28 octobre 2026 (maquette Carte2) : la pastille plus petite, « 6,8 kg perdus » quand tu as perdu depuis ton debut
   const pastilleDebut = (
-    <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: HAUT_PASTILLE, paddingHorizontal: 10, paddingVertical: 4, borderRadius: HAUT_PASTILLE / 2, backgroundColor: tDebut.fond, maxWidth: '100%' }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: HAUT_PASTILLE, paddingHorizontal: 8, paddingVertical: 3, borderRadius: HAUT_PASTILLE / 2, backgroundColor: tDebut.fond, maxWidth: '100%' }}>
       {follow && scrub ? (
         ligneEcart(fg2, POIDS.softText, POIDS.capText, fg)
-      ) : variation != null && Math.abs(variation) >= 0.05 ? (
-        <Ink size={12.5} weight="bold" color={tDebut.texte} style={{ flexShrink: 1 }}>
-          <Ink size={12.5} weight="black" color={tDebut.texte}>
-            {`${variation < 0 ? '−' : '+'}${formatKg(Math.abs(variation))} kg`}
+      ) : variation != null && variation <= -0.05 ? (
+        <Ink size={11.5} weight="extraBold" color={tDebut.texte} style={{ flexShrink: 1 }}>
+          {traduire('{0} kg perdus', formatKg(Math.abs(variation)))}
+        </Ink>
+      ) : variation != null && variation >= 0.05 ? (
+        <Ink size={11.5} weight="bold" color={tDebut.texte} style={{ flexShrink: 1 }}>
+          <Ink size={11.5} weight="black" color={tDebut.texte}>
+            {`+${formatKg(Math.abs(variation))} kg`}
           </Ink>
           {` ${PERIODE_TEXTE[PERIODE_PLAN]}`}
         </Ink>
       ) : variation != null ? (
-        <Ink size={12.5} weight="bold" color={tDebut.texte} style={{ flexShrink: 1 }}>
+        <Ink size={11.5} weight="bold" color={tDebut.texte} style={{ flexShrink: 1 }}>
           {traduire("stable {0}", PERIODE_TEXTE[PERIODE_PLAN])}
         </Ink>
       ) : (
@@ -855,24 +707,64 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
     return { fort, n: `${n} kg`, avant: i < 0 ? texte : texte.slice(0, i), apres: i < 0 ? '' : texte.slice(i + n.length + 3), trouve: i >= 0 };
   })() : null;
 
-  // Page 1 : ton poids en tete (l'ancienne page Ton poids), puis ton chemin en paliers et ton objectif
+  // Page 1, 28 octobre 2026 (maquette Carte2, mise en page A et couleurs C, choisies par Houari) : une seule ligne en
+  // tete (« Ton poids, hier » a gauche, ton poids au centre, le pourcentage et l'anneau a droite), l'alerte balance en
+  // petit « ! » colle au poids (l'explication complete au toucher), les pastilles plus petites sur une ligne, puis ton
+  // chemin avec la pastille « Objectif » a crayon sur la ligne de son titre (elle ouvre la feuille de Changer).
+  // Version d'avant : _archive_ancien_design_2026-10-09/carte_poids_v3_2026-10-28/CartePoids.tsx.
+  const couleurPoids = chemin ? couleurEtape(chemin.part, atteint, sombre) : violet;
+  // « Objectif 80 kg » (pas « 80,0 ») quand ton objectif est un nombre rond
+  const kgCible = goal !== null ? (Math.abs(goal - Math.round(goal)) < 0.05 ? String(Math.round(goal)) : formatKg(goal)) : null;
+  const pastilleObjectif = objectifTxt && kgCible ? (
+    <TourAnchor id="accueil.objectif">
+      <Press onPress={() => setFeuille({ quoi: null })} haptic="light" hitSlop={6} accessibilityRole="button" accessibilityLabel={traduire("Ton objectif : {0}{1}. Changer ton début, ton objectif ou ta date du cap", objectifTxt, plan.torii ? `, date du cap le ${jourCourt(plan.torii)}` : '')}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: HAUT_OBJECTIF, paddingHorizontal: 10, borderRadius: HAUT_OBJECTIF / 2, backgroundColor: lilas }}>
+          <Svg width={11} height={11} viewBox="0 0 24 24" fill="none">
+            <Path d="M4 20l4 -1l11 -11l-3 -3l-11 11z" stroke={chiffreC} strokeWidth={2.8} strokeLinecap="round" strokeLinejoin="round" />
+          </Svg>
+          <Ink size={12} weight="extraBold" color={chiffreC} numberOfLines={1}>
+            {traduire('Objectif {0} kg', kgCible)}
+          </Ink>
+        </View>
+      </Press>
+    </TourAnchor>
+  ) : null;
+  const pastilleAlerte = alerte && eauTxt ? (
+    <Press onPress={() => appAlert(traduire('Ta tendance'), eauTxt)} haptic="light" accessibilityRole="button" accessibilityLabel={eauTxt} accessibilityHint={traduire("Voir le détail")} hitSlop={10}>
+      <View style={{ width: 20, height: 20, borderRadius: 10, marginLeft: 4, backgroundColor: alerte.fort ? (sombre ? '#3D3010' : '#FFF0C9') : sombre ? '#2E2A55' : '#E6E1FF', alignItems: 'center', justifyContent: 'center' }}>
+        <Ink size={12} weight="black" color={alerte.fort ? (sombre ? '#F2C46B' : '#7A5200') : violet} style={{ lineHeight: 14 }}>
+          {alerte.fort ? '!' : 'i'}
+        </Ink>
+      </View>
+    </Press>
+  ) : null;
   const pageUne = (
     <View
-      style={{ width: W, alignSelf: 'flex-start', paddingHorizontal: 16, paddingTop: 11, paddingBottom: 0, gap: 7 }}
+      style={{ width: W, alignSelf: 'flex-start', paddingHorizontal: 16, paddingTop: 11, paddingBottom: 0, gap: 6 }}
       onLayout={(e) => {
         const h = e.nativeEvent.layout.height;
         if (h > 0 && Math.abs(h - hautPage1) > 1) setHautPage1(h);
       }}
     >
-      <Press onPress={openDetail} haptic="light" accessibilityRole="button" accessibilityLabel={traduire("{0}. Voir le détail", [a11y, texteStatut].filter(Boolean).join(', '))}>
-        {/* le titre et ton poids a gauche, l'anneau du chemin a droite ; le creux entre les deux accueille les citrouilles et les sapins */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-          <View style={{ flexShrink: 1, minWidth: 0 }}>
-            <Ink size={11} weight="black" color={P.indigo} style={{ letterSpacing: 1.4 }}>
-              {(isToday ? traduire('Ton poids') : `${traduire('Ton poids')}, ${relativeDay(last.date)}`).toUpperCase()}
-            </Ink>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5, marginTop: 2 }}>
-              <Ink size={30} weight="black" tight numberOfLines={1} color={violet} style={{ fontVariant: ['tabular-nums'], lineHeight: 33 }}>
+      <Press onPress={openDetail} haptic="light" accessibilityRole="button" accessibilityLabel={traduire("{0}. Voir le détail", [a11y, texteStatut, alerte && eauTxt ? eauTxt : null].filter(Boolean).join(', '))}>
+        {/* une seule ligne : le titre a gauche, ton poids au centre, le pourcentage et l'anneau a droite ; les deux
+            colonnes du bord ont la meme largeur, le poids est donc au centre exact de la carte */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: TETE.anneau }}>
+          {/* la colonne du titre calee en bas de la ligne : la toile du coin (Halloween) reste au dessus d'elle */}
+          <View style={{ flex: 1, minWidth: 0, alignSelf: 'stretch', justifyContent: 'flex-end' }}>
+            <View style={{ maxWidth: TETE.titre }}>
+              <Ink size={10.5} weight="black" color={P.indigo} numberOfLines={1} style={{ letterSpacing: 1.2, lineHeight: 13 }}>
+                {traduire('Ton poids').toUpperCase()}
+              </Ink>
+              {/* le jour un cran plus petit : « AUJOURD’HUI » tient sur sa ligne sans etre coupe au milieu du mot */}
+              <Ink size={9.5} weight="black" color={fg2} numberOfLines={2} style={{ letterSpacing: 0, lineHeight: 13 }}>
+                {(isToday ? traduire('aujourd’hui') : relativeDay(last.date)).toUpperCase()}
+              </Ink>
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 3 }}>
+              <Ink size={30} weight="black" tight numberOfLines={1} color={couleurPoids} style={{ fontVariant: ['tabular-nums'], lineHeight: 33 }}>
                 {entier}
                 {decimales ? (
                   <Ink size={30} weight="black" tight color={fg}>
@@ -881,90 +773,93 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
                 ) : null}
                 {decimales}
               </Ink>
-              <Ink size={15} weight="extraBold" color={fg}>
+              <Ink size={14} weight="extraBold" color={fg}>
                 {'kg'}
               </Ink>
             </View>
+            {pastilleAlerte}
           </View>
-          {chemin ? (
-            <View style={{ alignItems: 'center', gap: 2 }}>
-              <AnneauChemin part={chemin.part} />
-              <Ink size={12} weight="black" color={chiffreC} numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }}>
-                {`${Math.round(chemin.part * 100)} %`}
-              </Ink>
-            </View>
-          ) : null}
+          <View style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: TETE.ecartAnneau }}>
+            {chemin ? (
+              <>
+                <Ink size={12} weight="black" color={chiffreC} numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }}>
+                  {`${Math.round(chemin.part * 100)} %`}
+                </Ink>
+                <AnneauPierres part={chemin.part} taille={TETE.anneau} />
+              </>
+            ) : null}
+          </View>
         </View>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 6 }}>
+        {/* les pastilles plus petites, centrees sur une ligne (a la ligne seulement si la langue est trop longue) */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 5, marginTop: 5 }}>
           {pastilleDebut}
           {texteStatut && tStatut ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: HAUT_PASTILLE, paddingHorizontal: 10, paddingVertical: 4, borderRadius: HAUT_PASTILLE / 2, backgroundColor: tStatut.fond, maxWidth: '100%' }}>
-              <Ink size={12.5} weight="extraBold" color={tStatut.texte} style={{ flexShrink: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: HAUT_PASTILLE, paddingHorizontal: 8, paddingVertical: 3, borderRadius: HAUT_PASTILLE / 2, backgroundColor: tStatut.fond, maxWidth: '100%' }}>
+              <Ink size={11.5} weight="extraBold" color={tStatut.texte} style={{ flexShrink: 1 }}>
                 {texteStatut}
               </Ink>
             </View>
           ) : null}
         </View>
       </Press>
-      {alerte && eauTxt ? (
-        <Press onPress={() => appAlert(traduire('Ta tendance'), eauTxt)} haptic="light" accessibilityRole="button" accessibilityLabel={eauTxt} accessibilityHint={traduire("Voir le détail")} hitSlop={6}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: -1 }}>
-            <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: alerte.fort ? (sombre ? '#4A3710' : '#FFE2A1') : sombre ? '#2E2A55' : '#E6E1FF', alignItems: 'center', justifyContent: 'center' }}>
-              <Ink size={11} weight="black" color={alerte.fort ? (sombre ? '#F2C46B' : '#8A5A00') : violet} style={{ lineHeight: 13 }}>
-                {alerte.fort ? '!' : 'i'}
-              </Ink>
-            </View>
-            <Ink size={12} weight="bold" color={fg3} style={{ flexShrink: 1, lineHeight: 16 }}>
-              {alerte.avant}
-              {alerte.trouve ? (
-                <Ink size={12} weight="black" color={alerte.fort ? POIDS.or : fg2}>
-                  {alerte.n}
-                </Ink>
-              ) : null}
-              {alerte.apres}
-            </Ink>
-          </View>
-        </Press>
-      ) : null}
       {chemin ? (
-        <Press onPress={openDetail} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("{0}{1}. Voir le détail de ton poids", atteint ? traduire('Torii atteint') : traduire("{0} % du chemin, encore {1} kilos", Math.round(chemin.part * 100), formatKg(chemin.reste)), arrivee ? traduire(", arrivée prévue {0}", arrivee) : '')}>
-          <View style={{ gap: 5, paddingTop: 7, borderTopWidth: 1, borderColor: P.line2 }}>
-            {/* le titre sur sa ligne, la date sur la sienne : rien n'est jamais coupe */}
-            <View style={{ gap: 1 }}>
-              <Ink size={atteint ? 16 : 18} weight="black" tight color={chiffreC}>
-                {atteint ? traduire('Torii atteint') : traduire("{0} % du chemin", Math.round(chemin.part * 100))}
-              </Ink>
-              {arrivee ? (
-                <Ink size={12.5} weight="bold" color={fg2}>
-                  {`${plan.choisie ? traduire('ta date du cap') : traduire('arrivée prévue')} ${arrivee}`}
+        <View style={{ gap: 4, paddingTop: 7, borderTopWidth: 1, borderColor: P.line2 }}>
+          {/* le titre du chemin et sa date a gauche, la pastille Objectif a droite, sur la meme ligne */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <Press onPress={openDetail} haptic="none" style={{ flexShrink: 1 }} accessibilityRole="button" accessibilityLabel={traduire("{0}{1}. Voir le détail de ton poids", atteint ? traduire('Torii atteint') : traduire("{0} % du chemin, encore {1} kilos", Math.round(chemin.part * 100), formatKg(chemin.reste)), arrivee ? traduire(", arrivée prévue {0}", arrivee) : '')}>
+              <View style={{ gap: 0 }}>
+                <Ink size={16} weight="black" tight color={chiffreC} style={{ lineHeight: 20 }}>
+                  {atteint ? traduire('Torii atteint') : traduire("{0} % du chemin", Math.round(chemin.part * 100))}
                 </Ink>
-              ) : null}
-            </View>
-            {/* 27 octobre 2026 soir (Houari : « des paliers qui donnent envie ») : la barre en 4 paliers, le torii au bout */}
-            {goal !== null ? <BarrePaliers depart={start} objectif={goal} part={chemin.part} atteint={atteint} fg2={fg2} /> : null}
-            {(() => {
-              const pr = goal !== null && !atteint ? paliersDuChemin(start, goal, last.value, chemin.part).prochain : null;
-              if (!pr) return null;
-              // 28 octobre 2026 (version C) : la pastille prend la couleur de la pierre en cours
-              const pi = PIERRES_CHEMIN[pierreEnCours(chemin.part)];
-              const fondP = sombre ? pi.paleSombre : pi.pale;
-              const texteP = sombre ? pi.texteSombre : pi.texte;
+                {arrivee ? (
+                  <Ink size={11.5} weight="bold" color={fg2}>
+                    {`${plan.choisie ? traduire('ta date du cap') : traduire('arrivée prévue')} ${arrivee}`}
+                  </Ink>
+                ) : objectifTxt ? (
+                  // sans date d'arrivee (torii atteint) : ton objectif et ta perte, comme l'ancienne ligne « Ton objectif »
+                  <Ink size={11.5} weight="bold" color={fg2} numberOfLines={2}>
+                    {traduire("Ton objectif : {0}", objectifTxt)}
+                  </Ink>
+                ) : null}
+              </View>
+            </Press>
+            {pastilleObjectif}
+          </View>
+          <Press onPress={openDetail} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("Voir le détail de ton poids")}>
+            {goal !== null ? <CheminPierres depart={start} objectif={goal} part={chemin.part} atteint={atteint} fg2={fg2} idLanterne="accueil" /> : null}
+          </Press>
+          {(() => {
+            // la pastille prend la couleur de la pierre en cours
+            const pi = PIERRES_CHEMIN[pierreEnCours(chemin.part)];
+            const fondP = sombre ? pi.paleSombre : pi.pale;
+            const texteP = sombre ? pi.texteSombre : pi.texte;
+            // torii atteint (perte de poids) : la pastille doree dit ce que tu as perdu depuis ton debut
+            if (atteint && lossGoal && start - last.value >= 0.05) {
               return (
-                <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', minHeight: 26, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 13, backgroundColor: fondP, maxWidth: '100%' }}>
-                  <Ink size={12.5} weight="bold" color={texteP} style={{ flexShrink: 1 }}>
-                    {pr.dernier ? traduire('Dernier palier : ton objectif, ') : traduire('Prochain palier : {0} kg, ', formatKg(pr.kg))}
-                    <Ink size={12.5} weight="black" color={texteP}>
-                      {traduire('encore {0} kg', formatKg(pr.dernier ? chemin.reste : pr.encore))}
-                    </Ink>
+                <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', minHeight: HAUT_PASTILLE, paddingHorizontal: 10, paddingVertical: 3, borderRadius: HAUT_PASTILLE / 2, backgroundColor: fondP, maxWidth: '100%', marginTop: 2 }}>
+                  <Ink size={11.5} weight="black" color={texteP} style={{ flexShrink: 1 }}>
+                    {traduire('Cap atteint, {0} kg perdus', formatKg(start - last.value))}
                   </Ink>
                 </View>
               );
-            })()}
-          </View>
-        </Press>
+            }
+            const pr = goal !== null && !atteint ? paliersDuChemin(start, goal, last.value, chemin.part).prochain : null;
+            if (!pr) return null;
+            return (
+              <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', minHeight: HAUT_PASTILLE, paddingHorizontal: 10, paddingVertical: 3, borderRadius: HAUT_PASTILLE / 2, backgroundColor: fondP, maxWidth: '100%', marginTop: 2 }}>
+                <Ink size={11.5} weight="bold" color={texteP} style={{ flexShrink: 1 }}>
+                  {pr.dernier ? traduire('Dernier palier : ton objectif, ') : traduire('Prochain palier : {0} kg, ', formatKg(pr.kg))}
+                  <Ink size={11.5} weight="black" color={texteP}>
+                    {traduire('encore {0} kg', formatKg(pr.dernier ? chemin.reste : pr.encore))}
+                  </Ink>
+                </Ink>
+              </View>
+            );
+          })()}
+        </View>
       ) : goal === null ? (
         <Press onPress={() => router.push('/profile' as any)} accessibilityRole="button" accessibilityLabel={traduire("Fixer ton cap de poids")}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 12, borderTopWidth: 1, borderColor: P.line2 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 10, borderTopWidth: 1, borderColor: P.line2 }}>
             <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: lilas, alignItems: 'center', justifyContent: 'center' }}>
               <ToriiImage width={22} />
             </View>
@@ -977,28 +872,28 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
             <Icon name="chevron" size={15} color={fg2} width={2.6} />
           </View>
         </Press>
-      ) : null}
-      {objectifTxt ? (
-        <TourAnchor id="accueil.objectif">
-        <Press onPress={() => setFeuille({ quoi: null })} haptic="light" accessibilityRole="button" accessibilityLabel={traduire("Ton objectif : {0}{1}. Changer ton début, ton objectif ou ta date du cap", objectifTxt, plan.torii ? `, date du cap le ${jourCourt(plan.torii)}` : '')}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 8, borderTopWidth: 1, borderColor: P.line2 }}>
-            <Ink size={12.5} weight="bold" color={fg2} style={{ flexShrink: 1 }}>
-              {traduire("Ton objectif : {0}", objectifTxt)}
-            </Ink>
-            <View style={{ paddingHorizontal: 12, height: 28, borderRadius: 14, backgroundColor: lilas, justifyContent: 'center' }}>
-              <Ink size={12.5} weight="extraBold" color={chiffreC} numberOfLines={1}>
-                {traduire("Changer")}</Ink>
-            </View>
-          </View>
-        </Press>
-        </TourAnchor>
+      ) : objectifTxt ? (
+        // un objectif sans chemin (maintien) : la ligne de ton objectif reste, avec sa pastille
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 8, borderTopWidth: 1, borderColor: P.line2 }}>
+          <Ink size={12.5} weight="bold" color={fg2} style={{ flexShrink: 1 }}>
+            {traduire("Ton objectif : {0}", objectifTxt)}
+          </Ink>
+          {pastilleObjectif}
+        </View>
       ) : null}
     </View>
   );
 
   // Page 2 : ta courbe, sur son panneau, sans changement sur le fond ; le doigt ne la suit qu'apres un appui maintenu
   const pageDeLaCourbe = pageCourbe ? (
-    <View style={{ width: W, paddingTop: 16, paddingBottom: 6 }}>
+    <View
+      style={{ width: W, paddingTop: 16, paddingBottom: 6, alignSelf: 'flex-start' }}
+      onLayout={(e) => {
+        // la partie fixe autour de la courbe, mesuree : la courbe prend exactement la hauteur laissee par la page 1
+        const c = e.nativeEvent.layout.height - hCourbe;
+        if (c > 40 && Math.abs(c - chromeCourbe) > 1) setChromeCourbe(c);
+      }}
+    >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 20, paddingHorizontal: 16, marginBottom: 8 }}>
         <Ink size={13} weight="extraBold" color={fg2} numberOfLines={1} style={{ flexShrink: 1 }}>
           {traduire("Ta courbe de poids")}</Ink>

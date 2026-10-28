@@ -1,19 +1,18 @@
 /**
- * Le chemin de pierres vers le torii (28 octobre 2026, version C « chemin de pierres », choisie par Houari, maquette
- * Barre-C), en composant partage : le meme dessin que la barre de la carte Ton poids de l'accueil
- * (components/yoroi/v2/accueil/CartePoids.tsx, BarrePaliers), repris a l'identique pour l'onglet Progres.
- * Les couleurs des pierres, les mesures et le decoupage en paliers viennent de CartePoids (PIERRES_CHEMIN,
- * BARRE_PIERRES, paliersDuChemin) : une seule source, les deux barres ne peuvent pas diverger.
- * 4 pierres pastel separees qui se remplissent a mesure que tu avances, une lanterne a chaque palier (grise, puis ambre
- * allumee une fois franchi), le torii vermillon au bout ; les kilos dessous, chaque palier franchi dans la couleur de
- * sa pierre, ton objectif toujours dans celle de la derniere.
+ * Le chemin de pierres vers le torii, LE composant du chemin (28 octobre 2026) : la carte Ton poids de l'accueil
+ * (components/yoroi/v2/accueil/CartePoids.tsx) et l'onglet Progres (app/(tabs)/progres.tsx) l'utilisent tous les deux.
+ * Couleurs, mesures et paliers : une seule source, lib/v2/pesee/cheminPierres.ts ; l'accueil et Progres changent ensemble.
+ * 4 pierres separees qui se remplissent a mesure que tu avances (couleurs C : bleu nuit doux, lilas, peche clair, or
+ * lumineux), une lanterne a chaque palier (grise, puis ambre allumee une fois franchi), le torii dore au bout, avec un
+ * halo quand tu l'as atteint ; les kilos dessous, chaque palier franchi dans la couleur de sa pierre, ton objectif
+ * toujours dans celle de la derniere. L'anneau du pourcentage (AnneauPierres) reprend les memes 4 couleurs.
+ * Version d'avant (vermillon) : _archive_ancien_design_2026-10-09/carte_poids_v3_2026-10-28/CheminPierres.tsx.
  */
 import React from 'react';
 import { View } from 'react-native';
-import Svg, { Defs, Ellipse, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, Ellipse, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { ToriiImage } from '@/components/yoroi/v2/charts/ToriiImage';
-import { BARRE_PIERRES, PIERRES_CHEMIN, paliersDuChemin } from '@/components/yoroi/v2/accueil/CartePoids';
+import { BARRE_PIERRES, PIERRES_CHEMIN, TORII_CHEMIN, paliersDuChemin, pisteAnneau } from '@/lib/v2/pesee/cheminPierres';
 import { paletteSombre } from '@/components/yoroi/livePalette';
 import { formatKg } from '@/lib/v2/weightStats';
 
@@ -51,6 +50,65 @@ export function LanternePalier({ allumee, sombre, id }: { allumee: boolean; somb
   );
 }
 
+/** Le torii dore du chemin (dessin de la maquette, 48 sur 48), contour blanc pour se detacher de la pierre */
+export function ToriiDore({ taille }: { taille: number }) {
+  const T = TORII_CHEMIN;
+  return (
+    <Svg width={taille} height={taille} viewBox="0 0 48 48" style={{ overflow: 'visible' }}>
+      <Rect x={12} y={13} width={6} height={31} rx={2} fill={T.or} stroke={T.contour} strokeWidth={2.5} />
+      <Rect x={30} y={13} width={6} height={31} rx={2} fill={T.or} stroke={T.contour} strokeWidth={2.5} />
+      <Rect x={7} y={19} width={34} height={5.5} rx={2} fill={T.or} stroke={T.contour} strokeWidth={2.5} />
+      <Path d="M2 9Q24 2 46 9L45 15Q24 9 3 15Z" fill={T.or} stroke={T.contour} strokeWidth={3} strokeLinejoin="round" />
+      <Path d="M4 9.5Q24 3 44 9.5" fill="none" stroke={T.trait} strokeWidth={2.4} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+/** Le halo dore derriere le torii, une fois ton objectif atteint */
+function HaloTorii({ taille, id }: { taille: number; id: string }) {
+  return (
+    <Svg width={taille} height={taille} style={{ position: 'absolute', left: 0, top: 0 }}>
+      <Defs>
+        <RadialGradient id={id} cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor={TORII_CHEMIN.halo} stopOpacity={0.7} />
+          <Stop offset="0.7" stopColor={TORII_CHEMIN.halo} stopOpacity={0} />
+        </RadialGradient>
+      </Defs>
+      <Circle cx={taille / 2} cy={taille / 2} r={taille / 2} fill={`url(#${id})`} />
+    </Svg>
+  );
+}
+
+/** L'anneau du pourcentage en 4 arcs des couleurs des pierres, le torii dore au centre ; chaque arc se remplit avec sa pierre */
+export function AnneauPierres({ part, taille = 38 }: { part: number; taille?: number }) {
+  const S = taille;
+  const r = S * 0.39;
+  const ep = S * 0.11;
+  const c = S / 2;
+  const tour = 2 * Math.PI * r;
+  // 7 points de jour entre deux arcs (les bouts arrondis compris)
+  const arc = tour / 4 - 7;
+  const p = Math.max(0, Math.min(1, part));
+  const sombre = paletteSombre();
+  return (
+    <View style={{ width: S, height: S, alignItems: 'center', justifyContent: 'center' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Svg width={S} height={S} style={{ position: 'absolute', left: 0, top: 0 }}>
+        {PIERRES_CHEMIN.map((pi, i) => {
+          const loc = Math.max(0, Math.min(1, (p - i * 0.25) / 0.25));
+          const rot = `rotate(${-90 + i * 90 + 7} ${c} ${c})`;
+          return (
+            <React.Fragment key={i}>
+              <Circle cx={c} cy={c} r={r} stroke={pisteAnneau(i, sombre)} strokeWidth={ep} fill="none" strokeLinecap="round" strokeDasharray={`${arc} ${tour}`} transform={rot} />
+              {loc > 0 ? <Circle cx={c} cy={c} r={r} stroke={pi.plein} strokeWidth={ep} fill="none" strokeLinecap="round" strokeDasharray={`${arc * loc} ${tour}`} transform={rot} /> : null}
+            </React.Fragment>
+          );
+        })}
+      </Svg>
+      <ToriiDore taille={Math.round(S * 0.42)} />
+    </View>
+  );
+}
+
 /** Paliers franchis sur 4 (la part du chemin), comme la barre : 0 a 4 */
 export function paliersFranchis(part: number, atteint: boolean): number {
   if (atteint) return 4;
@@ -84,8 +142,9 @@ export function CheminPierres({ depart, objectif, part, atteint, fg2, idLanterne
         })}
         {l.map((x) =>
           x.part === 1 ? (
-            <View key={x.part} style={{ position: 'absolute', left: '100%', marginLeft: -B.torii / 2, top: (B.hauteur - B.torii) / 2, width: B.torii, height: B.torii, alignItems: 'center', justifyContent: 'center' }}>
-              <ToriiImage width={B.torii} />
+            <View key={x.part} pointerEvents="none" style={{ position: 'absolute', left: '100%', marginLeft: -B.halo / 2, top: (B.hauteur - B.halo) / 2, width: B.halo, height: B.halo, alignItems: 'center', justifyContent: 'center' }}>
+              {p >= 1 ? <HaloTorii taille={B.halo} id={`halo-${idLanterne}`} /> : null}
+              <ToriiDore taille={B.torii} />
             </View>
           ) : (
             <View key={x.part} style={{ position: 'absolute', left: `${x.part * 100}%`, marginLeft: -B.lanterneL / 2, top: (B.hauteur - B.lanterneH) / 2, width: B.lanterneL, height: B.lanterneH }}>

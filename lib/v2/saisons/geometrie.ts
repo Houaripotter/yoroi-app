@@ -130,8 +130,12 @@ export function boitesCarte(largeurCarte: number) {
 }
 
 /** Les toiles dans les coins du haut de la carte, et leurs araignees qui descendent le long du bord */
-export const TOILE_CARTE = 20;
-export const ARAIGNEE_CARTE = { taille: 12, x: 1, fil: 7, haut: 16, bas: 34 };
+// 28 octobre 2026 (carte Ton poids v3, une seule ligne en tete) : toiles de 14, l'araignee descend le long du bord, au
+// fil du coin de la toile (son centre a 8 du bord) : elle ne touche plus ni le titre ni l'anneau (verifie par le test)
+export const TOILE_CARTE = 14;
+export const ARAIGNEE_CARTE = { taille: 12, x: -7, fil: 7, haut: 16, bas: 34 };
+/** Le retrait des toiles et des araignees depuis le coin de la carte (components/yoroi/v2/saisons/DecorSaison.tsx) */
+export const RETRAIT_COIN_CARTE = 9;
 /** La guirlande de Noel le long du bord haut de la carte : fil a 1, ampoules jusqu'a 12 au plus */
 export const GUIRLANDE_CARTE = { debut: 26, fil: 1, bas: 12, pas: 22 };
 
@@ -241,25 +245,36 @@ export const HAUT_VOL_CARTE = 14 - 42;
 // 27 octobre 2026 nuit (Houari : « réduis la taille de ton poids ») : chiffre en 32, anneau de 50, haut 14
 // 27 octobre 2026 nuit (Houari : « fais moi un beau truc ») : chiffre en 32 (ligne de 35), chiffres violets, virgule et kg en encre
 // 28 octobre 2026 (Houari : « réduis un peu la carte Ton poids ») : haut 11 (la toile du coin reste hors du titre), chiffre en 30 (ligne de 33)
-export const CARTE_PASTEL = { marge: 16, haut: 11, titre: 15, ecartTitre: 2, ligneChiffre: 33, anneau: 44, rayon: 28 };
-/** « 100,0 » en 40 points (environ 24 par chiffre, 9 pour la virgule) et « kg » en 15 : 142, arrondi a 146 */
-/** 27 octobre 2026 nuit : « 104,5 » en 32 (environ 20 par chiffre, 8 pour la virgule), 5 d'ecart et « kg » en 15 : 113, arrondi a 116 */
-/** 28 octobre 2026 : en 30, environ 19 par chiffre et 7 pour la virgule : 108, la borne de 116 reste prudente */
-export const CHIFFRE_PASTEL_MAX = 116;
-/** Une citrouille ou un sapin de 40, entre le chiffre et l'anneau */
-export const DECOR_PASTEL = { w: 40, h: 40, ecart: 6 };
+// 28 octobre 2026, v3 (maquette Carte2, mise en page A) : une seule ligne en tete. titre : la largeur de la colonne
+// « TON POIDS / HIER » a gauche (cale en bas de la ligne) ; le poids au centre exact ; a droite le pourcentage (pct) et
+// l'anneau de 38, ecartes de 5. La ligne fait la hauteur de l'anneau.
+export const CARTE_PASTEL = { marge: 16, haut: 11, titre: 78, ligneChiffre: 33, anneau: 38, ecartAnneau: 5, pct: 34, rayon: 28 };
+/**
+ * Le poids au centre : « 100,0 kg » en 30 (chiffres tabulaires) mesure 104 points ; avec le petit « ! » de l'alerte
+ * balance (20, plus 4 d'ecart), 128. La place des citrouilles et des sapins se compte hors de cette boite.
+ */
+export const CHIFFRE_PASTEL_MAX = 104;
+export const ALERTE_PASTEL = 24;
+/** Une citrouille ou un sapin de chaque cote du poids : 34 au plus, 22 au moins, sinon rien (a 375 la place manque : aucun) */
+export const DECOR_PASTEL = { w: 34, h: 34, min: 22, ecart: 3 };
 
-export function boitesCartePastel(largeurCarte: number): { chiffre: Boite; anneau: Boite; cotes: Boite[]; hauteur: number } {
+export function boitesCartePastel(largeurCarte: number): { chiffre: Boite; anneau: Boite; titre: Boite; cotes: Boite[]; hauteur: number } {
   const c = CARTE_PASTEL;
-  const chiffre: Boite = { x: c.marge, y: c.haut + c.titre + c.ecartTitre, w: CHIFFRE_PASTEL_MAX, h: c.ligneChiffre };
-  const anneau: Boite = { x: largeurCarte - c.marge - c.anneau, y: c.haut, w: c.anneau, h: c.anneau };
-  const debut = chiffre.x + chiffre.w + DECOR_PASTEL.ecart;
-  const fin = anneau.x - DECOR_PASTEL.ecart;
-  const place = fin - debut;
-  const n = place >= 2 * DECOR_PASTEL.w + DECOR_PASTEL.ecart ? 2 : place >= DECOR_PASTEL.w ? 1 : 0;
-  const total = n * DECOR_PASTEL.w + Math.max(0, n - 1) * DECOR_PASTEL.ecart;
-  const x0 = debut + (place - total) / 2;
-  const y = anneau.y + anneau.h - DECOR_PASTEL.h;
-  const cotes: Boite[] = Array.from({ length: n }, (_, i) => ({ x: x0 + i * (DECOR_PASTEL.w + DECOR_PASTEL.ecart), y, w: DECOR_PASTEL.w, h: DECOR_PASTEL.h }));
-  return { chiffre, anneau, cotes, hauteur: anneau.y + anneau.h + 2 };
+  const W = largeurCarte;
+  const chiffre: Boite = { x: (W - CHIFFRE_PASTEL_MAX) / 2, y: c.haut + (c.anneau - c.ligneChiffre) / 2, w: CHIFFRE_PASTEL_MAX, h: c.ligneChiffre };
+  const anneau: Boite = { x: W - c.marge - c.anneau, y: c.haut, w: c.anneau, h: c.anneau };
+  const titre: Boite = { x: c.marge, y: c.haut, w: c.titre, h: c.anneau };
+  // a gauche : entre le titre et le poids ; a droite : entre le poids (et son eventuelle alerte) et le pourcentage
+  const zones = [
+    { debut: titre.x + titre.w, fin: chiffre.x },
+    { debut: chiffre.x + chiffre.w + ALERTE_PASTEL, fin: anneau.x - c.ecartAnneau - c.pct },
+  ];
+  const cotes: Boite[] = [];
+  for (const z of zones) {
+    const place = z.fin - z.debut - 2 * DECOR_PASTEL.ecart;
+    const d = Math.min(DECOR_PASTEL.w, place);
+    if (d < DECOR_PASTEL.min) continue;
+    cotes.push({ x: z.debut + (z.fin - z.debut - d) / 2, y: anneau.y + anneau.h - d, w: d, h: d });
+  }
+  return { chiffre, anneau, titre, cotes, hauteur: anneau.y + anneau.h + 2 };
 }

@@ -49,12 +49,12 @@ import type { SaisonId } from '@/lib/v2/saisons/calendrier';
 import {
   ARAIGNEE_CARTE,
   BAS_CALQUE,
-  DECOR_PASTEL,
   GUIRLANDE_CARTE,
   HAUT_CALQUE,
   TOILE_CARTE,
   ZOMBIE_V5,
   boitesCartePastel,
+  RETRAIT_COIN_CARTE,
   CARTE_PASTEL,
   decorGaucheHalloween,
   decorGaucheNoel,
@@ -114,7 +114,7 @@ import { ampouleAllumee, vaEtVient } from './inro/mouvements';
 import { traduire } from '@/lib/i18n/tr';
 
 /** Retrait des toiles et araignees depuis les coins arrondis de la carte Ton poids (rayon 28 : l'arrondi rentre de 8,2 a 45 degres) */
-const RETRAIT_COIN = 9;
+const RETRAIT_COIN = RETRAIT_COIN_CARTE;
 
 /** Les deux stickers de ce qu'INRO n'a pas (generes, detoures, 18 octobre 2026) */
 const KADOMATSU = require('@/assets/saisons/noel/kadomatsu.webp');
@@ -622,6 +622,8 @@ export function DecorCarte({ saison, largeur, scrollY, seuil = 100000 }: DecorCa
   if (!pret || largeur <= 0) return null;
   // 27 octobre 2026 (refonte Pastel) : la carte Ton poids a le chiffre a gauche et l'anneau a droite ;
   // les citrouilles ou les sapins vont entre les deux (un seul sur un petit ecran)
+  // 28 octobre 2026 (carte v3) : le poids au centre ; une citrouille ou un sapin de chaque cote du poids, a la taille
+  // de la place (boitesCartePastel), aucun sur un ecran trop etroit
   const b = boitesCartePastel(largeur);
   const cotes = b.cotes;
   const a = ARAIGNEE_CARTE;
@@ -630,8 +632,8 @@ export function DecorCarte({ saison, largeur, scrollY, seuil = 100000 }: DecorCa
   const toile = sombre ? 'rgba(232,239,245,0.35)' : 'rgba(26,43,61,0.3)';
   const soie = sombre ? 'rgba(232,239,245,0.6)' : 'rgba(120,130,140,0.75)';
   const encre = sombre ? '#0B0710' : '#231A2B';
-  const hSapin = DECOR_PASTEL.h;
-  const wSapin = (hSapin * 54) / 70;
+  // le sapin a la hauteur de sa place (34 au plus)
+  const tailleSapin = (h: number) => ({ h, w: (h * 54) / 70 });
   return (
     <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, top: 0, width: largeur, height: b.hauteur }}>
       {/* 27 octobre 2026 soir (Houari : « les toiles sortent de la carte ») : le decor est coupe aux coins arrondis
@@ -657,8 +659,8 @@ export function DecorCarte({ saison, largeur, scrollY, seuil = 100000 }: DecorCa
           <>
             <GuirlandeAmpoules largeur={largeur} temps={temps} />
             {cotes.map((c, i) => (
-              <View key={i} style={{ position: 'absolute', left: c.x + (c.w - wSapin) / 2, top: c.y }}>
-                <SapinInro h={hSapin} temps={temps} phase={i * 0.45} />
+              <View key={i} style={{ position: 'absolute', left: c.x + (c.w - tailleSapin(c.h).w) / 2, top: c.y }}>
+                <SapinInro h={tailleSapin(c.h).h} temps={temps} phase={i * 0.45} />
               </View>
             ))}
           </>
