@@ -16,9 +16,19 @@
  * 7. (16 octobre, SEANCES AVATAR) « Importer mes seances » depuis Apple Sante ou Health Connect : carte en haut tant
  *    que rien n'est importe, bouton dans l'etat vide, et le menu de l'onglet (les trois points). Masque sur le web.
  *    27 octobre : chaque bouton Importer ouvre un seul choix (Sante, autre app en CSV, GPX ou TCX).
+ * 9. (28 octobre 2026, maquette A « Aujourd'hui d'abord », validee par Houari, avec un emprunt a la maquette C)
+ *    En haut, la carte du jour (CarteDuJour : la seance du programme du Coach, sinon le creneau prevu, sinon
+ *    l'appel vers le Coach), puis ta semaine (anneau et jours de L a D), ce qui vient (prochain entrainement),
+ *    tes chiffres de la semaine (4 tuiles), puis « En detail » : des sections repliables (derniere seance, mes
+ *    seances, ton mois, muscles travailles, records), chacune avec son resume une fois fermee, l'etat retenu.
+ *    L'historique complet reste tout en bas. Rien n'a disparu. Ancienne version :
+ *    _archive_ancien_design_2026-10-09/seances_A_2026-10-28.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, TextInput, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
+import Animated, { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
+import { format } from 'date-fns';
+import { DATE_FNS_LOCALE } from '@/lib/i18n/dateLocale';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
@@ -37,30 +47,38 @@ import { formatRecordValue, recordShortTitle } from '@/lib/v2/seances/records';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import type { UnitePoids } from '@/lib/v2/unitePoids';
 import type { RecordLine } from '@/lib/v2/seances/records';
-import { formatHours, formatTonnage, mainSport, sessionFacts, topExercises, weekMuscles } from '@/lib/v2/seances/weekSummary';
+import { formatHours, formatTonnage, sessionFacts, topExercises, weekMuscles } from '@/lib/v2/seances/weekSummary';
 import { fr1, groupHistory, isImported, sportsByCount, weekCompare } from '@/lib/v2/seances/weekCompare';
 import type { HistoryGroup } from '@/lib/v2/seances/weekCompare';
 import { sportImage, sportTint } from '@/lib/v2/seance/sportVisuals';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
 import { PlusHint } from '@/components/yoroi/v2/PlusHint';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { SportThumb } from '@/components/yoroi/v2/seances/SessionRow';
 import { computeWeekPlates } from '@/components/yoroi/v2/seances/WeekPlates';
-import { LastSessionCard } from '@/components/yoroi/v2/seances/LastSession';
+import { LastSessionBody } from '@/components/yoroi/v2/seances/LastSession';
 import type { LastSessionVM } from '@/components/yoroi/v2/seances/LastSession';
-import { MuscleMap, MuscleScale } from '@/components/yoroi/v2/seances/MuscleMap';
-import { WeekHero } from '@/components/yoroi/v2/seances/WeekHero';
+import { WeekTiles } from '@/components/yoroi/v2/seances/WeekHero';
 import { NextUp, findNextSlot } from '@/components/yoroi/v2/seances/NextUp';
-import { ProgrammeCard } from '@/components/yoroi/v2/seances/ProgrammeCard';
-import { MesSeancesCarte } from '@/components/yoroi/v2/seances/MesSeancesCarte';
+import { MesSeancesListe, resumeMesSeances, useMesSeances } from '@/components/yoroi/v2/seances/MesSeancesCarte';
 import { HistoryCard } from '@/components/yoroi/v2/seances/HistoryCard';
-import { MonthCard } from '@/components/yoroi/v2/seances/MonthMarks';
+import { stickerDuSport } from '@/components/yoroi/v2/seances/MonthMarks';
 import { ExampleFrame } from '@/components/yoroi/v2/seances/Example';
-import { BigButton, Chip, ChipRow, EmptyState, Glass, Hanko, Row, SectionTitle, Segments, Sheet, tap } from '@/components/yoroi/v2/seances/ui';
+import { BigButton, Chip, ChipRow, EmptyState, Glass, Hanko, Row, Segments, Sheet, tap } from '@/components/yoroi/v2/seances/ui';
+import { CarteDuJour } from '@/components/yoroi/v2/seances/CarteDuJour';
+import { SemaineAnneau } from '@/components/yoroi/v2/seances/SemaineAnneau';
+import { MoisPastilles, RangeeDuMois, useMois } from '@/components/yoroi/v2/seances/MoisPastilles';
+import { MusclesSemaine } from '@/components/yoroi/v2/seances/MusclesSemaine';
+import { SectionRepliable, useSectionsOuvertes } from '@/components/yoroi/v2/seances/Repliable';
+import { Petites } from '@/components/yoroi/v2/seances/kitA';
+import { useVisiteEnCours } from '@/components/yoroi/v2/tour/VisiteGuidee';
+import { dernierRecord, musclePrincipal } from '@/lib/v2/seances/carteDuJour';
 import { CarteImportSeances, ImportSeancesSheet } from '@/components/yoroi/v2/seances/ImportSeances';
 import { importSeancesDisponible, nomSourceSante } from '@/lib/v2/seances/importSeances';
 import { devNow } from '@/lib/v2/creator/devClock';
 import { P } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { OMBRE_CARTE } from '@/components/yoroi/v2/seance/pastel';
 
 type Grouping = 'semaine' | 'mois';
@@ -101,7 +119,7 @@ export default function Seances() {
   const c = theme.colors;
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { trainings, plan, occurrences, competitions, gender, weeklyGoal, favoris, typeDays, records, loaded, reload } = useSeancesData();
+  const { trainings, plan, occurrences, competitions, gender, weeklyGoal, typeDays, records, loaded, reload } = useSeancesData();
   // 18 octobre 2026 : charges et tonnage dans l'unite du reglage (kg ou lb), stockage en kilos
   const unite = useUnitePoids();
   const [filter, setFilter] = useState<Filter>({ kind: 'tous' });
@@ -128,6 +146,14 @@ export default function Seances() {
     [],
   );
   const historyY = useRef(0);
+  // 28 octobre 2026 (maquette A) : la barre compacte « Séances » en haut quand l'onglet a défilé
+  const [compact, setCompact] = useState(false);
+  const { width } = useWindowDimensions();
+  const sections = useSectionsOuvertes();
+  // la visite guidée montre ta dernière séance et ton mois : ces sections restent ouvertes pendant la visite
+  const visite = useVisiteEnCours();
+  const mesSeances = useMesSeances();
+  const mois = useMois(trainings);
   const femme = gender === 'femme';
 
   const today = todayISO();
@@ -137,7 +163,6 @@ export default function Seances() {
   const week = useMemo(() => weekCompare(trainings, today), [trainings, today]);
   const muscles = useMemo(() => weekMuscles(trainings, today), [trainings, today]);
   const hasMuscles = muscles.some((m) => m.level > 0);
-  const main = useMemo(() => mainSport(favoris, trainings), [favoris, trainings]);
   const sports = useMemo(() => sportsByCount(trainings), [trainings]);
   const importedCount = useMemo(() => trainings.filter(isImported).length, [trainings]);
 
@@ -198,7 +223,7 @@ export default function Seances() {
     setRefreshing(false);
   };
 
-  const filterLabel = filter.kind === 'montre' ? traduire('de ta montre') : filter.kind === 'sport' ? getSportName(filter.sport) : '';
+  const filterLabel = filter.kind === 'montre' ? traduire('de ta montre') : filter.kind === 'sport' ? sansTiret(getSportName(filter.sport)) : '';
   const isNew = loaded && trainings.length === 0;
 
   return (
@@ -207,16 +232,21 @@ export default function Seances() {
         ref={scrollRef}
         onScroll={(ev) => {
           defileY.current = ev.nativeEvent.contentOffset.y;
+          const bas = defileY.current > 84;
+          if (bas !== compact) setCompact(bas);
         }}
         scrollEventThrottle={32}
-        contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: insets.bottom + INK_TAB_BAR_SPACE + 10, paddingHorizontal: 22, gap: 12 }}
+        contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: insets.bottom + INK_TAB_BAR_SPACE + 10, paddingHorizontal: 16, gap: 12 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.accent} colors={[c.accent]} />}
       >
         {/* En-tete, et le menu de l'onglet (16 octobre : importer tes seances) */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-          <Ink size={30} weight="black" tight accessibilityRole="header">{traduire("Séances")}</Ink>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 }}>
+          <View style={{ flexShrink: 1, gap: 2 }}>
+            <Ink size={11} weight="extraBold" color={c.indigo} style={{ letterSpacing: 1.4 }} numberOfLines={1}>{format(devNow(), DATE_FNS_LOCALE.code === 'de' ? 'EEEE, d. MMMM' : 'EEEE d MMMM', { locale: DATE_FNS_LOCALE }).toLocaleUpperCase()}</Ink>
+            <Ink size={32} weight="black" tight accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ letterSpacing: -1 }}>{traduire("Séances")}</Ink>
+          </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {/* Importer toujours a portee. 27 octobre : ouvre le choix d'import, sur toutes les plateformes */}
             <Pressable
@@ -225,10 +255,11 @@ export default function Seances() {
               accessibilityLabel={traduire("Importer mes séances")}
               accessibilityHint={traduire("Choisis d’où viennent tes séances")}
               hitSlop={6}
-              style={({ pressed }) => ({ height: 44, borderRadius: 22, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: pressed ? c.fillSoft : P.white, borderWidth: 1, borderColor: 'transparent', shadowColor: '#1B2A44', shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 })}
+              style={({ pressed }) => ({ height: 44, minWidth: 44, justifyContent: 'center', borderRadius: 22, paddingHorizontal: width < 400 && traduire("Importer").length > 9 ? 0 : 14, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: pressed ? c.fillSoft : P.white, borderWidth: 1, borderColor: 'transparent', shadowColor: '#1B2A44', shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 })}
             >
               <Icon name="download" size={18} color={c.accentText} strokeWidth={2.6} />
-              <Ink size={14} weight="extraBold" color={c.accentText}>{traduire("Importer")}</Ink>
+              {/* 28 octobre 2026 : sur un petit écran, un libellé long (Importieren) laisse place au titre : l'icône seule */}
+              {width < 400 && traduire("Importer").length > 9 ? null : <Ink size={14} weight="extraBold" color={c.accentText}>{traduire("Importer")}</Ink>}
             </Pressable>
           <Pressable
             onPress={() => { tap(); setMenuOpen(true); }}
@@ -245,134 +276,183 @@ export default function Seances() {
         {/* Importer mes seances : visible en haut tant que rien ne vient de Sante */}
         {importSante && loaded && trainings.length > 0 && importedCount === 0 ? <CarteImportSeances onPress={() => setImportOpen(true)} /> : null}
 
-        {/* La semaine en un coup d'oeil (27 octobre 2026 : ancre de la visite guidee) */}
-        <TourAnchor id="seances.semaine" rayon={26}>
-        <WeekHero
-          week={week}
-          plates={plates}
-          weeklyGoal={weeklyGoal}
-          art={sportImage(main, femme, 1)}
-          tint={sportTint(main)}
-          onOpenCharge={() => router.push('/charge' as any)}
-          onChooseGoal={() => router.push('/settings?objectif=1' as any)}
+        {/* 28 octobre 2026 (maquette A) : la seance du jour d'abord (programme du Coach, creneau prevu, ou le Coach) */}
+        <TourAnchor id="seances.programme" rayon={30}>
+          <CarteDuJour trainings={trainings} weeklyGoal={weeklyGoal} femme={femme} next={next} onCoach={() => router.push('/coach' as any)} />
+        </TourAnchor>
+
+        {/* Ta semaine : l'anneau de ton objectif et les jours de L a D */}
+        <TourAnchor id="seances.semaine" rayon={24}>
+          <SemaineAnneau week={week} plates={plates} trainings={trainings} weeklyGoal={weeklyGoal} onChooseGoal={() => router.push('/settings?objectif=1' as any)} />
+        </TourAnchor>
+
+        {/* Ce qui vient : le prochain entrainement prevu */}
+        <Petites texte={traduire('Ce qui vient')} teinte="lilas" style={{ marginTop: 8, marginBottom: -4 }} />
+        <TourAnchor id="seances.prochain" rayon={24}>
+          <NextUp
+            next={next}
+            femme={femme}
+            validated={validated}
+            slotsCount={slotsCount}
+            onPlanning={() => router.push('/planning' as any)}
+            onCreate={() => router.push('/slots' as any)}
+          />
+        </TourAnchor>
+
+        {/* Tes chiffres de la semaine : duree, tonnage, charge, jours */}
+        <Petites texte={traduire('Tes chiffres de la semaine')} teinte="creme" style={{ marginTop: 8, marginBottom: -4 }} />
+        <WeekTiles week={week} onOpenCharge={() => router.push('/charge' as any)} />
+
+        {/* En detail : les sections repliables, chacune avec son resume */}
+        <Petites
+          texte={traduire('En détail')}
+          teinte="bleu"
+          style={{ marginTop: 8, marginBottom: -4 }}
+          action={Object.values(sections.ouvert).some(Boolean) ? traduire('Tout replier') : traduire('Tout déplier')}
+          onAction={() => sections.toutes(!Object.values(sections.ouvert).some(Boolean))}
         />
-        </TourAnchor>
-
-        {/* Prochain entrainement prevu */}
-        <TourAnchor id="seances.prochain" rayon={22}>
-        <NextUp
-          next={next}
-          femme={femme}
-          validated={validated}
-          slotsCount={slotsCount}
-          onPlanning={() => router.push('/planning' as any)}
-          onCreate={() => router.push('/slots' as any)}
-        />
-        </TourAnchor>
-
-        {/* 24 octobre 2026 : programmes d'entrainement, ton programme en cours */}
-        <TourAnchor id="seances.programme" rayon={24}>
-          <ProgrammeCard femme={femme} onOpen={() => router.push('/programmes' as any)} />
-        </TourAnchor>
-
-        {/* 25 octobre 2026 : tes seances enregistrees, a refaire en un appui */}
-        <MesSeancesCarte />
-
-        {/* Derniere seance */}
-        {lastVM && last ? (
-          <>
-            <SectionTitle title={traduire("Ta dernière séance")} />
+        <View style={{ gap: 10 }}>
+          {lastVM && last ? (
             <TourAnchor id="seances.derniere" rayon={24}>
-              <LastSessionCard
-                vm={lastVM}
-                onOpen={() => router.push({ pathname: '/workout-detail', params: { id: String(last.id) } } as any)}
-              />
+              <SectionRepliable
+                titre={traduire('Ta dernière séance')}
+                resume={sansTiret([lastVM.when.charAt(0).toUpperCase() + lastVM.when.slice(1), traduire(lastVM.title)].filter(Boolean).join(', '))}
+                sticker={stickerDuSport(last.sport, !!last.is_outdoor) as NomSticker}
+                teinte="lilas"
+                ouvert={sections.ouvert.derniere || visite}
+                onBasculer={() => sections.basculer('derniere')}
+              >
+                <LastSessionBody vm={lastVM} onOpen={() => router.push({ pathname: '/workout-detail', params: { id: String(last.id) } } as any)} />
+              </SectionRepliable>
             </TourAnchor>
-          </>
-        ) : null}
+          ) : null}
 
-        {/* Ton mois : calendrier du mois, toujours visible */}
-        <SectionTitle title={traduire("Ton mois")} />
-        <TourAnchor id="seances.mois" rayon={22}>
-          <MonthCard trainings={trainings} competitions={competitions} onOpen={() => router.push('/planning?tab=mois' as any)} />
-        </TourAnchor>
+          {mesSeances ? (
+            <SectionRepliable
+              titre={traduire('Mes séances')}
+              resume={resumeMesSeances(mesSeances)}
+              sticker="carnet"
+              teinte="bleu"
+              ouvert={sections.ouvert.mesSeances}
+              onBasculer={() => sections.basculer('mesSeances')}
+            >
+              <MesSeancesListe liste={mesSeances} />
+            </SectionRepliable>
+          ) : null}
 
-        {/* Muscles travailles */}
-        {hasMuscles ? (
-          <>
-            <SectionTitle title={traduire("Muscles travaillés")} sub={traduire("cette semaine")} />
-            <Glass style={{ gap: 12 }}>
-              <MuscleMap loads={muscles} height={160} />
-              <MuscleScale />
-            </Glass>
-          </>
-        ) : null}
+          <TourAnchor id="seances.mois" rayon={24}>
+            <SectionRepliable
+              titre={traduire('Ton mois')}
+              resume={
+                <View>
+                  <Ink size={12.5} weight="bold" color={c.textSecondary}>{mois.resume}</Ink>
+                  {sections.ouvert.mois || visite ? null : <RangeeDuMois trainings={trainings} />}
+                </View>
+              }
+              sticker="calendrier"
+              teinte="creme"
+              ouvert={sections.ouvert.mois || visite}
+              onBasculer={() => sections.basculer('mois')}
+            >
+              <MoisPastilles trainings={trainings} competitions={competitions} onOpen={() => router.push('/planning?tab=mois' as any)} />
+            </SectionRepliable>
+          </TourAnchor>
 
-        {/* Records utiles */}
-        <SectionTitle title={traduire("Tes records")} action={records.highlights.length ? traduire('Tout voir') : undefined} onAction={() => router.push('/records' as any)} />
-        {records.highlights.length === 0 ? (
-          <Glass onPress={() => router.push('/records' as any)} label={traduire("Tes records")} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-            <Hanko size={28} color={c.textMuted} />
-            <View style={{ flex: 1, gap: 2 }}>
-              <Ink size={15} weight="extraBold">{traduire("Ton premier record t’attend")}</Ink>
-              <Ink size={13} color={c.textSecondary}>{traduire("Note tes charges, tes distances ou tes rounds : chaque marque battue reçoit son tampon ici.")}</Ink>
-            </View>
-          </Glass>
-        ) : (
-          <View style={{ borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider, paddingHorizontal: 14 }}>
-            {records.highlights.slice(0, 3).map((l, i) => {
-              const v = formatRecordValue(l, undefined, unite);
-              const fresh = l.stamps > 0 && l.date >= isoOf(new Date(Date.now() - 14 * 86400000));
-              return (
-                <Pressable
-                  key={l.key}
-                  onPress={() => { tap(); router.push({ pathname: '/records', params: { focus: l.key } } as any); }}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${recordTitle(l)}, ${v.main}`}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider }}
-                >
-                  <SportThumb sport={l.sport} femme={femme} size={40} />
-                  <View style={{ flex: 1, gap: 1 }}>
-                    <Ink size={15} weight="extraBold" numberOfLines={2}>{recordTitle(l)}</Ink>
-                    <Ink size={12} color={c.textSecondary} numberOfLines={2}>{`${relativeDay(l.date, today)}, ${v.sub}`}</Ink>
-                  </View>
-                  <View style={{ alignItems: 'flex-end', gap: 2, maxWidth: '40%' }}>
-                    <Ink size={17} weight="black" tight numberOfLines={1}>{v.main}</Ink>
-                    {fresh ? <Hanko size={16} /> : null}
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
-        )}
+          {hasMuscles ? (
+            <SectionRepliable
+              titre={traduire('Muscles travaillés')}
+              resume={(() => {
+                const m = musclePrincipal(muscles);
+                return m ? traduire('Cette semaine, surtout : {0}', traduire(m.name).toLocaleLowerCase()) : traduire('cette semaine');
+              })()}
+              sticker="muscle"
+              teinte="peche"
+              ouvert={sections.ouvert.muscles}
+              onBasculer={() => sections.basculer('muscles')}
+            >
+              <MusclesSemaine loads={muscles} largeur={width - 32 - 28} />
+            </SectionRepliable>
+          ) : null}
+
+          <SectionRepliable
+            titre={traduire('Tes records')}
+            resume={(() => {
+              if (records.lines.length === 0) return traduire('Ton premier record t’attend');
+              const d = dernierRecord(records.lines);
+              const n = records.lines.length;
+              return `${traduirePluriel(n, n > 1, '{0} record, le dernier {1}.', '{0} records, le dernier {1}.', n, d ? relativeDay(d.date, today) : '')} ${traduire('Le détail est dans Progrès.')}`;
+            })()}
+            sticker="records"
+            teinte="menthe"
+            ouvert={sections.ouvert.records}
+            onBasculer={() => sections.basculer('records')}
+          >
+            {records.highlights.length === 0 ? (
+              <Pressable onPress={() => { tap(); router.push('/records' as any); }} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, backgroundColor: c.background, padding: 12 }}>
+                <Hanko size={26} color={c.textMuted} />
+                <Ink size={13} color={c.textSecondary} style={{ flex: 1 }}>{traduire("Note tes charges, tes distances ou tes rounds : chaque marque battue reçoit son tampon ici.")}</Ink>
+              </Pressable>
+            ) : (
+              <View style={{ borderRadius: 16, backgroundColor: c.background, paddingHorizontal: 12 }}>
+                {records.highlights.slice(0, 3).map((l, i) => {
+                  const v = formatRecordValue(l, undefined, unite);
+                  const fresh = l.stamps > 0 && l.date >= isoOf(new Date(Date.now() - 14 * 86400000));
+                  return (
+                    <Pressable
+                      key={l.key}
+                      onPress={() => { tap(); router.push({ pathname: '/records', params: { focus: l.key } } as any); }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${recordTitle(l)}, ${v.main}`}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider }}
+                    >
+                      <SportThumb sport={l.sport} femme={femme} size={38} />
+                      <View style={{ flex: 1, gap: 1 }}>
+                        <Ink size={14.5} weight="extraBold" numberOfLines={2}>{sansTiret(recordTitle(l))}</Ink>
+                        <Ink size={12} color={c.textSecondary} numberOfLines={2}>{`${relativeDay(l.date, today)}, ${v.sub}`}</Ink>
+                      </View>
+                      <View style={{ alignItems: 'flex-end', gap: 2, maxWidth: '40%' }}>
+                        <Ink size={16} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{v.main}</Ink>
+                        {fresh ? <Hanko size={16} /> : null}
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
+            <Pressable onPress={() => { tap(); router.navigate('/(tabs)/progres' as any); }} accessibilityRole="link" hitSlop={6} style={{ alignSelf: 'flex-start', minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4, paddingHorizontal: 2 }}>
+              <Ink size={13} weight="extraBold" color={c.accentText}>{traduire('Tous tes records dans Progrès')}</Ink>
+              <Icon name="chevron" size={15} color={c.accentText} />
+            </Pressable>
+          </SectionRepliable>
+        </View>
 
         {/* Historique */}
         <TourAnchor
           id="seances.historique"
           rayon={16}
           onLayout={(e) => { historyY.current = e.nativeEvent.layout.y; }}
-          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4, marginTop: 10, gap: 10 }}
+          style={{ marginTop: 14, gap: 4 }}
         >
-          <View style={{ flex: 1, gap: 1 }}>
-            <Ink size={21} weight="black" tight>{traduire("Historique")}</Ink>
-            {trainings.length > 0 ? (
-              <Ink size={13} color={c.textSecondary}>
-                {filterLabel
+          <Petites texte={traduire('Historique')} teinte="bleu" />
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingHorizontal: 2, minHeight: 44 }}>
+            <Ink size={13} weight="bold" color={c.textSecondary} style={{ flex: 1 }}>
+              {trainings.length > 0
+                ? filterLabel
                   ? traduirePluriel(filtered.length, filtered.length > 1, "{0} séance {1}", "{0} séances {1}", filtered.length, filter.kind === 'sport' ? `de ${filterLabel}` : filterLabel)
-                  : traduirePluriel(trainings.length, trainings.length > 1, "{0} séance au total", "{0} séances au total", trainings.length)}
-              </Ink>
+                  : traduirePluriel(trainings.length, trainings.length > 1, "{0} séance au total", "{0} séances au total", trainings.length)
+                : ''}
+            </Ink>
+            {trainings.length > 0 ? (
+              <Pressable
+                onPress={() => { tap(); setSearchOpen((v) => !v); if (searchOpen) setQuery(''); }}
+                accessibilityRole="button"
+                accessibilityLabel={searchOpen ? traduire('Fermer la recherche') : traduire('Chercher une séance')}
+                style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: searchOpen ? c.primary : c.surface, ...OMBRE_CARTE }}
+              >
+                <Icon name={searchOpen ? 'close' : 'search'} size={20} color={searchOpen ? c.onPrimary : c.ink} />
+              </Pressable>
             ) : null}
           </View>
-          {trainings.length > 0 ? (
-            <Pressable
-              onPress={() => { tap(); setSearchOpen((v) => !v); if (searchOpen) setQuery(''); }}
-              accessibilityRole="button"
-              accessibilityLabel={searchOpen ? traduire('Fermer la recherche') : traduire('Chercher une séance')}
-              style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: searchOpen ? c.primary : c.surface, ...OMBRE_CARTE }}
-            >
-              <Icon name={searchOpen ? 'close' : 'search'} size={20} color={searchOpen ? c.onPrimary : c.ink} />
-            </Pressable>
-          ) : null}
         </TourAnchor>
 
         {searchOpen ? (
@@ -408,7 +488,7 @@ export default function Seances() {
                   ? sports.map(({ sport }) => (
                       <Chip
                         key={sport}
-                        label={getSportName(sport)}
+                        label={sansTiret(getSportName(sport))}
                         on={filter.kind === 'sport' && filter.sport === sport}
                         onPress={() => pickFilter(filter.kind === 'sport' && filter.sport === sport ? { kind: 'tous' } : { kind: 'sport', sport })}
                       />
@@ -450,7 +530,7 @@ export default function Seances() {
         {groups.slice(0, groupsShown).map((g) => (
           <View key={g.key} style={{ gap: 8 }}>
             <View style={{ paddingHorizontal: 4, marginTop: 6, gap: 1 }}>
-              <Ink size={16} weight="black" tight>{traduire(g.title)}</Ink>
+              <Ink size={16} weight="black" tight>{sansTiret(traduire(g.title))}</Ink>
               <Ink size={12} weight="bold" color={c.textSecondary}>{groupLine(g, unite)}</Ink>
             </View>
             {g.items.map((t) => (
@@ -466,6 +546,18 @@ export default function Seances() {
           />
         ) : null}
       </ScrollView>
+
+      {compact ? (
+        <Animated.View
+          entering={FadeIn.duration(160).reduceMotion(ReduceMotion.System)}
+          exiting={FadeOut.duration(140).reduceMotion(ReduceMotion.System)}
+          style={{ position: 'absolute', left: 0, right: 0, top: 0, paddingTop: insets.top, backgroundColor: theme.isDark ? 'rgba(17,20,29,0.96)' : 'rgba(245,246,251,0.96)', borderBottomWidth: 1, borderColor: c.divider }}
+        >
+          <Pressable onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })} accessibilityRole="button" accessibilityLabel={traduire('Remonter en haut des séances')} style={{ height: 48, alignItems: 'center', justifyContent: 'center' }}>
+            <Ink size={17} weight="extraBold">{traduire('Séances')}</Ink>
+          </Pressable>
+        </Animated.View>
+      ) : null}
 
       <Sheet visible={menuOpen} onClose={() => setMenuOpen(false)} title={traduire("Séances")}>
         <Row icon="download" title={traduire("Importer mes séances")} sub={traduire("Depuis ta montre, une autre app ou un fichier")} onPress={() => { setMenuOpen(false); setTimeout(() => setChoixImportOpen(true), 350); }} />

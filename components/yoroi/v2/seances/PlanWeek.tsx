@@ -23,6 +23,7 @@ import { DayDot } from './WeekPlates';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { traduire } from '@/lib/i18n/tr';
 
 type Props = {
@@ -220,8 +221,8 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
                 <View key={`c${cp.id}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 16, backgroundColor: c.goldTint }}>
                   <Icon name="trophy" size={20} color={c.goldDeep} />
                   <View style={{ flex: 1 }}>
-                    <Ink size={15} weight="extraBold" numberOfLines={2}>{traduire(cp.nom)}</Ink>
-                    <Ink size={12} color={c.textSecondary}>{[getSportName(cp.sport), cp.lieu].filter(Boolean).join(', ')}</Ink>
+                    <Ink size={15} weight="extraBold" numberOfLines={2}>{sansTiret(traduire(cp.nom))}</Ink>
+                    <Ink size={12} color={c.textSecondary}>{sansTiret([getSportName(cp.sport), cp.lieu].filter(Boolean).join(', '))}</Ink>
                   </View>
                 </View>
               ))}
@@ -238,8 +239,8 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
                   >
                     <View style={{ width: 6, alignSelf: 'stretch', borderRadius: 3, backgroundColor: s.club_color || familyInk(s.sport) }} />
                     <View style={{ flex: 1, gap: 1 }}>
-                      <Ink size={15} weight="extraBold" numberOfLines={2} style={st.state === 'cancelled' ? { textDecorationLine: 'line-through' } : undefined}>{s.label || sportLabel(s.sport)}</Ink>
-                      <Ink size={12} color={c.textSecondary} numberOfLines={2}>{[s.time ? (s.duration_minutes ? traduire("{0} à {1}", s.time, endTime(s.time, s.duration_minutes)) : s.time) : '', !s.time && s.duration_minutes ? formatDuration(s.duration_minutes) : '', s.club_name].filter(Boolean).join(', ') || traduire('horaire libre')}</Ink>
+                      <Ink size={15} weight="extraBold" numberOfLines={2} style={st.state === 'cancelled' ? { textDecorationLine: 'line-through' } : undefined}>{sansTiret(s.label || sportLabel(s.sport))}</Ink>
+                      <Ink size={12} color={c.textSecondary} numberOfLines={2}>{sansTiret([s.time ? (s.duration_minutes ? traduire("{0} à {1}", s.time, endTime(s.time, s.duration_minutes)) : s.time) : '', !s.time && s.duration_minutes ? formatDuration(s.duration_minutes) : '', s.club_name].filter(Boolean).join(', ')) || traduire('horaire libre')}</Ink>
                     </View>
                     <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 9, backgroundColor: st.state === 'done' ? c.successTint : st.state === 'missed' ? c.accentTint : c.fillSubtle }}>
                       <Ink size={11} weight="extraBold" color={st.tone}>{linked && st.state === 'done' ? traduire('fait') : st.label.split(',')[0]}</Ink>
@@ -270,11 +271,11 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
       ) : null}
 
       {/* Feuille d'un creneau */}
-      <Sheet visible={!!slot} onClose={() => setSlot(null)} title={slot ? slot.label || sportLabel(slot.sport) : undefined}>
+      <Sheet visible={!!slot} onClose={() => setSlot(null)} title={slot ? sansTiret(slot.label || sportLabel(slot.sport)) : undefined}>
         {slot ? (
           <>
             <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>
-              {[`${PLAN_DAYS[slot.day_of_week]} ${dateOf(slot.iso).getDate()}`, slot.time ? (slot.duration_minutes ? traduire("{0} à {1}", slot.time, endTime(slot.time, slot.duration_minutes)) : slot.time) : '', slot.club_name].filter(Boolean).join(', ')}
+              {sansTiret([`${PLAN_DAYS[slot.day_of_week]} ${dateOf(slot.iso).getDate()}`, slot.time ? (slot.duration_minutes ? traduire("{0} à {1}", slot.time, endTime(slot.time, slot.duration_minutes)) : slot.time) : '', slot.club_name].filter(Boolean).join(', '))}
             </Ink>
             {slotInjury && statusOf(slot).state !== 'done' ? (
               <View style={{ padding: 12, borderRadius: 16, backgroundColor: c.dangerTint, gap: 2 }}>

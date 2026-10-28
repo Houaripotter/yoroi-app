@@ -16,6 +16,7 @@ import { IllusImage } from './Decor';
 import type { Illus } from './Decor';
 import { Icon } from './Icon';
 import { tap } from './ui';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
@@ -107,7 +108,7 @@ export function CompetitionsAVenir({ competitions, today }: { competitions: Comp
         const d = daysUntil(cp.date, today);
         const dt = new Date(cp.date.slice(0, 10) + 'T12:00:00');
         const when = `${dt.getDate()} ${MOIS[dt.getMonth()]}`;
-        const line = [getSportName(cp.sport), cp.lieu].filter(Boolean).join(', ');
+        const line = sansTiret([getSportName(cp.sport), cp.lieu].filter(Boolean).join(', '));
         return (
           <Pressable
             key={cp.id ?? `${cp.nom}${cp.date}`}
@@ -130,7 +131,7 @@ export function CompetitionsAVenir({ competitions, today }: { competitions: Comp
               )}
             </View>
             <View style={{ flex: 1, gap: 1 }}>
-              <Ink size={15} weight="extraBold" numberOfLines={2}>{cp.nom}</Ink>
+              <Ink size={15} weight="extraBold" numberOfLines={2}>{sansTiret(cp.nom)}</Ink>
               <Ink size={12} color={c.textSecondary} numberOfLines={2}>{line ? `${when}, ${line}` : when}</Ink>
             </View>
             <Icon name="chevron" size={16} color={c.textMuted} />

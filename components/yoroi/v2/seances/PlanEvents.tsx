@@ -19,6 +19,7 @@ import { Icon } from './Icon';
 import { BigButton, Chip, ChipRow, EmptyState, SectionTitle, tap } from './ui';
 import { ChargementBloc } from '@/components/yoroi/v2/chargement/Chargement';
 import { P } from '@/components/yoroi/livePalette';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const SAVED_EVENTS_KEY = 'my_saved_events';
@@ -173,8 +174,8 @@ export function PlanEvents({ competitions }: { competitions: Competition[] }) {
                 {n > 0 ? <Ink size={11} weight="bold" color={i === 0 ? c.onDarkSecondary : c.textMuted}>{n > 1 ? 'jours' : 'jour'}</Ink> : null}
               </View>
               <View style={{ flex: 1, gap: 2 }}>
-                <Ink size={17} weight="extraBold" color={i === 0 ? c.background : c.ink} numberOfLines={2}>{traduire(cp.nom)}</Ink>
-                <Ink size={12} color={i === 0 ? c.onDarkSecondary : c.textSecondary} numberOfLines={2}>{[longDate(cp.date.slice(0, 10)), cp.lieu, getSportName(cp.sport), cp.categorie_poids].filter(Boolean).join(', ')}</Ink>
+                <Ink size={17} weight="extraBold" color={i === 0 ? c.background : c.ink} numberOfLines={2}>{sansTiret(traduire(cp.nom))}</Ink>
+                <Ink size={12} color={i === 0 ? c.onDarkSecondary : c.textSecondary} numberOfLines={2}>{sansTiret([longDate(cp.date.slice(0, 10)), cp.lieu, getSportName(cp.sport), cp.categorie_poids].filter(Boolean).join(', '))}</Ink>
               </View>
               <Icon name="chevron" size={18} color={i === 0 ? c.onDarkSecondary : c.textMuted} />
             </Pressable>

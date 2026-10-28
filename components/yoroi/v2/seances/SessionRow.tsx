@@ -2,6 +2,7 @@
  * Ligne d'historique (maquette S4) : vignette illustree du sport, titre, date et resume
  * (duree, series et tonnage en musculation, rounds en combat, distance en cardio), tampon si record.
  */
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import React from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -54,7 +55,7 @@ export function SessionRow({ t, stamps = 0, onBeforeOpen, femme, showDate = true
     >
       <SportThumb sport={t.sport} femme={femme} />
       <View style={{ flex: 1, gap: 2 }}>
-        <Ink size={15} weight="extraBold" numberOfLines={2}>{sessionTitle(t)}</Ink>
+        <Ink size={15} weight="extraBold" numberOfLines={2}>{sansTiret(sessionTitle(t))}</Ink>
         {line ? <Ink size={13} color={c.textSecondary} numberOfLines={2}>{line}</Ink> : null}
       </View>
       {stamps > 0 ? <Hanko size={20} /> : null}

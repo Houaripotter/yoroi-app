@@ -17,8 +17,10 @@ import { Icon } from './Icon';
 import { tap } from './ui';
 import { P } from '@/components/yoroi/livePalette';
 import { ombreBouton } from '@/components/yoroi/v2/accueil/kit';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { useTeinte } from './kitA';
 
 export type NextSlot = { slot: WeeklyPlan; dayOffset: number };
 
@@ -65,6 +67,7 @@ export function NextUp({
 }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  const lilas = useTeinte('lilas');
 
   const calendarLink = onCalendar ? (
     <Pressable
@@ -109,15 +112,15 @@ export function NextUp({
   }
 
   const s = next.slot;
-  const title = s.label || getSportName(s.sport);
-  const sub = [s.duration_minutes ? formatDuration(s.duration_minutes) : '', s.club_name].filter(Boolean).join(', ');
+  const title = sansTiret(s.label || getSportName(s.sport));
+  const sub = sansTiret([s.duration_minutes ? formatDuration(s.duration_minutes) : '', s.club_name].filter(Boolean).join(', '));
 
   return (
     <View style={{ borderRadius: 24, backgroundColor: P.white, padding: 12, gap: 12, shadowColor: '#1D2033', shadowOpacity: 0.05, shadowRadius: 14, shadowOffset: { width: 0, height: 4 }, elevation: 2 }}>
       <Pressable onPress={() => { tap(); onPlanning(); }} accessibilityRole="button" accessibilityLabel={traduire("Prochain entraînement, {0}, {1}. Ouvrir le planning", title, whenText(next))} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <SportThumb sport={s.sport} femme={femme} size={56} />
         <View style={{ flex: 1, gap: 1 }}>
-          <Ink size={12} weight="extraBold" color={c.accentText}>{traduire("Prochain entraînement")}</Ink>
+          <Ink size={11} weight="extraBold" color={lilas.texte} style={{ letterSpacing: 1.2 }}>{traduire("Prochain entraînement").toLocaleUpperCase()}</Ink>
           <Ink size={15.5} weight="black" tight numberOfLines={2}>{title}</Ink>
           <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={2}>{[whenText(next), sub].filter(Boolean).join(', ')}</Ink>
         </View>
@@ -138,13 +141,25 @@ export function NextUp({
             style={{ flex: 1 }}
             icone={(col) => <Icon name="play" size={16} color={col} fill={col} />}
           />
-        ) : (
+        ) : calendarLink ? (
           <View style={{ flex: 1 }}>{calendarLink}</View>
+        ) : null}
+        {/* 28 octobre 2026 (maquette A de l'onglet Seances) : sans bouton a gauche, les creneaux valides a gauche et le lien Planning a droite */}
+        {!onStart && !calendarLink ? (
+          <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', columnGap: 10, paddingTop: 10, borderTopWidth: 1, borderColor: c.divider }}>
+            <Ink size={12.5} weight="bold" color={c.textSecondary} style={{ flexShrink: 1 }}>
+              {`${traduirePluriel(slotsCount, slotsCount > 1, "{0} sur {1} créneau", "{0} sur {1} créneaux", validated, slotsCount)} ${traduirePluriel(validated, validated > 1, "validé cette semaine", "validés cette semaine")}`}
+            </Ink>
+            <Pressable onPress={() => { tap(); onPlanning(); }} accessibilityRole="link" hitSlop={8} style={{ minHeight: 36, justifyContent: 'center' }}>
+              <Ink size={13} weight="extraBold" color={c.accentText}>{traduire("Planning")}</Ink>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={{ flexShrink: 1, alignItems: 'flex-end' }}>
+            <Ink size={12} weight="bold" color={c.textMuted} style={{ textAlign: 'right' }}>{traduirePluriel(slotsCount, slotsCount > 1, "{0} sur {1} créneau", "{0} sur {1} créneaux", validated, slotsCount)}</Ink>
+            <Ink size={12} weight="bold" color={c.textMuted} style={{ textAlign: 'right' }}>{traduirePluriel(validated, validated > 1, "validé cette semaine", "validés cette semaine")}</Ink>
+          </View>
         )}
-        <View style={{ flexShrink: 1, alignItems: 'flex-end' }}>
-          <Ink size={12} weight="bold" color={c.textMuted} style={{ textAlign: 'right' }}>{traduirePluriel(slotsCount, slotsCount > 1, "{0} sur {1} créneau", "{0} sur {1} créneaux", validated, slotsCount)}</Ink>
-          <Ink size={12} weight="bold" color={c.textMuted} style={{ textAlign: 'right' }}>{traduirePluriel(validated, validated > 1, "validé cette semaine", "validés cette semaine")}</Ink>
-        </View>
       </View>
     </View>
   );

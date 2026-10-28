@@ -24,6 +24,7 @@ import { Row, Sheet, tap } from './ui';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P } from '@/components/yoroi/livePalette';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { useIllustrations } from '@/components/yoroi/v2/stickers';
 
@@ -172,7 +173,7 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
             {groups.map((g) => (
               <Pressable key={g.key} onPress={() => { tap(); setGroup({ key: g.key, name: g.name }); }} accessibilityRole="button" style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderRadius: 14, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider }}>
                 <SessionMark t={g.sample} size={24} />
-                <Ink size={14} weight="bold" numberOfLines={2} style={{ maxWidth: 170 }}>{traduire(g.name)}</Ink>
+                <Ink size={14} weight="bold" numberOfLines={2} style={{ maxWidth: 170 }}>{sansTiret(traduire(g.name))}</Ink>
                 <Ink size={14} weight="black">{`${g.count}`}</Ink>
               </Pressable>
             ))}
@@ -184,7 +185,7 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
         {day ? (
           <>
             {dayComps.map((cp) => (
-              <Row key={`c${cp.id}`} title={traduire(cp.nom)} sub={[cp.lieu, 'compétition'].filter(Boolean).join(', ')} icon="trophy" />
+              <Row key={`c${cp.id}`} title={sansTiret(traduire(cp.nom))} sub={sansTiret([cp.lieu, 'compétition'].filter(Boolean).join(', '))} icon="trophy" />
             ))}
             {dayList.map((t) => (
               <View key={t.id} style={{ gap: 6 }}>
@@ -202,7 +203,7 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
               </View>
             ))}
             {!dayList.length && daySlots.length ? (
-              <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Créneau prévu : {0}", daySlots.map((s) => `${s.label || sportLabel(s.sport)}${s.time ? ` à ${s.time}` : ''}`).join(', '))}</Ink>
+              <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Créneau prévu : {0}", sansTiret(daySlots.map((s) => `${s.label || sportLabel(s.sport)}${s.time ? ` à ${s.time}` : ''}`).join(', ')))}</Ink>
             ) : null}
             <Row title={traduire("Ajouter une séance ce jour")} icon="plus" onPress={() => { const iso = day; setDay(null); router.push(`/seance?date=${iso}` as any); }} />
             <Row

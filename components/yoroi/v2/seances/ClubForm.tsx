@@ -19,6 +19,7 @@ import { Icon } from './Icon';
 import { BackButton, BigButton, Chip, tap } from './ui';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P } from '@/components/yoroi/livePalette';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const COLORS = ['#2C4A84', '#B0282E', '#C59D45', '#6E8C3A', '#3D5D9E', '#A8832F', '#1D2029', '#8B8D96'];
@@ -149,7 +150,7 @@ export function ClubFormContent({ editingClub, onDone, onCancel }: { editingClub
           {results.length ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {results.map((s) => (
-                <Chip key={s.id} label={traduire(s.name)} on={s.id === sport} onPress={() => { setSport(s.id); setSearch(''); }} />
+                <Chip key={s.id} label={sansTiret(traduire(s.name))} on={s.id === sport} onPress={() => { setSport(s.id); setSearch(''); }} />
               ))}
             </View>
           ) : null}

@@ -18,6 +18,7 @@ import type { IconName } from './Icon';
 import { Hanko, tap } from './ui';
 import { P } from '@/components/yoroi/livePalette';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { traduire } from '@/lib/i18n/tr';
 
 const FACT_ICON: Record<KeyFact['kind'], IconName> = {
@@ -37,10 +38,10 @@ export function HistoryCard({ t, femme, stamps = 0, showMonth }: { t: Training; 
   const d = dateOf(t.date);
   const day = `${DOW_SHORT[d.getDay()]} ${d.getDate()}${showMonth ? ` ${MONTHS_SHORT[d.getMonth()]}` : ''}`;
   const time = t.start_time ? t.start_time.slice(0, 5).replace(':', ' h ') : '';
-  const when = [day, time ? `à ${time}` : '', t.club_name].filter(Boolean).join(', ');
+  const when = sansTiret([day, time ? `à ${time}` : '', t.club_name].filter(Boolean).join(', '));
   const facts = keyFacts(t, useUnitePoids());
   const watch = isImported(t);
-  const title = sessionTitle(t);
+  const title = sansTiret(sessionTitle(t));
 
   return (
     <Pressable

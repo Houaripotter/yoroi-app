@@ -2,6 +2,8 @@
  * « Mes séances » dans l'onglet Séances (25 octobre 2026) : tes trois séances enregistrées les plus récentes,
  * chacune avec son bouton pour la commencer tout de suite ; sans séance, l'invitation à en créer une.
  * Données : lib/v2/seance/mesSeances.ts. Liste complète : app/mes-seances.
+ * 28 octobre 2026 (maquette A de l'onglet Séances) : useMesSeances et MesSeancesListe, la même liste dans la section
+ * repliable « Mes séances », sans son titre ni sa carte.
  */
 import React, { useEffect, useState } from 'react';
 import { DeviceEventEmitter, Image, Pressable, View } from 'react-native';
@@ -14,8 +16,85 @@ import { SectionTitle, tap } from './ui';
 import { relativeDay } from '@/lib/v2/seance/format';
 import { MES_SEANCES_EVENT, chargerMesSeances } from '@/lib/v2/seance/mesSeances';
 import type { MaSeance } from '@/lib/v2/seance/mesSeances';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
+
+/** Tes séances enregistrées (null pendant le chargement), rechargées quand elles changent */
+export function useMesSeances(): MaSeance[] | null {
+  const [liste, setListe] = useState<MaSeance[] | null>(null);
+  useEffect(() => {
+    const charger = () => chargerMesSeances().then(setListe).catch(() => setListe([]));
+    charger();
+    const sub = DeviceEventEmitter.addListener(MES_SEANCES_EVENT, charger);
+    return () => sub.remove();
+  }, []);
+  return liste;
+}
+
+/** Le résumé de la section fermée : « Push, Jambes, Haut du corps : à refaire en un appui » */
+export function resumeMesSeances(liste: MaSeance[] | null): string {
+  if (!liste || liste.length === 0) return traduire('Enregistre tes séances : à refaire en un appui');
+  const noms = sansTiret(liste.slice(0, 3).map((s) => s.nom).join(', '));
+  return traduire('{0} : à refaire en un appui', noms);
+}
+
+/** La liste, dans la section repliable : trois séances au plus, chacune avec son bouton, puis « Voir tout » */
+export function MesSeancesListe({ liste }: { liste: MaSeance[] }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const router = useRouter();
+  const ouvrir = () => {
+    tap();
+    router.push('/mes-seances' as any);
+  };
+  if (liste.length === 0) {
+    return (
+      <Pressable onPress={ouvrir} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, borderRadius: 16, backgroundColor: c.background, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.85 : 1 })}>
+        <Image source={illustration('carnet')} style={{ width: 40, height: 40 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Ink size={15} weight="black" tight>{traduire('Enregistre tes séances')}</Ink>
+          <Ink size={12.5} color={c.textSecondary}>{traduire('Push, Jambes, Haut du corps : à refaire en un appui')}</Ink>
+        </View>
+        <Icon name="chevron" size={18} color={c.textMuted} />
+      </Pressable>
+    );
+  }
+  return (
+    <View style={{ gap: 4 }}>
+      <View style={{ borderRadius: 16, backgroundColor: c.background, overflow: 'hidden' }}>
+        {liste.slice(0, 3).map((s, i) => (
+          <View key={s.id} style={{ minHeight: 62, paddingLeft: 12, paddingRight: 8, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider }}>
+            <Pressable onPress={ouvrir} accessibilityRole="button" style={{ flex: 1, gap: 2 }}>
+              <Ink size={15} weight="black" tight numberOfLines={2}>{sansTiret(s.nom)}</Ink>
+              <Ink size={12} color={c.textSecondary} numberOfLines={2}>
+                {[
+                  traduirePluriel(s.exos.length, s.exos.length > 1, '{0} exercice', '{0} exercices', s.exos.length),
+                  s.faiteLe ? traduire('faite {0}', traduire(relativeDay(s.faiteLe))) : traduire('pas encore faite'),
+                ].join(', ')}
+              </Ink>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                tap();
+                router.push({ pathname: '/seance/muscu' as any, params: { sport: s.sport, maSeance: s.id } });
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={traduire('Commencer {0}', s.nom)}
+              style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primaryPressed : c.primary })}
+            >
+              <Icon name="play" size={17} color={c.onPrimary} />
+            </Pressable>
+          </View>
+        ))}
+      </View>
+      <Pressable onPress={ouvrir} accessibilityRole="link" hitSlop={6} style={{ alignSelf: 'flex-start', minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 2 }}>
+        <Ink size={13} weight="extraBold" color={c.accentText}>{traduire('Voir toutes mes séances')}</Ink>
+        <Icon name="chevron" size={15} color={c.accentText} />
+      </Pressable>
+    </View>
+  );
+}
 
 export function MesSeancesCarte() {
   const { theme } = useYoroiTheme();
@@ -59,7 +138,7 @@ export function MesSeancesCarte() {
         {liste.slice(0, 3).map((s, i) => (
           <View key={s.id} style={{ minHeight: 68, paddingLeft: 16, paddingRight: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider }}>
             <Pressable onPress={ouvrir} accessibilityRole="button" style={{ flex: 1, gap: 2 }}>
-              <Ink size={16} weight="black" tight numberOfLines={1}>{s.nom}</Ink>
+              <Ink size={16} weight="black" tight numberOfLines={1}>{sansTiret(s.nom)}</Ink>
               <Ink size={12} color={c.textSecondary} numberOfLines={1}>
                 {[
                   traduirePluriel(s.exos.length, s.exos.length > 1, '{0} exercice', '{0} exercices', s.exos.length),

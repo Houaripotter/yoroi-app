@@ -19,6 +19,7 @@ import { Icon } from './Icon';
 import { BigButton, EmptyState, Glass, SectionTitle, tap } from './ui';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P } from '@/components/yoroi/livePalette';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export function ClubLogo({ club, size = 52 }: { club: Club; size?: number }) {
@@ -97,7 +98,7 @@ export function PlanClubs({ trainings, onChanged }: { trainings: Training[]; onC
               <ClubLogo club={club} />
               <View style={{ flex: 1, gap: 2 }}>
                 <Ink size={16} weight="extraBold" numberOfLines={2}>{traduire(club.name)}</Ink>
-                <Ink size={12} color={c.textSecondary}>{traduire("{0}, {1} ce mois, {2} au total", getSportName(club.sport), month, all.length)}</Ink>
+                <Ink size={12} color={c.textSecondary}>{traduire("{0}, {1} ce mois, {2} au total", sansTiret(getSportName(club.sport)), month, all.length)}</Ink>
               </View>
               <Pressable onPress={() => { tap(); setEditing(club); setFormOpen(true); }} accessibilityRole="button" accessibilityLabel={traduire("Modifier {0}", club.name)} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
                 <Icon name="edit" size={18} color={c.ink} />
@@ -135,7 +136,7 @@ export function PlanClubs({ trainings, onChanged }: { trainings: Training[]; onC
         goals.map((g) => (
           <Glass key={g.goal.sport_id} style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <Ink size={15} weight="extraBold">{g.sport?.name ?? getSportName(g.goal.sport_id)}</Ink>
+              <Ink size={15} weight="extraBold">{sansTiret(g.sport?.name ?? getSportName(g.goal.sport_id))}</Ink>
               <Ink size={14} weight="black">{traduire("{0} sur {1}", g.weekCount, g.weekTarget)}</Ink>
             </View>
             <View style={{ flexDirection: 'row', gap: 4 }}>

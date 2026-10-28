@@ -5,9 +5,11 @@
  * 27 octobre 2026 (maquette Pastel-Seances) : la carte blanche garde le nombre de seances, le badge Objectif tenu a
  * droite et les 7 jours en carres ; les quatre chiffres sortent dessous en quatre cartes pastel (duree creme, volume
  * bleu, charge peche, jours menthe). Avant : _archive_ancien_design_2026-10-09/refonte_phase2_2026-10-27.
+ * 28 octobre 2026 (maquette A « Aujourd'hui d'abord ») : l'onglet Seances affiche la carte de la semaine (SemaineAnneau)
+ * et les quatre chiffres (WeekTiles) separement ; WeekHero les garde ensemble pour qui l'utiliserait encore.
  */
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useYoroiTheme } from '@/components/yoroi';
@@ -21,6 +23,8 @@ import { WeekPlates } from './WeekPlates';
 import type { DayPlate } from './WeekPlates';
 import { Icon } from './Icon';
 import { tap } from './ui';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
 import { P, paletteSombre } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
@@ -53,8 +57,8 @@ function volumeOf(cur: PeriodStats, prev: PeriodStats, unite: UnitePoids = 'kg')
 function Trend({ delta, text, hasPrev, couleur }: { delta: number; text: string; hasPrev: boolean; couleur?: string }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  if (!hasPrev && delta <= 0) return <Ink size={12} weight="extraBold" color={couleur ?? c.textMuted} numberOfLines={1}>{traduire("rien la semaine passée")}</Ink>;
-  if (Math.abs(delta) < 0.5) return <Ink size={12} weight="extraBold" color={couleur ?? c.textMuted} numberOfLines={1}>{traduire("comme la semaine passée")}</Ink>;
+  if (!hasPrev && delta <= 0) return <Ink size={11.5} weight="extraBold" color={couleur ?? c.textMuted} numberOfLines={2}>{traduire("rien la semaine passée")}</Ink>;
+  if (Math.abs(delta) < 0.5) return <Ink size={11.5} weight="extraBold" color={couleur ?? c.textMuted} numberOfLines={2}>{traduire("comme la semaine passée")}</Ink>;
   const up = delta > 0;
   const color = couleur ?? (up ? c.successText : c.textSecondary);
   return (
@@ -62,7 +66,7 @@ function Trend({ delta, text, hasPrev, couleur }: { delta: number; text: string;
       <Svg width={12} height={12} viewBox="0 0 24 24">
         <Path d={up ? 'M12 19V5M6 11l6-6 6 6' : 'M12 5v14M6 13l6 6 6-6'} stroke={color} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
       </Svg>
-      <Ink size={12} weight="extraBold" color={color} numberOfLines={1} style={{ flexShrink: 1 }}>{text}</Ink>
+      <Ink size={11.5} weight="extraBold" color={color} numberOfLines={2} style={{ flexShrink: 1 }}>{text}</Ink>
     </View>
   );
 }
@@ -80,26 +84,70 @@ export function couleursTuile(t: TeinteTuile): { fond: string; texte: string } {
   return { fond, texte };
 }
 
-function Tile({ label, value, children, onPress, a11y, teinte }: { label: string; value: string; children: React.ReactNode; onPress?: () => void; a11y?: string; teinte: TeinteTuile }) {
+function Tile({ label, value, children, onPress, a11y, teinte, sticker }: { label: string; value: string; children: React.ReactNode; onPress?: () => void; a11y?: string; teinte: TeinteTuile; sticker?: NomSticker }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const t = couleursTuile(teinte);
+  const illus = useIllustrations();
+  // 28 octobre 2026 (maquette A) : le libelle en petites capitales colorees, le sticker a droite, le chevron apres la valeur
   const body = (
     <>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
-        <Ink size={12.5} weight="extraBold" color={t.texte} numberOfLines={1} style={{ flexShrink: 1 }}>{label.charAt(0).toUpperCase() + label.slice(1)}</Ink>
-        {onPress ? <Icon name="chevron" size={14} color={t.texte} strokeWidth={2.6} /> : null}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6, minHeight: 26 }}>
+        <Ink size={10.5} weight="extraBold" color={t.texte} numberOfLines={2} style={{ flexShrink: 1, letterSpacing: 1.1 }}>{label.toLocaleUpperCase()}</Ink>
+        {sticker ? <Image source={illus.img(sticker)} style={{ width: 26, height: 26 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
       </View>
-      <Ink size={25} weight="black" tight color={c.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ letterSpacing: -0.5 }}>{value}</Ink>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}>
+        <Ink size={23} weight="black" tight color={c.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ letterSpacing: -0.4, flexShrink: 1 }}>{value}</Ink>
+        {onPress ? <Icon name="chevron" size={15} color={t.texte} strokeWidth={2.6} /> : null}
+      </View>
       {children}
     </>
   );
-  const style = { flexBasis: '47%' as const, flexGrow: 1, paddingVertical: 13, paddingHorizontal: 14, borderRadius: 22, backgroundColor: t.fond, gap: 2 };
+  const style = { flexBasis: '47%' as const, flexGrow: 1, paddingVertical: 12, paddingHorizontal: 12, borderRadius: 22, backgroundColor: t.fond, gap: 2, minHeight: 104 };
   if (!onPress) return <View style={style}>{body}</View>;
   return (
     <Pressable onPress={() => { tap(); onPress(); }} accessibilityRole="button" accessibilityLabel={a11y ?? label} style={({ pressed }) => [style, pressed ? { opacity: 0.85 } : null]}>
       {body}
     </Pressable>
+  );
+}
+
+/**
+ * 28 octobre 2026 (maquette A) : les quatre chiffres de la semaine, seuls (la carte de la semaine est dans
+ * SemaineAnneau.tsx), et la phrase de comparaison dessous. Memes calculs qu'avant.
+ */
+export function WeekTiles({ week, onOpenCharge }: { week: WeekCompare; onOpenCharge: () => void }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const cur = week.current;
+  const prev = week.previousSoFar;
+  const hasPrev = prev.sessions > 0;
+  const unite = useUnitePoids();
+  const vol = volumeOf(cur, prev, unite);
+  const loadPct = prev.load > 0 ? Math.round(((cur.load - prev.load) / prev.load) * 100) : 0;
+  const full = week.previousFull;
+  return (
+    <View style={{ gap: 8 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+        <Tile teinte="creme" sticker="sablier" label={traduire("durée")} value={cur.minutes ? fmtMin(cur.minutes) : `0${NB}min`}>
+          <Trend couleur={couleursTuile('creme').texte} delta={cur.minutes - prev.minutes} text={fmtMin(cur.minutes - prev.minutes)} hasPrev={hasPrev} />
+        </Tile>
+        <Tile teinte="bleu" sticker="musculation" label={traduire(vol.label)} value={vol.value}>
+          <Trend couleur={couleursTuile('bleu').texte} delta={vol.delta} text={vol.fmt(vol.delta)} hasPrev={hasPrev} />
+        </Tile>
+        <Tile teinte="peche" sticker="force_eclair" label="charge" value={`${formatPoints(cur.load)}${NB}pts`} onPress={onOpenCharge} a11y={traduire("Ta charge d’entraînement, voir le détail")}>
+          <Trend couleur={couleursTuile('peche').texte} delta={prev.load > 0 ? loadPct : cur.load} text={prev.load > 0 ? `${Math.abs(loadPct)}${NB}%` : `${formatPoints(cur.load)}${NB}pts`} hasPrev={hasPrev} />
+        </Tile>
+        <Tile teinte="menthe" sticker="calendrier" label={traduire("jours entraînés")} value={traduire("{0} sur 7", cur.days)}>
+          <Trend couleur={couleursTuile('menthe').texte} delta={cur.days - prev.days} text={traduirePluriel(Math.abs(cur.days - prev.days), Math.abs(cur.days - prev.days) > 1, "{0} jour", "{0} jours", Math.abs(cur.days - prev.days))} hasPrev={hasPrev} />
+        </Tile>
+      </View>
+      <Ink size={12} weight="bold" color={c.textMuted} style={{ paddingHorizontal: 4, lineHeight: 17 }}>
+        {full.sessions > 0
+          ? traduirePluriel(full.sessions, full.sessions > 1, "Comparé à la semaine passée au même jour. Semaine passée entière : {0} séance{1}.", "Comparé à la semaine passée au même jour. Semaine passée entière : {0} séances{1}.", full.sessions, full.minutes ? `, ${fmtMin(full.minutes)}` : '')
+          : traduire('Comparé à la semaine passée au même jour.')}
+      </Ink>
+    </View>
   );
 }
 
