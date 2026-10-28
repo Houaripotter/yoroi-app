@@ -18,7 +18,7 @@ import { sourceNotif, src, type SourceTexte } from '@/lib/notificationLangue';
  * dans l'app native : on prend le son par defaut pour eviter l'erreur
  * « Custom sound not found ».
  */
-function timerSound(): string {
+export function timerSound(): string {
   if (Platform.OS !== 'ios') return 'default';
   try {
     if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return 'default';

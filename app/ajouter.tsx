@@ -276,6 +276,8 @@ export default function Ajouter() {
     { key: 'passee', titre: traduire('Séance passée'), sous: traduire('un autre jour'), sticker: 'calendrier', onPress: () => open('/seance/deja-faite') },
     { key: 'importer', titre: traduire('Importer'), sous: traduire('tes notes, une autre app'), sticker: 'donnees', onPress: () => open('/importer-carnet') },
     { key: 'quoi', titre: traduire('Quoi faire ?'), sous: traduire('YOROI fait ta séance'), sticker: 'zones_corps', onPress: () => open('/programmes/zones') },
+    // 28 octobre 2026 : sprints guidés, échauffement, sprints et récupération avec le coach vocal (app/seance/sprints.tsx)
+    { key: 'sprints', titre: traduire('Sprints guidés'), sous: traduire('échauffement, sprints, récupération'), sticker: 'course', onPress: () => open('/seance/sprints') },
     ...(provider
       ? [{ key: 'montre', titre: traduire('Ta montre'), sous: sync === 'idle' ? traduire('récupérer tes séances') : sync === 'busy' ? traduire('synchro en cours') : sync, sticker: 'sante_appareils' as NomSticker, onPress: syncWatch }]
       : []),

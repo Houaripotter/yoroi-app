@@ -349,6 +349,18 @@ export default function OnSentraine() {
           })}
         </View>
 
+        {/* 28 octobre 2026 : en direct, les sprints guidés (app/seance/sprints.tsx) */}
+        {direct && !later ? (
+          <Pressable onPress={() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); router.push('/seance/sprints' as any); }} accessibilityRole="button" accessibilityLabel={traduire('Sprints guidés, échauffement, sprints et récupération')} style={({ pressed }) => [carteBlanche(c.surface, c.divider), { minHeight: 64, borderRadius: 18, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 12, opacity: pressed ? 0.85 : 1 }]}>
+            <Icon name="bolt" size={22} color={c.accent} />
+            <View style={{ flex: 1 }}>
+              <Ink size={15} weight="extraBold">{traduire('Sprints guidés')}</Ink>
+              <Ink size={12} color={c.textMuted}>{traduire('Échauffement, sprints, récupération, la voix te guide')}</Ink>
+            </View>
+            <Icon name="chevron" size={18} color={c.textMuted} />
+          </Pressable>
+        ) : null}
+
         {/* Recherche dans tous les sports */}
         <View style={{ ...carteBlanche(c.surface, c.divider), height: 52, borderRadius: 18, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 12 }}>
           <Icon name="search" size={20} color={c.textMuted} />

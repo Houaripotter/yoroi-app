@@ -259,6 +259,14 @@ export default function CoachScreen() {
               </Pressable>
             );
           })}
+          {/* 28 octobre 2026 : sprints guidés (app/seance/sprints.tsx) */}
+          <Pressable
+            onPress={() => { tap(); router.push('/seance/sprints' as any); }}
+            accessibilityRole="button"
+            style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 22, justifyContent: 'center', backgroundColor: pa.peche.fond, transform: [{ scale: pressed ? 0.97 : 1 }] })}
+          >
+            <Ink size={14} weight="extraBold" color={pa.peche.titre}>{traduire('Sprints guidés')}</Ink>
+          </Pressable>
         </View>
         </Animated.View>
       </ScrollView>

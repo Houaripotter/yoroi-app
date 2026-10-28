@@ -664,6 +664,8 @@ export default function TimerScreen() {
             {MODES.map((m) => (
               <ModeCard key={m.id} vive mode={m.id} title={traduire(m.label)} tag={m.tag} text={traduire(m.sub)} onPress={() => changeMode(m.id)} />
             ))}
+            {/* 28 octobre 2026 : sprints guidés, l'illustration de course du chrono contre la montre (app/seance/sprints.tsx) */}
+            <ModeCard vive mode="fortime" title={traduire("Sprints guidés")} tag={traduire("Course")} text={traduire("Échauffement, sprints et récupération, par niveau. La voix du coach te guide.")} onPress={() => router.push('/seance/sprints' as any)} />
             <ModeCard mode="sparring" dark title={traduire("Sparring, round par round")} text={traduire("Les rounds de combat, et tu notes chaque round : victoire, défaite ou nul.")} onPress={() => router.push('/combat-timer' as any)} />
           </View>
         </ScrollView>

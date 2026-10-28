@@ -81,9 +81,11 @@ type Props = {
   footer?: React.ReactNode;
   /** moins et plus sur la phase en cours (repos muscu : 15 s) */
   adjust?: { onMinus: () => void; onPlus: () => void; step?: string } | null;
+  /** à gauche de l'en tête (sprints guidés : le bouton du coach vocal) */
+  headerLeft?: React.ReactNode;
 };
 
-export function ActiveChrono({ engine, name, focusMode, onToggleFocus, onStop, confirmStop, skipLabel, canSkip = true, onReset, titleOverride, subOverride, nextOverride, track, children, footer, adjust }: Props) {
+export function ActiveChrono({ engine, name, focusMode, onToggleFocus, onStop, confirmStop, skipLabel, canSkip = true, onReset, titleOverride, subOverride, nextOverride, track, children, footer, adjust, headerLeft }: Props) {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const key = phaseColorKey(engine);
@@ -111,7 +113,7 @@ export function ActiveChrono({ engine, name, focusMode, onToggleFocus, onStop, c
   return (
     <View style={{ flex: 1, backgroundColor: pc.soft }}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 }}>
-        <View style={{ width: 44 }} />
+        {headerLeft ?? <View style={{ width: 44 }} />}
         <Ink size={15} weight="extraBold" color={P.ink2} numberOfLines={1} style={{ flexShrink: 1, textAlign: 'center' }}>{name}</Ink>
         {onToggleFocus ? <IconBtn name="eye" label={focusMode ? traduire('Quitter le mode épuré') : traduire('Mode épuré : juste le temps')} onPress={onToggleFocus} tone={focusMode ? 'ink' : 'glass'} /> : <View style={{ width: 44 }} />}
       </View>
