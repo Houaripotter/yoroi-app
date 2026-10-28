@@ -267,11 +267,11 @@ export default function Reglages() {
         <Pressable
           onLongPress={onVersionLongPress}
           delayLongPress={1500}
-          accessibilityLabel={`YOROI, version ${APP_VERSION}`}
+          accessibilityLabel={`Version ${APP_VERSION}`}
           style={{ alignItems: 'center', paddingVertical: 14, gap: 4 }}
         >
           <Embleme size={34} color={c.textMuted} ring={c.border} />
-          <Ink size={13} weight="bold" color={c.textMuted}>{APP_VERSION ? `YOROI, version ${APP_VERSION}` : 'YOROI'}</Ink>
+          <Ink size={13} weight="bold" color={c.textMuted}>{APP_VERSION ? `Version ${APP_VERSION}` : 'YOROI'}</Ink>
           <Ink size={12} color={c.textMuted}>{traduire("Fait à Marseille, 100 % hors ligne")}</Ink>
         </Pressable>
       </ScrollView>
