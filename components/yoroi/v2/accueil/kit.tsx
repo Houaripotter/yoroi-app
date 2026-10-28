@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import type { PressableProps, StyleProp, ViewStyle } from 'react-native';
+import type { PressableProps, RefreshControlProps, StyleProp, ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -330,6 +330,7 @@ export function DetailScreen({
   footer,
   onBack,
   scroll = true,
+  refreshControl,
 }: {
   title: string;
   subtitle?: string;
@@ -339,6 +340,8 @@ export function DetailScreen({
   footer?: React.ReactNode;
   onBack?: () => void;
   scroll?: boolean;
+  /** 28 octobre 2026 : tirer vers le bas pour actualiser (useTirerPourActualiser) */
+  refreshControl?: React.ReactElement<RefreshControlProps>;
 }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -354,6 +357,7 @@ export function DetailScreen({
             if (d !== defile) setDefile(d);
           }}
           scrollEventThrottle={32}
+          refreshControl={refreshControl}
           contentContainerStyle={{ paddingBottom: insets.bottom + (footer ? 110 : 40) }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"

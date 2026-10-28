@@ -15,6 +15,7 @@ import { fontStyle } from '@/components/yoroi/fonts';
 import { P, Press, tap } from '@/components/yoroi/v2/accueil/kit';
 import { paletteSombre } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
+import { RetourCompact } from '@/components/yoroi/v2/entete/EnTete';
 
 export { P, Press, tap };
 export { Card, Glass, BigButton, Pill, shadow, Enter, Kozane } from '@/components/yoroi/v2/accueil/kit';
@@ -118,7 +119,10 @@ export function ScreenHead({ title, subtitle, right, onBack }: { title: string; 
   return (
     <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 }}>
-        <IconBtn name="back" label={traduire("Retour")} onPress={back} />
+        {/* 28 octobre 2026 : le meme retour rond que tous les ecrans (en-tete commun) */}
+        <View style={{ marginLeft: -2 }}>
+          <RetourCompact onPress={back} />
+        </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>{right}</View>
       </View>
       <View style={{ paddingHorizontal: 6, gap: 4 }}>

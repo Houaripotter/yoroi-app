@@ -82,11 +82,18 @@ export default function SportScreen() {
   };
 
   const save = async (next: Routine) => {
+    const avant = routine;
     setRoutine(next);
+    let ok = false;
     try {
-      await saveUserSettings({ weekly_routine: next } as any);
+      ok = await saveUserSettings({ weekly_routine: next } as any);
     } catch (error) {
       logger.error('Erreur sauvegarde routine:', error);
+    }
+    // 28 octobre 2026 : avant, un enregistrement refuse gardait l'affichage comme si c'etait enregistre
+    if (!ok) {
+      setRoutine(avant);
+      appAlert(traduire('Oups'), traduire('Ta semaine type n’a pas pu être enregistrée. Réessaie dans un instant.'));
     }
   };
 

@@ -55,6 +55,8 @@ import { useIdentite } from '@/lib/v2/espace/useIdentite';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { logger } from '@/lib/security/logger';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
+import { useConfirmerSortie } from '@/lib/v2/saisie/useConfirmerSortie';
 import { FeuilleLangue, langueEnCours } from '@/components/yoroi/v2/langue/ChoixLangue';
 
 type Goal = 'lose' | 'maintain' | 'gain';
@@ -272,11 +274,17 @@ export default function TonProfil() {
     }
   };
 
+  // 28 octobre 2026 : quitter avec un prenom ou des poids modifies et pas enregistres demande confirmation
+  // (bouton retour, glissement retour de l'iPhone, retour d'Android)
+  useConfirmerSortie(dirty && !saving, { message: traduire('Ton prénom ou tes poids modifiés ne sont pas encore enregistrés.') });
+  // tirer pour actualiser : seulement sans changement en cours (sinon la relecture effacerait ta saisie)
+  const { refreshControl } = useTirerPourActualiser({ relire: load }, { actif: !dirty && !saving });
+
   /** Age et taille : enregistres tout de suite depuis leur feuille */
   const validerSaisie = async () => {
     Keyboard.dismiss();
-    const base = profile ?? (await getProfile());
     try {
+      const base = profile ?? (await getProfile());
       if (saisie === 'naissance') {
         const iso = brouillon.trim() ? normalizeBirth(brouillon) : null;
         if (brouillon.trim() && !iso) {
@@ -316,8 +324,14 @@ export default function TonProfil() {
       showPopup(traduire('Oups'), traduire('Tes réglages ne sont pas lisibles pour le moment. Réessaie dans un instant.'));
       return;
     }
+    const avant = genre;
     setGenre(g);
-    await saveUserSettings({ gender: g });
+    // 28 octobre 2026 : un enregistrement refuse (reglages illisibles) n'est plus montre comme reussi
+    if (!(await saveUserSettings({ gender: g }))) {
+      setGenre(avant);
+      showPopup(traduire('Oups'), traduire('Ton choix n’a pas pu être enregistré. Réessaie dans un instant.'));
+      return;
+    }
     DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
     notificationAsync(NotificationFeedbackType.Success).catch(() => {});
   };
@@ -459,6 +473,7 @@ export default function TonProfil() {
       gap={12}
       fondDes={40}
       scrollRef={scrollRef}
+      refreshControl={refreshControl}
       footer={dirty ? <BoutonPrincipal label={traduire("Enregistrer")} loading={saving} onPress={handleSave} lignes={1} /> : undefined}
       hero={(top) => (
         <View onLayout={(e) => { posContenu.current = e.nativeEvent.layout.height + 6; }}>

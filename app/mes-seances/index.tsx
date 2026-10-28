@@ -24,6 +24,7 @@ import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import { MES_SEANCES_EVENT, chargerMesSeances, dupliquerMaSeance, modifierMaSeance, supprimerMaSeance, totalSeries } from '@/lib/v2/seance/mesSeances';
 import type { MaSeance } from '@/lib/v2/seance/mesSeances';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
@@ -42,6 +43,8 @@ export default function MesSeances() {
     const sub = DeviceEventEmitter.addListener(MES_SEANCES_EVENT, charger);
     return () => sub.remove();
   }, []);
+  // 28 octobre 2026 : tirer pour actualiser partage (autre telephone, tes seances relues ; une lecture ratee est dite)
+  const { refreshControl } = useTirerPourActualiser({ relire: () => chargerMesSeances().then(setListe) });
 
   const commencer = (s: MaSeance, faite = false) => {
     tap();
@@ -62,13 +65,18 @@ export default function MesSeances() {
     // la feuille se ferme d'abord : deux fenetres a la fois se bloquent sur iPhone
     setTimeout(() => appAlert(traduire('Supprimer {0} ?', s.nom), traduire('Tes séances déjà faites restent dans ton historique.'), [
       { text: traduire('Annuler'), style: 'cancel' },
-      { text: traduire('Supprimer'), style: 'destructive', onPress: () => void supprimerMaSeance(s.id).catch(() => {}) },
+      {
+        text: traduire('Supprimer'),
+        style: 'destructive',
+        onPress: () =>
+          void supprimerMaSeance(s.id).catch(() => appAlert(traduire('Oups'), traduire('{0} n’a pas pu être supprimée, réessaie.', s.nom))),
+      },
     ]), 380);
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 40, gap: 12 }} showsVerticalScrollIndicator={false}>
+      <ScrollView refreshControl={refreshControl} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 40, gap: 12 }} showsVerticalScrollIndicator={false}>
         <EnTete titre={traduire('Mes séances')} sousTitre={traduire('tes séances à toi, à refaire en un appui')} repli="/(tabs)/seances" style={{ marginHorizontal: -16, marginTop: -8 }} />
 
         {liste && liste.length === 0 ? (

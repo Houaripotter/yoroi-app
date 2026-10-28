@@ -2,7 +2,7 @@
  * Modifier une competition (vague 18) : memes champs que l'ajout, sport modifiable.
  * Les rappels sont reprogrammes avec la nouvelle date. Parametre : id.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, DeviceEventEmitter, Keyboard, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
@@ -66,8 +66,10 @@ export default function EditCompetitionScreen() {
     };
   }, [id]);
 
+  // 28 octobre 2026 : un double appui n'enregistre et ne repart qu'une fois
+  const verrou = useRef(false);
   const save = async () => {
-    if (!draft) return;
+    if (!draft || verrou.current) return;
     Keyboard.dismiss();
     if (!draft.nom.trim()) {
       appAlert(traduire('Il manque le nom'), traduire('Donne un nom à ta compétition.'));
@@ -78,6 +80,7 @@ export default function EditCompetitionScreen() {
       appAlert(traduire('Adresse du site'), traduire('Vérifie l’adresse du site, par exemple www.exemple.fr.'));
       return;
     }
+    verrou.current = true;
     setSaving(true);
     try {
       const cat = selectedCategory(draft, gender);
@@ -103,6 +106,7 @@ export default function EditCompetitionScreen() {
     } catch (error) {
       logger.error('Error updating competition:', error);
       appAlert(traduire('Mise à jour impossible'), traduire('Réessaie dans un instant.'));
+      verrou.current = false;
       setSaving(false);
     }
   };

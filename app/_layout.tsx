@@ -41,6 +41,7 @@ import { scheduleCloudSyncCheckOnStartup } from '@/lib/multiDeviceSyncService';
 import { initAutoWatchSync, syncAllWatchesEnriched } from '@/lib/unifiedWatchSyncService';
 import { GlobalPasswordPromptMount } from '@/components/GlobalPasswordPromptMount';
 import { FenetreHost } from '@/components/yoroi/v2/fenetre/FenetreHost';
+import { ToastActualiser } from '@/components/yoroi/v2/actualiser/ToastActualiser';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { logger } from '@/lib/security/logger';
 import { healthConnect } from '@/lib/healthConnect';
@@ -510,6 +511,8 @@ function RootLayoutContent() {
       <MesureApp />
       {/* Ancien hote du mot de passe (les demandes passent desormais par la fenetre maison) */}
       <GlobalPasswordPromptMount />
+      {/* 28 octobre 2026 : message discret apres un tirer pour actualiser (« À jour » ou la raison d'un echec) */}
+      <ToastActualiser />
       {/* Fenetre maison unique (appAlert, appChoices, appPrompt), au-dessus de tout, y compris des ecrans modaux */}
       <FenetreHost />
       {/* Biometric lock (FaceID / TouchID), tout en haut pour masquer l'UI */}

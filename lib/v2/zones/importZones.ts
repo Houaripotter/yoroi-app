@@ -20,6 +20,14 @@ import { choisirFcMax, deciderImport, fcReposPlausible } from './zonesApple';
 import type { ResultatImport, SourceFcMax } from './zonesApple';
 import { logger } from '@/lib/security/logger';
 
+/** 28 octobre 2026 : les zones lues n'ont pas pu etre enregistrees dans tes reglages (rien n'est montre comme reussi) */
+export class ZonesNonEnregistrees extends Error {
+  constructor() {
+    super('Zones cardiaques non enregistrees');
+    this.name = 'ZonesNonEnregistrees';
+  }
+}
+
 const CLE = '@yoroi_zones_import';
 
 /** Ce qu'on garde du dernier import : date, FC de repos et FC max utilisees */
@@ -123,7 +131,7 @@ export async function importerZones(): Promise<ResultatImport> {
   const meta: ZonesMeta = res.type === 'exactes'
     ? { origin: 'apple', updatedAt: at, appleSource: res.appleSource, appleCheckedAt: at, noticeShown: true }
     : { origin: 'estimee', updatedAt: at, noticeShown: settings?.heartRateZonesMeta?.noticeShown };
-  await saveUserSettings({ heartRateZones: zonesFromLowers(res.lb, 0), heartRateZonesMeta: meta });
+  if (!(await saveUserSettings({ heartRateZones: zonesFromLowers(res.lb, 0), heartRateZonesMeta: meta }))) throw new ZonesNonEnregistrees();
   await ecrireMemoireImport(res.type === 'exactes'
     ? { at, type: 'exactes', repos: valeurs.repos ?? undefined, max: valeurs.fcMax?.valeur }
     : { at, type: 'calculees', repos: res.repos, max: res.max, sourceMax: res.sourceMax });

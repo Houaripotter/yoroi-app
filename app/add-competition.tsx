@@ -5,7 +5,7 @@
  * Apres l'enregistrement, on propose d'ajouter la competition au calendrier du telephone.
  */
 import { track } from '@/utils/telemetry';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { DeviceEventEmitter, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -63,8 +63,11 @@ export default function AddCompetitionScreen() {
       .catch(() => {});
   }, []);
 
+  // 28 octobre 2026 : un double appui ne cree plus deux competitions (le verrou reste pris une fois enregistree)
+  const verrou = useRef(false);
   const save = async () => {
     Keyboard.dismiss();
+    if (verrou.current) return;
     if (blocked) {
       ouvrirPaywall('competitions_limite', upcoming);
       return;
@@ -78,6 +81,7 @@ export default function AddCompetitionScreen() {
       appAlert(traduire('Adresse du site'), traduire('Vérifie l’adresse du site, par exemple www.exemple.fr.'));
       return;
     }
+    verrou.current = true;
     setSaving(true);
     try {
       const cat = selectedCategory(draft, gender);
@@ -120,6 +124,7 @@ export default function AddCompetitionScreen() {
         else if (error.message.includes('storage') || error.message.includes('quota')) msg = traduire('Le stockage du téléphone est plein. Libère de la place et réessaie.');
       }
       appAlert(traduire('Enregistrement impossible'), msg);
+      verrou.current = false;
       setSaving(false);
     }
   };

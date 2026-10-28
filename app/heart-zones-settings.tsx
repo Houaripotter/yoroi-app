@@ -37,9 +37,12 @@ import { lowerBounds, zonesFromLowers } from '@/lib/v2/seances/workoutMath';
 import { getEffectiveHRZones } from '@/lib/hrZones';
 import { bornesDesZones, bornesValides, changerBorne, dateImport, fcMaxPlausible, fcReposPlausible, partsArc, zonesCommeApple, zonesDepuisFcMax } from '@/lib/v2/zones/zonesApple';
 import type { ResultatImport } from '@/lib/v2/zones/zonesApple';
-import { importerZones, lireMemoireImport, lireValeursCoeur } from '@/lib/v2/zones/importZones';
+import { ZonesNonEnregistrees, importerZones, lireMemoireImport, lireValeursCoeur } from '@/lib/v2/zones/importZones';
 import type { MemoireImport } from '@/lib/v2/zones/importZones';
 import { traduire } from '@/lib/i18n/tr';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { useConfirmerSortie } from '@/lib/v2/saisie/useConfirmerSortie';
+import { logger } from '@/lib/security/logger';
 // 28 octobre 2026 : couleurs des 5 zones, la palette unique de l'app
 import { ZONES_CLAIR, ZONES_SOMBRE } from '@/lib/v2/zones/couleursZones';
 
@@ -335,8 +338,9 @@ export default function HeartZonesSettingsScreen() {
         setMethode('apple');
         if (r.type === 'calculees') { setRepos(r.repos); setMax(r.max); }
       }
-    } catch {
-      setResultat({ type: 'echec', raison: 'illisible' });
+    } catch (e) {
+      if (e instanceof ZonesNonEnregistrees) appAlert(traduire('Oups'), traduire('Tes zones n’ont pas pu être enregistrées. Réessaie dans un instant.'));
+      else setResultat({ type: 'echec', raison: 'illisible' });
     } finally {
       setImportEnCours(false);
     }
@@ -344,16 +348,33 @@ export default function HeartZonesSettingsScreen() {
 
   const valide = bornesValides(lb);
 
+  // 28 octobre 2026 : des bornes changees et pas enregistrees demandent confirmation avant de quitter
+  const modifie = !enregistre && !!lb && !!lbCharge && lb.join(',') !== lbCharge.join(',');
+  const verrou = useRef(false);
   const enregistrer = async () => {
-    if (!lb || !valide) return;
-    const hz = zonesFromLowers(lb, z1min);
-    const origine = originOnSave(lb, meta, lbCharge);
-    const m: ZonesMeta = meta && origine === meta.origin ? meta : { origin: origine, updatedAt: new Date().toISOString(), noticeShown: meta?.noticeShown };
-    await saveUserSettings({ heartRateZones: hz, heartRateZonesMeta: m });
-    tap('success');
-    setEnregistre(true);
-    router.back();
+    if (!lb || !valide || verrou.current) return;
+    verrou.current = true;
+    try {
+      const hz = zonesFromLowers(lb, z1min);
+      const origine = originOnSave(lb, meta, lbCharge);
+      const m: ZonesMeta = meta && origine === meta.origin ? meta : { origin: origine, updatedAt: new Date().toISOString(), noticeShown: meta?.noticeShown };
+      // avant : un enregistrement refuse affichait quand meme « Enregistré »
+      if (!(await saveUserSettings({ heartRateZones: hz, heartRateZonesMeta: m }))) {
+        appAlert(traduire('Oups'), traduire('Tes zones n’ont pas pu être enregistrées. Réessaie dans un instant.'));
+        return;
+      }
+      tap('success');
+      laisserPartir();
+      setEnregistre(true);
+      router.back();
+    } catch (e) {
+      logger.error('[Zones] enregistrement', e);
+      appAlert(traduire('Oups'), traduire('Tes zones n’ont pas pu être enregistrées. Réessaie dans un instant.'));
+    } finally {
+      verrou.current = false;
+    }
   };
+  const { laisserPartir } = useConfirmerSortie(modifie, { message: traduire('Tes zones modifiées ne sont pas encore enregistrées.'), enregistrer });
 
   const changerZone = (zone: number, cote: 'debut' | 'fin', n: number) => {
     if (!lb) return;

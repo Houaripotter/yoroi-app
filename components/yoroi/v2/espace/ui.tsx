@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Switch, View } from 'react-native';
-import type { StyleProp, ViewStyle } from 'react-native';
+import type { RefreshControlProps, StyleProp, ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
@@ -159,7 +159,7 @@ export function EspaceHeader({ title, subtitle, right, onBack }: { title: string
   );
 }
 
-export function EspaceScreen({ title, subtitle, right, children, footer, onBack, gap = 18, onScrollY, scrollRef }: {
+export function EspaceScreen({ title, subtitle, right, children, footer, onBack, gap = 18, onScrollY, scrollRef, refreshControl }: {
   title: string;
   subtitle?: string;
   right?: React.ReactNode;
@@ -171,6 +171,8 @@ export function EspaceScreen({ title, subtitle, right, children, footer, onBack,
   onScrollY?: (y: number) => void;
   /** 14 octobre : pour remonter a l'apercu ou descendre a un bloc */
   scrollRef?: React.Ref<ScrollView>;
+  /** 28 octobre 2026 : tirer vers le bas pour actualiser (useTirerPourActualiser) */
+  refreshControl?: React.ReactElement<RefreshControlProps>;
 }) {
   const { theme } = useYoroiTheme();
   const insets = useSafeAreaInsets();
@@ -196,6 +198,7 @@ export function EspaceScreen({ title, subtitle, right, children, footer, onBack,
           onScrollY?.(y);
         }}
         scrollEventThrottle={onScrollY ? 100 : 32}
+        refreshControl={refreshControl}
         contentContainerStyle={{ paddingTop: 8, paddingHorizontal: GUTTER, paddingBottom: (footer ? 24 : insets.bottom + 40), gap }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

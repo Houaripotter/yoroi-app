@@ -4,7 +4,7 @@
  * tes methodes de victoire et la liste de tes combats.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { DeviceEventEmitter, Image, ImageBackground, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { DeviceEventEmitter, Image, ImageBackground, Pressable, ScrollView, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getAllExtras } from '@/lib/v2/competition/extras';
 import type { CompetitionExtra, Medaille } from '@/lib/v2/competition/extras';
@@ -26,6 +26,7 @@ import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { BackButton, BigButton, Chip, ChipRow, EmptyState, Glass, Hanko, SectionTitle, tap } from '@/components/yoroi/v2/seances/ui';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const SCENE = require('@/assets/avatars/app/monde/scenes/remparts.webp');
@@ -43,7 +44,6 @@ export default function PalmaresScreen() {
   const [combats, setCombats] = useState<Combat[]>([]);
   const [extras, setExtras] = useState<Record<string, CompetitionExtra>>({});
   const [filter, setFilter] = useState<Filter>('all');
-  const [refreshing, setRefreshing] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(async () => {
@@ -57,6 +57,8 @@ export default function PalmaresScreen() {
       setLoaded(true);
     }
   }, []);
+  // 28 octobre 2026 : tirer pour actualiser partage (autre telephone, tes competitions)
+  const { refreshControl } = useTirerPourActualiser({ relire: load });
 
   useEffect(() => {
     load();
@@ -121,7 +123,7 @@ export default function PalmaresScreen() {
       <ScrollView
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.accent} colors={[c.accent]} />}
+        refreshControl={refreshControl}
       >
         {/* Scene des remparts sous la neige : le personnage reste sur la scene, jamais derriere une carte */}
         <ImageBackground source={SCENE} resizeMode="cover" style={{ height: 228 + insets.top, overflow: 'hidden' }}>

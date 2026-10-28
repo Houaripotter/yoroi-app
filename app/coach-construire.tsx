@@ -45,6 +45,8 @@ import { chargerProgrammeActif, suivreProgrammePerso, supprimerProgrammePerso } 
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { ExoProgramme } from '@/lib/v2/programmes/types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { useConfirmerSortie } from '@/lib/v2/saisie/useConfirmerSortie';
+import { logger } from '@/lib/security/logger';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
@@ -114,9 +116,15 @@ export default function CoachConstruire() {
 
   const n = nombreSeances(pp);
   const modifie = pret && empreinte(pp, rappel) !== (depart || empreinte(nouveauVide, rappel));
+  // 28 octobre 2026 : le glissement retour de l'iPhone et le retour d'Android demandent aussi, comme la fleche
+  const { laisserPartir } = useConfirmerSortie(modifie && peutEnregistrer(pp), {
+    titre: traduire('Enregistrer ton programme ?'),
+    message: traduire('Tu as fait des changements.'),
+    enregistrer: () => enregistrer(),
+  });
   const sortir = () => {
     tap();
-    const go = () => { if (router.canGoBack()) router.back(); else router.replace('/coach' as any); };
+    const go = () => { laisserPartir(); if (router.canGoBack()) router.back(); else router.replace('/coach' as any); };
     if (!modifie || !peutEnregistrer(pp)) { go(); return; }
     appAlert(traduire('Enregistrer ton programme ?'), traduire('Tu as fait des changements.'), [
       { text: traduire('Quitter sans enregistrer'), style: 'destructive', onPress: go },
@@ -175,7 +183,8 @@ export default function CoachConstruire() {
         setExiste(true);
         setPp(sauve);
         setFete({ id: sauve.id, n: jours.length, premier: jours.length ? JOURS[jours[0]] : '' });
-      } catch {
+      } catch (e) {
+        logger.error('[Coach] programme perso non enregistre', e);
         appAlert(traduire('Enregistrement impossible'), traduire('Réessaie dans un instant.'));
       } finally {
         setOccupe(false);
@@ -200,10 +209,17 @@ export default function CoachConstruire() {
         text: traduire('Supprimer'),
         style: 'destructive',
         onPress: () => {
-          void supprimerProgrammePerso(pp.id).finally(() => {
-            if (router.canGoBack()) router.back();
-            else router.replace('/coach' as any);
-          });
+          // 28 octobre 2026 : un echec est dit, et l'ecran reste ouvert (avant : on repartait comme si c'etait fait)
+          void supprimerProgrammePerso(pp.id)
+            .then(() => {
+              laisserPartir();
+              if (router.canGoBack()) router.back();
+              else router.replace('/coach' as any);
+            })
+            .catch((e) => {
+              logger.error('[Coach] programme perso non supprime', e);
+              appAlert(traduire('Oups'), traduire('Ton programme n’a pas pu être supprimé, réessaie.'));
+            });
         },
       },
     ]);

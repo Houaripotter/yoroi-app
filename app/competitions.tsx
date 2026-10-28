@@ -5,7 +5,7 @@
  * L'ancien import IBJJF et CFJJB est retire : sa liste ecrite dans le code s'arretait en juin 2026.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { DeviceEventEmitter, Image, ImageBackground, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { DeviceEventEmitter, Image, ImageBackground, Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -35,6 +35,7 @@ import { BackButton, BigButton, SectionTitle, tap } from '@/components/yoroi/v2/
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
+import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const SCENE = require('@/assets/avatars/app/monde/scenes/bataille.webp');
@@ -49,7 +50,6 @@ export default function CompetitionsScreen() {
   const [all, setAll] = useState<Competition[]>([]);
   const [extras, setExtras] = useState<Record<string, CompetitionExtra>>({});
   const [withCombats, setWithCombats] = useState<Set<number>>(new Set());
-  const [refreshing, setRefreshing] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(async () => {
@@ -65,6 +65,8 @@ export default function CompetitionsScreen() {
       setLoaded(true);
     }
   }, []);
+  // 28 octobre 2026 : tirer pour actualiser partage (autre telephone, tes competitions)
+  const { refreshControl } = useTirerPourActualiser({ relire: load });
 
   useEffect(() => {
     load();
@@ -152,7 +154,7 @@ export default function CompetitionsScreen() {
       <ScrollView
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.accent} colors={[c.accent]} />}
+        refreshControl={refreshControl}
       >
         {/* Scene de champ de bataille a l'aube : le personnage reste sur la scene, jamais derriere une carte */}
         <ImageBackground source={SCENE} resizeMode="cover" style={{ height: 228 + insets.top, overflow: 'hidden' }}>

@@ -9,7 +9,7 @@
 import { setProprietes, track } from '@/utils/telemetry';
 import React, { useMemo, useState } from 'react';
 import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
-import { Image, Platform, RefreshControl, ScrollView, View } from 'react-native';
+import { Image, Platform, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -31,6 +31,7 @@ import { dayLong, todayIso, capitalize } from '@/lib/v2/progres/format';
 import { logger } from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire } from '@/lib/i18n/tr';
+import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 
 const ANDROID = Platform.OS === 'android';
 
@@ -39,6 +40,8 @@ export default function SanteScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const st = useSante();
+  // 28 octobre 2026 : tirer pour actualiser partage (lecture de Sante, autre telephone, puis le tableau relu)
+  const { refreshControl } = useTirerPourActualiser({ relire: () => st.reload(), sante: true });
   const [goalsOpen, setGoalsOpen] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [asking, setAsking] = useState(false);
@@ -118,7 +121,7 @@ export default function SanteScreen() {
       <ScrollView
         contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 48, paddingHorizontal: 16, gap: 14 }}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={st.refreshing} onRefresh={st.refresh} tintColor={S.accent} />}
+        refreshControl={refreshControl}
       >
         <EnTete
           titre={traduire("Ta santé")}

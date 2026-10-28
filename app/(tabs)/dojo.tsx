@@ -9,7 +9,8 @@
  * sceaux, niveaux par sport, explorer le Dojo, boutique, combat et partage. Les regles d'XP sont dans le chemin.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Pressable, RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
+import { Image, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 import type { ImageSourcePropType } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -111,7 +112,6 @@ export default function Dojo() {
   const insets = useSafeAreaInsets();
   const { width, height: winH } = useWindowDimensions();
   const { snap, espace, reload } = useArmure();
-  const [refreshing, setRefreshing] = useState(false);
   const [celebration, setCelebration] = useState<CelebrationData | null>(null);
   const [welcome, setWelcome] = useState<WelcomeSummary | null>(null);
   // la bienvenue attend la fin de la visite guidee
@@ -169,11 +169,8 @@ export default function Dojo() {
     void markWelcomeSeen().then(() => markCelebrationSeen({ plate: true }));
   }, []);
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await reload(true);
-    setRefreshing(false);
-  }, [reload]);
+  // 28 octobre 2026 : tirer pour actualiser partage (autre telephone, ton Dojo recalcule)
+  const { refreshControl } = useTirerPourActualiser({ relire: () => reload(true) });
 
   const go = (href: string) => router.push(href as any);
 
@@ -326,7 +323,7 @@ export default function Dojo() {
         scrollEventThrottle={32}
         contentContainerStyle={{ paddingTop: insets.top + 10, paddingHorizontal: 16, paddingBottom: insets.bottom + INK_TAB_BAR_SPACE, gap: 14 }}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.accent} />}
+        refreshControl={refreshControl}
       >
         {/* En-tete */}
         <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, gap: 10 }}>

@@ -6,14 +6,12 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
-import { Image, RefreshControl, ScrollView, View } from 'react-native';
+import { Image, ScrollView, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { getRestDays } from '@/lib/restDaysService';
-import { healthConnect } from '@/lib/healthConnect';
-import { logger } from '@/lib/security/logger';
 import { useSeancesData } from '@/lib/v2/seances/useSeancesData';
 import { sportArt } from '@/lib/v2/seances/illustrations';
 import { mainSportOf } from '@/lib/v2/seances/bannerSport';
@@ -24,6 +22,7 @@ import { PlanEvents } from '@/components/yoroi/v2/seances/PlanEvents';
 import { PlanClubs } from '@/components/yoroi/v2/seances/PlanClubs';
 import { BackButton, RoundIcon, Segments } from '@/components/yoroi/v2/seances/ui';
 import { traduire } from '@/lib/i18n/tr';
+import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 
 type View_ = 'semaine' | 'mois' | 'competitions' | 'clubs';
 
@@ -43,7 +42,6 @@ export default function PlanningScreen() {
   const { trainings, plan, competitions, records, gender, reload } = useSeancesData();
   const [view, setView] = useState<View_>(initialView(params.tab));
   const [restDays, setRestDays] = useState<Set<string>>(new Set());
-  const [refreshing, setRefreshing] = useState(false);
   // L'illustration suit ton sport principal, ou celui de ta prochaine competition dans l'onglet Compét.
   const todayIso = isoOf(new Date());
   const nextComp = competitions.filter((x) => x.date >= todayIso && x.statut === 'a_venir').sort((a, b) => (a.date < b.date ? -1 : 1))[0];
@@ -77,16 +75,8 @@ export default function PlanningScreen() {
     reload();
   }, [loadRest, reload]);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      if (await healthConnect.isAvailable()) await healthConnect.syncAll();
-    } catch (e) {
-      logger.warn('[Planning] Synchronisation santé impossible', e);
-    }
-    await Promise.all([reload(), loadRest()]);
-    setRefreshing(false);
-  };
+  // 28 octobre 2026 : tirer pour actualiser partage (Sante, autre telephone, ton planning)
+  const { refreshControl } = useTirerPourActualiser({ relire: () => Promise.all([reload(), loadRest()]), sante: true });
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
@@ -94,7 +84,7 @@ export default function PlanningScreen() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.accent} colors={[c.accent]} />}
+        refreshControl={refreshControl}
       >
         <View style={{ height: 170 + insets.top, backgroundColor: c.indigoTint, overflow: 'hidden' }}>
           <Glyph kind="sakura" size={170} color="rgba(255,255,255,0.55)" style={{ position: 'absolute', left: 90, top: insets.top + 4 }} />

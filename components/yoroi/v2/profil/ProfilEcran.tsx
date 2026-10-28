@@ -7,7 +7,7 @@
  */
 import React from 'react';
 import { Image, Pressable, TextInput, View, useWindowDimensions } from 'react-native';
-import type { ImageSourcePropType } from 'react-native';
+import type { ImageSourcePropType, RefreshControlProps } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -32,7 +32,7 @@ function bannerHeight(top: number): number {
 
 const PHOTO = 132;
 
-export function ProfilEcran({ hero, children, footer, gutter = GUTTER, gap = 18, fondDes, scrollRef }: {
+export function ProfilEcran({ hero, children, footer, gutter = GUTTER, gap = 18, fondDes, scrollRef, refreshControl }: {
   hero: (top: number) => React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
@@ -42,6 +42,8 @@ export function ProfilEcran({ hero, children, footer, gutter = GUTTER, gap = 18,
   /** defilement a partir duquel le fond de la barre du haut apparait */
   fondDes?: number;
   scrollRef?: React.RefObject<React.ComponentRef<typeof Animated.ScrollView> | null>;
+  /** 28 octobre 2026 : tirer vers le bas pour actualiser (useTirerPourActualiser) */
+  refreshControl?: React.ReactElement<RefreshControlProps>;
 }) {
   const router = useRouter();
   const { theme } = useYoroiTheme();
@@ -65,6 +67,7 @@ export function ProfilEcran({ hero, children, footer, gutter = GUTTER, gap = 18,
         ref={scrollRef}
         onScroll={onScroll}
         scrollEventThrottle={16}
+        refreshControl={refreshControl}
         contentContainerStyle={{ paddingBottom: footer ? 24 : insets.bottom + 40 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

@@ -38,6 +38,7 @@ import type { ExoSeance } from '@/lib/v2/seance/mesSeances';
 import { seanceZones, titreZones, ZONES } from '@/lib/v2/programmes/zones';
 import type { ZoneId } from '@/lib/v2/programmes/zones';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { useConfirmerSortie } from '@/lib/v2/saisie/useConfirmerSortie';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
@@ -70,6 +71,8 @@ export default function ModifierMaSeance() {
   const [modifie, setModifie] = useState(false);
   const change = useRef(false);
   const enCours = useRef(false);
+  // 28 octobre 2026 : le retour d'Android demande aussi confirmation (la fleche et le glissement le faisaient deja)
+  const { laisserPartir } = useConfirmerSortie(modifie);
 
   useEffect(() => {
     (async () => {
@@ -142,6 +145,7 @@ export default function ModifierMaSeance() {
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
       change.current = false;
       setModifie(false);
+      laisserPartir();
       router.back();
     } catch (err) {
       enCours.current = false;
@@ -154,7 +158,7 @@ export default function ModifierMaSeance() {
     if (!change.current) return router.back();
     appAlert(traduire('Quitter sans enregistrer ?'), traduire('Tes changements seront perdus.'), [
       { text: traduire('Rester'), style: 'cancel' },
-      { text: traduire('Quitter'), style: 'destructive', onPress: () => router.back() },
+      { text: traduire('Quitter'), style: 'destructive', onPress: () => { laisserPartir(); router.back(); } },
     ]);
   };
 

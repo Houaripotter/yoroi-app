@@ -26,6 +26,7 @@ import type { IconName } from '@/components/yoroi/v2/seance/Icon';
 import { Hanko } from '@/components/yoroi/v2/seance/Hanko';
 import { dateCourte, kg1, nb, signe } from '@/lib/v2/bilan/texte';
 import { traduire } from '@/lib/i18n/tr';
+import { RetourCompact } from '@/components/yoroi/v2/entete/EnTete';
 // 28 octobre 2026 : temps par zone dans la palette unique des zones
 import { couleurZone } from '@/lib/v2/zones/couleursZones';
 
@@ -318,6 +319,10 @@ export function BilanCorpsVue({ b, onDone, onShare, enTete }: { b: BilanCorps; o
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 22, paddingBottom: insets.bottom + 136, paddingHorizontal: GUT, gap: 14 }} showsVerticalScrollIndicator={false}>
         <Animated.View entering={ENTREE} style={{ gap: 14 }}>
+          {/* 28 octobre 2026 : le retour rond de tous les ecrans, il fait comme « Terminé » */}
+          <View style={{ marginLeft: -12, marginTop: -14, marginBottom: -6 }}>
+            <RetourCompact onPress={onDone} />
+          </View>
           <View style={{ gap: 2 }} accessibilityLiveRegion="polite">
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: c.successTint, alignItems: 'center', justifyContent: 'center' }}>
@@ -568,6 +573,10 @@ export function BilanSeanceVue({ b, onDone, onShare, records }: { b: BilanSeance
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 22, paddingBottom: insets.bottom + 136, paddingHorizontal: GUT, gap: 14 }} showsVerticalScrollIndicator={false}>
         <Animated.View entering={ENTREE} style={{ gap: 14 }}>
+          {/* 28 octobre 2026 : le retour rond de tous les ecrans, il fait comme « Terminé » */}
+          <View style={{ marginLeft: -12, marginTop: -14, marginBottom: -6 }}>
+            <RetourCompact onPress={onDone} />
+          </View>
           <View style={{ gap: 2 }}>
             <Ink size={14} weight="bold" color={c.textSecondary}>{b.sousTitre}</Ink>
             <Ink size={30} weight="black" tight accessibilityRole="header">{traduire(b.titre)}</Ink>

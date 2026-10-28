@@ -39,6 +39,7 @@ import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Programme } from '@/lib/v2/programmes/types';
 import { Questionnaire } from '@/components/yoroi/v2/programmes/Questionnaire';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 
 export default function ProgrammesScreen() {
   const { theme } = useYoroiTheme();
@@ -84,6 +85,18 @@ export default function ProgrammesScreen() {
     };
   }, []);
 
+  // 28 octobre 2026 : tirer pour actualiser partage (autre telephone, ton programme, ton materiel, tes favoris, tes seances)
+  const { refreshControl } = useTirerPourActualiser({
+    relire: () =>
+      Promise.all([
+        chargerProgrammeActif().then(setActif),
+        chargerMateriel().then(setMateriel),
+        chargerMachines().then(setMachines),
+        chargerFavoris().then(setFavoris),
+        getTrainings().then((t) => setTrainings(t ?? [])),
+      ]),
+  });
+
   const suite = actif ? prochainJour(actif) : null;
   // combien d'exercices de ce programme ta salle remplace (0 : rien de renseigne ou tout est faisable)
   const remplaces = (p: Programme) => remplacesParLaSalle(p.jours, materiel, machines);
@@ -103,7 +116,7 @@ export default function ProgrammesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 40, gap: 14 }} showsVerticalScrollIndicator={false}>
+      <ScrollView refreshControl={refreshControl} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 40, gap: 14 }} showsVerticalScrollIndicator={false}>
         <EnTete titre={traduire('Programmes')} sousTitre={traduire('des séances prêtes à suivre, basées sur des études')} repli="/(tabs)/seances" fond={c.background} style={{ marginHorizontal: -16, marginTop: -8 }} />
 
         {programmesFavoris.length ? (

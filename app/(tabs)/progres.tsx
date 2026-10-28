@@ -88,6 +88,7 @@ import { versUnitePoids } from '@/lib/v2/unitePoids';
 import { grammes, phraseCardio, phraseCorps, phraseForce, phrasePhotos, phraseSante, phraseSemaine, victoireDuJour } from '@/lib/v2/progres/phrasesProgres';
 import type { FaitsProgres, Phrase, SensObjectif } from '@/lib/v2/progres/phrasesProgres';
 import { traduire } from '@/lib/i18n/tr';
+import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 
 /** 80 kg plutot que 80,0 kg, une decimale sinon (comme la carte Poids de l'accueil) */
 const kgShort = (v: number) => (Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : formatKg(v));
@@ -170,9 +171,14 @@ export default function Progres() {
   const weights = useWeightData();
   const measures = useMeasuresData();
   const photos = usePhotosData();
-  const { trainings } = useTrainingsData();
+  const { trainings, reload: relireSeances } = useTrainingsData();
   const unite = useUnitePoids();
   const [femme, setFemme] = useState(false);
+  // 28 octobre 2026 : tirer pour actualiser (Sante, autre telephone, poids, mesures, photos, seances)
+  const { refreshControl } = useTirerPourActualiser({
+    relire: () => Promise.all([weights.reload(), measures.reload(), photos.reload(), relireSeances()]),
+    sante: true,
+  });
   const [forme, setForme] = useState<FormeResult | null>(null);
   const hasData = weights.series.length > 0 || trainings.length > 0;
 
@@ -259,6 +265,7 @@ export default function Progres() {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <Animated.ScrollView
         ref={scrollRef}
+        refreshControl={refreshControl}
         onScroll={(e) => {
           const y = e.nativeEvent.contentOffset.y;
           scrollY.current = y;

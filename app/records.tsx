@@ -8,7 +8,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
-import { DeviceEventEmitter, Image, Pressable, RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
+import { DeviceEventEmitter, Image, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -35,6 +35,7 @@ import { blancA } from '@/components/yoroi/livePalette';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { libelleUnite, versUnitePoids } from '@/lib/v2/unitePoids';
 import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
+import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 import { STICKERS, useIllustrations } from '@/components/yoroi/v2/stickers';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
@@ -92,7 +93,6 @@ export default function RecordsScreen() {
   const [general, setGeneral] = useState<PersonalRecords | null>(null);
   const [newRecords, setNewRecords] = useState<NewRecordEvent[]>([]);
   const [combats, setCombats] = useState<CompCombat[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
 
   // Records generaux (poids, series) : meme calcul et meme cache que l'ancien ecran
   const loadGeneral = useCallback(async (celebrate = false, bypassCache = false) => {
@@ -125,8 +125,6 @@ export default function RecordsScreen() {
       }
     } catch (error) {
       logger.error('Erreur chargement records:', error);
-    } finally {
-      setRefreshing(false);
     }
     try {
       const list = await getCombats();
@@ -145,11 +143,13 @@ export default function RecordsScreen() {
     return () => sub.remove();
   }, [loadGeneral]);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await AsyncStorage.removeItem(RECORDS_CACHE_KEY).catch(() => {});
-    await loadGeneral(true, true);
-  };
+  // 28 octobre 2026 : tirer pour actualiser partage (autre telephone, tes records relus sans le cache)
+  const { refreshControl } = useTirerPourActualiser({
+    relire: async () => {
+      await AsyncStorage.removeItem(RECORDS_CACHE_KEY).catch(() => {});
+      await loadGeneral(true, true);
+    },
+  });
 
   // Le texte peut contenir le poids ou le tour de taille : la personne voit d'abord le texte exact
   const share = (type: RecordType, value: number) => {
@@ -301,7 +301,7 @@ export default function RecordsScreen() {
         ref={scrollRef}
         contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 14 }}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.accent} colors={[c.accent]} />}
+        refreshControl={refreshControl}
       >
         <EnTete
           titre={traduire("Records")}

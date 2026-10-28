@@ -107,6 +107,7 @@ import { TourAnchor, registerTourScroller } from '@/components/yoroi/v2/tour/Tou
 import { DecorCarte, DecorScene } from '@/components/yoroi/v2/saisons/DecorSaison';
 import { useSaison } from '@/lib/v2/saisons/useSaison';
 import { traduire } from '@/lib/i18n/tr';
+import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 
 export default function Accueil() {
   const insets = useSafeAreaInsets();
@@ -116,7 +117,7 @@ export default function Accueil() {
   // vague 35 : l'accueil se redessine quand tu passes en clair, sombre ou auto
   useYoroiTheme();
   const { series } = useWeightData();
-  const { data } = useAccueil();
+  const { data, reload: relireAccueil } = useAccueil();
   const sante = useSante();
   const { disposition } = useDisposition();
   // 16 octobre : « Mangé aujourd'hui », null sans repas du jour (rien ne s'affiche alors)
@@ -138,6 +139,8 @@ export default function Accueil() {
 
   // les donnees de la montre se rechargent a chaque retour sur l'accueil
   const reloadSante = sante.reload;
+  // 28 octobre 2026 : tirer pour actualiser (Sante, autre telephone, ton accueil)
+  const { refreshControl } = useTirerPourActualiser({ relire: () => Promise.all([relireAccueil(), reloadSante()]), sante: true });
   useFocusEffect(
     useCallback(() => {
       reloadSante();
@@ -309,7 +312,7 @@ export default function Accueil() {
 
   return (
     <View style={{ flex: 1, backgroundColor: P.paper }}>
-      <Animated.ScrollView ref={scrollRef} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + ENTETE_PASTEL.haut, paddingBottom: bottomSpace + 4 }} showsVerticalScrollIndicator={false}>
+      <Animated.ScrollView ref={scrollRef} refreshControl={refreshControl} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + ENTETE_PASTEL.haut, paddingBottom: bottomSpace + 4 }} showsVerticalScrollIndicator={false}>
         {/* 27 octobre 2026 : ta photo, la date, ton salut, la lanterne et la cloche, sur le fond de la page */}
         <View style={{ paddingHorizontal: 16, zIndex: 2 }}>
           <EnTeteAccueil name={data.name} photo={espace.identite === 'photo' ? data.photo : null} personnage={espace.personnage} rankIndex={rankIndex} />

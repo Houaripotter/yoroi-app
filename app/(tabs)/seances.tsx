@@ -25,7 +25,7 @@
  *    _archive_ancien_design_2026-10-09/seances_A_2026-10-28.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
 import { format } from 'date-fns';
 import { DATE_FNS_LOCALE } from '@/lib/i18n/dateLocale';
@@ -37,8 +37,7 @@ import { TourAnchor, registerTourScroller } from '@/components/yoroi/v2/tour/Tou
 import { INK_TAB_BAR_SPACE } from '@/components/yoroi/v2/InkTabBar';
 import type { Training } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
-import { healthConnect } from '@/lib/healthConnect';
-import { logger } from '@/lib/security/logger';
+import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 import { formatDuration, formatTonnage as tonnageText } from '@/lib/v2/trainingWeek';
 import { todayISO } from '@/lib/v2/weightStats';
 import { useSeancesData } from '@/lib/v2/seances/useSeancesData';
@@ -127,7 +126,6 @@ export default function Seances() {
   const [query, setQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [groupsShown, setGroupsShown] = useState(6);
-  const [refreshing, setRefreshing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   // 27 octobre : un seul choix « Importer mes séances » (Santé, autre app, GPX ou TCX)
@@ -212,16 +210,8 @@ export default function Seances() {
     setGroupsShown(grouping === 'mois' ? 4 : 6);
   };
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      if (await healthConnect.isAvailable()) await healthConnect.syncAll();
-    } catch (e) {
-      logger.warn('[Seances] Synchronisation santé impossible', e);
-    }
-    await reload();
-    setRefreshing(false);
-  };
+  // 28 octobre 2026 : tirer pour actualiser partage (Sante, autre telephone, tes seances)
+  const { refreshControl } = useTirerPourActualiser({ relire: reload, sante: true });
 
   const filterLabel = filter.kind === 'montre' ? traduire('de ta montre') : filter.kind === 'sport' ? sansTiret(getSportName(filter.sport)) : '';
   const isNew = loaded && trainings.length === 0;
@@ -239,7 +229,7 @@ export default function Seances() {
         contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: insets.bottom + INK_TAB_BAR_SPACE + 10, paddingHorizontal: 16, gap: 12 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.accent} colors={[c.accent]} />}
+        refreshControl={refreshControl}
       >
         {/* En-tete, et le menu de l'onglet (16 octobre : importer tes seances) */}
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 }}>
