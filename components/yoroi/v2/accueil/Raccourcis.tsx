@@ -86,28 +86,35 @@ export function outilsAccueil(): Outil[] {
  * les cartes. Le petit titre en capitales en haut a gauche, le sticker en haut a droite (meme taille, meme place
  * partout, il ne touche jamais le texte), la ligne principale en bas a gauche, meme marge et meme ligne de base
  * sur toutes les cartes. Le Beta du Coach : une petite pastille a droite de son titre (PastilleBeta.tsx, 27 octobre).
+ * 28 octobre 2026 (Houari : « les cartes outils sont trop grandes ») : 148 sur 112 au lieu de 172 sur 140, sticker de 52,
+ * ligne principale en 15 ; la pastille Beta quitte la ligne du titre et se pose a cheval sur le bord haut de la carte
+ * (PastilleBeta.tsx) : la carte ne coupe plus rien (le clip est sur une boite interieure), la rangee garde 16 points
+ * en haut pour la pastille et son ombre. Version d'avant : _archive_ancien_design_2026-10-09/accueil_compact_2026-10-28.
  */
-const CARTE_L = 172;
-const CARTE_H = 140;
-const MARGE = 14;
-const STICKER = 64;
-const STICKER_HAUT = 10;
-const STICKER_DROITE = 8;
+const CARTE_L = 148;
+const CARTE_H = 112;
+const MARGE = 12;
+const STICKER = 52;
+const STICKER_HAUT = 8;
+const STICKER_DROITE = 6;
+/** la place laissee en haut de la rangee pour ce qui depasse de la pastille Beta (12) et son ombre ; les cartes commencent 6 points sous le haut de la rangee d'avant, la pastille reste a 6 points de Ton poids */
+const HAUT_RANGEE = 16;
 /** la colonne du titre s'arrete avant le sticker, avec 6 points d'air */
 const TITRE_L = CARTE_L - MARGE - STICKER_DROITE - STICKER - 6;
 
 /** Deux cartes a partager en eventail : l'apercu de Partager */
 function ApercuPartage() {
-  const w = 46;
-  const h = 72;
+  // 28 octobre 2026 : a l'echelle des cartes de 148 sur 112
+  const w = 38;
+  const h = 58;
   const carte = (src: ImageSourcePropType, rot: string, dx: number) => (
-    <View style={{ position: 'absolute', right: 18 - dx, top: 14, width: w, height: h, borderRadius: 8, borderWidth: 2, borderColor: '#FFFFFF', overflow: 'hidden', backgroundColor: '#1E2336', transform: [{ rotate: rot }], shadowColor: '#1B2A44', shadowOpacity: 0.18, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 3 }}>
+    <View style={{ position: 'absolute', right: 14 - dx, top: 10, width: w, height: h, borderRadius: 8, borderWidth: 2, borderColor: '#FFFFFF', overflow: 'hidden', backgroundColor: '#1E2336', transform: [{ rotate: rot }], shadowColor: '#1B2A44', shadowOpacity: 0.18, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 3 }}>
       <Image source={src} style={{ width: h * 1.1, height: h, marginLeft: -h * 0.3 }} resizeMode="cover" accessibilityIgnoresInvertColors />
     </View>
   );
   return (
     <>
-      {carte(CARTE_B, '-12deg', 30)}
+      {carte(CARTE_B, '-12deg', 25)}
       {carte(CARTE_A, '8deg', 0)}
     </>
   );
@@ -196,8 +203,8 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={{ marginHorizontal: -16 }}
-        contentContainerStyle={{ paddingLeft: 16, paddingRight: 16, paddingTop: 2, paddingBottom: 12, gap: 10 }}
+        style={{ marginHorizontal: -16, marginTop: 6 - HAUT_RANGEE }}
+        contentContainerStyle={{ paddingLeft: 16, paddingRight: 16, paddingTop: HAUT_RANGEE, paddingBottom: 12, gap: 10 }}
         accessibilityLabel={traduire("Tes outils")}
       >
         {outils.map((o) => {
@@ -220,7 +227,7 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
               accessibilityLabel={o.key === 'partager' && pastille ? traduire("{0}. Une nouvelle carte t’attend", o.a11y) : o.beta ? traduire('{0}. En bêta', o.a11y) : o.a11y}
             >
               {/* 27 octobre 2026 : le Coach est montre par la visite guidee */}
-              <TourAnchor id={o.key === 'zones' ? 'accueil.coach' : 'accueil.outil'} rayon={22}>
+              <TourAnchor id={o.key === 'zones' ? 'accueil.coach' : 'accueil.outil'} rayon={20}>
               {(() => {
                 // Records : carte blanche (maquette) ; les autres sur leur pastel
                 const blanche = o.key === 'records';
@@ -229,7 +236,9 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
                 const douce = blanche ? P.ink2 : ENCRE_DOUCE;
                 const image = illus.stickers ? illus.img(o.sticker) : o.img ?? illus.img(o.sticker);
                 return (
-                  <View style={[{ width: CARTE_L, height: CARTE_H, borderRadius: 22, backgroundColor: fond, overflow: 'hidden', paddingHorizontal: MARGE, paddingTop: MARGE, paddingBottom: MARGE }, blanche ? ombreCarte : null]}>
+                  <View style={[{ width: CARTE_L, height: CARTE_H, borderRadius: 20, backgroundColor: fond }, blanche ? ombreCarte : null]}>
+                  {/* le clip des apercus est sur cette boite interieure : la pastille Beta peut deborder de la carte */}
+                  <View style={{ flex: 1, borderRadius: 20, overflow: 'hidden', paddingHorizontal: MARGE, paddingTop: MARGE, paddingBottom: MARGE }}>
                     {/* le sticker, meme taille et meme place sur toutes les cartes */}
                     {o.key === 'partager' && !illus.stickers ? (
                       <ApercuPartage />
@@ -237,8 +246,7 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
                       <Image source={image} resizeMode="contain" style={{ position: 'absolute', right: STICKER_DROITE, top: STICKER_HAUT, width: STICKER, height: STICKER }} accessibilityIgnoresInvertColors />
                     )}
                     {/* le petit titre en capitales, en haut a gauche, jamais sous le sticker */}
-                    {/* 27 octobre 2026 : la pastille Beta sur la meme ligne que le titre, a sa droite, centree verticalement */}
-                    <View style={{ width: o.beta ? TITRE_L + 8 : TITRE_L, minHeight: 14, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                    <View style={{ width: TITRE_L, minHeight: 14, flexDirection: 'row', alignItems: 'center' }}>
                       <Ink
                         size={10}
                         weight="black"
@@ -250,7 +258,6 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
                       >
                         {o.title.toUpperCase()}
                       </Ink>
-                      {o.beta ? <PastilleBeta /> : null}
                     </View>
                     {/* la ligne principale, en bas a gauche : meme marge et meme ligne de base partout */}
                     <View style={{ marginTop: 'auto' }}>
@@ -260,22 +267,25 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
                         </Ink>
                       ) : null}
                       <Ink
-                        size={16}
+                        size={15}
                         weight="black"
                         color={encre}
-                        numberOfLines={2}
+                        numberOfLines={sous ? 1 : 2}
                         adjustsFontSizeToFit
                         minimumFontScale={0.85}
                         textBreakStrategy="simple"
                         android_hyphenationFrequency="none"
-                        style={{ lineHeight: 19, letterSpacing: -0.2 }}
+                        style={{ lineHeight: 18, letterSpacing: -0.2 }}
                       >
                         {lierFinDeLigne(ligne)}
                       </Ink>
                     </View>
                     {o.key === 'partager' && pastille ? (
-                      <View pointerEvents="none" style={{ position: 'absolute', top: 10, right: 10, width: 14, height: 14, borderRadius: 7, backgroundColor: theme.colors.record, borderWidth: 2.5, borderColor: '#FFFFFF' }} />
+                      <View pointerEvents="none" style={{ position: 'absolute', top: 8, right: 8, width: 14, height: 14, borderRadius: 7, backgroundColor: theme.colors.record, borderWidth: 2.5, borderColor: '#FFFFFF' }} />
                     ) : null}
+                  </View>
+                  {/* 28 octobre 2026 : la pastille Beta a cheval sur le bord haut, hors du clip */}
+                  {o.beta ? <PastilleBeta /> : null}
                   </View>
                 );
               })()}

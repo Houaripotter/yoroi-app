@@ -208,8 +208,12 @@ export function hautAuDessus(b: Boite): number {
 export const ACCUEIL_PASTEL = { marge: 16, ecart: 12 };
 /** La rangee du haut : 8 points sous l'encoche, ta photo de 48, 12 points avant la carte de la scene */
 export const ENTETE_PASTEL = { haut: 8, rangee: 48, ecart: 12 };
-/** La carte de la scene : 168 de haut pour 358 de large (maquette), bornee entre 150 et 200 */
-export const SCENE_CARTE = { rayon: 28, ratio: 168 / 358, hMin: 150, hMax: 200, solBas: 12 };
+/**
+ * La carte de la scene : 168 de haut pour 358 de large (maquette), bornee entre 150 et 200.
+ * 28 octobre 2026 (Houari : « réduis un peu la hauteur de la scène ») : 150 pour 358 (environ 11 % de moins), bornee
+ * entre 136 et 180 ; le personnage reste entier, pose sur le sol (remonteeScene, placerPersonnage, verifies par le test).
+ */
+export const SCENE_CARTE = { rayon: 28, ratio: 150 / 358, hMin: 136, hMax: 180, solBas: 12 };
 
 /** Hauteur de la carte de la scene pour une largeur de carte */
 export function hauteurSceneCarte(largeurCarte: number): number {
@@ -236,9 +240,11 @@ export const HAUT_VOL_CARTE = 14 - 42;
 /** Carte Ton poids Pastel : marge 16, haut 16, petit titre de 15, le chiffre de 40 (ligne de 44), l'anneau de 62 */
 // 27 octobre 2026 nuit (Houari : « réduis la taille de ton poids ») : chiffre en 32, anneau de 50, haut 14
 // 27 octobre 2026 nuit (Houari : « fais moi un beau truc ») : chiffre en 32 (ligne de 35), chiffres violets, virgule et kg en encre
-export const CARTE_PASTEL = { marge: 16, haut: 12, titre: 15, ecartTitre: 2, ligneChiffre: 35, anneau: 44, rayon: 28 };
+// 28 octobre 2026 (Houari : « réduis un peu la carte Ton poids ») : haut 11 (la toile du coin reste hors du titre), chiffre en 30 (ligne de 33)
+export const CARTE_PASTEL = { marge: 16, haut: 11, titre: 15, ecartTitre: 2, ligneChiffre: 33, anneau: 44, rayon: 28 };
 /** « 100,0 » en 40 points (environ 24 par chiffre, 9 pour la virgule) et « kg » en 15 : 142, arrondi a 146 */
 /** 27 octobre 2026 nuit : « 104,5 » en 32 (environ 20 par chiffre, 8 pour la virgule), 5 d'ecart et « kg » en 15 : 113, arrondi a 116 */
+/** 28 octobre 2026 : en 30, environ 19 par chiffre et 7 pour la virgule : 108, la borne de 116 reste prudente */
 export const CHIFFRE_PASTEL_MAX = 116;
 /** Une citrouille ou un sapin de 40, entre le chiffre et l'anneau */
 export const DECOR_PASTEL = { w: 40, h: 40, ecart: 6 };
