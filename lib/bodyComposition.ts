@@ -16,6 +16,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import secureStorage from '@/lib/security/secureStorage';
+import { avecVerrou, listePourEcriture } from '@/lib/v2/sauvegarde/lectureSure';
+import { annoncerCoffreSupprime, mettreALaCorbeilleCoffre } from '@/lib/v2/sauvegarde/corbeilleCoffre';
 import { healthConnect } from '@/lib/healthConnect';
 import { selonGenre, type GenreFormule } from '@/lib/genreCalcul';
 
@@ -148,6 +150,24 @@ export interface BodyMeasurement {
 // BODY COMPOSITION FUNCTIONS
 // ============================================
 
+/**
+ * 28 octobre 2026 (audit « ne jamais perdre de donnees ») : lectures STRICTES avant une ecriture.
+ * Avant, une lecture ratee du coffre donnait [] et l'ajout suivant reecrivait [ce seul element] par dessus
+ * tout l'historique. Les ecritures d'une meme liste passent une par une (avecVerrou), et une suppression
+ * range d'abord l'element dans la corbeille (lib/v2/sauvegarde/corbeilleCoffre.ts), 30 jours, avec « Annuler ».
+ */
+const compositionsPourEcriture = async (): Promise<BodyComposition[]> => {
+  await migrateBodyCompFromAsyncStorage();
+  return listePourEcriture<BodyComposition>(await secureStorage.getItemStrict(BODY_COMP_KEY), BODY_COMP_KEY);
+};
+const mesuresPourEcriture = async (): Promise<BodyMeasurement[]> => {
+  await migrateMeasurementsFromAsyncStorage();
+  return listePourEcriture<BodyMeasurement>(await secureStorage.getItemStrict(MEASUREMENTS_KEY), MEASUREMENTS_KEY);
+};
+const enregistrer = async (cle: string, liste: unknown[]): Promise<void> => {
+  if (!(await secureStorage.setItem(cle, liste))) throw new Error('liste du coffre non enregistree');
+};
+
 export const getAllBodyCompositions = async (): Promise<BodyComposition[]> => {
   try {
     // Assurer la migration au premier accès
@@ -240,13 +260,15 @@ export const addBodyComposition = async (
   opts: { skipHealthWrite?: boolean } = {},
 ): Promise<BodyComposition> => {
   try {
-    const all = await getAllBodyCompositions();
     const newEntry: BodyComposition = {
       ...data,
       id: `bc_${Date.now()}`,
     };
-    all.unshift(newEntry);
-    await secureStorage.setItem(BODY_COMP_KEY, all);
+    await avecVerrou(BODY_COMP_KEY, async () => {
+      const all = await compositionsPourEcriture();
+      all.unshift(newEntry);
+      await enregistrer(BODY_COMP_KEY, all);
+    });
 
     // ✅ NOUVEAU: Écrire dans Apple Health
     if (!opts.skipHealthWrite && data.bodyFatPercent && data.bodyFatPercent > 0) {
@@ -267,12 +289,14 @@ export const addBodyComposition = async (
 
 export const updateBodyComposition = async (id: string, data: Partial<BodyComposition>): Promise<void> => {
   try {
-    const all = await getAllBodyCompositions();
-    const index = all.findIndex(item => item.id === id);
-    if (index !== -1) {
-      all[index] = { ...all[index], ...data };
-      await secureStorage.setItem(BODY_COMP_KEY, all);
-    }
+    await avecVerrou(BODY_COMP_KEY, async () => {
+      const all = await compositionsPourEcriture();
+      const index = all.findIndex(item => item.id === id);
+      if (index !== -1) {
+        all[index] = { ...all[index], ...data };
+        await enregistrer(BODY_COMP_KEY, all);
+      }
+    });
   } catch (error) {
     logger.error('Error updating body composition:', error);
     throw error;
@@ -281,9 +305,14 @@ export const updateBodyComposition = async (id: string, data: Partial<BodyCompos
 
 export const deleteBodyComposition = async (id: string): Promise<void> => {
   try {
-    const all = await getAllBodyCompositions();
-    const filtered = all.filter(item => item.id !== id);
-    await secureStorage.setItem(BODY_COMP_KEY, filtered);
+    const item = (await compositionsPourEcriture()).find(x => x.id === id);
+    if (!item) return;
+    const e = await mettreALaCorbeilleCoffre('composition', item as unknown as { id: string });
+    await avecVerrou(BODY_COMP_KEY, async () => {
+      const all = await compositionsPourEcriture();
+      await enregistrer(BODY_COMP_KEY, all.filter(x => x.id !== id));
+    });
+    annoncerCoffreSupprime(e);
   } catch (error) {
     logger.error('Error deleting body composition:', error);
     throw error;
@@ -317,13 +346,15 @@ export const getLatestMeasurement = async (): Promise<BodyMeasurement | null> =>
 
 export const addMeasurement = async (data: Omit<BodyMeasurement, 'id'>): Promise<BodyMeasurement> => {
   try {
-    const all = await getAllMeasurements();
     const newEntry: BodyMeasurement = {
       ...data,
       id: `m_${Date.now()}`,
     };
-    all.unshift(newEntry);
-    await secureStorage.setItem(MEASUREMENTS_KEY, all);
+    await avecVerrou(MEASUREMENTS_KEY, async () => {
+      const all = await mesuresPourEcriture();
+      all.unshift(newEntry);
+      await enregistrer(MEASUREMENTS_KEY, all);
+    });
     return newEntry;
   } catch (error) {
     logger.error('Error adding measurement:', error);
@@ -333,12 +364,14 @@ export const addMeasurement = async (data: Omit<BodyMeasurement, 'id'>): Promise
 
 export const updateMeasurement = async (id: string, data: Partial<BodyMeasurement>): Promise<void> => {
   try {
-    const all = await getAllMeasurements();
-    const index = all.findIndex(item => item.id === id);
-    if (index !== -1) {
-      all[index] = { ...all[index], ...data };
-      await secureStorage.setItem(MEASUREMENTS_KEY, all);
-    }
+    await avecVerrou(MEASUREMENTS_KEY, async () => {
+      const all = await mesuresPourEcriture();
+      const index = all.findIndex(item => item.id === id);
+      if (index !== -1) {
+        all[index] = { ...all[index], ...data };
+        await enregistrer(MEASUREMENTS_KEY, all);
+      }
+    });
   } catch (error) {
     logger.error('Error updating measurement:', error);
     throw error;
@@ -347,9 +380,14 @@ export const updateMeasurement = async (id: string, data: Partial<BodyMeasuremen
 
 export const deleteMeasurement = async (id: string): Promise<void> => {
   try {
-    const all = await getAllMeasurements();
-    const filtered = all.filter(item => item.id !== id);
-    await secureStorage.setItem(MEASUREMENTS_KEY, filtered);
+    const item = (await mesuresPourEcriture()).find(x => x.id === id);
+    if (!item) return;
+    const e = await mettreALaCorbeilleCoffre('mesures', item as unknown as { id: string });
+    await avecVerrou(MEASUREMENTS_KEY, async () => {
+      const all = await mesuresPourEcriture();
+      await enregistrer(MEASUREMENTS_KEY, all.filter(x => x.id !== id));
+    });
+    annoncerCoffreSupprime(e);
   } catch (error) {
     logger.error('Error deleting measurement:', error);
     throw error;

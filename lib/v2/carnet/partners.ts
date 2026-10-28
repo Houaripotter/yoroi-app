@@ -41,15 +41,31 @@ async function writeAll(list: SparringPartnerData[]) {
   DeviceEventEmitter.emit(PARTNERS_CHANGED_EVENT);
 }
 
-/** Copie la photo choisie dans un dossier permanent */
+/** 28 octobre 2026 : la copie de la photo d'un partenaire a rate (rien n'est enregistre) */
+export class PhotoNonCopiee extends Error {
+  constructor() {
+    super('Photo du partenaire non copiee');
+    this.name = 'PhotoNonCopiee';
+  }
+}
+
+/**
+ * Copie la photo choisie dans un dossier permanent, et verifie la copie (fichier present, taille non nulle).
+ * 28 octobre 2026 : avant, une copie ratee renvoyait l'adresse temporaire du selecteur, que le systeme
+ * efface plus tard (la photo disparaissait). Maintenant : erreur PhotoNonCopiee, rien n'est garde.
+ */
 export async function savePhotoPermanently(tempUri: string): Promise<string> {
+  const ext = (tempUri.split('.').pop()?.split('?')[0] ?? 'jpg').replace(/[^a-zA-Z0-9]/g, '').slice(0, 5) || 'jpg';
+  if (!FileSystem.documentDirectory) throw new PhotoNonCopiee();
+  const dest = `${FileSystem.documentDirectory}sparring_photo_${Date.now()}.${ext}`;
   try {
-    const ext = tempUri.split('.').pop()?.split('?')[0] ?? 'jpg';
-    const dest = `${FileSystem.documentDirectory}sparring_photo_${Date.now()}.${ext}`;
     await FileSystem.copyAsync({ from: tempUri, to: dest });
+    const info = await FileSystem.getInfoAsync(dest);
+    if (!info.exists || !(Number((info as { size?: number }).size) > 0)) throw new Error('copie vide');
     return dest;
   } catch {
-    return tempUri;
+    await FileSystem.deleteAsync(dest, { idempotent: true }).catch(() => undefined);
+    throw new PhotoNonCopiee();
   }
 }
 

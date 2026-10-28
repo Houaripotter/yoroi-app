@@ -168,6 +168,11 @@ export async function runAutoBackupIfDue(): Promise<boolean> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     void (require('./v2/sauvegarde/tailleStockage') as typeof import('./v2/sauvegarde/tailleStockage')).verifierTailleStockage();
+    // 28 octobre 2026 : corbeilles des photos et du coffre, ce qui a plus de 30 jours part pour de bon
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    void (require('./v2/photos/corbeillePhotos') as typeof import('./v2/photos/corbeillePhotos')).purgerCorbeillePhotos();
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    void (require('./v2/sauvegarde/corbeilleCoffre') as typeof import('./v2/sauvegarde/corbeilleCoffre')).purgerCorbeilleCoffre();
   } catch { /* jamais bloquant */ }
   // 18 octobre 2026 : pendant la visite guidee avec l'exemple, aucune sauvegarde (l'exemple n'est pas tes donnees)
   if (vitrineActive()) return false;

@@ -11,7 +11,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { P } from '@/components/yoroi/v2/accueil/kit';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
-import { EVENEMENT_CORPS_SUPPRIME, restaurerCorpsSupprime, restaurerSeanceSupprimee, SEANCE_SUPPRIMEE, texteSuppression } from '@/lib/v2/seances/corbeille';
+import { EVENEMENT_COFFRE_SUPPRIME, EVENEMENT_CORPS_SUPPRIME, EVENEMENT_PHOTO_SUPPRIMEE, restaurerSupprime, SEANCE_SUPPRIMEE, texteSuppression } from '@/lib/v2/seances/corbeille';
 import type { QuoiSupprime } from '@/lib/v2/seances/corbeille';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -45,6 +45,9 @@ export function AnnulerSuppression() {
     const subs = [
       DeviceEventEmitter.addListener(SEANCE_SUPPRIMEE, ajouter('seance')),
       DeviceEventEmitter.addListener(EVENEMENT_CORPS_SUPPRIME, (e: { trashId?: number; kind?: string }) => ajouter(e?.kind === 'measurements' ? 'measurements' : 'weights')(e)),
+      // 28 octobre 2026 : photo de progrès, composition et anciennes mensurations (corbeilles hors de la base)
+      DeviceEventEmitter.addListener(EVENEMENT_PHOTO_SUPPRIMEE, ajouter('photo')),
+      DeviceEventEmitter.addListener(EVENEMENT_COFFRE_SUPPRIME, (e: { trashId?: number; kind?: string }) => ajouter(e?.kind === 'mesures' ? 'mesures_coffre' : 'composition')(e)),
     ];
     return () => {
       subs.forEach((x) => x.remove());
@@ -58,10 +61,7 @@ export function AnnulerSuppression() {
     const aRemettre = liste;
     fermer();
     try {
-      for (const x of aRemettre) {
-        if (x.quoi === 'seance') await restaurerSeanceSupprimee(x.trashId);
-        else await restaurerCorpsSupprime(x.trashId);
-      }
+      for (const x of aRemettre) await restaurerSupprime(x.quoi, x.trashId);
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
     } catch {
       appAlert(traduire('Oups'), traduire('Ce qui a été supprimé n’a pas pu être remis. Tout reste dans la corbeille, 30 jours.'));

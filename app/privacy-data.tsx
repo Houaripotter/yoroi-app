@@ -59,10 +59,18 @@ async function deleteInDatabase(id: string): Promise<void> {
     for (const x of w) if (x.id != null) await deleteWeight(x.id, { definitif: true });
     for (const x of m) if (x.id != null) await deleteMeasurementRecord(x.id, { definitif: true });
     await emptyTrashCorps();
+    // et la corbeille de la composition et des anciennes mensurations (coffre)
+    const { viderCorbeilleCoffre } = await import('@/lib/v2/sauvegarde/corbeilleCoffre');
+    await viderCorbeilleCoffre();
   } else if (id === 'workouts') {
     await deleteAllTrainings();
   } else if (id === 'photos') {
     for (const x of await getPhotos()) if (x.id != null) await deletePhoto(x.id);
+    // 28 octobre 2026 : les photos de progres elles memes (liste v2 et fichiers), pour de bon, et leur corbeille
+    const { deleteAllPhotos } = await import('@/lib/storage');
+    await deleteAllPhotos();
+    const { viderCorbeillePhotos } = await import('@/lib/v2/photos/corbeillePhotos');
+    await viderCorbeillePhotos();
   } else if (id === 'injuries') {
     for (const x of await getInjuries()) if (x.id != null) await deleteInjury(x.id);
   }

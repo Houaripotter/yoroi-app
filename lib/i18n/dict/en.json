@@ -19478,5 +19478,10 @@
 "Avant la suppression de « {0} »": "Before deleting “{0}”",
 "Vraiment tout supprimer ?": "Really delete everything?",
 "Vraiment tout effacer ?": "Really erase everything?",
-"Pesées, séances, photos et réglages partent pour de bon. Fais une sauvegarde avant si tu veux les garder.": "Weight entries, sessions, photos and settings are gone for good. Make a backup first if you want to keep them."
+"Pesées, séances, photos et réglages partent pour de bon. Fais une sauvegarde avant si tu veux les garder.": "Weight entries, sessions, photos and settings are gone for good. Make a backup first if you want to keep them.",
+"Photo supprimée": "Photo deleted",
+"Photos supprimées": "Photos deleted",
+"Composition supprimée": "Body composition deleted",
+"Photo de progrès": "Progress photo",
+"La photo n’a pas pu être remise. Réessaie.": "The photo couldn't be restored. Try again."
 }

@@ -819,30 +819,35 @@ export const updatePhotoInStorage = async (id: string, updates: Partial<Pick<Pho
   return saveSecurePhotos(photos);
 });
 
-export const deletePhotoFromStorage = async (id: string): Promise<boolean> => avecVerrou(PHOTOS_ASYNC_KEY, async () => {
-  const photos = await getSecurePhotosForWrite();
-  const photoToDelete = photos.find(p => p.id === id);
-
-  if (!photoToDelete) {
+/**
+ * 28 octobre 2026 : une photo supprimee part a la corbeille (lib/v2/photos/corbeillePhotos.ts), 30 jours,
+ * avec la barre « Photo supprimée, Annuler ». Avant, le fichier etait efface pour de bon.
+ * Ordre : corbeille d'abord (fichier deplace, fiche rangee), puis retrait de la liste ; si le retrait rate,
+ * la photo est remise. Le verrou des photos n'est jamais pris avant celui de la corbeille (pas d'interblocage).
+ */
+export const deletePhotoFromStorage = async (id: string): Promise<boolean> => {
+  const photo = (await getSecurePhotosForWrite()).find(p => p.id === id);
+  if (!photo) return false;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const corbeille = require('./v2/photos/corbeillePhotos') as typeof import('./v2/photos/corbeillePhotos');
+  let entree: import('./v2/photos/corbeillePhotos').PhotoEnCorbeille;
+  try {
+    entree = await corbeille.mettrePhotoALaCorbeille(photo);
+  } catch (error) {
+    logger.error('Photo non mise a la corbeille, rien n est supprime:', error);
     return false;
   }
-
-  // 28 octobre 2026 : la liste est reecrite AVANT d'effacer le fichier (avant : fichier efface, puis
-  // une ecriture ratee laissait une photo sans image dans la liste)
-  const filteredPhotos = photos.filter(p => p.id !== id);
-  if (!(await saveSecurePhotos(filteredPhotos))) return false;
-  if (Platform.OS !== 'web' && photoToDelete.file_uri && !photoToDelete.file_uri.startsWith('data:')) {
-    try {
-      const fileInfo = await FileSystem.getInfoAsync(photoToDelete.file_uri);
-      if (fileInfo.exists) {
-        await FileSystem.deleteAsync(photoToDelete.file_uri);
-      }
-    } catch (error) {
-      logger.warn('Erreur suppression fichier photo:', error);
-    }
+  const retiree = await avecVerrou(PHOTOS_ASYNC_KEY, async () => {
+    const photos = await getSecurePhotosForWrite();
+    return saveSecurePhotos(photos.filter(p => p.id !== id));
+  }).catch(() => false);
+  if (!retiree) {
+    await corbeille.restaurerPhoto(entree.trashId).catch(() => false);
+    return false;
   }
+  corbeille.annoncerPhotoSupprimee(entree.trashId);
   return true;
-});
+};
 
 export const deleteAllPhotos = async (): Promise<boolean> => {
   const photos = await getSecurePhotosForWrite();

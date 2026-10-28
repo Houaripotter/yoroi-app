@@ -19,7 +19,7 @@ import {
   recentSessionsOf, sparringRecordsOf, streakDaysOf, submissionStatsOf, techniqueStatsOf, thisWeekRoundsOf, topMethodsOf, weeklyRoundsOf,
 } from '@/lib/v2/carnet/sparring';
 import type { PartnerStats } from '@/lib/v2/carnet/sparring';
-import { PARTNERS_CHANGED_EVENT, SPARRING_PARTNERS_KEY, WEEKLY_GOAL_KEY, deletePartnerFiche, loadPartnerPhotos, renamePartner, savePartnerPhoto, savePhotoPermanently } from '@/lib/v2/carnet/partners';
+import { PARTNERS_CHANGED_EVENT, SPARRING_PARTNERS_KEY, WEEKLY_GOAL_KEY, deletePartnerFiche, loadPartnerPhotos, PhotoNonCopiee, renamePartner, savePartnerPhoto, savePhotoPermanently } from '@/lib/v2/carnet/partners';
 import { compact, dayDate, lastMonths, monthLabel, relative, shortDate } from '@/lib/v2/carnet/format';
 import { useTrainings } from '@/lib/v2/carnet/useCarnetData';
 import { P, Press, CIcon, Sheet2, BigStats, Columns, RankRow, RecordTile, MiniChips, SplitBar, BlockTitle, Kozane, winColor, BigButton } from '../ui';
@@ -174,9 +174,11 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
         return null;
       }
       const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.8 });
-      if (!r.canceled && r.assets?.[0]?.uri) return savePhotoPermanently(r.assets[0].uri);
+      if (!r.canceled && r.assets?.[0]?.uri) return await savePhotoPermanently(r.assets[0].uri);
     } catch (e) {
-      appAlert(traduire('Oups'), traduire('La galerie ne s’ouvre pas. Réessaie.'));
+      // 28 octobre 2026 : copie ratee, la photo n'est pas gardee (jamais l'adresse temporaire)
+      if (e instanceof PhotoNonCopiee) appAlert(traduire('Oups'), traduire('La photo n’a pas pu être enregistrée. Réessaie.'));
+      else appAlert(traduire('Oups'), traduire('La galerie ne s’ouvre pas. Réessaie.'));
     }
     return null;
   };
