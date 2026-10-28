@@ -23,6 +23,10 @@ const ICONS: Record<string, { label: string; d: string[]; join?: boolean }> = {
   progres: { label: traduire('Progrès'), d: ['M3 17l5-5 4 3 8-8', 'M15 7h5v5'], join: true },
   dojo: { label: traduire('Dojo'), d: ['M3 6h18M5 9.5h14M7 6v15M17 6v15'] },
 };
+/** Un nom d'onglet long (plus de 9 lettres) s'ecrit un peu plus petit dans la pilule */
+export function libelleLong(l: string): boolean {
+  return l.length > 9;
+}
 const LEFT = ['index', 'seances'];
 const RIGHT = ['progres', 'dojo'];
 
@@ -72,7 +76,9 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
           ))}
         </Svg>
         {focused ? (
-          <Ink size={14} weight="black" color={c.onPrimary} numberOfLines={1} style={{ flexShrink: 1 }}>
+          // 28 octobre 2026 : le nom de l'onglet ouvert toujours en entier, a 375 de large et dans toutes les langues
+          // (« Vooruitgang », « Fortschritt ») : un nom long passe a 12,5 (environ 90 %), et peut encore se reduire a 80 %
+          <Ink size={libelleLong(traduire(icon.label)) ? 12.5 : 14} weight="black" color={c.onPrimary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ flexShrink: 1 }}>
             {traduire(icon.label)}
           </Ink>
         ) : null}
@@ -124,7 +130,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 8,
-    gap: 4,
+    // 28 octobre 2026 : ecarts resserres et onglets fermes de 44, pour laisser la place au nom de l'onglet ouvert
+    gap: 2,
   },
   shadow: {
     borderRadius: 32,
@@ -134,11 +141,11 @@ const styles = StyleSheet.create({
     shadowRadius: 30,
     elevation: 12,
   },
-  slot: { width: 48, height: 48 },
+  slot: { width: 44, height: 48 },
   slotActif: { flex: 1, height: 48 },
   slotPlus: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   ancre: { flex: 1 },
-  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 24, paddingHorizontal: 16 },
+  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 24, paddingHorizontal: 12 },
   add: {
     width: 48,
     height: 48,
