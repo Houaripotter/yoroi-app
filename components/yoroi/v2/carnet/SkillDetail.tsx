@@ -14,6 +14,7 @@ import { STATUS_LABEL, skillCategoryLabel, skillTone } from '@/lib/v2/carnet/jou
 import { shortDate } from '@/lib/v2/carnet/format';
 import { P, Press, CIcon, IconBtn, Sheet2, Field, BigButton, Plate, Stamp, BlockTitle } from './ui';
 import { traduire } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 type Props = {
   visible: boolean;
@@ -59,7 +60,7 @@ export function SkillDetail(p: Props) {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 4 }}>
             <View style={{ flex: 1, gap: 2 }}>
               <Ink size={13} weight="bold" color={tone}>{skillCategoryLabel(s.category)}</Ink>
-              <Ink size={30} weight="black" tight accessibilityRole="header">{traduire(s.name)}</Ink>
+              <Ink size={30} weight="black" tight accessibilityRole="header">{sansTiret(traduire(s.name))}</Ink>
             </View>
             {mastered ? (
               <Animated.View key={s.id + s.status} entering={ENTREE}>

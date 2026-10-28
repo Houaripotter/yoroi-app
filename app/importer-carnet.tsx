@@ -28,6 +28,7 @@ import type { BilanImport } from '@/lib/v2/import/enregistrerCarnet';
 import { logger } from '@/lib/security/logger';
 import { traduire, traduirePluriel, DECIMAL, LOCALE } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 // la bibliotheque, une fois : nom exact (enregistre) et nom francais (cherche)
 let BIBLIO: ExoCherchable[] | null = null;
@@ -189,7 +190,7 @@ export default function ImporterCarnet() {
                             <Ink size={12} weight="black" color={e.inconnu ? c.accent : c.textSecondary}>{String(i + 1)}</Ink>
                           </View>
                           <View style={{ flex: 1 }}>
-                            <Ink size={15} weight="extraBold">{traduire(nomFr(e.nom))}</Ink>
+                            <Ink size={15} weight="extraBold">{sansTiret(traduire(nomFr(e.nom)))}</Ink>
                             {e.saisi ? <Ink size={12} color={c.textMuted}>{traduire('écrit « {0} »', e.saisi)}</Ink> : e.inconnu ? <Ink size={12} weight="bold" color={c.accent}>{traduire('nouvel exercice, gardé avec ton nom')}</Ink> : null}
                           </View>
                         </View>

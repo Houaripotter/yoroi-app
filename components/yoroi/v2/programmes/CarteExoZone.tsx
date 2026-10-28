@@ -22,6 +22,7 @@ import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import type { ExoProgramme } from '@/lib/v2/programmes/types';
 import { traduire } from '@/lib/i18n/tr';
 import { carteBlanche, ton } from '@/components/yoroi/v2/seance/pastel';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 function Repere({ valeur, libelle }: { valeur: string; libelle: string }) {
   const { theme } = useYoroiTheme();
@@ -65,7 +66,7 @@ export function CarteExoZone({ exo, numero, total, zone, marge = 44 }: { exo: Ex
       </View>
 
       <View style={{ padding: 16, gap: 14 }}>
-        <Ink size={20} weight="black" tight>{traduire(nomFr(exo.nom))}</Ink>
+        <Ink size={20} weight="black" tight>{sansTiret(traduire(nomFr(exo.nom)))}</Ink>
 
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <Repere valeur={String(exo.series)} libelle={traduire('séries')} />

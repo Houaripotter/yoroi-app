@@ -36,6 +36,7 @@ import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { libelleUnite, versUnitePoids } from '@/lib/v2/unitePoids';
 import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 import { STICKERS, useIllustrations } from '@/components/yoroi/v2/stickers';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const RECORDS_CACHE_KEY = '@yoroi_records_cache_v1';
 const RECORDS_CACHE_TTL = 10 * 60 * 1000;
@@ -345,7 +346,7 @@ export default function RecordsScreen() {
               </ChipRow>
             ) : null}
             <View style={{ gap: 4, paddingHorizontal: 4 }}>
-              <Ink size={15} weight="extraBold" numberOfLines={2}>{traduire(current.name)}</Ink>
+              <Ink size={15} weight="extraBold" numberOfLines={2}>{sansTiret(traduire(current.name))}</Ink>
               {current.kind === 'force' ? (
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
                   <Tile
@@ -406,7 +407,7 @@ export default function RecordsScreen() {
                   >
                     <Hanko size={24} color={l.date >= freshLimit && l.stamps > 0 ? c.record : '#B9B6AE'} rotate={-7} />
                     <View style={{ flex: 1, gap: 2 }}>
-                      <Ink size={15} weight="extraBold" numberOfLines={2}>{traduire(l.name)}</Ink>
+                      <Ink size={15} weight="extraBold" numberOfLines={2}>{sansTiret(traduire(l.name))}</Ink>
                       <Ink size={12} color={c.textSecondary}>{relativeDay(l.date, today)}</Ink>
                     </View>
                     <View style={{ alignItems: 'flex-end', gap: 1 }}>

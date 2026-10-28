@@ -15,6 +15,7 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { getSportIcon, getSportName, getSportColor } from '@/lib/sports';
 import type { Training } from '@/lib/database';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 // ─── Sous-composants ─────────────────────────────────
 
@@ -188,7 +189,7 @@ const RichTrainingCardInner: React.FC<RichTrainingCardProps> = ({ training, pres
           {(training as any).technical_theme && (
             <View style={[styles.tag, { backgroundColor: '#8B5CF618' }]}>
               <MaterialCommunityIcons name="lightbulb-outline" size={11} color="#8B5CF6" />
-              <Text style={[styles.tagText, { color: '#8B5CF6' }]} numberOfLines={1}>{(training as any).technical_theme}</Text>
+              <Text style={[styles.tagText, { color: '#8B5CF6' }]} numberOfLines={1}>{sansTiret((training as any).technical_theme)}</Text>
             </View>
           )}
         </View>

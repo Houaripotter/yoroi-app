@@ -18,6 +18,7 @@ import { draftRoute, draftTitle } from '@/lib/v2/seance/resume';
 import { fmtClock } from '@/lib/v2/seance/format';
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import { traduire } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 /** Ce qu'on montre sous le titre : l'exercice et la série en cours (musculation), sinon rien */
 export function ligneEnCours(d: SeanceDraft): string {
@@ -25,7 +26,7 @@ export function ligneEnCours(d: SeanceDraft): string {
   const cur = d.exercises.find((e) => e.id === d.currentId) ?? d.exercises[0];
   if (!cur) return traduire('Choisis ton premier exercice');
   const i = cur.sets.findIndex((s) => !s.done);
-  const nom = traduire(nomFr(cur.name));
+  const nom = sansTiret(traduire(nomFr(cur.name)));
   return i >= 0 ? traduire('{0}, série {1} sur {2}', nom, i + 1, cur.sets.length) : traduire('{0}, bouclé', nom);
 }
 

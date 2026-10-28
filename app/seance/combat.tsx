@@ -47,6 +47,7 @@ import { traduire, LOCALE } from '@/lib/i18n/tr';
 import { programmeParId } from '@/lib/v2/programmes/catalogue';
 import { marquerJourFait } from '@/lib/v2/programmes/suivi';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const RPE = [
   { value: 3, label: traduire('Facile') },
@@ -523,7 +524,7 @@ export default function SeanceCombat() {
             const on = s.value === draft.sessionType && !typeLibre(draft, aliasTypeSeance);
             return (
               <Pressable key={s.value} onPress={() => { selectionAsync().catch(() => {}); update((d) => ({ ...d, sessionType: s.value, sessionTypeOrig: undefined })); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: on ? c.ink : 'transparent', borderWidth: on ? 0 : 1.5, borderColor: c.border }}>
-                <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? P.paper : c.textSecondary}>{traduire(s.label)}</Ink>
+                <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? P.paper : c.textSecondary}>{sansTiret(traduire(s.label))}</Ink>
               </Pressable>
             );
           })}
@@ -675,8 +676,8 @@ export default function SeanceCombat() {
             {selectedThemes.length > 0 ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {selectedThemes.map((th) => (
-                  <Pressable key={th} onPress={() => toggleTheme(th)} accessibilityRole="button" accessibilityLabel={traduire("Retirer {0}", th)} style={{ minHeight: 40, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.ink }}>
-                    <Ink size={13} weight="extraBold" color={c.background}>{traduire(th)}</Ink>
+                  <Pressable key={th} onPress={() => toggleTheme(th)} accessibilityRole="button" accessibilityLabel={traduire("Retirer {0}", sansTiret(th))} style={{ minHeight: 40, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.ink }}>
+                    <Ink size={13} weight="extraBold" color={c.background}>{sansTiret(traduire(th))}</Ink>
                     <Icon name="close" size={12} color={c.background} strokeWidth={3} />
                   </Pressable>
                 ))}
@@ -718,7 +719,7 @@ export default function SeanceCombat() {
                         const on = selectedThemes.includes(th);
                         return (
                           <Pressable key={th} onPress={() => toggleTheme(th)} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: on ? c.ink : blancA(0.7), borderWidth: on ? 0 : 1, borderColor: c.border }}>
-                            <Ink size={13} weight="bold" color={on ? P.paper : c.ink}>{traduire(th)}</Ink>
+                            <Ink size={13} weight="bold" color={on ? P.paper : c.ink}>{sansTiret(traduire(th))}</Ink>
                           </Pressable>
                         );
                       })}
@@ -833,7 +834,7 @@ export default function SeanceCombat() {
 
       {/* Fin de seance */}
       <Sheet visible={finishOpen} onClose={() => setFinishOpen(false)} title={draft.editId ? traduire('Enregistrer les changements ?') : draft.form ? traduire('Enregistrer la séance ?') : traduire('Terminer la séance ?')} scroll>
-        <SportRibbon sport={draft.sport} sub={draft.label && draft.label !== getSportName(draft.sport) ? draft.label : undefined} />
+        <SportRibbon sport={draft.sport} sub={draft.label && sansTiret(draft.label) !== getSportName(draft.sport) ? sansTiret(draft.label) : undefined} />
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <MiniStat label={traduire("durée")} value={fmtMinutes(draft.form && draft.details ? draft.details.duration : elapsedSec / 60)} />
           <MiniStat label={draft.rounds.length > 1 ? traduire('rounds') : traduire('round')} value={String(draft.rounds.length)} />

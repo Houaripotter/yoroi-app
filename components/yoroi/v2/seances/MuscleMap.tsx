@@ -9,6 +9,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import type { MuscleLoad, MuscleName } from '@/lib/v2/seances/weekSummary';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 export const MUSCLE_LEVEL_COLORS = ['#DEDAD1', '#C5CEE0', '#8197C2', '#3D5D9E'] as const;
 const NEUTRAL = '#ECE9E2';
@@ -116,7 +117,7 @@ export function MuscleMap({ loads, height = 176 }: { loads: MuscleLoad[]; height
           <View key={l.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <View style={{ width: 12, height: 12, borderRadius: 4, backgroundColor: MUSCLE_LEVEL_COLORS[l.level] }} />
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Ink size={13} weight="bold" numberOfLines={1}>{traduire(l.name)}</Ink>
+              <Ink size={13} weight="bold" numberOfLines={1}>{sansTiret(traduire(l.name))}</Ink>
               <Ink size={11} weight={l.sets ? 'extraBold' : 'medium'} color={l.sets ? c.ink : c.textMuted} numberOfLines={1}>
                 {l.sets ? traduirePluriel(l.sets, l.sets > 1, "{0} série", "{0} séries", l.sets) : l.engaged ? traduire('sollicité') : traduire('au repos')}
               </Ink>

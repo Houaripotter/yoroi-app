@@ -39,6 +39,7 @@ import { traduire } from '@/lib/i18n/tr';
 import { programmeParId } from '@/lib/v2/programmes/catalogue';
 import { marquerJourFait } from '@/lib/v2/programmes/suivi';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const RPE = [
   { value: 3, label: traduire('Facile') },
@@ -453,7 +454,7 @@ export default function SeanceCardio() {
       </ScrollView>
 
       <Sheet visible={finishOpen} onClose={() => setFinishOpen(false)} title={draft.editId ? traduire('Enregistrer les changements ?') : draft.form ? traduire('Enregistrer la séance ?') : traduire('Terminer la séance ?')} scroll>
-        <SportRibbon sport={draft.sport} femme={femme} title={draft.customName?.trim() || undefined} sub={draft.label && draft.label !== getSportName(draft.sport) ? draft.label : undefined} />
+        <SportRibbon sport={draft.sport} femme={femme} title={draft.customName?.trim() || undefined} sub={draft.label && sansTiret(draft.label) !== getSportName(draft.sport) ? sansTiret(draft.label) : undefined} />
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <MiniStat label={traduire("durée")} value={fmtMinutes(minutes)} />
           {distance > 0 ? <MiniStat label="km" value={fmtNum(distance)} /> : null}

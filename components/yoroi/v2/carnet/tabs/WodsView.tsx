@@ -13,6 +13,7 @@ import { useTrainings } from '@/lib/v2/carnet/useCarnetData';
 import { P, Sheet2, BigStats, Columns, RankRow, RecordTile, BlockTitle } from '../ui';
 import { SessionLine, TabEmpty, TabLoading } from './common';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const FORCE = new Set(sportsInPack('force'));
 
@@ -76,7 +77,7 @@ export function WodsView({ refreshKey, hideEmpty }: { refreshKey: number; hideEm
         if (t.duration_minutes) chips.push(humanMinutes(t.duration_minutes));
         if (t.intensity) chips.push(traduire("effort {0} sur 10", t.intensity));
         if (t.calories) chips.push(`${t.calories} kcal`);
-        return <SessionLine key={t.id ?? t.date} t={t} title={`${getSportName(t.sport)}${t.technical_theme ? `, ${t.technical_theme}` : ''}`} chips={chips} tone={P.accent} />;
+        return <SessionLine key={t.id ?? t.date} t={t} title={sansTiret(`${getSportName(t.sport)}${t.technical_theme ? `, ${t.technical_theme}` : ''}`)} chips={chips} tone={P.accent} />;
       })}
     </View>
   );

@@ -29,6 +29,7 @@ import { BackButton, BigButton, Chip, EmptyState, Glass, Sheet, tap } from '@/co
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const QUICK = ['jjb', 'musculation', 'boxe', 'mma', 'muay_thai', 'judo', 'grappling', 'crossfit', 'running', 'kickboxing'];
 
@@ -271,7 +272,7 @@ export default function SlotsScreen() {
             {sportResults.length ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {sportResults.map((s) => (
-                  <Chip key={s.id} label={traduire(s.name)} on={s.id === draft.sport} onPress={() => { setDraft({ ...draft, sport: s.id, type: '' }); setSearch(''); }} />
+                  <Chip key={s.id} label={sansTiret(traduire(s.name))} on={s.id === draft.sport} onPress={() => { setDraft({ ...draft, sport: s.id, type: '' }); setSearch(''); }} />
                 ))}
               </View>
             ) : null}
@@ -317,7 +318,7 @@ export default function SlotsScreen() {
             <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Type de séance")}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {types.map((t) => (
-                <Chip key={t} label={traduire(t)} on={draft.type === t} onPress={() => setDraft({ ...draft, type: draft.type === t ? '' : t })} />
+                <Chip key={t} label={sansTiret(traduire(t))} on={draft.type === t} onPress={() => setDraft({ ...draft, type: draft.type === t ? '' : t })} />
               ))}
             </View>
 

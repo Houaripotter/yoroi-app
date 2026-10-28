@@ -22,6 +22,7 @@ import { machineArt } from '@/lib/v2/seance/machinesArt';
 import { Icon } from './Icon';
 import { traduire } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 type Props = {
   visible: boolean;
@@ -194,7 +195,7 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
     >
       {illustration(m, tile)}
       <View style={{ paddingHorizontal: 2, gap: 1 }}>
-        <Ink size={14} weight="extraBold" numberOfLines={2}>{traduire(m.nom)}</Ink>
+        <Ink size={14} weight="extraBold" numberOfLines={2}>{sansTiret(traduire(m.nom))}</Ink>
         <Ink size={12} color={c.textMuted} numberOfLines={1}>{muscles(m)}</Ink>
       </View>
     </Pressable>
@@ -219,7 +220,7 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
     <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 14, paddingBottom: insets.bottom + 30, gap: 14 }}>
       <View style={{ alignItems: 'center' }}>{illustration(m, Math.min(260, pageW - 44))}</View>
       <View style={{ gap: 2 }}>
-        <Ink size={20} weight="black">{traduire(m.nom)}</Ink>
+        <Ink size={20} weight="black">{sansTiret(traduire(m.nom))}</Ink>
         <Ink size={13} color={c.textMuted}>{m.muscles.join(', ')}</Ink>
       </View>
       <Ink size={15} weight="bold" color={c.textSecondary}>{traduire("Quel exercice tu fais dessus ?")}</Ink>
@@ -271,7 +272,7 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
         <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
           {illustration(m, 116)}
           <View style={{ flex: 1, gap: 2 }}>
-            <Ink size={18} weight="black">{traduire(m.nom)}</Ink>
+            <Ink size={18} weight="black">{sansTiret(traduire(m.nom))}</Ink>
             <Ink size={13} color={c.textMuted}>{m.muscles.slice(0, 3).join(', ')}</Ink>
           </View>
         </View>
@@ -282,7 +283,7 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {b.autres.map((a) => (
                 <Pressable key={a.id} onPress={() => { setPhoto(false); touche(a); }} accessibilityRole="button" style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 12, justifyContent: 'center', borderWidth: 1.5, borderColor: c.border }}>
-                  <Ink size={13} weight="bold" color={c.textSecondary}>{traduire(a.nom)}</Ink>
+                  <Ink size={13} weight="bold" color={c.textSecondary}>{sansTiret(traduire(a.nom))}</Ink>
                 </Pressable>
               ))}
             </View>

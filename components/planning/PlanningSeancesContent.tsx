@@ -32,6 +32,7 @@ import { WorkoutMapRoute } from '@/components/WorkoutMapRoute';
 import { healthConnect } from '@/lib/healthConnect';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DECIMAL, LOCALE } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 interface PlanningSeancesContentProps {
   workouts: Training[];
@@ -861,7 +862,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
                 {training.technical_theme && (
                   <View style={[styles.tag, { backgroundColor: '#8B5CF618' }]}>
                     <MaterialCommunityIcons name="lightbulb-outline" size={11} color="#8B5CF6" />
-                    <Text style={[styles.tagText, { color: '#8B5CF6' }]} numberOfLines={1}>{training.technical_theme}</Text>
+                    <Text style={[styles.tagText, { color: '#8B5CF6' }]} numberOfLines={1}>{sansTiret(training.technical_theme)}</Text>
                   </View>
                 )}
               </View>

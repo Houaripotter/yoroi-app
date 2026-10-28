@@ -25,6 +25,7 @@ import { MES_SEANCES_EVENT, chargerMesSeances, dupliquerMaSeance, modifierMaSean
 import type { MaSeance } from '@/lib/v2/seance/mesSeances';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 export default function MesSeances() {
   const { theme } = useYoroiTheme();
@@ -82,7 +83,7 @@ export default function MesSeances() {
 
         {(liste ?? []).map((s, rang) => {
           const t = tonDuRang(rang);
-          const noms = s.exos.map((e) => traduire(nomFr(e.nom)));
+          const noms = s.exos.map((e) => sansTiret(traduire(nomFr(e.nom))));
           const vus = noms.slice(0, 4);
           const reste = noms.length - vus.length;
           const quand = s.faiteLe

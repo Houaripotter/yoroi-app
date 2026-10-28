@@ -18,6 +18,7 @@ import { longDate, shortDate } from '@/lib/v2/carnet/format';
 import { P, Sheet2, BigStats, RankRow, ResultDot, BigButton, Press, Hanko, winColor } from '../ui';
 import { TabEmpty, TabLoading } from './common';
 import { traduire } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const METHOD_LABEL: Record<string, string> = { soumission: traduire('Soumission'), points: traduire('Points'), decision: traduire('Décision'), 'décision': traduire('Décision'), ko: 'KO', tko: traduire('Arrêt de l’arbitre'), autre: 'Autre' };
 
@@ -128,8 +129,8 @@ export function CompetitionsView({ refreshKey }: { refreshKey: number }) {
                 <Ink size={13} weight="black" color={daysLeft <= 7 ? P.onPrimary : P.pureWhite}>{daysLeft <= 0 ? traduire("Aujourd'hui") : traduire("J moins {0}", daysLeft)}</Ink>
               </View>
             </View>
-            <Ink size={24} weight="black" tight color={P.ink} numberOfLines={2}>{traduire(next.nom)}</Ink>
-            <Ink size={13} weight="medium" color={P.ink2}>{`${longDate(next.date)}${next.lieu ? `, ${next.lieu}` : ''}`}</Ink>
+            <Ink size={24} weight="black" tight color={P.ink} numberOfLines={2}>{sansTiret(traduire(next.nom))}</Ink>
+            <Ink size={13} weight="medium" color={P.ink2}>{`${longDate(next.date)}${next.lieu ? `, ${sansTiret(next.lieu)}` : ''}`}</Ink>
             {next.categorie_poids ? <Ink size={13} weight="extraBold" color={P.goldDark}>{traduire("Catégorie {0}", next.categorie_poids)}</Ink> : null}
           </View>
         </Press>

@@ -11,6 +11,7 @@ import { useTrainings } from '@/lib/v2/carnet/useCarnetData';
 import { P, Sheet2, BigStats, BrushBar, BlockTitle } from '../ui';
 import { SessionLine, TabEmpty, TabLoading } from './common';
 import { traduire } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const NATURE = new Set(sportsInPack('nature'));
 const GRADES = ['4a', '4b', '4c', '5a', '5b', '5c', '6a', '6a+', '6b', '6b+', '6c', '6c+', '7a', '7a+', '7b', '7b+', '7c', '8a', '8a+', '8b'];
@@ -78,7 +79,7 @@ export function VoiesView({ refreshKey, hideEmpty }: { refreshKey: number; hideE
       ) : null}
       <BlockTitle title={traduire("Dernières séances")} />
       {recent.map((t) => (
-        <SessionLine key={t.id ?? t.date} t={t} title={t.technical_theme || traduire('Séance de grimpe')} chips={[shortDate(t.date), ...(t.duration_minutes ? [humanMinutes(t.duration_minutes)] : [])]} tone={P.indigo} />
+        <SessionLine key={t.id ?? t.date} t={t} title={sansTiret(t.technical_theme || traduire('Séance de grimpe'))} chips={[shortDate(t.date), ...(t.duration_minutes ? [humanMinutes(t.duration_minutes)] : [])]} tone={P.indigo} />
       ))}
     </View>
   );

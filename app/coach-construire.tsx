@@ -46,6 +46,7 @@ import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { ExoProgramme } from '@/lib/v2/programmes/types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 const NOMS_SEANCE = ['Haut du corps', 'Bas du corps', 'Corps entier', 'Push', 'Pull', 'Jambes'];
@@ -437,7 +438,7 @@ export default function CoachConstruire() {
       </Modal>
 
       {/* régler un exercice : séries, répétitions, repos, ordre */}
-      <Sheet visible={!!reglage} onClose={() => setARegler(null)} title={reglage ? traduire(nomFr(reglage.nom)) : ''}>
+      <Sheet visible={!!reglage} onClose={() => setARegler(null)} title={reglage ? sansTiret(traduire(nomFr(reglage.nom))) : ''}>
         {reglage && sRegle && aRegler ? (
           <View style={{ gap: 16, paddingHorizontal: 2, paddingBottom: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -515,11 +516,11 @@ function JourOuvert({ jour, s, f, onFermer, onNom, onRegler, onParMuscle, onCher
       {s.exos.length ? (
         <View style={{ gap: 2 }}>
           {s.exos.map((e, i) => (
-            <Pressable key={`${e.nom}${i}`} onPress={() => onRegler(i)} accessibilityRole="button" accessibilityLabel={`${traduire(nomFr(e.nom))}, ${seriesTexte(e)}, ${traduire('Régler')}`} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 46, borderRadius: 12, paddingHorizontal: 2, backgroundColor: pressed ? 'rgba(255,255,255,0.5)' : 'transparent' })}>
+            <Pressable key={`${e.nom}${i}`} onPress={() => onRegler(i)} accessibilityRole="button" accessibilityLabel={`${sansTiret(traduire(nomFr(e.nom)))}, ${seriesTexte(e)}, ${traduire('Régler')}`} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 46, borderRadius: 12, paddingHorizontal: 2, backgroundColor: pressed ? 'rgba(255,255,255,0.5)' : 'transparent' })}>
               <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: pa.carte, alignItems: 'center', justifyContent: 'center' }}>
                 <Ink size={12} weight="black" color={f.titre}>{String(i + 1)}</Ink>
               </View>
-              <Ink size={14.5} weight="bold" color={pa.texte} style={{ flex: 1 }} numberOfLines={2}>{traduire(nomFr(e.nom))}</Ink>
+              <Ink size={14.5} weight="bold" color={pa.texte} style={{ flex: 1 }} numberOfLines={2}>{sansTiret(traduire(nomFr(e.nom)))}</Ink>
               <Ink size={13} weight="extraBold" color={pa.texte2}>{seriesTexte(e)}</Ink>
             </Pressable>
           ))}

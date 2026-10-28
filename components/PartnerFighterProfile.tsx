@@ -24,6 +24,7 @@ import {
   ARCHETYPE_META, EXPERIENCE_LEVEL_META,
   type Archetype, type ExperienceLevel,
 } from '@/lib/partnerModel';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 export interface StyleStats {
   garde: number;        // 0-5
@@ -405,7 +406,7 @@ export const PartnerFighterProfile: React.FC<Props> = ({
                   },
                 ]}
               >
-                <Text style={[styles.gardeChipText, { color: sel ? mainColor : colors.text }]}>{g}</Text>
+                <Text style={[styles.gardeChipText, { color: sel ? mainColor : colors.text }]}>{sansTiret(g)}</Text>
               </TouchableOpacity>
             );
           })}

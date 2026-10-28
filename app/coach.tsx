@@ -42,6 +42,7 @@ import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, joursDuProgramme, proch
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 /** Les séances toutes faites, chacune dans sa teinte */
 const TEINTE_RACCOURCI: Record<string, 'bleu' | 'lilas' | 'creme' | 'menthe' | 'peche'> = { haut: 'bleu', bas: 'peche', fessiers_abdos: 'lilas', entier: 'menthe', grip: 'creme' };
@@ -161,7 +162,7 @@ export default function CoachScreen() {
                   <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: pa.carte, alignItems: 'center', justifyContent: 'center' }}>
                     <Ink size={11} weight="black" color={pa.bleu.titre}>{String(k + 1)}</Ink>
                   </View>
-                  <Ink size={13.5} weight="bold" color={pa.texte} style={{ flex: 1 }} numberOfLines={1}>{traduire(nomFr(e.nom))}</Ink>
+                  <Ink size={13.5} weight="bold" color={pa.texte} style={{ flex: 1 }} numberOfLines={1}>{sansTiret(traduire(nomFr(e.nom)))}</Ink>
                   <Ink size={12.5} weight="extraBold" color={pa.texte2}>{`${e.series} × ${e.repsMin === e.repsMax ? e.repsMin : traduire('{0} à {1}', e.repsMin, e.repsMax)}`}</Ink>
                 </View>
               ))}

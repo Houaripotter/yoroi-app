@@ -7,6 +7,7 @@ import { accordSouleve, durationOf, formatDuration, formatTonnage, setsCount, to
 import type { UnitePoids } from '@/lib/v2/unitePoids';
 import { formatKg } from '@/lib/v2/weightStats';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 export const DOW_SHORT = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
 export const DOW_LONG = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
@@ -160,14 +161,14 @@ export function estimatedMax(weight: number, reps: number): number {
 /** Titre lisible d'une seance */
 export function sessionTitle(t: Training): string {
   // 17 octobre 2026 : sport « Autre », le nom que tu as ecrit (escalade, padel...) sert de titre
-  if (t.sport === 'autre' && t.session_type?.trim() && t.session_type.trim().toLowerCase() !== 'autre') return t.session_type.trim();
+  if (t.sport === 'autre' && t.session_type?.trim() && t.session_type.trim().toLowerCase() !== 'autre') return sansTiret(t.session_type.trim());
   const type = t.session_type ? getSessionTypeLabel(t.session_type) : '';
   const name = sportLabel(t.sport);
   // vague 31 : pas de « Course à pied, course » quand le type redit le sport
   const tl = type.toLowerCase();
   const nl = name.toLowerCase();
-  if (type && tl !== nl && !nl.includes(tl) && !tl.includes(nl)) return `${name}, ${tl}`;
-  return name;
+  if (type && tl !== nl && !nl.includes(tl) && !tl.includes(nl)) return sansTiret(`${name}, ${tl}`);
+  return sansTiret(name);
 }
 
 /** Resume court sous le titre d'une seance (maquette S4) */

@@ -24,6 +24,7 @@ import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { traduire } from '@/lib/i18n/tr';
 import { noterRecherche } from '@/lib/v2/seance/recherchesIntrouvables';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 type Item = { key: string; name: string; autre?: string; muscle: string; history?: ExerciseHistory; count?: number; rang?: number };
 type Ligne = { kind: 'titre'; key: string; muscle: string; n: number } | { kind: 'exo'; key: string; item: Item };
@@ -269,7 +270,7 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
                 style={({ pressed }) => ({ minHeight: 64, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : c.surface, ...OMBRE_CARTE })}
               >
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Ink size={16} weight="extraBold" numberOfLines={1}>{traduire(item.name)}</Ink>
+                  <Ink size={16} weight="extraBold" numberOfLines={1}>{sansTiret(traduire(item.name))}</Ink>
                   <Ink size={12} color={c.textMuted} numberOfLines={1}>
                     {niceGroup(item.muscle)}
                     {last && item.history ? `, ${setLabel(last, unite)} ${relativeDay(item.history.lastDate)}` : ''}

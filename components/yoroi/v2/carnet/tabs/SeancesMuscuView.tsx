@@ -10,6 +10,7 @@ import { useTrainings } from '@/lib/v2/carnet/useCarnetData';
 import { P, Sheet2, BigStats, RankRow, BlockTitle } from '../ui';
 import { SessionLine, TabEmpty, TabLoading } from './common';
 import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const SPLITS: Record<string, { label: string; kw: string[] }> = {
   push: { label: traduire('Push'), kw: ['push', 'pecs', 'épaules', 'triceps', 'dc', 'dm', 'développé couché', 'développé militaire'] },
@@ -85,7 +86,7 @@ export function SeancesMuscuView({ refreshKey, hideEmpty }: { refreshKey: number
         if (sp) chips.push(sp.label);
         if (t.duration_minutes) chips.push(humanMinutes(t.duration_minutes));
         if (t.calories) chips.push(`${t.calories} kcal`);
-        return <SessionLine key={t.id ?? t.date} t={t} title={t.technical_theme || 'Musculation'} chips={chips} tone={P.accent} />;
+        return <SessionLine key={t.id ?? t.date} t={t} title={sansTiret(t.technical_theme || 'Musculation')} chips={chips} tone={P.accent} />;
       })}
     </View>
   );

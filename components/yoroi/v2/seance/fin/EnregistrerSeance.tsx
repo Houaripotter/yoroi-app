@@ -24,6 +24,7 @@ import type { ExoSeance, MaSeance } from '@/lib/v2/seance/mesSeances';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 type Etat =
   | { cas: 'rien' }
@@ -144,8 +145,8 @@ export function EnregistrerSeance({ trainingId, maSeanceId, marge = 22 }: { trai
   const diff = changee ? differencesExos(changee.exos, exos) : null;
   const lignesDiff = diff
     ? [
-        diff.ajoutes.length ? traduire('Nouveau : {0}.', diff.ajoutes.map((n) => traduire(nomFr(n))).join(', ')) : '',
-        diff.retires.length ? traduire('Pas fait : {0}.', diff.retires.map((n) => traduire(nomFr(n))).join(', ')) : '',
+        diff.ajoutes.length ? traduire('Nouveau : {0}.', diff.ajoutes.map((n) => sansTiret(traduire(nomFr(n)))).join(', ')) : '',
+        diff.retires.length ? traduire('Pas fait : {0}.', diff.retires.map((n) => sansTiret(traduire(nomFr(n)))).join(', ')) : '',
         !diff.ajoutes.length && !diff.retires.length ? traduire('L’ordre des exercices a changé.') : '',
       ].filter(Boolean).join(' ')
     : '';

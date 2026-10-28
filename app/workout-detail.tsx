@@ -52,6 +52,7 @@ import { INTENSITES } from '@/lib/v2/intensite';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
 import { traduire, traduirePluriel, LANG, LOCALE, DECIMAL } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1500;
@@ -548,8 +549,8 @@ export default function WorkoutDetailScreen() {
                   <Glass key={`${ex.name}${idx}`} style={{ gap: 10 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       <View style={{ flex: 1 }}>
-                        <Ink size={17} weight="black" tight>{ex.name || traduire('Exercice')}</Ink>
-                        {ex.muscle_group ? <Ink size={12} weight="bold" color={c.textMuted}>{ex.muscle_group}</Ink> : null}
+                        <Ink size={17} weight="black" tight>{sansTiret(ex.name) || traduire('Exercice')}</Ink>
+                        {ex.muscle_group ? <Ink size={12} weight="bold" color={c.textMuted}>{sansTiret(ex.muscle_group)}</Ink> : null}
                       </View>
                       {isRec ? <Hanko size={22} /> : null}
                     </View>
@@ -591,7 +592,7 @@ export default function WorkoutDetailScreen() {
               {t.technical_theme ? (
                 <>
                   <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Thème technique")}</Ink>
-                  <Ink size={17} weight="extraBold">{t.technical_theme}</Ink>
+                  <Ink size={17} weight="extraBold">{sansTiret(t.technical_theme)}</Ink>
                 </>
               ) : null}
               {(t.technique_rating ?? 0) > 0 ? (() => {

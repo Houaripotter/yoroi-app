@@ -18,6 +18,7 @@ import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import type { ExoProgramme } from '@/lib/v2/programmes/types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 /** « 3 × 8 à 12 », « 3 × 30 à 45 s » */
 export function seriesTexte(e: Pick<ExoProgramme, 'series' | 'repsMin' | 'repsMax' | 'secondes'>): string {
@@ -65,7 +66,7 @@ export function ChoixParMuscle({ visible, titre, exos, onBasculer, onClose }: { 
           <View style={[{ backgroundColor: pa.carte, borderRadius: 24, paddingHorizontal: 14 }, ombrePastel(pa.ombre)]}>
             {z.exos.map((e, k) => {
               const on = choisis.includes(e.nom);
-              const nom = traduire(nomFr(e.nom));
+              const nom = sansTiret(traduire(nomFr(e.nom)));
               return (
                 <Pressable
                   key={e.nom}

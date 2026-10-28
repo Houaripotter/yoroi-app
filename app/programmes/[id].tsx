@@ -63,6 +63,7 @@ import type { ExoModule } from '@/lib/v2/programmes/modules';
 import { guideCharge } from '@/lib/v2/programmes/charge';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 export default function ProgrammeDetail() {
   const { theme } = useYoroiTheme();
@@ -253,8 +254,8 @@ export default function ProgrammeDetail() {
     // le meme calcul que la seance lancee (app/seance/muscu.tsx) : ton materiel et tes douleurs d'abord, puis l'express
     const protege = jourPourToi(j, materiel, regionsVues, machines, enCours ? actif?.remplacements : null, ctxFin);
     const x = seanceExpress(protege.exos, minutes);
-    const garde = x.exos.map((e) => traduire('{0} : {1} séries', traduire(nomFr(e.nom)), e.series)).join('\n');
-    const reporte = x.reportes.length ? `\n\n${traduire('À faire une autre fois : {0}.', x.reportes.map((n) => traduire(nomFr(n))).join(', '))}` : '';
+    const garde = x.exos.map((e) => traduire('{0} : {1} séries', sansTiret(traduire(nomFr(e.nom))), e.series)).join('\n');
+    const reporte = x.reportes.length ? `\n\n${traduire('À faire une autre fois : {0}.', x.reportes.map((n) => sansTiret(traduire(nomFr(n)))).join(', '))}` : '';
     appAlert(traduire('Séance express, {0} min', minutes), `${garde}${reporte}\n\n${traduire('Moins de séries reste utile : c’est mieux que de sauter la séance.')}`, [
       { text: traduire('Annuler'), style: 'cancel' },
       { text: traduire('Commencer'), onPress: () => lancerJour(j.id, minutes) },
@@ -500,7 +501,7 @@ export default function ProgrammeDetail() {
                   charges.map((x, k) => (
                     <View key={x.nom} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 10, borderTopWidth: k === 0 ? 0 : 1, borderColor: c.divider }}>
                       <View style={{ flex: 1, gap: 1 }}>
-                        <Ink size={14} weight="extraBold" numberOfLines={1}>{traduire(nomFr(x.nom))}</Ink>
+                        <Ink size={14} weight="extraBold" numberOfLines={1}>{sansTiret(traduire(nomFr(x.nom)))}</Ink>
                         <Ink size={12} color={c.textSecondary}>{`${kg(x.debutKg)} → ${kg(x.actuelKg)}`}</Ink>
                       </View>
                       <Ink size={16} weight="black" color={x.gainPct > 0 ? pal.vert : c.textSecondary}>{x.gainPct > 0 ? `+${x.gainPct} %` : `${x.gainPct} %`}</Ink>
@@ -619,8 +620,8 @@ function LigneExo({ e, premier, raison, onChanger, onRevenir, carte, k = 0 }: { 
       {onChanger || (onRevenir && e.perso) || aFiche ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 }}>
           {aFiche ? <ActionExo label={traduire(technique ? 'Masquer la technique' : 'Voir la technique')} onPress={() => { tap(); setTechnique((o) => !o); }} etat={technique} /> : null}
-          {onChanger ? <ActionExo label={traduire('Changer')} onPress={onChanger} accessibilityLabel={traduire('Changer {0}', traduire(nomFr(e.nom)))} /> : null}
-          {onRevenir && e.perso ? <ActionExo label={traduire('Revenir à {0}', traduire(nomFr(e.perso)))} onPress={onRevenir} /> : null}
+          {onChanger ? <ActionExo label={traduire('Changer')} onPress={onChanger} accessibilityLabel={traduire('Changer {0}', sansTiret(traduire(nomFr(e.nom))))} /> : null}
+          {onRevenir && e.perso ? <ActionExo label={traduire('Revenir à {0}', sansTiret(traduire(nomFr(e.perso))))} onPress={onRevenir} /> : null}
         </View>
       ) : null}
       {technique && aFiche ? <FicheTechnique nom={e.nom} /> : null}
@@ -637,7 +638,7 @@ function LigneExo({ e, premier, raison, onChanger, onRevenir, carte, k = 0 }: { 
           onPress={() => { tap(); setDeplie((o) => !o); }}
           accessibilityRole="button"
           accessibilityState={{ expanded: deplie }}
-          accessibilityLabel={`${traduire(nomFr(e.nom))}. ${phrase}`}
+          accessibilityLabel={`${sansTiret(traduire(nomFr(e.nom)))}. ${phrase}`}
           style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52, opacity: pressed ? 0.75 : 1 })}
         >
           {/* 27 octobre 2026 (refonte Pastel) : le numero de l'exercice sur sa pastille pastel */}
@@ -645,7 +646,7 @@ function LigneExo({ e, premier, raison, onChanger, onRevenir, carte, k = 0 }: { 
             <Ink size={17} weight="black" color={t.encre}>{String(k + 1)}</Ink>
           </View>
           <View style={{ flex: 1, gap: 3 }}>
-            <Ink size={15} weight="extraBold" color={pal.texte} numberOfLines={2}>{traduire(nomFr(e.nom))}</Ink>
+            <Ink size={15} weight="extraBold" color={pal.texte} numberOfLines={2}>{sansTiret(traduire(nomFr(e.nom)))}</Ink>
             <Ink size={12} weight="bold" color={pal.texte2} numberOfLines={1}>{`${muscle} · ${traduire('{0} de repos', libelleRepos(e.reposSec))}`}</Ink>
             {signe ? <View style={{ flexDirection: 'row', marginTop: 2 }}>{signe}</View> : null}
           </View>
@@ -662,13 +663,13 @@ function LigneExo({ e, premier, raison, onChanger, onRevenir, carte, k = 0 }: { 
         onPress={() => { tap(); setDeplie((o) => !o); }}
         accessibilityRole="button"
         accessibilityState={{ expanded: deplie }}
-        accessibilityLabel={`${traduire(nomFr(e.nom))}. ${phrase}`}
+        accessibilityLabel={`${sansTiret(traduire(nomFr(e.nom)))}. ${phrase}`}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, opacity: pressed ? 0.75 : 1 })}
       >
         {demoDe(e.nom) ? <ExoDemo nom={e.nom} taille={56} arrondi={14} /> : null}
         <View style={{ flex: 1, gap: 6 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
-            <Ink size={15} weight="extraBold" style={{ flex: 1 }} numberOfLines={2}>{traduire(nomFr(e.nom))}</Ink>
+            <Ink size={15} weight="extraBold" style={{ flex: 1 }} numberOfLines={2}>{sansTiret(traduire(nomFr(e.nom)))}</Ink>
             <Ink size={15} weight="black" color={c.accent}>{volume}</Ink>
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -727,9 +728,9 @@ function NoteMateriel({ e, raison }: { e: ExoProtege; raison: string }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   if (e.zone && e.impossible) return <Ink size={12} weight="bold" color={c.danger}>{traduire('Tu as signalé une douleur : {0}. Passe cet exercice, et demande l’avis d’un professionnel si elle dure.', traduire(LIBELLE_REGION[e.zone]))}</Ink>;
-  if (e.zone && e.remplace) return <Ink size={12} weight="bold" color={c.accent}>{traduire('Remplace {0} pour ménager {1}', traduire(nomFr(e.remplace)), traduire(LIBELLE_REGION[e.zone]))}</Ink>;
+  if (e.zone && e.remplace) return <Ink size={12} weight="bold" color={c.accent}>{traduire('Remplace {0} pour ménager {1}', sansTiret(traduire(nomFr(e.remplace))), traduire(LIBELLE_REGION[e.zone]))}</Ink>;
   if (e.remplace) {
-    return <Ink size={12} weight="bold" color={c.accent}>{raison ? `${traduire('Remplace {0}', traduire(nomFr(e.remplace)))} · ${traduire(raison)}` : traduire('Remplace {0}', traduire(nomFr(e.remplace)))}</Ink>;
+    return <Ink size={12} weight="bold" color={c.accent}>{raison ? `${traduire('Remplace {0}', sansTiret(traduire(nomFr(e.remplace))))} · ${traduire(raison)}` : traduire('Remplace {0}', sansTiret(traduire(nomFr(e.remplace))))}</Ink>;
   }
   if (e.impossible) return <Ink size={12} weight="bold" color={c.danger}>{traduire('Ton matériel ne permet pas cet exercice : passe le, ou change Mon matériel.')}</Ink>;
   return null;

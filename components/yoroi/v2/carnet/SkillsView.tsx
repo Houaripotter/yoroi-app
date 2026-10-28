@@ -12,6 +12,7 @@ import { P, Press, CIcon, Stamp, Field, Enter } from './ui';
 import { BlockHead, CarnetEmpty, FilterChips, Illus, Summary } from './nav';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { useIllustrations } from '@/components/yoroi/v2/stickers';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 type SkillFilter = 'all' | 'jjb' | 'lutte' | 'boxe' | 'autre';
 
@@ -142,7 +143,7 @@ function SkillCard({ s, onOpen }: { s: Skill; onOpen: (s: Skill) => void }) {
           <Illus name={illusOf(s)} size={illus.stickers ? 46 : 40} />
         </View>
         <View style={{ flex: 1, gap: 3 }}>
-          <Ink size={16} weight="extraBold" numberOfLines={2}>{traduire(s.name)}</Ink>
+          <Ink size={16} weight="extraBold" numberOfLines={2}>{sansTiret(traduire(s.name))}</Ink>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <Ink size={12} weight="bold" color={tone}>{skillCategoryLabel(s.category)}</Ink>
             {s.drillCount > 0 ? <Ink size={12} weight="bold" color={P.muted}>{traduire("{0} répétitions", s.drillCount)}</Ink> : null}

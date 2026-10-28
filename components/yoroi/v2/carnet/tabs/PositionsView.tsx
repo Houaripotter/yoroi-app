@@ -10,6 +10,7 @@ import { humanMinutes } from '@/lib/v2/carnet/format';
 import { P, Sheet2, BigStats, SplitBar, RankRow } from '../ui';
 import { TabEmpty, TabLoading } from './common';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 export const SUBMISSION_FAMILIES: Record<string, { label: string; kw: string[] }> = {
   chokes: { label: traduire('Étranglements'), kw: ['triangle', 'rnc', 'rear naked', 'guillotine', "d'arce", 'darce', 'ezekiel', 'cross collar', 'anaconda', 'bow and arrow', 'étranglement', 'etranglement', 'baseball', 'north south', 'loop choke', 'peruvian'] },
@@ -110,7 +111,7 @@ export function PositionsView({ refreshKey }: { refreshKey: number }) {
           <Ink size={18} weight="black" tight>{traduire("Thèmes les plus travaillés")}</Ink>
           {themes.map((t, i) => {
             const since = Math.floor((Date.now() - new Date(t.lastDate).getTime()) / 86400000);
-            return <RankRow key={t.theme} rank={i + 1} title={t.theme} value={traduire("{0} fois", t.sessions)} ratio={t.sessions / themes[0].sessions} color={P.indigo} sub={traduirePluriel(since, since > 1, "{0} cumulées, dernière fois il y a {1} jour", "{0} cumulées, dernière fois il y a {1} jours", humanMinutes(t.minutes), since)} />;
+            return <RankRow key={t.theme} rank={i + 1} title={sansTiret(t.theme)} value={traduire("{0} fois", t.sessions)} ratio={t.sessions / themes[0].sessions} color={P.indigo} sub={traduirePluriel(since, since > 1, "{0} cumulées, dernière fois il y a {1} jour", "{0} cumulées, dernière fois il y a {1} jours", humanMinutes(t.minutes), since)} />;
           })}
         </Sheet2>
       ) : null}

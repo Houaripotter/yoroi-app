@@ -39,6 +39,7 @@ import { seanceZones, titreZones, ZONES } from '@/lib/v2/programmes/zones';
 import type { ZoneId } from '@/lib/v2/programmes/zones';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 type Ligne = ExoSeance & { cle: string };
 
@@ -206,7 +207,7 @@ export default function ModifierMaSeance() {
         <View style={{ gap: 10 }}>
           {lignes.map((e, i) => {
             const t = tonDuRang(i);
-            const nomExo = traduire(nomFr(e.nom));
+            const nomExo = sansTiret(traduire(nomFr(e.nom)));
             const ouverte = ouvert === e.cle;
             return (
               <View key={e.cle} style={[carteBlanche(c.surface, c.divider), { padding: 12, gap: 12 }]}>

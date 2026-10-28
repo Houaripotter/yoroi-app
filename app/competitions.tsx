@@ -35,6 +35,7 @@ import { BackButton, BigButton, SectionTitle, tap } from '@/components/yoroi/v2/
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const SCENE = require('@/assets/avatars/app/monde/scenes/bataille.webp');
 
@@ -137,8 +138,8 @@ export default function CompetitionsScreen() {
           )}
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={15} weight="extraBold" numberOfLines={2}>{traduire(x.nom)}</Ink>
-          <Ink size={12} color={c.textSecondary} numberOfLines={2}>{[longDate(x.date.slice(0, 10), true), x.lieu].filter(Boolean).join(', ')}</Ink>
+          <Ink size={15} weight="extraBold" numberOfLines={2}>{sansTiret(traduire(x.nom))}</Ink>
+          <Ink size={12} color={c.textSecondary} numberOfLines={2}>{sansTiret([longDate(x.date.slice(0, 10), true), x.lieu].filter(Boolean).join(', '))}</Ink>
           {x.categorie_poids ? <Ink size={11} weight="bold" color={c.textMuted} numberOfLines={1}>{`${x.categorie_poids}${x.poids_max && x.poids_max < 900 ? traduire(", {0} kg max", formatKg(x.poids_max)) : ''}`}</Ink> : null}
         </View>
         <Icon name="chevron" size={18} color={c.textMuted} />
@@ -180,8 +181,8 @@ export default function CompetitionsScreen() {
                   {nextDays === 0 ? traduire('Jour J') : String(nextDays)}
                   {nextDays > 0 ? <Ink size={18} weight="bold" color={c.textSecondary}>{nextDays > 1 ? ` ${traduire('jours')}` : ` ${traduire('jour')}`}</Ink> : null}
                 </Ink>
-                <Ink size={18} weight="extraBold" numberOfLines={2}>{traduire(next.nom)}</Ink>
-                <Ink size={13} color={c.textSecondary}>{[longDate(next.date.slice(0, 10), true), next.lieu, getSportName(next.sport)].filter(Boolean).join(', ')}</Ink>
+                <Ink size={18} weight="extraBold" numberOfLines={2}>{sansTiret(traduire(next.nom))}</Ink>
+                <Ink size={13} color={c.textSecondary}>{[longDate(next.date.slice(0, 10), true), sansTiret(next.lieu), getSportName(next.sport)].filter(Boolean).join(', ')}</Ink>
                 {gap !== null ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: gap <= 0 ? c.successTint : c.dangerTint }}>
                     <Icon name="scale" size={16} color={gap <= 0 ? c.successText : c.danger} />

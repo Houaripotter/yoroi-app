@@ -32,6 +32,7 @@ import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import logger from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 
 const RESULT: Record<string, { label: string; color: string }> = {
@@ -184,7 +185,7 @@ export default function CompetitionDetailScreen() {
 
   return (
     <DetailScreen
-      title={traduire(comp.nom)}
+      title={sansTiret(traduire(comp.nom))}
       subtitle={subtitle}
       right={
         <>
@@ -222,7 +223,7 @@ export default function CompetitionDetailScreen() {
               </Ink>
               {comp.lieu ? (
                 <Ink size={12} weight="bold" color={P.ink2} numberOfLines={2}>
-                  {comp.lieu}
+                  {sansTiret(comp.lieu)}
                 </Ink>
               ) : null}
             </Glass>

@@ -7,6 +7,7 @@
 // Exemple: 'karate', 'boxing-glove', 'arm-flex', etc.
 import { traduire } from '@/lib/i18n/tr';
 import { cheminLogoActuel, dossierDocuments } from '@/lib/v2/clubs/cheminLogo';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 export interface Sport {
   id: string;
@@ -1553,8 +1554,9 @@ export const getSportIcon = (id: string): string => {
   return getSportById(id)?.icon || 'trophy';
 };
 
+/** nom affiche du sport, sans trait d'union (lib/v2/texte/sansTiret.ts) ; les noms des donnees ne changent pas */
 export const getSportName = (id: string): string => {
-  return getSportById(id)?.name || 'Autre';
+  return sansTiret(getSportById(id)?.name || 'Autre');
 };
 
 export const getSportCategory = (id: string): string => {

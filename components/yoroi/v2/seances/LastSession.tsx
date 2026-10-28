@@ -9,6 +9,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { BigButton, Hanko } from './ui';
 import { P } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 export type LastSessionVM = {
   title: string;
@@ -59,7 +60,7 @@ export function LastSessionCard({ vm, onRepeat, onOpen }: { vm: LastSessionVM; o
           <View style={{ borderRadius: 16, backgroundColor: c.fillSoft, paddingHorizontal: 12 }}>
             {vm.exercises.map((e, i) => (
               <View key={`${e.name}${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.border }}>
-                <Ink size={14} weight="bold" style={{ flex: 1 }} numberOfLines={2}>{traduire(e.name)}</Ink>
+                <Ink size={14} weight="bold" style={{ flex: 1 }} numberOfLines={2}>{sansTiret(traduire(e.name))}</Ink>
                 {e.best ? <Ink size={14} weight="extraBold">{e.best}</Ink> : null}
               </View>
             ))}

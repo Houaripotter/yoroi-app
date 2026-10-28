@@ -19,6 +19,7 @@ import { CIcon } from './Icon';
 import type { CIconName } from './Icon';
 import { blancA } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 export { P, tap, Enter, Glass, Card, Kozane, KozaneBar, BrushRing, BigButton, Pill, Stat } from '@/components/yoroi/v2/accueil/kit';
 export { Hanko, DetailScreen, EmptyState } from '@/components/yoroi/v2/ornements/screens';
@@ -433,5 +434,5 @@ export function sportLabel(raw?: string | null): string {
   const t = raw.trim();
   const keys = [t, t.toLowerCase(), t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[\s-]+/g, '_'), t.toLowerCase().replace(/[\s-]+/g, '')];
   for (const k of keys) if (getSportById(k)) return getSportName(k);
-  return t;
+  return sansTiret(t);
 }

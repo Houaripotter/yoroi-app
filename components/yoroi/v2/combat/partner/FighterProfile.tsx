@@ -15,6 +15,7 @@ import type { PartnerInsights } from '@/lib/v2/combat/partnerInsights';
 import { StyleRadar } from '../charts';
 import { Card, Chip, CIcon, D, Field, FormSheet, P, Press, TagEditor, tap } from '../ui';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 /** Sigle du style de combat, en lettres latines */
 const ARCH_MARK: Record<Archetype, string> = { gardien: 'GA', passeur: 'PA', striker: 'ST', bagarreur: 'BA', takedown: 'TD', polyvalent: 'PO' };
@@ -148,7 +149,7 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {GARDES.map((g) => {
               const on = gardes.includes(g);
-              return <Chip key={g} label={traduire(g)} on={on} color={color} onPress={() => onChange({ gardePreferred: on ? gardes.filter((x) => x !== g) : [...gardes, g] })} />;
+              return <Chip key={g} label={sansTiret(traduire(g))} on={on} color={color} onPress={() => onChange({ gardePreferred: on ? gardes.filter((x) => x !== g) : [...gardes, g] })} />;
             })}
           </View>
         </View>

@@ -21,6 +21,7 @@ import { CoachProgramme } from '@/components/yoroi/v2/programmes/CoachProgramme'
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { traduire } from '@/lib/i18n/tr';
 import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 export function ProgrammeCard({ onOpen, femme = false }: { onOpen: () => void; femme?: boolean }) {
   const { theme } = useYoroiTheme();
@@ -115,7 +116,7 @@ export function ProgrammeCard({ onOpen, femme = false }: { onOpen: () => void; f
                 {apercu.map((e, k) => (
                   <View key={`${e.nom}${k}`} style={{ flex: 1, gap: 4, alignItems: 'center' }}>
                     <ExoDemo nom={e.nom} taille={78} arrondi={14} />
-                    <Ink size={11} weight="bold" color={c.textSecondary} numberOfLines={2} style={{ textAlign: 'center' }}>{traduire(nomFr(e.nom))}</Ink>
+                    <Ink size={11} weight="bold" color={c.textSecondary} numberOfLines={2} style={{ textAlign: 'center' }}>{sansTiret(traduire(nomFr(e.nom)))}</Ink>
                   </View>
                 ))}
               </View>
