@@ -10,13 +10,13 @@ export type Explain = { text: string; tip?: string };
 
 export const WEIGHT_EXPLAIN: Explain = {
   text: traduire('Ton poids du jour bouge avec l’eau, les repas, le sel et le sommeil. La tendance lisse ces écarts sur plusieurs jours : c’est elle qui montre où tu vas.'),
-  tip: traduire('Pèse-toi le matin, à jeun, après être passé aux toilettes, quelques fois par semaine.'),
+  tip: traduire('Monte sur la balance le matin, à jeun, après être passé aux toilettes, quelques fois par semaine.'),
 };
 
 export const COMPO_EXPLAIN: Record<CompoKey, Explain> = {
   fat: {
     text: traduire('La part de ton poids qui vient de la graisse. Ta balance l’estime en envoyant un très faible courant dans ton corps.'),
-    tip: traduire('La valeur change avec ton hydratation : compare-toi toujours dans les mêmes conditions, le matin à jeun.'),
+    tip: traduire('La valeur change avec ton hydratation : compare toujours tes mesures dans les mêmes conditions, le matin à jeun.'),
   },
   muscle: {
     text: traduire('La part de ton poids faite de muscle, estimée par ta balance. Elle monte quand tu prends du muscle, et aussi quand tu perds de la graisse.'),
@@ -29,7 +29,7 @@ export const COMPO_EXPLAIN: Record<CompoKey, Explain> = {
   weight: WEIGHT_EXPLAIN,
   muscleKg: {
     text: traduire('Le poids de tes muscles en kilos, estimé par ta balance. C’est la donnée qui montre le mieux ce que tes séances construisent.'),
-    tip: traduire('Elle progresse lentement : juge-la sur un ou deux mois.'),
+    tip: traduire('Elle progresse lentement : regarde son évolution sur un ou deux mois.'),
   },
   bone: {
     text: traduire('Le poids estimé de ton squelette. Il change très peu au fil du temps : un écart vient surtout de la mesure elle-même.'),

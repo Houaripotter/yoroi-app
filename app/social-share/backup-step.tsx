@@ -20,9 +20,9 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire } from '@/lib/i18n/tr';
 
 const STEPS: { icon: IconName; title: string; text: string }[] = [
-  { icon: 'archive', title: traduire('Crée un dossier'), text: traduire('Appelle-le Yoroi_Backup dans ton cloud.') },
+  { icon: 'archive', title: traduire('Crée un dossier'), text: traduire('Nomme le dossier Yoroi_Backup dans ton cloud.') },
   { icon: 'download', title: traduire('Génère ta sauvegarde'), text: traduire('Un seul fichier avec tout ton historique.') },
-  { icon: 'upload', title: traduire('Range-la dans ton cloud'), text: traduire('Tu ne perdras plus rien, même en changeant de téléphone.') },
+  { icon: 'upload', title: traduire('Range ta sauvegarde dans ton cloud'), text: traduire('Tu ne perdras plus rien, même en changeant de téléphone.') },
 ];
 
 export default function BackupStepScreen() {

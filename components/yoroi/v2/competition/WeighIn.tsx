@@ -74,13 +74,13 @@ export function WeighInCard({ categorie, poidsMax, weight, weightDate, daysLeft,
           ) : null}
           {perWeek !== null ? (
             <Ink size={13} weight="bold" color={P.ink2}>
-              {perWeek > 1 ? traduire("Soit {0} kg par semaine : c'est beaucoup. Parles-en à ton coach avant de couper.", formatKg(perWeek)) : traduire("Soit environ {0} kg par semaine d'ici le jour J.", formatKg(perWeek))}
+              {perWeek > 1 ? traduire("Soit {0} kg par semaine : c'est beaucoup. Demande conseil à ton coach avant de couper.", formatKg(perWeek)) : traduire("Soit environ {0} kg par semaine d'ici le jour J.", formatKg(perWeek))}
             </Ink>
           ) : null}
         </>
       ) : (
         <Ink size={14} weight="medium" color={P.ink2}>
-          {traduire("Pèse-toi pour savoir où tu en es par rapport à ta catégorie.")}</Ink>
+          {traduire("Une pesée te dit où tu en es par rapport à ta catégorie.")}</Ink>
       )}
 
       <View style={{ flexDirection: 'row', gap: 8 }}>

@@ -303,7 +303,7 @@ export default function HeartZonesSettingsScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: effectiveSource === 'custom' ? S.moss : S.gold }} />
             <Ink size={13} weight="extraBold" color={S.ink2} style={{ flex: 1 }}>
-              {effectiveSource === 'custom' && meta?.origin === 'apple' ? traduire("Zones Apple Santé actives ({0}), mises à jour toutes seules", meta.appleSource === 'user' ? traduire('tes zones manuelles de Santé') : traduire('automatiques')) : effectiveSource === 'custom' && meta?.origin === 'estimee' ? traduire('Zones estimées depuis ta FC max Apple Santé') : effectiveSource === 'custom' ? traduire('Tes zones personnalisées sont actives') : effectiveSource === 'age' ? traduire('Zones calculées depuis ta FC max. Personnalise-les ci-dessous.') : traduire('Zones par défaut. Personnalise-les ci-dessous.')}
+              {effectiveSource === 'custom' && meta?.origin === 'apple' ? traduire("Zones Apple Santé actives ({0}), mises à jour toutes seules", meta.appleSource === 'user' ? traduire('tes zones manuelles de Santé') : traduire('automatiques')) : effectiveSource === 'custom' && meta?.origin === 'estimee' ? traduire('Zones estimées depuis ta FC max Apple Santé') : effectiveSource === 'custom' ? traduire('Tes zones personnalisées sont actives') : effectiveSource === 'age' ? traduire('Zones calculées depuis ta FC max. Tu peux les personnaliser plus bas.') : traduire('Zones par défaut. Tu peux les personnaliser plus bas.')}
             </Ink>
           </View>
           <ZoneBand bounds={bounds} />
@@ -378,7 +378,7 @@ export default function HeartZonesSettingsScreen() {
                 <Ink size={15} weight="extraBold">
                   {traduire("FC au repos")}</Ink>
                 <Ink size={12} weight="bold" color={S.ink2}>
-                  {karvSources.rest ? traduire('Reprise de ta montre') : traduire('Mesure-la au réveil, allongé')}
+                  {karvSources.rest ? traduire('Reprise de ta montre') : traduire('À mesurer au réveil, allongé')}
                 </Ink>
               </View>
               <BoundInput value={restHr} onChange={setRestHr} color={S.indigo} label={traduire("Fréquence cardiaque au repos")} />
@@ -388,7 +388,7 @@ export default function HeartZonesSettingsScreen() {
                 <Ink size={15} weight="extraBold">
                   {traduire("FC max")}</Ink>
                 <Ink size={12} weight="bold" color={S.ink2}>
-                  {karvSources.age ? traduire('220 moins ton âge. Change-la si tu la connais.') : traduire('Règle-la : 220 moins ton âge')}
+                  {karvSources.age ? traduire('220 moins ton âge. Tu peux la changer si tu la connais.') : traduire('À régler : 220 moins ton âge')}
                 </Ink>
               </View>
               <BoundInput value={karvMax} onChange={setKarvMax} color={S.accent} label={traduire("Fréquence cardiaque maximale")} />
@@ -447,7 +447,7 @@ export default function HeartZonesSettingsScreen() {
         <Label>{traduire("Où trouver tes zones")}</Label>
         <Accordion title={traduire("iPhone et Apple Watch")} sub={traduire("App Watch, Exercice")}>
           <Ink size={13} weight="medium" color={S.ink2}>
-            {traduire("1. Ouvre l'app Watch sur ton iPhone\n2. Onglet Ma montre\n3. Descends jusqu'à Exercice\n4. Tout en bas : Zones de fréquence cardiaque\n5. Choisis Manuelle\n6. Note les valeurs de chaque zone\n7. Reviens ici et entre-les dans Mes valeurs")}
+            {traduire("1. Ouvre l'app Watch sur ton iPhone\n2. Onglet Ma montre\n3. Descends jusqu'à Exercice\n4. Tout en bas : Zones de fréquence cardiaque\n5. Choisis Manuelle\n6. Note les valeurs de chaque zone\n7. Reviens ici et entre ces valeurs dans Mes valeurs")}
           </Ink>
         </Accordion>
         <Accordion title="Garmin Connect">
@@ -464,7 +464,7 @@ export default function HeartZonesSettingsScreen() {
         </Accordion>
         <Accordion title="Health Connect">
           <Ink size={13} weight="medium" color={S.ink2}>
-            {traduire("Health Connect rassemble les données de ton capteur mais ne règle pas les zones. Configure-les dans l'app de ta montre (Garmin Connect, Samsung Health), puis reporte-les ici.")}</Ink>
+            {traduire("Health Connect rassemble les données de ton capteur mais ne règle pas les zones. Règle tes zones dans l'app de ta montre (Garmin Connect, Samsung Health), puis reporte les valeurs ici.")}</Ink>
         </Accordion>
       </DetailScreen>
     </KeyboardAvoidingView>

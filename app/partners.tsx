@@ -141,7 +141,7 @@ export default function PartnersScreen() {
         <Ink size={20} weight="black" tight>
           {traduire("Tu veux être dans la sélection ?")}</Ink>
         <Ink size={14} color={P.ink2}>
-          {traduire("Écris-moi sur Instagram, je serai ravi de te mettre en avant.")}</Ink>
+          {traduire("Un message sur Instagram suffit, je serai ravi de te mettre en avant.")}</Ink>
         <BigButton label={traduire("Nous contacter")} icon="share" onPress={() => openEmail()} />
       </Glass>
       <Ink size={12} color={P.muted} style={{ textAlign: 'center', paddingHorizontal: 12 }}>

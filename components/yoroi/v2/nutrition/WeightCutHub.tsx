@@ -179,7 +179,7 @@ export function WeightCutHub({ initialTab = 'coupe', extrasRoute }: { initialTab
               }}
             />
           ) : (
-            <EmptyState title={traduire("Pèse-toi d’abord")} text={traduire("Ta coupe part de ta dernière pesée. Enregistre ton poids, puis reviens fixer ton objectif.")} action={traduire("Me peser")} onAction={() => router.push('/pesee' as any)} />
+            <EmptyState title={traduire("Commence par une pesée")} text={traduire("Ta coupe part de ta dernière pesée. Enregistre ton poids, puis reviens fixer ton objectif.")} action={traduire("Me peser")} onAction={() => router.push('/pesee' as any)} />
           )
         ) : tab === 'simu' ? (
           <Simulator defaultCurrent={current} defaultTarget={cut?.targetWeight ?? 0} defaultDays={cut ? daysLeft : 0} />

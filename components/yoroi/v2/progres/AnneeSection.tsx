@@ -111,7 +111,7 @@ export function AnneeSection() {
         </View>
         <View style={{ flexDirection: 'row', gap: 14, marginTop: 8, flexWrap: 'wrap' }}>
           <LegendMark kind="square" color={tint(CHART_COLORS.blue, 0.58)} label={traduire("mois passés")} />
-          <LegendMark kind="square" color={c.accent} label={traduire("ce mois-ci")} />
+          <LegendMark kind="square" color={c.accent} label={traduire("ce mois")} />
           {avg !== null ? <LegendMark kind="dash" color={c.textSecondary} label="moyenne" /> : null}
         </View>
       </View>

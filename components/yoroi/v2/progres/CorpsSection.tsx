@@ -242,7 +242,7 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
             flush
             style={{ marginTop: 12 }}
             title={traduire("Ta composition, courbe par courbe")}
-            text={traduire("Masse grasse, muscle, eau : si ta balance les donne, note-les avec ta pesée. Chaque courbe a sa propre échelle pour bien voir ce qui bouge.")}
+            text={traduire("Masse grasse, muscle, eau : si ta balance les donne, note ces mesures avec ta pesée. Chaque courbe a sa propre échelle pour bien voir ce qui bouge.")}
             plusHint={traduire("Touche + pour ta composition")}
           >
             {ROWS.map((r, i) => (

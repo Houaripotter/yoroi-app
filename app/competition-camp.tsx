@@ -211,7 +211,7 @@ export default function CompetitionCampScreen() {
 
         {saved ? <BigButton label={traduire("Arrêter ce camp")} tone="light" onPress={reset} /> : <BigButton label={traduire("Lancer mon camp")} icon="play" onPress={launch} />}
 
-        <Note>{traduire("Ce plan suit une périodisation classique. Adapte-le à tes sensations et aux conseils de ton coach, et regarde ta récupération du jour pour ajuster la charge.")}</Note>
+        <Note>{traduire("Ce plan suit une périodisation classique. Adapte ce plan à tes sensations et aux conseils de ton coach, et regarde ta récupération du jour pour ajuster la charge.")}</Note>
       </DetailScreen>
     </PremiumGate>
   );

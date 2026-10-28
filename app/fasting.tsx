@@ -77,7 +77,7 @@ const DAY_NAMES = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), t
 const HEALTH_WARNING =
   traduire('Consulte un médecin avant de jeûner si tu as un problème de santé, un traitement, un diabète, si tu es enceinte ou si tu allaites. Arrête si tu as des vertiges, des malaises ou des palpitations.');
 const PROLONGED_WARNING =
-  traduire('Un jeûne prolongé peut être dangereux. Parles-en à un médecin avant de commencer et reste bien hydraté. Arrête immédiatement en cas de malaise.');
+  traduire('Un jeûne prolongé peut être dangereux. Demande l’avis d’un médecin avant de commencer et reste bien hydraté. Arrête immédiatement en cas de malaise.');
 
 export default function FastingScreen() {
   const [state, setState] = useState<FastingState | null>(null);
@@ -150,7 +150,7 @@ export default function FastingScreen() {
       await completeFasting();
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
       await load();
-      appAlert(traduire('Jeûne tenu'), traduire('Bravo, tu as tenu ton jeûne jusqu’au bout. Romps-le en douceur et bois de l’eau.'));
+      appAlert(traduire('Jeûne tenu'), traduire('Bravo, tu as tenu ton jeûne jusqu’au bout. Reprends en douceur et bois de l’eau.'));
     } catch (err) {
       logger.error('Fin du jeûne impossible', err);
     } finally {
@@ -431,7 +431,7 @@ export default function FastingScreen() {
                 <View style={{ gap: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Ink size={13} weight="bold" color={P.ink2}>
-                      {traduire("Ce mois-ci")}</Ink>
+                      {traduire("Ce mois")}</Ink>
                     <Ink size={13} weight="black">
                       {traduire("{0} sur {1}", stats.thisMonthCompleted, stats.thisMonthTarget)}
                     </Ink>

@@ -99,7 +99,7 @@ export function AlluresView({ refreshKey, hideEmpty }: { refreshKey: number; hid
         <Sheet2>
           <Ink size={18} weight="black" tight>{traduire("Allure moyenne, 6 mois")}</Ink>
           <Columns items={evo.series.map((s) => ({ label: s.label, value: s.pace > 0 ? evo.slow * 1.15 - s.pace : 0, display: s.pace > 0 ? pace(s.pace) : '' }))} color={P.indigo} />
-          <Ink size={12} weight="medium" color={P.muted}>{traduire("Plus la colonne est haute, plus tu as couru vite ce mois-là.")}</Ink>
+          <Ink size={12} weight="medium" color={P.muted}>{traduire("Plus la colonne est haute, plus tu as couru vite ce mois.")}</Ink>
         </Sheet2>
       ) : null}
     </View>

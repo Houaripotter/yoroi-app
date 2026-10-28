@@ -326,7 +326,7 @@ export default function CarteEditeur() {
       <View style={{ flex: 1, backgroundColor: c.background, paddingTop: insets.top + 12, paddingHorizontal: 22, gap: 14 }}>
         <RoundButton icon="back" label={traduire("Retour")} onPress={() => router.back()} />
         <Ink size={26} weight="black" tight>{traduire("Pas de carte ici")}</Ink>
-        <Ink size={15} color={c.textSecondary}>{aa ? traduire('Il te faut au moins 2 photos de corps pour faire ta carte Avant après. Ajoute-les dans tes photos de forme.') : traduire('Ce moment n’a pas encore de chiffres à montrer. Retrouve tes séances, tes pesées et tes semaines dans Mes cartes.')}</Ink>
+        <Ink size={15} color={c.textSecondary}>{aa ? traduire('Il te faut au moins 2 photos de corps pour faire ta carte Avant après. Tu peux les ajouter dans tes photos de forme.') : traduire('Ce moment n’a pas encore de chiffres à montrer. Retrouve tes séances, tes pesées et tes semaines dans Mes cartes.')}</Ink>
         <Pressable onPress={() => router.replace('/mes-cartes' as never)} accessibilityRole="button" style={{ height: 54, borderRadius: 18, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
           <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Mes cartes")}</Ink>
         </Pressable>

@@ -195,7 +195,7 @@ export default function CompositionDetailScreen() {
             <EmptyInvite
               style={{ margin: GUTTER }}
               title={traduire("Pas encore de composition")}
-              text={traduire("Si ta balance donne la masse grasse, le muscle ou l’eau, note-les avec ta pesée, ou relie {0}. Chaque mesure apparaîtra ici.", SANTE)}
+              text={traduire("Si ta balance donne la masse grasse, le muscle ou l’eau, note ces mesures avec ta pesée, ou relie {0}. Chaque mesure apparaîtra ici.", SANTE)}
               plusHint={ADD_HINT}
               plusArrow={false}
             />
@@ -235,7 +235,7 @@ export default function CompositionDetailScreen() {
         text:
           metric.key === 'bmi' && !ctx.heightCm
             ? traduire('Ton IMC se calcule avec ta taille et ton poids. Renseigne ta taille dans ton profil.')
-            : traduire("Si ta balance donne la masse grasse, le muscle ou l’eau, note-les avec ta pesée, ou relie {0}. Tes courbes apparaîtront ici.", SANTE),
+            : traduire("Si ta balance donne la masse grasse, le muscle ou l’eau, note ces mesures avec ta pesée, ou relie {0}. Tes courbes apparaîtront ici.", SANTE),
         cta: metric.key === 'bmi' && !ctx.heightCm ? traduire('Renseigner ma taille') : undefined,
         onPress: metric.key === 'bmi' && !ctx.heightCm ? () => router.push('/profile' as any) : undefined,
         plusHint: metric.key === 'bmi' && !ctx.heightCm ? undefined : ADD_HINT,

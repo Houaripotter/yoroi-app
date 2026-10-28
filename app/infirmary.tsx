@@ -166,7 +166,7 @@ function Infirmary() {
         ) : null}
 
         <View style={{ paddingHorizontal: GUTTER, marginTop: 24 }}>
-          <SectionHead title={traduire("Où as-tu mal ?")} />
+          <SectionHead title={traduire("Où est ta douleur ?")} />
           <Ink size={14} color={c.textSecondary} style={{ marginTop: 2 }}>{traduire("Touche la zone sur le corps pour la noter ou suivre une blessure.")}</Ink>
         </View>
         <View style={{ marginHorizontal: GUTTER, marginTop: 12, padding: 14, borderRadius: 24, backgroundColor: blancA(0.78), borderWidth: 1, borderColor: c.divider, gap: 14 }}>
@@ -214,7 +214,7 @@ function Infirmary() {
           {injuries.length === 0 ? (
             <View style={{ padding: 16, borderRadius: 20, backgroundColor: blancA(0.78), borderWidth: 1, borderColor: c.divider, gap: 4 }}>
               <Ink size={16} weight="extraBold">{traduire("Aucune blessure")}</Ink>
-              <Ink size={13} color={c.textSecondary}>{traduire("Si une douleur apparaît, note-la tout de suite : tu suivras son évolution jour après jour.")}</Ink>
+              <Ink size={13} color={c.textSecondary}>{traduire("Si une douleur apparaît, tu la notes tout de suite : tu suivras son évolution jour après jour.")}</Ink>
             </View>
           ) : (
             injuries.map((inj) => {

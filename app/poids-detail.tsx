@@ -373,8 +373,8 @@ export default function PoidsDetailScreen() {
       }
       empty={{
         title: traduire('Pas encore de pesée'),
-        text: traduire('Pèse-toi le matin, à jeun. Ta courbe se dessine dès la troisième pesée.'),
-        plusHint: traduire('Pèse-toi avec le bouton + de la barre d’onglets'),
+        text: traduire('Monte sur la balance le matin, à jeun. Ta courbe se dessine dès la troisième pesée.'),
+        plusHint: traduire('Note ta pesée avec le bouton + de la barre d’onglets'),
       }}
     />
   );

@@ -310,7 +310,7 @@ export default function MetriqueScreen() {
           flush
           dim={0.4}
           title={appData ? traduire('Rien sur cette période') : traduire('Aucune mesure sur cette période')}
-          text={appData ? traduire('Pèse-toi le matin, à jeun : chaque pesée s’ajoute ici.') : traduire('Voici ce que tu verras quand ta montre ou ta balance enverra cette mesure.')}
+          text={appData ? traduire('Monte sur la balance le matin, à jeun : chaque pesée s’ajoute ici.') : traduire('Voici ce que tu verras quand ta montre ou ta balance enverra cette mesure.')}
           cta={appData ? traduire('Me peser') : traduire('Relier ma montre')}
           onPress={() => router.push((appData ? '/pesee' : '/sante/montre') as any)}
         >

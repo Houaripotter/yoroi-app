@@ -128,7 +128,7 @@ export function Abonnement() {
       <Card>
         <KV first label={appUserId ?? traduire('Pas encore connu')} value="" right={appUserId ? <SmallAction label={traduire("Copier")} onPress={() => void copyId()} /> : undefined} />
       </Card>
-      <Note>{traduire("Colle-le dans RevenueCat pour offrir Premium à ce téléphone. Ce n’est pas un secret, juste un numéro de client.")}</Note>
+      <Note>{traduire("Colle ce numéro dans RevenueCat pour offrir Premium à ce téléphone. Ce n’est pas un secret, juste un numéro de client.")}</Note>
 
       <SubTitle>{`Offering current${info?.offering ? ` : ${info.offering}` : ''}`}</SubTitle>
       <Card>

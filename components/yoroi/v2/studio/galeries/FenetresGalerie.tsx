@@ -42,7 +42,7 @@ const LONG =
   traduire('Tes séances, tes pesées et ton carnet restent sur ce téléphone. Si tu changes de téléphone sans sauvegarde, tout repart de zéro. ') +
   traduire('Une sauvegarde prend quelques secondes : elle crée un fichier que tu gardes où tu veux, dans tes fichiers, sur ton ordinateur ou dans ton nuage. ') +
   traduire('Le jour où tu en as besoin, tu ouvres ce fichier depuis YOROI et tout revient comme avant, tes records, tes techniques, tes photos de progression. ') +
-  traduire('Fais-en une maintenant, puis une fois par mois, ou avant chaque mise à jour importante de ton téléphone.');
+  traduire('Fais une sauvegarde maintenant, puis une fois par mois, ou avant chaque mise à jour importante de ton téléphone.');
 
 const RESULTATS: { label: string; sub: string; r: ResultInfo }[] = [
   { label: traduire('Nouveau record'), sub: traduire('Le tampon rouge se pose'), r: { name: traduire('Développé couché'), performance: '45 kg x 5 reps', isPR: true, gain: '+2,5 kg', recordText: '42,5 kg x 5 reps', illus: 'musculation' } },

@@ -194,7 +194,7 @@ export default function CompetitionsScreen() {
             ) : (
               <>
                 <Ink size={22} weight="black" tight>{traduire("Prépare ta prochaine échéance")}</Ink>
-                <Ink size={13} color={c.textSecondary}>{traduire("Ajoute-la en quelques secondes : compte à rebours, rappels et suivi de ta catégorie de poids.")}</Ink>
+                <Ink size={13} color={c.textSecondary}>{traduire("Tu l’ajoutes en quelques secondes : compte à rebours, rappels et suivi de ta catégorie de poids.")}</Ink>
               </>
             )}
           </Pressable>
@@ -247,7 +247,7 @@ export default function CompetitionsScreen() {
           ) : null}
 
           <SectionTitle title={traduire("Trouver une compétition")} />
-          <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4, marginTop: -4 }}>{traduire("Repère ta compétition sur le calendrier officiel, puis ajoute-la ici.")}</Ink>
+          <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4, marginTop: -4 }}>{traduire("Repère ta compétition sur le calendrier officiel, puis tu l’ajoutes ici.")}</Ink>
           <View style={{ borderRadius: 22, backgroundColor: blancA(0.86), borderWidth: 1, borderColor: c.divider, overflow: 'hidden' }}>
             {calendarsFor(sport as Sport).map((cal, i) => (
               <Pressable

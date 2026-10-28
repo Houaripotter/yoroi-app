@@ -287,7 +287,7 @@ export default function Pesee() {
       : weightOrigin === 'row'
         ? editId
           ? traduire('tu corriges cette pesée')
-          : traduire('déjà enregistrée ce jour-là, tu la corriges')
+          : traduire('déjà enregistrée ce jour, tu la corriges')
         : null;
 
   const bmi = useMemo<{ value: number; from: 'health' | 'calc' } | undefined>(() => {

@@ -14,6 +14,7 @@ import type { GestureResponderEvent, ImageSourcePropType } from 'react-native';
 import Svg, { Ellipse, Path } from 'react-native-svg';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Ink } from '@/components/yoroi/v2/Ink';
+import { useYoroiTheme } from '@/components/yoroi';
 import { usePastel } from '@/components/yoroi/v2/programmes/Habillage';
 import { CONTOUR, DETAILS, HAUTEUR_CORPS, LARGEUR_CORPS, MUSCLES, TETE, TOUCHER, TOUCHER_IMAGE, zoneAuPoint } from '@/lib/v2/programmes/carteMuscles';
 import type { VueCorps } from '@/lib/v2/programmes/carteMuscles';
@@ -32,6 +33,13 @@ const CORPS = '#E6ECF8';
 const LISERE = '#C9D3EA';
 const REPOS = '#D6DEF2';
 export const ACCENT_MUSCLES = '#6684F2';
+/**
+ * 28 octobre 2026, mode sombre : l'illustration (tres claire) eblouissait sur le fond nuit et le halo bleu se perdait
+ * dans les muscles bleutes. En sombre : un fond de carte un cran plus clair derriere le corps, l'illustration un peu
+ * adoucie, et un halo plus franc (bleu plus clair, contour blanc, lueur autour).
+ */
+const FOND_SOMBRE = '#222838';
+const ACCENT_SOMBRE = '#9DB1FF';
 const RATIO = HAUTEUR_CORPS / LARGEUR_CORPS;
 
 export function CarteMuscles({ vue, largeur, choisies = [], onToggle, accent = ACCENT_MUSCLES, muscles = true, point, libelle }: {
@@ -49,6 +57,8 @@ export function CarteMuscles({ vue, largeur, choisies = [], onToggle, accent = A
   libelle?: boolean;
 }) {
   const pa = usePastel();
+  const { isDark } = useYoroiTheme();
+  const teinte = isDark && accent === ACCENT_MUSCLES ? ACCENT_SOMBRE : accent;
   const hauteur = Math.round(largeur * RATIO);
   // la petite silhouette des douleurs (muscles false, un point dans le repere 200 x 440) garde le dessin
   const image = muscles ? IMAGES_MUSCLES[vue] : null;
@@ -64,7 +74,8 @@ export function CarteMuscles({ vue, largeur, choisies = [], onToggle, accent = A
   const plein = { position: 'absolute' as const, left: 0, top: 0, width: largeur, height: hauteur };
   const dessin = image ? (
     <>
-      <Image source={image} style={plein} resizeMode="contain" accessibilityIgnoresInvertColors />
+      {isDark ? <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: largeur, height: hauteur, borderRadius: Math.min(24, largeur * 0.16), backgroundColor: FOND_SOMBRE }} /> : null}
+      <Image source={image} style={[plein, isDark ? { opacity: 0.86 } : null]} resizeMode="contain" accessibilityIgnoresInvertColors />
       {choisies.map((z) => {
         const calque = CALQUES_MUSCLES[vue][z];
         if (calque) return <Image key={z} source={calque} style={plein} resizeMode="contain" />;
@@ -73,7 +84,10 @@ export function CarteMuscles({ vue, largeur, choisies = [], onToggle, accent = A
       {/* sans calque : un halo doux sur les zones choisies */}
       <Svg width={largeur} height={hauteur} viewBox="0 0 100 100" preserveAspectRatio="none" style={plein} pointerEvents="none">
         {table.filter((t) => choisies.includes(t.zone) && !CALQUES_MUSCLES[vue][t.zone]).map((t, k) => (
-          <Ellipse key={k} cx={t.x} cy={t.y} rx={t.rx} ry={t.ry} fill={accent} fillOpacity={0.28} stroke={accent} strokeOpacity={0.5} strokeWidth={0.6} />
+          <React.Fragment key={k}>
+            {isDark ? <Ellipse cx={t.x} cy={t.y} rx={t.rx + 2.2} ry={t.ry + 1.4} fill={teinte} fillOpacity={0.16} /> : null}
+            <Ellipse cx={t.x} cy={t.y} rx={t.rx} ry={t.ry} fill={teinte} fillOpacity={isDark ? 0.5 : 0.28} stroke={isDark ? '#FFFFFF' : accent} strokeOpacity={isDark ? 0.85 : 0.5} strokeWidth={isDark ? 0.7 : 0.6} />
+          </React.Fragment>
         ))}
       </Svg>
     </>

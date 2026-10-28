@@ -223,7 +223,7 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
           {/* Message humble */}
           <Text style={[styles.humbleMessage, { color: colors.textSecondary }]}>
             {t('rating.humbleMessage') ||
-              traduire("Excuse-moi de t'interrompre... Je sais que ton temps est precieux.\n\nMais si Yoroi t'aide dans ta progression, une petite note sur le Store m'aiderait enormement a faire grandir notre famille de warriors et a rendre l'app visible pour d'autres sportifs comme toi.\n\nSi je merite les 5 etoiles, je t'en serais infiniment reconnaissant.")}
+              traduire("Pardon de t'interrompre... Je sais que ton temps est precieux.\n\nMais si Yoroi t'aide dans ta progression, une petite note sur le Store m'aiderait enormement a faire grandir notre famille de warriors et a rendre l'app visible pour d'autres sportifs comme toi.\n\nSi je merite les 5 etoiles, je t'en serais infiniment reconnaissant.")}
           </Text>
 
           {/* Statistique encourageante */}

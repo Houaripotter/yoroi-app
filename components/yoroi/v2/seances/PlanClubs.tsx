@@ -127,7 +127,7 @@ export function PlanClubs({ trainings, onChanged }: { trainings: Training[]; onC
         <Glass onPress={() => router.push('/training-goals?tab=training' as any)} label={traduire("Fixer un objectif")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <Icon name="target" size={24} color={c.accent} />
           <View style={{ flex: 1 }}>
-            <Ink size={15} weight="extraBold">{traduire("Fixe-toi un objectif par sport")}</Ink>
+            <Ink size={15} weight="extraBold">{traduire("Un objectif par sport")}</Ink>
             <Ink size={13} color={c.textSecondary}>{traduire("Par exemple trois séances de JJB par semaine.")}</Ink>
           </View>
         </Glass>

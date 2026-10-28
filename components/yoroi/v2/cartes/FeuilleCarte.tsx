@@ -108,7 +108,7 @@ function Contenu({ data, onClose, choix, nombre }: { data: CarteData; onClose: (
         <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: c.fillSubtle }} />
         <View style={{ gap: 2 }}>
           <Ink size={22} weight="black" tight accessibilityRole="header">{nombre > 1 ? traduire("{0} cartes pour toi", nombre) : traduire('Ta carte est prête')}</Ink>
-          <Ink size={14} color={c.textSecondary}>{nombre > 1 ? traduire('Choisis celle que tu veux poster.') : traduire('Enregistre-la dans ta pellicule ou poste-la.')}</Ink>
+          <Ink size={14} color={c.textSecondary}>{nombre > 1 ? traduire('Choisis celle que tu veux poster.') : traduire('Ta carte va dans ta pellicule, ou tu la publies.')}</Ink>
         </View>
         {choix}
 

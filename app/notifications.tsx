@@ -331,7 +331,7 @@ export default function TesNotifications() {
             <Icon name="lock" size={22} color={c.goldDeep} />
             <View style={{ flex: 1, gap: 2 }}>
               <Ink size={16} weight="extraBold">{traduire("Les notifications sont bloquées")}</Ink>
-              <Ink size={13} color={c.textSecondary}>{traduire("Tant qu’elles le sont, aucun rappel ne peut arriver{0}: autorise-les une fois.", NB)}</Ink>
+              <Ink size={13} color={c.textSecondary}>{traduire("Tant qu’elles le sont, aucun rappel ne peut arriver{0}: il suffit de les autoriser une fois.", NB)}</Ink>
             </View>
           </View>
           <Pressable
@@ -415,7 +415,7 @@ export default function TesNotifications() {
         onToggle={toggleHab}
         preview={{ title: 'YOROI', body: traduire('Ta pesée du jour t’attend, 10 secondes suffisent.'), when: habOn ? sayTime(heureRappel(hab)) : '' }}
       >
-        <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Quand te pèses-tu, d’habitude ?")}</Ink>
+        <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Tu te pèses quand, d’habitude ?")}</Ink>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {(['reveil', 'douche', 'midi', 'soir', 'heure'] as const).map((m) => {
             const sel = hab.moment === m;
@@ -428,7 +428,7 @@ export default function TesNotifications() {
         </View>
         {hab.moment === 'heure' ? <TimeField label={traduire("Ton heure de pesée")} value={hab.heure ?? '07:00'} onChange={(v) => void pickHabHeure(v)} /> : null}
         <DaysPicker value={habJours} onChange={(d) => void pickHabJours(d)} />
-        <Ink size={12} color={c.textMuted}>{habJours.length ? traduire("Un seul rappel, environ 2{0}h après, seulement ces jours-là et seulement si ta pesée manque.", NB) : traduire('Sans jours choisis : seulement les jours où tu t’es pesé la semaine d’avant.')}</Ink>
+        <Ink size={12} color={c.textMuted}>{habJours.length ? traduire("Un seul rappel, environ 2{0}h après, seulement ces jours et seulement si ta pesée manque.", NB) : traduire('Sans jours choisis : seulement les jours où tu t’es pesé la semaine d’avant.')}</Ink>
       </NotifCard>
 
       <NotifCard
@@ -584,7 +584,7 @@ export default function TesNotifications() {
       >
         <TimeField label={traduire("Heure de l’analyse")} value={smart.checkTime} onChange={(v) => patch('smartReminders', { checkTime: v })} />
         <View>
-          <MiniToggle label={traduire("Jour habituel manqué")} sub={traduire("Tu t’entraînes d’habitude ce jour-là")} value={smart.missedTrainingAlert} onChange={(v) => patch('smartReminders', { missedTrainingAlert: v })} />
+          <MiniToggle label={traduire("Jour habituel manqué")} sub={traduire("Tu t’entraînes d’habitude ce jour")} value={smart.missedTrainingAlert} onChange={(v) => patch('smartReminders', { missedTrainingAlert: v })} />
           <MiniToggle label={traduire("Conseil de repos")} sub={traduire("Après plusieurs jours d’affilée")} value={smart.restDaySuggestion} onChange={(v) => patch('smartReminders', { restDaySuggestion: v })} />
           <MiniToggle label={traduire("Rythme en baisse")} sub={traduire("Moins de séances que d’habitude")} value={smart.frequencyAlert} onChange={(v) => patch('smartReminders', { frequencyAlert: v })} />
         </View>

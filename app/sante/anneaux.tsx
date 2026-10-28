@@ -184,7 +184,7 @@ export default function TesAnneaux() {
 
   const android = Platform.OS === 'android';
   const sourceTexte = h.direct
-    ? traduire("Pas et calories : {0}. Exercice : {1}{2}.", android ? 'Health Connect' : traduire('Apple Santé'), android ? traduire('tes séances Health Connect') : traduire('Apple Santé'), seancesDuJour ? (seancesDuJour > 1 ? traduire(" et tes {0} séances notées dans YOROI ce jour-là", seancesDuJour) : traduire(" et ta séance notée dans YOROI ce jour-là")) : traduire(' et tes séances YOROI'))
+    ? traduire("Pas et calories : {0}. Exercice : {1}{2}.", android ? 'Health Connect' : traduire('Apple Santé'), android ? traduire('tes séances Health Connect') : traduire('Apple Santé'), seancesDuJour ? (seancesDuJour > 1 ? traduire(" et tes {0} séances notées dans YOROI ce jour", seancesDuJour) : traduire(" et ta séance notée dans YOROI ce jour")) : traduire(' et tes séances YOROI'))
     : traduire("Exercice : tes séances notées dans YOROI. Relie {0} pour tes pas et tes calories.", android ? 'Health Connect' : traduire('l’app Santé de ton téléphone'));
 
   return (
@@ -222,7 +222,7 @@ export default function TesAnneaux() {
           </View>
           {!aUneDonnee(a) && !h.chargement ? (
             <Ink size={13} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>
-              {traduire("Pas de donnée ce jour-là")}</Ink>
+              {traduire("Pas de donnée ce jour")}</Ink>
           ) : null}
           <View>
             {CLES_ANNEAUX.map((cle) => (

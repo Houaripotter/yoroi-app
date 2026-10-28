@@ -12,7 +12,7 @@
  * effort, annee), Sante, Photos. L'ancien Resume (doublon des courbes de Corps) laisse place a la vue d'ensemble.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -37,7 +37,8 @@ import type { Illus } from '@/components/yoroi/v2/seances/Decor';
 import { useBiomarkers } from '@/lib/v2/progres/biomarkers';
 import { useMeasuresData } from '@/lib/v2/progres/useProgresData';
 import { DetailCue, GhostButton, GLASS, LegendMark, tapLight } from '@/components/yoroi/v2/progres/ui';
-import { blancA } from '@/components/yoroi/livePalette';
+import { carteBlanche, ton } from '@/components/yoroi/v2/seance/pastel';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import { PeriodSwitch, periodPhrase, SHORT_PERIODS } from '@/components/yoroi/v2/charts/PeriodSwitch';
 import { usePremium } from '@/context/PremiumContext';
 import { useWeightData } from '@/lib/v2/useWeightData';
@@ -67,14 +68,6 @@ const INTRO: Record<Section, { title: string; sub: string; illus: Illus }> = {
   Santé: { title: traduire('Ta santé'), sub: traduire('Ta montre, ton sommeil, ton cœur, ta nutrition et tes soins.'), illus: { ornement: 'koi' } },
   Photos: { title: traduire('Tes photos'), sub: traduire('Ta transformation en images. Elles restent sur ton téléphone.'), illus: { ornement: 'fuji' } },
 };
-
-function BrushUnderline({ color }: { color: string }) {
-  return (
-    <Svg width={40} height={6} viewBox="0 0 40 6">
-      <Path d="M2 4 C12 1 26 5 38 2" stroke={color} strokeWidth={3.5} fill="none" strokeLinecap="round" />
-    </Svg>
-  );
-}
 
 export default function Progres() {
   const { theme } = useYoroiTheme();
@@ -122,6 +115,7 @@ export default function Progres() {
     scrollRef.current?.scrollTo({ y: tabsY.current, animated: true });
   };
   const intro = INTRO[section];
+  const illus = useIllustrations();
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
@@ -158,20 +152,27 @@ export default function Progres() {
         {/* 25 octobre 2026 : ta semaine et ton mois, tout reuni (app/bilan-periode.tsx) */}
         {hasData ? (
           <TourAnchor id="progres.bilans" rayon={20} style={{ flexDirection: 'row', gap: 10, marginHorizontal: 16, marginTop: 14 }}>
-            {(['semaine', 'mois'] as const).map((t) => (
-              <Pressable
-                key={t}
-                onPress={() => {
-                  selectionAsync().catch(() => {});
-                  router.push({ pathname: '/bilan-periode', params: { type: t } } as any);
-                }}
-                accessibilityRole="button"
-                style={({ pressed }) => ({ flex: 1, minHeight: 64, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
-              >
-                <Ink size={12} weight="bold" color={c.textSecondary}>{t === 'semaine' ? traduire('Bilan') : traduire('Rendez-vous')}</Ink>
-                <Ink size={16} weight="black">{t === 'semaine' ? traduire('Ta semaine') : traduire('Ton mois')}</Ink>
-              </Pressable>
-            ))}
+            {(['semaine', 'mois'] as const).map((t) => {
+              // 28 octobre 2026 (Pastel) : deux tuiles pastel, ta semaine en bleu, ton mois en lilas, un sticker a droite
+              const tt = ton(t === 'semaine' ? 'ciel' : 'lilas');
+              return (
+                <Pressable
+                  key={t}
+                  onPress={() => {
+                    selectionAsync().catch(() => {});
+                    router.push({ pathname: '/bilan-periode', params: { type: t } } as any);
+                  }}
+                  accessibilityRole="button"
+                  style={({ pressed }) => ({ flex: 1, minHeight: 68, borderRadius: 20, paddingLeft: 14, paddingRight: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: tt.fond, opacity: pressed ? 0.85 : 1 })}
+                >
+                  <View style={{ flex: 1, gap: 1, minWidth: 0 }}>
+                    <Ink size={12.5} weight="extraBold" color={tt.encre} numberOfLines={1}>{t === 'semaine' ? traduire('Bilan') : traduire('Rendez-vous')}</Ink>
+                    <Ink size={16} weight="black" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{t === 'semaine' ? traduire('Ta semaine') : traduire('Ton mois')}</Ink>
+                  </View>
+                  <Image source={illus.img(t === 'semaine' ? 'calendrier' : 'bilan')} style={{ width: 38, height: 38 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+                </Pressable>
+              );
+            })}
           </TourAnchor>
         ) : null}
 
@@ -189,7 +190,7 @@ export default function Progres() {
           onLayout={(e) => {
             tabsY.current = e.nativeEvent.layout.y;
           }}
-          style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 12, marginTop: hasData ? 20 : 4, paddingTop: 4 }}
+          style={{ ...carteBlanche(c.surface, c.border), flexDirection: 'row', gap: 4, padding: 4, marginHorizontal: 16, marginTop: hasData ? 22 : 4, borderRadius: 16 }}
           accessibilityRole="tablist"
         >
           {SECTIONS.map((s) => (
@@ -198,18 +199,14 @@ export default function Progres() {
               onPress={() => choose(s)}
               accessibilityRole="tab"
               accessibilityState={{ selected: s === section }}
-              hitSlop={8}
-              style={{ alignItems: 'center', gap: 4, minHeight: 44, justifyContent: 'center', paddingHorizontal: 2 }}
+              style={{ flex: 1, minHeight: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 2, backgroundColor: s === section ? c.primary : 'transparent' }}
             >
-              <Ink size={15} weight="extraBold" color={s === section ? c.ink : c.textSecondary} numberOfLines={1}>{s}</Ink>
-              {s === section ? <BrushUnderline color={c.accent} /> : <View style={{ height: 6 }} />}
+              <Ink size={14} weight={s === section ? 'black' : 'extraBold'} color={s === section ? c.onPrimary : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{s}</Ink>
             </Pressable>
           ))}
         </TourAnchor>
-        <View style={{ height: 1, backgroundColor: c.divider, marginHorizontal: 16 }} />
-
         {/* Titre, phrase et illustration de l'onglet */}
-        <EnteteSection title={traduire(intro.title)} sub={traduire(intro.sub)} illus={intro.illus} style={{ marginHorizontal: 12, marginTop: 16 }} />
+        <EnteteSection title={traduire(intro.title)} sub={traduire(intro.sub)} illus={intro.illus} style={{ marginHorizontal: 12, marginTop: 18 }} />
 
         {section === 'Corps' ? (
           <>
@@ -248,7 +245,7 @@ function WeightExample() {
       bleed
       dim={0.4}
       title={traduire("Ta courbe se dessine dès la troisième pesée")}
-      text={traduire("Pèse-toi le matin, à jeun, quelques fois par semaine. YOROI lisse les variations et te montre la vraie tendance.")}
+      text={traduire("Monte sur la balance le matin, à jeun, quelques fois par semaine. YOROI lisse les variations et te montre la vraie tendance.")}
       plusHint={traduire("Touche + pour ta première pesée")}
       style={{ marginTop: 18 }}
     >
@@ -328,7 +325,7 @@ function WeightSection() {
     <View>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, minHeight: 44 }}>
         <Ink size={14} weight="bold" color={c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>
-          {head ? traduire('Ce jour-là') : traduire('Ta courbe de poids')}
+          {head ? traduire('Ce jour') : traduire('Ta courbe de poids')}
         </Ink>
         <DetailCue onPress={openDetail} />
       </View>
@@ -337,7 +334,7 @@ function WeightSection() {
           <>
             <Ink size={15} weight="bold" color={c.textSecondary}>{formatLongDate(head.date)}</Ink>
             <Ink size={56} weight="black" tight>{formatKg(head.value)} <Ink size={22} weight="black" color={c.textSecondary}>{traduire('kilos')}</Ink></Ink>
-            <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("tendance {0} kilos ce jour-là", formatKg(head.trend))}</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("tendance {0} kilos ce jour", formatKg(head.trend))}</Ink>
           </>
         ) : (
           emphasize ? (
@@ -375,7 +372,7 @@ function WeightSection() {
 
       <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: 16, marginTop: 8 }}>{traduire("Touche la courbe pour son détail, glisse ton doigt pour revoir chaque pesée.")}</Ink>
 
-      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginTop: 22, paddingVertical: 14, borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: c.border }}>
+      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginTop: 20, paddingVertical: 14, paddingHorizontal: 14, ...carteBlanche(c.surface, c.border) }}>
         <Stat value={formatKg(last.value)} label={traduire("dernière pesée")} />
         <Stat value={formatKg(last.trend)} label={traduire("tendance lissée")} border />
         <Stat value={rateText(rate)} label={rate === null ? traduire('ton rythme, dès 4 pesées') : rate <= 0 ? traduire('en moins par semaine') : traduire('en plus par semaine')} border />
@@ -386,7 +383,7 @@ function WeightSection() {
         onPress={() => router.push('/profile' as any)}
         accessibilityRole="button"
         accessibilityLabel={goal ? traduire("Objectif {0} kilos, modifier", formatKg(goal)) : traduire('Fixer ton objectif de poids')}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginTop: 14, minHeight: 52, paddingHorizontal: 14, borderRadius: 16, backgroundColor: pressed ? c.fillSoft : blancA(0.78), borderWidth: 1, borderColor: c.divider })}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginTop: 12, minHeight: 56, paddingHorizontal: 14, ...carteBlanche(c.surface, c.border), backgroundColor: pressed ? c.fillSoft : c.surface })}
       >
         <View style={{ flex: 1, gap: 1 }}>
           <Ink size={13} weight="bold" color={c.textSecondary}>{goal ? traduire("Objectif {0} kg", formatKg(goal)) : traduire('Ton objectif')}</Ink>
@@ -398,10 +395,9 @@ function WeightSection() {
       </Pressable>
 
       {rate !== null && Math.abs(rate) > Math.max(1, last.trend * 0.01) ? (
-        <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 16, marginTop: 14, padding: 14, borderRadius: 18, backgroundColor: 'rgba(197,157,69,0.14)', borderWidth: 1, borderColor: 'rgba(197,157,69,0.35)' }}>
-          <View style={{ width: 4, borderRadius: 2, backgroundColor: c.gold }} />
-          <Ink size={13} weight="bold" color={c.ink} style={{ flex: 1 }}>
-            {traduire(`Ton poids bouge de plus d’un kilo par semaine. C’est rapide : vise plutôt un rythme lent et régulier, et parles-en à un professionnel de santé si ça dure.`)}
+        <View style={{ marginHorizontal: 16, marginTop: 12, padding: 14, borderRadius: 18, backgroundColor: ton('creme').fond }}>
+          <Ink size={13} weight="bold" color={ton('creme').encre}>
+            {traduire(`Ton poids bouge de plus d’un kilo par semaine. C’est rapide : vise plutôt un rythme lent et régulier, et demande conseil à un professionnel de santé si ça dure.`)}
           </Ink>
         </View>
       ) : null}
@@ -442,7 +438,7 @@ function PredictionCard({ series, goal }: { series: DayWeight[]; goal: number | 
       }}
       accessibilityRole="button"
       accessibilityLabel={isPremium ? traduire("Prévisions, {0}, {1}", titre.toLowerCase(), line) : traduire("Prévisions, {0}, {1}, page complète avec Premium", titre.toLowerCase(), line)}
-      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginTop: 10, minHeight: 52, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, backgroundColor: pressed ? c.fillSoft : blancA(0.78), borderWidth: 1, borderColor: c.divider })}
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginTop: 10, minHeight: 56, paddingHorizontal: 14, paddingVertical: 10, ...carteBlanche(c.surface, c.border), backgroundColor: pressed ? c.fillSoft : c.surface })}
     >
       <View style={{ flex: 1, gap: 1, minWidth: 0 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>

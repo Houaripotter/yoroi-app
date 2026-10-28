@@ -24,7 +24,7 @@ const LEVELS = [
   { name: traduire('Récupération'), range: traduire('0 à 500 points'), max: 500, n: 1 as NiveauIntensite, get color() { return intensite(1).text; }, description: traduire("Charge d'entraînement faible."), advice: traduire("Augmente progressivement l'intensité de tes séances.") },
   { name: traduire('Équilibré'), range: traduire('500 à 1 000 points'), max: 1000, n: 2 as NiveauIntensite, get color() { return intensite(2).text; }, description: traduire('Ton entraînement est bien équilibré.'), advice: traduire('Garde ce rythme pour progresser durablement.') },
   { name: traduire('Optimal'), range: traduire('1 000 à 1 500 points'), max: 1500, n: 3 as NiveauIntensite, get color() { return intensite(3).text; }, description: traduire("Charge d'entraînement optimale."), advice: traduire('Tu es dans la zone de progression idéale.') },
-  { name: traduire('Intense'), range: traduire('1 500 à 2 000 points'), max: 2000, n: 4 as NiveauIntensite, get color() { return intensite(4).text; }, description: traduire("Charge d'entraînement élevée."), advice: traduire('Assure-toi de bien récupérer entre les séances.') },
+  { name: traduire('Intense'), range: traduire('1 500 à 2 000 points'), max: 2000, n: 4 as NiveauIntensite, get color() { return intensite(4).text; }, description: traduire("Charge d'entraînement élevée."), advice: traduire('Pense à bien récupérer entre les séances.') },
   { name: traduire('Très intense'), range: traduire('plus de 2 000 points'), max: Infinity, n: 5 as NiveauIntensite, get color() { return intensite(5).text; }, description: traduire("Charge d'entraînement très élevée."), advice: traduire('Risque de surentraînement. Prévois des jours de repos.') },
 ];
 
@@ -61,7 +61,7 @@ function verdictOf(load: number, habit: number): Verdict {
     // Sans historique, on ne parle jamais de surentrainement.
     const i = Math.min(idx, 3);
     const l = LEVELS[i];
-    return { idx: i, n: l.n, name: l.name, color: l.color, description: l.description, advice: i === 3 ? traduire('Encore peu d’historique : assure-toi de bien récupérer entre les séances.') : l.advice };
+    return { idx: i, n: l.n, name: l.name, color: l.color, description: l.description, advice: i === 3 ? traduire('Encore peu d’historique : pense à bien récupérer entre les séances.') : l.advice };
   }
   const ratio = load / habit;
   const pct = Math.round((ratio - 1) * 100);
@@ -76,7 +76,7 @@ function verdictOf(load: number, habit: number): Verdict {
     return { idx: Math.min(idx, 3), n: 3, name: 'Au-dessus de ton habitude', get color() { return intensite(3).text; }, description: traduire("Un peu plus chargé que d’habitude : {0} % de plus.", pct), advice: traduire('Soigne ton sommeil et ta récupération cette semaine.') };
   }
   if (ratio >= 0.8) {
-    return { idx: Math.min(idx, 3), n: 2, name: 'Dans ton habitude', get color() { return intensite(2).text; }, description: traduire('Ta charge ressemble à tes quatre semaines précédentes.'), advice: traduire('Ton corps connaît ce rythme. Garde-le pour progresser durablement.') };
+    return { idx: Math.min(idx, 3), n: 2, name: 'Dans ton habitude', get color() { return intensite(2).text; }, description: traduire('Ta charge ressemble à tes quatre semaines précédentes.'), advice: traduire('Ton corps connaît ce rythme. Garde ce rythme pour progresser durablement.') };
   }
   return { idx: Math.min(idx, 2), n: 1, name: 'Plus légère', get color() { return intensite(1).text; }, description: traduire('Semaine plus calme que tes quatre semaines précédentes.'), advice: traduire('Parfait pour récupérer. Reprends le rythme quand tu te sens prêt.') };
 }

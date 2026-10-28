@@ -8,6 +8,7 @@ import { Image, Pressable, ScrollView, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
+import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 import { ChevronIcon, tap } from '@/components/yoroi/v2/dojo/parts';
 import type { BadgeVitrine, Vignette } from '@/lib/v2/dojo/dojoAffichage';
 import { traduire } from '@/lib/i18n/tr';
@@ -56,13 +57,14 @@ function Carte({ children, label, onPress }: { children: React.ReactNode; label:
 export function VitrineBoutique({ vignettes, total, onOuvrir }: { vignettes: Vignette[]; total: string; onOuvrir: () => void }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const cadre = { backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 20, padding: 6, paddingBottom: 10, gap: 8 } as const;
+  const cadre = { ...carteBlanche(c.surface, c.border), borderRadius: 20, padding: 6, paddingBottom: 10, gap: 8 } as const;
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={{ marginHorizontal: -22 }}
-      contentContainerStyle={{ paddingHorizontal: 22, gap: ECART }}
+      // 28 octobre 2026 : la marge de la page (16), et de la place pour l'ombre des cartes
+      style={{ marginHorizontal: -16, marginTop: -4, marginBottom: -12 }}
+      contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 12, gap: ECART }}
       snapToInterval={LARGEUR + ECART}
       decelerationRate="fast"
     >
@@ -85,7 +87,7 @@ export function VitrineBoutique({ vignettes, total, onOuvrir }: { vignettes: Vig
       ))}
       {/* Vague 45 : la derniere vignette ouvre toute la boutique */}
       <Carte label={traduire("Tout voir, {0}", total)} onPress={onOuvrir}>
-        <View style={[cadre, { flex: 1, minHeight: 180, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accentTint, borderColor: c.accentTint }]}>
+        <View style={[cadre, { flex: 1, minHeight: 180, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accentTint, borderColor: c.accentTint, shadowOpacity: 0, elevation: 0 }]}>
           <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
             <ChevronIcon size={18} color={c.onPrimary} />
           </View>

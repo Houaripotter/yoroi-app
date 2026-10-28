@@ -23,7 +23,7 @@ import { traduire } from '@/lib/i18n/tr';
 type Tab = 'liste' | 'objectives' | 'training';
 
 const SUBTITLES: Record<Tab, string> = {
-  liste: traduire('Fixe une cible claire et coche-la quand c’est fait'),
+  liste: traduire('Fixe une cible claire, tu la coches quand c’est fait'),
   objectives: traduire('Le temps qui te sépare de tes buts'),
   training: traduire('Ton rythme, sport par sport'),
 };
@@ -67,7 +67,7 @@ export default function TrainingGoalsScreen() {
         isPremium ? <ObjectivesTab /> : <PremiumNote title={traduire("Des objectifs datés")} text={traduire("Compétition, poids, examen : un compte à rebours jusqu’à chaque but. Disponible avec Premium.")} />
       ) : null}
       {tab === 'training' ? (
-        isPremium ? <TrainingGoalsTab gender={gender} /> : <PremiumNote title={traduire("Un rythme par sport")} text={traduire("Fixe tes séances par semaine pour chaque discipline et suis-les semaine après semaine. Disponible avec Premium.")} />
+        isPremium ? <TrainingGoalsTab gender={gender} /> : <PremiumNote title={traduire("Un rythme par sport")} text={traduire("Fixe tes séances par semaine pour chaque discipline et suis tes progrès semaine après semaine. Disponible avec Premium.")} />
       ) : null}
     </DetailScreen>
   );

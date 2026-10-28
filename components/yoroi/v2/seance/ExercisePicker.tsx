@@ -219,7 +219,7 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
               <View style={{ paddingVertical: 28, alignItems: 'center', gap: 14 }}>
                 <View style={{ alignItems: 'center', gap: 4 }}>
                   <Ink size={16} weight="extraBold" style={{ textAlign: 'center' }}>{traduire("Aucun exercice pour « {0} »", query.trim())}</Ink>
-                  <Ink size={13} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire("Essaie un autre mot, en français ou en anglais, ou crée-le tel quel.")}</Ink>
+                  <Ink size={13} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire("Essaie un autre mot, en français ou en anglais, ou crée l’exercice tel quel.")}</Ink>
                 </View>
                 <Pressable onPress={ajouterPerso} accessibilityRole="button" accessibilityLabel={traduire("Créer l’exercice {0}", query.trim())} style={({ pressed }) => ({ alignSelf: 'stretch', minHeight: 56, borderRadius: 18, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: pressed ? c.primaryPressed : c.primary })}>
                   <Icon name="plus" size={20} color={c.onPrimary} strokeWidth={2.8} />

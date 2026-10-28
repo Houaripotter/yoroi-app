@@ -201,7 +201,7 @@ export default function SportScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Ink size={16} weight="black" tight>
-                  {convertedAt ? traduire('Copiée dans ton planning') : traduire('Passe-la dans ton planning')}
+                  {convertedAt ? traduire('Copiée dans ton planning') : traduire('À mettre dans ton planning')}
                 </Ink>
                 <Ink size={13} weight="medium" color={P.ink2}>
                   {convertedAt ? traduire("Le {0}. Tes créneaux vivent maintenant dans le planning.", mediumDate(new Date(convertedAt))) : traduire('Le planning remplace cette page : rappels, séances prévues, semaine tenue.')}

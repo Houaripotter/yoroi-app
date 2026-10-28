@@ -138,7 +138,7 @@ export default function ExportDataScreen() {
   return (
     <>
       <View style={{ flex: 1 }}>
-      <EspaceScreen title={traduire("Exporter")} subtitle={traduire("Tes données t’appartiennent. Emporte-les où tu veux.")}>
+      <EspaceScreen title={traduire("Exporter")} subtitle={traduire("Tes données t’appartiennent. Tu les emportes où tu veux.")}>
         <SectionTitle title={traduire("Tes séances")} />
         {FORMATS.map((f) => {
           const isDone = done === f.id;

@@ -1188,7 +1188,7 @@ export function TuileRecordVide() {
       <Entete domaine="seances" icone="star" titre={traduire("Dernier record")} />
       <Bas>
         <Ink size={17} weight="black" tight numberOfLines={2}>
-          {traduire("Pas de record ce mois-ci")}</Ink>
+          {traduire("Pas de record ce mois")}</Ink>
         <Explication>{traduire("Ton prochain record s’affichera ici")}</Explication>
       </Bas>
     </Cadre>

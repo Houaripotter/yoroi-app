@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
+import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 import { tap } from '@/components/yoroi/v2/dojo/parts';
 import { PROTECTION_CHANGED_EVENT, etatProtection, lireProtection, type EtatProtection } from '@/lib/v2/sauvegarde/copieAuto';
 import { texteAbri } from '@/lib/v2/sauvegarde/textesCopie';
@@ -57,7 +58,7 @@ export function AbriDojo({ rang, xp, serie }: { rang: string; xp: number; serie:
   };
 
   return (
-    <View style={{ marginTop: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 12 }}>
+    <View style={{ ...carteBlanche(c.surface, c.border), marginTop: 14, padding: 16, gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.goldTint, alignItems: 'center', justifyContent: 'center' }}>
           <MaterialCommunityIcons name={etat === 'en_panne' ? 'cloud-alert' : 'shield-check'} size={24} color={c.goldDeep} />

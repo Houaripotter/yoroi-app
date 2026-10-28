@@ -494,7 +494,7 @@ export const NotificationBellPopup: React.FC<NotificationBellPopupProps> = ({
                         </Text>
                         <Text style={[styles.suggestionBody, { color: colors.textSecondary || colors.textMuted }]}>
                           {isFr
-                            ? 'Definissez vos entraînements recurrents et validez-les d\'un tap !'
+                            ? 'Note tes entraînements récurrents, tu les valides d\'un tap !'
                             : 'Set up your recurring workouts and validate them with a tap!'}
                         </Text>
                       </View>

@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { useYoroiTheme } from '../YoroiThemeProvider';
 import { Ink } from './Ink';
-import { blancA } from '@/components/yoroi/livePalette';
+import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 import { traduire } from '@/lib/i18n/tr';
 
 export type Feature = { label: string; sub?: string; href: string };
@@ -19,7 +19,9 @@ export function FeatureList({ title, items }: { title: string; items: Feature[] 
   return (
     <View style={{ gap: 8 }}>
       <Ink size={15} weight="extraBold" style={{ paddingHorizontal: 4 }}>{title}</Ink>
-      <View style={{ borderRadius: 22, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.divider, overflow: 'hidden' }}>
+      {/* 28 octobre 2026 (Pastel) : carte blanche a ombre douce ; l'ombre dehors, les coins decoupes dedans */}
+      <View style={carteBlanche(c.surface, c.border)}>
+      <View style={{ borderRadius: 22, overflow: 'hidden' }}>
         {items.map((it, i) => (
           <Pressable
             key={it.href + it.label}
@@ -34,6 +36,7 @@ export function FeatureList({ title, items }: { title: string; items: Feature[] 
             <Svg width={16} height={16} viewBox="0 0 24 24" fill="none"><Path d="M9 5l7 7-7 7" stroke={c.textMuted} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" /></Svg>
           </Pressable>
         ))}
+      </View>
       </View>
     </View>
   );

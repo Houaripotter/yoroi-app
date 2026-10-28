@@ -321,7 +321,7 @@ export default function CombatTimerScreen() {
     <View style={{ flex: 1, backgroundColor: P.paper }}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + DOCK_SPACE }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <ScreenHead title="Sparring" subtitle={traduire("Round par round : à chaque fin de round, tu notes le résultat.")} />
-        <View style={{ paddingHorizontal: 20, gap: 14, marginTop: 18 }}>
+        <View style={{ paddingHorizontal: 16, gap: 14, marginTop: 18 }}>
           <SetupHero
             label={traduire("Durée totale")}
             big={humanSeconds(totalDuration)}

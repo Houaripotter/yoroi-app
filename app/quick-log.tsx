@@ -476,7 +476,7 @@ export default function DicteSeance() {
               </Press>
             </Enter>
             <Ink size={13} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>
-              {understood === 0 ? traduire('Je n’ai rien reconnu. Remplis les champs ou reformule, par exemple : boxe 1 h, intense.') : traduire('Surligné : ce que j’ai compris. Ce qui est vide, complète-le ou laisse-le vide. Ta phrase reste dans la note.')}
+              {understood === 0 ? traduire('Je n’ai rien reconnu. Remplis les champs ou reformule, par exemple : boxe 1 h, intense.') : traduire('Surligné : ce que j’ai compris. Ce qui est vide, tu le complètes ou tu le laisses vide. Ta phrase reste dans la note.')}
             </Ink>
 
             {form.guesses.length || (twin && form.linkId === undefined) || linked ? (
@@ -503,7 +503,7 @@ export default function DicteSeance() {
               </View>
             ) : null}
 
-            <Field label="Sport" src={src('sport')} empty={!form.sport ? traduire('pas reconnu, choisis-le') : undefined}>
+            <Field label="Sport" src={src('sport')} empty={!form.sport ? traduire('pas reconnu, à choisir') : undefined}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {sportChips.map((s) => {
                   const on = s === form.sport;
@@ -680,7 +680,7 @@ export default function DicteSeance() {
             ) : null}
 
             {kind === 'muscu' || form.exercises.length > 0 ? (
-              <Field label={traduire("Exercices")} empty={form.exercises.length === 0 ? traduire('aucun compris, ajoute-les avec Plus de détails') : undefined}>
+              <Field label={traduire("Exercices")} empty={form.exercises.length === 0 ? traduire('aucun compris, à ajouter avec Plus de détails') : undefined}>
                 {form.exercises.map((e, i) => (
                   <ExerciseRow
                     key={`${e.name}${i}`}
@@ -1013,7 +1013,7 @@ function TwinCard({ twin, linked, open, onLink, onNew, onUndo }: { twin: Trainin
           <Icon name={linked ? 'check' : 'heart'} size={18} color={linked ? P.mossText : accent} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={16} weight="extraBold">{linked ? traduire("Reliée à ta séance {0}", HEALTH) : traduire("Déjà dans {0} ce jour-là", HEALTH)}</Ink>
+          <Ink size={16} weight="extraBold">{linked ? traduire("Reliée à ta séance {0}", HEALTH) : traduire("Déjà dans {0} ce jour", HEALTH)}</Ink>
           <Ink size={13} weight="medium" color={P.ink2}>{`${what.charAt(0).toUpperCase()}${what.slice(1)}${bits.length ? `, ${bits.join(', ')}` : ''}`}</Ink>
         </View>
       </View>

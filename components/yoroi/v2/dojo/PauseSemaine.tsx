@@ -18,7 +18,7 @@ type Icone = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 const CHOIX: { kind: PauseKind; titre: string; texte: string; icone: Icone }[] = [
   { kind: 'repos', titre: traduire('Repos'), texte: traduire('Vacances, semaine chargée, besoin de souffler'), icone: 'sofa-outline' },
   { kind: 'blessure', titre: traduire('Blessé'), texte: traduire('Tu te soignes, tu reviens plus fort'), icone: 'bandage' },
-  { kind: 'malade', titre: traduire('Malade'), texte: traduire('Repose-toi, ta série t’attend'), icone: 'thermometer' },
+  { kind: 'malade', titre: traduire('Malade'), texte: traduire('Prends ton repos, ta série t’attend'), icone: 'thermometer' },
 ];
 
 export const PAUSE_TEXTE: Record<PauseKind, string> = { repos: 'repos', blessure: 'blessure', malade: 'maladie' };

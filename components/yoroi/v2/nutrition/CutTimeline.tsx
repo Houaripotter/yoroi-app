@@ -24,7 +24,7 @@ export function cutZones(current: number, target: number, daysLeft: number) {
 export const ZONE_TEXT: Record<CutZone, { title: string; text: string; color: string; soft: string }> = {
   safe: { title: traduire('Atteignable à un rythme sain'), text: traduire('Ton objectif tient avec une perte d’environ 1 kg par semaine au maximum.'), color: P.mossText, soft: P.mossSoft },
   water: { title: traduire('Demande une coupe d’eau'), text: traduire('Une partie devra passer par une coupe d’eau en fin de préparation. À faire encadré, jamais seul.'), color: P.goldDark, soft: P.goldSoft },
-  danger: { title: traduire('Hors des limites de sécurité'), text: traduire('Cet objectif dépasse ce qu’on peut perdre sans danger d’ici la pesée. Parles-en à un médecin du sport ou vise la catégorie au-dessus.'), color: P.danger, soft: P.dangerSoft },
+  danger: { title: traduire('Hors des limites de sécurité'), text: traduire('Cet objectif dépasse ce qu’on peut perdre sans danger d’ici la pesée. Demande conseil à un médecin du sport ou vise la catégorie au-dessus.'), color: P.danger, soft: P.dangerSoft },
 };
 
 type Pt = { date: string; weight: number };

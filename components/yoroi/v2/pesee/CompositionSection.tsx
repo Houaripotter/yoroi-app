@@ -46,13 +46,13 @@ export function CompositionSection({ open, onToggle, text, origin, lastDate, onC
   const summary = filled.length === 0
     ? traduire('masse grasse, muscle, eau, os, viscérale')
     : allRow
-    ? traduirePluriel(filled.length, filled.length > 1, "{0} mesure déjà enregistrée ce jour-là", "{0} mesures déjà enregistrées ce jour-là", filled.length)
+    ? traduirePluriel(filled.length, filled.length > 1, "{0} mesure déjà enregistrée ce jour", "{0} mesures déjà enregistrées ce jour", filled.length)
     : `${filled.length} ${filled.length > 1 ? traduire('mesures pré-remplies') : traduire('mesure pré-remplie')}${fromHealth ? `, ${healthText ?? traduire("depuis {0}", provider)}` : ''}`;
 
   const subOf = (f: FieldSpec): { t: string; tone: 'health' | 'muted' | 'plain' } => {
     const o = origin[f.key] ?? 'none';
     if (o === 'health') return { t: healthText ?? traduire("depuis {0}", provider), tone: 'health' };
-    if (o === 'row') return { t: allRow ? '' : traduire('déjà enregistrée ce jour-là'), tone: 'plain' };
+    if (o === 'row') return { t: allRow ? '' : traduire('déjà enregistrée ce jour'), tone: 'plain' };
     if (o === 'last') return { t: lastDate[f.key] ? traduire("ta dernière mesure, le {0}", lastDate[f.key]) : traduire('ta dernière mesure'), tone: 'muted' };
     if (o === 'user') return { t: traduire('saisie à la main'), tone: 'plain' };
     if (!f.fromHealth && live && scaleBrand) return { t: traduire("à recopier depuis l’app {0}", scaleBrand), tone: 'plain' };
@@ -130,7 +130,7 @@ export function CompositionSection({ open, onToggle, text, origin, lastDate, onC
           ) : null}
 
           <Ink size={12} color={c.textSecondary} style={{ marginTop: 12 }}>
-            {scaleBrand != null ? traduire("{0} reçoit de ta balance le poids, la masse grasse et la masse maigre. La masse musculaire, l’eau, l’os et la graisse viscérale n’y passent pas : recopie-les depuis l’app {1}. Une mesure grisée vient de ta dernière saisie, ajuste-la ou efface-la.", provider, scaleBrand) : traduire("{0} reçoit de ta balance le poids, la masse grasse et la masse maigre. La masse musculaire, l’eau, l’os et la graisse viscérale n’y passent pas : recopie-les depuis l’app de ta balance. Une mesure grisée vient de ta dernière saisie, ajuste-la ou efface-la.", provider)}
+            {scaleBrand != null ? traduire("{0} reçoit de ta balance le poids, la masse grasse et la masse maigre. La masse musculaire, l’eau, l’os et la graisse viscérale n’y passent pas : recopie ces mesures depuis l’app {1}. Une mesure grisée vient de ta dernière saisie : tu peux l’ajuster ou l’effacer.", provider, scaleBrand) : traduire("{0} reçoit de ta balance le poids, la masse grasse et la masse maigre. La masse musculaire, l’eau, l’os et la graisse viscérale n’y passent pas : recopie ces mesures depuis l’app de ta balance. Une mesure grisée vient de ta dernière saisie : tu peux l’ajuster ou l’effacer.", provider)}
           </Ink>
         </View>
       ) : null}

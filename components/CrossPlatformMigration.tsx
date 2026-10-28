@@ -32,7 +32,7 @@ const STEPS = [
   },
   {
     num: '2',
-    title: traduire('Envoie-toi le fichier'),
+    title: traduire('Envoie le fichier sur ton autre appareil'),
     body: traduire("Un écran de partage s'ouvre. Choisis comment envoyer :\n• Email (à toi-même)\n• WhatsApp (à toi-même)\n• Google Drive / iCloud Drive\n• AirDrop (entre iPhone et iPad / Mac)"),
   },
   {
@@ -59,7 +59,7 @@ export const CrossPlatformMigration: React.FC<Props> = ({ visible, onClose }) =>
       if (ok) {
         appAlert(
           traduire('Sauvegarde créée'),
-          traduire(`Le fichier est prêt. Envoie-le à toi-même via le partage (email, WhatsApp, Drive…) puis ouvre-le sur ton autre appareil pour l'importer automatiquement.`)
+          traduire(`Le fichier est prêt. Envoie le fichier via le partage (email, WhatsApp, Drive…) puis tu l’ouvres sur ton autre appareil pour l'importer automatiquement.`)
         );
       }
     } catch (e) {

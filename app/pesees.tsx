@@ -169,7 +169,7 @@ export default function Pesees() {
           );
         }}
         ListEmptyComponent={
-          <EmptyInvite style={{ marginTop: 18 }} title={traduire("Aucune pesée pour l’instant")} text={traduire("Pèse-toi le matin, à jeun, quelques fois par semaine. Ta liste et ta courbe se remplissent dès la première.")} plusHint={traduire("Pèse-toi avec le bouton + de la barre d’onglets")} plusArrow={false} />
+          <EmptyInvite style={{ marginTop: 18 }} title={traduire("Aucune pesée pour l’instant")} text={traduire("Monte sur la balance le matin, à jeun, quelques fois par semaine. Ta liste et ta courbe se remplissent dès la première.")} plusHint={traduire("Note ta pesée avec le bouton + de la barre d’onglets")} plusArrow={false} />
         }
         ListFooterComponent={raw.length > 0 ? <Ink size={13} color={c.textSecondary} style={{ marginTop: 16 }}>{traduire("Appuie sur une pesée pour la modifier ou la supprimer.")}</Ink> : null}
       />

@@ -219,7 +219,7 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
         text: 'Ton sommeil est insuffisant. Voici ce que tu peux améliorer :',
         tips: [
           avgHours < 6 ? 'Tu dors trop peu, vise au minimum 7h par nuit' : null,
-          'Couche-toi et lève-toi à des heures fixes chaque jour',
+          'Garde des heures fixes pour le coucher et le lever',
           'Évite la caféine après 14h et l\'alcool le soir',
           'Maintiens ta chambre fraîche (18-20°C) et sombre',
         ].filter(Boolean) as string[],

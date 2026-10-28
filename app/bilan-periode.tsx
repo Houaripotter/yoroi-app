@@ -104,7 +104,7 @@ export default function BilanPeriodeEcran() {
         {!b ? null : vide ? (
           <EmptyState
             ornement="kabuto"
-            title={type === 'semaine' ? traduire('Rien de noté cette semaine') : traduire('Rien de noté ce mois-ci')}
+            title={type === 'semaine' ? traduire('Rien de noté cette semaine') : traduire('Rien de noté ce mois')}
             text={traduire('Une séance, une pesée ou une mensuration, et ton bilan se remplit tout seul.')}
             action={traduire('Noter quelque chose')}
             onAction={() => router.push('/ajouter' as any)}
@@ -190,9 +190,9 @@ export default function BilanPeriodeEcran() {
             {!b.poids || !b.mensurations.length ? (
               <Ink size={12} color={c.textMuted} style={{ textAlign: 'center', paddingHorizontal: 12 }}>
                 {!b.poids && !b.mensurations.length
-                  ? traduire('Pèse-toi et prends tes mensurations pour voir aussi ton corps évoluer ici.')
+                  ? traduire('Note une pesée et tes mensurations pour voir aussi ton corps évoluer ici.')
                   : !b.poids
-                    ? traduire('Pèse-toi au moins deux fois pour voir ton poids réel ici.')
+                    ? traduire('Note au moins deux pesées pour voir ton poids réel ici.')
                     : traduire('Prends tes mensurations pour les voir évoluer ici.')}
               </Ink>
             ) : null}

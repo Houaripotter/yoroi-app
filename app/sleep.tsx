@@ -33,7 +33,7 @@ async function hkLastNight(): Promise<any[] | null> {
 
 function advice(debtH: number): { text: string; color: string } {
   if (debtH <= 2) return { text: traduire('Ton sommeil est au rendez-vous. Garde ce rythme.'), color: intensite(2).text };
-  if (debtH <= 5) return { text: traduire("Il te manque {0} h sur 7 jours. Couche-toi un peu plus tôt ce soir.", String(debtH).replace('.', DECIMAL)), color: intensite(3).text };
+  if (debtH <= 5) return { text: traduire("Il te manque {0} h sur 7 jours. Va au lit un peu plus tôt ce soir.", String(debtH).replace('.', DECIMAL)), color: intensite(3).text };
   if (debtH <= 10) return { text: traduire("{0} h de retard sur 7 jours. La fatigue va peser sur tes séances.", String(debtH).replace('.', DECIMAL)), color: intensite(4).text };
   return { text: traduire("{0} h de retard. Ton corps a besoin de vraies nuits avant de pousser.", String(debtH).replace('.', DECIMAL)), color: intensite(5).text };
 }

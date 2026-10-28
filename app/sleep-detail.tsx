@@ -191,7 +191,7 @@ export default function DetailNuit() {
               <Ink size={20} weight="black" tight>
                 {traduire("Rien de noté pour cette nuit")}</Ink>
               <Ink size={14} weight="medium" color={P.ink2}>
-                {traduire("Note-la en deux appuis : durée, heure du coucher et qualité. Elle apparaîtra ici comme dans l’exemple.")}</Ink>
+                {traduire("Note ta nuit en deux appuis : durée, heure du coucher et qualité. Elle apparaîtra ici comme dans l’exemple.")}</Ink>
             </View>
             <BigButton label={traduire("Noter cette nuit")} icon="moon" onPress={() => router.replace('/sleep-input' as any)} />
           </View>

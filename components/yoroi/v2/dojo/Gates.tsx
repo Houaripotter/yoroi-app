@@ -8,6 +8,7 @@ import type { ImageSourcePropType } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
+import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 import { Hanko } from '@/components/yoroi/v2/dojo/Hanko';
 import { tap } from '@/components/yoroi/v2/dojo/parts';
 import type { TamponId } from '@/components/yoroi/v2/tampons/table';
@@ -49,7 +50,7 @@ function GateTile({ g, width }: { g: Gate; width: number }) {
       accessibilityLabel={`${g.title}, ${g.value}`}
       style={{ width }}
     >
-      <Animated.View style={[{ backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 8, paddingBottom: 12, gap: 10 }, anim]}>
+      <Animated.View style={[{ ...carteBlanche(c.surface, c.border), padding: 8, paddingBottom: 12, gap: 10 }, anim]}>
         <View style={{ height: 104, borderRadius: 16, backgroundColor: g.fond, overflow: 'hidden', alignItems: 'center', justifyContent: g.image ? 'flex-end' : 'center' }}>
           {g.image ? (
             <Image source={g.image} style={{ width: '100%', height: 116, marginBottom: -12 }} resizeMode="contain" />

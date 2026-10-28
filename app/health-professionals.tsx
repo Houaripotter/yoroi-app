@@ -71,7 +71,7 @@ export default function HealthProfessionalsScreen() {
         <Enter i={list.length + 1}>
           <H2>{traduire("Tu es un pro de santé ?")}</H2>
           <View style={{ marginTop: 10 }}>
-            <LinkCard icon="people" tone="red" title={traduire("Rejoindre la sélection")} sub={traduire("Contacte-moi sur Instagram, je serai ravi de te mettre en avant.")} onPress={() => safeOpenURL('https://www.instagram.com/yoroiapp')} right={<NIcon name="link" size={18} color={P.muted} />} />
+            <LinkCard icon="people" tone="red" title={traduire("Rejoindre la sélection")} sub={traduire("Un message sur Instagram suffit, je serai ravi de te mettre en avant.")} onPress={() => safeOpenURL('https://www.instagram.com/yoroiapp')} right={<NIcon name="link" size={18} color={P.muted} />} />
           </View>
         </Enter>
 

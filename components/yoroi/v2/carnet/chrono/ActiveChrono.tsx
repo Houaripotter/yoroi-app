@@ -50,7 +50,7 @@ function kindLabel(engine: ChronoEngine, key: Phase): string {
   if (engine.status === 'holding') return traduire('Round terminé');
   if (!p) return '';
   if (key === 'final') return traduirePluriel(engine.remaining, engine.remaining > 1, "{0} dernière seconde", "{0} dernières secondes", engine.remaining);
-  if (key === 'prepa' && p.kind === 'repos') return traduire('Prépare-toi, ça repart');
+  if (key === 'prepa' && p.kind === 'repos') return traduire('Prêt ? Ça repart');
   if (p.kind === 'prepa') return traduire('Préparation');
   if (p.kind === 'repos') return traduire('Repos');
   return engine.status === 'paused' ? 'En pause' : traduire('Effort');

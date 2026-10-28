@@ -159,7 +159,7 @@ export function RappelsDiscipline({
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
             <Icon name="lock" size={20} color={c.goldDeep} />
             <Ink size={13.5} weight="bold" style={{ flex: 1, lineHeight: 19 }}>
-              {traduire("Les notifications de YOROI sont coupées sur ton téléphone. Pour recevoir tes rappels, autorise-les dans Réglages{0}: tu pourras revenir ici ensuite.", NB)}
+              {traduire("Les notifications de YOROI sont coupées sur ton téléphone. Pour recevoir tes rappels, autorise les notifications dans Réglages{0}: tu pourras revenir ici ensuite.", NB)}
             </Ink>
           </View>
           <Pressable onPress={ouvrirReglagesSysteme} accessibilityRole="link" style={({ pressed }) => ({ minHeight: 44, borderRadius: 14, backgroundColor: pressed ? c.primaryPressed : c.primary, alignItems: 'center', justifyContent: 'center' })}>

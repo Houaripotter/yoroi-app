@@ -142,7 +142,7 @@ export function GoalsChecklist() {
         </Enter>
       ) : (
         <Enter i={0}>
-          <EmptyState title={traduire("Fixe ton premier objectif")} text={traduire("Un poids, une distance, une compétition, un rythme. Choisis une cible précise et coche-la le jour où tu l’atteins.")} action={traduire("Ajouter un objectif")} onAction={openAdd} />
+          <EmptyState title={traduire("Fixe ton premier objectif")} text={traduire("Un poids, une distance, une compétition, un rythme. Choisis une cible précise, tu la coches le jour où tu l’atteins.")} action={traduire("Ajouter un objectif")} onAction={openAdd} />
         </Enter>
       )}
 

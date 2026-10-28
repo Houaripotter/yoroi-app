@@ -165,7 +165,7 @@ export const RecurringSlotCard: React.FC<RecurringSlotCardProps> = ({
           <Clock size={12} color={colors.textMuted} />
           <Text style={[styles.timeText, { color: colors.textSecondary }]}>
             {formatTime(slot.time)}
-            {endTime ? ` - ${endTime}` : ''}
+            {endTime ? ` à ${endTime}` : ''}
             {slot.duration_minutes ? ` (${slot.duration_minutes} min)` : ''}
           </Text>
         </View>

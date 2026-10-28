@@ -86,7 +86,7 @@ export function IdentityCard({ profile, armure, espace, onPress, height = 300 }:
             {sports.length ? (
               <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={1}>{sports.map(shortSport).join(', ')}</Ink>
             ) : (
-              <Ink size={13} weight="bold" color={c.accent}>{name ? 'Choisis tes sports' : 'Donne-lui un prénom'}</Ink>
+              <Ink size={13} weight="bold" color={c.accent}>{name ? 'Choisis tes sports' : 'Choisis son prénom'}</Ink>
             )}
           </View>
           {onPress ? <Icon name="chevron" size={18} color={c.textMuted} /> : null}

@@ -217,7 +217,7 @@ export default function BackupHistoryScreen() {
       }
       if (!opened) {
         const { requestPassword } = await import('@/lib/passwordPromptController');
-        const pwd = await requestPassword({ title: traduire('Sauvegarde protégée'), message: traduire('Cette sauvegarde est protégée par un mot de passe. Tape-le pour continuer.'), confirmLabel: traduire('Ouvrir') });
+        const pwd = await requestPassword({ title: traduire('Sauvegarde protégée'), message: traduire('Cette sauvegarde est protégée par un mot de passe. Tape ce mot de passe pour continuer.'), confirmLabel: traduire('Ouvrir') });
         if (!pwd) return false;
         try {
           opened = enc.decryptBackup(raw, pwd);

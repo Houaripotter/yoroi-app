@@ -29,7 +29,7 @@ const PHASES: Phase[] = [
     tone: 'gold',
     description: traduire('Optimise ton énergie avant la séance'),
     meals: [
-      { timing: traduire('3 à 4 h avant'), title: traduire('Repas complet'), foods: [traduire('Riz ou pâtes'), traduire('Poulet ou poisson'), traduire('Légumes'), 'Huile d’olive'], macros: { protein: 30, carbs: 80, fat: 15 }, tips: [traduire('Évite les fibres lourdes'), traduire('Hydrate-toi bien')] },
+      { timing: traduire('3 à 4 h avant'), title: traduire('Repas complet'), foods: [traduire('Riz ou pâtes'), traduire('Poulet ou poisson'), traduire('Légumes'), 'Huile d’olive'], macros: { protein: 30, carbs: 80, fat: 15 }, tips: [traduire('Évite les fibres lourdes'), traduire('Bois bien')] },
       { timing: traduire('1 à 2 h avant'), title: traduire('Collation légère'), foods: ['Banane', traduire('Barre de céréales'), traduire('Pain et miel')], macros: { protein: 5, carbs: 40, fat: 5 }, tips: [traduire('Glucides rapides'), traduire('Facile à digérer')] },
       { timing: traduire('30 min avant'), title: traduire('Coup de pouce'), foods: ['Datte', traduire('Gel énergétique'), 'Boisson isotonique'], macros: { protein: 0, carbs: 25, fat: 0 }, tips: [traduire('Optionnel si tu as mangé récemment'), traduire('Pour les séances intenses')] },
     ],
@@ -72,7 +72,7 @@ const PHASES: Phase[] = [
   },
 ];
 
-const TIPS = [traduire('Hydrate-toi : environ 35 ml par kg de poids'), traduire('Mange ce que tu connais avant un combat'), traduire('Évite les aliments nouveaux le jour J'), traduire('Des protéines à chaque repas pour récupérer')];
+const TIPS = [traduire('Bois environ 35 ml par kg de poids'), traduire('Mange ce que tu connais avant un combat'), traduire('Évite les aliments nouveaux le jour J'), traduire('Des protéines à chaque repas pour récupérer')];
 
 export default function QuickNutritionScreen() {
   const [phaseId, setPhaseId] = useState<PhaseId>('pre_training');
@@ -187,7 +187,7 @@ export default function QuickNutritionScreen() {
 
         {phaseId === 'fight_day' ? (
           <Enter i={2}>
-            <Notice tone="danger" title={traduire("Après une coupe de poids")} text={traduire("Réhydrate-toi progressivement. Si tu as des vertiges, des crampes ou une confusion, préviens le staff médical.")} />
+            <Notice tone="danger" title={traduire("Après une coupe de poids")} text={traduire("Bois de nouveau, petit à petit. Si tu as des vertiges, des crampes ou une confusion, préviens le staff médical.")} />
           </Enter>
         ) : null}
 

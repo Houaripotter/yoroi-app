@@ -368,7 +368,7 @@ export default function ZonesScreen() {
                   </View>
                 ))}
               </View>
-              <Ink size={13} weight="bold" color={c.textSecondary}>{traduire('Fais-les dans l’ordre : les gros muscles d’abord, les abdos à la fin.')}</Ink>
+              <Ink size={13} weight="bold" color={c.textSecondary}>{traduire('À faire dans l’ordre : les gros muscles d’abord, les abdos à la fin.')}</Ink>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               <Pressable onPress={() => { tap(); aller('muscles'); }} accessibilityRole="button" style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: P.white }}>
                 <Ink size={13} weight="extraBold" color={c.onPrimary}>{traduire('Changer les muscles')}</Ink>
@@ -389,7 +389,7 @@ export default function ZonesScreen() {
             ))}
 
             <Glass style={[carteBlanche(c.surface, c.divider), { gap: 12 }]}>
-              <Ink size={16} weight="black">{traduire('Quand verras-tu des résultats ?')}</Ink>
+              <Ink size={16} weight="black">{traduire('Les résultats arrivent quand ?')}</Ink>
               {[
                 { t: traduire('Dès les premières séances'), d: traduire('Les gestes deviennent faciles et tu soulèves plus : au début, c’est surtout ton cerveau qui apprend à commander tes muscles.') },
                 { t: traduire('Après 3 à 5 semaines'), d: traduire('Chez la plupart des débutants, le muscle commence déjà à grossir, même si ça ne se voit pas encore : une étude l’a mesuré à l’échographie après 20 jours, à 3 séances par semaine.') },

@@ -294,7 +294,7 @@ export function bodyGroup(weights: DayWeight[], compo: CompoPoint[], ctx: BodyCo
     title: 'Corps',
     curves,
     aside: { label: traduire('Tes pesées'), onPress: () => nav('/pesees') },
-    empty: { title: traduire('Ta première pesée'), text: traduire('Pèse-toi le matin, à jeun. Ton poids, ton muscle, ta masse grasse et ton eau auront chacun leur courbe ici.'), plusHint: traduire('Touche + pour te peser') },
+    empty: { title: traduire('Ta première pesée'), text: traduire('Monte sur la balance le matin, à jeun. Ton poids, ton muscle, ta masse grasse et ton eau auront chacun leur courbe ici.'), plusHint: traduire('Touche + pour te peser') },
   };
 }
 
@@ -313,7 +313,7 @@ export function compositionGroup(compo: CompoPoint[], ctx: BodyContext, nav: Nav
     title: traduire('Composition'),
     curves,
     aside: { label: traduire('Chaque mesure'), onPress: () => nav({ pathname: '/composition-detail', params: { mode: 'mesure' } }) },
-    empty: { title: traduire('Ta composition en détail'), text: traduire('Graisse viscérale, os, métabolisme de base, âge métabolique : si ta balance les donne, note-les avec ta pesée.'), plusHint: traduire('Touche + pour ta composition') },
+    empty: { title: traduire('Ta composition en détail'), text: traduire('Graisse viscérale, os, métabolisme de base, âge métabolique : si ta balance les donne, note ces mesures avec ta pesée.'), plusHint: traduire('Touche + pour ta composition') },
   };
 }
 

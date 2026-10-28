@@ -17,6 +17,7 @@ import { PlusHint } from '../PlusHint';
 import { RecordSeal } from '@/components/yoroi/v2/ornements/RecordSeal';
 import type { TamponId } from '@/components/yoroi/v2/tampons/table';
 import { P } from '@/components/yoroi/livePalette';
+import { carteBlanche, OMBRE_CARTE } from '@/components/yoroi/v2/seance/pastel';
 import { traduire } from '@/lib/i18n/tr';
 
 // 27 octobre 2026 (maquettes Pastel) : 16 points des bords, comme l'accueil
@@ -72,7 +73,8 @@ export function DetailHeader({ title, sub, right, onBack }: { title: string; sub
 export function GlassCard({ children, style, onPress, label }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; onPress?: () => void; label?: string }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const base: ViewStyle = { borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider, padding: 16 };
+  // 28 octobre 2026 (Pastel) : carte blanche a ombre douce, un filet seulement en sombre
+  const base: ViewStyle = { ...carteBlanche(c.surface, c.border), padding: 16 };
   if (!onPress) return <View style={[base, style]}>{children}</View>;
   return (
     <Pressable
@@ -133,9 +135,9 @@ export function Pills<T extends string | number | null>({ items, value, onChange
             }}
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
-            style={{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 13, borderRadius: 12, backgroundColor: on ? c.ink : 'transparent', borderWidth: 1.5, borderColor: on ? c.ink : '#C9CEDF' }}
+            style={[{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 14, backgroundColor: on ? c.primary : c.surface }, on ? null : OMBRE_CARTE]}
           >
-            <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? P.paper : c.textSecondary} numberOfLines={1}>
+            <Ink size={14} weight={on ? 'black' : 'bold'} color={on ? c.onPrimary : c.textSecondary} numberOfLines={1}>
               {traduire(p.label)}
             </Ink>
           </Pressable>
@@ -183,7 +185,7 @@ export function GhostButton({ label, onPress, style }: { label: string; onPress:
         onPress();
       }}
       accessibilityRole="button"
-      style={({ pressed }) => [{ height: 56, borderRadius: 18, backgroundColor: pressed ? c.fillSoft : P.carte, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 }, style]}
+      style={({ pressed }) => [{ ...carteBlanche(c.surface, c.border), height: 56, borderRadius: 18, backgroundColor: pressed ? c.fillSoft : c.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 }, style]}
     >
       <Ink size={14} weight="extraBold" numberOfLines={1} style={{ flexShrink: 1 }}>
         {label}
@@ -198,7 +200,9 @@ export function EmptyInvite({ title, text, cta, onPress, plusHint, plusArrow = t
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
-    <View style={[{ borderRadius: 26, overflow: 'hidden', backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider }, style]}>
+    // 28 octobre 2026 (Pastel) : l'ombre sur le cadre exterieur, le decoupage des coins sur le cadre interieur
+    <View style={[{ ...carteBlanche(c.surface, c.border), borderRadius: 26 }, style]}>
+    <View style={{ borderRadius: 26, overflow: 'hidden' }}>
       {image ? (
         <View style={{ height: 150, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'flex-end' }}>
           <Image source={image} style={{ width: 150, height: 200, marginBottom: -50 }} resizeMode="contain" accessibilityIgnoresInvertColors />
@@ -213,6 +217,7 @@ export function EmptyInvite({ title, text, cta, onPress, plusHint, plusArrow = t
         </Ink>
         {plusHint ? <PlusHint text={plusHint} arrow={plusArrow} style={{ marginTop: 8 }} /> : cta && onPress ? <PrimaryButton label={cta} onPress={onPress} style={{ marginTop: 8, height: 50 }} /> : null}
       </View>
+    </View>
     </View>
   );
 }
@@ -278,9 +283,9 @@ export function StampButton({ label, onPress, disabled, dim }: { label: string; 
       accessibilityState={{ disabled: !!disabled }}
       style={({ pressed }) => ({ height: 60, borderRadius: 20, backgroundColor: pressed ? c.primaryPressed : c.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, opacity: dim ? 0.45 : 1 })}
     >
-      <View style={{ width: 30, height: 30, borderRadius: 7, borderWidth: 2.5, borderColor: P.white, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-6deg' }] }}>
+      <View style={{ width: 30, height: 30, borderRadius: 7, borderWidth: 2.5, borderColor: c.onPrimary, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-6deg' }] }}>
         <Svg width={16} height={16} viewBox="0 0 24 24">
-          <Path d="M5 12.5l4.5 4.5L19 7.5" stroke={c.onAccent} strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          <Path d="M5 12.5l4.5 4.5L19 7.5" stroke={c.onPrimary} strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
         </Svg>
       </View>
       <Ink size={17} weight="extraBold" color={c.onPrimary}>
@@ -318,7 +323,7 @@ export function StatGrid({ items, style }: { items: { value: string; label: stri
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
-    <View style={[{ flexDirection: 'row', flexWrap: 'wrap', borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider, overflow: 'hidden' }, style]}>
+    <View style={[{ ...carteBlanche(c.surface, c.border), flexDirection: 'row', flexWrap: 'wrap' }, style]}>
       {items.map((it, i) => (
         <View
           key={it.label}
@@ -343,7 +348,7 @@ export function ExplainCard({ title = traduire('Ce que ça mesure'), text, tip, 
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
-    <View style={[{ flexDirection: 'row', gap: 12, padding: 16, borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider }, style]}>
+    <View style={[{ ...carteBlanche(c.surface, c.border), flexDirection: 'row', gap: 12, padding: 16 }, style]}>
       <View style={{ width: 4, borderRadius: 2, backgroundColor: c.indigo }} />
       <View style={{ flex: 1, gap: 6 }}>
         <Ink size={16} weight="extraBold">

@@ -173,7 +173,7 @@ export default function MeasurementsScreen() {
 
         {screenshotDetected ? (
           <View style={{ marginHorizontal: GUTTER, marginTop: 8, padding: 12, borderRadius: 14, backgroundColor: c.accentTint }}>
-            <Ink size={13} weight="bold">{traduire("Capture d’écran repérée. Tes mesures sont personnelles, garde-les pour toi.")}</Ink>
+            <Ink size={13} weight="bold">{traduire("Capture d’écran repérée. Tes mesures sont personnelles : elles restent à toi.")}</Ink>
           </View>
         ) : null}
 

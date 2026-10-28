@@ -246,7 +246,7 @@ export function PremiumLockScreen({ featureTitle, source }: { featureTitle?: str
         </View>
         <GoldVein style={{ marginVertical: 12 }} />
         <Ink size={15} weight="medium" color={c.textSecondary} style={{ lineHeight: 22 }}>
-          {traduire("Cette partie est réservée aux membres Premium. Débloque-la pour forger ton armure complète.")}</Ink>
+          {traduire("Cette partie est réservée aux membres Premium. Passe à Premium pour forger ton armure complète.")}</Ink>
       </Animated.View>
 
       {/* Avantages */}

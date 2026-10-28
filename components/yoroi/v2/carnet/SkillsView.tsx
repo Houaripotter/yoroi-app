@@ -66,7 +66,7 @@ export function SkillsView({ skills, onOpen, onCreate }: Props) {
       <CarnetEmpty
         illus="techniques"
         title={traduire("Note ce que tu apprends")}
-        text={traduire("Une garde, un passage, un enchaînement : ajoute-la, compte tes répétitions, et marque-la maîtrisée le jour où elle sort toute seule.")}
+        text={traduire("Une garde, un passage, un enchaînement : ajoute ta technique, compte tes répétitions et marque ta technique comme maîtrisée le jour où elle sort toute seule.")}
         action={traduire("Ajouter ma première technique")}
         onAction={() => onCreate()}
       />

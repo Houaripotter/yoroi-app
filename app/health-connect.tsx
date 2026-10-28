@@ -127,7 +127,7 @@ export default function HealthConnectScreen() {
             ? __DEV__
               ? traduire("Mode test\u00A0: l'app Santé n'est pas disponible (simulateur, tablette, ou Expo Go). Teste dans l'app installée.")
               : traduire("L'app Santé n'est pas disponible sur cet appareil.")
-            : traduire("Health Connect n'est pas disponible sur cet appareil. Installe-le depuis le Play Store."),
+            : traduire("Health Connect n'est pas disponible sur cet appareil. Tu peux l’installer depuis le Play Store."),
         );
         return;
       }
@@ -174,7 +174,7 @@ export default function HealthConnectScreen() {
             );
             break;
           case 'HEALTH_CONNECT_NOT_INSTALLED':
-            appAlert(traduire('Health Connect absent'), traduire("Health Connect n'est pas installé. C'est l'app de Google qui rassemble tes données de santé. Installe-la depuis le Play Store pour continuer."), [
+            appAlert(traduire('Health Connect absent'), traduire("Health Connect n'est pas installé. C'est l'app de Google qui rassemble tes données de santé. Installe Health Connect depuis le Play Store pour continuer."), [
               { text: traduire('Plus tard'), style: 'cancel' },
               { text: traduire('Installer'), onPress: () => safeOpenURL('market://details?id=com.google.android.apps.healthdata') },
             ]);
@@ -194,7 +194,7 @@ export default function HealthConnectScreen() {
 
   const disconnect = () => {
     tap('medium');
-    appAlert(traduire('Déconnecter ?'), traduire("Veux-tu vraiment déconnecter YOROI de {0} ? Tes données ne seront plus synchronisées automatiquement.", healthConnect.getProviderName()), [
+    appAlert(traduire('Déconnecter ?'), traduire("Tu veux vraiment déconnecter YOROI de {0} ? Tes données ne seront plus synchronisées automatiquement.", healthConnect.getProviderName()), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
         text: traduire('Déconnecter'),

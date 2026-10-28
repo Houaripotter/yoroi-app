@@ -274,7 +274,7 @@ export default function SparringPartnersScreen() {
           </Enter>
         ))}
 
-        {partners.length > 0 ? <Section title={traduire("Un nouveau partenaire ?")} sub={traduire("Ajoute-le, son bilan se calcule à partir de tes rounds")} action={traduire("Ajouter")} onAction={() => { setNewName(''); setAddOpen(true); }} /> : null}
+        {partners.length > 0 ? <Section title={traduire("Un nouveau partenaire ?")} sub={traduire("Ajoute ton partenaire, son bilan se calcule à partir de tes rounds")} action={traduire("Ajouter")} onAction={() => { setNewName(''); setAddOpen(true); }} /> : null}
 
         <FormSheet visible={addOpen} onClose={() => setAddOpen(false)} title={traduire("Nouveau partenaire")} sub={traduire("Écris le même nom que dans tes rounds pour relier son bilan.")}>
           <Field value={newName} onChangeText={setNewName} autoFocus placeholder={traduire("Prénom ou surnom")} returnKeyType="done" onSubmitEditing={add} />

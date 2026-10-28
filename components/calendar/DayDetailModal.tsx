@@ -161,7 +161,7 @@ export function DayDetailModal({
                         </Text>
                         {slot.time && (
                           <Text style={{ color: colors.textMuted, fontSize: 11 }}>
-                            {slot.time}{slot.duration_minutes ? ` - ${slot.duration_minutes} min` : ''}
+                            {slot.time}{slot.duration_minutes ? `, ${slot.duration_minutes} min` : ''}
                           </Text>
                         )}
                       </View>
@@ -251,7 +251,7 @@ export function DayDetailModal({
                             <Clock size={12} color={colors.textMuted} />
                             <Text style={[styles.sessionMetaText, { color: colors.textSecondary }]}>
                               {session.start_time || ''}
-                              {endTime ? ` - ${endTime}` : ''}
+                              {endTime ? ` à ${endTime}` : ''}
                               {' • '}
                               {formatDuration(session.duration_minutes)}
                               {session.session_type ? ` • ${getSessionTypeLabel(session.session_type)}` : ''}

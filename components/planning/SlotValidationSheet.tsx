@@ -129,7 +129,7 @@ export const SlotValidationSheet: React.FC<SlotValidationSheetProps> = ({
                 <Clock size={14} color={colors.textMuted} />
                 <Text style={[styles.timeText, { color: colors.textSecondary }]}>
                   {formatTime(slot.time)}
-                  {endTime ? ` - ${endTime}` : ''}
+                  {endTime ? ` à ${endTime}` : ''}
                   {slot.duration_minutes ? ` (${slot.duration_minutes} min)` : ''}
                 </Text>
               </View>

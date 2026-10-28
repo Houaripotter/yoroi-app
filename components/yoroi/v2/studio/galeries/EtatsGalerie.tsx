@@ -123,7 +123,7 @@ function ProgresVide() {
           bleed
           dim={0.4}
           title={traduire("Ta courbe se dessine dès la troisième pesée")}
-          text={traduire("Pèse-toi le matin, à jeun, quelques fois par semaine. YOROI lisse les variations et te montre la vraie tendance.")}
+          text={traduire("Monte sur la balance le matin, à jeun, quelques fois par semaine. YOROI lisse les variations et te montre la vraie tendance.")}
           plusHint={traduire("Touche + pour ta première pesée")}
         >
           <WeightTrendChart points={sample} goal={SAMPLE_GOAL} height={230} />
@@ -161,7 +161,7 @@ function CarnetVide() {
         <CarnetEmpty
           illus="techniques"
           title={traduire("Note ce que tu apprends")}
-          text={traduire("Une garde, un passage, un enchaînement : ajoute-la, compte tes répétitions, et marque-la maîtrisée le jour où elle sort toute seule.")}
+          text={traduire("Une garde, un passage, un enchaînement : ajoute ta technique, compte tes répétitions et marque ta technique comme maîtrisée le jour où elle sort toute seule.")}
           action={traduire("Ajouter ma première technique")}
           onAction={() => undefined}
         />
@@ -189,7 +189,7 @@ function CompetitionsVide() {
           <View style={{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: c.divider, padding: 18, gap: 6 }}>
             <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Aucune compétition prévue")}</Ink>
             <Ink size={22} weight="black" tight>{traduire("Prépare ta prochaine échéance")}</Ink>
-            <Ink size={13} color={c.textSecondary}>{traduire("Ajoute-la en quelques secondes : compte à rebours, rappels et suivi de ta catégorie de poids.")}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire("Tu l’ajoutes en quelques secondes : compte à rebours, rappels et suivi de ta catégorie de poids.")}</Ink>
           </View>
           <BigButton label={traduire("Ajouter une compétition")} icon="plus" onPress={() => undefined} />
         </View>

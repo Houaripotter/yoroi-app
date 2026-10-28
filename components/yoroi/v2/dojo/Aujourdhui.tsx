@@ -185,7 +185,7 @@ export function Aujourdhui({ serie, coffre, onOuvrir, onVerre, suite, onCadeau, 
           {coffre.etat === 'verrouille' ? (
             <Ink size={13} color={c.textSecondary}>{traduire('Une séance, une pesée ou un verre d’eau pour l’ouvrir.')}</Ink>
           ) : coffre.etat === 'pret' ? (
-            <Ink size={13} color={c.textSecondary}>{traduire('Ton geste est fait. Ouvre-le pour découvrir ta récompense.')}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire('Ton geste est fait. Ouvre ton coffre pour découvrir ta récompense.')}</Ink>
           ) : (
             <Ink size={13} color={c.textSecondary}>{traduire("+{0}{1}XP gagnés. Le prochain s’ouvre demain.", coffre.xp, NB)}</Ink>
           )}

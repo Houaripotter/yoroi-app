@@ -34,7 +34,7 @@ const FAQ: FaqItem[] = [
     a: traduire("• Localement sur ton téléphone (10 derniers gardés)\n• Dans ton iCloud Drive ou Google Drive si configuré\n• Jamais sur des serveurs externes, tes données restent à toi."),
   },
   {
-    q: traduire("Mes photos sont-elles vraiment dans le backup ?"),
+    q: traduire("Mes photos sont vraiment dans le backup ?"),
     a: traduire("Oui, toutes les photos (profil, clubs, transformation, sparring partners, avatars custom…) sont converties en base64 et incluses dans le fichier JSON. Tu retrouves tout à l'identique à la restauration."),
   },
   {
@@ -43,18 +43,18 @@ const FAQ: FaqItem[] = [
   },
   {
     q: traduire("Et pour passer d'iPhone à Android (ou inverse) ?"),
-    a: traduire("Va dans « Mes sauvegardes » → « Migrer vers un autre appareil ». Crée un backup léger (sans photos, ~300 KB), envoie-le par email/WhatsApp, ouvre-le sur l'autre téléphone → import automatique."),
+    a: traduire("Va dans « Mes sauvegardes » → « Migrer vers un autre appareil ». Crée un backup léger (sans photos, ~300 KB), envoie le fichier par email ou WhatsApp, tu l’ouvres sur l'autre téléphone : import automatique."),
   },
   {
     q: traduire("Qu'est-ce que le chiffrement AES-256 ?"),
     a: traduire("Option pour protéger tes backups avec un mot de passe. Personne ne peut lire le fichier sans ce mot de passe, même s'il fuite. Utile si tu stockes tes backups sur un cloud public. Attention : si tu oublies le mot de passe, les backups chiffrés sont irrécupérables."),
   },
   {
-    q: traduire("Que se passe-t-il si j'importe un backup par erreur ?"),
+    q: traduire("Et si j'importe un backup par erreur ?"),
     a: traduire("Une sauvegarde de sécurité est automatiquement créée JUSTE AVANT. Tu peux revenir en arrière en 1 tap via « Annuler la dernière restauration »."),
   },
   {
-    q: traduire("Mes Apple Watch / Wear OS reçoivent-elles les infos ?"),
+    q: traduire("Ma montre Apple Watch ou Wear OS reçoit les infos ?"),
     a: traduire("Oui, automatiquement. Dès qu'une donnée change (pesée, séance, objectif), la montre reçoit la mise à jour en quelques secondes. Streak, stats du mois, dernière séance, etc."),
   },
   {

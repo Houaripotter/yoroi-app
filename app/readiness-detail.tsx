@@ -222,7 +222,7 @@ export default function TaForme() {
             <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: P.indigoSoft, borderRadius: 16, padding: 12 }}>
               <Icon name="moon" size={18} color={P.indigo} />
               <Ink size={13} weight="bold" color={P.indigo} style={{ flex: 1 }}>
-                {traduire("Il te manque {0} h de sommeil sur 7 jours. Couche-toi un peu plus tôt ce soir.", String(sleep.sleepDebtHours).replace('.', DECIMAL))}
+                {traduire("Il te manque {0} h de sommeil sur 7 jours. Va au lit un peu plus tôt ce soir.", String(sleep.sleepDebtHours).replace('.', DECIMAL))}
               </Ink>
             </View>
           ) : null}

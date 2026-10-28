@@ -672,7 +672,7 @@ export function ActiveGoal({ p, onSet, onAchieved }: { p: Partner; onSet: (text:
         </View>
       ) : (
         <Ink size={14} color={P.ink2}>
-          {traduire("Fixe-toi un objectif précis pour ton prochain combat contre lui.")}</Ink>
+          {traduire("Fixe un objectif précis pour ton prochain combat contre lui.")}</Ink>
       )}
     </Card>
   );

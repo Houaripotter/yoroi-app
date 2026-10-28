@@ -121,7 +121,7 @@ export default function TransformationScreen() {
         <EmptyInvite
           style={{ margin: GUTTER }}
           title={traduire("Il faut deux photos")}
-          text={asc.length === 1 ? traduire('Ta première photo est dans le coffre. Reprends-en une dans quelques semaines, même cadrage, et compare ici.') : traduire('Prends une photo aujourd’hui, puis une autre dans quelques semaines. Tu les verras ici côte à côte, au doigt.')}
+          text={asc.length === 1 ? traduire('Ta première photo est dans le coffre. Prends une nouvelle photo dans quelques semaines, même cadrage, et compare ici.') : traduire('Prends une photo aujourd’hui, puis une autre dans quelques semaines. Tu les verras ici côte à côte, au doigt.')}
           cta={traduire("Ouvrir mes photos")}
           onPress={() => router.push('/photos' as any)}
         />

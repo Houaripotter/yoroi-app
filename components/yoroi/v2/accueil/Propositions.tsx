@@ -273,7 +273,7 @@ export function TableauDuJour({
       {!autres.length && !estAujourdhui && avecSemaine ? (
         <View style={{ borderTopWidth: 1, borderTopColor: P.line2, paddingTop: 12 }}>
           <Ink size={11.5} weight="bold" color={P.ink2}>
-            {traduire("Pas d’autre mesure de Santé ce jour-là")}</Ink>
+            {traduire("Pas d’autre mesure de Santé ce jour")}</Ink>
         </View>
       ) : null}
       <FeuilleMesures visible={feuille} onFermer={() => setFeuille(false)} mesures={autres} titre={estAujourdhui ? traduire('Tes autres mesures du jour') : traduire("Tes autres mesures, {0}", jourA11y(choisi))} />
@@ -388,10 +388,10 @@ function MiniRecup({ forme, passe = false }: { forme: FormeResult | null; passe?
   // 19 octobre : le score de recuperation se calcule pour aujourd'hui seulement, aucun score n'est garde par jour
   if (passe) {
     return (
-      <CadreMini onPress={() => router.push('/readiness-detail' as any)} a11y={traduire("Récupération : pas de score ce jour-là, le score se calcule pour aujourd’hui")} titre={traduire("Récupération")} couleur={t.texte}>
+      <CadreMini onPress={() => router.push('/readiness-detail' as any)} a11y={traduire("Récupération : pas de score ce jour, le score se calcule pour aujourd’hui")} titre={traduire("Récupération")} couleur={t.texte}>
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <Ink size={11.5} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>
-            {traduire("Pas de score ce jour-là")}</Ink>
+            {traduire("Pas de score ce jour")}</Ink>
         </View>
       </CadreMini>
     );
@@ -441,10 +441,10 @@ function MiniSommeil({ sleep, sleepGoal, jour = null }: { sleep: SleepEntry[]; s
   const nuits = useMemo(() => septNuits(sleep, jour ?? localISO()), [sleep, jour]);
   if (!nuit && jour) {
     return (
-      <CadreMini onPress={() => router.push('/sleep' as any)} a11y={traduire("Sommeil : pas de nuit notée ce jour-là")} titre={traduire("Sommeil")} couleur={t.texte}>
+      <CadreMini onPress={() => router.push('/sleep' as any)} a11y={traduire("Sommeil : pas de nuit notée ce jour")} titre={traduire("Sommeil")} couleur={t.texte}>
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <Ink size={11.5} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>
-            {traduire("Pas de nuit notée ce jour-là")}</Ink>
+            {traduire("Pas de nuit notée ce jour")}</Ink>
         </View>
       </CadreMini>
     );
@@ -535,7 +535,7 @@ function MiniEauPassee({ eau, goal }: { eau: { amount: number; goal: number | nu
   if (!eau) {
     return (
       <View style={{ flex: 1, minWidth: 0 }}>
-        <CadreMini onPress={ouvrir} a11y={traduire("Eau : pas de donnée ce jour-là. Ouvrir l’eau")} titre="Eau" couleur={trait} titreAGauche>
+        <CadreMini onPress={ouvrir} a11y={traduire("Eau : pas de donnée ce jour. Ouvrir l’eau")} titre="Eau" couleur={trait} titreAGauche>
           <View style={{ flex: 1, justifyContent: 'center' }}>
             <Ink size={11.5} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>
               {traduire("Pas de donnée")}</Ink>
@@ -547,7 +547,7 @@ function MiniEauPassee({ eau, goal }: { eau: { amount: number; goal: number | nu
   const ok = g > 0 && eau.amount >= g;
   return (
     <View style={{ flex: 1, minWidth: 0 }}>
-      <CadreMini onPress={ouvrir} a11y={traduire("Eau : {0} litre{1} ce jour-là. Ouvrir l’eau", formatLiters(eau.amount), g > 0 ? traduire(" sur {0}", formatLiters(g)) : '')} titre={traduire('Eau')} couleur={trait} titreAGauche>
+      <CadreMini onPress={ouvrir} a11y={traduire("Eau : {0} litre{1} ce jour. Ouvrir l’eau", formatLiters(eau.amount), g > 0 ? traduire(" sur {0}", formatLiters(g)) : '')} titre={traduire('Eau')} couleur={trait} titreAGauche>
         <Bouteille part={g > 0 ? eau.amount / g : 0} couleur={c.anneau} vague={c.fin} contour={trait} largeur={30} hauteur={56} cle="mini:eau:passee" />
         <Ink size={15} weight="black" color={trait} style={{ textAlign: 'center' }}>
           {`${formatLiters(eau.amount)} L`}

@@ -654,7 +654,7 @@ export default function TimerScreen() {
           <ScreenHead title={traduire("Chronos")} subtitle={focusMode ? traduire('Mode épuré : pendant le chrono, juste le temps') : traduire('Choisis comment découper ton temps')} right={eyeBtn} />
           {/* vague 45 (Houari : « c'est beau mais c'est fade ») : bandeau illustre, le dernier chrono a reprendre,
               une couleur et une illustration par chrono, des cartes plus genereuses */}
-          <View style={{ paddingHorizontal: 20, gap: 12, marginTop: 16 }}>
+          <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
             <ChronoBanner />
             {dernier ? <ReprendreCard mode={dernier.mode} resume={dernier.resume} onPress={() => reprendre(dernier)} /> : null}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 16, rowGap: 4, paddingHorizontal: 4, marginTop: 4 }}>
@@ -686,7 +686,7 @@ export default function TimerScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + DOCK_SPACE }} showsVerticalScrollIndicator={false}>
         <ScreenHead title={traduire(modeMeta.label)} subtitle={traduire(modeMeta.sub)} onBack={() => { setPicked(false); haptic('light'); }} right={eyeBtn} />
 
-        <View style={{ paddingHorizontal: 20, gap: 14, marginTop: 18 }}>
+        <View style={{ paddingHorizontal: 16, gap: 14, marginTop: 18 }}>
           {mode === 'musculation' ? (
             <>
               <SetupBlock>
@@ -825,8 +825,8 @@ function SeriesCard({ count, history, onReset }: { count: number; history: Serie
   return (
     <SetupBlock>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <View style={{ width: 76, height: 76, borderRadius: 22, backgroundColor: count > 0 ? P.ink : (paletteSombre() ? P.line2 : '#EEF0F7'), alignItems: 'center', justifyContent: 'center' }}>
-          <Ink size={38} weight="black" tight color={count > 0 ? P.white : P.ink}>{String(count)}</Ink>
+        <View style={{ width: 76, height: 76, borderRadius: 22, backgroundColor: count > 0 ? P.primary : (paletteSombre() ? P.line2 : '#EEF0F7'), alignItems: 'center', justifyContent: 'center' }}>
+          <Ink size={38} weight="black" tight color={count > 0 ? P.onPrimary : P.ink}>{String(count)}</Ink>
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={18} weight="black" tight>{count === 0 ? traduire('Aucune série faite') : traduirePluriel(count, count > 1, "{0} série faite", "{0} séries faites", count)}</Ink>

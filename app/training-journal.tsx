@@ -699,7 +699,7 @@ export default function TrainingJournalScreen() {
                 <Ink size={20} weight="black" tight>{traduire("Ta vidéothèque, avec Premium")}</Ink>
               </View>
               <Ink size={14} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>
-                {traduire("Importe les vidéos qui t’inspirent, range-les par muscle ou par sport, et revois le geste juste avant ta séance.")}</Ink>
+                {traduire("Importe les vidéos qui t’inspirent, range tes vidéos par muscle ou par sport, et revois le geste juste avant ta séance.")}</Ink>
               <View style={{ alignSelf: 'stretch' }}>
                 <BigButton label={traduire("Découvrir Premium")} onPress={() => ouvrirPaywall('videos')} />
               </View>

@@ -269,7 +269,7 @@ export function EditPartnerSheet({ name, onClose, editName, setEditName, editPho
 export function GoalSheet({ visible, value, onChange, onSave, onClose }: { visible: boolean; value: number; onChange: (v: number) => void; onSave: () => void; onClose: () => void }) {
   return (
     <Sheet visible={visible} onClose={onClose} title={traduire("Objectif de la semaine")}>
-      <Ink size={14} weight="medium" color={P.ink2}>{traduire("Combien de rounds de sparring veux-tu faire chaque semaine ?")}</Ink>
+      <Ink size={14} weight="medium" color={P.ink2}>{traduire("Tu veux faire combien de rounds de sparring chaque semaine ?")}</Ink>
       <View style={{ alignItems: 'center', paddingVertical: 8 }}>
         <Stepper value={value} step={1} min={1} max={100} onChange={onChange} unit={traduire('rounds')} size={44} format={(v) => traduire("{0} rounds", v)} />
       </View>

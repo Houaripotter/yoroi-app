@@ -473,7 +473,7 @@ export const TrainingTabPage: React.FC = React.memo(() => {
 
       {/* Comparaisons fun (carrousel horizontal) */}
       {funComparisons.length > 0 && (
-        <FunComparisonsCard comparisons={funComparisons} title="Le saviez-vous ?" />
+        <FunComparisonsCard comparisons={funComparisons} title="Tu le savais ?" />
       )}
 
       {/* ── Modal Premium analytics entraînements */}

@@ -297,7 +297,7 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
       <Ink size={14} color={c.textSecondary}>{traduire("Ton IA reconnaît la machine sur ta photo. YOROI n’envoie rien : tu passes par l’IA que tu utilises déjà.")}</Ink>
       {etape(1, traduire('Copie la consigne'), traduire('Elle contient la liste des machines de YOROI.'))}
       <PrimaryButton label={copied ? traduire('Consigne copiée') : traduire('Copier la consigne')} tone={copied ? 'ink' : 'accent'} onPress={() => void copier()} />
-      {etape(2, traduire('Envoie-la à ton IA avec ta photo'), traduire('ChatGPT, Gemini, Claude ou une autre : colle la consigne et joins la photo de la machine, prise de côté si tu peux.'))}
+      {etape(2, traduire('À envoyer à ton IA avec ta photo'), traduire('ChatGPT, Gemini, Claude ou une autre : colle la consigne et joins la photo de la machine, prise de côté si tu peux.'))}
       {etape(3, traduire('Colle sa réponse ici'), traduire("Elle commence par {0} et finit par FIN.", MACHINE_HEADER))}
       {clipFound && !bloc ? (
         <Pressable onPress={() => lire(clipFound)} accessibilityRole="button" style={({ pressed }) => ({ borderRadius: 16, padding: 14, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1.5, borderColor: c.accent, gap: 2 })}>
@@ -369,7 +369,7 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
         ListEmptyComponent={
           <View style={{ paddingVertical: 40, alignItems: 'center', gap: 6 }}>
             <Ink size={15} color={c.textSecondary}>{traduire("Aucune machine ne correspond.")}</Ink>
-            <Ink size={13} color={c.textMuted}>{traduire("Essaie un autre nom, ou prends-la en photo.")}</Ink>
+            <Ink size={13} color={c.textMuted}>{traduire("Essaie un autre nom, ou prends la machine en photo.")}</Ink>
           </View>
         }
         ListFooterComponent={
@@ -416,7 +416,7 @@ export function MachineFinderButton({ onPress }: { onPress: () => void }) {
       <CameraGlyph color={c.accent} size={20} />
       <View style={{ flex: 1, gap: 1 }}>
         <Ink size={15} weight="extraBold" numberOfLines={1}>{traduire("Trouve ta machine")}</Ink>
-        <Ink size={12} color={c.textMuted} numberOfLines={1}>{traduire("En image, ou prends-la en photo")}</Ink>
+        <Ink size={12} color={c.textMuted} numberOfLines={1}>{traduire("En image, ou en photo")}</Ink>
       </View>
       <Icon name="chevron" size={16} color={c.textMuted} />
     </Pressable>

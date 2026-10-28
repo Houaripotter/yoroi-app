@@ -139,7 +139,7 @@ function MarketingKitInner() {
       {complete ? (
         <Card style={{ padding: 16, gap: 6, alignItems: 'center', backgroundColor: P.mossSoft, borderColor: P.mossSoft }}>
           <Ink size={17} weight="black" color={P.mossText}>{traduire("Séquence complète")}</Ink>
-          <Ink size={13} color={P.mossText} style={{ textAlign: 'center' }}>{traduire("Tes 6 captures sont dans tes Photos. Range-les dans cet ordre pour l’App Store ou Instagram.")}</Ink>
+          <Ink size={13} color={P.mossText} style={{ textAlign: 'center' }}>{traduire("Tes 6 captures sont dans tes Photos. Range tes captures dans cet ordre pour l’App Store ou Instagram.")}</Ink>
         </Card>
       ) : null}
     </DetailScreen>

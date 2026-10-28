@@ -303,7 +303,7 @@ export default function BalancePhotoScreen() {
     } catch (err) {
       logger.warn('[Balance photo] copie impossible', err);
     }
-    setSendNotice(traduire('Consigne copiée, colle-la dans ton IA avec tes photos.'));
+    setSendNotice(traduire('Consigne copiée : colle la consigne dans ton IA avec tes photos.'));
     notificationAsync(NotificationFeedbackType.Success).catch(() => {});
     if (Platform.OS === 'web') return;
     try {
@@ -415,7 +415,7 @@ export default function BalancePhotoScreen() {
     const had = existingOf(st).has;
     const res = await saveImportBlock(st.date, values, list, replace);
     if (!res.ok) {
-      update(i, (s) => ({ ...s, open: true, error: traduire('Il manque ton poids : il n’est pas sur les photos et aucune pesée n’est notée ce jour-là. Écris-le dans la ligne Poids, ou décoche les valeurs de la balance.') }));
+      update(i, (s) => ({ ...s, open: true, error: traduire('Il manque ton poids : il n’est pas sur les photos et aucune pesée n’est notée ce jour. Écris ton poids dans la ligne Poids, ou décoche les valeurs de la balance.') }));
       return null;
     }
     const kept = res.kept ? `, ${res.kept} ${res.kept > 1 ? traduire('valeurs gardées') : traduire('valeur gardée')}` : '';
@@ -592,15 +592,15 @@ export default function BalancePhotoScreen() {
               hitSlop={6}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: rep }}
-              accessibilityLabel={isWeight ? traduire("Remplacer {0}, déjà noté ce jour-là, par {1} de la balance", p.old, nowTxt) : traduire("Remplacer {0}, déjà notée {1}", p.label, p.old)}
+              accessibilityLabel={isWeight ? traduire("Remplacer {0}, déjà noté ce jour, par {1} de la balance", p.old, nowTxt) : traduire("Remplacer {0}, déjà notée {1}", p.label, p.old)}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', minHeight: 32, paddingLeft: 47 }}
             >
               <Check on={rep} size={18} />
               <Ink size={12} weight="bold" color={rep ? c.accent : c.textSecondary} style={{ flexShrink: 1 }} numberOfLines={isWeight ? 4 : 2}>
                 {isWeight
                   ? rep
-                    ? traduire("Déjà noté ce jour-là : {0}. La balance fait foi : {1} le remplace, {2} reste dans tes pesées.", p.old, nowTxt, p.old)
-                    : traduire("Déjà noté ce jour-là : {0}, gardé. Coche pour prendre {1} de la balance.", p.old, nowTxt)
+                    ? traduire("Déjà noté ce jour : {0}. La balance fait foi : {1} le remplace, {2} reste dans tes pesées.", p.old, nowTxt, p.old)
+                    : traduire("Déjà noté ce jour : {0}, gardé. Coche pour prendre {1} de la balance.", p.old, nowTxt)
                   : rep
                     ? `Remplacer ${p.old}`
                     : traduire("Déjà notée : {0}, gardée", p.old)}
@@ -710,8 +710,8 @@ export default function BalancePhotoScreen() {
       const sub =
         f.key === 'poids_kg' && !hasWeight
           ? dayWeight
-            ? traduire('pas sur les photos : ta pesée de ce jour-là')
-            : traduire('pas sur les photos : écris-le')
+            ? traduire('pas sur les photos : ta pesée de ce jour')
+            : traduire('pas sur les photos : à écrire')
           : off
             ? traduire("à vérifier, de {0} à {1}", String(f.min).replace('.', DECIMAL), String(f.max).replace('.', DECIMAL))
             : f.key === 'physique' && edited
@@ -989,7 +989,7 @@ export default function BalancePhotoScreen() {
               </View>
             ) : null}
             <PrimaryButton label={traduire("Coller depuis le presse-papiers")} onPress={() => void paste()} />
-            <Ink size={12} color={c.textSecondary}>{traduire("Ou colle-la dans le champ :")}</Ink>
+            <Ink size={12} color={c.textSecondary}>{traduire("Ou colle la réponse dans le champ :")}</Ink>
             <TextInput
               value={text}
               onChangeText={setText}
@@ -1079,7 +1079,7 @@ export default function BalancePhotoScreen() {
             {multi && pending > SNAPSHOT_OVER && !allDone ? (
               <Ink size={12} color={c.textSecondary}>{traduire("Une copie de sécurité de tes données est faite sur ce téléphone avant l’import.")}</Ink>
             ) : null}
-            <Ink size={12} color={c.textSecondary}>{traduire("Une valeur déjà notée n’est jamais écrasée, sauf si tu coches Remplacer. Source notée : Balance (photo). Les balances à impédance donnent une estimation, compare-toi à toi-même.")}</Ink>
+            <Ink size={12} color={c.textSecondary}>{traduire("Une valeur déjà notée n’est jamais écrasée, sauf si tu coches Remplacer. Source notée : Balance (photo). Les balances à impédance donnent une estimation : compare tes mesures entre elles.")}</Ink>
           </View>
         ) : error ? (
           <View style={{ marginHorizontal: GUTTER, marginTop: 12, padding: 12, borderRadius: 14, backgroundColor: c.dangerTint }}>

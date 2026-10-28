@@ -19,6 +19,7 @@ import { blancA, paletteSombre, paperA } from '@/components/yoroi/livePalette';
 import { ORNEMENTS } from '@/components/yoroi/v2/ornements/images';
 import { useFondTaScene } from '@/components/yoroi/v2/espace/apercuScene';
 import { pickSportArt } from '@/lib/v2/seance/sportArt';
+import { carteBlanche, OMBRE_CARTE, ton } from '@/components/yoroi/v2/seance/pastel';
 import { traduire } from '@/lib/i18n/tr';
 
 /**
@@ -30,21 +31,26 @@ const ARTS: Record<TimerMode | 'sparring', string> = { musculation: 'musculation
 export function lookDuMode(mode: TimerMode | 'sparring'): ModeLook {
   const s = paletteSombre();
   const art = pickSportArt(ARTS[mode], false).source;
+  // 28 octobre 2026 (Pastel) : chaque chrono garde sa couleur, en pastel (fond doux, encre lisible), jamais de fond sature
+  const de = (t: Parameters<typeof ton>[0]) => {
+    const x = ton(t);
+    return { couleur: x.encre, doux: x.fond, art };
+  };
   switch (mode) {
     case 'musculation':
-      return { couleur: P.indigo, doux: P.indigoSoft, art };
+      return de('ciel');
     case 'combat':
-      return { couleur: P.goldDark, doux: P.goldSoft, art };
+      return de('peche');
     case 'tabata':
-      return { couleur: P.mossText, doux: P.mossSoft, art };
+      return de('menthe');
     case 'emom':
-      return { couleur: s ? '#5FB8E0' : '#1A7FA8', doux: s ? '#1B2B36' : '#E1F0F6', art };
+      return { couleur: s ? '#A9BEF5' : '#1F4FA8', doux: s ? '#243049' : '#E6ECF8', art };
     case 'amrap':
-      return { couleur: s ? '#A08CF5' : '#6A4FE0', doux: s ? '#262241' : '#ECE8FB', art };
+      return de('lilas');
     case 'fortime':
-      return { couleur: P.lacquer, doux: s ? '#232733' : '#E9EAEE', art };
+      return de('creme');
     default:
-      return { couleur: P.ink, doux: P.paper, art };
+      return de('peche');
   }
 }
 
@@ -71,7 +77,7 @@ export function ReprendreCard({ mode, resume, onPress }: { mode: TimerMode; resu
   const look = lookDuMode(mode);
   return (
     <Press onPress={onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={`Reprendre : ${resume}`}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, paddingRight: 16, borderRadius: 24, backgroundColor: look.doux, borderWidth: 2, borderColor: look.couleur }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, paddingRight: 14, borderRadius: 24, backgroundColor: look.doux }}>
         <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: blancA(0.7), overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
           <Image source={look.art} style={{ width: 64, height: 76 }} resizeMode="contain" accessibilityIgnoresInvertColors />
         </View>
@@ -79,8 +85,8 @@ export function ReprendreCard({ mode, resume, onPress }: { mode: TimerMode; resu
           <Ink size={12} weight="extraBold" color={look.couleur}>{traduire("Reprendre")}</Ink>
           <Ink size={18} weight="black" tight numberOfLines={2}>{resume}</Ink>
         </View>
-        <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: look.couleur, alignItems: 'center', justifyContent: 'center' }}>
-          <CIcon name="play" size={20} color={P.white} />
+        <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: P.white, alignItems: 'center', justifyContent: 'center', ...OMBRE_CARTE }}>
+          <CIcon name="play" size={20} color={look.couleur} />
         </View>
       </View>
     </Press>
@@ -92,16 +98,14 @@ export const DOCK_SPACE = 132;
 
 /** Grande carte d'un chrono : pictogramme de la structure, nom clair, sigle en petit, une phrase */
 export function ModeCard({ mode, title, tag, text, onPress, dark, vive }: { mode: TimerMode | 'sparring'; title: string; tag?: string; text: string; onPress: () => void; dark?: boolean; /** vague 45 : la carte vivante (couleur et illustration du chrono) */ vive?: boolean }) {
-  // audit 43 : en sombre, la carte foncee reste foncee (l'encre y devient claire)
-  const darkBg = paletteSombre() ? '#232838' : P.ink;
   if (vive) {
     const look = lookDuMode(mode);
     return (
       <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={`${title}. ${text}`}>
-        <View style={{ flexDirection: 'row', alignItems: 'stretch', borderRadius: 26, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, overflow: 'hidden', minHeight: 132 }}>
+        <View style={{ ...carteBlanche(P.white, P.line2), borderRadius: 24 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'stretch', borderRadius: 24, overflow: 'hidden', minHeight: 132 }}>
           <View style={{ width: 104, backgroundColor: look.doux, alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' }}>
             <Image source={look.art} style={{ width: 104, height: 122 }} resizeMode="contain" accessibilityIgnoresInvertColors />
-            <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 5, backgroundColor: look.couleur }} />
           </View>
           <View style={{ flex: 1, padding: 14, paddingRight: 10, gap: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -121,27 +125,31 @@ export function ModeCard({ mode, title, tag, text, onPress, dark, vive }: { mode
             </View>
           </View>
         </View>
+        </View>
       </Press>
     );
   }
+  // 28 octobre 2026 (Pastel) : la carte « dark » (sparring) devient une carte peche, plus de fond bleu nuit plein
+  const pe = ton('peche');
+  const fond = dark ? pe.fond : P.white;
   return (
     <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={`${title}. ${text}`}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, paddingRight: 12, borderRadius: 24, backgroundColor: dark ? darkBg : P.white, borderWidth: 1, borderColor: dark ? darkBg : P.line2 }}>
-        <View style={{ width: 84, height: 70, borderRadius: 18, backgroundColor: dark ? blancA(0.94) : paletteSombre() ? P.line2 : '#EEF0F7', alignItems: 'center', justifyContent: 'center' }}>
+      <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, paddingRight: 12, borderRadius: 24, backgroundColor: fond }, dark ? null : carteBlanche(P.white, P.line2), dark ? null : { borderRadius: 24 }]}>
+        <View style={{ width: 84, height: 70, borderRadius: 18, backgroundColor: dark ? blancA(0.7) : paletteSombre() ? P.line2 : '#EEF0F7', alignItems: 'center', justifyContent: 'center' }}>
           <ChronoPicto mode={mode} size={0.86} />
         </View>
         <View style={{ flex: 1, gap: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: 8, rowGap: 4 }}>
-            <Ink size={17} weight="black" tight color={dark ? (paletteSombre() ? P.ink : P.white) : P.ink}>{title}</Ink>
+            <Ink size={17} weight="black" tight color={P.ink}>{title}</Ink>
             {tag ? (
-              <View style={{ paddingHorizontal: 7, height: 20, borderRadius: 6, backgroundColor: dark ? 'rgba(255,255,255,0.14)' : paletteSombre() ? P.line : '#EEECE6', justifyContent: 'center' }}>
-                <Ink size={11} weight="extraBold" color={dark ? 'rgba(255,255,255,0.8)' : P.ink2}>{tag}</Ink>
+              <View style={{ paddingHorizontal: 7, height: 20, borderRadius: 6, backgroundColor: dark ? blancA(0.7) : paletteSombre() ? P.line : '#EEECE6', justifyContent: 'center' }}>
+                <Ink size={11} weight="extraBold" color={dark ? pe.encre : P.ink2}>{tag}</Ink>
               </View>
             ) : null}
           </View>
-          <Ink size={13} weight="medium" color={dark ? 'rgba(255,255,255,0.74)' : P.ink2} style={{ lineHeight: 18 }}>{text}</Ink>
+          <Ink size={13} weight="medium" color={dark ? pe.encre : P.ink2} style={{ lineHeight: 18 }}>{text}</Ink>
         </View>
-        <CIcon name="chevron" size={18} color={dark ? P.goldLight : P.muted} />
+        <CIcon name="chevron" size={18} color={dark ? pe.encre : P.muted} />
       </View>
     </Press>
   );
@@ -159,7 +167,7 @@ export function Legend({ color, text }: { color: string; text: string }) {
 /** Resume de la seance : la duree en tres grand, une phrase, la bande des phases et sa legende */
 export function SetupHero({ label, big, line, band, legend }: { label: string; big: string; line: string; band?: { seconds: number; color: string }[]; legend?: { color: string; text: string }[] }) {
   return (
-    <View style={{ borderRadius: 26, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, padding: 18, gap: 12 }}>
+    <View style={{ ...carteBlanche(P.white, P.line2), borderRadius: 24, padding: 18, gap: 12 }}>
       <View style={{ gap: 2 }}>
         <Ink size={13} weight="extraBold" color={P.muted}>{label}</Ink>
         <Ink size={50} weight="black" style={{ fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{big}</Ink>
@@ -178,7 +186,7 @@ export function SetupHero({ label, big, line, band, legend }: { label: string; b
 /** Bloc de reglage : un titre, une explication courte, puis le contenu */
 export function SetupBlock({ title, hint, children }: { title?: string; hint?: string; children: React.ReactNode }) {
   return (
-    <View style={{ borderRadius: 24, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, padding: 16, gap: 12 }}>
+    <View style={{ ...carteBlanche(P.white, P.line2), borderRadius: 24, padding: 16, gap: 12 }}>
       {title ? (
         <View style={{ gap: 2 }}>
           <Ink size={18} weight="black" tight>{title}</Ink>
@@ -227,7 +235,7 @@ export function ChoiceGrid<T extends string | number>({ items, value, onPick, co
 export function StartDock({ children }: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
   return (
-    <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 14, backgroundColor: P.paper, borderTopWidth: 1, borderTopColor: P.line2 }}>
+    <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 14, backgroundColor: P.paper, borderTopWidth: paletteSombre() ? 1 : 0, borderTopColor: P.line2, shadowColor: '#1D2033', shadowOpacity: paletteSombre() ? 0 : 0.06, shadowRadius: 14, shadowOffset: { width: 0, height: -4 }, elevation: 6 }}>
       {children}
     </View>
   );
@@ -235,17 +243,20 @@ export function StartDock({ children }: { children: React.ReactNode }) {
 
 /** Tres gros bouton d'action : un titre et une precision dessous, lisible et facile a toucher en sueur */
 export function HugeButton({ title, sub, icon = 'play', onPress, tone = 'accent' }: { title: string; sub?: string; icon?: CIconName; onPress: () => void; tone?: 'accent' | 'ink' }) {
-  const { accent } = useAccent();
-  const bg = tone === 'ink' ? P.ink : accent;
+  useAccent(); // se redessine quand le theme change
+  // 28 octobre 2026 (Pastel) : le grand bouton en pastel (fond #DCE3FF, texte bleu nuit), plus de bleu plein
+  const ink = tone === 'ink';
+  const bg = ink ? P.ink : P.primary;
+  const fg = ink ? P.white : P.onPrimary;
   return (
     <Press onPress={onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={sub ? `${title}, ${sub}` : title}>
-      <View style={{ minHeight: sub ? 78 : 64, borderRadius: 24, backgroundColor: bg, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18, shadowColor: bg, shadowOpacity: 0.28, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
-        <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center' }}>
-          <CIcon name={icon} size={24} color={P.white} width={2.8} />
+      <View style={{ minHeight: sub ? 78 : 64, borderRadius: 24, backgroundColor: bg, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18, ...OMBRE_CARTE }}>
+        <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: ink ? 'rgba(255,255,255,0.16)' : P.white, alignItems: 'center', justifyContent: 'center' }}>
+          <CIcon name={icon} size={24} color={fg} width={2.8} />
         </View>
         <View style={{ flex: 1, gap: 1 }}>
-          <Ink size={20} weight="black" tight color={P.white} numberOfLines={1}>{title}</Ink>
-          {sub ? <Ink size={13} weight="bold" color={paletteSombre() ? 'rgba(29,32,41,0.78)' : 'rgba(255,255,255,0.78)'} numberOfLines={1}>{sub}</Ink> : null}
+          <Ink size={20} weight="black" tight color={fg} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{title}</Ink>
+          {sub ? <Ink size={13} weight="bold" color={fg} style={{ opacity: 0.78 }} numberOfLines={1}>{sub}</Ink> : null}
         </View>
       </View>
     </Press>

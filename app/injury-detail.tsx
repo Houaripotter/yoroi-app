@@ -435,7 +435,7 @@ export default function InjuryDetailScreen() {
               {!isHealed && reprise.freineeParDouleur ? (
                 <Notice
                   tone="gold"
-                  text={traduire('Ta douleur est à {0} sur 10 : tu restes à l’étape {1} tant qu’elle ne baisse pas. Note-la chaque jour ; si elle ne baisse pas, demande l’avis d’un professionnel.', injury.eva_score, reprise.etape)}
+                  text={traduire('Ta douleur est à {0} sur 10 : tu restes à l’étape {1} tant qu’elle ne baisse pas. Note ta douleur chaque jour ; si elle ne baisse pas, demande l’avis d’un professionnel.', injury.eva_score, reprise.etape)}
                   style={{ marginBottom: 12 }}
                 />
               ) : null}

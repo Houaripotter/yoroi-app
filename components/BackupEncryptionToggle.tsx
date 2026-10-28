@@ -82,7 +82,7 @@ const BackupEncryptionToggleInner: React.FC = () => {
         setHasPassword(true);
         appAlert(
           traduire('Chiffrement activé'),
-          traduire('Tes prochaines sauvegardes seront protégées par ce mot de passe. Garde-le en lieu sûr, il te sera demandé pour les restaurer.')
+          traduire('Tes prochaines sauvegardes seront protégées par ce mot de passe. Garde ce mot de passe en lieu sûr, il te sera demandé pour les restaurer.')
         );
       } catch (e) {
         logger.error('[BackupEncryption] Erreur activation:', e);

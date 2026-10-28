@@ -39,9 +39,9 @@ export default function IdeasScreen() {
     try {
       const can = await Linking.canOpenURL(mailto);
       if (can) await safeOpenURL(mailto);
-      else appAlert(traduire('Pas d’app mail'), traduire("Écris-nous à {0}", APP_CONFIG.supportEmail));
+      else appAlert(traduire('Pas d’app mail'), traduire("Notre adresse : {0}", APP_CONFIG.supportEmail));
     } catch {
-      appAlert(traduire('Pas d’app mail'), traduire("Écris-nous à {0}", APP_CONFIG.supportEmail));
+      appAlert(traduire('Pas d’app mail'), traduire("Notre adresse : {0}", APP_CONFIG.supportEmail));
     }
   };
 
@@ -57,7 +57,7 @@ export default function IdeasScreen() {
           <TextInput
             value={text}
             onChangeText={setText}
-            placeholder={traduire("Dis-nous ce que tu as en tête")}
+            placeholder={traduire("Raconte ce que tu as en tête")}
             placeholderTextColor={P.muted}
             multiline
             maxLength={2000}

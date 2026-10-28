@@ -337,7 +337,7 @@ export default function CalculatorsScreen() {
                 <KV label={traduire("Avec ton exercice")} value={`${fmt(vWater.withExercise)} L`} strong last />
               </Card>
             ) : null}
-            <Notice tone="indigo" text={traduire("Repère simple et courant, pas une recommandation officielle. Adapte-le à ta transpiration et à la chaleur. Pendant l’effort, évite de perdre plus de 2 % de ton poids, selon la source ci-dessous.")} />
+            <Notice tone="indigo" text={traduire("Repère simple et courant, pas une recommandation officielle. Adapte ce repère à ta transpiration et à la chaleur. Pendant l’effort, évite de perdre plus de 2 % de ton poids, selon la source ci-dessous.")} />
             <SourceRow source={SOURCES.hydration} />
           </>
         ) : null}
@@ -364,7 +364,7 @@ export default function CalculatorsScreen() {
                 <StdBox label={traduire("Élite")} value={EXERCISES[exercise].standards.elite} color={P.goldDark} />
               </View>
             </Card>
-            <Notice tone="gold" text={traduire("Ne teste pas ta charge maximale seul : échauffe-toi bien et garde un pareur.")} />
+            <Notice tone="gold" text={traduire("Ne teste pas ta charge maximale seul : prends le temps de bien t’échauffer et garde un pareur.")} />
             <SourceRow source={SOURCES.epley} />
           </>
         ) : null}

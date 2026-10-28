@@ -140,9 +140,9 @@ export const TimetableView: React.FC<TimetableViewProps> = memo(({
 
   // Créneaux horaires pour l'affichage (3-4 par jour max en démo)
   const timeSlots = [
-    { id: 'morning', label: 'Matin', time: '07:00 - 12:00' },
-    { id: 'afternoon', label: 'Après-midi', time: '12:00 - 17:00' },
-    { id: 'evening', label: 'Soir', time: '17:00 - 21:00' },
+    { id: 'morning', label: 'Matin', time: '07:00 à 12:00' },
+    { id: 'afternoon', label: 'Après-midi', time: '12:00 à 17:00' },
+    { id: 'evening', label: 'Soir', time: '17:00 à 21:00' },
   ];
 
   // Fonction pour déterminer le créneau d'une séance

@@ -256,7 +256,7 @@ export default function ProgrammesScreen() {
         ))}
 
         <View style={{ paddingHorizontal: 4, gap: 6, marginTop: 4 }}>
-          <Ink size={12} color={c.textMuted}>{traduire('Chaque programme indique ses sources scientifiques, ouvre-le pour les voir.')}</Ink>
+          <Ink size={12} color={c.textMuted}>{traduire('Chaque programme indique ses sources scientifiques : ouvre un programme pour les voir.')}</Ink>
           <Ink size={12} color={c.textMuted}>{traduire('Si tu as un problème de santé, une douleur ou une blessure, demande l’avis d’un médecin avant de commencer.')}</Ink>
         </View>
       </ScrollView>

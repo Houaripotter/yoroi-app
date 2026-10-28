@@ -118,7 +118,7 @@ export default function SyncDevicesScreen() {
     setMsg(null);
     try {
       const count = await forceSync();
-      if (count === 0) setMsg({ tone: 'bad', text: traduire("Aucun appareil appairé à proximité. Ouvre cet écran sur ton autre appareil, à côté de celui-ci, avec le wifi et le réseau local autorisés.") });
+      if (count === 0) setMsg({ tone: 'bad', text: traduire("Aucun appareil appairé à proximité. Ouvre cet écran sur ton autre appareil, à côté de ce téléphone, avec le wifi et le réseau local autorisés.") });
       else setMsg({ tone: 'good', text: traduirePluriel(count, count > 1, "Synchronisation envoyée à {0} appareil. Les données se mettent à jour dans quelques secondes.", "Synchronisation envoyée à {0} appareils. Les données se mettent à jour dans quelques secondes.", count) });
     } catch (e: any) {
       setMsg({ tone: 'bad', text: traduire("Erreur : {0}", e?.message || traduire('inconnue')) });
@@ -154,7 +154,7 @@ export default function SyncDevicesScreen() {
             : isConnected
               ? traduire('Tes données se synchronisent')
               : status.paires.length
-                ? traduire('Ouvre cet écran sur ton autre appareil, à côté de celui-ci')
+                ? traduire('Ouvre cet écran sur ton autre appareil, à côté de ce téléphone')
                 : traduire('Appaire d’abord ton autre appareil avec un code')}
         </Ink>
         {isAvailable && !isConnected && status.paires.length > 0 ? <ActivityIndicator size="small" color={S.accent} /> : null}

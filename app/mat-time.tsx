@@ -214,7 +214,7 @@ export default function MatTimeScreen() {
                       <Ink size={12} weight="bold" color={P.ink2}>
                         {traduire("À ce rythme")}</Ink>
                       <Ink size={16} weight="black" color={P.goldDark}>
-                        {monthsLeft > 0 ? traduire("dans {0}", plural(monthsLeft, 'mois', 'mois')) : traduire('ce mois-ci')}
+                        {monthsLeft > 0 ? traduire("dans {0}", plural(monthsLeft, 'mois', 'mois')) : traduire('ce mois')}
                       </Ink>
                       <Ink size={12} weight="bold" color={P.ink2}>
                         {`${monthLong(proj.getMonth())} ${proj.getFullYear()}`}

@@ -131,11 +131,11 @@ const NOTIF_TYPES: { id: string; label: string; title: string; body: string }[] 
   { id: 'recap', label: traduire('Récap de la semaine'), title: traduire('Récap de ta semaine'), body: traduire('Découvre ton bilan sportif des 7 derniers jours dans Yoroi') },
   { id: 'sparring', label: 'Sparring', title: traduire('Sparring avec Larbi ?'), body: traduire('Objectif en cours : atteindre 20 % de victoires contre lui') },
   { id: 'j7', label: traduire('Compétition dans 7 jours'), title: traduire('Dans 7 jours : Open de la Côte'), body: traduire('Dernière semaine. Surveille ton poids : Médio, moins de 82,3 kg.') },
-  { id: 'veille', label: traduire('Veille de compétition'), title: traduire('Demain : Open de la Côte'), body: traduire('Rendez-vous à Montpellier. Prépare ton sac et couche-toi tôt.') },
-  { id: 'jourpesee', label: traduire('Jour de pesée'), title: traduire('Jour de pesée : Open de la Côte'), body: traduire('Médio, moins de 82,3 kg. Pèse-toi ce matin pour savoir où tu en es.') },
+  { id: 'veille', label: traduire('Veille de compétition'), title: traduire('Demain : Open de la Côte'), body: traduire('Rendez-vous à Montpellier. Prépare ton sac et va au lit tôt.') },
+  { id: 'jourpesee', label: traduire('Jour de pesée'), title: traduire('Jour de pesée : Open de la Côte'), body: traduire('Médio, moins de 82,3 kg. Une pesée ce matin te dit où tu en es.') },
   { id: 'resultat', label: traduire('Résultat de compétition'), title: traduire('Comment s’est passée ta compétition ?'), body: traduire('Note ton résultat de Open de la Côte : il rejoint ton palmarès.') },
   { id: 'citation', label: traduire('Citation du jour'), title: traduire('Citation du jour'), body: '' },
-  { id: 'essai', label: traduire('Fin de l’essai Premium'), title: traduire('Ton essai Premium se termine bientôt'), body: traduire('Il prend fin le 17 octobre. Pour ne pas être débité, annule-le avant dans les réglages de ton compte App Store.') },
+  { id: 'essai', label: traduire('Fin de l’essai Premium'), title: traduire('Ton essai Premium se termine bientôt'), body: traduire('Il prend fin le 17 octobre. Pour ne pas être débité, annule l’essai avant dans les réglages de ton compte App Store.') },
   { id: 'chrono', label: traduire('Chrono terminé'), title: traduire('Entraînement terminé !'), body: traduire('Excellent travail !') },
 ];
 

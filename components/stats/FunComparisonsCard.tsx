@@ -17,7 +17,7 @@ interface FunComparisonsCardProps {
 
 const FunComparisonsCardInner: React.FC<FunComparisonsCardProps> = ({
   comparisons,
-  title = 'Le saviez-vous ?',
+  title = 'Tu le savais ?',
 }) => {
   const { colors, isDark, screenText } = useTheme();
   if (!comparisons || comparisons.length === 0) return null;

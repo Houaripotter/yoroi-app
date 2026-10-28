@@ -67,7 +67,7 @@ export function Predictions() {
           <Jauge label={traduire("Pesées")} val={Math.min(r.pesees, MIN_PESEES)} max={MIN_PESEES} txt={traduire("{0} sur {1}", Math.min(r.pesees, MIN_PESEES), MIN_PESEES)} />
           <Jauge label={traduire("Jours couverts")} val={Math.min(r.jours, MIN_JOURS)} max={MIN_JOURS} txt={traduire("{0} sur {1}", Math.min(r.jours, MIN_JOURS), MIN_JOURS)} />
           <Ink size={12.5} color={P.muted} style={{ marginTop: 2 }}>
-            {traduire("Pèse-toi le matin, à jeun. On regarde tes {0} dernières semaines.", FENETRE_JOURS / 7)}
+            {traduire("Monte sur la balance le matin, à jeun. On regarde tes {0} dernières semaines.", FENETRE_JOURS / 7)}
           </Ink>
         </View>
       </View>

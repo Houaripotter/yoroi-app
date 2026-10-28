@@ -167,7 +167,7 @@ export function CameraFantome({ visible, photos, initialPose, onClose, onTaken }
         <View style={{ paddingHorizontal: 16, marginTop: 12, gap: 6 }}>
           <Ink size={13} color="rgba(255,255,255,0.75)" numberOfLines={2}>
             {ghost
-              ? traduire("Cale-toi sur ta photo du {0} en transparence : même place, même distance.", dateCourte(ghost.date.slice(0, 10)))
+              ? traduire("Aligne ton corps sur ta photo du {0} en transparence : même place, même distance.", dateCourte(ghost.date.slice(0, 10)))
               : pose
                 ? traduire('Première photo de cette pose : elle servira de repère aux suivantes.')
                 : traduire('Choisis une pose en haut pour retrouver le même cadrage la prochaine fois.')}

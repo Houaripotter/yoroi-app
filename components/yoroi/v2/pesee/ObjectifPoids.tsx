@@ -183,7 +183,7 @@ export function FeuilleObjectif({ visible, quoi: quoiInitial, onClose, etat, ser
                 <Ink size={13.5} weight="extraBold" color={c.accent}>{traduire("Changer")}</Ink>
               </Pressable>
               <View style={{ alignItems: 'center', gap: 2 }}>
-                <Ink size={12.5} weight="bold" color={c.textSecondary}>{traduire("Ton poids ce jour-là")}</Ink>
+                <Ink size={12.5} weight="bold" color={c.textSecondary}>{traduire("Ton poids ce jour")}</Ink>
                 <Ink size={34} weight="black" tight>{`${kg1(poidsDebut)} kg`}</Ink>
               </View>
               <Ruler value={poidsDebut} onChange={(v) => setPoidsDebut(clamp(v))} hardMin={30} hardMax={250} label={traduire("Règle du poids de début, fais glisser pour régler")} />

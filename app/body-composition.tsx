@@ -468,7 +468,7 @@ function BodyComposition() {
           </View>
         ) : null}
         <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 14 }}>
-          {traduire("Les balances à impédance donnent une estimation. Compare-toi à toi-même, à la même heure, dans les mêmes conditions.")}</Ink>
+          {traduire("Les balances à impédance donnent une estimation. Compare tes mesures entre elles, à la même heure, dans les mêmes conditions.")}</Ink>
       </ScrollView>
 
       <View style={{ position: 'absolute', left: GUTTER, right: GUTTER, bottom: insets.bottom + 18 }}>

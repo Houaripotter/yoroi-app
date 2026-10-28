@@ -24,7 +24,7 @@ export default function Aide() {
     const s = encodeURIComponent(subject);
     const b = encodeURIComponent(`\n\n\nYOROI ${APP_VERSION}, ${Platform.OS === 'ios' ? 'iPhone' : traduire('Android')}`);
     safeOpenURL(`mailto:${APP_CONFIG.supportEmail}?subject=${s}&body=${b}`).then((ok) => {
-      if (!ok) showPopup(traduire('Pas d’app mail'), traduire("Écris-nous directement à {0}", APP_CONFIG.supportEmail));
+      if (!ok) showPopup(traduire('Pas d’app mail'), traduire("Écris directement à l’équipe : {0}", APP_CONFIG.supportEmail));
     });
   };
 
@@ -41,7 +41,7 @@ export default function Aide() {
         <ValueRow icon="doc" label={traduire("Savoir")} sub={traduire("Règles des sports et sources scientifiques")} onPress={() => router.push('/savoir' as any)} />
         {/* 18 octobre 2026 (Houari : « les sources des calculs doivent être visibles ») : un acces direct */}
         <ValueRow icon="doc" label={traduire("Sources scientifiques")} sub={traduire("Les études derrière les calculs de YOROI")} onPress={() => router.push('/scientific-sources' as any)} />
-        <ValueRow icon="mail" label={traduire("Boîte à idées")} sub={traduire("Une idée, un bug ? Écris-nous")} onPress={() => mail(traduire('Idée pour YOROI'))} />
+        <ValueRow icon="mail" label={traduire("Boîte à idées")} sub={traduire("Une idée, un bug ? Écris à l’équipe")} onPress={() => mail(traduire('Idée pour YOROI'))} />
         {/* 18 octobre 2026 : la page Aide et contact du site (questions frequentes, abonnement, donnees) */}
         <ValueRow icon="globe" label={traduire("Aide en ligne")} sub={traduire("Achats, abonnement, données : les réponses")} onPress={() => void safeOpenURL(APP_CONFIG.site.support)} />
         <ValueRow icon="share" label={traduire("Partager YOROI")} sub={traduire("Avec un partenaire d’entraînement")} onPress={shareApp} />

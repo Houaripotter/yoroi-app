@@ -54,7 +54,7 @@ import { familyOf } from '@/lib/v2/dojo/seals';
 import { useArmure } from '@/lib/v2/dojo/useArmure';
 import { PACKS, THEMES, THEME_IMAGES, aUnPersonnage, parsePersonnage, personnageImage, personnageName } from '@/lib/v2/dojo/personnages';
 import type { Gender } from '@/lib/v2/dojo/personnages';
-import { P } from '@/components/yoroi/livePalette';
+import { carteBlanche, ton } from '@/components/yoroi/v2/seance/pastel';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const NB = ' ';
@@ -82,7 +82,7 @@ function SectionHead({ title, action, onAction }: { title: string; action?: stri
   const c = theme.colors;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, paddingHorizontal: 2 }}>
-      <Ink size={20} weight="black" tight style={{ flex: 1 }} accessibilityRole="header">
+      <Ink size={18} weight="black" tight style={{ flex: 1 }} accessibilityRole="header">
         {title}
       </Ink>
       {action && onAction ? (
@@ -422,7 +422,7 @@ export default function Dojo() {
             }}
             accessibilityRole="button"
             accessibilityLabel={traduire("Ta prochaine récompense : {0}, {1}, étape {2} sur 3, {3}. {4} XP sur {5}, encore {6} XP", cons.palier, cons.piece.nom, cons.enCours, cons.piece.etapes[cons.faites], formatXp(xp), formatXp(cons.objectifXp), formatXp(cons.resteXp))}
-            style={({ pressed }) => ({ backgroundColor: pressed ? P.bande : c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 14 })}
+            style={({ pressed }) => ({ ...carteBlanche(c.surface, c.border), backgroundColor: pressed ? c.fillSoft : c.surface, padding: 16, gap: 14 })}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ alignItems: 'center', gap: 8 }}>
@@ -430,7 +430,7 @@ export default function Dojo() {
                 <EtapesPiece faites={cons.faites} />
               </View>
               <View style={{ flex: 1, gap: 3 }}>
-                <Ink size={12} weight="extraBold" color={c.goldDeep}>{traduire("Ta prochaine récompense")}</Ink>
+                <Ink size={12.5} weight="extraBold" color={ton('creme').encre}>{traduire("Ta prochaine récompense")}</Ink>
                 <Ink size={20} weight="black" tight numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>{cons.palier}</Ink>
                 <Ink size={14} weight="extraBold" numberOfLines={2}>{traduire(cons.piece.nom)}</Ink>
                 <Ink size={12} color={c.textSecondary} numberOfLines={3}>
@@ -452,7 +452,7 @@ export default function Dojo() {
 
         {/* Vague 47 : tes semaines reussies, avec des jokers et une pause faciles a comprendre */}
         <Section i={4} ancre="semaines">
-          <View style={{ backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 14 }}>
+          <View style={{ ...carteBlanche(c.surface, c.border), padding: 16, gap: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
               <View style={{ flex: 1, gap: 4 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
@@ -502,7 +502,7 @@ export default function Dojo() {
             }}
             accessibilityRole="button"
             accessibilityLabel={traduire("{0} sceaux sur {1}. Voir la collection", sealsCount, sealsTotal)}
-            style={({ pressed }) => ({ backgroundColor: pressed ? P.bande : c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 14 })}
+            style={({ pressed }) => ({ ...carteBlanche(c.surface, c.border), backgroundColor: pressed ? c.fillSoft : c.surface, padding: 16, gap: 14 })}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               {(earnedSeals.length ? earnedSeals.slice(0, 4) : seals.slice(0, 4)).map((s) => (
@@ -536,7 +536,7 @@ export default function Dojo() {
         <Section i={4}>
           <SectionHead title={traduire("Tes niveaux par sport")} action={traduire("Tout voir")} onAction={() => go('/dojo/ceintures')} />
           {belts.length ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -22 }} contentContainerStyle={{ paddingHorizontal: 22, gap: 10 }} snapToInterval={158} decelerationRate="fast">
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16, marginTop: -4, marginBottom: -12 }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 12, gap: 10 }} snapToInterval={158} decelerationRate="fast">
               {belts.map((b) => (
                 <SportCard key={b.sport} b={b} gender={gender} onPress={() => go('/dojo/ceintures')} />
               ))}
@@ -548,7 +548,7 @@ export default function Dojo() {
                 go('/dojo/ceintures');
               }}
               accessibilityRole="button"
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: 22, backgroundColor: pressed ? P.bande : c.surface, borderWidth: 1, borderColor: c.border })}
+              style={({ pressed }) => ({ ...carteBlanche(c.surface, c.border), flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, backgroundColor: pressed ? c.fillSoft : c.surface })}
             >
               <View style={{ width: 64, height: 80, borderRadius: 14, backgroundColor: PACKS[0].fond, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
                 <Image source={PACKS[0].images[gender][0]} style={{ width: 64, height: 78 }} resizeMode="contain" />
@@ -572,7 +572,7 @@ export default function Dojo() {
                 key: 'rangs',
                 title: libelleChemin(u),
                 value: traduire("{0} rangs puis les dan, tu es {1}", RANKS.length, title),
-                fond: '#F3EBDA',
+                fond: ton('creme').fond,
                 image: imageChemin ?? cons.piece.image,
                 onPress: () => go('/dojo/rangs'),
               },
@@ -580,7 +580,7 @@ export default function Dojo() {
                 key: 'journal',
                 title: traduire('Journal d’XP'),
                 value: `${formatXp(xp)}${NB}XP gagnés`,
-                fond: c.indigoTint,
+                fond: ton('lilas').fond,
                 kanjiColor: c.indigo,
                 tampon: u === 'classique' ? 'objectif_maintien' : 'frein_programme',
                 onPress: () => go('/dojo/journal'),
@@ -659,7 +659,7 @@ function SportCard({ b, gender, onPress }: { b: BeltInfo; gender: Gender; onPres
       }}
       accessibilityRole="button"
       accessibilityLabel={traduire("{0}, niveau {1}, {2} séances", b.sportName, b.belt.name, b.count)}
-      style={({ pressed }) => ({ width: 148, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 8, paddingBottom: 12, gap: 8, opacity: pressed ? 0.85 : 1 })}
+      style={({ pressed }) => ({ ...carteBlanche(c.surface, c.border), width: 148, padding: 8, paddingBottom: 12, gap: 8, opacity: pressed ? 0.85 : 1 })}
     >
       <View style={{ height: 120, borderRadius: 16, backgroundColor: pack?.fond ?? c.fillSoft, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
         {pack ? <Image source={pack.images[gender][lvl - 1]} style={{ width: '100%', height: 132, marginBottom: -10 }} resizeMode="contain" /> : <LevelPlate color={b.belt.color} edge={b.belt.edge} size={44} />}

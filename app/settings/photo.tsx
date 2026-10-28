@@ -136,7 +136,7 @@ export default function PhotoEtContour() {
     <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 14, gap: 12 }}>
       <View style={{ gap: 2 }}>
         <Ink size={11.5} weight="extraBold" color={P.etiquettePrune} accessibilityRole="header" style={{ letterSpacing: 1.6, textTransform: 'uppercase' }}>{traduire('Ta photo')}</Ink>
-        <Ink size={12} color={c.textMuted}>{photo ? traduire('Change-la quand tu veux') : traduire('Ajoute-la pour la voir dans ton rond')}</Ink>
+        <Ink size={12} color={c.textMuted}>{photo ? traduire('Tu peux la changer quand tu veux') : traduire('Ajoute une photo pour la voir dans ton rond')}</Ink>
       </View>
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <BoutonPhoto icon="camera" label={traduire('Prendre')} onPress={() => prendre('camera')} disabled={occupe} principal={!photo} />

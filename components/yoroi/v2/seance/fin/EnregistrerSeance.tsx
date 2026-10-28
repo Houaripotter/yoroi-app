@@ -155,11 +155,11 @@ export function EnregistrerSeance({ trainingId, maSeanceId, marge = 22 }: { trai
       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
         <Image source={illustration(changee ? 'refresh' : 'carnet')} style={{ width: 48, height: 48 }} resizeMode="contain" accessibilityIgnoresInvertColors />
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={17} weight="black" tight>{changee ? traduire('Tu as changé {0}', changee.nom) : traduire('Refais-la en un appui')}</Ink>
+          <Ink size={17} weight="black" tight>{changee ? traduire('Tu as changé {0}', changee.nom) : traduire('À refaire en un appui')}</Ink>
           <Ink size={13} color={c.textSecondary}>
             {changee
               ? `${lignesDiff} ${traduire('Garder ces exercices pour la prochaine fois ?')}`
-              : traduirePluriel(exos.length, exos.length > 1, '{0} exercice, {1} séries. Garde-la dans Mes séances, avec un nom à toi.', '{0} exercices, {1} séries. Garde-la dans Mes séances, avec un nom à toi.', exos.length, nbSeries)}
+              : traduirePluriel(exos.length, exos.length > 1, '{0} exercice, {1} séries. Garde ta séance dans Mes séances, avec un nom à toi.', '{0} exercices, {1} séries. Garde ta séance dans Mes séances, avec un nom à toi.', exos.length, nbSeries)}
           </Ink>
         </View>
       </View>

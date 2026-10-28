@@ -38,7 +38,7 @@ interface PartnerData {
 const partnersData: PartnerData[] = [
   {
     id: '1',
-    name: "Fouad - Coach MMA & Prépa",
+    name: "Fouad, Coach MMA & Prépa",
     role: "Expert Performance & International",
     description: "Ancien combattant Pro, Coach MMA et Personal Trainer avec une expérience internationale. Une double expertise rare : diplômé par le diplôme et par le terrain. N'hésitez pas à visiter son Instagram pour découvrir son travail.",
     images: [],
@@ -57,7 +57,7 @@ const partnersData: PartnerData[] = [
   {
     id: '3',
     name: "Gracie Barra Les Olives",
-    role: "Académie & Famille - JJB",
+    role: "Académie & Famille, JJB",
     description: "Une académie, une famille. Dirigée par Venino Jr (Black Belt, multiple champion) et Mélissa (multiple championne). Le club dispose d'une section féminine dynamique. La porte est grande ouverte à tout le monde : n'hésitez pas à venir faire un cours d'essai !",
     images: [],
     location: "52 Av. Frédéric Mistral, Marseille",
@@ -83,7 +83,7 @@ const partnersData: PartnerData[] = [
   },
   {
     id: '6',
-    name: "Younes - Kiné & Hijama",
+    name: "Younes, Kiné & Hijama",
     role: "Expert Médical & Pratiquant JJB",
     description: "Expert dans le domaine Kiné du Sport et Cupping (Hijama). Il connait les besoins des combattants car il est lui-même pratiquant de JJB. Le partenaire idéal pour la récupération.",
     images: [],

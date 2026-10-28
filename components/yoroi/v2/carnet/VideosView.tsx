@@ -138,7 +138,7 @@ export function VideosView({ refreshKey, addKey = 0 }: Props) {
         <CarnetEmpty
           illus="videos"
           title={traduire("Garde ici les vidéos qui t’inspirent")}
-          text={traduire("Un exercice, une technique : importe la vidéo depuis ta galerie, donne-lui un titre et range-la par muscle ou par sport.")}
+          text={traduire("Un exercice, une technique : importe la vidéo depuis ta galerie, donne un titre à la vidéo et tu la ranges par muscle ou par sport.")}
           action={traduire("Importer une vidéo")}
           onAction={() => setAdding(true)}
         />

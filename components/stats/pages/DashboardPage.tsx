@@ -655,7 +655,7 @@ export const DashboardPage: React.FC = React.memo(() => {
 
       {/* Comparaisons fun (carrousel horizontal, effet wow) */}
       {funComparisons.length > 0 && (
-        <FunComparisonsCard comparisons={funComparisons} title="Le saviez-vous ?" />
+        <FunComparisonsCard comparisons={funComparisons} title="Tu le savais ?" />
       )}
 
       <View style={{ height: 40 }} />
@@ -665,7 +665,7 @@ export const DashboardPage: React.FC = React.memo(() => {
           visible={!!selectedMetric}
           onClose={handleCloseModal}
           title={selectedMetric.title}
-          subtitle={`Vision complète - ${selectedMetric.theme}`}
+          subtitle={`Vision complète, ${selectedMetric.theme}`}
           data={modalData}
           color={selectedMetric.color}
           unit={selectedMetric.unit}

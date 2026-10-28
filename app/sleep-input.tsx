@@ -159,7 +159,7 @@ export default function NoterMaNuit() {
       <Enter i={3}>
         <Card style={{ alignItems: 'center', gap: 6 }}>
           <Ink size={15} weight="extraBold">
-            {traduire("Comment as-tu dormi ?")}</Ink>
+            {traduire("Ta nuit, c’était comment ?")}</Ink>
           <Stars value={quality} size={30} onChange={setQuality} />
           <Ink size={14} weight="bold" color={quality >= 4 ? P.mossText : quality === 3 ? P.ink2 : P.goldDark}>
             {QUALITY_LABELS[quality]}

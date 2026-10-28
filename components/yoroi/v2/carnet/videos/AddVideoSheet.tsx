@@ -173,7 +173,7 @@ export function AddVideoSheet({ visible, onClose, onSaved, preset, editing }: Pr
       {step === 'source' ? (
         <>
           <Ink size={14} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>
-            {traduire("Une vidéo TikTok ou Instagram enregistrée sur ton téléphone, ou que tu as filmée : importe-la, elle reste dans YOROI.")}</Ink>
+            {traduire("Une vidéo TikTok ou Instagram enregistrée sur ton téléphone, ou que tu as filmée : tu l’importes, elle reste dans YOROI.")}</Ink>
           <Press onPress={pickFromGallery} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Importer depuis ta galerie")}>
             <View style={{ minHeight: 96, borderRadius: 22, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: P.primary }}>
               <View style={{ width: 60, height: 60, borderRadius: 18, backgroundColor: blancA(0.92), alignItems: 'center', justifyContent: 'center' }}>
@@ -181,7 +181,7 @@ export function AddVideoSheet({ visible, onClose, onSaved, preset, editing }: Pr
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <Ink size={18} weight="black" color={P.onPrimary}>{traduire("Depuis ta galerie")}</Ink>
-                <Ink size={13} weight="bold" color="rgba(255,255,255,0.8)">{traduire("Choisis la vidéo, donne-lui un titre")}</Ink>
+                <Ink size={13} weight="bold" color="rgba(255,255,255,0.8)">{traduire("Choisis la vidéo, donne un titre")}</Ink>
               </View>
               <CIcon name="chevron" size={18} color={P.onPrimary} />
             </View>

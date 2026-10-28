@@ -85,7 +85,7 @@ export default function NutritionPlanScreen() {
 
           {g?.warning ? (
             <Enter i={1}>
-              <Notice tone="danger" title={traduire("À ne pas tenir longtemps")} text={traduire("{0}. Une perte trop rapide coûte du muscle, de la force et de la performance. Parles-en à un professionnel de santé.", pretty(g.warning))} />
+              <Notice tone="danger" title={traduire("À ne pas tenir longtemps")} text={traduire("{0}. Une perte trop rapide coûte du muscle, de la force et de la performance. Demande conseil à un professionnel de santé.", pretty(g.warning))} />
             </Enter>
           ) : null}
 

@@ -200,7 +200,7 @@ export default function ImportCSVScreen() {
           <Enter i={0}>
             <Glass style={{ gap: 12, backgroundColor: blancA(0.92) }}>
               <Ink size={18} weight="black" tight>{traduire("Un seul fichier pour tout ton historique")}</Ink>
-              <Ink size={14} color={P.ink2}>{traduire("Remplis-le sur ton ordinateur, puis importe-le ici.")}</Ink>
+              <Ink size={14} color={P.ink2}>{traduire("Remplis le modèle sur ton ordinateur, puis importe le fichier ici.")}</Ink>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 <TypeBadge icon="scale" label="Poids" tint={P.indigo} soft={P.indigoSoft} />
                 <TypeBadge icon="pulse" label={traduire("Composition")} tint={P.mossText} soft={P.mossSoft} />
@@ -212,7 +212,7 @@ export default function ImportCSVScreen() {
             <NumberedSteps steps={[
               { title: traduire('Télécharge le modèle'), text: traduire('Il s’ouvre dans Excel, Google Sheets ou Numbers, avec des exemples.') },
               { title: traduire('Remplis tes données'), text: traduire('Une ligne par date. Laisse vide ce que tu n’as pas.') },
-              { title: 'Importe-le', text: traduire('Range-le dans tes fichiers en ligne, puis choisis-le ci-dessous.') },
+              { title: 'Importer le fichier', text: traduire('Range le fichier dans tes fichiers en ligne, puis tu le choisis plus bas.') },
             ]} />
           </Enter>
           <Enter i={2} style={{ gap: 10 }}>
@@ -227,7 +227,7 @@ export default function ImportCSVScreen() {
             <Ink size={13} color={P.ink2}>
               {Platform.OS === 'ios'
                 ? traduire('Range le fichier dans iCloud Drive sur ton Mac, il apparaît dans Fichiers sur ton iPhone. AirDrop et mail marchent aussi.')
-                : traduire('Range le fichier dans Google Drive sur ton ordinateur, puis ouvre-le depuis Fichiers. WhatsApp et mail marchent aussi.')}
+                : traduire('Range le fichier dans Google Drive sur ton ordinateur, puis ouvre le fichier depuis Fichiers. WhatsApp et mail marchent aussi.')}
             </Ink>
             <Ink size={12} color={P.ink2}>{traduire("Les fichiers des anciennes versions sont acceptés. Séparateurs virgule ou point-virgule, dates JJ/MM/AAAA ou AAAA-MM-JJ.")}</Ink>
           </Card>
