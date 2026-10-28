@@ -332,6 +332,14 @@ export const ANCIENNES: Partial<Record<NomSticker, ImageSourcePropType>> = {
   sport_vitesse: require('@/assets/avatars/app/tampons/sport_vitesse.webp'),
   sport_voile: require('@/assets/avatars/app/tampons/sport_voile.webp'),
   sport_volley: require('@/assets/avatars/app/tampons/sport_volley.webp'),
+  // les tampons de la collection qui ont deja le meme motif (koi de la cascade, balance ancienne, saule, lapin de lune, lanterne de pierre)
+  erable: require('@/assets/avatars/app/tampons/erable.webp'),
+  gunbai: require('@/assets/avatars/app/tampons/gunbai.webp'),
+  lune_lapin: require('@/assets/avatars/app/tampons/lapin_lune.webp'),
+  lanterne_pierre: require('@/assets/avatars/app/tampons/toro.webp'),
+  koi_cascade: require('@/assets/avatars/app/tampons/record.webp'),
+  balance_ancienne: require('@/assets/avatars/app/tampons/record_poids.webp'),
+  saule: require('@/assets/avatars/app/tampons/frein_blessures.webp'),
 };
 
 // ============ le reglage Illustrations ============
