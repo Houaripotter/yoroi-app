@@ -765,6 +765,7 @@ export function Accroche({
   const apercu = useApercuVisible();
   const visible = useEcranVisible();
   const [held, setHeld] = useState(false);
+  const [rangeeTenue, setRangeeTenue] = useState<number | null>(null);
   const [i, setI] = useState(0);
   const [pagerH, setPagerH] = useState(0);
   const rows = useMemo(() => buildRows(genre), [genre]);
@@ -861,14 +862,18 @@ export function Accroche({
     if (contenuH <= 0) return null;
     if (id === 'mur') {
       return (
-        <View style={{ width, height: contenuH, overflow: 'hidden', justifyContent: 'center' }} pointerEvents="none">
+        <View style={{ width, height: contenuH, overflow: 'hidden', justifyContent: 'center' }}>
+          {/* 28 octobre 2026 (Houari) : la rangee touchee s'arrete tant que le doigt est pose et repart des qu'il se leve ;
+              elle se fait aussi glisser au doigt (Defilement draggable) */}
           <View style={{ gap: ROW_GAP }}>
             {shown.map((r, k) => (
-              <Defilement key={k} speed={speeds[k]} direction={k % 2 === 0 ? 'left' : 'right'} paused={!visible || i !== 0} start={[0, 0.4, 0.7][k]}>
-                {r.map((t, j) => (
-                  <TileView key={j} t={t} h={tileH} />
-                ))}
-              </Defilement>
+              <View key={k} onTouchStart={() => setRangeeTenue(k)} onTouchEnd={() => setRangeeTenue(null)} onTouchCancel={() => setRangeeTenue(null)}>
+                <Defilement speed={speeds[k]} direction={k % 2 === 0 ? 'left' : 'right'} paused={!visible || i !== 0 || rangeeTenue === k} start={[0, 0.4, 0.7][k]} draggable>
+                  {r.map((t, j) => (
+                    <TileView key={j} t={t} h={tileH} />
+                  ))}
+                </Defilement>
+              </View>
             ))}
           </View>
           <LinearGradient pointerEvents="none" start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} colors={[c.background, `${c.background}00`]} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 26 }} />

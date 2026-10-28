@@ -1,146 +1,168 @@
 /**
- * Ecran 15 : « On forge ton armure », en plein ecran (vague 29, refait).
- * Quatre scenes d'epoque se succedent en fondu, chacune avec un personnage different (le Guerrier au rang
- * Ashigaru dans la forge, le Ronin errant sous les cerisiers, le Ninja ou la Kunoichi dans la neige,
- * le Guerrier au rang Shogun devant le chateau), toujours au dessin classique. Zoom lent sur chaque decor,
- * une ligne se coche par scene pendant que l'enregistrement final se fait vraiment, avec l'indicateur ensō
- * de l'ecran de chargement. Gong et vibration a la fin. Environ 3,8 secondes, une seule fois :
- * au retour depuis ton plan, l'onboarding saute cet ecran. Plus de halo rond derriere le personnage.
- * Vague 45 : l'univers choisi a l'ecran 4 decide des scenes. Classique : la salle, le parc, la ville et la piste,
- * avec le Sportif ou la Sportive qui gagne sa tenue, titre « On prépare ta tenue ». Sans personnage : les memes
- * scenes seules, titre « On prépare ton plan ».
- * 26 octobre 2026 (Houari : « je n'ai pas compris pourquoi tu dis on prépare ta tenue ») : en Classique le titre devient
- * « On prépare ton plan », comme sans personnage (le Japon garde « On forge ton armure », le nom de son Dojo).
- * La liste dit ce qui est vraiment prêt a la fin (lignes, calculees par app/onboarding.tsx : ton chemin de poids,
- * ta semaine, ton personnage, tes rappels si tu en as choisi, ton accueil). Environ 2,6 s au lieu de 3,8.
+ * Ecran de preparation de l'onboarding (« On forge ton armure », « On prépare ton plan »).
+ * L'enregistrement final se fait vraiment pendant l'ecran (run), une seule fois : au retour depuis ton plan, il est saute.
+ * 28 octobre 2026, refait (Houari : « on pourrait mieux faire, je compte sur toi » ; le titre blanc et jaune sur le ciel
+ * etait illisible) :
+ *  1. en haut, ta scene en carte (celle choisie a l'ecran Ta scene, sinon celle de ton univers) avec ton personnage,
+ *     un zoom lent du decor et le personnage qui monte doucement ;
+ *  2. le titre en encre sur le fond clair de l'app, lisible ;
+ *  3. un anneau de progression pastel qui se remplit, le pourcentage au centre, et a cote les chiffres de ton plan qui
+ *     apparaissent un par un (ton cap, tes seances par semaine, ton arrivee prevue : seulement tes reponses et l'estimation
+ *     de lib/v2/pesee/estimation.ts) ;
+ *  4. les etapes, chacune avec son sticker, qui se cochent une par une ; la derniere attend la fin de l'enregistrement.
+ * Environ 4,2 secondes. Gong et vibration a la fin. Reduire les animations : pas de zoom ni de montee.
  */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { StatusBar, StyleSheet, View, useWindowDimensions } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Image, StatusBar, View, useWindowDimensions } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import type { SharedValue } from 'react-native-reanimated';
+import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
+import Animated, { Easing, FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, ZoomIn } from 'react-native-reanimated';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
 import { tap } from '@/components/yoroi/v2/accueil/kit';
-import { guerrierImage } from '@/components/yoroi/v2/espace/assets';
-import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
-import { FONDS } from '@/components/yoroi/v2/fonds/FondEpoque';
-import { CLASSIQUE_IMAGES, MONDE_PERSONNAGES, packImage } from '@/lib/v2/dojo/personnages';
-import { CLASSIQUE_SCENE_IMAGES } from '@/lib/v2/espace/classique';
+import { guerrierImage, sceneMeta } from '@/components/yoroi/v2/espace/assets';
+import { CLASSIQUE_IMAGES } from '@/lib/v2/dojo/personnages';
+import { CLASSIQUE_SCENE_IMAGES, SCENES_CLASSIQUE } from '@/lib/v2/espace/classique';
+import { SCENES_VOYAGES } from '@/lib/v2/espace/voyages';
 import type { ChoixUnivers } from '@/lib/v2/dojo/choisirUnivers';
-import { FORGE_SCENE } from './illus';
-import { GUTTER, MainButton, ProgressBar, RoundIcon, useColors } from './ui';
+import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+import { GUTTER, MainButton, ProgressBar, RoundIcon, decouper, useColors } from './ui';
 import type { Nav } from './types';
 import { ApercuDansBarre, useApercuVisible } from '@/components/yoroi/v2/studio/PreviewBar';
 import { traduire } from '@/lib/i18n/tr';
 
+export type LignePreparation = { texte: string; sticker: NomSticker };
+export type ChiffrePreparation = { label: string; valeur: string; famille: 'bleu' | 'lilas' | 'creme' };
+
+const FAMILLES: Record<ChiffrePreparation['famille'], { fond: string; titre: string }> = {
+  bleu: { fond: '#E6ECF8', titre: '#3557D9' },
+  lilas: { fond: '#EFE6F3', titre: '#8A3F78' },
+  creme: { fond: '#F6EEDD', titre: '#A57A1C' },
+};
+
 /** liste par defaut, si l'appelant n'en donne pas */
-const LIGNES_DEFAUT = [traduire('Ton suivi de poids'), traduire('Ta semaine d’entraînement'), traduire('Ton écran d’accueil')];
-/** duree d'une scene ; la derniere reste a l'ecran jusqu'a la fin */
-const SCENE_MS = 600;
-const MIN_MS = 2600;
+const LIGNES_DEFAUT: LignePreparation[] = [
+  { texte: traduire('Ton suivi de poids'), sticker: 'torii' },
+  { texte: traduire('Ta semaine d’entraînement'), sticker: 'calendrier' },
+  { texte: traduire('Ton écran d’accueil'), sticker: 'lanterne' },
+];
+/** duree totale ; la derniere etape attend que l'enregistrement soit vraiment fini */
+const DUREE_MS = 4200;
 
-type Scene = { fond: ImageSourcePropType; perso: ImageSourcePropType | null };
+/** Titre selon l'univers, le mot cle en couleur */
+const TITRES: Record<ChoixUnivers, string> = {
+  japon: traduire('On forge **ton armure**'),
+  classique: traduire('On prépare **ton plan**'),
+  aucun: traduire('On prépare **ton plan**'),
+};
 
-function monde(id: string, genre: 'h' | 'f'): ImageSourcePropType {
-  const pack = MONDE_PERSONNAGES.find((p) => p.id === id);
-  return pack ? packImage(pack, genre, 1) : guerrierImage(genre, 0);
+function imageScene(id: string | null, univers: ChoixUnivers): ImageSourcePropType {
+  const sid = id ?? (univers === 'japon' ? 'samourai_armurerie' : 'classique_salle_jour');
+  return SCENES_VOYAGES.find((s) => s.id === sid)?.image ?? SCENES_CLASSIQUE.find((s) => s.id === sid)?.image ?? (univers === 'japon' ? sceneMeta(sid).image : CLASSIQUE_SCENE_IMAGES.classique_salle_jour);
 }
 
-/** Un decor et son personnage : fondu d'entree et de sortie, zoom lent du decor, le personnage monte un peu */
-function Couche({ index, last, t, scene, heroW, heroH, bottom }: { index: number; last: boolean; t: SharedValue<number>; scene: Scene; heroW: number; heroH: number; bottom: number }) {
-  const fondStyle = useAnimatedStyle(() => {
-    const p = t.value;
-    const opacity = index === 0 ? (last ? 1 : interpolate(p, [0.75, 1], [1, 0], 'clamp')) : last ? interpolate(p, [index - 0.3, index], [0, 1], 'clamp') : interpolate(p, [index - 0.3, index, index + 0.75, index + 1], [0, 1, 1, 0], 'clamp');
-    const scale = interpolate(p, [index - 0.3, index + (last ? 1.6 : 1)], [1.02, 1.12], 'clamp');
-    return { opacity, transform: [{ scale }] };
-  });
-  const persoStyle = useAnimatedStyle(() => {
-    const p = t.value;
-    const opacity = index === 0 ? (last ? 1 : interpolate(p, [0.7, 0.95], [1, 0], 'clamp')) : last ? interpolate(p, [index - 0.25, index], [0, 1], 'clamp') : interpolate(p, [index - 0.15, index + 0.1, index + 0.7, index + 0.95], [0, 1, 1, 0], 'clamp');
-    const rise = interpolate(p, [index - 0.25, last ? index : index + 0.3], [16, 0], 'clamp');
-    return { opacity, transform: [{ translateY: rise }] };
-  });
+/** L'anneau pastel qui se remplit, le pourcentage au centre */
+function Anneau({ part, taille }: { part: number; taille: number }) {
+  const c = useColors();
+  const trait = 10;
+  const r = (taille - trait) / 2;
+  const tour = 2 * Math.PI * r;
+  const p = Math.max(0, Math.min(1, part));
   return (
-    <>
-      <Animated.Image source={scene.fond} resizeMode="cover" style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }, fondStyle]} accessibilityIgnoresInvertColors />
-      {scene.perso ? (
-        <Animated.Image source={scene.perso} resizeMode="contain" style={[{ position: 'absolute', bottom, alignSelf: 'center', width: heroW, height: heroH }, persoStyle]} accessibilityIgnoresInvertColors />
-      ) : null}
-    </>
+    <View style={{ width: taille, height: taille, alignItems: 'center', justifyContent: 'center' }} accessible accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(p * 100) }}>
+      <Svg width={taille} height={taille} style={{ position: 'absolute' }}>
+        <Defs>
+          <SvgGradient id="anneauPrep" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor="#8FA6F8" />
+            <Stop offset="0.55" stopColor="#B35A9E" />
+            <Stop offset="1" stopColor="#D9B866" />
+          </SvgGradient>
+        </Defs>
+        <Circle cx={taille / 2} cy={taille / 2} r={r} stroke="#E6ECF8" strokeWidth={trait} fill="none" />
+        <Circle cx={taille / 2} cy={taille / 2} r={r} stroke="url(#anneauPrep)" strokeWidth={trait} fill="none" strokeLinecap="round" strokeDasharray={`${tour * Math.max(0.02, p)} ${tour}`} transform={`rotate(-90 ${taille / 2} ${taille / 2})`} />
+      </Svg>
+      <Ink size={Math.round(taille * 0.26)} weight="black" tight color={c.ink} style={{ fontVariant: ['tabular-nums'] }}>{`${Math.round(p * 100)}`}</Ink>
+      <Ink size={11} weight="black" color={c.textMuted} style={{ marginTop: -2 }}>%</Ink>
+    </View>
   );
 }
 
-/** Titre de l'ecran selon l'univers : le debut, puis le mot en or */
-const TITRES: Record<ChoixUnivers, [string, string]> = {
-  japon: [traduire('On forge '), traduire('ton armure')],
-  classique: [traduire('On prépare '), traduire('ton plan')],
-  aucun: [traduire('On prépare '), traduire('ton plan')],
-};
-
-export function Forge({ nav, genre, univers = 'japon', lignes, run, onDone, onSound }: { nav: Nav; genre: 'h' | 'f'; univers?: ChoixUnivers; lignes?: string[]; run: () => Promise<void>; onDone: () => void; onSound: () => void }) {
+export function Forge({ nav, genre, univers = 'japon', lignes, chiffres = [], scene = null, run, onDone, onSound }: {
+  nav: Nav;
+  genre: 'h' | 'f';
+  univers?: ChoixUnivers;
+  lignes?: LignePreparation[];
+  chiffres?: ChiffrePreparation[];
+  /** la scene choisie a l'ecran Ta scene (null : celle de ton univers) */
+  scene?: string | null;
+  run: () => Promise<void>;
+  onDone: () => void;
+  onSound: () => void;
+}) {
   const LINES = lignes && lignes.length ? lignes : LIGNES_DEFAUT;
   const c = useColors();
+  const illus = useIllustrations();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const apercu = useApercuVisible();
+  const calme = !!useReducedMotion();
+  const petit = height < 720;
   const [checked, setChecked] = useState(0);
+  const [part, setPart] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const doneRef = useRef(false);
-  const t = useSharedValue(0);
-  const scenes: Scene[] = useMemo(() => {
-    if (univers === 'japon') {
-      return [
-        { fond: FORGE_SCENE, perso: guerrierImage(genre, 0) },
-        { fond: FONDS.sakura, perso: monde('ronin_errant', genre) },
-        { fond: FONDS.neige, perso: monde('ninja', genre) },
-        { fond: FONDS.chateau, perso: guerrierImage(genre, 4) },
-      ];
-    }
-    // Vague 45 : Classique (le Sportif ou la Sportive, du premier au dernier rang) ou les scenes seules
-    const avec = univers === 'classique';
-    const g = genre === 'f' ? 'f' : 'h';
-    return [
-      { fond: CLASSIQUE_SCENE_IMAGES.classique_salle_jour, perso: avec ? CLASSIQUE_IMAGES[g][0] : null },
-      { fond: CLASSIQUE_SCENE_IMAGES.classique_parc_jour, perso: avec ? CLASSIQUE_IMAGES[g][1] : null },
-      { fond: CLASSIQUE_SCENE_IMAGES.classique_ville_jour, perso: avec ? CLASSIQUE_IMAGES[g][2] : null },
-      { fond: CLASSIQUE_SCENE_IMAGES.classique_piste_jour, perso: avec ? CLASSIQUE_IMAGES[g][4] : null },
-    ];
-  }, [genre, univers]);
-  const [titreDebut, titreOr] = TITRES[univers] ?? TITRES.japon;
-  const petit = height < 720;
-  const listH = LINES.length * 42 + 36;
-  const bottom = insets.bottom + listH + (petit ? 0 : 12);
-  const heroH = Math.round(Math.min(height - bottom - insets.top - (petit ? 150 : 190), 400));
-  const heroW = Math.round(Math.min(width * 0.8, heroH * 0.75));
 
+  const fond = imageScene(scene, univers);
+  const g: 'h' | 'f' = genre === 'f' ? 'f' : 'h';
+  // Japon : le Rōnin ; Classique : le Sportif ou la Sportive ; sans personnage : la scene seule
+  const perso = univers === 'japon' ? guerrierImage(genre, 3) : univers === 'classique' ? CLASSIQUE_IMAGES[g][3] : null;
+  const carteW = width - GUTTER * 2;
+  const carteH = Math.round(Math.min(petit ? 190 : 250, height * 0.3));
+
+  // zoom lent du decor et montee du personnage
+  const zoom = useSharedValue(1);
+  const monte = useSharedValue(calme ? 0 : 18);
   useEffect(() => {
-    t.value = 0;
-    t.value = withTiming(scenes.length - 1, { duration: SCENE_MS * (scenes.length - 1), easing: Easing.linear });
-  }, [attempt, t, scenes.length]);
+    if (calme) return;
+    zoom.value = 1;
+    zoom.value = withTiming(1.1, { duration: DUREE_MS + 600, easing: Easing.out(Easing.quad) });
+    monte.value = 18;
+    monte.value = withTiming(0, { duration: 900, easing: Easing.out(Easing.cubic) });
+  }, [attempt, calme, zoom, monte]);
+  const styleFond = useAnimatedStyle(() => ({ transform: [{ scale: zoom.value }] }));
+  const stylePerso = useAnimatedStyle(() => ({ transform: [{ translateY: monte.value }] }));
 
   useEffect(() => {
     let alive = true;
     doneRef.current = false;
     setChecked(0);
+    setPart(0);
     setError(null);
     const t0 = Date.now();
-    // une ligne cochee par scene ; la derniere attend que l'enregistrement soit vraiment fini
+    let fini = false;
+    // l'anneau avance jusqu'a 92 % au rythme de l'ecran, puis 100 % quand l'enregistrement est fini
+    const horloge = setInterval(() => {
+      if (!alive) return;
+      const p = Math.min(1, (Date.now() - t0) / DUREE_MS);
+      setPart(fini ? 1 : Math.min(0.92, p * 0.92));
+    }, 50);
+    const pas = Math.round((DUREE_MS - 700) / Math.max(1, LINES.length));
     const timers = LINES.slice(0, -1).map((_, i) =>
       setTimeout(() => {
         if (!alive) return;
         setChecked((n) => Math.max(n, i + 1));
         tap('light');
-      }, 450 + i * Math.round((MIN_MS - 900) / Math.max(1, LINES.length - 1))),
+      }, 500 + i * pas),
     );
     run()
       .then(async () => {
-        const wait = Math.max(0, MIN_MS - 400 - (Date.now() - t0));
+        const wait = Math.max(0, DUREE_MS - 500 - (Date.now() - t0));
         await new Promise((r) => setTimeout(r, wait));
         if (!alive) return;
+        fini = true;
+        setPart(1);
         setChecked(LINES.length);
         onSound();
         tap('success');
@@ -149,7 +171,7 @@ export function Forge({ nav, genre, univers = 'japon', lignes, run, onDone, onSo
             doneRef.current = true;
             onDone();
           }
-        }, 400);
+        }, 500);
       })
       .catch((e: unknown) => {
         if (!alive) return;
@@ -157,71 +179,86 @@ export function Forge({ nav, genre, univers = 'japon', lignes, run, onDone, onSo
       });
     return () => {
       alive = false;
+      clearInterval(horloge);
       timers.forEach(clearTimeout);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attempt]);
 
-  const fini = checked >= LINES.length;
+  // les chiffres de ton plan apparaissent a 20, 45 et 70 % de l'anneau
+  const seuils = [0.2, 0.45, 0.7];
+  const titre = TITRES[univers] ?? TITRES.japon;
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#17110D', overflow: 'hidden' }}>
-      <StatusBar barStyle="light-content" />
-      <View style={StyleSheet.absoluteFill} accessible accessibilityLabel={univers === 'japon' ? traduire('Des scènes d’époque défilent, un personnage différent dans chacune') : univers === 'classique' ? traduire('Des scènes de salle, de parc et de ville défilent avec ton personnage') : traduire('Des scènes de salle, de parc et de ville défilent')}>
-        {scenes.map((s, i) => (
-          <Couche key={i} index={i} last={i === scenes.length - 1} t={t} scene={s} heroW={heroW} heroH={heroH} bottom={bottom} />
-        ))}
-      </View>
-      <LinearGradient
-        pointerEvents="none"
-        colors={['rgba(14,10,8,0.62)', 'rgba(14,10,8,0.05)', 'rgba(14,10,8,0)', 'rgba(14,10,8,0.18)', 'rgba(14,10,8,0.3)']}
-        locations={[0, 0.24, 0.5, 0.74, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-
+    <View style={{ flex: 1, backgroundColor: c.background }}>
+      <StatusBar barStyle="dark-content" />
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: insets.top + 56 }}>
         <View style={{ width: 44 }} />
-        {/* vague 30 : la pastille d'apercu du Studio ici, jamais sur le titre */}
         <ApercuDansBarre />
         {apercu ? null : nav.progress != null ? <ProgressBar value={nav.progress} /> : <View style={{ flex: 1 }} />}
         <View style={{ width: 44 }} />
-        {nav.onClose ? <RoundIcon name="close" label={traduire("Fermer l’aperçu")} onPress={nav.onClose} /> : null}
+        {nav.onClose ? <RoundIcon name="close" label={traduire('Fermer l’aperçu')} onPress={nav.onClose} /> : null}
       </View>
 
-      <View style={{ paddingHorizontal: GUTTER, paddingTop: 8, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <Ink size={width < 380 ? 27 : 30} weight="black" tight color="#FFFFFF" numberOfLines={1} style={{ flex: 1, lineHeight: 35, textShadowColor: 'rgba(0,0,0,0.45)', textShadowRadius: 8 }} accessibilityRole="header">
-          {titreDebut}
-          <Ink size={width < 380 ? 27 : 30} weight="black" tight color="#E3C47B">{titreOr}</Ink>
+      <View style={{ flex: 1, paddingHorizontal: GUTTER, gap: petit ? 10 : 14 }}>
+        {/* 1. ta scene en carte, ton personnage dessus */}
+        <View style={{ width: carteW, height: carteH, borderRadius: 28, overflow: 'hidden', backgroundColor: c.fillSoft }} accessible accessibilityLabel={traduire('Ta scène et ton personnage')}>
+          <Animated.Image source={fond} resizeMode="cover" style={[{ width: carteW, height: carteH }, styleFond]} accessibilityIgnoresInvertColors />
+          {perso ? (
+            <Animated.Image source={perso} resizeMode="contain" style={[{ position: 'absolute', right: 8, bottom: 0, width: Math.round(carteH * 0.66), height: carteH - 6 }, stylePerso]} accessibilityIgnoresInvertColors />
+          ) : null}
+        </View>
+
+        {/* 2. le titre, en encre sur le fond clair */}
+        <Ink size={petit ? 25 : 28} weight="black" tight style={{ lineHeight: petit ? 30 : 33 }} accessibilityRole="header" accessibilityLabel={titre.replace(/\*\*/g, '')}>
+          {decouper(titre).map((m, i) => (m.cle ? <Ink key={i} size={petit ? 25 : 28} weight="black" tight color={c.accent}>{m.txt}</Ink> : m.txt))}
         </Ink>
-        {fini ? (
-          <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="check" size={16} color={c.onPrimary} stroke={3} />
-          </View>
-        ) : (
-          <ChargementPetit size={30} color={c.onPrimary} />
-        )}
-      </View>
 
-      {/* 27 octobre 2026 (refonte Pastel) : la liste dans une carte blanche posee sur la scene, comme la scene en carte de l'accueil */}
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: GUTTER, paddingTop: 18, paddingBottom: insets.bottom + 18, gap: 10, backgroundColor: c.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28 }}>
-        {LINES.map((l, i) => {
-          const on = i < checked;
-          return (
-            <View key={l} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 32 }}>
-              <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: on ? 0 : 2, borderColor: c.border, backgroundColor: on ? c.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                {on ? <Icon name="check" size={15} color={c.onPrimary} stroke={3} /> : null}
-              </View>
-              <Ink size={16} weight={on ? 'extraBold' : 'medium'} color={on ? c.ink : c.textSecondary}>{l}</Ink>
-            </View>
-          );
-        })}
-        {error ? (
-          <View style={{ gap: 10, marginTop: 4 }}>
-            <Ink size={14} weight="bold" color={c.danger}>{traduire("L’enregistrement n’a pas abouti. {0}", error)}</Ink>
-            <MainButton label={traduire("Réessayer")} onPress={() => setAttempt((a) => a + 1)} />
+        {/* 3. l'anneau et les chiffres de ton plan */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <Anneau part={part} taille={petit ? 86 : 100} />
+          <View style={{ flex: 1, gap: 6 }}>
+            {chiffres.slice(0, 3).map((ch, i) =>
+              part >= seuils[i] ? (
+                <Animated.View key={ch.label} entering={calme ? undefined : FadeInDown.duration(320)} style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, borderRadius: 14, backgroundColor: FAMILLES[ch.famille].fond, paddingHorizontal: 12, paddingVertical: 7 }}>
+                  <Ink size={10.5} weight="black" color={FAMILLES[ch.famille].titre} style={{ letterSpacing: 0.8 }} numberOfLines={1}>{ch.label.toUpperCase()}</Ink>
+                  <Ink size={14.5} weight="black" color={c.ink} numberOfLines={1} style={{ flexShrink: 1 }}>{ch.valeur}</Ink>
+                </Animated.View>
+              ) : (
+                <View key={ch.label} style={{ height: 32, borderRadius: 14, backgroundColor: c.fillSoft, opacity: 0.6 }} />
+              ),
+            )}
           </View>
+        </View>
+
+        {/* 4. les etapes, chacune avec son sticker */}
+        <View style={{ borderRadius: 22, backgroundColor: c.surface, paddingVertical: 6, paddingHorizontal: 12 }}>
+          {LINES.map((l, i) => {
+            const on = i < checked;
+            return (
+              <View key={l.texte} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: petit ? 38 : 42, borderTopWidth: i ? 1 : 0, borderTopColor: c.divider }}>
+                <Image source={illus.img(l.sticker)} style={{ width: 30, height: 30, opacity: on ? 1 : 0.45 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+                <Ink size={15} weight={on ? 'extraBold' : 'medium'} color={on ? c.ink : c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>{l.texte}</Ink>
+                {on ? (
+                  <Animated.View entering={calme ? undefined : ZoomIn.duration(220)} style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#23358F', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="check" size={13} color="#FFFFFF" stroke={3} />
+                  </Animated.View>
+                ) : (
+                  <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: c.border }} />
+                )}
+              </View>
+            );
+          })}
+        </View>
+
+        {error ? (
+          <Animated.View entering={FadeIn.duration(200)} style={{ gap: 10 }}>
+            <Ink size={14} weight="bold" color={c.danger}>{traduire('L’enregistrement n’a pas abouti. {0}', error)}</Ink>
+            <MainButton label={traduire('Réessayer')} onPress={() => setAttempt((a) => a + 1)} />
+          </Animated.View>
         ) : null}
       </View>
+      <View style={{ height: insets.bottom + 10 }} />
     </View>
   );
 }

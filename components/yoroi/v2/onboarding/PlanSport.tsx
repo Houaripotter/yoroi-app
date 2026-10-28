@@ -14,12 +14,13 @@
  * Les barres sont indicatives (ordre de grandeur des moyennes), et la légende le dit.
  */
 import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { sticker, useIllustrations } from '@/components/yoroi/v2/stickers';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import type { IconName } from '@/components/yoroi/v2/seances/Icon';
-import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { etudesCourtes } from '@/lib/v2/programmes/sources';
 import { getSportName } from '@/lib/sports';
 import { FAMILLES, familleSport } from './SemaineCouleurs';
@@ -28,8 +29,7 @@ import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export const SOURCES_PLAN_SPORT = ['swift2014', 'verheggen2016', 'johns2014', 'wewege2017', 'keating2017', 'donnelly2009'];
 
-function Barre({ part, couleur, delai, calme }: { part: number; couleur: string; delai: number; calme: boolean }) {
-  const pal = usePaletteProgramme();
+function Barre({ part, couleur, degrade, delai, calme }: { part: number; couleur: string; degrade?: [string, string, ...string[]]; delai: number; calme: boolean }) {
   const w = useSharedValue(calme ? part : 0);
   useEffect(() => {
     if (calme) return;
@@ -37,8 +37,10 @@ function Barre({ part, couleur, delai, calme }: { part: number; couleur: string;
   }, [part, delai, calme, w]);
   const style = useAnimatedStyle(() => ({ width: `${Math.round(w.value * 100)}%` }));
   return (
-    <View style={{ height: 12, borderRadius: 6, backgroundColor: pal.teinte, overflow: 'hidden' }}>
-      <Animated.View style={[{ height: 12, borderRadius: 6, backgroundColor: couleur }, style]} />
+    <View style={{ height: 14, borderRadius: 7, backgroundColor: '#EEF0F7', overflow: 'hidden' }}>
+      <Animated.View style={[{ height: 14, borderRadius: 7, backgroundColor: couleur, overflow: 'hidden' }, style]}>
+        {degrade ? <LinearGradient colors={degrade} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ flex: 1 }} /> : null}
+      </Animated.View>
     </View>
   );
 }
@@ -58,6 +60,7 @@ function Ligne({ icone, couleur, fond, texte }: { icone: IconName; couleur: stri
 /** partie : tout (une carte), barres (la comparaison seule) ou conseils (ton sport, ce qui compte), pour le carrousel de Ton plan */
 export function PlanSport({ sessions, sports, partie = 'tout' }: { sessions: number | null; sports: string[]; partie?: 'tout' | 'barres' | 'conseils' }) {
   const c = useColors();
+  const illus = useIllustrations();
   const calme = !!useReducedMotion();
   const n = sessions ?? 0;
   const familles = sports.map(familleSport);
@@ -98,10 +101,14 @@ export function PlanSport({ sessions, sports, partie = 'tout' }: { sessions: num
       texte: traduire('Repère : **150 à 250 minutes** de sport par semaine pour une perte modeste, **plus de 250** pour une perte nette. Et le sport aide beaucoup à **ne pas reprendre**.'),
     },
   ];
-  const barres = [
-    { cle: 'sport', label: traduire('Sport seul'), valeur: traduire('environ 2 kg en moyenne'), part: 0.26, couleur: FAMILLES.cardio.couleur },
-    { cle: 'alim', label: traduire('Alimentation seule'), valeur: traduire('le plus gros effet sur la balance'), part: 0.8, couleur: FAMILLES.combat.couleur },
-    { cle: 'deux', label: traduire('Alimentation et sport'), valeur: traduire('5 à 6 kg de plus que le sport seul'), part: 1, couleur: FAMILLES.muscu.couleur },
+  // 28 octobre 2026 (Houari : « les couleurs des barres ne donnent pas envie ») : pastels du theme. Les trois premieres
+  // barres viennent des etudes (memes longueurs relatives qu'avant, a 86 %) ; la quatrieme, YOROI, n'est PAS un chiffre :
+  // aucun kilo ni effet prouve, seulement ce que fait l'app (t'aider a tenir les deux), et la legende le dit.
+  const barres: { cle: string; label: string; valeur: string; part: number; couleur: string; degrade?: [string, string, ...string[]]; yoroi?: boolean }[] = [
+    { cle: 'sport', label: traduire('Sport seul'), valeur: traduire('environ 2 kg en moyenne'), part: 0.22, couleur: '#9ED3B6' },
+    { cle: 'alim', label: traduire('Alimentation seule'), valeur: traduire('le plus gros effet sur la balance'), part: 0.69, couleur: '#E8C978' },
+    { cle: 'deux', label: traduire('Alimentation et sport'), valeur: traduire('5 à 6 kg de plus que le sport seul'), part: 0.86, couleur: '#8FA6F8' },
+    { cle: 'yoroi', label: traduire('Sport, alimentation et YOROI'), valeur: traduire('le suivi qui t’aide à tenir les deux, semaine après semaine'), part: 1, couleur: '#8FA6F8', degrade: ['#8FA6F8', '#B35A9E', '#E8C978'], yoroi: true },
   ];
 
   const carte = { borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 14 } as const;
@@ -112,25 +119,24 @@ export function PlanSport({ sessions, sports, partie = 'tout' }: { sessions: num
         <Ink size={13} weight="bold" color={c.textMuted}>{traduire('Sport, alimentation, ou les deux ?')}</Ink>
         <Riche size={18} weight="black" color={c.ink} lineHeight={23} text={traduire('Avec ton alimentation, ton sport **fait la différence**')} />
       </View>
-      <View style={{ gap: 12 }} accessible accessibilityLabel={traduire('Sport seul : environ 2 kg en moyenne. Alimentation seule : le plus gros effet sur la balance. Alimentation et sport : 5 à 6 kg de plus que le sport seul.')}>
+      <View style={{ gap: 12 }} accessible accessibilityLabel={traduire('Sport seul : environ 2 kg en moyenne. Alimentation seule : le plus gros effet sur la balance. Alimentation et sport : 5 à 6 kg de plus que le sport seul. Sport, alimentation et YOROI : le suivi qui t’aide à tenir les deux, semaine après semaine.')}>
         {barres.map((b, k) => (
-          <View key={b.cle} style={{ gap: 5 }}>
-            {/* 26 octobre 2026 : le nom et la valeur sur deux lignes qui passent a la ligne, la pastille Toi apres la barre (plus rien de coupe) */}
-            <Ink size={14} weight="black" color={c.ink}>{b.label}</Ink>
-            <Ink size={12} weight="bold" color={c.textSecondary} style={{ lineHeight: 16 }}>{b.valeur}</Ink>
+          <View key={b.cle} style={b.yoroi ? { gap: 6, borderRadius: 18, backgroundColor: '#EFE6F3', padding: 12, marginTop: 2 } : { gap: 5 }}>
+            {/* 26 octobre 2026 : le nom et la valeur sur deux lignes qui passent a la ligne (plus rien de coupe) */}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={{ flex: 1 }}>
-                <Barre part={b.part} couleur={b.couleur} delai={200 + k * 180} calme={calme} />
-              </View>
-              {b.cle === 'deux' && n ? (
-                <View style={{ flexShrink: 0, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10, backgroundColor: c.primary }}>
-                  <Ink size={11} weight="black" color={c.onPrimary}>{traduire('Toi')}</Ink>
+              {b.yoroi ? <Image source={illus.img('coach', sticker('coach'))} style={{ width: 34, height: 34 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
+              <Ink size={14} weight="black" color={b.yoroi ? '#6E2F60' : c.ink} style={{ flex: 1 }}>{b.label}</Ink>
+              {b.yoroi ? (
+                <View style={{ flexShrink: 0, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: '#23358F' }}>
+                  <Ink size={11} weight="black" color="#FFFFFF">{traduire('Toi')}</Ink>
                 </View>
               ) : null}
             </View>
+            <Ink size={12} weight="bold" color={c.textSecondary} style={{ lineHeight: 16 }}>{b.valeur}</Ink>
+            <Barre part={b.part} couleur={b.couleur} degrade={b.degrade} delai={200 + k * 180} calme={calme} />
           </View>
         ))}
-        <Ink size={11} weight="bold" color={c.textMuted}>{traduire('Longueurs indicatives, d’après les moyennes des études.')}</Ink>
+        <Ink size={11} weight="bold" color={c.textMuted} style={{ lineHeight: 15 }}>{traduire('Les trois premières longueurs sont indicatives, d’après les moyennes des études. La dernière n’est pas un chiffre : YOROI ne promet pas de kilos, il t’aide à tenir.')}</Ink>
       </View>
     </>
   );

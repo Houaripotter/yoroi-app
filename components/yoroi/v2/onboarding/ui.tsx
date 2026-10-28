@@ -3,7 +3,8 @@
  * bouton principal de 56, carte de choix qui grandit quand on la choisit.
  */
 import React, { useEffect, useRef } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -84,7 +85,12 @@ export function MainButton({ label, onPress, disabled, loading, tone = 'accent',
   accessibilityLabel?: string;
 }) {
   const c = useColors();
+  const { theme } = useYoroiTheme();
   const light = tone === 'light';
+  // 28 octobre 2026 (Houari : « le pastel est trop pale, Continuer desactive presque invisible ») : bouton principal franc,
+  // degrade bleu nuit vers indigo doux, texte blanc, ombre douce ; desactive : fond clair et texte gris moyen, bien lisible.
+  // En sombre : le pastel du theme (primary), comme avant.
+  const fort = !light && !theme.isDark;
   const s = useSharedValue(1);
   const anim = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
   return (
@@ -106,11 +112,27 @@ export function MainButton({ label, onPress, disabled, loading, tone = 'accent',
     >
       <Animated.View
         style={[
-          { minHeight: 56, borderRadius: 18, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: light ? c.surface : c.primary, borderWidth: light ? 1 : 0, borderColor: c.border, opacity: disabled ? 0.38 : 1 },
+          {
+            minHeight: 56,
+            borderRadius: 18,
+            paddingHorizontal: 16,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: light ? c.surface : fort ? (disabled ? '#E4E7F1' : '#23358F') : c.primary,
+            borderWidth: light ? 1 : 0,
+            borderColor: c.border,
+            opacity: fort ? 1 : disabled ? 0.38 : 1,
+          },
+          fort && !disabled ? { shadowColor: '#23358F', shadowOpacity: 0.28, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 5 } : null,
           anim,
         ]}
       >
-        {loading ? <ActivityIndicator color={light ? c.ink : c.onPrimary} /> : <Ink size={16} weight="extraBold" color={light ? c.ink : c.onPrimary} style={{ textAlign: 'center' }}>{label}</Ink>}
+        {fort && !disabled ? <LinearGradient colors={['#23358F', '#4256C9']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: 18 }]} /> : null}
+        {loading ? (
+          <ActivityIndicator color={light ? c.ink : fort ? '#FFFFFF' : c.onPrimary} />
+        ) : (
+          <Ink size={16.5} weight="extraBold" color={light ? c.ink : fort ? (disabled ? '#7D8299' : '#FFFFFF') : c.onPrimary} style={{ textAlign: 'center' }}>{label}</Ink>
+        )}
       </Animated.View>
     </Pressable>
   );

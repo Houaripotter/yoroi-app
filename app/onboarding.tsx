@@ -94,7 +94,8 @@ import { NOUVEAUTES_30_KEY } from '@/lib/v2/onboarding/parcours';
 import { Moment } from '@/components/yoroi/v2/onboarding/Moment';
 import { Demo } from '@/components/yoroi/v2/onboarding/Demo';
 import { Comparaison } from '@/components/yoroi/v2/onboarding/Comparaison';
-import { Forge } from '@/components/yoroi/v2/onboarding/Forge';
+import { Forge, type ChiffrePreparation, type LignePreparation } from '@/components/yoroi/v2/onboarding/Forge';
+import { estimerArrivee, fourchetteDates } from '@/lib/v2/pesee/estimation';
 import { Resultat } from '@/components/yoroi/v2/onboarding/Resultat';
 import { Premium } from '@/components/yoroi/v2/onboarding/Premium';
 import type { Nav } from '@/components/yoroi/v2/onboarding/types';
@@ -597,7 +598,8 @@ export default function OnboardingScreen() {
   };
 
   // ===== Preparation : ce qui est vraiment pret a la fin (26 octobre 2026) =====
-  const lignesPreparation = (): string[] => {
+  // 28 octobre 2026 : chaque ligne avec son sticker (ecran de preparation refait)
+  const lignesPreparation = (): LignePreparation[] => {
     const cur = draftRef.current;
     const cap = capVu(cur, cur.weighIn?.weight ?? cur.weight ?? weight);
     const stable = cap == null;
@@ -605,12 +607,28 @@ export default function OnboardingScreen() {
     const r = cur.rappels;
     const rappels = !!(r && (r.seance.actif || r.pesee.actif || r.eau.actif || r.bilan.actif));
     return [
-      stable ? traduire('Ton suivi de poids') : traduire('Ton chemin vers {0} kg', kg(cap as number)),
-      n ? traduirePluriel(n, n > 1, 'Ta semaine : {0} séance', 'Ta semaine : {0} séances', n) : traduire('Ta semaine d’entraînement'),
-      ...(cur.univers !== 'aucun' ? [traduire('Ton personnage et ses rangs')] : []),
-      ...(rappels ? [traduire('Tes rappels')] : []),
-      traduire('Ton écran d’accueil'),
+      { texte: stable ? traduire('Ton suivi de poids') : traduire('Ton chemin vers {0} kg', kg(cap as number)), sticker: 'torii' },
+      { texte: n ? traduirePluriel(n, n > 1, 'Ta semaine : {0} séance', 'Ta semaine : {0} séances', n) : traduire('Ta semaine d’entraînement'), sticker: 'calendrier' },
+      ...(cur.univers !== 'aucun' ? [{ texte: traduire('Ton personnage et ses rangs'), sticker: 'kabuto' as const }] : []),
+      ...(rappels ? [{ texte: traduire('Tes rappels'), sticker: 'rappels' as const }] : []),
+      { texte: traduire('Ton écran d’accueil'), sticker: 'lanterne' },
     ];
+  };
+
+  /** 28 octobre 2026 : les chiffres de ton plan qui apparaissent pendant la preparation (seulement tes reponses et l'estimation) */
+  const chiffresPreparation = (): ChiffrePreparation[] => {
+    const cur = draftRef.current;
+    const depart = cur.weighIn?.weight ?? cur.weight ?? weight;
+    const cap = capVu(cur, depart);
+    const n = cur.jours.length || cur.sessions || 0;
+    const out: ChiffrePreparation[] = [];
+    out.push(cap != null ? { label: traduire('Ton cap'), valeur: `${kg(cap)} kg`, famille: 'bleu' } : { label: traduire('Ton poids'), valeur: `${kg(depart)} kg`, famille: 'bleu' });
+    if (n) out.push({ label: traduire('Par semaine'), valeur: traduirePluriel(n, n > 1, '{0} séance', '{0} séances', n), famille: 'lilas' });
+    if (cap != null) {
+      const e = estimerArrivee({ start: depart, target: cap, sessions: n || null, heightCm: cur.height, recompo: sensDe(goalsDe(cur)) === 'recompo' && cap < depart });
+      if (e.kind === 'ok') out.push({ label: traduire('Arrivée prévue'), valeur: fourchetteDates(e.earliest, e.latest), famille: 'creme' });
+    }
+    return out;
   };
 
   // ===== Rendu =====
@@ -827,7 +845,7 @@ export default function OnboardingScreen() {
       case COMPARAISON:
         return <Comparaison nav={nav()} genre={genre} univers={univers} onNext={() => goTo(forged ? RESULTAT : FORGE)} />;
       case FORGE:
-        return <Forge nav={{ progress: progressOf(page, true, PRENOM, RESULTAT), onClose: isPreview ? closePreview : undefined }} genre={genre} univers={univers} lignes={lignesPreparation()} run={runFinal} onSound={playGong} onDone={() => goTo(RESULTAT)} />;
+        return <Forge nav={{ progress: progressOf(page, true, PRENOM, RESULTAT), onClose: isPreview ? closePreview : undefined }} genre={genre} univers={univers} lignes={lignesPreparation()} chiffres={chiffresPreparation()} scene={d.scene ?? null} run={runFinal} onSound={playGong} onDone={() => goTo(RESULTAT)} />;
       case RESULTAT:
         return (
           <Resultat
