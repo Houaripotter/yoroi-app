@@ -5,6 +5,10 @@
 
 import { MetricRange } from '@/components/stats/charts/MetricRangeIndicator';
 import { traduire } from '@/lib/i18n/tr';
+import { selonGenre, type GenreFormule } from '@/lib/genreCalcul';
+
+/** bornes neutres au centieme (moyenne exacte des reperes homme et femme) */
+const centieme = (v: number) => Math.round(v * 100) / 100;
 export { MetricRange } from '@/components/stats/charts/MetricRangeIndicator';
 
 // Translation key type for i18n
@@ -48,7 +52,7 @@ export const BODY_FAT_RANGES_MALE: MetricRangeWithTranslation = {
   min: 3,
   max: 40,
   unit: '%',
-  source: 'Gallagher D et al. Am J Clin Nutr 2000 - PMID: 10966886',
+  source: 'Gallagher D et al. Am J Clin Nutr 2000, PMID 10966886',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/10966886/',
   translationKey: 'bodyFat',
   genderSpecific: true,
@@ -82,7 +86,7 @@ export const BODY_FAT_RANGES_FEMALE: MetricRangeWithTranslation = {
   min: 10,
   max: 45,
   unit: '%',
-  source: 'Gallagher D et al. Am J Clin Nutr 2000 - PMID: 10966886',
+  source: 'Gallagher D et al. Am J Clin Nutr 2000, PMID 10966886',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/10966886/',
   translationKey: 'bodyFat',
   genderSpecific: true,
@@ -115,7 +119,7 @@ export const MUSCLE_MASS_RANGES_MALE: MetricRangeWithTranslation = {
   min: 30,
   max: 60,
   unit: '%',
-  source: 'Janssen I et al. J Appl Physiol 2000 - PMID: 10846039',
+  source: 'Janssen I et al. J Appl Physiol 2000, PMID 10846039',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/10846039/',
   translationKey: 'muscleMass',
   genderSpecific: true,
@@ -150,7 +154,7 @@ export const MUSCLE_MASS_RANGES_FEMALE: MetricRangeWithTranslation = {
   min: 25,
   max: 55,
   unit: '%',
-  source: 'Janssen I et al. J Appl Physiol 2000 - PMID: 10846039',
+  source: 'Janssen I et al. J Appl Physiol 2000, PMID 10846039',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/10846039/',
   translationKey: 'muscleMass',
   genderSpecific: true,
@@ -184,7 +188,7 @@ export const WATER_PERCENTAGE_RANGES: MetricRangeWithTranslation = {
   min: 40,
   max: 70,
   unit: '%',
-  source: 'Watson PE et al. Am J Clin Nutr 1980 - PMID: 6986753',
+  source: 'Watson PE et al. Am J Clin Nutr 1980, PMID 6986753',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/6986753/',
   translationKey: 'waterPercentage',
   explanation: traduire(`L'eau corporelle totale (TBW) represente environ 60% du poids chez l'homme adulte et 50-55% chez la femme.
@@ -223,7 +227,7 @@ export const VISCERAL_FAT_RANGES: MetricRangeWithTranslation = {
   min: 1,
   max: 20,
   unit: '/20',
-  source: 'Despres JP et al. Obesity Reviews 2008 - PMID: 18331423',
+  source: 'Despres JP et al. Obesity Reviews 2008, PMID 18331423',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/18331423/',
   translationKey: 'visceralFat',
   explanation: traduire(`La graisse viscerale est la graisse profonde qui entoure les organes (foie, intestins, coeur).
@@ -261,7 +265,7 @@ export const HRV_RANGES: MetricRangeWithTranslation = {
   min: 10,
   max: 100,
   unit: 'ms',
-  source: 'Task Force ESC/NASPE, Circulation 1996 - PMID: 8598068',
+  source: 'Task Force ESC/NASPE, Circulation 1996, PMID 8598068',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/8598068/',
   translationKey: 'hrv',
   explanation: traduire(`La VFC (HRV) mesure les variations entre chaque battement cardiaque en millisecondes.
@@ -305,7 +309,7 @@ export const RESTING_HEART_RATE_RANGES: MetricRangeWithTranslation = {
   min: 40,
   max: 100,
   unit: 'bpm',
-  source: 'Fox K et al. Eur Heart J 2007 - PMID: 17303589',
+  source: 'Fox K et al. Eur Heart J 2007, PMID 17303589',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/17303589/',
   translationKey: 'restingHeartRate',
   explanation: traduire(`La fréquence cardiaque au repos est un predicteur independant de mortalite cardiovasculaire.
@@ -341,7 +345,7 @@ export const SLEEP_DURATION_RANGES: MetricRangeWithTranslation = {
   min: 4,
   max: 11,
   unit: 'h',
-  source: 'Cappuccio FP et al. Sleep 2010 - PMID: 20469800',
+  source: 'Cappuccio FP et al. Sleep 2010, PMID 20469800',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/20469800/',
   translationKey: 'sleepDuration',
   explanation: traduire(`La durée de sommeil optimale pour la santé.
@@ -379,7 +383,7 @@ export const RECOVERY_SCORE_RANGES: MetricRangeWithTranslation = {
   min: 0,
   max: 100,
   unit: '%',
-  source: 'Plews DJ et al. Int J Sports Physiol Perform 2013 - PMID: 23628627',
+  source: 'Plews DJ et al. Int J Sports Physiol Perform 2013, PMID 23628627',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/23628627/',
   translationKey: 'recoveryScore',
   explanation: traduire(`Le score de récupération estime ta capacite a performer et t'entrainer.
@@ -417,7 +421,7 @@ export const BMI_RANGES: MetricRangeWithTranslation = {
   min: 15,
   max: 35,
   unit: '',
-  source: 'Prospective Studies Collaboration, Lancet 2009 - PMID: 19299006',
+  source: 'Prospective Studies Collaboration, Lancet 2009, PMID 19299006',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/19299006/',
   translationKey: 'bmi',
   explanation: traduire(`L'Indice de Masse Corporelle (IMC) = Poids (kg) / Taille au carre (m2)
@@ -455,7 +459,7 @@ export const WAIST_CIRCUMFERENCE_RANGES_MALE: MetricRangeWithTranslation = {
   min: 60,
   max: 120,
   unit: 'cm',
-  source: 'Ashwell M et al. Obes Rev 2012 - PMID: 22106927',
+  source: 'Ashwell M et al. Obes Rev 2012, PMID 22106927',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/22106927/',
   translationKey: 'waistCircumference',
   genderSpecific: true,
@@ -492,7 +496,7 @@ export const WAIST_CIRCUMFERENCE_RANGES_FEMALE: MetricRangeWithTranslation = {
   min: 55,
   max: 110,
   unit: 'cm',
-  source: 'Ashwell M et al. Obes Rev 2012 - PMID: 22106927',
+  source: 'Ashwell M et al. Obes Rev 2012, PMID 22106927',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/22106927/',
   translationKey: 'waistCircumference',
   genderSpecific: true,
@@ -532,7 +536,7 @@ export const BONE_MASS_RANGES_MALE: MetricRangeWithTranslation = {
   min: 2.0,
   max: 4.5,
   unit: 'kg',
-  source: 'Kanis JA et al. Lancet 2002 - PMID: 12049882',
+  source: 'Kanis JA et al. Lancet 2002, PMID 12049882',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/12049882/',
   translationKey: 'boneMass',
   genderSpecific: true,
@@ -571,7 +575,7 @@ export const BONE_MASS_RANGES_FEMALE: MetricRangeWithTranslation = {
   min: 1.5,
   max: 3.5,
   unit: 'kg',
-  source: 'Kanis JA et al. Lancet 2002 - PMID: 12049882',
+  source: 'Kanis JA et al. Lancet 2002, PMID 12049882',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/12049882/',
   translationKey: 'boneMass',
   genderSpecific: true,
@@ -610,11 +614,9 @@ Construis ta "banque osseuse" avant 30 ans. Apres, l'objectif est de MAINTENIR.`
 // BMR (Metabolisme de base)
 // ============================================
 
-export const getBMRRange = (weight: number, height: number, age: number, gender: 'male' | 'female'): MetricRangeWithTranslation => {
-  // Formule Mifflin-St Jeor
-  const idealBMR = gender === 'male'
-    ? 10 * weight + 6.25 * height - 5 * age + 5
-    : 10 * weight + 6.25 * height - 5 * age - 161;
+export const getBMRRange = (weight: number, height: number, age: number, gender: GenreFormule): MetricRangeWithTranslation => {
+  // Formule Mifflin-St Jeor (neutre : la moyenne homme et femme)
+  const idealBMR = 10 * weight + 6.25 * height - 5 * age + selonGenre(gender, 5, -161);
 
   const min = Math.floor(idealBMR * 0.7);
   const max = Math.ceil(idealBMR * 1.3);
@@ -623,7 +625,7 @@ export const getBMRRange = (weight: number, height: number, age: number, gender:
     min,
     max,
     unit: 'kcal',
-    source: 'Mifflin MD et al. Am J Clin Nutr 1990 - PMID: 2305711',
+    source: 'Mifflin MD et al. Am J Clin Nutr 1990, PMID 2305711',
     sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/2305711/',
     translationKey: 'bmr',
     // BMR values for translation interpolation
@@ -637,7 +639,7 @@ export const getBMRRange = (weight: number, height: number, age: number, gender:
       active: Math.round(idealBMR * 1.55),
       veryActive: Math.round(idealBMR * 1.725),
     },
-    explanation: traduire("Le metabolisme de base (BMR) = énergie brulee au repos complet pendant 24h.\n\nTON BMR ESTIME: environ {0} kcal/jour\n(Base sur: {1}kg, {2}cm, {3} ans)\n\nEQUATION MIFFLIN-ST JEOR (Mifflin et al. 1990):\nValidee sur 498 sujets, precision +/-10% vs calorimetrie indirecte.\n\nDEPENSE TOTALE (facteurs d'activité valides):\n- Sedentaire (1.2): environ {4} kcal\n- Peu actif (1.375): environ {5} kcal\n- Actif (1.55): environ {6} kcal\n- Tres actif (1.725): environ {7} kcal\n\nFACTEURS D'INFLUENCE:\n- Masse musculaire: +13 kcal/kg muscle/jour\n- Age: -2% par decennie apres 20 ans\n- Genetique: +/-5-10% de variation\n\nCONSEIL:\nAugmente ton BMR via la masse musculaire!", Math.round(idealBMR), weight, height, age, Math.round(idealBMR * 1.2), Math.round(idealBMR * 1.375), Math.round(idealBMR * 1.55), Math.round(idealBMR * 1.725)),
+    explanation: traduire("Le metabolisme de base (BMR) = énergie brulee au repos complet pendant 24h.\n\nTON BMR ESTIME: environ {0} kcal/jour\n(Base sur: {1}kg, {2}cm, {3} ans)\n\nEQUATION MIFFLIN ST JEOR (Mifflin et al. 1990):\nValidee sur 498 sujets, precision +/-10% vs calorimetrie indirecte.\n\nDEPENSE TOTALE (facteurs d'activité valides):\n• Sedentaire (1.2): environ {4} kcal\n• Peu actif (1.375): environ {5} kcal\n• Actif (1.55): environ {6} kcal\n• Tres actif (1.725): environ {7} kcal\n\nFACTEURS D'INFLUENCE:\n• Masse musculaire: +13 kcal/kg muscle/jour\n• Age: moins 2% par decennie apres 20 ans\n• Genetique: plus ou moins 5 à 10% de variation\n\nCONSEIL:\nAugmente ton BMR via la masse musculaire!", Math.round(idealBMR), weight, height, age, Math.round(idealBMR * 1.2), Math.round(idealBMR * 1.375), Math.round(idealBMR * 1.55), Math.round(idealBMR * 1.725)),
     zones: [
       { label: 'low', start: min, end: Math.floor(idealBMR * 0.85), color: '#F97316', status: 'moderate' },
       { label: 'normal', start: Math.floor(idealBMR * 0.85) + 1, end: Math.floor(idealBMR * 1.15), color: '#22C55E', status: 'optimal' },
@@ -654,7 +656,7 @@ export const INTENSITY_RANGES: MetricRangeWithTranslation = {
   min: 0,
   max: 100,
   unit: '%',
-  source: 'Banister EW, Med Sci Sports Exerc 1991 - PMID: 2017016',
+  source: 'Banister EW, Med Sci Sports Exerc 1991, PMID 2017016',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/2017016/',
   translationKey: 'intensity',
   explanation: traduire(`L'intensite d'entraînement mesure l'effort relatif par rapport a ta capacite maximale.
@@ -686,21 +688,31 @@ La majorite de tes entraînements devraient etre en zone facile (conversation po
 /**
  * Obtenir le range approprié selon le genre
  */
-export const getBodyFatRange = (gender: 'male' | 'female'): MetricRangeWithTranslation => {
-  return gender === 'male' ? BODY_FAT_RANGES_MALE : BODY_FAT_RANGES_FEMALE;
-};
+/**
+ * 28 octobre 2026 : reperes neutres, la moyenne exacte des reperes homme et femme (memes zones, bornes moyennes au
+ * centieme), avec une explication qui le dit. Les deux reperes ont les memes zones dans le meme ordre.
+ */
+export const moyenneRange = (h: MetricRangeWithTranslation, f: MetricRangeWithTranslation): MetricRangeWithTranslation => ({
+  ...h,
+  min: centieme((h.min + f.min) / 2),
+  max: centieme((h.max + f.max) / 2),
+  genderSpecific: false,
+  explanation: `${traduire('Repères neutres : la moyenne des repères homme et femme, un peu moins précis.')}\n\n${h.explanation}`,
+  zones: h.zones.map((z, i) => {
+    const zf = f.zones[i] ?? z;
+    return { ...z, start: centieme((z.start + zf.start) / 2), end: centieme((z.end + zf.end) / 2) };
+  }),
+});
 
-export const getMuscleMassRange = (gender: 'male' | 'female'): MetricRangeWithTranslation => {
-  return gender === 'male' ? MUSCLE_MASS_RANGES_MALE : MUSCLE_MASS_RANGES_FEMALE;
-};
+const parGenre = (gender: GenreFormule, h: MetricRangeWithTranslation, f: MetricRangeWithTranslation) => (gender === 'male' ? h : gender === 'female' ? f : moyenneRange(h, f));
 
-export const getWaistCircumferenceRange = (gender: 'male' | 'female'): MetricRangeWithTranslation => {
-  return gender === 'male' ? WAIST_CIRCUMFERENCE_RANGES_MALE : WAIST_CIRCUMFERENCE_RANGES_FEMALE;
-};
+export const getBodyFatRange = (gender: GenreFormule): MetricRangeWithTranslation => parGenre(gender, BODY_FAT_RANGES_MALE, BODY_FAT_RANGES_FEMALE);
 
-export const getBoneMassRange = (gender: 'male' | 'female'): MetricRangeWithTranslation => {
-  return gender === 'male' ? BONE_MASS_RANGES_MALE : BONE_MASS_RANGES_FEMALE;
-};
+export const getMuscleMassRange = (gender: GenreFormule): MetricRangeWithTranslation => parGenre(gender, MUSCLE_MASS_RANGES_MALE, MUSCLE_MASS_RANGES_FEMALE);
+
+export const getWaistCircumferenceRange = (gender: GenreFormule): MetricRangeWithTranslation => parGenre(gender, WAIST_CIRCUMFERENCE_RANGES_MALE, WAIST_CIRCUMFERENCE_RANGES_FEMALE);
+
+export const getBoneMassRange = (gender: GenreFormule): MetricRangeWithTranslation => parGenre(gender, BONE_MASS_RANGES_MALE, BONE_MASS_RANGES_FEMALE);
 
 /**
  * Calculer le statut d'une métrique
@@ -732,8 +744,8 @@ export const getMetricStatus = (value: number, range: MetricRange | MetricRangeW
  * Usage: t(`healthRanges.${range.translationKey}.explanation`, range.bmrValues)
  * For gender-specific metrics: t(`healthRanges.${range.translationKey}.explanation${gender === 'male' ? 'Male' : 'Female'}`)
  */
-export const getExplanationKey = (range: MetricRangeWithTranslation, gender?: 'male' | 'female'): string => {
-  if (range.genderSpecific && gender) {
+export const getExplanationKey = (range: MetricRangeWithTranslation, gender?: GenreFormule): string => {
+  if (range.genderSpecific && gender && gender !== 'neutral') {
     return `healthRanges.${range.translationKey}.explanation${gender === 'male' ? 'Male' : 'Female'}`;
   }
   return `healthRanges.${range.translationKey}.explanation`;

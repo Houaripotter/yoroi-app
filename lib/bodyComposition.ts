@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import secureStorage from '@/lib/security/secureStorage';
 import { healthConnect } from '@/lib/healthConnect';
+import { selonGenre, type GenreFormule } from '@/lib/genreCalcul';
 
 const BODY_COMP_KEY = '@yoroi_body_composition';
 const MEASUREMENTS_KEY = '@yoroi_measurements';
@@ -369,13 +370,15 @@ export interface BodyCompositionAnalysis {
 
 export const analyzeBodyComposition = (
   data: BodyComposition,
-  gender: 'male' | 'female' = 'male',
+  gender: GenreFormule = 'male',
   age: number = 30
 ): BodyCompositionAnalysis => {
-  // Body fat ranges
-  const bodyFatRanges = gender === 'male'
-    ? { low: 6, healthy: 24, high: 30 }
-    : { low: 14, healthy: 31, high: 37 };
+  // Body fat ranges (28 octobre 2026 : neutre, la moyenne homme et femme)
+  const bodyFatRanges = {
+    low: selonGenre(gender, 6, 14),
+    healthy: selonGenre(gender, 24, 31),
+    high: selonGenre(gender, 30, 37),
+  };
 
   let bodyFatStatus: BodyCompositionAnalysis['bodyFatStatus'] = 'healthy';
   if (data.bodyFatPercent < bodyFatRanges.low) bodyFatStatus = 'low';
@@ -390,7 +393,7 @@ export const analyzeBodyComposition = (
   else if (muscleRatio > 0.45) muscleMassStatus = 'high';
 
   // Water percentage (healthy: 50-65% for women, 55-65% for men)
-  const waterRanges = gender === 'male' ? { low: 55, high: 65 } : { low: 50, high: 65 };
+  const waterRanges = { low: selonGenre(gender, 55, 50), high: 65 };
   let waterStatus: BodyCompositionAnalysis['waterStatus'] = 'normal';
   if (data.waterPercent < waterRanges.low) waterStatus = 'low';
   else if (data.waterPercent > waterRanges.high) waterStatus = 'high';
@@ -449,9 +452,16 @@ export const calculateChanges = (
 export const estimateBodyFatFromMeasurements = (
   measurement: BodyMeasurement,
   height: number,
-  gender: 'male' | 'female'
+  gender: GenreFormule
 ): number | null => {
   if (!measurement.waist || !measurement.neck) return null;
+
+  // 28 octobre 2026 : neutre, la moyenne des formules homme et femme (il faut alors aussi les hanches)
+  if (gender === 'neutral') {
+    const h = estimateBodyFatFromMeasurements(measurement, height, 'male');
+    const f = estimateBodyFatFromMeasurements(measurement, height, 'female');
+    return h != null && f != null ? (h + f) / 2 : null;
+  }
 
   if (gender === 'male') {
     // Male formula: 495 / (1.0324 - 0.19077 * log10(waist - neck) + 0.15456 * log10(height)) - 450
@@ -474,13 +484,10 @@ export const calculateBMR = (
   weight: number,
   height: number,
   age: number,
-  gender: 'male' | 'female'
+  gender: GenreFormule
 ): number => {
-  if (gender === 'male') {
-    return Math.round(10 * weight + 6.25 * height - 5 * age + 5);
-  } else {
-    return Math.round(10 * weight + 6.25 * height - 5 * age - 161);
-  }
+  // Mifflin-St Jeor : + 5 (homme), - 161 (femme), neutre : la moyenne (- 78)
+  return Math.round(10 * weight + 6.25 * height - 5 * age + selonGenre(gender, 5, -161));
 };
 
 // Get chart data for a specific metric

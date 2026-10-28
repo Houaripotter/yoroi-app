@@ -8,6 +8,7 @@
 // TYPES
 // ============================================
 import { traduire } from '@/lib/i18n/tr';
+import { selonGenre, type GenreFormule } from '@/lib/genreCalcul';
 
 export interface ActivityLevel {
   id: string;
@@ -75,22 +76,22 @@ export const ACTIVITY_LEVELS: ActivityLevel[] = [
     id: 'light',
     name: traduire('Légèrement actif'),
     multiplier: 1.375,
-    description: traduire('Exercice léger 1-3 jours/semaine'),
-    examples: traduire('1-2 séances de sport, marche quotidienne'),
+    description: traduire('Exercice léger 1 à 3 jours/semaine'),
+    examples: traduire('1 à 2 séances de sport, marche quotidienne'),
   },
   {
     id: 'moderate',
     name: traduire('Modérément actif'),
     multiplier: 1.55,
-    description: traduire('Exercice modéré 3-5 jours/semaine'),
-    examples: traduire('3-4 séances JJB/musculation'),
+    description: traduire('Exercice modéré 3 à 5 jours/semaine'),
+    examples: traduire('3 à 4 séances JJB/musculation'),
   },
   {
     id: 'active',
     name: traduire('Très actif'),
     multiplier: 1.725,
-    description: traduire('Exercice intense 6-7 jours/semaine'),
-    examples: traduire('5-6 séances, entraînement biquotidien'),
+    description: traduire('Exercice intense 6 à 7 jours/semaine'),
+    examples: traduire('5 à 6 séances, entraînement biquotidien'),
   },
   {
     id: 'extreme',
@@ -112,7 +113,7 @@ export const GOALS: Goal[] = [
     calorieAdjustment: -750,
     description: traduire('Déficit important (-750 kcal)'),
     weeklyChange: '-0.75 kg/sem',
-    warning: traduire('Ne pas maintenir plus de 4-6 semaines'),
+    warning: traduire('Ne pas maintenir plus de 4 à 6 semaines'),
   },
   {
     id: 'moderate_loss',
@@ -168,7 +169,7 @@ export const MACRO_PROFILES: MacroProfile[] = [
     protein: 0.30,
     carbs: 0.40,
     fat: 0.30,
-    source: 'ANSES - Agence nationale de sécurité sanitaire',
+    source: 'ANSES, Agence nationale de sécurité sanitaire',
   },
   {
     id: 'high_protein',
@@ -219,11 +220,11 @@ export const calculateBMR = (
   weight: number,    // kg
   height: number,    // cm
   age: number,       // années
-  gender: 'male' | 'female'
+  gender: GenreFormule
 ): number => {
-  // Mifflin-St Jeor (1990) - Recommandée par l'Academy of Nutrition and Dietetics
+  // Mifflin-St Jeor (1990) - Recommandée par l'Academy of Nutrition and Dietetics ; neutre : moyenne homme et femme
   const base = (10 * weight) + (6.25 * height) - (5 * age);
-  return Math.round(gender === 'male' ? base + 5 : base - 161);
+  return Math.round(base + selonGenre(gender, 5, -161));
 };
 
 // ============================================
@@ -326,7 +327,7 @@ export const calculateNutritionPlan = (
   weight: number,
   height: number,
   age: number,
-  gender: 'male' | 'female',
+  gender: GenreFormule,
   activityLevelId: string,
   goalId: string,
   macroProfileId: string
@@ -360,7 +361,7 @@ export interface MealPlan {
 
 export const MEAL_DISTRIBUTION: MealPlan[] = [
   {
-    name: traduire('Petit-déjeuner'),
+    name: traduire('Petit déjeuner'),
     time: '7h00',
     percentage: 0.25,
     example: 'Oeufs, pain complet, avocat, fruit',

@@ -411,12 +411,14 @@ export function Chip({ label, active, onPress, accent = P.ink }: { label: string
 }
 
 /** Choix homme ou femme */
-export function GenderSwitch({ value, onChange }: { value: 'male' | 'female'; onChange: (g: 'male' | 'female') => void }) {
+/** 28 octobre 2026 : troisieme choix « Neutre », la moyenne des formules homme et femme (lib/genreCalcul.ts) */
+export function GenderSwitch({ value, onChange }: { value: 'male' | 'female' | 'neutral'; onChange: (g: 'male' | 'female' | 'neutral') => void }) {
   return (
     <Segments
       items={[
         { key: 'male', label: traduire('Homme') },
         { key: 'female', label: traduire('Femme') },
+        { key: 'neutral', label: traduire('Neutre') },
       ]}
       value={value}
       onChange={onChange}

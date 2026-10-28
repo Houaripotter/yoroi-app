@@ -5,6 +5,8 @@
 import { getLatestWeight, getProfile } from '@/lib/database';
 import type { Profile } from '@/lib/database';
 import { logger } from '@/lib/security/logger';
+import { getUserSettings } from '@/lib/storage';
+import { genreDesReglages } from '@/lib/genreCalcul';
 import { ageFromBirth } from './formulas';
 import type { Gender } from './formulas';
 
@@ -19,13 +21,14 @@ export type BodyData = {
 
 export async function loadBodyData(): Promise<BodyData> {
   try {
-    const [profile, latest] = await Promise.all([getProfile(), getLatestWeight()]);
+    const [profile, latest, reglages] = await Promise.all([getProfile(), getLatestWeight(), getUserSettings().catch(() => null)]);
     const w = latest?.weight && latest.weight > 0 ? latest.weight : profile?.start_weight && profile.start_weight > 0 ? profile.start_weight : null;
     return {
       weight: w,
       height: profile?.height_cm && profile.height_cm > 0 ? profile.height_cm : null,
       age: ageFromBirth(profile?.birth_date),
-      gender: profile?.avatar_gender === 'femme' ? 'female' : 'male',
+      // 28 octobre 2026 : les reperes neutres choisis a l'onboarding passent avant le genre du personnage
+      gender: genreDesReglages(reglages) === 'neutral' ? 'neutral' : profile?.avatar_gender === 'femme' ? 'female' : 'male',
       targetWeight: profile?.target_weight && profile.target_weight > 0 ? profile.target_weight : null,
       profile: profile ?? null,
     };

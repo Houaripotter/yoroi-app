@@ -187,7 +187,8 @@ export async function saveOnboarding(d: Draft): Promise<void> {
   if (reglagesLisibles) {
     await saveUserSettings({
       ...(name ? { username: name } : {}),
-      ...(genreCalcul ? { gender: genreCalcul === 'femme' ? 'female' as const : 'male' as const } : {}),
+      // 28 octobre 2026 : « Autre » puis « Je préfère ne pas le dire » : reperes neutres (moyenne homme et femme)
+      ...(genreCalcul ? { gender: genreCalcul === 'femme' ? 'female' as const : 'male' as const } : d.gender === 'autre' && d.genreRepere === 'neutre' ? { gender: 'neutral' as const } : {}),
       // le genre declare n'est garde a part que s'il est « autre » (efface s'il redevient homme ou femme)
       ...(d.gender ? { genreDeclare: d.gender === 'autre' ? ('autre' as const) : null } : {}),
       ...(d.trancheAge ? { trancheAge: d.trancheAge } : {}),

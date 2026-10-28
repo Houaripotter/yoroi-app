@@ -5,7 +5,9 @@
  */
 
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
-export type Gender = 'male' | 'female';
+import { selonGenre, type GenreFormule } from '@/lib/genreCalcul';
+/** 28 octobre 2026 : 'neutral', la moyenne des formules homme et femme (lib/genreCalcul.ts) */
+export type Gender = GenreFormule;
 
 // ============================================
 // SOURCES
@@ -16,7 +18,7 @@ export type Source = { label: string; ref: string; url?: string };
 export const SOURCES = {
   imc: { label: traduire('Indice de masse corporelle'), ref: 'Organisation mondiale de la santé, classification de l’IMC chez l’adulte' },
   deurenberg: { label: traduire('Formule de Deurenberg (1991)'), ref: 'British Journal of Nutrition' },
-  mifflin: { label: traduire('Formule Mifflin-St Jeor (1990)'), ref: 'American Journal of Clinical Nutrition', url: 'https://pubmed.ncbi.nlm.nih.gov/2305711/' },
+  mifflin: { label: traduire('Formule Mifflin St Jeor (1990)'), ref: 'American Journal of Clinical Nutrition', url: 'https://pubmed.ncbi.nlm.nih.gov/2305711/' },
   lorentz: { label: traduire('Formule de Lorentz (1929)'), ref: 'Formule historique, donnée à titre indicatif' },
   devine: { label: traduire('Formule de Devine (1974)'), ref: 'Formule pharmacologique, donnée à titre indicatif' },
   epley: { label: traduire('Formule d’Epley (1985)'), ref: 'Estimation de la charge maximale à partir des répétitions' },
@@ -88,10 +90,17 @@ export function imcCategory(v: number): Level {
 /** IMG Deurenberg : 1,20 x IMC + 0,23 x age - 10,8 x sexe - 5,4 (sexe = 1 homme, 0 femme) */
 export function img(weight: number, heightCm: number, age: number, gender: Gender): number {
   const i = imc(weight, heightCm);
-  return 1.2 * i + 0.23 * age - (gender === 'male' ? 10.8 : 0) - 5.4;
+  return 1.2 * i + 0.23 * age - selonGenre(gender, 10.8, 0) - 5.4;
 }
 
 export function imgCategory(v: number, gender: Gender): Level {
+  // neutre : seuils moyens (14, 22,5, 28,5)
+  if (gender === 'neutral') {
+    if (v < 14) return { label: traduire('Très maigre'), tone: 'indigo' };
+    if (v < 22.5) return { label: traduire('Athlète'), tone: 'moss' };
+    if (v < 28.5) return { label: 'Normal', tone: 'moss' };
+    return { label: 'Élevé', tone: 'gold' };
+  }
   if (gender === 'male') {
     if (v < 10) return { label: traduire('Très maigre'), tone: 'indigo' };
     if (v < 20) return { label: traduire('Athlète'), tone: 'moss' };
@@ -117,12 +126,18 @@ export const IMG_RANGES: Record<Gender, { range: string; label: string }[]> = {
     { range: traduire('25 à 32 %'), label: 'Normal' },
     { range: traduire('plus de 32 %'), label: 'Élevé' },
   ],
+  neutral: [
+    { range: traduire('moins de 14 %'), label: traduire('Très maigre') },
+    { range: traduire('14 à 22,5 %'), label: traduire('Athlète') },
+    { range: traduire('22,5 à 28,5 %'), label: 'Normal' },
+    { range: traduire('plus de 28,5 %'), label: 'Élevé' },
+  ],
 };
 
 /** Mifflin-St Jeor : 10 x P + 6,25 x T - 5 x A + 5 (homme) ou - 161 (femme) */
 export function bmr(weight: number, heightCm: number, age: number, gender: Gender): number {
   const base = 10 * weight + 6.25 * heightCm - 5 * age;
-  return gender === 'male' ? base + 5 : base - 161;
+  return base + selonGenre(gender, 5, -161);
 }
 
 export function tdee(b: number, level: ActivityLevel): number {
@@ -131,8 +146,8 @@ export function tdee(b: number, level: ActivityLevel): number {
 
 export function idealWeight(heightCm: number, gender: Gender) {
   const inches = heightCm / 2.54;
-  const lorentz = gender === 'male' ? heightCm - 100 - (heightCm - 150) / 4 : heightCm - 100 - (heightCm - 150) / 2.5;
-  const devine = gender === 'male' ? 50 + 2.3 * (inches - 60) : 45.5 + 2.3 * (inches - 60);
+  const lorentz = selonGenre(gender, heightCm - 100 - (heightCm - 150) / 4, heightCm - 100 - (heightCm - 150) / 2.5);
+  const devine = selonGenre(gender, 50 + 2.3 * (inches - 60), 45.5 + 2.3 * (inches - 60));
   const h = heightCm / 100;
   return {
     lorentz: round1(lorentz),
@@ -282,7 +297,7 @@ export function simulateCut(current: number, target: number, days: number): CutP
       days: 4,
       targetWeight: current - (fatCutNeeded > 0 ? fatCutNeeded * 0.7 : 0),
       method: 'Hyperhydratation puis restriction',
-      tips: [traduire('De J-5 à J-3 : beaucoup d’eau, sous contrôle'), traduire('Sel normal les premiers jours'), traduire('Baisse le sel progressivement')],
+      tips: [traduire('Entre 5 et 3 jours avant : beaucoup d’eau, sous contrôle'), traduire('Sel normal les premiers jours'), traduire('Baisse le sel progressivement')],
     });
   }
   phases.push({

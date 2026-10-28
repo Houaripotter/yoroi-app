@@ -21,6 +21,8 @@ import { getProfile, getWeights } from '@/lib/database';
 import type { Profile } from '@/lib/database';
 import { BMI_RANGES } from '@/lib/healthRanges';
 import { logger } from '@/lib/security/logger';
+import { getUserSettings } from '@/lib/storage';
+import { genreDesReglages, type GenreFormule } from '@/lib/genreCalcul';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { loadComposition } from './composition';
 import type { CompoKey, CompoPoint } from './composition';
@@ -31,7 +33,8 @@ export type BioKey = CompoKey | 'bmi' | 'lean';
 
 export type BodyContext = {
   heightCm?: number;
-  sex?: 'male' | 'female';
+  /** 28 octobre 2026 : 'neutral', reperes neutres (moyenne homme et femme) */
+  sex?: 'male' | 'female' | 'neutral';
   birthDate?: string;
   age?: number;
 };
@@ -79,12 +82,13 @@ export function ageAt(ctx: BodyContext, date: string): number | undefined {
   return ctx.age && ctx.age > 0 ? ctx.age : undefined;
 }
 
-export function contextOf(p: Profile | null | undefined): BodyContext {
-  if (!p) return {};
+export function contextOf(p: Profile | null | undefined, genre?: GenreFormule): BodyContext {
+  if (!p) return genre === 'neutral' ? { sex: 'neutral' } : {};
   const h = typeof p.height_cm === 'number' && p.height_cm > 80 && p.height_cm < 250 ? p.height_cm : undefined;
   return {
     heightCm: h,
-    sex: p.avatar_gender === 'femme' ? 'female' : p.avatar_gender === 'homme' ? 'male' : undefined,
+    // les reperes neutres choisis a l'onboarding passent avant le genre du personnage
+    sex: genre === 'neutral' ? 'neutral' : p.avatar_gender === 'femme' ? 'female' : p.avatar_gender === 'homme' ? 'male' : undefined,
     birthDate: p.birth_date || undefined,
     age: typeof p.age === 'number' ? p.age : undefined,
   };
@@ -130,7 +134,10 @@ const GALLAGHER: Record<'male' | 'female', { upTo: number; low: number; high: nu
 export function fatRange(ctx: BodyContext, date: string): BioRange | undefined {
   const age = ageAt(ctx, date);
   if (!ctx.sex || !age || age < 20 || age > 79) return undefined;
-  const band = GALLAGHER[ctx.sex].find((b) => age <= b.upTo);
+  const bandeDe = (s: 'male' | 'female') => GALLAGHER[s].find((b) => age <= b.upTo);
+  const bh = bandeDe('male');
+  const bf = bandeDe('female');
+  const band = ctx.sex === 'neutral' ? (bh && bf ? { upTo: bh.upTo, low: (bh.low + bf.low) / 2, high: (bh.high + bf.high) / 2 } : undefined) : bandeDe(ctx.sex);
   if (!band) return undefined;
   const min = Math.max(2, band.low - 8);
   const max = band.high + 15;
@@ -142,7 +149,7 @@ export function fatRange(ctx: BodyContext, date: string): BioRange | undefined {
       { status: 'Normal', from: band.low, to: band.high },
       { status: 'Élevé', from: band.high, to: max },
     ],
-    source: traduire("Repères Gallagher 2000, {0} de {1} ans", ctx.sex === 'female' ? traduire('femme') : traduire('homme'), band.upTo === 39 ? traduire('20 à 39') : band.upTo === 59 ? traduire('40 à 59') : traduire('60 à 79')),
+    source: traduire("Repères Gallagher 2000, {0} de {1} ans", ctx.sex === 'female' ? traduire('femme') : ctx.sex === 'neutral' ? traduire('moyenne homme et femme') : traduire('homme'), band.upTo === 39 ? traduire('20 à 39') : band.upTo === 59 ? traduire('40 à 59') : traduire('60 à 79')),
   };
 }
 
@@ -162,7 +169,7 @@ export function visceralRange(): BioRange {
 export function waterRange(ctx: BodyContext, date: string): BioRange | undefined {
   const age = ageAt(ctx, date);
   if (!ctx.sex || (age !== undefined && age < 18)) return undefined;
-  const [low, high] = ctx.sex === 'female' ? [45, 60] : [50, 65];
+  const [low, high] = ctx.sex === 'female' ? [45, 60] : ctx.sex === 'neutral' ? [47.5, 62.5] : [50, 65];
   return {
     min: low - 10,
     max: high + 8,
@@ -171,7 +178,7 @@ export function waterRange(ctx: BodyContext, date: string): BioRange | undefined
       { status: 'Normal', from: low, to: high },
       { status: 'Élevé', from: high, to: high + 8 },
     ],
-    source: ctx.sex === 'female' ? traduire('Repères Tanita, femme adulte') : traduire('Repères Tanita, homme adulte'),
+    source: ctx.sex === 'female' ? traduire('Repères Tanita, femme adulte') : ctx.sex === 'neutral' ? traduire('Repères Tanita, moyenne homme et femme') : traduire('Repères Tanita, homme adulte'),
   };
 }
 
@@ -520,6 +527,7 @@ async function loadAll(): Promise<Omit<BiomarkersData, 'loading'>> {
     getProfile().catch(() => null),
     getWeights().catch(() => []),
   ]);
+  const genre = genreDesReglages(await getUserSettings().catch(() => null));
   const byDate = new Map<string, number>();
   for (const w of ws ?? []) {
     if (!w?.date || !(w.weight > 0)) continue;
@@ -528,7 +536,7 @@ async function loadAll(): Promise<Omit<BiomarkersData, 'loading'>> {
   const weights = Array.from(byDate.entries())
     .map(([date, weight]) => ({ date, weight }))
     .sort((a, b) => (a.date < b.date ? -1 : 1));
-  return { points, ctx: contextOf(profile as Profile | null), weights };
+  return { points, ctx: contextOf(profile as Profile | null, genre), weights };
 }
 
 export function useBiomarkers(): BiomarkersData {
@@ -573,7 +581,7 @@ export function bmiSeries(weights: { date: string; weight: number }[], ctx: Body
 export const BIO_EXPLAIN: Record<'bmi' | 'lean', { text: string; tip?: string }> = {
   bmi: {
     text: traduire('Ton poids divisé par ta taille au carré. L’OMS parle de corpulence normale entre 18,5 et 25, de surpoids à partir de 25 et d’obésité à partir de 30.'),
-    tip: traduire('L’IMC ne distingue pas le muscle de la graisse : chez un sportif musclé, il peut être élevé sans excès de graisse. Regarde-le avec ta masse grasse.'),
+    tip: traduire('L’IMC ne distingue pas le muscle de la graisse : chez un sportif musclé, il peut être élevé sans excès de graisse. Lis cet indice avec ta masse grasse.'),
   },
   lean: {
     text: traduire('Tout ce qui n’est pas de la graisse : muscles, os, organes, eau. YOROI la calcule à partir de ta masse grasse.'),

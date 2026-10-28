@@ -306,7 +306,8 @@ export interface UserSettings {
   routine_image_uri?: string | null;
   custom_club_logos?: { [key: string]: string };
   weekly_routine?: { [key: string]: { time: string; activity: string }[] };
-  gender?: 'male' | 'female';
+  /** 28 octobre 2026 : 'neutral', reperes neutres (moyenne homme et femme, lib/genreCalcul.ts) */
+  gender?: 'male' | 'female' | 'neutral';
   /** 26 octobre 2026 : « autre » declare a l'onboarding ; gender garde alors le repere des calculs (masse grasse, metabolisme) */
   genreDeclare?: 'autre' | null;
   /** 26 octobre 2026 : tranche d'age declaree (lib/v2/onboarding/trancheAge.ts), jamais l'age exact */

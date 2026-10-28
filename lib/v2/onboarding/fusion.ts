@@ -65,7 +65,8 @@ export function brouillonPrerempli(d: Draft, src: { settings?: ReglagesExistants
     ...d,
     name: d.name.trim() ? d.name : nom,
     gender: d.gender ?? genre,
-    genreRepere: d.genreRepere ?? (d.gender == null && autre ? repere : null),
+    // 28 octobre 2026 : reperes neutres gardes (« Je préfère ne pas le dire »), jamais remplaces par le genre du personnage
+    genreRepere: d.genreRepere ?? (d.gender == null && autre ? (s?.gender === 'neutral' ? 'neutre' : repere) : null),
     trancheAge: d.trancheAge ?? tranche,
     height: d.height ?? positif(p?.height_cm) ?? positif(s?.height),
     target: d.target ?? positif(p?.target_weight) ?? positif(s?.targetWeight),
