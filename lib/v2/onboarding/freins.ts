@@ -126,7 +126,7 @@ export type AffirmationMelee = {
 function liste(mots: string[]): string {
   const m = mots.map((x) => `**${x}**`);
   if (m.length <= 1) return m.join('');
-  return traduire("{0} ni à {1}", m.slice(0, -1).join(', à '), m[m.length - 1]);
+  return traduire("{0} ni à {1}", m.slice(0, -1).join(traduire(', à ')), m[m.length - 1]);
 }
 
 /**
@@ -148,7 +148,7 @@ export function affirmationMelee(freins: Frein[], genre: 'h' | 'f' | null = null
     return { freins: vus, principal, titre: a.titre, texte: a.texte, lien: null, autres: [], points: a.points.map((texte) => ({ texte, frein: principal as Frein })) };
   }
   const autres = vus.slice(1);
-  const seul = genre === 'f' ? 'seule' : 'seul';
+  const seul = genre === 'f' ? traduire('seule') : traduire('seul');
   const lien = traduire("Et tu n’es pas {0} à {1}.", seul, liste(autres.map((f) => MELANGE[f].lien)));
   const points: PointFrein[] = vus.map((f) => ({ texte: MELANGE[f].point, frein: f }));
   for (const p of a.points) {

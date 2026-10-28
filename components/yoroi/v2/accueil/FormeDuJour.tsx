@@ -20,7 +20,7 @@ import { viewSeries } from '@/lib/v2/progres/measures';
 import { Icon, P, Press, useAccent } from './kit';
 import { FeuilleEau } from './EauFeuille';
 import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
-import { DECIMAL } from '@/lib/i18n/tr';
+import { DECIMAL, traduire } from '@/lib/i18n/tr';
 
 type IconKey = 'bolt' | 'moon' | 'drop' | 'body';
 
@@ -154,7 +154,7 @@ export function FormeDuJour({ forme, sleep, sleepGoal, water, waterGoal }: { for
         hint={reachedWater ? 'objectif atteint' : `encore ${formatLiters(Math.max(0, waterGoal - water))} L`}
         hintColor={reachedWater ? P.mossText : P.ink2}
         onPress={() => setEauOuverte(true)}
-        a11y={`Ton eau du jour : ${formatLiters(water)} litre sur ${formatLiters(waterGoal)}. Touche pour ajouter ou retirer de l’eau`}
+        a11y={traduire("Ton eau du jour : {0} litre sur {1}. Touche pour ajouter ou retirer de l’eau", formatLiters(water), formatLiters(waterGoal))}
       />
       </TourAnchor>
 
