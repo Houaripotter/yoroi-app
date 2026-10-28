@@ -8,14 +8,17 @@
 //   3. Calcul via âge : FCmax théorique = 220 - âge
 //   4. Valeurs par défaut adulte moyen 30 ans (FCmax = 190)
 //
-// Formule Apple Santé/Fitness (identique à ce qu'affiche Apple) :
-//   Z1 < 63% FCmax | Z2 63–71% | Z3 71–79% | Z4 79–90% | Z5 > 90%
+// 28 octobre 2026 : avec une FC de repos connue, les cas 2 et 3 suivent la methode d'Apple (reserve
+// cardiaque, 60, 70, 80, 90 %, lib/v2/zones/zonesApple.ts). Sans FC de repos, repli sur le pourcentage
+// de la FC max : Z1 < 63% | Z2 63–71% | Z3 71–79% | Z4 79–90% | Z5 > 90% (estimation, pas la formule d'Apple).
+// Les zones exactes d'Apple (iOS 27) arrivent par l'import et la synchronisation (lib/appleZonesSync.ts).
 // ============================================
 
 import { getUserSettings } from './storage';
-import { getProfile } from './database';
+import { getLatestHealthData, getProfile } from './database';
 import { INTENSITES } from './v2/intensite';
-import { lowerBounds, zoneOf, zoneTimes } from './v2/seances/workoutMath';
+import { lowerBounds, zoneOf, zoneTimes, zonesFromLowers } from './v2/seances/workoutMath';
+import { zonesCommeApple } from './v2/zones/zonesApple';
 import type { Interval } from './v2/seances/workoutMath';
 import type { ZonesOrigin } from './v2/seances/appleZonesSync';
 
@@ -65,6 +68,26 @@ const DEFAULT_ZONES: HRZoneThresholds = {
  * Formule Apple Santé/Fitness : 63/71/79/90% de FCmax.
  * Identique à ce qu'affiche Apple Watch et l'app Forme.
  */
+/**
+ * 28 octobre 2026 : zones comme Apple (reserve cardiaque) depuis la FC de repos et la FC max ;
+ * sans FC de repos valable, repli sur calcZonesFromMaxHR.
+ */
+export function calcZonesCommeApple(fcmax: number, repos?: number | null): HRZoneThresholds {
+  const lb = typeof repos === 'number' ? zonesCommeApple(repos, fcmax) : null;
+  if (!lb) return calcZonesFromMaxHR(fcmax);
+  const z = zonesFromLowers(lb, 0);
+  return { ...z, source: 'age' };
+}
+
+async function fcReposConnue(): Promise<number | null> {
+  try {
+    const r = await getLatestHealthData('heart_rate_resting');
+    return r && r.value > 30 && r.value < 110 ? Math.round(r.value) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function calcZonesFromMaxHR(fcmax: number): HRZoneThresholds {
   return {
     z1max: Math.round(fcmax * 0.63),
@@ -103,7 +126,7 @@ export async function getEffectiveHRZones(): Promise<HRZoneThresholds> {
     if (storedMaxHR) {
       const fcmax = Math.round(parseFloat(storedMaxHR));
       if (fcmax > 100 && fcmax < 250) {
-        return calcZonesFromMaxHR(fcmax);
+        return calcZonesCommeApple(fcmax, await fcReposConnue());
       }
     }
   } catch {
@@ -123,7 +146,7 @@ export async function getEffectiveHRZones(): Promise<HRZoneThresholds> {
     }
 
     if (age >= 10 && age <= 100) {
-      return calcZonesFromMaxHR(220 - age);
+      return calcZonesCommeApple(220 - age, await fcReposConnue());
     }
   } catch {
     // Profil non disponible
