@@ -289,6 +289,14 @@ export const ANCIENNES: Partial<Record<NomSticker, ImageSourcePropType>> = {
   masse: require('@/assets/avatars/app/tampons/masse.webp'),
   ventre: require('@/assets/avatars/app/tampons/ventre.webp'),
   sac: require('@/assets/avatars/app/tampons/sac.webp'),
+  perte: require('@/assets/avatars/app/tampons/perte.webp'),
+  seche: require('@/assets/avatars/app/tampons/seche.webp'),
+  debuter: require('@/assets/avatars/app/tampons/debuter.webp'),
+  force_eclair: require('@/assets/avatars/app/tampons/force_eclair.webp'),
+  mobilite: require('@/assets/avatars/app/tampons/mobilite.webp'),
+  montagne_drapeau: require('@/assets/avatars/app/tampons/montagne_drapeau.webp'),
+  recuperation: require('@/assets/avatars/app/tampons/recuperation.webp'),
+  energie: require('@/assets/avatars/app/tampons/energie.webp'),
 };
 
 // ============ le reglage Illustrations ============
