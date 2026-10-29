@@ -63,6 +63,12 @@ const IMG_MESURES: ImageSourcePropType | null = null;
 
 type Other = { key: string; title: string; sub: string; href: string; params?: Record<string, string> };
 
+// Ecrans declares en presentation 'modal' dans app/_layout.tsx : eux seuls peuvent s'ouvrir par dessus la feuille
+const ECRANS_MODAUX = new Set([
+  '/pesee', '/add-measurement', '/entry', '/injury-detail', '/add-competition', '/add-combat', '/sleep-input',
+  '/add-training', '/add-combat-session', '/add-club', '/quick-nutrition',
+]);
+
 /** Un jour de la semaine du programme, pour les mini barres */
 type JourSemaine = { lettre: string; etat: 'fait' | 'jour' | 'prevu' | 'repos'; aujourdhui: boolean };
 
@@ -197,9 +203,14 @@ export default function Ajouter() {
   // Le retour depuis l'ecran ouvert ramene a l'Accueil, pas a la feuille.
   const open = (href: string, params?: Record<string, string>) => {
     impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+    const cible = params ? { pathname: href as any, params } : (href as any);
     // 26 octobre 2026 (Houari : « quand j'appuie sur retour, ca quitte le + ») : l'ecran s'ouvre PAR DESSUS
     // la feuille ; le retour ramene au +, pas a l'Accueil
-    router.push(params ? { pathname: href as any, params } : (href as any));
+    // 29 octobre 2026 : sur iOS un ecran "card" pousse par dessus la feuille transparente reste bloque
+    // (on voit l'ecran derriere sans pouvoir rien toucher). Seuls les ecrans en modal s'ouvrent par dessus,
+    // les autres remplacent la feuille comme avant le 26 octobre.
+    if (ECRANS_MODAUX.has(href)) router.push(cible);
+    else router.replace(cible);
   };
 
   // une seance faite : la saisie du sport en mode « seance faite » (jour, heure, duree, details), sans chrono
