@@ -48,12 +48,13 @@ export const CustomPopup: React.FC<CustomPopupProps> = memo(({
     impactAsync(ImpactFeedbackStyle.Light);
     // Fermer d'abord le popup actuel
     onClose();
-    // Puis executer l'action apres un court delai pour permettre
-    // l'affichage d'un nouveau popup si necessaire
+    // Puis executer l'action apres la fin de l'animation de fermeture.
+    // Sur iOS, ouvrir la camera ou la galerie pendant que le Modal se ferme
+    // echoue en silence et laisse un calque transparent qui bloque l'ecran.
     if (button.onPress) {
       setTimeout(() => {
         button.onPress?.();
-      }, 100);
+      }, Platform.OS === 'ios' ? 450 : 100);
     }
   };
 
