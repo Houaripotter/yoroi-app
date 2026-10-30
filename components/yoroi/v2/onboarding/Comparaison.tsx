@@ -176,7 +176,7 @@ export function Comparaison({ nav, genre = 'h', univers = 'japon', onNext }: { n
       )}
       {etape >= 5 ? (
         <Animated.View entering={calme ? undefined : FadeIn.delay(200).duration(FONDU_MS)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 14 }}>
-          <Icon name="shield" size={16} color={c.accent} />
+          <Icon sticker="hors_ligne" name="shield" size={16} color={c.accent} />
           <Riche text={traduire("**Hors ligne**, tout reste sur ton téléphone")} size={14} weight="bold" color={c.ink} />
         </Animated.View>
       ) : null}
