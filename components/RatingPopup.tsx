@@ -26,6 +26,7 @@ import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedba
 import { requestReview, isAvailableAsync } from 'expo-store-review';
 import { router } from 'expo-router';
 import { traduire } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 
 interface RatingPopupProps {
   visible: boolean;
@@ -207,7 +208,7 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
                 { backgroundColor: '#FF6B6B', transform: [{ scale: heartAnim }] },
               ]}
             >
-              <Ionicons name="heart" size={14} color="#FFFFFF" />
+              <IconeOuSticker sticker="coeur" taille={14}><Ionicons name="heart" size={14} color="#FFFFFF" /></IconeOuSticker>
             </Animated.View>
           </View>
 
@@ -247,7 +248,7 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
               activeOpacity={0.8}
             >
               <View style={styles.rateButtonGradient}>
-                <Ionicons name="star" size={22} color={colors.textOnAccent} />
+                <IconeOuSticker sticker="etoile" taille={22}><Ionicons name="star" size={22} color={colors.textOnAccent} /></IconeOuSticker>
                 <Text style={[styles.rateButtonText, { color: colors.textOnAccent }]}>
                   {t('rating.rateButton') || traduire("Je note l'app !")}
                 </Text>
@@ -260,7 +261,7 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
               onPress={handleSuggestionBox}
               activeOpacity={0.7}
             >
-              <Ionicons name="bulb-outline" size={20} color={colors.accent} />
+              <IconeOuSticker sticker="boite_idees" taille={20}><Ionicons name="bulb-outline" size={20} color={colors.accent} /></IconeOuSticker>
               <Text style={[styles.suggestionButtonText, { color: isDark ? colors.accent : colors.textPrimary }]}>
                 {t('rating.suggestionButton') || traduire("J'ai une idée / un problème")}
               </Text>
