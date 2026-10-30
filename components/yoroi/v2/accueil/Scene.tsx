@@ -48,7 +48,7 @@
  * L'apercu de Ta scene et la galerie du Studio gardent l'ancienne fenetre pleine largeur.
  */
 import React from 'react';
-import { Image, Pressable, View, useWindowDimensions } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
@@ -81,6 +81,7 @@ import { BusteRond } from '@/components/yoroi/v2/espace/BusteRond';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { ROUTES_PERSONNALISER } from '@/lib/v2/personnaliser/acces';
 import { traduire } from '@/lib/i18n/tr';
+import { useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
 
 const DAYS = [traduire('Dimanche'), traduire('Lundi'), traduire('Mardi'), traduire('Mercredi'), traduire('Jeudi'), traduire('Vendredi'), traduire('Samedi')];
 const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
@@ -165,6 +166,8 @@ type Props = {
   carte?: boolean;
   /** dans la carte : le decor de saison, pose par dessus la scene et coupe par ses coins */
   decor?: React.ReactNode;
+  /** 30 octobre 2026 (grand ecran) : hauteur imposee de la carte ; absente, elle suit sa largeur (iPhone) */
+  hauteur?: number;
 };
 
 export function SceneHero(props: Props) {
@@ -173,7 +176,7 @@ export function SceneHero(props: Props) {
 }
 
 function SceneFenetre({ top, scene, name, personnage, rankIndex, photo, scrollY, apercu = false, largeur, sansVideo = false }: Props) {
-  const { width: ecran } = useWindowDimensions();
+  const ecran = useLargeurEcran();
   const router = useRouter();
   const width = largeur ?? ecran;
   const now = devNow();
@@ -335,13 +338,13 @@ function SceneFenetre({ top, scene, name, personnage, rankIndex, photo, scrollY,
  * 27 octobre 2026 (refonte Pastel) : la scene de l'accueil en carte arrondie. Meme image, meme video, meme son, meme
  * personnage pose sur le sol, memes touchers (le decor ouvre Ta scene, ton personnage ouvre Ton personnage) ; ni salut, ni lanterne, ni cloche.
  */
-function SceneCarte({ scene, personnage, rankIndex, largeur, decor }: Props) {
+function SceneCarte({ scene, personnage, rankIndex, largeur, decor, hauteur }: Props) {
   const router = useRouter();
-  const { width: ecran } = useWindowDimensions();
+  const ecran = useLargeurEcran();
   const width = largeur ?? ecran - 32;
   const now = devNow();
   const dark = sceneIsDark(scene, now);
-  const H = hauteurSceneCarte(width);
+  const H = hauteur ?? hauteurSceneCarte(width);
   const imgH = Math.max(H, width / SCENE_RATIO);
   const imgW = imgH * SCENE_RATIO;
   const focus = SCENE_FOCUS[scene] ?? 0.5;
