@@ -53,7 +53,7 @@ export const BiometricLockOverlay: React.FC = () => {
       <Text style={styles.title}>{traduire("Yoroi est verrouille")}</Text>
       <Text style={styles.sub}>{traduire("Déverrouille avec FaceID ou TouchID")}</Text>
       <TouchableOpacity style={styles.btn} onPress={retry} activeOpacity={0.85}>
-        <Fingerprint size={22} color="#1a1a2e" />
+        <IconeOuSticker sticker="empreinte_doigt" taille={22}><Fingerprint size={22} color="#1a1a2e" /></IconeOuSticker>
         <Text style={styles.btnText}>{traduire("Deverrouiller")}</Text>
       </TouchableOpacity>
     </View>
