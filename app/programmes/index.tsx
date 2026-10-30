@@ -328,7 +328,7 @@ function CarteProgramme({ p, femme, enCours, favori, onFavori, onPress, remplace
           hitSlop={6}
           style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -6, alignSelf: 'flex-start' }}
         >
-          <Icon name="star" size={22} color={favori ? c.accent : c.textMuted} fill={favori ? c.accent : undefined} />
+          <Icon sticker={false} name="star" size={22} color={favori ? c.accent : c.textMuted} fill={favori ? c.accent : undefined} />
         </Pressable>
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
