@@ -1076,7 +1076,7 @@ function RepsWeightSheet({ visible, series, reps, weight, onReps, onWeight, onSa
         </View>
         <View style={{ flex: 1, alignItems: 'center', gap: 6, padding: 12, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
           <Ink size={13} weight="bold" color={P.ink2}>{traduire("Charge")}</Ink>
-          <Stepper value={weight} step={2} fine={0.5} min={0} max={500} decimals onChange={onWeight} unit="kilos" layout="stack" size={34} button={48} hint="kilos" format={(v) => String(v).replace('.', DECIMAL)} />
+          <Stepper value={weight} step={1} fine={0.5} min={0} max={500} decimals onChange={onWeight} unit="kilos" layout="stack" size={34} button={48} hint="kilos" format={(v) => String(v).replace('.', DECIMAL)} />
         </View>
       </View>
       <BigButton label={traduire("Noter la série")} icon="check" onPress={onSave} />

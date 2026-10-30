@@ -195,7 +195,7 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <View style={{ flex: 1, alignItems: 'center', gap: 6, padding: 12, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
             <Ink size={13} weight="bold" color={P.ink2}>{traduire("Charge")}</Ink>
-            <Stepper value={weight} step={2} fine={0.5} min={0} max={600} decimals onChange={setWeight} unit="kilos" size={28} button={36} format={(v) => `${String(v).replace('.', DECIMAL)} ${unit === 'lbs' ? 'lbs' : 'kg'}`} />
+            <Stepper value={weight} step={1} fine={0.5} min={0} max={600} decimals onChange={setWeight} unit="kilos" size={28} button={36} format={(v) => `${String(v).replace('.', DECIMAL)} ${unit === 'lbs' ? 'lbs' : 'kg'}`} />
           </View>
           <View style={{ flex: 1, alignItems: 'center', gap: 6, padding: 12, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
             <Ink size={13} weight="bold" color={P.ink2}>{traduire("Répétitions")}</Ink>

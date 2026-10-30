@@ -1,6 +1,6 @@
 /**
  * Reglage d'une valeur : boutons - et + (appui long pour defiler vite) et saisie directe en touchant le chiffre.
- * 16 octobre : `fine` ajoute deux petits boutons de reglage fin sous les gros (les kilos : pas de 2, et 0,5).
+ * 16 octobre : `fine` ajoute deux petits boutons de reglage fin sous les gros (les kilos : pas de 1, et 0,5).
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';

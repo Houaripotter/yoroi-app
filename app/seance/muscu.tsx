@@ -920,7 +920,7 @@ export default function SeanceMuscu() {
                     </View>
                     <View style={{ flexDirection: 'row', gap: 10 }}>
                       <View style={{ flex: 1 }}>
-                        <Stepper layout="stack" value={saisieDepuisKg(s.weight, unite)} step={lb ? 5 : 2} fine={lb ? 1 : 0.5} max={lb ? 1100 : 500} decimals unit={lb ? traduire('livres') : traduire('kilos')} size={38} button={50} hint={lb ? traduire('livres') : traduire('kilos')} onChange={(v) => setValue(current.id, s.id, { weight: kgDepuisSaisie(v, unite) })} />
+                        <Stepper layout="stack" value={saisieDepuisKg(s.weight, unite)} step={lb ? 2 : 1} fine={lb ? 1 : 0.5} max={lb ? 1100 : 500} decimals unit={lb ? traduire('livres') : traduire('kilos')} size={38} button={50} hint={lb ? traduire('livres') : traduire('kilos')} onChange={(v) => setValue(current.id, s.id, { weight: kgDepuisSaisie(v, unite) })} />
                       </View>
                       <View style={{ width: 1, backgroundColor: c.divider, marginVertical: 6 }} />
                       <View style={{ flex: 1 }}>
