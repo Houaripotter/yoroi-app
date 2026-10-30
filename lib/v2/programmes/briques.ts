@@ -264,3 +264,12 @@ export function creerBrique(pp: ProgrammePerso, s: Omit<SeancePerso, 'brique' | 
 export function joursDeBrique(pp: Pick<ProgrammePerso, 'semaine'>, cle: string): number[] {
   return pp.semaine.map((s, d) => (s && s.brique === cle ? d : -1)).filter((d) => d >= 0);
 }
+
+/**
+ * Revue du 30 octobre 2026 : les jours qui portent cette brique (semaines A et B) quand il y en a au moins deux,
+ * sinon une liste vide. La feuille de reglage d'un exercice les annonce : le changement vaut partout.
+ */
+export function joursAPrevenir(pp: Pick<ProgrammePerso, 'semaine' | 'semaineB' | 'briques'>, cle: string): PlaceBrique[] {
+  const jours = briquesDuPerso(pp).find((x) => x.cle === cle)?.jours ?? [];
+  return jours.length > 1 ? jours : [];
+}
