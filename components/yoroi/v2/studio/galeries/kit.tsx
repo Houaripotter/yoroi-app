@@ -14,6 +14,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
 import { Icon, RoundButton } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
 import { useCreatorMode } from '@/lib/v2/creator/CreatorModeContext';
 import { traduire } from '@/lib/i18n/tr';
@@ -155,7 +156,7 @@ export function Rubrique({ title, sub }: { title: string; sub?: string }) {
 }
 
 /** Ligne qui ouvre quelque chose : pictogramme, libelle, precision, chevron */
-export function Ligne({ icon, label, sub, onPress, first, danger }: { icon: IconName; label: string; sub?: string; onPress: () => void; first?: boolean; danger?: boolean }) {
+export function Ligne({ icon, label, sub, onPress, first, danger, sticker }: { icon: IconName; label: string; sub?: string; onPress: () => void; first?: boolean; danger?: boolean; sticker?: NomSticker | false }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
@@ -179,7 +180,7 @@ export function Ligne({ icon, label, sub, onPress, first, danger }: { icon: Icon
       })}
     >
       <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: danger ? c.dangerTint : c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name={icon} size={18} color={danger ? c.danger : c.accent} />
+        <Icon name={icon} size={18} color={danger ? c.danger : c.accent} sticker={sticker} />
       </View>
       <View style={{ flex: 1, gap: 1 }}>
         <Ink size={15} weight="extraBold" color={danger ? c.danger : c.ink}>{label}</Ink>
