@@ -62,7 +62,7 @@ export function GalerieGate({ children }: { children: React.ReactNode }) {
         </View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 80 }} accessible accessibilityLabel={traduire("Verrouillé")}>
           <View style={{ width: 96, height: 96, borderRadius: 32, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon sticker="cle" name="lock" size={42} color={c.textMuted} />
+            <Icon sticker="cadenas" name="lock" size={42} color={c.textMuted} />
           </View>
         </View>
       </View>
