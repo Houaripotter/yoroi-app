@@ -21,7 +21,9 @@ import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 /** « 3 × 8 à 12 », « 3 × 30 à 45 s » */
-export function seriesTexte(e: Pick<ExoProgramme, 'series' | 'repsMin' | 'repsMax' | 'secondes'>): string {
+export function seriesTexte(e: Pick<ExoProgramme, 'series' | 'repsMin' | 'repsMax' | 'secondes' | 'minutes'>): string {
+  // 30 octobre 2026 : la brique Cardio (lib/v2/programmes/briques.ts), une durée
+  if (e.minutes) return traduire('{0} min', e.minutes);
   const reps = e.repsMin === e.repsMax ? String(e.repsMin) : traduire('{0} à {1}', e.repsMin, e.repsMax);
   return e.secondes ? traduire('{0} × {1} s', e.series, reps) : `${e.series} × ${reps}`;
 }
