@@ -977,7 +977,7 @@ export default function WorkoutDetailScreen() {
               <Ink size={15} weight="extraBold" style={{ flex: 1 }}>{traduire("Ta note de séance")}</Ink>
               <View style={{ flexDirection: 'row', gap: 3 }}>
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <Icon key={i} name="star" size={18} color={c.gold} fill={i <= (t.session_rating ?? 0) ? c.gold : undefined} />
+                  <Icon key={i} sticker={false} name="star" size={18} color={c.gold} fill={i <= (t.session_rating ?? 0) ? c.gold : undefined} />
                 ))}
               </View>
             </Glass>
