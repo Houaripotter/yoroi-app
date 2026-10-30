@@ -16,6 +16,8 @@ import { P, Press, tap } from '@/components/yoroi/v2/accueil/kit';
 import { paletteSombre } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
 import { RetourCompact } from '@/components/yoroi/v2/entete/EnTete';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
 
 export { P, Press, tap };
 export { Card, Glass, BigButton, Pill, shadow, Enter, Kozane } from '@/components/yoroi/v2/accueil/kit';
@@ -81,12 +83,16 @@ const PATHS: Record<CIconName, string> = {
 
 const FILLED: Partial<Record<CIconName, boolean>> = { play: true, pause: true, stop: true };
 
-export function CIcon({ name, size = 22, color = P.ink, width = 2.2, fill }: { name: CIconName; size?: number; color?: string; width?: number; fill?: string }) {
+/** 30 octobre 2026 : le sticker de l'icone quand il y en a un (reglage Stickers), voir ui/StickerIcone */
+export function CIcon({ name, size = 22, color = P.ink, width = 2.2, fill, sticker }: { name: CIconName; size?: number; color?: string; width?: number; fill?: string; sticker?: NomSticker | false }) {
   const filled = fill ?? (FILLED[name] ? color : 'none');
+  // le carnet a ses commandes video (lecture, pause, arret) : la lecture y reste une icone
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d={PATHS[name]} stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" fill={filled} />
-    </Svg>
+    <IconeOuSticker nom={name === 'play' ? null : name} sticker={sticker} taille={size}>
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path d={PATHS[name]} stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" fill={filled} />
+      </Svg>
+    </IconeOuSticker>
   );
 }
 
