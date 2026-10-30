@@ -7,7 +7,7 @@
  * la fin est discrete (lib/v2/seances/finRepos.ts).
  */
 import React, { useEffect, useRef } from 'react';
-import { AppState, Pressable, Vibration, View } from 'react-native';
+import { AppState, Image, Pressable, Vibration, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -18,6 +18,7 @@ import { PHASE_COLORS } from '@/lib/v2/carnet/chrono';
 import { useAlignedNow } from '@/lib/v2/carnet/useAlignedNow';
 import { blancA } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 
 type Props = {
   endsAt: number;
@@ -34,6 +35,8 @@ const INK = '#1D2029';
 
 export function RestBar({ endsAt, total, bottom, onAdd, onSkip, onFinish }: Props) {
   const now = useAlignedNow(endsAt, true);
+  // 30 octobre 2026 (Houari : des stickers partout) : le sablier du repos, rien en Encre japonaise comme avant
+  const illus = useIllustrations();
   const fired = useRef(false);
 
   useEffect(() => {
@@ -85,6 +88,7 @@ export function RestBar({ endsAt, total, bottom, onAdd, onSkip, onFinish }: Prop
       accessibilityLabel={traduire("Repos, {0}", fmtClock(left))}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 16, paddingRight: 10, paddingTop: 10, paddingBottom: 12 }}>
+        {illus.stickers ? <Image source={illus.img('sablier')} style={{ width: 40, height: 40 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
         <View style={{ flex: 1, minWidth: 0 }}>
           <Ink size={12} weight="extraBold" color={pc.deep} numberOfLines={1}>{final ? traduire('Ça repart') : traduire('Repos')}</Ink>
           <Ink size={32} weight="black" color={final ? pc.deep : INK} style={{ fontVariant: ['tabular-nums'] }} numberOfLines={1}>{fmtClock(left)}</Ink>
