@@ -19923,5 +19923,10 @@
 "Vérifie qu’il y a au moins une séance d’exercices, puis réessaie.": "Controleer of er minstens één training met oefeningen is en probeer het opnieuw.",
 "{0} groupes sur {1} travaillés 2 fois par semaine": "{0} van de {1} groepen 2 keer per week getraind",
 "{0} reprend tout seul après. Tes séances faites et tes charges restent.": "{0} gaat daarna vanzelf verder. Je gedane trainingen en je gewichten blijven.",
-"{0} {1}/{2}": "{0} {1}/{2}"
+"{0} {1}/{2}": "{0} {1}/{2}",
+"Modifier cette semaine": "Deze week aanpassen",
+"La séance de chaque jour, mêmes dates": "De training van elke dag, zelfde data",
+"Garder comme mon programme ?": "Bewaren als mijn programma?",
+"Ta semaine mixte devient ton programme, sans fin, dans Mes programmes. Tes séances faites et tes charges restent.": "Je gemengde week wordt je programma, zonder einde, in Mijn programma's. Je gedane trainingen en je gewichten blijven.",
+"Il rejoint Mes programmes, sans fin": "Het komt bij Mijn programma's, zonder einde"
 }

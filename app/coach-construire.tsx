@@ -12,6 +12,9 @@
  * 30 octobre 2026 : « Partir d'un modèle » en haut (Push Pull Legs, Upper Lower, Push Pull + Upper Lower...), les
  * programmes du catalogue remplissent les jours, modifiables ensuite (lib/v2/programmes/modelesSemaine.ts) ;
  * les idées de nom passent à la ligne au lieu d'être coupées au bord ; contenu limité à 720 points sur iPad et Mac.
+ * 30 octobre 2026 : ta semaine changée dans Tes jours (page du programme, Coach) est celle que tu retrouves ici ; avec
+ * des semaines A et B qui alternent, « Semaine A » et « Semaine B » en haut de ta semaine, chacune se remplit ici.
+ * Un programme archivé ne s'ouvre jamais ici : tu repars d'un programme neuf.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
@@ -42,12 +45,12 @@ import type { Programme } from '@/lib/v2/programmes/types';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
 import {
   avecExo, avecJour, deplacerExo, exoDepuisNom, joursDuPerso, nombreSeances, nouveauProgrammePerso, peutEnregistrer,
-  programmePersoParId, reglerExo, sansExo, titreDeSeance, enregistrerProgrammePerso,
+  programmePersoParId, reglerExo, sansExo, titreDeSeance, enregistrerProgrammePerso, CLE_PROGRAMMES_PERSO, semaineVide,
 } from '@/lib/v2/programmes/monProgramme';
 import type { ProgrammePerso, RappelPerso, SeancePerso } from '@/lib/v2/programmes/monProgramme';
 import { appliquerRappelProgramme, lireRappelSeance } from '@/lib/v2/programmes/rappelProgramme';
 import { HEURES_RAPPEL, estAutreHeure, libelleHeureRappel } from '@/lib/v2/programmes/rappel';
-import { chargerProgrammeActif, suivreProgrammePerso, supprimerProgrammePerso } from '@/lib/v2/programmes/suivi';
+import { chargerProgrammeActif, enFileProgramme, suivreProgrammePerso, supprimerProgrammePerso } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { ExoProgramme } from '@/lib/v2/programmes/types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
@@ -63,7 +66,10 @@ const SECONDES: [number, number][] = [[20, 30], [30, 45], [45, 60]];
 const REPOS = [60, 90, 120, 180];
 const majuscule = (s: string) => s.charAt(0).toLocaleUpperCase() + s.slice(1);
 /** Ce qui compte pour savoir si tu as changé quelque chose (les séances vides ne comptent pas) */
-const empreinte = (x: ProgrammePerso, r: RappelPerso) => JSON.stringify([x.nom.trim(), x.semaine.map((s) => (s && s.exos.length ? s : null)), r.actif, r.heure]);
+const plein = (l: readonly (SeancePerso | null)[] | undefined) => (l ?? []).map((s) => (s && s.exos.length ? s : null));
+const empreinte = (x: ProgrammePerso, r: RappelPerso) => JSON.stringify([x.nom.trim(), plein(x.semaine), r.actif, r.heure, ...(x.semaineB ? [plein(x.semaineB)] : [])]);
+/** 30 octobre 2026 : la semaine B s'affiche à la place de A (et inversement) ; tout ce qui est enregistré repasse par A */
+const echanger = (x: ProgrammePerso): ProgrammePerso => ({ ...x, semaine: x.semaineB ?? semaineVide(), semaineB: x.semaine });
 const nouveauVide: ProgrammePerso = { id: '', nom: '', semaine: [null, null, null, null, null, null, null], creeLe: '', modifieLe: '' };
 
 export default function CoachConstruire() {
@@ -73,6 +79,10 @@ export default function CoachConstruire() {
   const illus = useIllustrations();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const [pp, setPp] = useState<ProgrammePerso>(() => nouveauProgrammePerso());
+  // 30 octobre 2026 : la semaine montrée, A ou B (semaines qui alternent) ; « normal » est toujours ton programme dans l'ordre
+  const [vue, setVue] = useState<'a' | 'b'>('a');
+  const normal = vue === 'b' ? echanger(pp) : pp;
+  const avecAB = !!normal.ab && !!normal.semaineB;
   const [existe, setExiste] = useState(false);
   const [pret, setPret] = useState(!id);
   const [ouvert, setOuvert] = useState<number | null>(null);
@@ -121,9 +131,9 @@ export default function CoachConstruire() {
   }, [id]);
 
   const n = nombreSeances(pp);
-  const modifie = pret && empreinte(pp, rappel) !== (depart || empreinte(nouveauVide, rappel));
+  const modifie = pret && empreinte(normal, rappel) !== (depart || empreinte(nouveauVide, rappel));
   // 28 octobre 2026 : le glissement retour de l'iPhone et le retour d'Android demandent aussi, comme la fleche
-  const { laisserPartir } = useConfirmerSortie(modifie && peutEnregistrer(pp), {
+  const { laisserPartir } = useConfirmerSortie(modifie && peutEnregistrer(normal), {
     titre: traduire('Enregistrer ton programme ?'),
     message: traduire('Tu as fait des changements.'),
     enregistrer: () => enregistrer(),
@@ -131,7 +141,7 @@ export default function CoachConstruire() {
   const sortir = () => {
     tap();
     const go = () => { laisserPartir(); if (router.canGoBack()) router.back(); else router.replace('/coach' as any); };
-    if (!modifie || !peutEnregistrer(pp)) { go(); return; }
+    if (!modifie || !peutEnregistrer(normal)) { go(); return; }
     appAlert(traduire('Enregistrer ton programme ?'), traduire('Tu as fait des changements.'), [
       { text: traduire('Quitter sans enregistrer'), style: 'destructive', onPress: go },
       { text: traduire('Enregistrer'), onPress: () => void enregistrer() },
@@ -168,14 +178,15 @@ export default function CoachConstruire() {
 
   const enregistrer = async () => {
     if (occupe) return;
-    if (!peutEnregistrer(pp)) {
+    if (!peutEnregistrer(normal)) {
       appAlert(traduire('Ajoute au moins un exercice'), traduire('Touche un jour, puis ajoute tes exercices par muscle ou en cherchant.'));
       return;
     }
     const go = async () => {
       setOccupe(true);
       try {
-        const sauve = await enregistrerProgrammePerso({ ...pp, rappel });
+        // 30 octobre 2026 : dans la file de tes programmes (suivi.ts), jamais en même temps qu'un autre enregistrement
+        const sauve = await enFileProgramme(CLE_PROGRAMMES_PERSO, () => enregistrerProgrammePerso({ ...normal, rappel }));
         await suivreProgrammePerso(sauve);
         const r = await appliquerRappelProgramme(rappel, joursDuPerso(sauve));
         if (r === 'refuse') {
@@ -188,6 +199,8 @@ export default function CoachConstruire() {
         setDepart(empreinte(sauve, rappel));
         setExiste(true);
         setPp(sauve);
+        setVue('a');
+        setOuvert(null);
         setFete({ id: sauve.id, n: jours.length, premier: jours.length ? JOURS[jours[0]] : '' });
       } catch (e) {
         logger.error('[Coach] programme perso non enregistre', e);
@@ -320,9 +333,37 @@ export default function CoachConstruire() {
             rayon={22}
             tailleTexte={15}
             lignes={1}
-            styleBouton={{ opacity: peutEnregistrer(pp) ? 1 : 0.55 }}
+            styleBouton={{ opacity: peutEnregistrer(normal) ? 1 : 0.55 }}
           />
         </View>
+        {avecAB ? (
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+            {(['a', 'b'] as const).map((l) => {
+              const on = vue === l;
+              return (
+                <Pressable
+                  key={l}
+                  onPress={() => {
+                    if (on) return;
+                    tap();
+                    // le jour ouvert resté vide redevient un repos, puis l'autre semaine s'affiche
+                    setPp((x) => {
+                      const y = ouvert !== null && !(x.semaine[ouvert]?.exos.length) ? avecJour(x, ouvert, null) : x;
+                      return echanger(y);
+                    });
+                    setOuvert(null);
+                    setVue(l);
+                  }}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: on }}
+                  style={({ pressed }) => [{ flex: 1, minHeight: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? pa.texte : pressed ? pa.choisi : pa.carte }, on ? null : ombrePastel(pa.ombre)]}
+                >
+                  <Ink size={14} weight="extraBold" color={on ? pa.page : pa.texte}>{l === 'a' ? traduire('Semaine A') : traduire('Semaine B')}</Ink>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
         <Ink size={13} weight="bold" color={pa.texte2} style={{ marginTop: 2, marginBottom: 10, marginHorizontal: 1 }}>
           {n ? traduirePluriel(n, n > 1, '{0} séance, touche un jour pour le remplir', '{0} séances, touche un jour pour le remplir', n) : traduire('Touche un jour pour le remplir')}
         </Ink>

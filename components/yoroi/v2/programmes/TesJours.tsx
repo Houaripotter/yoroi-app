@@ -29,7 +29,8 @@ import {
   seancesProposees, seancesTropProches, semaineDepuisBoucle, semaineUtile,
 } from '@/lib/v2/programmes/semaineLibre';
 import type { CaseSemaine, FamilleSeance, GroupeMuscle, LigneSemaine, SemaineLibre, SeanceProposee } from '@/lib/v2/programmes/semaineLibre';
-import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, enregistrerSemaine, joursDuProgramme, semaineEffective } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, enregistrerSemaine, joursDuProgramme, modifierSemainePerso, semaineEffective } from '@/lib/v2/programmes/suivi';
+import { estProgrammePerso } from '@/lib/v2/programmes/registrePerso';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { JourProgramme, Programme } from '@/lib/v2/programmes/types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
@@ -368,25 +369,44 @@ function Note({ texte, attention }: { texte: string; attention?: boolean }) {
   );
 }
 
-/** « Tes jours » du programme en cours, qui s'enregistre tout seul (page du programme, Coach) */
+/**
+ * « Tes jours » du programme en cours, qui s'enregistre tout seul (page du programme, Coach).
+ * 30 octobre 2026 : ton programme à toi aussi (construit, gardé, mixte habituel) : ta semaine est écrite dans ton
+ * programme et dans ton programme en cours (suivi.ts, modifierSemainePerso), tes exercices se changent toujours dans
+ * « Modifier mon programme ».
+ */
 export function TesJoursEnCours({ programme }: { programme?: Programme | null }) {
   const [actif, setActif] = useState<ProgrammeActif | null>(null);
+  // ton programme à toi : ta semaine telle que tu viens de la changer, le temps qu'elle soit enregistrée
+  const [vue, setVue] = useState<SemaineLibre | null>(null);
   useEffect(() => {
-    const lire = () => chargerProgrammeActif().then(setActif).catch(() => setActif(null));
+    let vivant = true;
+    const lire = () =>
+      chargerProgrammeActif()
+        .then((a) => { if (vivant) { setActif(a); setVue(null); } })
+        .catch(() => { if (vivant) setActif(null); });
     lire();
     const sub = DeviceEventEmitter.addListener(PROGRAMME_CHANGED_EVENT, lire);
-    return () => sub.remove();
+    return () => { vivant = false; sub.remove(); };
   }, []);
-  const p = programme ?? (actif ? programmeParId(actif.id) ?? null : null);
+  // ton programme à toi est relu à chaque changement (registrePerso.ts) : la version la plus fraîche
+  const frais = actif ? programmeParId(actif.id) ?? null : null;
+  const p = programme ? (frais && frais.id === programme.id ? frais : programme) : frais;
   if (!actif || !p || actif.id !== p.id) return null;
+  const perso = estProgrammePerso(p.id);
   const v = semaineAffichee(actif, p);
   return (
     <TesJours
       programme={p}
-      semaine={v.semaine}
+      semaine={perso && vue ? vue : v.semaine}
       fin={actif.fin}
-      enBoucle={v.enBoucle}
+      enBoucle={!(perso && vue) && v.enBoucle}
       onSemaine={(s) => {
+        if (perso) {
+          setVue(s);
+          void modifierSemainePerso(s).then((ok) => { if (!ok) setVue(null); }).catch(() => setVue(null));
+          return;
+        }
         setActif((a) => (a ? { ...a, semaine: s } : a));
         void enregistrerSemaine(s);
       }}

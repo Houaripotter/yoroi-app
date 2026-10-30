@@ -19923,5 +19923,10 @@
 "Vérifie qu’il y a au moins une séance d’exercices, puis réessaie.": "Check there is at least one exercise session, then try again.",
 "{0} groupes sur {1} travaillés 2 fois par semaine": "{0} of {1} groups worked 2 times a week",
 "{0} reprend tout seul après. Tes séances faites et tes charges restent.": "{0} comes back on its own afterwards. Your completed sessions and your weights stay.",
-"{0} {1}/{2}": "{0} {2}/{1}"
+"{0} {1}/{2}": "{0} {2}/{1}",
+"Modifier cette semaine": "Edit this week",
+"La séance de chaque jour, mêmes dates": "Each day's session, same dates",
+"Garder comme mon programme ?": "Keep as my program?",
+"Ta semaine mixte devient ton programme, sans fin, dans Mes programmes. Tes séances faites et tes charges restent.": "Your mixed week becomes your program, with no end, in My programs. Your completed sessions and your weights stay.",
+"Il rejoint Mes programmes, sans fin": "It joins My programs, with no end"
 }

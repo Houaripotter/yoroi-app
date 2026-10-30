@@ -19923,5 +19923,10 @@
 "Vérifie qu’il y a au moins une séance d’exercices, puis réessaie.": "Prüfe, ob mindestens eine Einheit mit Übungen dabei ist, und versuch es erneut.",
 "{0} groupes sur {1} travaillés 2 fois par semaine": "{0} von {1} Gruppen 2 Mal pro Woche trainiert",
 "{0} reprend tout seul après. Tes séances faites et tes charges restent.": "{0} geht danach von selbst weiter. Deine erledigten Einheiten und deine Gewichte bleiben.",
-"{0} {1}/{2}": "{0} {1}.{2}."
+"{0} {1}/{2}": "{0} {1}.{2}.",
+"Modifier cette semaine": "Diese Woche ändern",
+"La séance de chaque jour, mêmes dates": "Die Einheit jedes Tages, gleiche Daten",
+"Garder comme mon programme ?": "Als mein Programm behalten?",
+"Ta semaine mixte devient ton programme, sans fin, dans Mes programmes. Tes séances faites et tes charges restent.": "Deine gemischte Woche wird dein Programm, ohne Ende, in Meine Programme. Deine erledigten Einheiten und deine Gewichte bleiben.",
+"Il rejoint Mes programmes, sans fin": "Es kommt zu Meine Programme, ohne Ende"
 }

@@ -19,7 +19,7 @@ import { extrasDe, finDesModules, lireModules, modulesActifs, normaliserModules 
 import type { ModuleId } from './modules';
 import { MACHINE_BY_ID } from '@/lib/v2/seance/machines';
 import { estProgrammePerso } from './registrePerso';
-import { CLE_PROGRAMMES_PERSO, archiverProgrammePerso, chargerProgrammesPerso, enregistrerProgrammePerso, idJourPerso, joursDuPerso, nouveauProgrammePerso } from './monProgramme';
+import { CLE_PROGRAMMES_PERSO, archiverProgrammePerso, chargerProgrammesPerso, enregistrerProgrammePerso, idJourPerso, idJourPersoB, joursDuPerso, modifierProgrammePerso, nouveauProgrammePerso } from './monProgramme';
 import type { ProgrammePerso, SeancePerso } from './monProgramme';
 import { caseLe, casesDe, idAutre, jourDeRef, jourDuProgramme, lireDuree, lireSemaine, lundiIso, planDepuisSemaine, planProjete, seanceLe, semaineDepuisBoucle, semaineDepuisPlan, semaineUtile, semaineUtilisePerso } from './semaineLibre';
 import type { CaseSemaine, SemaineLibre } from './semaineLibre';
@@ -603,6 +603,125 @@ async function annulerMixtePonctuel_(): Promise<void> {
   if (a.jusquau) await ecrire(null);
 }
 
+/* ------------------------------------------------------------------------------------------------
+ * 30 octobre 2026 : ta semaine d'un programme à toi (construit, gardé, mixte habituel ou semaine mixte temporaire),
+ * changée dans Tes jours. Elle est écrite dans ton programme (monProgramme.ts : il la garde si tu le relances) ET
+ * dans ton programme en cours. Tes séances faites, ton début, ta progression, tes autres réglages ne bougent pas.
+ * ---------------------------------------------------------------------------------------------- */
+type ChampsSemainePerso = Pick<ProgrammePerso, 'semaine' | 'semaineB' | 'ab' | 'depuis'>;
+
+/**
+ * Ta semaine libre (cases) en séances à toi. Une case de ton programme reprend sa séance (copie, mêmes exercices) ;
+ * une séance d'un autre programme est copiée dans ton programme. `renommes` : l'id d'avant de chaque séance vers
+ * ses ids dans la nouvelle semaine (pour tes exercices changés à la main). null : une case introuvable ou une
+ * séance sans exercice (rounds, cardio) : rien n'est écrit.
+ */
+export function semainePersoDepuisLibre(pp: ProgrammePerso, s: SemaineLibre): { champs: ChampsSemainePerso; renommes: Map<string, string[]> } | null {
+  let ok = true;
+  const renommes = new Map<string, string[]>();
+  const copie = (x: SeancePerso): SeancePerso => ({ ...(x.titre ? { titre: x.titre } : {}), exos: x.exos.map((e) => ({ ...e })) });
+  const versSeance = (c: CaseSemaine, nouvelId: string): SeancePerso | null => {
+    if (!c) return null;
+    let seance: SeancePerso | null = null;
+    let ancien: string;
+    if (c.p === pp.id) {
+      ancien = c.s;
+      const dA = [0, 1, 2, 3, 4, 5, 6].find((d) => c.s === idJourPerso(pp.id, d));
+      const dB = [0, 1, 2, 3, 4, 5, 6].find((d) => c.s === idJourPersoB(pp.id, d));
+      const src = dA !== undefined ? pp.semaine[dA] : dB !== undefined ? pp.semaineB?.[dB] : null;
+      if (src && src.exos.length) seance = copie(src);
+    } else {
+      ancien = idAutre(c);
+      const j = jourDeRef(c, pp.id);
+      if (j && j.exos.length && !j.rounds && !j.cardio) {
+        seance = {
+          titre: j.titre.slice(0, 40),
+          exos: j.exos.map((e) => ({ nom: e.nom, muscle: e.muscle, series: e.series, repsMin: e.repsMin, repsMax: e.repsMax, reposSec: e.reposSec, ...(e.conseil ? { conseil: e.conseil } : {}), ...(e.poidsDuCorps ? { poidsDuCorps: true } : {}), ...(e.secondes ? { secondes: true } : {}) })),
+        };
+      }
+    }
+    if (!seance) {
+      ok = false;
+      return null;
+    }
+    renommes.set(ancien, [...(renommes.get(ancien) ?? []), nouvelId]);
+    return seance;
+  };
+  const semaine = s.a.map((c, d) => versSeance(c, idJourPerso(pp.id, d)));
+  // ta semaine B : celle de Tes jours ; absente, celle d'avant est gardée telle quelle
+  const semaineB = s.b ? s.b.map((c, d) => versSeance(c, idJourPersoB(pp.id, d))) : pp.semaineB;
+  if (!ok || !semaine.some((x) => !!x)) return null;
+  const ab = !!s.ab && !!s.b;
+  const depuis = s.depuis ?? pp.depuis;
+  return { champs: { semaine, semaineB, ab: ab || undefined, depuis }, renommes };
+}
+
+/** Tes exercices changés à la main suivent leur séance dans la nouvelle semaine ; ceux d'une séance retirée partent */
+export function remplacementsRenommes(r: Remplacements | undefined, renommes: ReadonlyMap<string, readonly string[]>): Remplacements | undefined {
+  if (!r) return undefined;
+  const out: Remplacements = {};
+  for (const [cle, nom] of Object.entries(r)) {
+    const m = /^(.*)\|(\d+)$/.exec(cle);
+    if (!m || typeof nom !== 'string') continue;
+    for (const n of renommes.get(m[1]) ?? []) out[cleCase(n, Number(m[2]))] = nom;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+async function modifierSemainePerso_(semaine: SemaineLibre): Promise<boolean> {
+  const a = await chargerProgrammeActif();
+  if (!a || !estProgrammePerso(a.id)) return false;
+  const s = lireSemaine(semaine);
+  if (!semaineUtile(s)) return false;
+  await chargerProgrammesPerso();
+  const sortie: { renommes?: Map<string, string[]> } = {};
+  const enr = await enFileProgramme(CLE_PROGRAMMES_PERSO, () =>
+    modifierProgrammePerso(a.id, (pp) => {
+      const r = semainePersoDepuisLibre(pp, s);
+      if (!r) return null;
+      sortie.renommes = r.renommes;
+      return { ...pp, ...r.champs };
+    }),
+  );
+  if (!enr || !sortie.renommes) return false;
+  const q = programmeParId(enr.id);
+  const plan = q ? planDuProgrammePerso(q) : null;
+  if (!q || !plan) return false;
+  const remplacements = remplacementsRenommes(a.remplacements, sortie.renommes);
+  const { remplacements: _r, plan: _p, ...reste } = a;
+  const suite: ProgrammeActif = { ...reste, plan, jours: joursDuPlan(plan), ...(remplacements ? { remplacements } : {}) };
+  const j = joursDeLaSemaine(suite, q, new Date(), false);
+  if (j.length) suite.jours = j;
+  suite.prochain = indexGarde(q, suite, Math.min(a.prochain, q.jours.length - 1));
+  await ecrire(suite);
+  return true;
+}
+
+/**
+ * « Garder comme mon programme » d'une semaine mixte temporaire : elle devient un vrai programme à toi, dans « Mes
+ * programmes », toujours en cours, sans fin. Même début, mêmes séances faites, même semaine.
+ */
+async function garderTemporaire_(): Promise<ProgrammeActif | null> {
+  const a = await chargerProgrammeActif();
+  if (!a || !estProgrammePerso(a.id) || !estIso(a.jusquau)) return null;
+  const enr = await enFileProgramme(CLE_PROGRAMMES_PERSO, () =>
+    modifierProgrammePerso(a.id, (pp) => {
+      const { archive: _x, ...reste } = pp;
+      return { ...reste, duree: 0 };
+    }),
+  );
+  if (!enr || enr.archive) return null;
+  const { jusquau: _j, ...reste } = a;
+  const suite: ProgrammeActif = { ...reste, duree: 0 };
+  await ecrire(suite);
+  return suite;
+}
+
+/** Ton programme en cours est une semaine mixte temporaire (lancée sans programme, archivée, avec une fin) */
+export function estTemporaire(a: Pick<ProgrammeActif, 'id' | 'jusquau'> | null | undefined, aujourdhui = new Date()): boolean {
+  return !!a && estProgrammePerso(a.id) && estIso(a.jusquau) && a.jusquau >= jourLocal(aujourdhui);
+}
+
 /** La semaine mixte en cours aujourd'hui (bandeau « Semaine mixte jusqu'à dimanche ») ; null : aucune */
 export function mixteEnCours(a: ProgrammeActif | null, aujourdhui = new Date()): { jusquau: string; nom?: string; temporaire: boolean } | null {
   if (!a) return null;
@@ -1064,6 +1183,12 @@ export function lancerMixtePonctuel(...a: Parameters<typeof lancerMixtePonctuel_
 }
 export function annulerMixtePonctuel(...a: Parameters<typeof annulerMixtePonctuel_>): ReturnType<typeof annulerMixtePonctuel_> {
   return enFileProgramme(CLE, () => annulerMixtePonctuel_(...a)) as ReturnType<typeof annulerMixtePonctuel_>;
+}
+export function modifierSemainePerso(...a: Parameters<typeof modifierSemainePerso_>): ReturnType<typeof modifierSemainePerso_> {
+  return enFileProgramme(CLE, () => modifierSemainePerso_(...a)) as ReturnType<typeof modifierSemainePerso_>;
+}
+export function garderTemporaire(...a: Parameters<typeof garderTemporaire_>): ReturnType<typeof garderTemporaire_> {
+  return enFileProgramme(CLE, () => garderTemporaire_(...a)) as ReturnType<typeof garderTemporaire_>;
 }
 export function remplacerExercice(...a: Parameters<typeof remplacerExercice_>): ReturnType<typeof remplacerExercice_> {
   return enFileProgramme(CLE, () => remplacerExercice_(...a)) as ReturnType<typeof remplacerExercice_>;

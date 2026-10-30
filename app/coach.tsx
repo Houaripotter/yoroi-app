@@ -41,7 +41,7 @@ import { chargerProgrammesPerso, joursDuPerso, nomDuPerso, programmesVisibles } 
 import type { ProgrammePerso } from '@/lib/v2/programmes/monProgramme';
 import { estProgrammePerso } from '@/lib/v2/programmes/registrePerso';
 import { libelleHeureRappel } from '@/lib/v2/programmes/rappel';
-import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, joursDuProgramme, prochainJour, semaineDuProgramme, semainesDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, estTemporaire, joursDuProgramme, prochainJour, semaineDuProgramme, semainesDuProgramme } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
@@ -149,7 +149,7 @@ export default function CoachScreen() {
             <LigneProgramme
               jours={joursDuProgramme(actif, p)}
               couleur={actifPerso ? pa.creme.barre : pa.bleu.barre}
-              titre={actifPerso ? nomPerso(persos.find((x) => x.id === p.id) ?? { nom: '', semaine: [] }) : traduire(p.titre)}
+              titre={actifPerso ? (() => { const x = persos.find((y) => y.id === p.id); return x ? nomPerso(x) : traduire(p.titre); })() : traduire(p.titre)}
               sous={actifPerso || !semainesDuProgramme(actif, p) ? traduire('En cours, semaine {0}', semaineDuProgramme(actif)) : traduire('En cours, semaine {0} sur {1}', Math.min(semaineDuProgramme(actif), semainesDuProgramme(actif, p)!), semainesDuProgramme(actif, p)!)}
               sous2={traduire('Prochaine : {0}', nomCourt(traduire(jour.titre)))}
               onPress={() => { tap(); router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } }); }}
@@ -213,14 +213,15 @@ export default function CoachScreen() {
         </View>
         </Animated.View>
 
-        {/* « Tes jours » du programme du catalogue en cours, modifiables d'ici (TesJours.tsx) ; le tien se modifie dans sa page */}
+        {/* « Tes jours » du programme en cours, modifiables d'ici (TesJours.tsx) ; 30 octobre 2026 : le tien aussi (ta semaine
+            est écrite dans ton programme), sauf une semaine mixte temporaire, qui se change dans sa page */}
         {/* 28 octobre 2026 : à la fin de chaque cycle, ta régularité (GarderProgramme.tsx), sans rien bloquer */}
         {p && actif ? <View style={{ marginTop: 10 }}><PointRegularite programme={p} actif={actif} onChanger={() => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } })} /></View> : null}
         {/* 30 octobre 2026 : une semaine mixte ponctuelle tourne : jusqu'à quand, et « Annuler » (Mixte.tsx) */}
         <BandeauMixte style={{ marginTop: 10 }} />
         {/* 30 octobre 2026 : chaque muscle 2 fois par semaine, le coach le rappelle à partir du jeudi (CarteDeuxFois.tsx) */}
         <CarteDeuxFois style={{ marginTop: 10 }} />
-        {p && !actifPerso ? <View style={{ marginTop: 10 }}><TesJoursEnCours programme={p} /></View> : null}
+        {p && !estTemporaire(actif) ? <View style={{ marginTop: 10 }}><TesJoursEnCours programme={p} /></View> : null}
 
         {/* 3. EXPLORER PAR MUSCLE : la carte musculaire, face et dos ; toucher un muscle le montre et donne sa séance */}
         <Animated.View entering={FadeInDown.duration(380).delay(180)}>

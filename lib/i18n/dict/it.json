@@ -19923,5 +19923,10 @@
 "Vérifie qu’il y a au moins une séance d’exercices, puis réessaie.": "Controlla che ci sia almeno una sessione di esercizi, poi riprova.",
 "{0} groupes sur {1} travaillés 2 fois par semaine": "{0} gruppi su {1} allenati 2 volte a settimana",
 "{0} reprend tout seul après. Tes séances faites et tes charges restent.": "{0} riprende da solo dopo. Le sessioni fatte e i tuoi carichi restano.",
-"{0} {1}/{2}": "{0} {1}/{2}"
+"{0} {1}/{2}": "{0} {1}/{2}",
+"Modifier cette semaine": "Modifica questa settimana",
+"La séance de chaque jour, mêmes dates": "La sessione di ogni giorno, stesse date",
+"Garder comme mon programme ?": "Tenere come il mio programma?",
+"Ta semaine mixte devient ton programme, sans fin, dans Mes programmes. Tes séances faites et tes charges restent.": "La tua settimana mista diventa il tuo programma, senza fine, in I miei programmi. Le sessioni fatte e i tuoi carichi restano.",
+"Il rejoint Mes programmes, sans fin": "Entra in I miei programmi, senza fine"
 }

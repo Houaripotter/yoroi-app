@@ -397,3 +397,21 @@ export async function archiverProgrammePerso(id: string, maintenant = new Date()
   if (!liste.some((p) => p.id === id)) return;
   await ecrireListe(liste.map((p) => (p.id === id ? { ...p, archive: jourLocal(maintenant) } : p)));
 }
+
+/**
+ * 30 octobre 2026 : change un de tes programmes sans rien perdre d'autre (ta semaine depuis Tes jours, « Garder
+ * comme mon programme » d'une semaine mixte). La liste est relue strictement juste avant d'écrire ; `changer` reçoit
+ * le programme tel qu'il est stocké et rend la suite (null : rien n'est écrit). Introuvable, vide ou illisible :
+ * null, rien n'est écrit. À appeler dans la file de CLE_PROGRAMMES_PERSO (suivi.ts, enFileProgramme).
+ */
+export async function modifierProgrammePerso(id: string, changer: (pp: ProgrammePerso) => ProgrammePerso | null, maintenant = new Date()): Promise<ProgrammePerso | null> {
+  const liste = await chargerPourEcrire();
+  const i = liste.findIndex((p) => p.id === id);
+  if (i < 0) return null;
+  const suite = changer(liste[i]);
+  if (!suite) return null;
+  const propre = nettoyerPerso({ ...suite, id, creeLe: liste[i].creeLe, modifieLe: jourLocal(maintenant) });
+  if (!propre || !peutEnregistrer(propre)) return null;
+  await ecrireListe(liste.map((p, k) => (k === i ? propre : p)));
+  return propre;
+}

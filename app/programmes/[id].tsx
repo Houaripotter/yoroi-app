@@ -48,7 +48,7 @@ import { ExplicationExo } from '@/components/yoroi/v2/programmes/ExplicationExo'
 import { ficheDe } from '@/lib/v2/programmes/fiches';
 import { DUREES_EXPRESS, dureeEstimee, seanceExpress } from '@/lib/v2/programmes/express';
 import { demoDe } from '@/lib/v2/programmes/demos';
-import { PROGRAMME_CHANGED_EVENT, arreterProgramme, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerFin, faitsCetteSemaine, prochainJour, remplacerExercice, joursConseilles, joursDuProgramme, planEffectif, semaineDuProgramme, semainesDuProgramme, enregistrerDuree } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, arreterProgramme, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerFin, faitsCetteSemaine, prochainJour, remplacerExercice, joursConseilles, joursDuProgramme, planEffectif, semaineDuProgramme, semainesDuProgramme, enregistrerDuree, estTemporaire, garderTemporaire } from '@/lib/v2/programmes/suivi';
 import { DUREES, jourDuProgramme, joursDeLaLigne, planDepuisSemaine } from '@/lib/v2/programmes/semaineLibre';
 import type { SemaineLibre } from '@/lib/v2/programmes/semaineLibre';
 import { ChoixDuree, GarderMonProgramme, PointRegularite } from '@/components/yoroi/v2/programmes/GarderProgramme';
@@ -80,14 +80,16 @@ export default function ProgrammeDetail() {
   // 27 octobre 2026 : ton programme construit (« Je construis le mien ») est lu du téléphone, puis trouvé comme les autres
   const [persoLu, setPersoLu] = useState(0);
   const perso = estProgrammePerso(typeof id === 'string' ? id : undefined);
+  // 30 octobre 2026 : un programme à toi archivé (supprimé, ou semaine mixte temporaire) ne s'ouvre jamais dans « Je construis le mien »
+  const [archive, setArchive] = useState(false);
   useEffect(() => {
     if (!perso) return;
     let vivant = true;
-    const relire = () => { void chargerProgrammesPerso().then(() => { if (vivant) setPersoLu((n) => n + 1); }); };
+    const relire = () => { void chargerProgrammesPerso().then((l) => { if (vivant) { setArchive(!!l.find((x) => x.id === id)?.archive); setPersoLu((n) => n + 1); } }); };
     relire();
     const sub = DeviceEventEmitter.addListener(PROGRAMME_CHANGED_EVENT, relire);
     return () => { vivant = false; sub.remove(); };
-  }, [perso]);
+  }, [perso, id]);
   const p = useMemo(() => programmeParId(typeof id === 'string' ? id : undefined), [id, persoLu]); // eslint-disable-line react-hooks/exhaustive-deps
   const [actif, setActif] = useState<ProgrammeActif | null>(null);
   const [femme, setFemme] = useState(false);
@@ -190,6 +192,8 @@ export default function ProgrammeDetail() {
   }
 
   const enCours = actif?.id === p.id;
+  // 30 octobre 2026 : ta semaine mixte lancée sans programme : un programme temporaire, archivé, avec une fin
+  const temporaire = enCours && estTemporaire(actif);
   // tes douleurs de l'infirmerie, et celles dites au Guide pour ce programme (27 octobre 2026)
   const regionsVues = unirRegions(regions, enCours ? actif?.douleurs : null);
   const favori = favoris.includes(p.id);
@@ -364,9 +368,55 @@ export default function ProgrammeDetail() {
         ) : null}
 
         {/* 27 octobre 2026 : Tes jours, la séance de chaque jour (Push lundi, Pull mardi...), modifiable à tout moment */}
-        {/* ton programme construit : ses jours se changent dans « Je construis le mien » */}
-        {perso && enCours ? <BoutonSemaineMixte /> : null}
-        {perso ? (
+        {/* ton programme construit : ses exercices se changent dans « Je construis le mien » */}
+        {/* 30 octobre 2026 : ton programme à toi en cours : ta semaine se change ici aussi (TesJours.tsx), tes exercices dans « Modifier mon programme » */}
+        {perso && enCours && !temporaire ? (
+          <View onLayout={(e) => { tesJoursY.current = e.nativeEvent.layout.y; }}>
+            <TesJoursEnCours programme={p} />
+          </View>
+        ) : null}
+        {perso && enCours && !temporaire ? <BoutonSemaineMixte /> : null}
+        {perso && temporaire ? (
+          <View style={{ gap: 12 }}>
+            {/* ta semaine mixte temporaire : elle se change dans son écran, mêmes dates ; ou elle devient ton programme */}
+            <Pressable
+              onPress={() => { tap(); router.push({ pathname: '/programme-mixte' as any, params: { mode: 'temporaire' } }); }}
+              accessibilityRole="button"
+              style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: pressed ? pal.teinte : pal.carte }, OMBRE_CARTE]}
+            >
+              <View style={{ flex: 1, gap: 2 }}>
+                <Ink size={15} weight="black" color={pal.texte}>{traduire('Modifier cette semaine')}</Ink>
+                <Ink size={12} weight="bold" color={pal.texte2}>{traduire('La séance de chaque jour, mêmes dates')}</Ink>
+              </View>
+              <Icon name="chevron" size={16} color={pal.texte3} />
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                tap();
+                appAlert(traduire('Garder comme mon programme ?'), traduire('Ta semaine mixte devient ton programme, sans fin, dans Mes programmes. Tes séances faites et tes charges restent.'), [
+                  { text: traduire('Annuler'), style: 'cancel' },
+                  {
+                    text: traduire('Garder'),
+                    onPress: () => {
+                      void garderTemporaire()
+                        .then((a) => { if (!a) appAlert(traduire('Oups'), traduire('Réessaie dans un instant.')); })
+                        .catch(() => appAlert(traduire('Oups'), traduire('Réessaie dans un instant.')));
+                    },
+                  },
+                ]);
+              }}
+              accessibilityRole="button"
+              style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: pressed ? pal.teinte : pal.carte }, OMBRE_CARTE]}
+            >
+              <View style={{ flex: 1, gap: 2 }}>
+                <Ink size={15} weight="black" color={pal.texte}>{traduire('Garder comme mon programme')}</Ink>
+                <Ink size={12} weight="bold" color={pal.texte2}>{traduire('Il rejoint Mes programmes, sans fin')}</Ink>
+              </View>
+              <Icon name="chevron" size={16} color={pal.texte3} />
+            </Pressable>
+          </View>
+        ) : perso ? (
+          archive ? null : (
           <Pressable
             onPress={() => { tap(); router.push({ pathname: '/coach-construire' as any, params: { id: p.id } }); }}
             accessibilityRole="button"
@@ -378,6 +428,7 @@ export default function ProgrammeDetail() {
             </View>
             <Icon name="chevron" size={16} color={pal.texte3} />
           </Pressable>
+          )
         ) : enCours ? (
           <View style={{ gap: 18 }} onLayout={(e) => { tesJoursY.current = e.nativeEvent.layout.y; }}>
             <TesJoursEnCours programme={p} />

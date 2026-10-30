@@ -7,6 +7,9 @@
  *  1. Combien de jours par semaine (tes jours connus préchoisis).
  *  2. Ta semaine : les 7 jours de Tes jours (TesJours.tsx), proposés d'après tes jours, tout se change ; Semaines A et B
  *     en option ; ce que ta semaine travaille et combien de groupes reviennent 2 fois.
+ *  30 octobre 2026 : mode=temporaire (page de ta semaine mixte lancée sans programme, « Modifier cette semaine ») :
+ *     seulement l'étape 2, sur la semaine en cours ; « Enregistrer » change cette semaine, mêmes dates
+ *     (suivi.ts, modifierSemainePerso), puis retour à sa page.
  *  3. Un nom, puis « Habituel » (ton programme, 8, 12 semaines ou sans fin) ou « Ponctuel » (cette semaine, les
  *     2 prochaines semaines ou jusqu'à une date, par dessus ton programme en cours).
  * Le modèle : lib/v2/programmes/mixte.ts ; l'enregistrement : suivi.ts (creerMixteHabituel, lancerMixtePonctuel).
@@ -35,7 +38,7 @@ import { joursLePlusProche } from '@/lib/v2/programmes/preselection';
 import { lireProfilCoach } from '@/lib/v2/programmes/profilCoach';
 import { FAMILLES_SEANCES } from '@/lib/v2/programmes/semaineLibre';
 import type { LigneSemaine, SemaineLibre } from '@/lib/v2/programmes/semaineLibre';
-import { chargerProgrammeActif, creerMixteHabituel, joursConseilles, joursDuProgramme, lancerMixtePonctuel, ponctuelLe } from '@/lib/v2/programmes/suivi';
+import { chargerProgrammeActif, creerMixteHabituel, estTemporaire, joursConseilles, joursDuProgramme, lancerMixtePonctuel, modifierSemainePerso, ponctuelLe } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Programme } from '@/lib/v2/programmes/types';
 import { traduire } from '@/lib/i18n/tr';
@@ -69,7 +72,9 @@ export default function ProgrammeMixte() {
   const insets = useSafeAreaInsets();
   const pal = usePaletteProgramme();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
-  const raccourci = mode === 'ponctuel';
+  const raccourci = mode === 'ponctuel' || mode === 'temporaire';
+  // ta semaine mixte temporaire en cours, à changer (mêmes dates) ; vrai une fois lue
+  const [temporaire, setTemporaire] = useState(false);
   const defilement = useRef<ScrollView>(null);
 
   const [charge, setCharge] = useState(false);
@@ -97,7 +102,12 @@ export default function ProgrammeMixte() {
         const jours = profil?.jours?.length ? profil.jours : a && p ? joursDuProgramme(a, p) : [];
         setConnus(jours);
         if (jours.length) setNJours(joursLePlusProche(jours.length, JOURS_MIXTE));
-        if (raccourci && a && p) {
+        if (mode === 'temporaire' && a && p && estTemporaire(a)) {
+          setTemporaire(true);
+          setBase(p);
+          setSemaine(semaineAffichee(a, p).semaine);
+          setNom(p.titre);
+        } else if (raccourci && a && p) {
           // ta semaine mixte déjà en cours, sinon ta semaine actuelle : tu changes juste quelques jours
           const pc = ponctuelLe(a, new Date());
           setBase(p);
@@ -162,6 +172,26 @@ export default function ProgrammeMixte() {
     }
   };
 
+  // ta semaine mixte temporaire : la même, changée, jusqu'à la même date
+  const enregistrerTemporaire = async () => {
+    if (!semaine || occupe) return;
+    setOccupe(true);
+    try {
+      const ok = await modifierSemainePerso(semaine);
+      if (!ok) {
+        appAlert(traduire('Ta semaine n’a pas pu être enregistrée'), traduire('Vérifie qu’il y a au moins une séance d’exercices, puis réessaie.'));
+        return;
+      }
+      if (router.canGoBack()) router.back();
+      else router.replace({ pathname: '/programmes/[id]' as any, params: { id: base.id } });
+    } catch (e) {
+      logger.error('[programme-mixte] semaine temporaire', e);
+      appAlert(traduire('Ta semaine n’a pas pu être enregistrée'), traduire('Rien n’a changé. Réessaie dans un instant.'));
+    } finally {
+      setOccupe(false);
+    }
+  };
+
   const titre = etape === 'jours' ? traduire('Combien de jours par semaine ?') : etape === 'semaine' ? traduire('Compose ta semaine') : traduire('Habituel ou ponctuel ?');
   const sous = etape === 'jours'
     ? traduire('Je te propose une semaine, tu changes tout ce que tu veux')
@@ -169,7 +199,7 @@ export default function ProgrammeMixte() {
       ? traduire('Touche un jour pour choisir sa séance.')
       : raccourci ? traduire('Pour quelques jours, ton programme reprend après') : traduire('Pour longtemps, ou juste pour quelques jours');
   const rang = raccourci ? (etape === 'semaine' ? 0 : 1) : etape === 'jours' ? 0 : etape === 'semaine' ? 1 : 2;
-  const nbEtapes = raccourci ? 2 : 3;
+  const nbEtapes = temporaire ? 1 : raccourci ? 2 : 3;
 
   return (
     <View style={{ flex: 1, backgroundColor: pal.page }}>
@@ -202,7 +232,11 @@ export default function ProgrammeMixte() {
           <Animated.View entering={FadeInDown.duration(260)} style={{ gap: 14 }}>
             <TesJours programme={base} semaine={semaine} onSemaine={setSemaine} fin={base === BASE_MIXTE ? null : actif?.fin} />
             <DeuxFoisPrevu semaine={semaine} base={base} lignes={lignes} />
-            <BoutonPrincipal label={traduire('Suivant')} onPress={() => { tap(); setEtape('choix'); }} haptique="none" />
+            {temporaire ? (
+              <BoutonPrincipal label={traduire('Enregistrer')} onPress={() => void enregistrerTemporaire()} loading={occupe} haptique="none" />
+            ) : (
+              <BoutonPrincipal label={traduire('Suivant')} onPress={() => { tap(); setEtape('choix'); }} haptique="none" />
+            )}
           </Animated.View>
         ) : etape === 'choix' && semaine ? (
           <Animated.View entering={FadeInDown.duration(260)} style={{ gap: 14 }}>
