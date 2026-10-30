@@ -1,10 +1,11 @@
 /**
  * Reglage de la machine ou de la poulie (30 octobre 2026, retour de Houari : « a la poulie, je m'y suis repris
- * 3 fois pour trouver le bon cran »). Le cran note pendant la seance est garde par exercice, sur ce telephone
- * seulement, et propose a la seance suivante (« Dernière fois : cran 17 »).
+ * 3 fois pour trouver le bon cran »). Le cran note pendant la seance est garde par exercice (partage avec tes
+ * appareils appaires depuis la revue du 30 octobre, lib/v2/synchro/cles.ts), et propose a la seance suivante (« Dernière fois : cran 17 »).
  * Cle d'un exercice : son nom sans la prise (meme machine, meme reglage).
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { signalerASynchroniser } from '@/lib/v2/synchro/cles';
 import { besoinDe } from '@/lib/v2/programmes/materiel';
 import { MACHINES } from '@/lib/v2/seance/machines';
 import { sansPrise } from '@/lib/v2/seance/prise';
@@ -67,6 +68,7 @@ export function enregistrerCran(nom: string, cran: number | null): Promise<Regla
     const r = avecCran(await chargerReglages(), nom, cran);
     try {
       await AsyncStorage.setItem(CLE_REGLAGES_MACHINE, JSON.stringify(r));
+      signalerASynchroniser();
     } catch {
       // rien a faire : le cran reste affiche pour cette seance
     }
