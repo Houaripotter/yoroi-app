@@ -78,12 +78,13 @@ export default function TesCourbes() {
       </Card>
 
       <Card>
-        <ValueRow first tint={TUILE.bleu} icon="pulse" label={traduire("Style de la courbe")} value={`Style ${style.id}`} onPress={() => setPicker('style')} />
-        <ValueRow tint={TUILE.or} icon="wand" label={traduire("Couleur de ta courbe")} value={couleur.nom} onPress={() => setPicker('couleur')} />
-        <ValueRow tint={TUILE.mousse} icon="image" label={traduire("Fond de la courbe")} value={fondNom} onPress={() => setPicker('fond')} />
+        <ValueRow first tint={TUILE.bleu} sticker="bilan" icon="pulse" label={traduire("Style de la courbe")} value={`Style ${style.id}`} onPress={() => setPicker('style')} />
+        <ValueRow tint={TUILE.or} sticker="arc_en_ciel" icon="wand" label={traduire("Couleur de ta courbe")} value={couleur.nom} onPress={() => setPicker('couleur')} />
+        <ValueRow tint={TUILE.mousse} sticker="sentier" icon="image" label={traduire("Fond de la courbe")} value={fondNom} onPress={() => setPicker('fond')} />
         <ValueRow
           tint={TUILE.indigo}
           icon="target"
+          sticker="torii"
           label={traduire("Ton cap et ton rythme prévu")}
           sub={traduire("Ton torii et tes tirets verts sur tes courbes")}
           onPress={() => courbes.set({ cap: !courbes.cap })}
