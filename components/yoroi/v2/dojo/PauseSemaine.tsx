@@ -12,6 +12,11 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { tap } from '@/components/yoroi/v2/dojo/parts';
 import type { PauseKind } from '@/lib/v2/armure';
 import { traduire } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
+
+/** 30 octobre 2026 : le sticker de chaque pause (reglage Stickers) ; malade n'a pas encore le sien */
+const STICKER_PAUSE: Partial<Record<PauseKind, NomSticker>> = { repos: 'sommeil', blessure: 'bandes' };
 
 type Icone = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -98,7 +103,7 @@ export function FeuillePause({ visible, onChoisir, onClose }: { visible: boolean
               style={({ pressed }) => ({ minHeight: 64, borderRadius: 18, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: pressed ? c.accentTint : c.surface, borderWidth: 1, borderColor: c.border })}
             >
               <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: c.goldTint, alignItems: 'center', justifyContent: 'center' }}>
-                <MaterialCommunityIcons name={ch.icone} size={22} color={c.goldDeep} />
+                <IconeOuSticker sticker={STICKER_PAUSE[ch.kind] ?? false} taille={22}><MaterialCommunityIcons name={ch.icone} size={22} color={c.goldDeep} /></IconeOuSticker>
               </View>
               <View style={{ flex: 1 }}>
                 <Ink size={16} weight="extraBold">{traduire(ch.titre)}</Ink>
