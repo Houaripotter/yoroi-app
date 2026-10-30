@@ -1,9 +1,13 @@
 /**
  * Icones de l'espace Sante, dessinees en SVG (trait arrondi, style v2).
+ * 30 octobre 2026 : avec le reglage Illustrations sur Stickers, l'icone devient le sticker de la table
+ * ui/StickerIcone (meme encombrement, marge negative) ; en Encre japonaise, l'icone d'avant reste.
  */
 import React from 'react';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { traduire } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
 
 export type SanteIconName =
   | 'steps'
@@ -142,11 +146,13 @@ const P: Record<SanteIconName, string> = {
   leaf: 'M5 19C5 10 10 5 20 4c0 10-5 15-14 15zM5 19l8-8',
 };
 
-export function SanteIcon({ name, size = 22, color = '#1D2029', width = 2 }: { name: SanteIconName; size?: number; color?: string; width?: number }) {
+export function SanteIcon({ name, size = 22, color = '#1D2029', width = 2, sticker }: { name: SanteIconName; size?: number; color?: string; width?: number; sticker?: NomSticker | false }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d={P[name]} stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </Svg>
+    <IconeOuSticker nom={name} sticker={sticker} taille={size}>
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path d={P[name]} stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </Svg>
+    </IconeOuSticker>
   );
 }
 
