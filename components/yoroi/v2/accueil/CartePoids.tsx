@@ -31,7 +31,7 @@
  * l'allure quittent la carte ; « Où tu en seras » passe dans le detail du poids (app/poids-detail.tsx).
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, View, useWindowDimensions } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { selectionAsync } from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView as PagesScroll } from 'react-native-gesture-handler';
@@ -73,6 +73,7 @@ import { ecouterPagePoids } from '@/lib/v2/visite/pagePoids';
 import type { QuoiObjectif } from '@/components/yoroi/v2/pesee/ObjectifPoids';
 import { Card, Icon, ombreCarte, P, Press } from './kit';
 import { traduire, LANG, DECIMAL } from '@/lib/i18n/tr';
+import { useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
 
 const PERIODE_TEXTE: Record<number, string> = { 30: traduire('en 1 mois'), 90: traduire('en 3 mois'), 180: traduire('en 6 mois'), 365: traduire('en 1 an'), [PERIODE_PLAN]: traduire('depuis ton début') };
 
@@ -279,7 +280,7 @@ function PointsPages({ nb, page, couleur, inactif }: { nb: number; page: number;
 
 export function CartePoids({ series: seriesIn, targetWeight, startWeight, today: todayProp, demo, centre = CENTRAGE_POIDS, onPage }: Props) {
   const router = useRouter();
-  const { width: largeur } = useWindowDimensions();
+  const largeur = useLargeurEcran();
   const { theme } = useYoroiTheme();
   // 27 octobre 2026 (refonte Ciel) : le carrousel de la carte bleue, sa page et sa largeur
   const [page, setPage] = useState(0);
