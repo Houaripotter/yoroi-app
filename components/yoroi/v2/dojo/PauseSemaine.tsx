@@ -16,7 +16,7 @@ import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
 
 /** 30 octobre 2026 : le sticker de chaque pause (reglage Stickers) ; malade n'a pas encore le sien */
-const STICKER_PAUSE: Partial<Record<PauseKind, NomSticker>> = { repos: 'sommeil', blessure: 'bandes' };
+const STICKER_PAUSE: Partial<Record<PauseKind, NomSticker>> = { repos: 'sommeil', blessure: 'bandes', malade: 'thermometre' };
 
 type Icone = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
