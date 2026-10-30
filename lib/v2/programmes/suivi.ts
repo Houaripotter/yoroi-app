@@ -13,7 +13,7 @@ import { indexJour, joursValides } from './coach';
 import { estPlanFixe, indicesGardes, joursDuPlan, memePlan, planParDefaut, planValide, REPOS } from './planJours';
 import { appliquerRemplacements, avecRemplacement, cleCase } from './perso';
 import type { Remplacements } from './perso';
-import { estJourMuscu, joursRetires, lireFinSeance, retenirFinActive } from './finSeance';
+import { estJourMuscu, finActive, joursRetires, lireFinSeance, retenirFinActive } from './finSeance';
 import type { FinSeance } from './finSeance';
 import { extrasDe, finDesModules, lireModules, modulesActifs, normaliserModules } from './modules';
 import type { ModuleId } from './modules';
@@ -208,7 +208,7 @@ async function demarrerProgramme_(id: string, jours?: number[], fin?: FinSeance 
   const f = modules ? finDesModules(modules, lireFinSeance(fin)) : lireFinSeance(fin);
   const extras = extrasDe(modules);
   const douleurs = lireDouleurs(options?.douleurs);
-  const a: ProgrammeActif = { id, debut: jourLocal(), prochain: 0, faits: [], ...(choisis ? { jours: choisis } : {}), ...(f && (modules ? f.choix !== 'rien' || f.sansMarche : true) ? { fin: f } : {}), ...(extras.length ? { modules: extras } : {}), ...(douleurs ? { douleurs } : {}) };
+  const a: ProgrammeActif = { id, debut: jourLocal(), prochain: 0, faits: [], ...(choisis ? { jours: choisis } : {}), ...(f && (modules ? finActive(f) || f.sansMarche : true) ? { fin: f } : {}), ...(extras.length ? { modules: extras } : {}), ...(douleurs ? { douleurs } : {}) };
   // 27 octobre 2026 : tes jours séance par séance (Tes jours), choisis au départ ; ton programme construit : sa semaine
   const pl = planDuProgrammePerso(p) ?? planValide(p, plan, a.fin);
   if (pl) {
