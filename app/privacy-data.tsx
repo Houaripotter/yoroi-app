@@ -34,6 +34,7 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { MesureConfidentialite } from '@/components/yoroi/v2/reglages/MesureConfidentialite';
 import { messageEffacement } from '@/lib/effacementPlan';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { StickerSinon } from '@/components/yoroi/v2/ui/StickerSinon';
 
 /** Nombre d'éléments gardés dans la base de l'app (SQLite) pour une catégorie. */
 async function countInDatabase(id: string): Promise<number> {
@@ -221,7 +222,7 @@ export default function PrivacyDataScreen() {
     <EspaceScreen title={traduire("Tes données")} subtitle={traduire("Elles t’appartiennent.")}>
       <View style={{ borderRadius: 22, backgroundColor: c.carteDouce, padding: 20, gap: 8, overflow: 'hidden' }}>
         <Glyph kind="sakura" size={150} color={'rgba(35,53,143,0.07)'} style={{ position: 'absolute', right: -24, top: -34 }} />
-        <Icon name="lock" size={26} color={c.goldDeep} stroke={2.4} />
+        <StickerSinon nom="donnees_telephone" taille={44}><Icon name="lock" size={26} color={c.goldDeep} stroke={2.4} /></StickerSinon>
         <Ink size={24} weight="black" tight color={c.ink}>{traduire("Tes données t’appartiennent")}</Ink>
         <Ink size={14} color={c.textSecondary}>{traduire("Tes données de santé sont stockées sur ton téléphone. YOROI n’a aucun serveur qui les reçoit.")}</Ink>
       </View>
