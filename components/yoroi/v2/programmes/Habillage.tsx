@@ -779,7 +779,7 @@ export function TuilesStats({ tuiles }: { tuiles: Tuile[] }) {
               <Ink size={15} weight="extraBold" color={pal.texte2} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ marginTop: 8 }}>{t.vide ?? ''}</Ink>
             ) : (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                {t.baisse ? <View style={{ transform: [{ scaleY: -1 }] }}><Icon name="chart" size={16} color={t.couleur ?? pal.texte2} /></View> : null}
+                {t.baisse ? <View style={{ transform: [{ scaleY: -1 }] }}><Icon sticker={false} name="chart" size={16} color={t.couleur ?? pal.texte2} /></View> : null}
                 <Ink size={28} weight="black" tight color={t.couleur ?? pal.texte} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} style={{ flexShrink: 1 }}>
                   {t.valeur}
                   {t.sur ? <Ink size={14} weight="extraBold" color={pal.texte3}>{`/${t.sur}`}</Ink> : null}
