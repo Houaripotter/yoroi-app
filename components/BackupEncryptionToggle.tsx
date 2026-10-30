@@ -20,6 +20,7 @@ import logger from '@/lib/security/logger';
 import { usePasswordPrompt } from './PasswordPromptModal';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 
 const BackupEncryptionToggleInner: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -156,7 +157,7 @@ const BackupEncryptionToggleInner: React.FC = () => {
           style={[styles.changeBtn, { borderColor: `${accent}40` }]}
           accessibilityLabel={traduire("Changer le mot de passe de chiffrement")}
         >
-          <Key size={13} color={accent} />
+          <IconeOuSticker sticker="cle" taille={13}><Key size={13} color={accent} /></IconeOuSticker>
           <Text style={[styles.changeBtnText, { color: accent }]}>{traduire("Changer le mot de passe")}</Text>
         </TouchableOpacity>
       )}
