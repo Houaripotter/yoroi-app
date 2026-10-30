@@ -39,7 +39,7 @@ import { getProfile } from '@/lib/database';
 import { brouillonPrerempli } from '@/lib/v2/onboarding/fusion';
 import { importDataFromJSON } from '@/lib/exportService';
 import { choisirSauvegardeICloud } from '@/components/yoroi/v2/sauvegarde/trouverICloud';
-import { markTourSeen } from '@/components/yoroi/v2/tour/keys';
+import { markTourSeen, markVisiteDone } from '@/components/yoroi/v2/tour/keys';
 import { markWhatsNewSeen } from '@/components/WhatsNewModal';
 import { logger } from '@/lib/security/logger';
 import { safeOpenURL, validators } from '@/lib/security/validators';
@@ -435,7 +435,8 @@ export default function OnboardingScreen() {
       // 28 octobre 2026 : pas de mode retour juste apres une restauration
       await marquerRetourVu({ setItem: (k, v) => AsyncStorage.setItem(k, v) });
       // il passe par l'onboarding : pas de visite guidee ni de nouveautes en plus
-      await Promise.all([markTourSeen(), markWhatsNewSeen()]);
+      // 30 octobre 2026 : la visite lit VISITE_DONE_KEY, pas l'ancienne cle des diapositives (sinon elle part toute seule)
+      await Promise.all([markTourSeen(), markVisiteDone(), markWhatsNewSeen()]);
       finished.current = true;
       await clearDraft();
       onboardingEvent('fin', { par: 'restauration' });
