@@ -88,8 +88,8 @@ export function generateCSVTemplate(): string {
   const lines: string[] = [];
 
   // Comment header
-  lines.push('# YOROI - Modele Import CSV');
-  lines.push('# Remplissez les lignes ci-dessous puis importez dans l\'app');
+  lines.push('# YOROI : Modele Import CSV');
+  lines.push('# Remplissez les lignes suivantes puis importez dans l\'app');
   lines.push('# TYPE = POIDS | ENTRAÎNEMENT | MENSURATION | SOMMEIL | HYDRATATION | HUMEUR');
   lines.push('# Laissez vides les colonnes non pertinentes pour votre type');
   lines.push('# Dates au format YYYY-MM-DD, heures au format HH:MM');

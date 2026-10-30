@@ -210,7 +210,7 @@ export const WEIGHT_BADGES: Badge[] = [
   },
   {
     id: 'halfway_hero',
-    name: 'Heros mi-parcours',
+    name: 'Heros mi parcours',
     iconComponent: Target,
     description: traduire('15 kg perdus au total'),
     category: 'weight',
@@ -264,7 +264,7 @@ export const WEIGHT_BADGES: Badge[] = [
   },
   {
     id: 'halfway_goal',
-    name: 'Mi-chemin',
+    name: 'Mi chemin',
     iconComponent: Target,
     description: traduire('Atteindre 50% de ton objectif de poids'),
     category: 'weight',
@@ -389,7 +389,7 @@ export const SPECIAL_BADGES: Badge[] = [
   },
   {
     id: 'early_bird',
-    name: 'Leve-tot',
+    name: 'Leve tot',
     iconComponent: Sunrise,
     description: traduire('10 pesees avant 7h du matin'),
     category: 'special',

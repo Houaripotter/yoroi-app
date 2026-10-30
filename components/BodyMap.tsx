@@ -168,7 +168,7 @@ export const INITIAL_DATA: { front: BodyZone[]; back: BodyZone[] } = {
     
     // === LOMBAIRES ===
     { id: 'lumbar', label: traduire('Lombaires'), x: 50, y: 42, w: 26, h: 9, injuries: ['Lumbago', 'Hernie discale', 'Sciatique', 'Contracture'] },
-    { id: 'sacrum', label: traduire('Sacrum'), x: 50, y: 48, w: 9, h: 8, injuries: ['Sacro-iliaque', 'Contusion', traduire('Fracture de fatigue')] },
+    { id: 'sacrum', label: traduire('Sacrum'), x: 50, y: 48, w: 9, h: 8, injuries: ['Sacro iliaque', 'Contusion', traduire('Fracture de fatigue')] },
     
     // === FESSIERS ===
     { id: 'glute_l', label: traduire('Fessier G'), x: 56, y: 50, w: 13, h: 10, injuries: ['Contracture', 'Syndrome piriforme', 'Tendinite moyen fessier'] },

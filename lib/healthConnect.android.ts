@@ -3713,7 +3713,7 @@ export const getProviderIcon = (): string => {
 
 export const getConnectionInstructions = (): string[] => {
   return [
-    traduire("1. Assure-toi que Health Connect est installé sur ton téléphone"),
+    traduire("1. Vérifie que Health Connect est installé sur ton téléphone"),
     traduire("2. YOROI va demander l'accès à tes données de santé"),
     traduire("3. Autorise l'accès au poids, aux pas, au sommeil et au reste"),
     traduire("4. Tes données seront synchronisées automatiquement"),

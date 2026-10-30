@@ -209,7 +209,7 @@ export const THEMES: { id: SceneId; name: string; premium: boolean; description:
   { id: 'village', name: traduire('Village aux lanternes'), premium: false, description: traduire('La rue du soir sous les lanternes, offert'), kanji: '', dark: true },
   { id: 'jardin', name: 'Jardin zen', premium: false, description: traduire('Le sable ratissé devant le pavillon, offert'), kanji: '' },
   // vague 27 : scene exclusive, offerte avec l'abonnement annuel seulement (jamais par le rang)
-  { id: 'sommet', name: traduire('Sommet des nuages'), premium: true, annual: true, description: traduire('Le torii au-dessus de la mer de nuages, à l’aube'), kanji: '' },
+  { id: 'sommet', name: traduire('Sommet des nuages'), premium: true, annual: true, description: traduire('Le torii au dessus de la mer de nuages, à l’aube'), kanji: '' },
   { id: 'machiya_aube', name: traduire('Ruelle à l’aube'), premium: true, description: traduire('La brume du matin sur les pavés'), kanji: '', unlockRank: 1 },
   { id: 'machiya_couchant', name: traduire('Ruelle au couchant'), premium: true, description: traduire('Le soleil couchant derrière la pagode'), kanji: '', dark: true, unlockRank: 2 },
   { id: 'machiya_nuit', name: traduire('Ruelle de nuit'), premium: false, description: traduire('Les maisons de bois sous la lune, offerte'), kanji: '', dark: true },
@@ -233,7 +233,7 @@ export const THEMES: { id: SceneId; name: string; premium: boolean; description:
   { id: 'pavillon', name: 'Pavillon d’or', premium: true, description: traduire('Le pavillon d’or et son reflet sous la lune'), kanji: '', dark: true },
   { id: 'pont', name: traduire('Pont des cerisiers'), premium: true, description: traduire('Le pont laqué rouge sur l’étang'), kanji: '', unlockRank: 1 },
   { id: 'chateau', name: traduire('Château'), premium: true, description: traduire('Les douves et les cerisiers'), kanji: '', unlockRank: 2 },
-  { id: 'temple', name: 'Temple', premium: true, description: traduire('Le sanctuaire au-dessus des nuages'), kanji: '', unlockRank: 3 },
+  { id: 'temple', name: 'Temple', premium: true, description: traduire('Le sanctuaire au dessus des nuages'), kanji: '', unlockRank: 3 },
   { id: 'remparts', name: traduire('Remparts sous la neige'), premium: true, description: traduire('Le château blanc dans la nuit d’hiver'), kanji: '', dark: true, unlockRank: 4 },
   { id: 'pagode', name: 'Pagode d’automne', premium: true, description: traduire('Les érables rouges autour de la pagode'), kanji: '' },
   { id: 'montagne', name: traduire('Sanctuaire de montagne'), premium: true, description: traduire('Le torii au lever du soleil'), kanji: '' },
@@ -309,8 +309,8 @@ const MONDE: PackDef[] = [
     images: { h: [require('@/assets/avatars/app/monde/personnages/sensei_h.webp')], f: [require('@/assets/avatars/app/monde/personnages/sensei_f.webp')] },
   },
   {
-    id: 'daimyo', kind: 'monde', name: 'Daimyō et Onna-bugeisha', kanji: '大名', unlockRank: 4,
-    names: { h: 'Daimyō', f: 'Onna-bugeisha' }, kanjis: { h: '大名', f: '女武芸者' },
+    id: 'daimyo', kind: 'monde', name: 'Daimyō et Onna bugeisha', kanji: '大名', unlockRank: 4,
+    names: { h: 'Daimyō', f: 'Onna bugeisha' }, kanjis: { h: '大名', f: '女武芸者' },
     tagline: traduire('Le seigneur en armure d’apparat, réservé au rang Shōgun'), fond: '#F6E3DF', sports: [], productId: '',
     images: { h: [require('@/assets/avatars/app/monde/personnages/daimyo_h.webp')], f: [require('@/assets/avatars/app/monde/personnages/daimyo_f.webp')] },
   },
@@ -433,7 +433,7 @@ export const PACKS: PackDef[] = [
     images: both([require('@/assets/avatars/app/packs/tengu/tengu_1.webp'), require('@/assets/avatars/app/packs/tengu/tengu_2.webp'), require('@/assets/avatars/app/packs/tengu/tengu_3.webp')]),
   },
   {
-    id: 'yuki_onna', kind: 'legende', name: 'Yuki-onna', kanji: '雪女', tagline: traduire('La dame des neiges, évolue avec ton rang'), fond: '#E8F1F6',
+    id: 'yuki_onna', kind: 'legende', name: 'Yuki onna', kanji: '雪女', tagline: traduire('La dame des neiges, évolue avec ton rang'), fond: '#E8F1F6',
     sports: [], productId: 'yoroi_pack_yuki_onna',
     images: both([require('@/assets/avatars/app/packs/yuki_onna/yuki_onna_1.webp'), require('@/assets/avatars/app/packs/yuki_onna/yuki_onna_2.webp'), require('@/assets/avatars/app/packs/yuki_onna/yuki_onna_3.webp')]),
   },

@@ -209,7 +209,7 @@ export const CombatShareCard = React.memo(React.forwardRef<View, CombatShareCard
           <View style={styles.statsSubRow}>
             {(stats.totalFor > 0 || stats.totalAgainst > 0) && (
               <Text style={[styles.ptsText, { color: 'rgba(255,255,255,0.6)', fontSize: 11 * s }]}>
-                {stats.totalFor} – {stats.totalAgainst} pts
+                {stats.totalFor} à {stats.totalAgainst} pts
               </Text>
             )}
             {stats.allGiven.length > 0 && (
@@ -288,7 +288,7 @@ export const CombatShareCard = React.memo(React.forwardRef<View, CombatShareCard
                     ))}
                     {hasScore && (
                       <View style={[styles.chip, { backgroundColor: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.12)', borderRadius: 4 * s, paddingHorizontal: 5 * s, paddingVertical: 2 * s }]}>
-                        <Text style={[styles.chipText, { color: 'rgba(255,255,255,0.55)', fontSize: 7.5 * s }]}>{r.pointsFor ?? 0}–{r.pointsAgainst ?? 0}pts</Text>
+                        <Text style={[styles.chipText, { color: 'rgba(255,255,255,0.55)', fontSize: 7.5 * s }]}>{r.pointsFor ?? 0} à {r.pointsAgainst ?? 0} pts</Text>
                       </View>
                     )}
                     {techs.map((t, ti) => (
@@ -299,7 +299,7 @@ export const CombatShareCard = React.memo(React.forwardRef<View, CombatShareCard
                 {/* Mode compact : tout sur 1 ligne */}
                 {ROUND_COMPACT && (hasScore || subsGiven.length > 0 || techs.length > 0) && (
                   <Text style={[styles.roundCompactLine, { color: 'rgba(255,255,255,0.4)', fontSize: 7.5 * s, marginTop: 2 * s }]} numberOfLines={1}>
-                    {[hasScore ? `${r.pointsFor ?? 0}–${r.pointsAgainst ?? 0}pts` : '', ...subsGiven.map(s => `↗${s}`), ...techs].filter(Boolean).join('  ')}
+                    {[hasScore ? `${r.pointsFor ?? 0} à ${r.pointsAgainst ?? 0} pts` : '', ...subsGiven.map(s => `↗${s}`), ...techs].filter(Boolean).join('  ')}
                   </Text>
                 )}
               </View>

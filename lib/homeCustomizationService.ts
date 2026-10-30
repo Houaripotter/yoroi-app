@@ -21,7 +21,7 @@ export interface HomeSection {
 export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
   {
     id: 'header',
-    name: 'En-tete',
+    name: 'En tête',
     description: 'Logo, salutation et citation',
     icon: 'user',
     visible: true,

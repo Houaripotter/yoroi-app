@@ -282,7 +282,7 @@ function parseTCX(xmlContent: string): ParseResult {
       const timeStr = startDate.toTimeString().slice(0, 5);
 
       // Activity name from Notes or sport type
-      const name = activity.Notes || `${sportType || 'Séance'} - ${dateStr}`;
+      const name = activity.Notes || `${sportType || 'Séance'}, ${dateStr}`;
 
       activities.push({
         id: `tcx_${i}_${Date.now()}`,

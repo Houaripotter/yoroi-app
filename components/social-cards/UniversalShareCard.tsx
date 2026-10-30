@@ -131,7 +131,7 @@ export const UniversalShareCard = React.memo(
           stats: [
             { v: String(rounds.length), l: 'ROUNDS' },
             { v: fmtDur(training.duration_minutes ?? training.duration), l: 'DURÉE' },
-            ptsFor > 0 ? { v: `${ptsFor}–${ptsAg}`, l: 'POINTS' } : null,
+            ptsFor > 0 ? { v: `${ptsFor} à ${ptsAg}`, l: 'POINTS' } : null,
             techs > 0  ? { v: String(techs), l: 'TECHNIQUES' } : null,
           ].filter(Boolean) as { v: string; l: string }[],
         };
@@ -346,7 +346,7 @@ export const UniversalShareCard = React.memo(
                 const rc = r.result === 'win' ? WIN : r.result === 'loss' ? LOSS : DRAW;
                 const rl = r.result === 'win' ? 'V' : r.result === 'loss' ? 'D' : r.result === 'draw' ? 'N' : null;
                 const score = (r.pointsFor ?? 0) > 0 || (r.pointsAgainst ?? 0) > 0
-                  ? `${r.pointsFor ?? 0}–${r.pointsAgainst ?? 0} pts` : null;
+                  ? `${r.pointsFor ?? 0} à ${r.pointsAgainst ?? 0} pts` : null;
                 const topTechs = (r.usedTechniques ?? [])
                   .slice(0, 2)
                   .map(t => t.count && t.count > 1 ? `${t.label} ×${t.count}` : t.label)

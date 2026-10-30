@@ -38,7 +38,7 @@ const distanceComparison = (km: number): FunComparison | null => {
   // Quelques références françaises mémorables
   const refs = [
     { dist: 6,    label: 'tour du périphérique parisien' },
-    { dist: 21,   label: 'semi-marathon' },
+    { dist: 21,   label: 'semi marathon' },
     { dist: 42,   label: 'marathon complet' },
     { dist: 100,  label: '100 km, score à un Brevet de Randonneur' },
     { dist: 200,  label: 'Paris → Reims' },

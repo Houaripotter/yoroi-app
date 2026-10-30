@@ -11,11 +11,11 @@ export type OfficialCalendar = { id: string; name: string; sub: string; url: str
 export const OFFICIAL_CALENDARS_CHECKED = traduire('10 octobre 2026');
 
 export const OFFICIAL_CALENDARS: OfficialCalendar[] = [
-  { id: 'cfjjb', name: traduire('Calendrier national de JJB'), sub: traduire('Jiu-jitsu brésilien en France'), url: 'https://cfjjb.com/competitions/calendrier-competitions', sports: ['jjb'] },
-  { id: 'ibjjf', name: traduire('Calendrier international de JJB'), sub: traduire('Jiu-jitsu brésilien, tournois dans le monde'), url: 'https://ibjjf.com/events/calendar', sports: ['jjb'] },
-  { id: 'smoothcomp', name: traduire('Plateforme d’inscription'), sub: traduire('Inscriptions en ligne : grappling, jiu-jitsu, MMA'), url: 'https://smoothcomp.com', sports: ['jjb', 'mma', 'judo'] },
+  { id: 'cfjjb', name: traduire('Calendrier national de JJB'), sub: traduire('Jiu jitsu brésilien en France'), url: 'https://cfjjb.com/competitions/calendrier-competitions', sports: ['jjb'] },
+  { id: 'ibjjf', name: traduire('Calendrier international de JJB'), sub: traduire('Jiu jitsu brésilien, tournois dans le monde'), url: 'https://ibjjf.com/events/calendar', sports: ['jjb'] },
+  { id: 'smoothcomp', name: traduire('Plateforme d’inscription'), sub: traduire('Inscriptions en ligne : grappling, jiu jitsu, MMA'), url: 'https://smoothcomp.com', sports: ['jjb', 'mma', 'judo'] },
   { id: 'ffjudo', name: traduire('Calendrier national de judo'), sub: traduire('Judo et jujitsu'), url: 'https://www.ffjudo.com/evenements', sports: ['judo'] },
-  { id: 'ffkmda', name: traduire('Calendrier national pieds-poings'), sub: traduire('Kickboxing, muay-thaï, pancrace'), url: 'https://www.ffkmda.com/calendrier/', sports: ['muay_thai', 'mma'] },
+  { id: 'ffkmda', name: traduire('Calendrier national pieds poings'), sub: traduire('Kickboxing, muay thaï, pancrace'), url: 'https://www.ffkmda.com/calendrier/', sports: ['muay_thai', 'mma'] },
 ];
 
 /** Les calendriers du sport choisi en premier, puis les autres */

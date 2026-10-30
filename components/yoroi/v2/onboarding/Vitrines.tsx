@@ -218,7 +218,7 @@ const CARTE_SEMAINE: CarteData = {
     poidsFin: null,
     poidsEcart: null,
     objectif: 4,
-    parJour: [{ sports: ['Jiu-jitsu brésilien'] }, { sports: [] }, { sports: ['Musculation'] }, { sports: [] }, { sports: ['Jiu-jitsu brésilien'] }, { sports: [traduire('Course à pied')] }, { sports: [] }],
+    parJour: [{ sports: ['Jiu jitsu brésilien'] }, { sports: [] }, { sports: ['Musculation'] }, { sports: [] }, { sports: ['Jiu jitsu brésilien'] }, { sports: [traduire('Course à pied')] }, { sports: [] }],
   },
   cle: 'onboarding:semaine',
 };

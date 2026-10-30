@@ -156,7 +156,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // === SPÉCIAUX ===
   {
     id: 'early_bird',
-    name: 'Lève-tôt',
+    name: 'Lève tôt',
     iconComponent: Sun,
     description: 'Pesée avant 7h',
     category: 'special',

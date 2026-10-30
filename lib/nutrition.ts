@@ -401,7 +401,7 @@ export const getMealCalories = (totalCalories: number): { name: string; time: st
 
 export const SCIENTIFIC_SOURCES = {
   bmr: {
-    name: 'Formule Mifflin-St Jeor (1990)',
+    name: 'Formule Mifflin St Jeor (1990)',
     source: 'American Journal of Clinical Nutrition',
     url: 'https://pubmed.ncbi.nlm.nih.gov/2305711/',
   },

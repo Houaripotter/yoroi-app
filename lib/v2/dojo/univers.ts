@@ -36,7 +36,7 @@ export const RANG_NOMS: Record<Univers, [string, string, string, string, string]
 /** Ce que porte le personnage a chaque rang */
 export const RANG_TENUES: Record<Univers, [string, string, string, string, string]> = {
   japon: [traduire('Tenue d’entraînement et bandeau'), traduire('Kimono indigo et plastron'), traduire('Armure complète'), traduire('Cape et chapeau de paille'), traduire('Armure d’apparat noir et or')],
-  classique: [traduire('T-shirt et short'), traduire('Veste d’entraînement'), 'Tenue technique', traduire('Coupe-vent et sac de sport'), traduire('Tenue de champion bleu nuit et or')],
+  classique: [traduire('Tee shirt et short'), traduire('Veste d’entraînement'), 'Tenue technique', traduire('Coupe vent et sac de sport'), traduire('Tenue de champion bleu nuit et or')],
 };
 
 /** Nom du rang affiche (0 a 4), dans l'univers donne ou l'univers actif */

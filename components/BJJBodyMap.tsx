@@ -25,7 +25,7 @@ export const ALL_SUBMISSIONS: { id: string; short: string; full: string }[] = [
   { id: 'triangleinv',  short: traduire('Triangle inversé'),    full: traduire('Inverted Triangle, depuis les hanches') },
   { id: 'montedtri',    short: traduire('Triangle monté'),      full: traduire('Mounted Triangle, position montée') },
   { id: 'guillotine',   short: 'Guillotine',          full: traduire('Guillotine Choke, avant du cou') },
-  { id: 'guillarmin',   short: 'Arm-in Guillotine',   full: traduire('Guillotine bras inclus, emprisonne le bras') },
+  { id: 'guillarmin',   short: 'Arm in Guillotine',   full: traduire('Guillotine bras inclus, emprisonne le bras') },
   { id: 'marcelo',      short: 'Guillotine haute',    full: 'High Elbow Guillotine, Marcelotine' },
   { id: 'hipbumpguil',  short: 'Hip Bump Guillotine', full: traduire('Hip Bump + Guillotine, rebond de hanche') },
 
@@ -33,7 +33,7 @@ export const ALL_SUBMISSIONS: { id: string; short: string; full: string }[] = [
   { id: 'darce',        short: "D'Arce",              full: traduire("D'Arce Choke, étranglement latéral avant") },
   { id: 'anaconda',     short: 'Anaconda',            full: traduire('Anaconda Choke, roulade, avant gorge') },
   { id: 'armtri',       short: 'Arm Triangle',        full: traduire('Arm Triangle / Kata Gatame, bras + épaule') },
-  { id: 'northsouth',   short: 'Nord-Sud',            full: 'North South Choke, position nord sud' },
+  { id: 'northsouth',   short: 'Nord Sud',            full: 'North South Choke, position nord sud' },
   { id: 'ezekiel',      short: 'Ezekiel',             full: traduire('Ezekiel Choke / Sode Guruma, depuis mont') },
   { id: 'buggy',        short: 'Buggy Choke',         full: traduire('Buggy Choke, avant bras, de côté') },
   { id: 'loop',         short: 'Loop Choke',          full: 'Loop Choke, gi, col + manche' },

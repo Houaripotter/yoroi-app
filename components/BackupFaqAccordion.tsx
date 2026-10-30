@@ -59,7 +59,7 @@ const FAQ: FaqItem[] = [
   },
   {
     q: traduire("Comment tester que mon backup marche ?"),
-    a: traduire("Utilise « Tester un backup (dry-run) ». L'app vérifie qu'un fichier est valide SANS modifier tes données actuelles. Tu peux le faire à tout moment pour être rassuré."),
+    a: traduire("Utilise « Tester un backup (dry run) ». L'app vérifie qu'un fichier est valide SANS modifier tes données actuelles. Tu peux le faire à tout moment pour être rassuré."),
   },
 ];
 

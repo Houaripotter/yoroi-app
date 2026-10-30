@@ -22,7 +22,7 @@ const COUCHE_POMPES: Preuve = {
   source: 'Kikuchi et Nakazato, Journal of Exercise Science & Fitness, 2017',
 };
 const TRICEPS_TETE: Preuve = {
-  texte: 'Bras au-dessus de la tête, les triceps ont grossi de 20 % en 12 semaines, contre 14 % bras le long du corps.',
+  texte: 'Bras au dessus de la tête, les triceps ont grossi de 20 % en 12 semaines, contre 14 % bras le long du corps.',
   source: 'Maeo et coll., European Journal of Sport Science, 2023',
 };
 const ISCHIOS_ASSIS: Preuve = {
@@ -34,7 +34,7 @@ const HIP_THRUST: Preuve = {
   source: 'Plotkin, Rodas, Vigotsky et coll., Frontiers in Physiology, 2023',
 };
 const SQUAT_COMPLET: Preuve = {
-  texte: 'Descendre bas compte : le squat complet a fait grossir les fessiers de 6,7 %, contre 2,2 % pour le demi-squat, en 10 semaines.',
+  texte: 'Descendre bas compte : le squat complet a fait grossir les fessiers de 6,7 %, contre 2,2 % pour le demi squat, en 10 semaines.',
   source: 'Kubo, Ikebukuro et Yata, European Journal of Applied Physiology, 2019',
 };
 const MOLLETS_DEBOUT: Preuve = {
@@ -59,7 +59,7 @@ export const PREUVES: Record<string, Preuve> = {
   'Overhead Triceps Extension': TRICEPS_TETE,
   'Cable Overhead Extension': TRICEPS_TETE,
   'Extension Triceps Poulie (Corde)': {
-    texte: 'Efficace (+14 % en 12 semaines), mais moins que la version bras au-dessus de la tête : idéal en deuxième exercice.',
+    texte: 'Efficace (+14 % en 12 semaines), mais moins que la version bras au dessus de la tête : idéal en deuxième exercice.',
     source: 'Maeo et coll., European Journal of Sport Science, 2023',
   },
   'Leg Curl Assis': ISCHIOS_ASSIS,

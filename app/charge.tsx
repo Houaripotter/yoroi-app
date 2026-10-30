@@ -73,7 +73,7 @@ function verdictOf(load: number, habit: number): Verdict {
     return { idx, n: 4, name: 'Forte hausse', get color() { return intensite(4).text; }, description: traduire("Bien plus haut que ton habitude : {0} % de plus que tes quatre semaines précédentes.", pct), advice: traduire('Monte en charge progressivement et garde un jour de repos.') };
   }
   if (ratio >= 1.25) {
-    return { idx: Math.min(idx, 3), n: 3, name: 'Au-dessus de ton habitude', get color() { return intensite(3).text; }, description: traduire("Un peu plus chargé que d’habitude : {0} % de plus.", pct), advice: traduire('Soigne ton sommeil et ta récupération cette semaine.') };
+    return { idx: Math.min(idx, 3), n: 3, name: 'Au dessus de ton habitude', get color() { return intensite(3).text; }, description: traduire("Un peu plus chargé que d’habitude : {0} % de plus.", pct), advice: traduire('Soigne ton sommeil et ta récupération cette semaine.') };
   }
   if (ratio >= 0.8) {
     return { idx: Math.min(idx, 3), n: 2, name: 'Dans ton habitude', get color() { return intensite(2).text; }, description: traduire('Ta charge ressemble à tes quatre semaines précédentes.'), advice: traduire('Ton corps connaît ce rythme. Garde ce rythme pour progresser durablement.') };

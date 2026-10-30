@@ -815,7 +815,7 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
       // Saisie du mot de passe : fenetre maison YOROI
       const password = await requestPassword({
         title: traduire('Sauvegarde protégée'),
-        message: traduire('Cette sauvegarde est protégée par un mot de passe. Tape-le pour continuer.'),
+        message: traduire('Cette sauvegarde est protégée par un mot de passe. Tape ce mot de passe pour continuer.'),
         confirmLabel: 'Ouvrir',
       });
       if (!password) return false;
@@ -897,8 +897,8 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
         if (recomputed !== integrity.checksum) {
           const confirmed = await new Promise<boolean>((resolve) => {
             appAlert(
-              traduire('Fichier peut-être abîmé'),
-              traduire('Ce fichier a peut-être été modifié ou coupé pendant un transfert.\n\nTu veux quand même essayer de le restaurer ? Certaines données pourraient manquer.'),
+              traduire('Fichier sans doute abîmé'),
+              traduire('Ce fichier a pu être modifié ou coupé pendant un transfert.\n\nTu veux quand même essayer de le restaurer ? Certaines données pourraient manquer.'),
               [
                 { text: traduire('Annuler'), style: 'cancel', onPress: () => resolve(false) },
                 { text: traduire('Tenter quand même'), style: 'destructive', onPress: () => resolve(true) },
@@ -2157,8 +2157,8 @@ export const exportEditableCSV = async (): Promise<boolean> => {
     const date = new Date().toISOString().split('T')[0];
 
     // === 1. CSV PESÉES ===
-    let weightsCSV = '# YOROI - PESÉES (éditable)\n';
-    weightsCSV += '# Modifie ce fichier puis réimporte-le dans Yoroi\n';
+    let weightsCSV = '# YOROI : PESÉES (éditable)\n';
+    weightsCSV += '# Modifie ce fichier puis importe à nouveau ce fichier dans Yoroi\n';
     weightsCSV += '# Format date: AAAA-MM-JJ\n';
     weightsCSV += '#\n';
     weightsCSV += 'date;poids_kg;graisse_pct;muscle_pct;eau_pct;masse_osseuse_kg;graisse_viscerale;age_metabolique;bmr\n';
@@ -2170,8 +2170,8 @@ export const exportEditableCSV = async (): Promise<boolean> => {
     });
 
     // === 2. CSV SÉANCES ===
-    let trainingsCSV = '# YOROI - SÉANCES (éditable)\n';
-    trainingsCSV += '# Modifie ce fichier puis réimporte-le dans Yoroi\n';
+    let trainingsCSV = '# YOROI : SÉANCES (éditable)\n';
+    trainingsCSV += '# Modifie ce fichier puis importe à nouveau ce fichier dans Yoroi\n';
     trainingsCSV += '# Format date: AAAA-MM-JJ | Heure: HH:MM | Durée en minutes\n';
     trainingsCSV += '# Sports disponibles: musculation, jjb, mma, boxe, running, natation, velo, fitness, yoga, autre\n';
     trainingsCSV += '#\n';
@@ -2187,7 +2187,7 @@ export const exportEditableCSV = async (): Promise<boolean> => {
     });
 
     // === 3. CSV MENSURATIONS ===
-    let measurementsCSV = '# YOROI - MENSURATIONS (éditable)\n';
+    let measurementsCSV = '# YOROI : MENSURATIONS (éditable)\n';
     measurementsCSV += '# Toutes les valeurs en cm\n';
     measurementsCSV += '#\n';
     measurementsCSV += 'date;poitrine;taille;hanches;bras_gauche;bras_droit;cuisse_gauche;cuisse_droit;mollet_gauche;mollet_droit;epaules;cou;avant_bras_gauche;avant_bras_droit\n';
@@ -2200,7 +2200,7 @@ export const exportEditableCSV = async (): Promise<boolean> => {
     });
 
     // === 4. CSV CLUBS ===
-    let clubsCSV = '# YOROI - CLUBS (éditable)\n';
+    let clubsCSV = '# YOROI : CLUBS (éditable)\n';
     clubsCSV += '# Sports disponibles: musculation, jjb, mma, boxe, running, natation, velo, fitness, yoga, autre\n';
     clubsCSV += '# Couleur en format hex: #FF0000 (rouge), #00FF00 (vert), #0000FF (bleu)\n';
     clubsCSV += '#\n';
@@ -2219,11 +2219,11 @@ export const exportEditableCSV = async (): Promise<boolean> => {
           traduire("1. Ouvre ce fichier dans un éditeur de texte (VS Code, Notepad++, etc.)"),
           traduire("2. Modifie les données dans chaque section CSV"),
           traduire("3. Les lignes commençant par # sont des commentaires (ignorés)"),
-          traduire("4. Sauvegarde le fichier et réimporte-le dans Yoroi"),
+          traduire("4. Sauvegarde le fichier, puis importe à nouveau ce fichier dans Yoroi"),
         ],
         format_date: "AAAA-MM-JJ (ex: 2024-01-15)",
         format_heure: "HH:MM (ex: 18:30)",
-        separateur: "point-virgule (;)",
+        separateur: "point virgule (;)",
       },
       pesees_csv: weightsCSV,
       seances_csv: trainingsCSV,
@@ -2467,7 +2467,7 @@ export const exportEmptyTemplate = async (): Promise<boolean> => {
   try {
     const template = {
       _documentation: {
-        fr: traduire("TEMPLATE VIDE - Remplis ce fichier avec tes données et importe-le dans Yoroi"),
+        fr: traduire("TEMPLATE VIDE. Remplis ce fichier avec tes données, puis importe ce fichier dans Yoroi"),
         instructions: [
           traduire("1. Ouvre ce fichier dans un éditeur de texte"),
           traduire("2. Ajoute tes données dans chaque section CSV"),
@@ -2538,7 +2538,7 @@ nom;sport;couleur;adresse
 
       appAlert(
         traduire('Modèle créé'),
-        traduire('Ouvre ce fichier sur ton ordinateur, remplis-le, puis importe-le dans YOROI.')
+        traduire('Ouvre ce fichier sur ton ordinateur, remplis ce fichier, puis importe ce fichier dans YOROI.')
       );
     }
 

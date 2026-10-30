@@ -33,7 +33,7 @@ export const FAKE_WELCOME: WelcomeSummary = {
   rankTitle: traduire('Samouraï'),
   rankIndex: 2,
   seals: 7,
-  mainSport: { name: 'Jiu-jitsu brésilien', level: traduire('Ceinture bleue'), count: 74 },
+  mainSport: { name: 'Jiu jitsu brésilien', level: traduire('Ceinture bleue'), count: 74 },
   xp: 3400,
 };
 

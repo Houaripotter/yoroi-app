@@ -112,7 +112,7 @@ export async function triggerRankProgressMessage(totalPoints: number): Promise<v
 
     let body: string;
     if (xpLeft <= 50) {
-      body = `Tu es a ${xpLeft} XP de ${nextRank.name} - tu y es presque !`;
+      body = `Tu es a ${xpLeft} XP de ${nextRank.name}, tu y es presque !`;
     } else if (xpLeft <= 200) {
       body = `${progress}% vers ${nextRank.name}. Encore ${xpLeft} XP !`;
     } else {
@@ -162,7 +162,7 @@ export async function triggerWeeklyRecap(
     }
 
     await saveNotification(
-      `Recap de ta semaine - ${rank.name}`,
+      `Recap de ta semaine : ${rank.name}`,
       body,
       'gamification',
       { screen: 'gamification' }

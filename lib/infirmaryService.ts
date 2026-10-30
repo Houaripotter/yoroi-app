@@ -502,7 +502,7 @@ export const getInjuryRecommendation = (
   // Douleur sévère
   if (evaScore >= 7) {
     if (daysSinceInjury >= 2) {
-      return traduire("Douleur intense ({0} jours) - Consultez un professionnel de santé", daysSinceInjury);
+      return traduire("Douleur intense ({0} jours). Consultez un professionnel de santé", daysSinceInjury);
     }
     return traduire('Douleur intense enregistrée');
   }

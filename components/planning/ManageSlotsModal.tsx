@@ -46,7 +46,7 @@ const formatWeekLabel = (weekStart: string): string => {
   const end = new Date(d);
   end.setDate(end.getDate() + 6);
   const fmt = (dt: Date) => `${dt.getDate()}/${dt.getMonth() + 1}`;
-  return `${fmt(d)} - ${fmt(end)}`;
+  return `${fmt(d)} au ${fmt(end)}`;
 };
 
 interface ManageSlotsModalProps {

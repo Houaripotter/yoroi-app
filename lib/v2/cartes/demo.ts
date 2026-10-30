@@ -66,10 +66,10 @@ export const DEMO_SEMAINE: CarteData = {
     parJour: [
       { sports: ['Musculation'], club: { nom: 'Salle de musculation' } },
       { sports: [] },
-      { sports: ['Jiu-jitsu brésilien'], club: { nom: 'Club de JJB' } },
+      { sports: ['Jiu jitsu brésilien'], club: { nom: 'Club de JJB' } },
       { sports: ['Musculation'], club: { nom: 'Salle de musculation' } },
       { sports: [] },
-      { sports: ['Jiu-jitsu brésilien'], club: { nom: 'Club de JJB' } },
+      { sports: ['Jiu jitsu brésilien'], club: { nom: 'Club de JJB' } },
       { sports: [traduire('Course à pied')] },
     ],
   },

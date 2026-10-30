@@ -115,7 +115,7 @@ const TestRestoreButtonInner: React.FC = () => {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={[styles.title, { color: colors.text }]}>
-          {testing ? traduire('Vérification en cours…') : traduire('Tester un backup (dry-run)')}
+          {testing ? traduire('Vérification en cours…') : traduire('Tester un backup (dry run)')}
         </Text>
         <Text style={[styles.sub, { color: colors.textMuted ?? '#888' }]}>
           {traduire("Vérifie qu'un fichier est valide SANS modifier tes données actuelles.")}</Text>

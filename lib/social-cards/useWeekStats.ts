@@ -291,8 +291,8 @@ export function useWeekStats(targetDate?: Date) {
       const endMonth = MONTH_NAMES[weekEnd.getMonth()];
 
       const weekLabel = weekStart.getMonth() === weekEnd.getMonth()
-        ? traduire("Semaine {0} • {1}-{2} {3}", getWeekNumber(weekStart), startDay, endDay, startMonth)
-        : traduire("Semaine {0} • {1} {2} - {3} {4}", getWeekNumber(weekStart), startDay, startMonth, endDay, endMonth);
+        ? traduire("Semaine {0} • {1} au {2} {3}", getWeekNumber(weekStart), startDay, endDay, startMonth)
+        : traduire("Semaine {0} • {1} {2} au {3} {4}", getWeekNumber(weekStart), startDay, startMonth, endDay, endMonth);
 
       setStats({
         year: weekStart.getFullYear(),
