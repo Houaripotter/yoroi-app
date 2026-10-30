@@ -49,7 +49,7 @@ import { ficheDe } from '@/lib/v2/programmes/fiches';
 import { DUREES_EXPRESS, dureeEstimee, seanceExpress } from '@/lib/v2/programmes/express';
 import { demoDe } from '@/lib/v2/programmes/demos';
 import { PROGRAMME_CHANGED_EVENT, arreterProgramme, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerFin, faitsCetteSemaine, prochainJour, remplacerExercice, joursConseilles, joursDuProgramme, planEffectif, semaineDuProgramme, semainesDuProgramme, enregistrerDuree, estTemporaire, garderTemporaire } from '@/lib/v2/programmes/suivi';
-import { DUREES, jourDuProgramme, joursDeLaLigne, planDepuisSemaine } from '@/lib/v2/programmes/semaineLibre';
+import { DUREES, jourDuProgramme, joursDeLaLigne, planDepuisSemaine, seancesDeLaLigne, semaineUtile } from '@/lib/v2/programmes/semaineLibre';
 import type { SemaineLibre } from '@/lib/v2/programmes/semaineLibre';
 import { ChoixDuree, GarderMonProgramme, PointRegularite } from '@/components/yoroi/v2/programmes/GarderProgramme';
 import { joursDuPlan, planParDefaut } from '@/lib/v2/programmes/planJours';
@@ -63,7 +63,7 @@ import { BandeauMixte, BoutonSemaineMixte } from '@/components/yoroi/v2/programm
 import { ChoisirCharge } from '@/components/yoroi/v2/programmes/ChoisirCharge';
 import { CartePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
 import { CarteFinDeSeance, FeuilleFinDeSeance } from '@/components/yoroi/v2/programmes/FinDeSeance';
-import { aDesJoursMarche, aDesJoursMuscu, joursRetires } from '@/lib/v2/programmes/finSeance';
+import { aDesJoursMarche, aDesJoursMuscu, estJourMuscu, joursRetires } from '@/lib/v2/programmes/finSeance';
 import type { FinSeance } from '@/lib/v2/programmes/finSeance';
 import type { ExoModule } from '@/lib/v2/programmes/modules';
 import { guideCharge } from '@/lib/v2/programmes/charge';
@@ -212,6 +212,13 @@ export default function ProgrammeDetail() {
   const ctxFin = enCours && actif ? { fin: actif.fin, materiel: p.materiel } : null;
   const retires = enCours && actif ? joursRetires(p, actif.fin) : [];
   const finPossible = aDesJoursMuscu(p) || aDesJoursMarche(p);
+  // 30 octobre 2026 : les séances de musculation de ta semaine (semaine mixte et semaine B comprises), pour choisir la fin jour par jour
+  const seancesFin = (() => {
+    const s = enCours && actif && semaineUtile(actif.semaine) ? actif.semaine : null;
+    const liste = s ? [...seancesDeLaLigne(s, p, 'a'), ...(s.b ? seancesDeLaLigne(s, p, 'b') : [])] : p.jours;
+    const vus = new Set<string>();
+    return liste.filter((j): j is NonNullable<typeof j> => !!j && estJourMuscu(j) && !vus.has(j.id) && !!vus.add(j.id));
+  })();
   const img = sportImage(sportDuProgramme(p), femme, 1);
   // la prochaine séance (tes jours, ton matériel, tes douleurs et tes modules appliqués), ou le jour 1 avant de commencer
   // 28 octobre 2026 : la séance du jour peut venir d'un autre programme (ta semaine libre) : index -1
@@ -661,6 +668,7 @@ export default function ProgrammeDetail() {
       <FeuilleFinDeSeance
         visible={finOuverte !== null}
         programme={p}
+        seances={seancesFin}
         valeur={finOuverte === 'page' && enCours ? actif?.fin : null}
         bouton={finOuverte === 'depart' ? traduire('Commencer le programme') : traduire('Valider')}
         onClose={() => setFinOuverte(null)}
