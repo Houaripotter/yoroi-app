@@ -5,12 +5,13 @@
  * gants et ceinture), jamais sous le texte, sur un fond doux uni, le titre et une ligne d'aide.
  */
 import React from 'react';
-import { Image, View, useWindowDimensions } from 'react-native';
+import { Image, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Ornement } from '@/components/yoroi/v2/ornements/Ornement';
 import type { OrnementKey } from '@/components/yoroi/v2/ornements/images';
 import { P, Press } from './kit';
+import { useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
 
 type Outil = { title: string; sub: string; href: string; tint: string; ornement: OrnementKey };
 
@@ -34,7 +35,7 @@ function Tile({ o, width }: { o: Outil; width: number }) {
 }
 
 export function TesOutils(_props: { femme?: boolean }) {
-  const { width } = useWindowDimensions();
+  const width = useLargeurEcran();
   const tileW = Math.floor((width - 44 - 10) / 2);
   const outils: Outil[] = [
     { title: 'Chrono', sub: 'repos, rounds, Tabata', href: '/timer', tint: P.tuileIndigo, ornement: 'chrono' },
