@@ -2,6 +2,8 @@ import React from 'react';
 import { View } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
 import { InkTabBar } from '@/components/yoroi/v2/InkTabBar';
+import { BarreLaterale } from '@/components/yoroi/v2/BarreLaterale';
+import { useGrandEcran } from '@/lib/v2/nav/useGrandEcran';
 import { ImportProgressBanner } from '@/components/ImportProgressBanner';
 import { TourGate } from '@/components/yoroi/v2/tour/TourGate';
 import { PropositionSemaine } from '@/components/yoroi/v2/cartes/PropositionCarte';
@@ -11,11 +13,13 @@ import { RouvrirLePlus } from '@/lib/v2/nav/RouvrirLePlus';
 
 export default function TabsLayout() {
   const router = useRouter();
+  // 30 octobre 2026 : en grand ecran (Mac, iPad en grande fenetre), la barre laterale a gauche ; sur iPhone, la barre du bas
+  const grand = useGrandEcran();
   return (
     <View style={{ flex: 1 }}>
       <Tabs
-        screenOptions={{ headerShown: false }}
-        tabBar={(props) => <InkTabBar {...props} onPressAdd={() => router.push('/ajouter' as any)} />}
+        screenOptions={grand ? { headerShown: false, tabBarPosition: 'left' } : { headerShown: false }}
+        tabBar={(props) => (grand ? <BarreLaterale {...props} onPressAdd={() => router.push('/ajouter' as any)} /> : <InkTabBar {...props} onPressAdd={() => router.push('/ajouter' as any)} />)}
       >
         <Tabs.Screen name="index" />
         <Tabs.Screen name="seances" />
