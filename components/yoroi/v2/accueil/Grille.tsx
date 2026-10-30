@@ -22,7 +22,7 @@
  */
 import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView } from 'react-native';
-import { DeviceEventEmitter, Image, Modal, Pressable, View, useWindowDimensions } from 'react-native';
+import { DeviceEventEmitter, Image, Modal, Pressable, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -64,6 +64,8 @@ import { fondAjouter, Icon, P, PlusPastille, Press } from './kit';
 import { carteNeutre, teinte, domaineDuLien } from './domaines';
 import type { Domaine } from './domaines';
 import { traduire, traduirePluriel, DECIMAL, LOCALE } from '@/lib/i18n/tr';
+import { LargeurEcranContext, useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
+import { largeurEcranPourColonne, rangeesTrois } from '@/lib/v2/nav/grandEcran';
 
 type IconName = React.ComponentProps<typeof Icon>['name'];
 
@@ -81,7 +83,9 @@ const cm = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', DECI
 /* ============ La grille ============ */
 
 /** Range les tuiles deux par deux (demi) ou seules (pleine), sans trou */
-export function GrilleAccueil({ tuiles }: { tuiles: (TuileGrille<React.ReactNode> | null | false | undefined)[] }) {
+export function GrilleAccueil({ tuiles, largeur }: { tuiles: (TuileGrille<React.ReactNode> | null | false | undefined)[]; largeur?: number }) {
+  // 30 octobre 2026 : en grand ecran, la grille passe a 3 colonnes (largeur donnee) ; sur iPhone, 2 comme avant
+  if (largeur) return <GrilleTrois tuiles={tuiles} largeur={largeur} />;
   const lignes = rangees(tuiles);
   return (
     <View style={{ gap: ESPACE_GRILLE }}>
@@ -93,6 +97,32 @@ export function GrilleAccueil({ tuiles }: { tuiles: (TuileGrille<React.ReactNode
               {t.contenu}
             </View>
           ))}
+        </Apparition>
+      ))}
+    </View>
+  );
+}
+
+/**
+ * Grand ecran (30 octobre 2026) : 3 colonnes, une demi tuile en prend 1, une pleine 2 (lib/v2/nav/grandEcran.ts,
+ * rangeesTrois). Chaque tuile recoit sa largeur (LargeurEcranContext) pour dimensionner son contenu.
+ */
+function GrilleTrois({ tuiles, largeur }: { tuiles: (TuileGrille<React.ReactNode> | null | false | undefined)[]; largeur: number }) {
+  const lignes = rangeesTrois(tuiles);
+  const espace = 20;
+  const col = (largeur - 2 * espace) / 3;
+  return (
+    <View style={{ gap: espace }}>
+      {lignes.map((r, i) => (
+        <Apparition key={r.cle} i={i} cle={r.cle} style={{ flexDirection: 'row', gap: espace, alignItems: 'stretch' }}>
+          {r.tuiles.map(({ tuile, parts }) => {
+            const l = Math.floor(col * parts + espace * (parts - 1));
+            return (
+              <LargeurEcranContext.Provider key={tuile.cle} value={largeurEcranPourColonne(l)}>
+                <View style={{ width: l }}>{tuile.contenu}</View>
+              </LargeurEcranContext.Provider>
+            );
+          })}
         </Apparition>
       ))}
     </View>
@@ -525,7 +555,7 @@ export function TuileMensurationsDefile() {
   const router = useRouter();
   const t = teinte('mensurations');
   const { points } = useMeasuresData();
-  const { width } = useWindowDimensions();
+  const width = useLargeurEcran();
   const [page, setPage] = useState(0);
   const mesures = useMemo(
     () =>
@@ -808,7 +838,7 @@ export function LigneConseil({ trainings, lastWeighIso, goal, freins, semaineVis
 
 export function TuileMois({ trainings, plannedDays, competitionDate }: { trainings: Training[]; plannedDays: number[]; competitionDate: string | null }) {
   const router = useRouter();
-  const { width } = useWindowDimensions();
+  const width = useLargeurEcran();
   const t = teinte('seances');
   const tc = teinte('competition');
   const now = devNow();
