@@ -6,7 +6,7 @@
 import type { Training } from '@/lib/database';
 import { EXERCISES } from '@/lib/exercises';
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
-import { NOMS_FR } from '@/lib/v2/seance/rechercheExo';
+import { NOMS_FR, nomBibliotheque } from '@/lib/v2/seance/rechercheExo';
 import { sansPrise } from '@/lib/v2/seance/prise';
 import { exercisesOf as allExercisesOf, mondayOf, tonnage, workSetsOf } from '@/lib/v2/trainingWeek';
 import { shiftDays } from './format';
@@ -63,7 +63,8 @@ export function computeLifts(trainings: Training[]): Lift[] {
         if (v > best.value) best = { value: v, weight: s.weight, reps: s.reps };
       }
       if (best.value <= 0) continue;
-      const key = strip(e.name);
+      // 30 octobre 2026 : nom francais et nom de la bibliotheque du meme exercice, une seule courbe
+      const key = strip(nomBibliotheque(e.name));
       const entry = map.get(key) ?? { name: niceName(e.name), lastDate: '', sessions: new Set<string>(), best: new Map() };
       if (date >= entry.lastDate) {
         entry.lastDate = date;

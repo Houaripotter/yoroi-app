@@ -4,6 +4,7 @@
  */
 import type { Training } from '@/lib/database';
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
+import { nomBibliotheque } from './rechercheExo';
 import { versUnitePoids } from '@/lib/v2/unitePoids';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
@@ -56,9 +57,27 @@ function sortKey(t: Training): string {
   return `${t.date.slice(0, 10)} ${t.start_time ?? '00:00'}`;
 }
 
+/** 30 octobre 2026 : cle commune au nom de la bibliotheque et au nom francais du meme exercice */
+export function cleExercice(nomOuCle: string): string {
+  return normName(nomBibliotheque(nomOuCle));
+}
+
+/**
+ * Historique par exercice : on le lit avec normName(nom), quel que soit le nom enregistre (bibliotheque ou
+ * francais), et le meme exercice ne fait qu'une entree.
+ */
+class CarteExercices<V> extends Map<string, V> {
+  get(k: string): V | undefined {
+    return super.get(cleExercice(k));
+  }
+  has(k: string): boolean {
+    return super.has(cleExercice(k));
+  }
+}
+
 /** Construit l'historique de chaque exercice, du plus recent au plus ancien */
 export function buildExerciseHistory(trainings: Training[]): { map: Map<string, ExerciseHistory>; recent: string[] } {
-  const map = new Map<string, ExerciseHistory>();
+  const map: Map<string, ExerciseHistory> = new CarteExercices<ExerciseHistory>();
   const recent: string[] = [];
   const sorted = [...trainings].sort((a, b) => (sortKey(a) < sortKey(b) ? 1 : -1));
   for (const t of sorted) {
@@ -66,7 +85,7 @@ export function buildExerciseHistory(trainings: Training[]): { map: Map<string, 
       if (!e || !e.name) continue;
       const sets = setsOf(e).filter((s) => s.weight > 0 || s.reps > 0);
       if (sets.length === 0) continue;
-      const key = normName(e.name);
+      const key = cleExercice(e.name);
       const bestW = Math.max(...sets.map((s) => s.weight));
       const bestE = Math.max(...sets.map((s) => epley(s.weight, s.reps)));
       const h = map.get(key);

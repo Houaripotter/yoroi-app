@@ -34,7 +34,7 @@ import { formatKg } from '@/lib/v2/weightStats';
 import {
   endTime, estimatedMax, familyOf, formatClock, isCombat, longDate, parseExercises, parseRounds, sessionTitle, tileColor, workSets,
 } from '@/lib/v2/seances/sessionData';
-import { computeRecords, formatRecordValue, recordsOfTraining } from '@/lib/v2/seances/records';
+import { cleRecordExercice, computeRecords, formatRecordValue, recordsOfTraining } from '@/lib/v2/seances/records';
 import { dedupeTrainings } from '@/lib/v2/seances/dedupe';
 import { sportArt } from '@/lib/v2/seances/illustrations';
 import { useSeancesData } from '@/lib/v2/seances/useSeancesData';
@@ -542,7 +542,7 @@ export default function WorkoutDetailScreen() {
               {exercises.map((ex, idx) => {
                 const sets = ex.setsData && ex.setsData.length > 0 ? ex.setsData : workSets(ex);
                 const vol = sets.filter((s) => s.type !== 'warmup').reduce((a, s) => a + (s.weight || 0) * (s.reps || 0), 0);
-                const isRec = recordKeys.has(`force:${(ex.name ?? '').trim().toLowerCase()}`) || recordKeys.has(`reps:${(ex.name ?? '').trim().toLowerCase()}`);
+                const isRec = recordKeys.has(`force:${cleRecordExercice(ex.name ?? '')}`) || recordKeys.has(`reps:${cleRecordExercice(ex.name ?? '')}`);
                 return (
                   <Glass key={`${ex.name}${idx}`} style={{ gap: 10 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>

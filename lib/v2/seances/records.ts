@@ -14,6 +14,7 @@ import { durationOf } from '@/lib/v2/trainingWeek';
 import { libelleUnite, versUnitePoids, type UnitePoids } from '@/lib/v2/unitePoids';
 import { estimatedMax, familyOf, firstSport, parseExercises, parseRounds, workSets } from './sessionData';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { nomBibliotheque } from '@/lib/v2/seance/rechercheExo';
 
 export type RecordKind = 'force' | 'reps' | 'distance' | 'allure' | 'rounds' | 'duree';
 
@@ -77,6 +78,14 @@ function push(map: Map<string, Acc>, key: string, make: () => RecordLine, lowerI
   if (isRecord) l.stamps += 1;
 }
 
+/**
+ * 30 octobre 2026 : cle d'un exercice dans les records (apres « force: » ou « reps: »). Le nom francais affiche et
+ * le nom de la bibliotheque du meme exercice donnent la meme cle ; les autres noms gardent leur cle d'avant.
+ */
+export function cleRecordExercice(name: string): string {
+  return nomBibliotheque((name ?? '').trim()).toLowerCase();
+}
+
 export function computeRecords(trainings: Training[]): RecordsResult {
   const sorted = [...trainings].filter((t) => t && t.date).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.start_time ?? '').localeCompare(b.start_time ?? '')));
   const map = new Map<string, Acc>();
@@ -103,7 +112,7 @@ export function computeRecords(trainings: Training[]): RecordsResult {
         }
         if (!(s.weight > 0) && s.reps > bestReps) bestReps = s.reps;
       }
-      const key = name.toLowerCase();
+      const key = cleRecordExercice(name);
       if (bestMax > 0 && bestSet) {
         const set = bestSet;
         push(map, `force:${key}`, () => ({ key: `force:${key}`, kind: 'force', name, sport, best: 0, date, stamps: 0, history: [] }), false, { date, value: Math.round(bestMax * 10) / 10, trainingId: t.id }, (l) => { l.bestSet = set; l.name = name; });

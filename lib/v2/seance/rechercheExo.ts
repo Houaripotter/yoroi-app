@@ -242,6 +242,35 @@ export function nomFr(name: string): string {
   return name;
 }
 
+/**
+ * 30 octobre 2026 (Houari, option b) : le meme exercice s'enregistre sous deux noms, celui de la bibliotheque
+ * (programmes) et son nom francais affiche (choix d'exercice en seance). Records, Progres et « la derniere fois »
+ * les regroupent a la lecture avec ce nom commun, anciennes seances comprises, sans rien reecrire.
+ * Renvoie le nom de la bibliotheque si `name` est le nom francais d'un exercice (prise comprise), sinon `name`.
+ * Accepte aussi un nom deja replie (minuscules, sans accents).
+ */
+const replier = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+let biblioParNomFr: Map<string, string> | null = null;
+export function nomBibliotheque(name: string): string {
+  if (!name) return name;
+  if (!biblioParNomFr) {
+    biblioParNomFr = new Map();
+    for (const [biblio, fr] of Object.entries(NOMS_FR)) {
+      const k = replier(fr);
+      if (k !== replier(biblio) && !biblioParNomFr.has(k)) biblioParNomFr.set(k, biblio);
+    }
+  }
+  const k = replier(name);
+  const direct = biblioParNomFr.get(k);
+  if (direct) return direct;
+  const m = / \((prise [^)]+)\)$/.exec(k);
+  if (m) {
+    const base = biblioParNomFr.get(k.slice(0, m.index));
+    if (base) return `${base} (${m[1]})`;
+  }
+  return name;
+}
+
 /* ------------------------------------------------------------------ */
 /* Pliage du texte et synonymes                                         */
 /* ------------------------------------------------------------------ */
@@ -484,10 +513,13 @@ export type ExoCatalogue<H extends Hist = Hist> = ExoCherchable & { key: string;
  */
 export function construireCatalogue<H extends Hist>(lib: Lib[], history: Map<string, H>, normKey: (s: string) => string): ExoCatalogue<H>[] {
   const map = new Map<string, ExoCatalogue<H>>();
+  // 30 octobre 2026 : un historique regroupe (nom de la bibliotheque et nom francais) ne s'affiche qu'une fois
+  const pris = new Set<H>();
   lib.forEach((l, rang) => {
     const fr = nomFr(l.name);
     const frKey = normKey(fr);
     const h = history.get(l.key) ?? history.get(frKey);
+    if (h) pris.add(h);
     const name = h ? h.name : fr;
     const key = normKey(name);
     if (map.has(key)) return;
@@ -496,7 +528,7 @@ export function construireCatalogue<H extends Hist>(lib: Lib[], history: Map<str
   });
   const biblio = Array.from(map.values());
   history.forEach((h, key) => {
-    if (map.has(key)) return;
+    if (map.has(key) || pris.has(h)) return;
     // exercice cree a la main sans muscle : celui de l'exercice de la bibliotheque qui lui ressemble le plus
     const muscle = h.muscle ?? chercherExos(biblio, h.name)[0]?.muscle ?? 'AUTRE';
     map.set(key, { key, name: h.name, muscle, history: h, count: h.count });
