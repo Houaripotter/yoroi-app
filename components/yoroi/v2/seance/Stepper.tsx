@@ -1,16 +1,19 @@
 /**
  * Reglage d'une valeur : boutons - et + (appui long pour defiler vite) et saisie directe en touchant le chiffre.
  * 16 octobre : `fine` ajoute deux petits boutons de reglage fin sous les gros (les kilos : pas de 1, et 0,5).
+ * 30 octobre : `saut` (10 kg, 20 lb) pour monter vite la charge : a la 3e tape rapide, ou apres 1 s d'appui long
+ * (regles dans lib/v2/seances/pasRapide.ts). Sans `saut`, rien ne change.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
-import { selectionAsync } from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle, selectionAsync } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { fontStyle } from '@/components/yoroi/fonts';
 import { fmtNum, parseNum } from '@/lib/v2/seance/format';
 import { Icon } from './Icon';
 import { traduire } from '@/lib/i18n/tr';
+import { compterTape, RAFALE_VIDE, REPETITION_MS, sautAppuiLong, TAPES_AVANT_SAUT, valeurSuivante, type Rafale } from '@/lib/v2/seances/pasRapide';
 
 type Props = {
   value: number;
@@ -31,9 +34,11 @@ type Props = {
   layout?: 'row' | 'stack';
   /** pas fin, en deux petits boutons sous les gros (0,5 pour les kilos) */
   fine?: number;
+  /** pas des tapes rapides et de l'appui long prolonge (10 pour les kilos, 20 pour les livres) */
+  saut?: number;
 };
 
-export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size = 26, decimals = false, format, hint, dark = false, button = 38, layout = 'row', fine }: Props) {
+export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size = 26, decimals = false, format, hint, dark = false, button = 38, layout = 'row', fine, saut }: Props) {
   const stack = layout === 'stack';
   const { theme } = useYoroiTheme();
   const c = theme.colors;
@@ -42,6 +47,8 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
   const valueRef = useRef(value);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const repeats = useRef(0);
+  const rafale = useRef<Rafale>(RAFALE_VIDE);
+  const appuiDebut = useRef(0);
 
   useEffect(() => {
     valueRef.current = value;
@@ -51,13 +58,25 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
 
   const clamp = (v: number) => Math.min(max, Math.max(min, Math.round(v * 100) / 100));
 
-  const bump = (dir: 1 | -1, amount: number = step) => {
-    const next = clamp(valueRef.current + dir * amount);
+  // `enSaut` : pas de `saut` cale sur son multiple ; `annonce` : petit choc au passage en pas de saut
+  const bump = (dir: 1 | -1, amount: number = step, enSaut = false, annonce = false) => {
+    const next = valeurSuivante(valueRef.current, dir, amount, enSaut && saut ? saut : null, min, max);
     if (next === valueRef.current) return false;
     valueRef.current = next;
     onChange(next);
-    selectionAsync().catch(() => {});
+    if (annonce) impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+    else selectionAsync().catch(() => {});
     return true;
+  };
+
+  const tap = (bouton: string, dir: 1 | -1, amount: number = step) => {
+    if (!saut) {
+      bump(dir, amount);
+      return;
+    }
+    const { rafale: apres, saut: enSaut } = compterTape(rafale.current, bouton, Date.now());
+    rafale.current = apres;
+    bump(dir, amount, enSaut, apres.compte === TAPES_AVANT_SAUT + 1);
   };
 
   function stop() {
@@ -68,6 +87,18 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
 
   const startRepeat = (dir: 1 | -1, amount: number = step) => {
     stop();
+    if (saut) {
+      rafale.current = RAFALE_VIDE;
+      let enSaut = false;
+      const tickSaut = () => {
+        const passe = !enSaut && sautAppuiLong(Date.now() - appuiDebut.current);
+        if (passe) enSaut = true;
+        if (!bump(dir, amount, enSaut, passe)) return stop();
+        timer.current = setTimeout(tickSaut, REPETITION_MS);
+      };
+      tickSaut();
+      return;
+    }
     const tick = () => {
       if (!bump(dir, amount)) return stop();
       repeats.current += 1;
@@ -90,7 +121,8 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
   const renderBtn = (dir: 1 | -1) => (
     <Pressable
       key={dir}
-      onPress={() => bump(dir)}
+      onPressIn={() => { appuiDebut.current = Date.now(); }}
+      onPress={() => tap(`gros${dir}`, dir)}
       onLongPress={() => startRepeat(dir)}
       onPressOut={stop}
       delayLongPress={280}
@@ -107,7 +139,8 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
   const renderFine = (dir: 1 | -1) => (
     <Pressable
       key={`fin${dir}`}
-      onPress={() => bump(dir, fine)}
+      onPressIn={() => { appuiDebut.current = Date.now(); }}
+      onPress={() => tap(`fin${dir}`, dir, fine)}
       onLongPress={() => startRepeat(dir, fine)}
       onPressOut={stop}
       delayLongPress={280}
