@@ -129,7 +129,8 @@ export function appliquerActionsIle(d: MuscuDraft, actions: ActionIle[]): MuscuD
       exercises,
       currentId: fait && apres ? apres.id : ex.id,
       // 30 octobre 2026 : minuteur de repos coupe, pas de repos (lib/v2/seances/minuteurRepos.ts)
-      ...reposApresSerie({ sansRepos: r.sansRepos, pasDeRepos: boucle, secondes: repos, maintenant: a.at }),
+      // un exercice cardio n'a pas de repos apres
+      ...reposApresSerie({ sansRepos: r.sansRepos, pasDeRepos: boucle || !!ex.cardio, secondes: repos, maintenant: a.at }),
     };
   }
   return r;
