@@ -3,12 +3,15 @@
  */
 import React from 'react';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
 
 export type IconName =
   | 'close' | 'check' | 'plus' | 'minus' | 'trash' | 'up' | 'down' | 'clock' | 'pencil' | 'pause' | 'play'
   | 'search' | 'more' | 'chevron' | 'back' | 'swap' | 'flame' | 'heart' | 'route' | 'calendar' | 'bolt';
 
-export function Icon({ name, size = 22, color = '#1D2029', strokeWidth = 2.2 }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {
+/** 30 octobre 2026 : le sticker de l'icone quand il y en a un (reglage Stickers), voir ui/StickerIcone */
+export function Icon({ name, size = 22, color = '#1D2029', strokeWidth = 2.2, sticker }: { name: IconName; size?: number; color?: string; strokeWidth?: number; sticker?: NomSticker | false }) {
   const p = { stroke: color, strokeWidth, fill: 'none' as const, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   let body: React.ReactNode = null;
   switch (name) {
@@ -35,8 +38,10 @@ export function Icon({ name, size = 22, color = '#1D2029', strokeWidth = 2.2 }: 
     case 'bolt': body = <Path d="M13 3L5 13.5h6L10 21l8-10.5h-6z" {...p} />; break;
   }
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
-      {body}
-    </Svg>
+    <IconeOuSticker nom={name} sticker={sticker} taille={size}>
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        {body}
+      </Svg>
+    </IconeOuSticker>
   );
 }
