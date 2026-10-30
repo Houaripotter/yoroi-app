@@ -2,14 +2,17 @@
  * Minuteur de repos de la seance de muscu, en bas de l'ecran, dans le style des chronos :
  * fond mousse du repos, barre du temps restant, gros chiffres, moins et plus 15 s, passer.
  * Les 10 dernieres secondes passent en or : prepare-toi, ca repart. Horloge calee sur l'instant de fin
- * (chaque chiffre reste une seconde pile, aucune acceleration). Bip et vibration a la fin.
+ * (chaque chiffre reste une seconde pile, aucune acceleration). Son « wizz » et vibration a la fin.
+ * 30 octobre 2026 : le son seulement si tu as l'app sous les yeux a la fin ; vue en retard (retour dans l'app),
+ * la fin est discrete (lib/v2/seances/finRepos.ts).
  */
 import React, { useEffect, useRef } from 'react';
-import { Pressable, Vibration, View } from 'react-native';
+import { AppState, Pressable, Vibration, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { playBeepSound } from '@/lib/soundManager';
+import { playWizzSound } from '@/lib/soundManager';
+import { decisionFinRepos } from '@/lib/v2/seances/finRepos';
 import { fmtClock } from '@/lib/v2/seance/format';
 import { PHASE_COLORS } from '@/lib/v2/carnet/chrono';
 import { useAlignedNow } from '@/lib/v2/carnet/useAlignedNow';
@@ -23,7 +26,8 @@ type Props = {
   /** secondes a ajouter (negatif pour enlever) */
   onAdd: (sec: number) => void;
   onSkip: () => void;
-  onFinish: () => void;
+  /** enRetard : fin vue au retour dans l'app, sans son */
+  onFinish: (enRetard: boolean) => void;
 };
 
 const INK = '#1D2029';
@@ -42,13 +46,18 @@ export function RestBar({ endsAt, total, bottom, onAdd, onSkip, onFinish }: Prop
 
   useEffect(() => {
     if (left === 0 && !fired.current) {
+      const d = decisionFinRepos({ finMs: endsAt, maintenant: Date.now(), etatApp: AppState.currentState, sansRepos: false });
+      // en arriere plan : la notification previent, l'ecran attend ton retour
+      if (d === 'attendre' || d === 'rien') return;
       fired.current = true;
-      Vibration.vibrate([0, 400, 150, 400]);
-      notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-      playBeepSound().catch(() => {});
-      onFinish();
+      if (d === 'son') {
+        Vibration.vibrate([0, 400, 150, 400]);
+        notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+        playWizzSound().catch(() => {});
+      }
+      onFinish(d === 'discret');
     }
-  }, [left, onFinish]);
+  }, [left, onFinish, now, endsAt]);
 
   const frac = total > 0 ? Math.max(0, Math.min(1, left / total)) : 0;
 
