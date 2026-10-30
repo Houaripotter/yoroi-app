@@ -16,6 +16,7 @@ import {
   UserProfile,
 } from './fighterMode';
 import { traduire } from '@/lib/i18n/tr';
+import { jourLocalIso } from '@/lib/v2/dateLocale';
 
 const STORAGE_KEY_MODE = '@yoroi_user_mode';
 const STORAGE_KEY_SPORT = '@yoroi_user_sport';
@@ -172,7 +173,7 @@ export const getCompetitions = async (): Promise<Competition[]> => {
 
 export const getUpcomingCompetitions = async (): Promise<Competition[]> => {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = jourLocalIso();
     const result = db.getAllSync(
       'SELECT * FROM competitions WHERE date >= ? AND statut = ? ORDER BY date ASC',
       [today, 'a_venir']
@@ -455,7 +456,7 @@ export const deleteCombat = async (id: number): Promise<void> => {
 
 export const getHydratationToday = async (): Promise<Hydratation[]> => {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = jourLocalIso();
     const result = db.getAllSync(
       'SELECT * FROM hydratation WHERE date = ? ORDER BY heure DESC',
       [today]
@@ -480,7 +481,7 @@ export const getTotalHydratationToday = async (): Promise<number> => {
 export const addHydratation = async (quantite_ml: number, type: Hydratation['type'] = 'eau'): Promise<number> => {
   try {
     const now = new Date();
-    const date = now.toISOString().split('T')[0];
+    const date = jourLocalIso(now);
     const heure = now.toTimeString().split(' ')[0].substring(0, 5);
 
     const result = db.runSync(

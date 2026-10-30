@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import secureStorage from '@/lib/security/secureStorage';
 import { traduire, LOCALE } from '@/lib/i18n/tr';
+import { jourLocalIso } from '@/lib/v2/dateLocale';
 
 // ============================================
 // CLES DE STOCKAGE
@@ -486,7 +487,7 @@ export const stopFasting = async (completed: boolean = false): Promise<boolean> 
       // Ajouter a l'historique
       const session: FastingSession = {
         id: generateId(),
-        date: startTime.toISOString().split('T')[0],
+        date: jourLocalIso(startTime),
         modeId: state.modeId,
         startTime: state.startTime,
         endTime: endTime.toISOString(),
@@ -650,7 +651,7 @@ export const getFastingStreak = async (): Promise<number> => {
 const updateFastingStreak = async (completed: boolean): Promise<void> => {
   try {
     const lastCompletedStr = await AsyncStorage.getItem(STORAGE_KEYS.LAST_COMPLETED_DATE);
-    const today = new Date().toISOString().split('T')[0];
+    const today = jourLocalIso();
 
     if (completed) {
       let newStreak = 1;

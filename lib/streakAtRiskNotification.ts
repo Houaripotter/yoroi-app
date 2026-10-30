@@ -12,6 +12,7 @@ import { Platform } from 'react-native';
 import { getTrainings } from './database';
 import logger from '@/lib/security/logger';
 import { traduire } from '@/lib/i18n/tr';
+import { jourDe, jourLocalIso } from '@/lib/v2/dateLocale';
 import { sourceNotif, src } from '@/lib/notificationLangue';
 
 const LAST_CHECK_KEY = '@yoroi_streak_risk_last_check';
@@ -27,28 +28,29 @@ const computeCurrentStreak = (dates: string[]): number => {
   const daysWithActivity = new Set<string>();
   for (const d of dates) {
     try {
-      daysWithActivity.add(new Date(d).toISOString().slice(0, 10));
+      daysWithActivity.add(jourDe(d));
     } catch {}
   }
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().slice(0, 10);
-  const yesterdayStr = new Date(today.getTime() - 86400000).toISOString().slice(0, 10);
+  // 30 octobre 2026 : jours locaux (minuit local converti en UTC donnait la veille en France)
+  const todayStr = jourLocalIso(today);
+  const yesterdayStr = jourLocalIso(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1));
 
   // Commencer à compter depuis aujourd'hui si séance aujourd'hui, sinon hier
   let cursor: Date;
   if (daysWithActivity.has(todayStr)) {
     cursor = new Date(today);
   } else if (daysWithActivity.has(yesterdayStr)) {
-    cursor = new Date(today.getTime() - 86400000);
+    cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
   } else {
     return 0;
   }
 
   let streak = 0;
-  while (daysWithActivity.has(cursor.toISOString().slice(0, 10))) {
+  while (daysWithActivity.has(jourLocalIso(cursor))) {
     streak++;
-    cursor = new Date(cursor.getTime() - 86400000);
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() - 1);
   }
   return streak;
 };
@@ -67,7 +69,7 @@ export async function checkAndNotifyStreakAtRisk(): Promise<void> {
     if (enabled === 'false') return;
 
     // 2. N'envoyer qu'une fois par jour max
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = jourLocalIso();
     const lastSent = await AsyncStorage.getItem(LAST_SENT_KEY);
     if (lastSent === todayStr) return;
 
@@ -86,7 +88,7 @@ export async function checkAndNotifyStreakAtRisk(): Promise<void> {
     const daysWithActivity = new Set<string>();
     for (const t of trainings) {
       try {
-        daysWithActivity.add(new Date(t.date).toISOString().slice(0, 10));
+        daysWithActivity.add(jourDe(t.date));
       } catch {}
     }
     if (daysWithActivity.has(todayStr)) {

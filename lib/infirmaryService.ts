@@ -17,6 +17,7 @@ import {
   getReminders,
   updateReminder,
 } from './database';
+import { jourLocalIso, minuitLocalDe } from '@/lib/v2/dateLocale';
 import {
   getZoneById,
   FitForDutyStatus,
@@ -89,7 +90,7 @@ export const createInjury = async (data: {
   notes?: string;
   estimated_recovery_days?: number;
 }): Promise<number> => {
-  const today = new Date().toISOString().split('T')[0];
+  const today = jourLocalIso();
 
   // Calculer le statut FIT FOR DUTY en fonction de l'EVA
   let fitForDuty: FitForDutyStatus = 'operational';
@@ -127,7 +128,7 @@ export const updateInjuryEva = async (
   evaScore: number,
   notes?: string
 ): Promise<void> => {
-  const today = new Date().toISOString().split('T')[0];
+  const today = jourLocalIso();
 
   // Ajouter dans l'historique
   await addEvaHistory({
@@ -167,7 +168,7 @@ export const updateInjuryEva = async (
  * Marque une blessure comme guérie
  */
 export const markInjuryAsHealed = async (injuryId: number): Promise<void> => {
-  const today = new Date().toISOString().split('T')[0];
+  const today = jourLocalIso();
 
   await updateInjury(injuryId, {
     status: 'healed',
@@ -295,7 +296,7 @@ export const recordTreatment = async (data: {
   custom_description?: string;
   notes?: string;
 }): Promise<number> => {
-  const today = new Date().toISOString().split('T')[0];
+  const today = jourLocalIso();
 
   return await addTreatment({
     ...data,
@@ -370,7 +371,7 @@ export const createTreatmentReminder = async (data: {
 
   return await addReminder({
     ...data,
-    next_reminder_date: nextDate.toISOString().split('T')[0],
+    next_reminder_date: jourLocalIso(nextDate),
     enabled: true,
   });
 };
@@ -391,12 +392,12 @@ export const completeReminder = async (reminderId: number): Promise<void> => {
   });
 
   // Calculer la prochaine date
-  const currentDate = new Date(reminder.next_reminder_date);
+  const currentDate = minuitLocalDe(reminder.next_reminder_date);
   const nextDate = calculateNextReminderDate(currentDate, reminder.frequency);
 
   // Mettre à jour le rappel
   await updateReminder(reminderId, {
-    next_reminder_date: nextDate.toISOString().split('T')[0],
+    next_reminder_date: jourLocalIso(nextDate),
   });
 };
 

@@ -29,6 +29,7 @@ import type { Periode } from '@/components/yoroi/v2/nuit/Periodes';
 import { couleursPhases, duree, heure } from '@/components/yoroi/v2/nuit/outils';
 import { GrandeDuree } from '@/components/yoroi/v2/nuit/GrandeDuree';
 import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
+import { jourLocalIso } from '@/lib/v2/dateLocale';
 
 type Detail = { nuit: NuitCalculee; coeur: MesureNuit | null; respiration: MesureNuit | null; temperature: MesureNuit | null };
 
@@ -225,7 +226,7 @@ export default function DetailNuit() {
       <OngletsPeriode value={periode} onChange={setPeriode} />
 
       {periode !== 'J' ? (
-        <Historique entries={all} fin={target || new Date().toISOString().slice(0, 10)} periode={periode} />
+        <Historique entries={all} fin={target || jourLocalIso()} periode={periode} />
       ) : (
         <>
           {/* le heros : la duree, coucher et reveil, la qualite */}

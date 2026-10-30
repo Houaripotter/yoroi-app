@@ -5,6 +5,7 @@
 
 import { XMLParser } from 'fast-xml-parser';
 import { Training } from '@/lib/database';
+import { jourLocalIso } from '@/lib/v2/dateLocale';
 
 // ============================================
 // TYPES
@@ -208,7 +209,7 @@ function parseGPX(xmlContent: string): ParseResult {
 
       // Date & time
       const startDate = firstTime || new Date();
-      const dateStr = startDate.toISOString().split('T')[0];
+      const dateStr = jourLocalIso(startDate); // jour local, comme l'heure (30 octobre 2026)
       const timeStr = startDate.toTimeString().slice(0, 5);
 
       activities.push({
@@ -278,7 +279,7 @@ function parseTCX(xmlContent: string): ParseResult {
       // Start time from activity ID or first lap
       const startTimeStr = activity.Id || laps[0]?.['@_StartTime'];
       const startDate = startTimeStr ? new Date(startTimeStr) : new Date();
-      const dateStr = startDate.toISOString().split('T')[0];
+      const dateStr = jourLocalIso(startDate); // jour local, comme l'heure (30 octobre 2026)
       const timeStr = startDate.toTimeString().slice(0, 5);
 
       // Activity name from Notes or sport type
