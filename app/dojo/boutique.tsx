@@ -31,7 +31,7 @@ import { BackHeader, CheckIcon, ChevronIcon, tap } from '@/components/yoroi/v2/d
 import { GenreBascule, Grille, GroupeTitre, Onglets, Teintes, Vignette, VignetteScene, fondFamille, selection } from '@/components/yoroi/v2/dojo/personnages/Galerie';
 import type { FamilleFond } from '@/components/yoroi/v2/dojo/personnages/Galerie';
 import { usePremium } from '@/context/PremiumContext';
-import { saveEspace } from '@/lib/v2/espace';
+import { saveEspace, sceneJamaisChoisie } from '@/lib/v2/espace';
 import type { Espace, SceneId } from '@/lib/v2/espace';
 import { useArmure } from '@/lib/v2/dojo/useArmure';
 import { SANS_PERSONNAGE, rangNom } from '@/lib/v2/dojo/univers';
@@ -215,7 +215,8 @@ export default function Boutique() {
       return;
     }
     setCandPerso(key);
-    const sc = sceneDuPack(pack);
+    // 30 octobre 2026 : essayer un personnage ne change plus ta scene deja choisie ; sa scene assortie reste a cocher
+    const sc = sceneJamaisChoisie(espace) ? sceneDuPack(pack) : null;
     setCandScene(sc && sc !== espace.scene ? sc : null);
   };
 

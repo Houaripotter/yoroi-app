@@ -115,7 +115,24 @@ export type Espace = {
   /** vague 45 : univers du personnage (lib/v2/dojo/univers.ts). Absent : 'japon', aussi pour les utilisateurs existants.
    *  Le choix « Sans personnage » met l'univers classique et la cle de personnage 'aucun'. */
   univers?: Univers;
+  /** 30 octobre 2026 : vrai des que tu as choisi une scene toi meme (ecran Ta scene, Boutique, onboarding, rotation).
+   *  Choisir un personnage ne touche alors jamais ta scene. Faux : la scene par defaut d'un personnage, jamais choisie.
+   *  Absent : voir sceneJamaisChoisie. */
+  sceneChoisie?: boolean;
 };
+
+/**
+ * 30 octobre 2026 (Houari : choisir un personnage changeait la scene deja choisie) : vrai seulement si aucune scene
+ * n'a jamais ete choisie. Sans la marque (utilisateurs d'avant cette date), une scene autre que le Dojo par defaut
+ * ou une rotation montre un choix fait a la main.
+ */
+export function sceneJamaisChoisie(e: Pick<Espace, 'scene' | 'sceneFixe' | 'sceneRotation' | 'sceneChoisie'> | null | undefined): boolean {
+  if (!e) return true;
+  if (e.sceneChoisie === true) return false;
+  if (e.sceneChoisie === false) return true;
+  if (e.sceneRotation) return false;
+  return (e.sceneFixe ?? e.scene) === DEFAULT_ESPACE.scene;
+}
 
 /** Objectif de seances vise, ou 0 tant que l'utilisateur ne l'a pas choisi lui-meme. */
 export function objectifVise(e: Pick<Espace, 'objectifSemaine' | 'objectifChoisi'> | null | undefined): number {
@@ -279,8 +296,11 @@ export async function saveEspace(patch: Partial<Espace>): Promise<Espace> {
   const flag = patch.objectifSemaine !== undefined && patch.objectifChoisi === undefined ? { objectifChoisi: true } : {};
   // vague 40 : choisir une scene a la main arrete la rotation ; la scene du lancement n'est jamais enregistree
   const rotation = patch.scene !== undefined && !('sceneRotation' in patch) ? { sceneRotation: undefined } : {};
+  // 30 octobre 2026 : une scene posee (ou une rotation) est un choix, sauf si l'appelant dit le contraire (sceneChoisie: false,
+  // la scene par defaut d'un personnage quand aucune scene n'a jamais ete choisie, lib/v2/dojo/choisirUnivers.ts)
+  const marque = (patch.scene !== undefined || 'sceneRotation' in patch) && patch.sceneChoisie === undefined ? { sceneChoisie: true } : {};
   const { sceneFixe: _ignore, ...propre } = patch;
-  const next: Espace = { ...(await getEspaceEnregistre()), ...propre, ...flag, ...rotation };
+  const next: Espace = { ...(await getEspaceEnregistre()), ...propre, ...flag, ...rotation, ...marque };
   if (next.sceneRotation === undefined) delete next.sceneRotation;
   try {
     await AsyncStorage.setItem(KEY, JSON.stringify(next));

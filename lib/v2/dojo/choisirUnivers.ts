@@ -7,11 +7,14 @@
  * Le genre reste garde dans le profil (avatar_gender), comme pour le Guerrier : rien ne se perd
  * quand on passe par « Sans personnage » puis qu'on revient a un personnage.
  * L'XP, les rangs et le journal d'XP ne sont jamais touches. Aucune migration : sans choix, on reste au Japon.
+ * 30 octobre 2026 (Houari : choisir un personnage changeait la scene qu'il avait choisie) : la scene choisie n'est
+ * plus jamais touchee, ni sa rotation. La scene assortie a l'univers n'est posee que si aucune scene n'a jamais ete
+ * choisie (sceneJamaisChoisie), et elle ne compte pas comme un choix.
  */
 import { DeviceEventEmitter } from 'react-native';
 import { getProfile, saveProfile } from '@/lib/database';
 import { logger } from '@/lib/security/logger';
-import { getEspace, saveEspace, type Espace } from '@/lib/v2/espace';
+import { getEspace, saveEspace, sceneJamaisChoisie, type Espace } from '@/lib/v2/espace';
 import { estSceneClassique } from '@/lib/v2/espace/classique';
 import { estSceneNature } from '@/lib/v2/espace/nature';
 import { estSceneVie } from '@/lib/v2/espace/packsScenes';
@@ -51,20 +54,21 @@ export async function choisirUnivers(choix: ChoixUnivers, genre: 'h' | 'f'): Pro
   // la scene choisie a la main (pas celle tiree au lancement par la rotation)
   const sceneChoisie = e.sceneFixe ?? e.scene;
   const patch: Partial<Espace> = {};
+  // 30 octobre 2026 : une scene deja choisie (ou une rotation) reste telle quelle
+  const libre = sceneJamaisChoisie(e);
 
   if (choix === 'japon') {
     patch.univers = 'japon';
     patch.personnage = `guerrier_${g}`;
-    if (estSceneClassique(sceneChoisie)) patch.scene = 'dojo';
-    // la rotation du pack Classique s'arrete ; les autres rotations restent
-    else if (e.sceneRotation === 'classique') patch.sceneRotation = undefined;
+    if (libre && estSceneClassique(sceneChoisie)) patch.scene = 'dojo';
   } else {
     patch.univers = 'classique';
     patch.personnage = choix === 'classique' ? `classique_${g}` : SANS_PERSONNAGE;
-    const rotationJapon = e.sceneRotation === 'lanternes' || e.sceneRotation === 'samourai';
     // une scene du pack Nature et ville (ou Voyages, 18 octobre) est neutre aussi : elle reste
-    if (!(estSceneClassique(sceneChoisie) || estSceneNature(sceneChoisie) || estSceneVie(sceneChoisie) || estSceneVoyage(sceneChoisie)) || rotationJapon) patch.scene = 'classique_salle_jour';
+    if (libre && !(estSceneClassique(sceneChoisie) || estSceneNature(sceneChoisie) || estSceneVie(sceneChoisie) || estSceneVoyage(sceneChoisie))) patch.scene = 'classique_salle_jour';
   }
+  // la scene par defaut d'un personnage n'est pas un choix : la suivante pourra encore suivre le personnage
+  if (patch.scene !== undefined) patch.sceneChoisie = false;
 
   // le genre reste garde dans le profil (lu par l'accueil, le profil et le choix du personnage).
   // Le rond de profil n'est pas touche : sans personnage, il montre de lui-meme ta photo ou tes initiales.
