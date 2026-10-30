@@ -152,7 +152,7 @@ export async function retirerRappelIle(): Promise<void> {
   }
 }
 
-function depsApp(titre: () => string): DepsRappelRepos {
+function depsApp(titre: () => string, corps: () => string = () => ''): DepsRappelRepos {
   return {
     maintenant: () => Date.now(),
     autorise: rappelReposAutorise,
@@ -161,7 +161,7 @@ function depsApp(titre: () => string): DepsRappelRepos {
       return Notif.scheduleNotificationAsync({
         // identifiant fixe : un nouveau repos remplace l'ancien, et la fin de seance le retire
         identifier: ID_RAPPEL_REPOS,
-        content: { title: titre(), body: '', sound: 'default', data: { type: TYPE_FIN_REPOS } },
+        content: { title: titre(), body: corps(), sound: 'default', data: { type: TYPE_FIN_REPOS } },
         trigger: { type: Notif.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: secondes },
       });
     },
@@ -174,11 +174,14 @@ function depsApp(titre: () => string): DepsRappelRepos {
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 /** Branche le rappel de fin de repos sur l'écran de séance : `finMs` est la fin du repos en cours (ou null) */
-export function useRappelFinRepos(finMs: number | null | undefined, titre: string): void {
+export function useRappelFinRepos(finMs: number | null | undefined, titre: string, corps = ''): void {
   const rappel = useRef<ReturnType<typeof creerRappelRepos> | null>(null);
   const titreRef = useRef(titre);
   titreRef.current = titre;
-  if (!rappel.current) rappel.current = creerRappelRepos(depsApp(() => titreRef.current));
+  // 30 octobre 2026 : la suite (« Ensuite : Développé couché, série 2 ») sous « Repos terminé »
+  const corpsRef = useRef(corps);
+  corpsRef.current = corps;
+  if (!rappel.current) rappel.current = creerRappelRepos(depsApp(() => titreRef.current, () => corpsRef.current));
 
   useEffect(() => {
     const r = rappel.current!;
