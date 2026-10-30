@@ -10,6 +10,7 @@ import { HelpCircle, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { traduire } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -76,7 +77,7 @@ const BackupFaqAccordionInner: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: isDark ? '#1E1E22' : '#fff', borderColor: colors.border ?? '#E5E7EB' }]}>
       <View style={styles.header}>
-        <HelpCircle size={18} color="#8B5CF6" />
+        <IconeOuSticker sticker="aide" taille={18}><HelpCircle size={18} color="#8B5CF6" /></IconeOuSticker>
         <Text style={[styles.title, { color: colors.text }]}>{traduire("Questions fréquentes")}</Text>
       </View>
 
