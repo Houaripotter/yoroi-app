@@ -167,10 +167,10 @@ export default function MesSeances() {
         {menu ? (
           <>
             <Row icon="calendar" title={traduire('Noter comme faite')} sub={traduire('sans chrono, la date et l’heure au choix')} onPress={() => commencer(menu, true)} />
-            <Row icon="edit" title={traduire('Modifier les exercices')} sub={traduire('ajouter, retirer, changer l’ordre et les séries')} onPress={() => modifier(menu)} />
-            <Row icon="bookmark" title={traduire('Renommer')} onPress={() => { const s = menu; setMenu(null); setTimeout(() => setRenommer(s), 380); }} />
-            <Row icon="repeat" title={traduire('Dupliquer')} sub={traduire('pour en faire une variante')} onPress={() => { const s = menu; setMenu(null); void dupliquerMaSeance(s.id).catch(() => {}); }} />
-            <Row icon="trash" danger title={traduire('Supprimer')} onPress={() => supprimer(menu)} />
+            <Row icon="edit" sticker="crayon" title={traduire('Modifier les exercices')} sub={traduire('ajouter, retirer, changer l’ordre et les séries')} onPress={() => modifier(menu)} />
+            <Row icon="bookmark" sticker="crayon" title={traduire('Renommer')} onPress={() => { const s = menu; setMenu(null); setTimeout(() => setRenommer(s), 380); }} />
+            <Row icon="repeat" sticker="dupliquer" title={traduire('Dupliquer')} sub={traduire('pour en faire une variante')} onPress={() => { const s = menu; setMenu(null); void dupliquerMaSeance(s.id).catch(() => {}); }} />
+            <Row icon="trash" sticker="corbeille" danger title={traduire('Supprimer')} onPress={() => supprimer(menu)} />
           </>
         ) : null}
       </Sheet>
