@@ -11,6 +11,8 @@ import { View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
+import { stickerDuSport } from '@/components/yoroi/v2/seances/MonthMarks';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { P } from '@/components/yoroi/livePalette';
 import { getSportIcon } from '@/lib/sports';
@@ -94,7 +96,8 @@ export function Pastille({ etat, taille = 26, sport, remplissage, signe, ton = '
         {signe === 'manque' ? <Path d="M9 13 H17" stroke={P.muted} strokeWidth={2} strokeLinecap="round" /> : null}
         {signe === 'repos' ? <Path d="M15.6 10.6a4.4 4.4 0 1 1-5-2.4 3.4 3.4 0 0 0 5 2.4z" fill={P.muted} /> : null}
       </Svg>
-      {icone && !signe ? <MaterialCommunityIcons name={icone} size={Math.round(taille * 0.52)} color={P.muted} /> : null}
+      {/* 30 octobre 2026 : le sticker du sport (reglage Stickers), sinon l'icone d'avant */}
+      {icone && !signe ? <IconeOuSticker sticker={stickerDuSport(sport)} taille={Math.round(taille * 0.52)}><MaterialCommunityIcons name={icone} size={Math.round(taille * 0.52)} color={P.muted} /></IconeOuSticker> : null}
     </View>
   );
 }
