@@ -5,6 +5,7 @@ import { Flame, Calendar, Target, Dumbbell } from 'lucide-react-native';
 import { YearStats } from '@/lib/social-cards/useYearStats';
 import { ThemeColors } from '@/lib/ThemeContext';
 import { traduire } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 
 // ============================================
 // YEAR COUNTER CARD - Le fameux X/365
@@ -88,7 +89,7 @@ export const YearCounterCard = React.memo(forwardRef<View, YearCounterCardProps>
               <View style={styles.activitiesGrid}>
                 {topActivities.map((activity, index) => (
                   <View key={index} style={[styles.activityItem, { backgroundColor: colors.backgroundElevated || colors.card }]}>
-                    <Dumbbell size={24} color={colors.accent} />
+                    <IconeOuSticker sticker="musculation" taille={24}><Dumbbell size={24} color={colors.accent} /></IconeOuSticker>
                     <Text style={[styles.activitySport, { color: colors.textPrimary }]} numberOfLines={1}>
                       {activity.clubName}
                     </Text>
@@ -105,7 +106,7 @@ export const YearCounterCard = React.memo(forwardRef<View, YearCounterCardProps>
           <View style={[styles.statsGrid, { gap: gap / 2 }]}>
             {/* Streak */}
             <View style={[styles.statCard, { backgroundColor: colors.backgroundElevated || colors.card }]}>
-              <Flame size={20} color="#F59E0B" />
+              <IconeOuSticker sticker="flamme" taille={20}><Flame size={20} color="#F59E0B" /></IconeOuSticker>
               <Text style={[styles.statValue, { color: colors.textPrimary }]}>
                 {stats.currentStreak > 0 ? stats.currentStreak : stats.bestStreak}
               </Text>
@@ -116,7 +117,7 @@ export const YearCounterCard = React.memo(forwardRef<View, YearCounterCardProps>
 
             {/* Mois le plus actif */}
             <View style={[styles.statCard, { backgroundColor: colors.backgroundElevated || colors.card }]}>
-              <Calendar size={20} color={colors.accent} />
+              <IconeOuSticker sticker="calendrier" taille={20}><Calendar size={20} color={colors.accent} /></IconeOuSticker>
               <Text style={[styles.statValue, { color: colors.textPrimary }]}>
                 {stats.busiestMonth.month.substring(0, 3)}
               </Text>
@@ -127,7 +128,7 @@ export const YearCounterCard = React.memo(forwardRef<View, YearCounterCardProps>
             {/* Projection */}
             {stats.projection.estimatedTotal > stats.totalDays && (
               <View style={[styles.statCard, { backgroundColor: colors.backgroundElevated || colors.card }]}>
-                <Target size={20} color={colors.accent} />
+                <IconeOuSticker sticker="objectifs" taille={20}><Target size={20} color={colors.accent} /></IconeOuSticker>
                 <Text style={[styles.statValue, { color: colors.textPrimary }]}>
                   {stats.projection.estimatedTotal}
                 </Text>
