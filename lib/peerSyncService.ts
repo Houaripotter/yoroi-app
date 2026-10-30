@@ -80,7 +80,7 @@ import logger from './security/logger';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 // 28 octobre 2026 : listes fusionnees par element, nouvelles donnees, journal du dernier echange (lib/v2/synchro)
 import { FORMAT_ELEMENTS, type EtatEnvoi } from './v2/synchro/fusion';
-import { CLES_ANCIENNES_PAR_ELEMENT } from './v2/synchro/cles';
+import { CLES_ANCIENNES_PAR_ELEMENT, EVENEMENT_A_SYNCHRONISER } from './v2/synchro/cles';
 import { appliquer as appliquerElements, appliquerAncienFormat, collecter as collecterElements } from './v2/synchro/elements';
 import { NOMS_TABLES_ETENDUES, TABLES_ETENDUES } from './v2/synchro/tables';
 import { ajouter, noterEchange, noterErreur, typeDeTable } from './v2/synchro/journal';
@@ -561,6 +561,8 @@ const demarrer = async (): Promise<void> => {
       // 30 octobre 2026 : mes seances et programmes partent aussi tout seuls vers un appareil appaire relie
       DeviceEventEmitter.addListener('YOROI_MES_SEANCES_CHANGED', scheduleBackgroundScan),
       DeviceEventEmitter.addListener('YOROI_PROGRAMME_CHANGED', scheduleBackgroundScan),
+      // revue du 30 octobre 2026 : cran de la machine, exercice ecarte, minuteur de repos (lib/v2/synchro/cles.ts)
+      DeviceEventEmitter.addListener(EVENEMENT_A_SYNCHRONISER, scheduleBackgroundScan),
     );
 
     await MultipeerBridge.startDiscovery();
