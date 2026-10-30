@@ -157,7 +157,7 @@ export function RappelsDiscipline({
       {refuse ? (
         <Animated.View entering={FadeIn.duration(180)} style={{ borderRadius: 18, backgroundColor: c.goldTint, padding: 14, gap: 10 }}>
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-            <Icon name="lock" size={20} color={c.goldDeep} />
+            <Icon sticker="rappels" name="lock" size={20} color={c.goldDeep} />
             <Ink size={13.5} weight="bold" style={{ flex: 1, lineHeight: 19 }}>
               {traduire("Les notifications de YOROI sont coupées sur ton téléphone. Pour recevoir tes rappels, autorise les notifications dans Réglages{0}: tu pourras revenir ici ensuite.", NB)}
             </Ink>
