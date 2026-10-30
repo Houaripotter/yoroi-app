@@ -37,8 +37,9 @@ export default function ExercicesEcartes() {
     <EspaceScreen title={traduire('Exercices écartés')} subtitle={traduire('Ceux que tu as écartés en séance. Ils ne te sont plus proposés.')} gap={14}>
       <Card>
         {liste && liste.length === 0 ? (
-          <View style={{ paddingVertical: 16, paddingHorizontal: 4 }}>
-            <Ink size={15} color={c.textSecondary}>{traduire('Aucun exercice écarté.')}</Ink>
+          <View style={{ paddingVertical: 16, paddingHorizontal: 4, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <StickerOuIcone sticker="refresh" icon="check" size={36} />
+            <Ink size={15} color={c.textSecondary} style={{ flex: 1 }}>{traduire('Aucun exercice écarté.')}</Ink>
           </View>
         ) : null}
         {(liste ?? []).map((e, i) => (
