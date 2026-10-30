@@ -82,6 +82,8 @@ export type LiveExercise = {
   caseProg?: { jourId: string; index: number };
   /** nom de l'exercice prevu, quand tu l'as remplace pendant la seance */
   remplaceEnSeance?: string;
+  /** 30 octobre 2026 : exercice cardio de fin de seance, son chrono (lib/v2/seances/cardioFin.ts) */
+  cardio?: import('@/lib/v2/seances/cardioFin').ChronoCardio;
 };
 
 /** Changer d'exercice : celui qu'on quitte avec au moins une serie faite est « laisse » (plus repropose) */
