@@ -111,9 +111,14 @@ export async function lireChoixRappels(): Promise<ChoixRappels> {
 /**
  * Ecrit le choix dans les services et reprogramme. Ne demande jamais l'autorisation.
  * joursEntrainement (0 = lundi) : a l'onboarding, les jours de l'ecran Rythme quand les jours du rappel n'ont pas ete touches.
+ * seulement (30 octobre 2026, onboarding retour) : n'applique que ces rappels ; les autres ne sont ni eteints ni modifies.
  */
-export async function appliquerChoixRappels(c: ChoixRappels, opts: { joursEntrainement?: number[] | null } = {}): Promise<void> {
-  try {
+export async function appliquerChoixRappels(
+  c: ChoixRappels,
+  opts: { joursEntrainement?: number[] | null; seulement?: readonly (keyof ChoixRappels)[] | null } = {},
+): Promise<void> {
+  const fait = (k: keyof ChoixRappels) => !opts.seulement || opts.seulement.includes(k);
+  if (fait('seance') || fait('eau') || (fait('pesee') && c.pesee.actif)) try {
     const s = await notificationService.loadSettings().catch(() => notificationService.getSettings());
     const hyd = s.hydration;
     // premiere activation : des horaires utiles plutot qu'un seul rappel a 8 h (comme Reglages, Rappels)
@@ -122,24 +127,29 @@ export async function appliquerChoixRappels(c: ChoixRappels, opts: { joursEntrai
         ? { ...hyd, enabled: true, useSlots: false, startTime: '09:00', endTime: '19:00', interval: 3 }
         : { ...hyd, enabled: true }
       : { ...hyd, enabled: false };
+    const allume = (fait('seance') && c.seance.actif) || (fait('eau') && c.eau.actif) || (!opts.seulement && auMoinsUnRappel(c));
     await notificationService.updateSettings({
-      ...(auMoinsUnRappel(c) ? { enabled: true } : {}),
-      training: {
-        ...s.training,
-        enabled: c.seance.actif,
-        time: heureValide(c.seance.heure),
-        days: joursSeanceRetenus(c, opts.joursEntrainement).map(lundiVersJs).sort((a, b) => a - b),
-      },
+      ...(allume ? { enabled: true } : {}),
+      ...(fait('seance')
+        ? {
+            training: {
+              ...s.training,
+              enabled: c.seance.actif,
+              time: heureValide(c.seance.heure),
+              days: joursSeanceRetenus(c, opts.joursEntrainement).map(lundiVersJs).sort((a, b) => a - b),
+            },
+          }
+        : {}),
       // un seul rappel de pesee : le rappel doux remplace celui a heure fixe
-      weighing: c.pesee.actif ? { ...s.weighing, enabled: false } : s.weighing,
-      hydration,
+      ...(fait('pesee') && c.pesee.actif ? { weighing: { ...s.weighing, enabled: false } } : {}),
+      ...(fait('eau') ? { hydration } : {}),
     });
     await cancelLegacyReminderSettings();
   } catch (e) {
     logger.warn('[Rappels] seance ou eau non appliques', e);
   }
 
-  try {
+  if (fait('pesee')) try {
     if (c.pesee.actif) {
       const h = await getHabitudePesee();
       const moment = h.moment && h.moment !== 'inconnu' ? h.moment : 'reveil';
@@ -152,7 +162,7 @@ export async function appliquerChoixRappels(c: ChoixRappels, opts: { joursEntrai
     logger.warn('[Rappels] pesee non appliquee', e);
   }
 
-  try {
+  if (fait('bilan')) try {
     if (c.bilan.actif) await scheduleWeeklyRecap();
     else await cancelWeeklyRecap();
   } catch (e) {

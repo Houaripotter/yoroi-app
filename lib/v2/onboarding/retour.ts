@@ -8,6 +8,8 @@
  *  - enregistrerRetour : n'ecrit que ces champs, jamais une valeur vide a la place d'une valeur existante.
  *    Seances, pesees, XP, rangs, coffres, records, clubs, pratiques, programmes et photos ne sont jamais touches ;
  *  - marquerRetourVu : « Plus tard », le drapeau seulement, rien d'autre n'est ecrit.
+ * Rappels (30 octobre 2026) : le brouillon part des rappels reels (lireChoixRappels) et seuls les interrupteurs
+ * touches sont appliques (rappelsTouches) ; un rappel non touche n'est jamais eteint ni modifie.
  * Les acces a l'appareil passent par des ports (branches dans retourAppareil.ts).
  */
 import type { Draft, Goal } from './draft';
@@ -69,7 +71,28 @@ export type SourcesRetour = {
   habitude: HabitudeLue;
   /** la categorie de poids deja choisie (mode competiteur) */
   categorie?: string | null;
+  /** les rappels tels qu'ils sont programmes aujourd'hui (lireChoixRappels) ; absent : tout eteint a l'ecran */
+  rappels?: ChoixRappels | null;
 };
+
+/** Brouillon des rappels : les vrais rappels ; un rappel de seance eteint suit les jours de l'ecran Rythme */
+function rappelsDeDepart(r: ChoixRappels | null | undefined): ChoixRappels {
+  if (!r) return CHOIX_RAPPELS_VIDE;
+  return {
+    seance: { ...r.seance, jours: [...r.seance.jours], joursAuto: r.seance.actif ? false : true },
+    pesee: { ...r.pesee },
+    eau: { ...r.eau },
+    bilan: { ...r.bilan },
+  };
+}
+
+export type PartieRappel = 'seance' | 'pesee' | 'eau' | 'bilan';
+
+/** Les rappels reellement touches entre le depart et la fin (seulement eux seront appliques) */
+export function rappelsTouches(depart: ChoixRappels, fin: ChoixRappels): PartieRappel[] {
+  const parties: PartieRappel[] = ['seance', 'pesee', 'eau', 'bilan'];
+  return parties.filter((k) => !meme(depart[k], fin[k]));
+}
 
 const jsVersLundi = (j: number) => (j + 6) % 7;
 const GOALS: Goal[] = ['lose', 'gain', 'combat', 'maintain'];
@@ -100,7 +123,7 @@ export function brouillonRetour(src: SourcesRetour): Draft {
     peseeMoment: h?.moment ?? null,
     peseeJours: Array.isArray(h?.jours) ? (h?.jours ?? []).map(jsVersLundi).sort((a, b) => a - b) : [],
     peseeHeure: h?.heure ?? null,
-    rappels: CHOIX_RAPPELS_VIDE,
+    rappels: rappelsDeDepart(src.rappels),
   };
 }
 
@@ -147,8 +170,12 @@ export type PortsRetour = {
   setUserMode: (m: 'competiteur' | 'loisir') => Promise<unknown>;
   setUserSport: (s: string) => Promise<unknown>;
   setUserWeightCategory: (c: string) => Promise<unknown>;
-  saveHabitudePesee: (h: { moment: Draft['peseeMoment']; actif: boolean; jours: number[]; heure: string | null }) => Promise<unknown>;
-  appliquerRappels: (r: ChoixRappels, jours: number[]) => Promise<unknown>;
+  /** actif absent : le rappel doux de pesee garde son etat actuel */
+  saveHabitudePesee: (h: { moment: Draft['peseeMoment']; actif?: boolean; jours: number[]; heure: string | null }) => Promise<unknown>;
+  /** seulement : les rappels touches, les autres ne sont ni eteints ni modifies */
+  appliquerRappels: (r: ChoixRappels, jours: number[], seulement: PartieRappel[]) => Promise<unknown>;
+  /** reprogramme le rappel doux de pesee apres un changement d'habitude */
+  replanifierPesee?: () => Promise<unknown>;
   ecrireIllustrations: (s: 'encre' | 'stickers') => Promise<unknown>;
   setItem: (k: string, v: string) => Promise<void>;
   /** sport de categorie ou de combat parmi les sports choisis */
@@ -243,16 +270,21 @@ export async function enregistrerRetour(depart: Draft, fin: Draft, p: PortsRetou
   if (a('scene') && fin.scene) await p.saveEspace({ scene: fin.scene });
   if (a('univers')) await p.ecrireIllustrations((fin.univers ?? 'japon') === 'japon' ? 'encre' : 'stickers').catch(() => undefined);
 
-  // ── Habitude de pesee et rappels ──
+  // ── Rappels puis habitude de pesee ──
+  // Seuls les interrupteurs touches sont appliques. L'habitude passe apres : ses jours et son heure ne sont pas ecrases.
+  const touches = a('rappels') ? rappelsTouches(depart.rappels, fin.rappels) : [];
+  if (touches.length) await p.appliquerRappels(fin.rappels, fin.jours, touches).catch(() => undefined);
   if (a('pesee_habitude') && fin.peseeMoment) {
+    const peseeTouchee = touches.includes('pesee');
     await p.saveHabitudePesee({
       moment: fin.peseeMoment,
-      actif: fin.peseeMoment !== 'inconnu',
+      // l'etat du rappel doux ne change que si son interrupteur a ete touche
+      ...(peseeTouchee ? { actif: fin.rappels.pesee.actif && fin.peseeMoment !== 'inconnu' } : {}),
       jours: fin.peseeJours.map(lundiVersJs),
       heure: fin.peseeMoment === 'heure' ? fin.peseeHeure ?? '07:00' : null,
     });
+    await p.replanifierPesee?.().catch(() => undefined);
   }
-  if (a('rappels')) await p.appliquerRappels(fin.rappels, fin.jours).catch(() => undefined);
 
   await marquerRetourVu(p);
   return ch;
