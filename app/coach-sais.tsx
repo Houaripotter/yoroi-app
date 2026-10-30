@@ -318,7 +318,7 @@ function CarteListe({ p, f, favori, enCours, onPress, onEtoile }: { p: Programme
         </View>
       </Pressable>
       <Pressable onPress={onEtoile} accessibilityRole="button" accessibilityState={{ selected: favori }} accessibilityLabel={traduire(favori ? 'Retirer des favoris' : 'Ajouter aux favoris')} style={({ pressed }) => ({ width: 52, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.6 : 1 })}>
-        <Icon name="star" size={22} color={favori ? pa.creme.barre : pa.texte3} fill={favori ? pa.creme.barre : undefined} />
+        <Icon sticker={false} name="star" size={22} color={favori ? pa.creme.barre : pa.texte3} fill={favori ? pa.creme.barre : undefined} />
       </Pressable>
     </View>
   );
