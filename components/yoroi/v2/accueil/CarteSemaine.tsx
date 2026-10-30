@@ -21,11 +21,11 @@ import { ombreCarte, P, Press } from './kit';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 /** Les deux anneaux d'un jour (30 points) : exercice dehors (lilas), pas dedans (bleu vif) */
-function DoubleAnneau({ dehors, dedans, futur }: { dehors: number; dedans: number; futur: boolean }) {
+function DoubleAnneau({ dehors, dedans, futur, taille = 30 }: { dehors: number; dedans: number; futur: boolean; taille?: number }) {
   const sombre = paletteSombre();
   const piste1 = sombre ? '#3A2D3C' : '#F0ECF6';
   const piste2 = sombre ? '#2A3352' : '#E6ECF8';
-  const T = 30;
+  const T = taille;
   const arc = (r: number, part: number, couleur: string, ep: number) => {
     const tour = 2 * Math.PI * r;
     const p = Math.max(0, Math.min(1, part));
@@ -46,7 +46,7 @@ function DoubleAnneau({ dehors, dedans, futur }: { dehors: number; dedans: numbe
   );
 }
 
-export function CarteSemaine({ trainings, goal, series, objectifs, jour }: { trainings: Training[]; goal: number; series: SeriesJour | null | undefined; objectifs: ObjectifsSante; jour: string }) {
+export function CarteSemaine({ trainings, goal, series, objectifs, jour, grand = false }: { trainings: Training[]; goal: number; series: SeriesJour | null | undefined; objectifs: ObjectifsSante; jour: string; grand?: boolean }) {
   const router = useRouter();
   const n = trainingsThisWeek(trainings, jour).length;
   const jours = useMemo(() => semaineAnneaux(series, trainings, jour), [series, trainings, jour]);
@@ -57,6 +57,9 @@ export function CarteSemaine({ trainings, goal, series, objectifs, jour }: { tra
       accessibilityRole="button"
       accessibilityLabel={traduire('Ta semaine : {0}. Voir tes séances', droite)}
     >
+      {grand ? (
+        <SemaineLarge jours={jours} objectifs={objectifs} jour={jour} droite={droite} />
+      ) : (
       <View style={[{ borderRadius: 22, backgroundColor: P.white, paddingVertical: 12, paddingHorizontal: 14 }, ombreCarte]}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
           <Ink size={11} weight="black" color={paletteSombre() ? '#D9A3CC' : '#8A3F78'} style={{ letterSpacing: 1.4 }}>
@@ -81,6 +84,43 @@ export function CarteSemaine({ trainings, goal, series, objectifs, jour }: { tra
           })}
         </View>
       </View>
+      )}
     </Press>
+  );
+}
+
+/**
+ * 30 octobre 2026 (grand ecran, maquette validee par Houari) : Ta semaine en vraie rangee. A gauche le petit titre et
+ * tes seances de la semaine, a droite les 7 jours en grands doubles anneaux, avec la date ; aujourd'hui sur fond pastel.
+ */
+function SemaineLarge({ jours, objectifs, jour, droite }: { jours: ReturnType<typeof semaineAnneaux>; objectifs: ObjectifsSante; jour: string; droite: string }) {
+  return (
+    <View style={[{ borderRadius: 26, backgroundColor: P.white, paddingVertical: 18, paddingHorizontal: 26, flexDirection: 'row', alignItems: 'center', gap: 28 }, ombreCarte]}>
+      <View style={{ width: 190, gap: 6 }}>
+        <Ink size={12} weight="black" color={paletteSombre() ? '#D9A3CC' : '#8A3F78'} style={{ letterSpacing: 1.5 }}>
+          {traduire('Ta semaine').toUpperCase()}
+        </Ink>
+        <Ink size={18} weight="black" color={P.accentText} numberOfLines={2}>
+          {droite}
+        </Ink>
+      </View>
+      <View style={{ flex: 1, flexDirection: 'row', gap: 10 }} accessible={false} importantForAccessibility="no-hide-descendants">
+        {jours.map((a, i) => {
+          const parts = partsAnneaux(a, objectifs);
+          const aujourdhui = a.date === jour;
+          return (
+            <View key={a.date} style={{ flex: 1, alignItems: 'center', gap: 6, paddingVertical: 10, borderRadius: 18, backgroundColor: aujourdhui ? P.primary : 'transparent' }}>
+              <DoubleAnneau dehors={parts[1]} dedans={parts[0]} futur={a.futur} taille={56} />
+              <Ink size={13} weight="black" color={aujourdhui ? P.accentText : P.ink2}>
+                {LETTRES_JOURS[i]}
+              </Ink>
+              <Ink size={12} weight="extraBold" color={aujourdhui ? P.accentText : P.muted}>
+                {String(Number(a.date.slice(8, 10)))}
+              </Ink>
+            </View>
+          );
+        })}
+      </View>
+    </View>
   );
 }
