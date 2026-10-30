@@ -109,7 +109,7 @@ import { useSaison } from '@/lib/v2/saisons/useSaison';
 import { traduire } from '@/lib/i18n/tr';
 import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
-import { largeurColonne } from '@/lib/v2/nav/grandEcran';
+import { colonnesPour, largeurCote } from '@/lib/v2/nav/grandEcran';
 import { Colonne, LargeurPage } from '@/components/yoroi/v2/PageLarge';
 
 /** 30 octobre 2026 : hauteur de la scene en grand ecran (maquette validee par Houari) */
@@ -158,7 +158,8 @@ export default function Accueil() {
   // Ton poids sur la troisieme (maquette _propositions/grand_ecran_2026-10-30/accueil.png). Sur iPhone, comme avant.
   const page = usePageLarge();
   const grand = page.grand;
-  const colonne = largeurColonne(page.largeur, 3);
+  const colonne = largeurCote(page.largeur);
+  const grille3 = grand && colonnesPour(page.largeur) === 3;
   // 27 octobre 2026 : la scene en carte, a 16 points des bords
   const largeurCarte = grand ? page.largeur - colonne - 20 : largeurEcran - 32;
   const hauteurScene = grand ? HAUTEUR_SCENE_GRAND : hauteurSceneCarte(largeurCarte);
@@ -273,7 +274,7 @@ export default function Accueil() {
             return (
               <View key={k} style={{ gap: 10 }}>
                 {k !== 'mois' ? <TitreSection titre={TITRES_SECTIONS[k]} /> : null}
-                <GrilleAccueil tuiles={tuiles} largeur={grand ? page.largeur : undefined} />
+                <GrilleAccueil tuiles={tuiles} largeur={grille3 ? page.largeur : undefined} />
               </View>
             );
           })}
@@ -316,7 +317,7 @@ export default function Accueil() {
         </View>
       );
     }
-    return <GrilleAccueil tuiles={blocs.flatMap(tuilesDuBloc)} largeur={grand ? page.largeur : undefined} />;
+    return <GrilleAccueil tuiles={blocs.flatMap(tuilesDuBloc)} largeur={grille3 ? page.largeur : undefined} />;
   };
 
   const bottomSpace = insets.bottom + INK_TAB_BAR_SPACE;
@@ -355,6 +356,9 @@ export default function Accueil() {
                       {saison && series.length && pagePoids === 0 ? <DecorCarte saison={saison} largeur={colonne} scrollY={scrollY} seuil={hautSceneCarte(insets.top) + hauteurScene + 480} /> : null}
                     </TourAnchor>
                   </Enter>
+                  {/* sous Ton poids, la carte Sante et la copie de tes donnees : la colonne ne reste pas vide */}
+                  {importSante.visible ? <CarteImportSante controle={importSante} onImporte={sante.reload} /> : <CarteSante sante={sante} />}
+                  <BackupNotice />
                 </Colonne>
               </View>
 
@@ -377,11 +381,9 @@ export default function Accueil() {
                 </Enter>
               ) : null}
 
-              <BackupNotice />
               <PropositionCoach />
-              {importSante.visible ? <CarteImportSante controle={importSante} onImporte={sante.reload} /> : <CarteSante sante={sante} />}
 
-              {/* les blocs reglables, en 3 colonnes */}
+              {/* les blocs reglables, en 3 colonnes (2 sur une page plus etroite) */}
               <Enter i={1}>{rendreProposition()}</Enter>
               <FeuilleEau visible={eauOuverte} onClose={() => setEauOuverte(false)} water={data.hydration.amount} waterGoal={data.hydration.goal} />
 
