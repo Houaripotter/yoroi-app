@@ -40,6 +40,7 @@ import type { Programme } from '@/lib/v2/programmes/types';
 import { Questionnaire } from '@/components/yoroi/v2/programmes/Questionnaire';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
+import { StickerSinon } from '@/components/yoroi/v2/ui/StickerSinon';
 
 export default function ProgrammesScreen() {
   const { theme } = useYoroiTheme();
@@ -312,7 +313,7 @@ function CarteProgramme({ p, femme, enCours, favori, onFavori, onPress, remplace
     <Glass onPress={onPress} label={traduire(p.titre)} style={[carteBlanche(c.surface, c.divider), { gap: 12, padding: 16 }, enCours ? { borderWidth: 2, borderColor: c.primary } : null]}>
       <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
         <View style={{ width: 72, height: 72, borderRadius: 22, backgroundColor: c.accentTint, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
-          {img ? <Image source={img} style={{ width: 72, height: 96, marginBottom: -26 }} resizeMode="contain" /> : <Icon name="dumbbell" size={28} color={c.accent} />}
+          {img ? <Image source={img} style={{ width: 72, height: 96, marginBottom: -26 }} resizeMode="contain" /> : <StickerSinon nom="musculation" taille={52}><Icon name="dumbbell" size={28} color={c.accent} /></StickerSinon>}
         </View>
         <View style={{ flex: 1, gap: 4 }}>
           {enCours ? <Ink size={11} weight="black" color={c.accentText} style={{ letterSpacing: 0.6 }}>{traduire('EN COURS')}</Ink> : null}
