@@ -43,7 +43,6 @@ import type { SeanceRecord } from '@/lib/v2/seance/save';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { useNow } from '@/lib/v2/seance/useNow';
 import { rappelReposAutorise, useRappelFinRepos } from '@/lib/v2/seance/rappelRepos';
-import { useI18n } from '@/lib/I18nContext';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { blancA } from '@/components/yoroi/livePalette';
 import { PlusPastille } from '@/components/yoroi/v2/accueil/kit';
@@ -77,6 +76,7 @@ import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { BoutonCoachVocal, useCoachVocal } from '@/components/yoroi/v2/seance/CoachVocal';
 import { cibleDefilement } from '@/lib/v2/seances/defilementExo';
+import { DUREE_MESSAGE_MS } from '@/lib/v2/seances/finRepos';
 import { chargerMinuteurRepos, enregistrerMinuteurRepos, reposApresSerie } from '@/lib/v2/seances/minuteurRepos';
 import { objectifExo, seriesVisees, texteReps, texteSerie } from '@/lib/v2/seances/objectifExo';
 import { chargerReglages, cranDe, enregistrerCran, typeReglage, CRAN_MAX } from '@/lib/v2/seances/reglagesMachine';
@@ -143,8 +143,23 @@ export default function SeanceMuscu() {
 
   const [draft, setDraft] = useState<MuscuDraft | null>(null);
   // 18 octobre 2026 : app en arriere plan pendant un repos, une notification annonce sa fin (lib/v2/seance/rappelRepos.ts)
-  const { t: tRepos } = useI18n();
-  useRappelFinRepos(draft?.restEndsAt ?? null, tRepos('timer.restEnded'));
+  // 30 octobre 2026 (G) : « Repos terminé » et la suite, plutôt qu'un titre seul
+  const corpsRepos = (() => {
+    const cur = draft?.exercises.find((e) => e.id === draft.currentId);
+    if (!draft || !cur) return '';
+    const i = cur.sets.findIndex((x) => !x.done);
+    if (i >= 0) return traduire('Ensuite : {0}, série {1}', sansTiret(traduire(nomFr(cur.name))), i + 1);
+    const suite = draft.exercises.find((e) => e.id !== cur.id && seriesRestantes(e) > 0);
+    return suite ? traduire('Ensuite : {0}', sansTiret(traduire(nomFr(suite.name)))) : '';
+  })();
+  useRappelFinRepos(draft?.sansRepos ? null : draft?.restEndsAt ?? null, traduire('Repos terminé'), corpsRepos);
+  // fin du repos vue en revenant dans l'app : pas de son, un petit message qui part tout seul (lib/v2/seances/finRepos.ts)
+  const [reposFiniVu, setReposFiniVu] = useState(false);
+  useEffect(() => {
+    if (!reposFiniVu) return;
+    const t = setTimeout(() => setReposFiniVu(false), DUREE_MESSAGE_MS);
+    return () => clearTimeout(t);
+  }, [reposFiniVu]);
   // 25 octobre 2026 : le même rappel, programmé par le natif après un appui dans la Dynamic Island
   const [rappelIle, setRappelIle] = useState(false);
   useEffect(() => {
@@ -730,7 +745,7 @@ export default function SeanceMuscu() {
       fini: traduire('Séance bouclée'),
       bouton: traduire('Série faite'),
       plus15: traduire('+15 s'),
-      reposFini: tRepos('timer.restEnded'),
+      reposFini: traduire('Repos terminé'),
     };
     const plan = planIle(draft, textes, (e) => sansTiret(traduire(nomFr(e.name))), rappelIle);
     // 28 octobre 2026 : la charge et les repetitions de la prochaine serie de chaque exercice, pour l'Apple Watch
@@ -1093,7 +1108,7 @@ export default function SeanceMuscu() {
                     </View>
                     <View style={{ flexDirection: 'row', gap: 10 }}>
                       <View style={{ flex: 1 }}>
-                        <Stepper layout="stack" value={saisieDepuisKg(s.weight, unite)} step={lb ? 2 : 1} fine={lb ? 1 : 0.5} saut={lb ? 20 : 10} max={lb ? 1100 : 500} decimals unit={lb ? traduire('livres') : traduire('kilos')} size={38} button={50} hint={lb ? traduire('livres') : traduire('kilos')} onChange={(v) => setValue(current.id, s.id, { weight: kgDepuisSaisie(v, unite) })} />
+                        <Stepper layout="stack" value={saisieDepuisKg(s.weight, unite)} step={lb ? 2 : 1} fine={lb ? 1 : 0.5} saut={lb ? 20 : 10} max={lb ? 1100 : 500} decimals unit={lb ? traduire('livres') : traduire('kilos')} size={38} button={50} uniteForte={lb ? traduire('LB') : traduire('KG')} onChange={(v) => setValue(current.id, s.id, { weight: kgDepuisSaisie(v, unite) })} />
                       </View>
                       <View style={{ width: 1, backgroundColor: c.divider, marginVertical: 6 }} />
                       <View style={{ flex: 1 }}>
@@ -1133,7 +1148,8 @@ export default function SeanceMuscu() {
                   style={[pending ? { backgroundColor: c.fillSoft, borderRadius: 18 } : carteBlanche(c.surface, c.divider), { flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 8, borderRadius: 18 }]}
                 >
                   <Ink size={16} weight="extraBold" color={c.textSecondary} style={{ width: 44, textAlign: 'center' }}>{i + 1}</Ink>
-                  <Ink size={20} weight={pending ? 'bold' : 'black'} color={pending ? c.textMuted : c.ink} style={{ flex: 1, textAlign: 'center' }}>{fmtNum(saisieDepuisKg(s.weight, unite))}</Ink>
+                  {/* 30 octobre 2026 (F) : l'unite en gros, aux deux tiers du chiffre */}
+                  <Ink size={20} weight={pending ? 'bold' : 'black'} color={pending ? c.textMuted : c.ink} style={{ flex: 1, textAlign: 'center' }}>{fmtNum(saisieDepuisKg(s.weight, unite))}<Ink size={14} weight="black" color={pending ? c.textMuted : c.ink}>{` ${lb ? traduire('LB') : traduire('KG')}`}</Ink></Ink>
                   <Ink size={20} weight={pending ? 'bold' : 'black'} color={pending ? c.textMuted : c.ink} style={{ flex: 1, textAlign: 'center' }}>{s.reps}</Ink>
                   <View style={{ width: 48, alignItems: 'center' }}>
                     {s.done ? (
@@ -1287,8 +1303,19 @@ export default function SeanceMuscu() {
           bottom={insets.bottom + 12}
           onAdd={(sec) => update((d) => ({ ...d, restEndsAt: (d.restEndsAt ?? Date.now()) + sec * 1000, restTotal: d.restTotal + sec }))}
           onSkip={() => update((d) => ({ ...d, restEndsAt: null }))}
-          onFinish={() => setTimeout(() => update((d) => ({ ...d, restEndsAt: null })), 1500)}
+          onFinish={(enRetard) => {
+            if (!enRetard) return void setTimeout(() => update((d) => ({ ...d, restEndsAt: null })), 1500);
+            update((d) => ({ ...d, restEndsAt: null }));
+            setReposFiniVu(true);
+            impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+          }}
         />
+      ) : null}
+
+      {reposFiniVu ? (
+        <View pointerEvents="none" accessibilityLiveRegion="polite" style={{ position: 'absolute', alignSelf: 'center', bottom: insets.bottom + 150, paddingVertical: 10, paddingHorizontal: 18, borderRadius: 18, backgroundColor: ton('menthe').fond, shadowColor: c.shadow, shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 4 }}>
+          <Ink size={14} weight="extraBold" color={ton('menthe').encre}>{traduire('Repos terminé')}</Ink>
+        </View>
       ) : null}
 
       <ExercisePicker
