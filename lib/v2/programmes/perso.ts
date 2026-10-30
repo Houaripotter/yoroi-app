@@ -11,6 +11,8 @@ import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { protegerJour } from './blessures';
 import type { ExoProtege, Region } from './blessures';
 import type { Equipement, MachinesSalle } from './materiel';
+import { faisable, remplacantsDe, remplacerPar } from './materiel';
+import { ecartesEnMemoire } from '@/lib/v2/seances/exercicesEcartes';
 import { completerContexte, contexteFinPour } from './finSeance';
 import type { ContexteFin } from './finSeance';
 import { avecModules } from './modules';
@@ -84,5 +86,22 @@ export function jourPourToi<J extends JourProgramme>(
   // les exercices ajoutes (abdo, grip, cou) passent ensuite par le materiel et les douleurs, comme les autres
   const complet = avecModules(jour, fin === undefined ? contexteFinPour(jour) : completerContexte(jour, fin));
   const protege = protegerJour(complet, dispo, regions, machines) as Omit<J, 'exos'> & AvecModules & { id: string; exos: ExoProtege[] };
-  return appliquerRemplacements(protege, remplacements, muscleBiblio) as Omit<J, 'exos'> & AvecModules & { exos: (ExoProtege & ExoPerso & ExoModule)[] };
+  const perso = appliquerRemplacements(protege, remplacements, muscleBiblio) as Omit<J, 'exos'> & AvecModules & { exos: (ExoProtege & ExoPerso & ExoModule)[] };
+  // 30 octobre 2026 : tes exercices ecartes (« Pas dans ma salle », « Ça me fait mal ») ne reviennent plus
+  return eviterEcartes(perso, ecartesEnMemoire(), dispo, machines);
+}
+
+/**
+ * Exercices ecartes (lib/v2/seances/exercicesEcartes.ts) : chacun prend la place du premier de ses remplacants
+ * qui n'est pas ecarte et que ton materiel permet, avec les memes series et repos. Sans remplacant possible,
+ * il reste (mieux vaut un exercice a changer en seance qu'un trou dans le programme).
+ */
+export function eviterEcartes<E extends ExoProgramme, J extends { exos: E[] }>(jour: J, ecartes: ReadonlySet<string>, dispo?: readonly Equipement[] | null, machines?: MachinesSalle): J {
+  if (!ecartes.size || !jour.exos.some((e) => ecartes.has(e.nom))) return jour;
+  const exos = jour.exos.map((e) => {
+    if (!ecartes.has(e.nom)) return e;
+    const nom = remplacantsDe(e.nom).find((n) => !ecartes.has(n) && (!dispo || faisable(n, dispo, machines)));
+    return nom ? ({ ...e, ...remplacerPar(e, nom) } as E) : e;
+  });
+  return { ...jour, exos };
 }
