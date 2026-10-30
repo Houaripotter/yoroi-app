@@ -7,6 +7,7 @@ import { View, Text, StyleSheet, AppState, TouchableOpacity } from 'react-native
 import { Fingerprint, Lock } from 'lucide-react-native';
 import { authenticateIfNeeded, isBiometricLockEnabled } from '@/lib/biometricLockService';
 import { traduire } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 
 export const BiometricLockOverlay: React.FC = () => {
   const [locked, setLocked] = useState(false);
@@ -47,7 +48,7 @@ export const BiometricLockOverlay: React.FC = () => {
   return (
     <View style={styles.overlay}>
       <View style={styles.iconCircle}>
-        <Lock size={56} color="#D4AF37" strokeWidth={2} />
+        <IconeOuSticker sticker="donnees_telephone" taille={56}><Lock size={56} color="#D4AF37" strokeWidth={2} /></IconeOuSticker>
       </View>
       <Text style={styles.title}>{traduire("Yoroi est verrouille")}</Text>
       <Text style={styles.sub}>{traduire("Déverrouille avec FaceID ou TouchID")}</Text>
