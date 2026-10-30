@@ -4,9 +4,13 @@
  * etiree, icone et nom affiches ; les autres montrent seulement leur icone. Correction du meme jour (Houari : « le bleu
  * plein est trop fort ») : la pilule active est pastel (#DCE3FF) avec icone et nom bleu nuit (#23358F), les autres
  * icones en gris bleute (#646985) sans rond colore, le bouton + aussi en pastel. Ancienne barre (verre depoli, noms sous les icones) : _archive_ancien_design_2026-10-09/refonte_ciel_2026-10-27.
+ * 30 octobre 2026 (valide par Houari) : avec le reglage Illustrations sur Stickers, chaque onglet prend son sticker
+ * (torii, musculation, bilan, kabuto), toujours en pleine couleur : l'onglet ouvert garde sa pilule pastel et son nom,
+ * avec un sticker un peu plus grand ; les autres un sticker un peu plus petit, sans fond. Le + ne change pas.
+ * En Encre japonaise, les icones au trait reviennent.
  */
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -16,12 +20,13 @@ import { useYoroiTheme } from '../YoroiThemeProvider';
 import { Ink } from './Ink';
 import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
 import { traduire } from '@/lib/i18n/tr';
+import { STICKERS, useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 
-const ICONS: Record<string, { label: string; d: string[]; join?: boolean }> = {
-  index: { label: traduire('Accueil'), d: ['M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'], join: true },
-  seances: { label: traduire('Séances'), d: ['M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11'] },
-  progres: { label: traduire('Progrès'), d: ['M3 17l5-5 4 3 8-8', 'M15 7h5v5'], join: true },
-  dojo: { label: traduire('Dojo'), d: ['M3 6h18M5 9.5h14M7 6v15M17 6v15'] },
+const ICONS: Record<string, { label: string; d: string[]; join?: boolean; sticker: NomSticker }> = {
+  index: { label: traduire('Accueil'), d: ['M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'], join: true, sticker: 'torii' },
+  seances: { label: traduire('Séances'), d: ['M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11'], sticker: 'musculation' },
+  progres: { label: traduire('Progrès'), d: ['M3 17l5-5 4 3 8-8', 'M15 7h5v5'], join: true, sticker: 'bilan' },
+  dojo: { label: traduire('Dojo'), d: ['M3 6h18M5 9.5h14M7 6v15M17 6v15'], sticker: 'kabuto' },
 };
 /** Un nom d'onglet long (plus de 9 lettres) s'ecrit un peu plus petit dans la pilule */
 export function libelleLong(l: string): boolean {
@@ -39,6 +44,7 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
   const c = theme.colors;
   const insets = useSafeAreaInsets();
   const bottom = Math.max(insets.bottom - 8, 0) + 14;
+  const illus = useIllustrations();
 
   const renderTab = (name: string) => {
     const index = state.routes.findIndex((r) => r.name === name);
@@ -63,6 +69,10 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
         style={[styles.tab, focused ? { backgroundColor: c.primary } : null]}
         hitSlop={4}
       >
+        {illus.stickers ? (
+          // le sticker en pleine couleur : 30 dans la pilule ouverte, 27 ailleurs (jamais d'opacite baissee)
+          <Image source={STICKERS[icon.sticker]} style={focused ? styles.stickerActif : styles.sticker} resizeMode="contain" accessibilityIgnoresInvertColors />
+        ) : (
         <Svg width={focused ? 19 : 20} height={focused ? 19 : 20} viewBox="0 0 24 24" fill="none">
           {icon.d.map((d) => (
             <Path
@@ -75,6 +85,7 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
             />
           ))}
         </Svg>
+        )}
         {focused ? (
           // 28 octobre 2026 : le nom de l'onglet ouvert toujours en entier, a 375 de large et dans toutes les langues
           // (« Vooruitgang », « Fortschritt ») : un nom long passe a 12,5 (environ 90 %), et peut encore se reduire a 80 %
@@ -146,6 +157,8 @@ const styles = StyleSheet.create({
   slotPlus: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   ancre: { flex: 1 },
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 24, paddingHorizontal: 12 },
+  sticker: { width: 27, height: 27, margin: -2 },
+  stickerActif: { width: 30, height: 30, margin: -3 },
   add: {
     width: 48,
     height: 48,
