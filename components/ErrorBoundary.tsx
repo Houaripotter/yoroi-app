@@ -15,6 +15,7 @@ import { RefreshCw, House } from 'lucide-react-native';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { traduire } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 
 interface Props {
   children: ReactNode;
@@ -55,7 +56,7 @@ function ErrorScreen({ error, onRetry, onHome }: { error: Error | null; onRetry:
             accessibilityLabel={traduire("Réessayer")}
             style={({ pressed }) => ({ height: 56, borderRadius: 18, backgroundColor: pressed ? c.primaryPressed : c.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 })}
           >
-            <RefreshCw size={20} color={c.onPrimary} strokeWidth={2.4} />
+            <IconeOuSticker sticker="refresh" taille={20}><RefreshCw size={20} color={c.onPrimary} strokeWidth={2.4} /></IconeOuSticker>
             <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire("Réessayer")}</Ink>
           </Pressable>
           <Pressable
