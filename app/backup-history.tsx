@@ -515,7 +515,7 @@ function Protegee() {
   const c = theme.colors;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 12, backgroundColor: c.fillSoft, paddingVertical: 10, paddingHorizontal: 12 }}>
-      <Icon name="lock" size={16} color={c.indigo} />
+      <Icon sticker="cle" name="lock" size={16} color={c.indigo} />
       <View style={{ flex: 1, gap: 1 }}>
         <Ink size={14} weight="extraBold">{traduire("Sauvegarde protégée")}</Ink>
         <Ink size={11} color={c.textMuted}>{traduire("Son contenu s’affiche avec ton mot de passe, au moment de la restaurer.")}</Ink>
