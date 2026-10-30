@@ -5,6 +5,7 @@
  * repos de la seance (restEndsAt), qui reste vide.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { signalerASynchroniser } from '@/lib/v2/synchro/cles';
 
 export const CLE_MINUTEUR_REPOS = 'yoroi_minuteur_repos_v1';
 
@@ -20,6 +21,7 @@ export async function chargerMinuteurRepos(): Promise<boolean> {
 export async function enregistrerMinuteurRepos(actif: boolean): Promise<void> {
   try {
     await AsyncStorage.setItem(CLE_MINUTEUR_REPOS, actif ? '1' : '0');
+    signalerASynchroniser();
   } catch {
     // rien a faire : le reglage reste celui de la seance en cours
   }
