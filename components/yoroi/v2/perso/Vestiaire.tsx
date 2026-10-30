@@ -368,7 +368,7 @@ export function Vestiaire() {
                   <Image source={imageDuRang(i)} style={{ width: 34, height: 50, opacity: fait ? 1 : 0.4 }} resizeMode="contain" accessibilityIgnoresInvertColors />
                   {!fait ? (
                     <View style={{ position: 'absolute', top: 4, right: 4, width: 16, height: 16, borderRadius: 8, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon name="lock" size={9} color={c.textMuted} stroke={2.8} />
+                      <Icon sticker="couronne" name="lock" size={9} color={c.textMuted} stroke={2.8} />
                     </View>
                   ) : null}
                 </View>
