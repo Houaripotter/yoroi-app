@@ -145,6 +145,7 @@ export default function CopiesSecurite() {
                 key={copy.dir}
                 first={i === 0}
                 icon="archive"
+                sticker="coffre_ferme"
                 label={quand(copy.at)}
                 sub={`${versions(copy)}, ${taille(copy.bytes)}`}
                 onPress={() => setOpen(copy)}
