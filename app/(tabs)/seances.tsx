@@ -68,6 +68,7 @@ import { CarteDuJour } from '@/components/yoroi/v2/seances/CarteDuJour';
 import { SemaineAnneau } from '@/components/yoroi/v2/seances/SemaineAnneau';
 import { MoisPastilles, RangeeDuMois, useMois } from '@/components/yoroi/v2/seances/MoisPastilles';
 import { MusclesSemaine } from '@/components/yoroi/v2/seances/MusclesSemaine';
+import { frequenceSemaine } from '@/lib/v2/frequence/deuxFois';
 import { SectionRepliable, useSectionsOuvertes } from '@/components/yoroi/v2/seances/Repliable';
 import { Petites } from '@/components/yoroi/v2/seances/kitA';
 import { useVisiteEnCours } from '@/components/yoroi/v2/tour/VisiteGuidee';
@@ -160,6 +161,8 @@ export default function Seances() {
   const next = useMemo(() => findNextSlot(plan, doneToday > 0), [plan, doneToday]);
   const week = useMemo(() => weekCompare(trainings, today), [trainings, today]);
   const muscles = useMemo(() => weekMuscles(trainings, today), [trainings, today]);
+  // 30 octobre 2026 : chaque muscle 2 fois par semaine (lib/v2/frequence/deuxFois.ts)
+  const frequence = useMemo(() => frequenceSemaine(trainings, today), [trainings, today]);
   const hasMuscles = muscles.some((m) => m.level > 0);
   const sports = useMemo(() => sportsByCount(trainings), [trainings]);
   const importedCount = useMemo(() => trainings.filter(isImported).length, [trainings]);
@@ -360,7 +363,7 @@ export default function Seances() {
               ouvert={sections.ouvert.muscles}
               onBasculer={() => sections.basculer('muscles')}
             >
-              <MusclesSemaine loads={muscles} largeur={width - 32 - 28} />
+              <MusclesSemaine loads={muscles} frequence={frequence} largeur={width - 32 - 28} />
             </SectionRepliable>
           ) : null}
 

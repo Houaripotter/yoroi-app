@@ -173,7 +173,7 @@ export default function ProgrammesScreen() {
                 tuiles={[
                   { label: traduire('Semaine'), valeur: String(semaineDuProgramme(actif)), sur: semainesDuProgramme(actif, p) ? String(semainesDuProgramme(actif, p)) : undefined },
                   { label: traduire('Séances'), valeur: String(faits), sur: String(jours.length), accessibilityLabel: traduire('{0} séances sur {1} cette semaine', faits, jours.length) },
-                  tuileCharge(gainMoyen(progresDesCharges(p, trainings, actif.debut)), pal, () => ouvrirProgramme(p.id)),
+                  tuileCharge(gainMoyen(progresDesCharges(p, trainings, actif.debut, actif)), pal, () => ouvrirProgramme(p.id)),
                 ]}
               />
             </>

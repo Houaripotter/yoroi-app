@@ -1,31 +1,68 @@
 /**
  * Tes progres dans le programme (24 octobre 2026). Donnees pures, testees dans __tests__/unit/programmes.test.ts.
- * Pour chaque exercice du programme : ta charge de travail a la premiere seance depuis le debut du programme
- * et a la derniere. Et ta regularite sur les semaines terminees.
+ * Pour chaque exercice de ta semaine de programme : ta charge de travail a la premiere seance depuis le debut du
+ * programme et a la derniere. Et ta regularite sur les semaines terminees.
  */
 import { chargeDeTravail, seancesDeLExo } from './progression';
-import type { Programme } from './types';
+import { cleCase } from './perso';
+import { jourDeRef, jourDuProgramme } from './semaineLibre';
+import type { JourProgramme, Programme } from './types';
 import type { ProgrammeActif } from './suivi';
 
 type TrainingLu = Parameters<typeof seancesDeLExo>[0][number];
 
 export type ProgresExo = { nom: string; debutKg: number; actuelKg: number; gainPct: number; seances: number };
 
-export function progresDesCharges(p: Programme, trainings: TrainingLu[], debut: string): ProgresExo[] {
-  const depuis = trainings.filter((t) => t.date.slice(0, 10) >= debut);
+/**
+ * 30 octobre 2026 (semaine libre) : les séances de ta semaine de programme. Celles du programme, celles d'un autre
+ * programme posées dans ta semaine (« @programme/séance », semaineLibre.ts) et celles que tu as faites depuis le
+ * début. La même séance n'est comptée qu'une fois.
+ */
+function seancesDeTaSemaine(p: Programme, a?: Pick<ProgrammeActif, 'debut' | 'faits' | 'semaine'> | null): JourProgramme[] {
+  const out: JourProgramme[] = [...p.jours];
+  const ids = new Set(out.map((j) => j.id));
+  const ajoute = (j: JourProgramme | null) => {
+    if (j && !ids.has(j.id)) {
+      ids.add(j.id);
+      out.push(j);
+    }
+  };
+  if (a?.semaine) for (const c of [...(Array.isArray(a.semaine.a) ? a.semaine.a : []), ...(Array.isArray(a.semaine.b) ? a.semaine.b : [])]) ajoute(jourDeRef(c, p.id));
+  if (a && Array.isArray(a.faits)) for (const f of a.faits) if (f && typeof f.jourId === 'string' && typeof f.date === 'string' && f.date >= a.debut) ajoute(jourDuProgramme(p, f.jourId));
+  return out;
+}
+
+/**
+ * Pour chaque exercice de musculation de ta semaine de programme, par nom (comme la progression des charges,
+ * progression.ts) : ta charge de travail à la première séance depuis le début du programme et à la dernière.
+ * `a` (le programme en cours) : sans lui, seuls les exercices du programme comptent, comme avant le 30 octobre 2026.
+ * Tes exercices changés à la main (perso.ts) comptent sous leur nouveau nom.
+ */
+export function progresDesCharges(
+  p: Programme,
+  trainings: TrainingLu[],
+  debut: string,
+  a?: Pick<ProgrammeActif, 'debut' | 'faits' | 'semaine' | 'remplacements'> | null,
+): ProgresExo[] {
+  const depuis = trainings.filter((t) => typeof t?.date === 'string' && t.date.slice(0, 10) >= debut);
+  const plier = (x: string) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const r = a?.remplacements && typeof a.remplacements === 'object' ? a.remplacements : null;
   const vus = new Set<string>();
   const out: ProgresExo[] = [];
-  for (const j of p.jours)
-    for (const e of j.exos) {
-      if (e.poidsDuCorps || vus.has(e.nom)) continue;
-      vus.add(e.nom);
-      const toutes = seancesDeLExo(depuis, e.nom, 1000);
-      if (toutes.length < 2) continue;
+  for (const j of seancesDeTaSemaine(p, a ? { ...a, debut } : null))
+    j.exos.forEach((e, i) => {
+      const perso = r ? r[cleCase(j.id, i)] : undefined;
+      const nom = typeof perso === 'string' && perso.trim() ? perso.trim() : e.nom;
+      // au poids du corps, la progression passe par les répétitions (un exercice changé à la main peut se charger)
+      if ((e.poidsDuCorps && nom === e.nom) || vus.has(plier(nom))) return;
+      vus.add(plier(nom));
+      const toutes = seancesDeLExo(depuis, nom, 1000);
+      if (toutes.length < 2) return;
       const actuelKg = chargeDeTravail(toutes[0]);
       const debutKg = chargeDeTravail(toutes[toutes.length - 1]);
-      if (!(debutKg > 0) || !(actuelKg > 0)) continue;
-      out.push({ nom: e.nom, debutKg, actuelKg, gainPct: Math.round(((actuelKg - debutKg) / debutKg) * 100), seances: toutes.length });
-    }
+      if (!(debutKg > 0) || !(actuelKg > 0)) return;
+      out.push({ nom, debutKg, actuelKg, gainPct: Math.round(((actuelKg - debutKg) / debutKg) * 100), seances: toutes.length });
+    });
   return out.sort((a, b) => b.gainPct - a.gainPct);
 }
 

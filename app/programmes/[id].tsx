@@ -44,6 +44,7 @@ import type { ExoProtege, Region } from '@/lib/v2/programmes/blessures';
 import type { Equipement } from '@/lib/v2/programmes/materiel';
 import { ExoDemo } from '@/components/yoroi/v2/seance/ExoDemo';
 import { FicheTechnique } from '@/components/yoroi/v2/programmes/FicheTechnique';
+import { ExplicationExo } from '@/components/yoroi/v2/programmes/ExplicationExo';
 import { ficheDe } from '@/lib/v2/programmes/fiches';
 import { DUREES_EXPRESS, dureeEstimee, seanceExpress } from '@/lib/v2/programmes/express';
 import { demoDe } from '@/lib/v2/programmes/demos';
@@ -55,6 +56,7 @@ import { joursDuPlan, planParDefaut } from '@/lib/v2/programmes/planJours';
 import { lireProfilCoach } from '@/lib/v2/programmes/profilCoach';
 import { messageCoach } from '@/lib/v2/programmes/coach';
 import { infosHero } from '@/lib/v2/programmes/heroJour';
+import { CarteDeuxFois } from '@/components/yoroi/v2/frequence/CarteDeuxFois';
 import { TesJours, TesJoursEnCours, semaineAffichee } from '@/components/yoroi/v2/programmes/TesJours';
 import { RappelSeance } from '@/components/yoroi/v2/programmes/RappelSeance';
 import { ChoisirCharge } from '@/components/yoroi/v2/programmes/ChoisirCharge';
@@ -239,7 +241,7 @@ export default function ProgrammeDetail() {
     ? [
         { label: traduire('Semaine'), valeur: String(semaineDuProgramme(actif)), sur: semainesDuProgramme(actif, p) ? String(semainesDuProgramme(actif, p)) : undefined },
         { label: traduire('Séances'), valeur: String(faitsCetteSemaine(actif)), sur: String(jours.length), accessibilityLabel: traduire('{0} séances sur {1} cette semaine', faitsCetteSemaine(actif), jours.length) },
-        tuileCharge(gainMoyen(progresDesCharges(p, trainings, actif.debut)), pal, () => {
+        tuileCharge(gainMoyen(progresDesCharges(p, trainings, actif.debut, actif)), pal, () => {
           if (progresY.current !== null) defilement.current?.scrollTo({ y: Math.max(0, progresY.current - insets.top - 8), animated: true });
         }),
       ]
@@ -342,12 +344,15 @@ export default function ProgrammeDetail() {
         {/* 3. TA SEMAINE : fait, prochaine séance, repos */}
         <SemaineRonds ronds={rondsDeLaSemaine(p, enCours ? actif : null, planAvant && !enCours ? joursDuPlan(planAvant) : jours, undefined, enCours ? undefined : planAvant, enCours ? undefined : semaineAvant)} />
 
+        {/* 30 octobre 2026 : chaque muscle 2 fois par semaine, le coach le rappelle à partir du jeudi (CarteDeuxFois.tsx) */}
+        {enCours ? <CarteDeuxFois /> : null}
+
         {/* 28 octobre 2026 : à la fin de chaque cycle, ta régularité, sans rien bloquer */}
         {enCours ? (
           <PointRegularite
             programme={p}
             actif={actif}
-            gain={gainMoyen(progresDesCharges(p, trainings, actif!.debut))}
+            gain={gainMoyen(progresDesCharges(p, trainings, actif!.debut, actif))}
             onChanger={() => { if (tesJoursY.current !== null) defilement.current?.scrollTo({ y: Math.max(0, tesJoursY.current - insets.top - 8), animated: true }); }}
           />
         ) : null}
@@ -507,7 +512,7 @@ export default function ProgrammeDetail() {
         {enCours && actif ? (() => {
           const sem = semaineDuProgramme(actif);
           const reg = regularite(p, actif, sem);
-          const charges = progresDesCharges(p, trainings, actif.debut).slice(0, 6);
+          const charges = progresDesCharges(p, trainings, actif.debut, actif).slice(0, 6);
           const corps = corpsDepuis(actif.debut, pesees, mesures);
           const kg = (v: number) => (unite === 'lb' ? traduire('{0} lb', fmtNum(saisieDepuisKg(v, unite))) : traduire('{0} kg', fmtNum(v)));
           return (
@@ -649,6 +654,8 @@ function LigneExo({ e, premier, raison, onChanger, onRevenir, carte, k = 0 }: { 
   const details = deplie ? (
     <View style={{ gap: 8, padding: 14, borderRadius: 16, backgroundColor: carte ? pal.page : c.fillSoft }}>
       {carte && demoDe(e.nom) ? <ExoDemo nom={e.nom} taille={88} arrondi={16} /> : null}
+      {/* 30 octobre 2026 : position, mouvement, à éviter, en trois lignes (lib/v2/programmes/explications.ts) */}
+      <ExplicationExo nom={e.nom} />
       {g.niveau === 'tenu' ? null : (
         <Ink size={13} weight="bold" style={{ lineHeight: 19 }}>
           {g.libelle ? traduire('Charge : {0}. Garde {1} répétitions en réserve.', g.libelle, traduire(g.reserve)) : traduire('Garde {0} répétitions en réserve.', traduire(g.reserve))}

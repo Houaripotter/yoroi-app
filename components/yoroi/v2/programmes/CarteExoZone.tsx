@@ -12,6 +12,7 @@ import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { tap } from '@/components/yoroi/v2/seances/ui';
 import { ExoDemo, FOND_DEMO } from '@/components/yoroi/v2/seance/ExoDemo';
 import { FicheTechnique } from '@/components/yoroi/v2/programmes/FicheTechnique';
+import { ExplicationExo } from '@/components/yoroi/v2/programmes/ExplicationExo';
 import { blancA } from '@/components/yoroi/livePalette';
 import { demoDe } from '@/lib/v2/programmes/demos';
 import { useSourceDemos } from '@/lib/v2/programmes/demosTest';
@@ -73,6 +74,9 @@ export function CarteExoZone({ exo, numero, total, zone, marge = 44 }: { exo: Ex
           <Repere valeur={reps} libelle={exo.secondes ? traduire('secondes') : traduire('répétitions')} />
           <Repere valeur={libelleRepos(exo.reposSec)} libelle={traduire('de repos')} />
         </View>
+
+        {/* 30 octobre 2026 : position, mouvement, à éviter (lib/v2/programmes/explications.ts), à plat dans la carte */}
+        <ExplicationExo nom={exo.nom} fond={c.fillSoft} style={{ shadowOpacity: 0, elevation: 0, borderWidth: 0, borderRadius: 18 }} />
 
         {exo.conseil ? (
           <View style={{ flexDirection: 'row', gap: 12, padding: 12, borderRadius: 18, backgroundColor: ton('menthe').fond }}>

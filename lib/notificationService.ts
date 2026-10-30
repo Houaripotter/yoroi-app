@@ -23,6 +23,7 @@ import { getEspace, objectifVise } from '@/lib/v2/espace';
 import { traduire } from '@/lib/i18n/tr';
 import { sourceNotif, src } from '@/lib/notificationLangue';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
+import { POSSESSIF, enListe, notifDeuxFois, rappelDeuxFoisActif } from '@/lib/v2/frequence/deuxFois';
 
 // Règle : aucune valeur de santé (poids, kcal, FC, ml, mensurations...) dans
 // le titre ou le corps d'une notification, car elle s'affiche sur l'écran
@@ -97,6 +98,13 @@ export interface NotificationSettings {
     restDaySuggestion: boolean; // Suggérer repos après plusieurs jours consécutifs
     frequencyAlert: boolean; // Alerte si fréquence en baisse
     checkTime: string; // HH:mm - heure de vérification (soir)
+  };
+  /**
+   * 30 octobre 2026 : « Rappel 2 fois par muscle », le vendredi à 18 h (lib/v2/frequence/deuxFois.ts).
+   * Absent : suit le rappel d'entraînement (allumé seulement s'il l'est).
+   */
+  deuxFois?: {
+    enabled: boolean;
   };
 }
 
@@ -255,7 +263,7 @@ const DAY_NAMES = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), t
 /** Types (data.type) des notifications programmees par ce service */
 const OWN_TYPES = new Set([
   'training', 'programme_du_jour', 'hydration', 'weighing', 'streak', 'sleep',
-  'social_card_weekly', 'social_card_monthly', 'briefing', 'smart_check',
+  'social_card_weekly', 'social_card_monthly', 'briefing', 'smart_check', 'deux_fois',
 ]);
 
 /** Type des rappels programmes par scheduleNotifications (ancien ecran ReminderSettings) */
@@ -447,6 +455,9 @@ class NotificationService {
     if (this.settings.training.enabled) {
       await this.scheduleTrainingNotifications();
     }
+    if (rappelDeuxFoisActif(this.settings)) {
+      await this.scheduleDeuxFoisNotification();
+    }
     if (this.settings.hydration.enabled) {
       await this.scheduleHydrationNotifications();
     }
@@ -541,6 +552,45 @@ class NotificationService {
       if (this.settings.enabled && this.settings.training.enabled) await this.scheduleTrainingNotifications();
     } catch (e) {
       logger.warn('[NotificationService] rappels de seance non reprogrammes', e);
+    }
+    // 30 octobre 2026 : le rappel « 2 fois par muscle » suit tes séances (refait au lancement et après chaque séance)
+    try {
+      await cancelScheduledWhere((n) => (n.content?.data as any)?.type === 'deux_fois');
+      if (this.settings.enabled && rappelDeuxFoisActif(this.settings)) await this.scheduleDeuxFoisNotification();
+    } catch (e) {
+      logger.warn('[NotificationService] rappel 2 fois par muscle non reprogramme', e);
+    }
+  }
+
+  /**
+   * « Rappel 2 fois par muscle » (30 octobre 2026) : une seule notification, le vendredi 18 h de cette semaine,
+   * seulement si les notifications sont autorisées, si au moins un muscle n'a pas encore ses 2 jours et si tu as fait
+   * une séance de musculation dans les 14 jours avant ce vendredi. Identifiant fixe : jamais plus d'une par semaine.
+   * Tout est calculé sur le téléphone (lib/v2/frequence/deuxFois.ts). Ne demande jamais l'autorisation.
+   */
+  private async scheduleDeuxFoisNotification(): Promise<void> {
+    if (Platform.OS === 'web') return;
+    try {
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') return;
+      const trainings = await getTrainings(28).catch(() => []);
+      const r = notifDeuxFois(trainings ?? [], new Date());
+      if (!r) return;
+      const muscles = enListe(r.muscles.map((m) => traduire(POSSESSIF[m])), traduire('et'));
+      const contenu = contenuSansSante({
+        title: sansTiret(traduire('Chaque muscle 2 fois')),
+        body: sansTiret(traduire('Tu n’as pas travaillé {0} 2 fois cette semaine. Il te reste le week end.', muscles)),
+      });
+      await Notifications.scheduleNotificationAsync({
+        identifier: 'yoroi-deux-fois',
+        content: { ...contenu, data: { type: 'deux_fois', screen: 'coach', semaine: r.semaine }, sound: true },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: r.date,
+        } as Notifications.DateTriggerInput,
+      });
+    } catch (e) {
+      logger.warn('[NotificationService] rappel 2 fois par muscle impossible', e);
     }
   }
 

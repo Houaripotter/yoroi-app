@@ -31,6 +31,7 @@ import {
 } from '@/components/yoroi/v2/notifications/parts';
 import { notificationService, requestNotificationPermissions } from '@/lib/notificationService';
 import type { NotificationSettings } from '@/lib/notificationService';
+import { rappelDeuxFoisActif } from '@/lib/v2/frequence/deuxFois';
 import { getCitationNotifSettings, getDailyQuote, setCitationNotifSettings } from '@/lib/citations';
 import type { CitationNotifSettings } from '@/lib/citations';
 import { getHealthTipSettings, saveHealthTipSettings } from '@/lib/eveningHealthTipsService';
@@ -314,7 +315,7 @@ export default function TesNotifications() {
   const social = settings.socialCards ?? { enabled: false, weeklyTime: '19:00', monthlyTime: '10:00' };
 
   const states = [
-    settings.weighing.enabled, habOn, settings.training.enabled, recap, settings.streak.enabled, risk, briefing.enabled,
+    settings.weighing.enabled, habOn, settings.training.enabled, rappelDeuxFoisActif(settings), recap, settings.streak.enabled, risk, briefing.enabled,
     settings.sleep.enabled, hyd.enabled, tips.enabled, cit.enabled, smart.enabled, social.enabled,
   ];
   const active = states.filter(Boolean).length;
@@ -447,6 +448,19 @@ export default function TesNotifications() {
         <TimeField label={traduire("Heure du rappel")} value={settings.training.time} onChange={(v) => patch('training', { time: v })} />
         <DaysPicker value={trainDays} onChange={(d) => patch('training', { days: d })} />
       </NotifCard>
+
+      {/* 30 octobre 2026 : chaque muscle 2 fois par semaine (lib/v2/frequence/deuxFois.ts). Allumé par défaut seulement
+          si le rappel d'entraînement l'est ; une seule fois par semaine, et seulement s'il manque un muscle */}
+      <NotifCard
+        index={idx++}
+        icon="target"
+        title={traduire('Rappel 2 fois par muscle')}
+        pitch={traduire('Le vendredi, si un muscle n’a pas été travaillé 2 fois')}
+        summary={traduire('Le vendredi à 18{0}h, seulement s’il manque un muscle', NB)}
+        on={rappelDeuxFoisActif(settings)}
+        onToggle={(v) => patch('deuxFois', { enabled: v })}
+        preview={{ title: traduire('Chaque muscle 2 fois'), body: traduire('Tu n’as pas travaillé {0} 2 fois cette semaine. Il te reste le week end.', traduire('tes jambes')), when: `ven. 18${NB}h` }}
+      />
 
       <NotifCard
         index={idx++}

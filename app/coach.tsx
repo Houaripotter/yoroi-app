@@ -29,6 +29,7 @@ import { MiniSemaine, PuceConseil } from '@/components/yoroi/v2/programmes/Choix
 import { TesJoursEnCours } from '@/components/yoroi/v2/programmes/TesJours';
 import { PointRegularite } from '@/components/yoroi/v2/programmes/GarderProgramme';
 import { BoutonLecture } from '@/components/yoroi/v2/programmes/Lecture';
+import { CarteDeuxFois } from '@/components/yoroi/v2/frequence/CarteDeuxFois';
 import { PROGRAMMES } from '@/lib/v2/programmes/catalogue';
 import { routeDuJour } from '@/lib/v2/programmes/lancer';
 import { lireDepart } from '@/lib/v2/programmes/depart';
@@ -214,6 +215,8 @@ export default function CoachScreen() {
         {/* « Tes jours » du programme du catalogue en cours, modifiables d'ici (TesJours.tsx) ; le tien se modifie dans sa page */}
         {/* 28 octobre 2026 : à la fin de chaque cycle, ta régularité (GarderProgramme.tsx), sans rien bloquer */}
         {p && actif ? <View style={{ marginTop: 10 }}><PointRegularite programme={p} actif={actif} onChanger={() => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } })} /></View> : null}
+        {/* 30 octobre 2026 : chaque muscle 2 fois par semaine, le coach le rappelle à partir du jeudi (CarteDeuxFois.tsx) */}
+        <CarteDeuxFois style={{ marginTop: 10 }} />
         {p && !actifPerso ? <View style={{ marginTop: 10 }}><TesJoursEnCours programme={p} /></View> : null}
 
         {/* 3. EXPLORER PAR MUSCLE : la carte musculaire, face et dos ; toucher un muscle le montre et donne sa séance */}

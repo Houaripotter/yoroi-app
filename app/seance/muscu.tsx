@@ -53,6 +53,7 @@ import { intensite, niveauRpe } from '@/lib/v2/intensite';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { programmeParId, libelleRepos } from '@/lib/v2/programmes/catalogue';
 import { ExoDemo } from '@/components/yoroi/v2/seance/ExoDemo';
+import { ExplicationExo } from '@/components/yoroi/v2/programmes/ExplicationExo';
 import { AideBarre } from '@/components/yoroi/v2/seance/AideBarre';
 import { proposer, proposerLegere, proposerLibre, seancesDeLExo } from '@/lib/v2/programmes/progression';
 import { chargerMachines, chargerMateriel, chargerProgrammeActif, estSemaineLegere, marquerJourFait, plusJours } from '@/lib/v2/programmes/suivi';
@@ -863,6 +864,9 @@ export default function SeanceMuscu() {
             <View style={{ alignItems: 'center' }}>
               <ExoDemo nom={sansPrise(current.name).base} taille={150} arrondi={22} />
             </View>
+
+            {/* 30 octobre 2026 : position, mouvement, à éviter, en trois lignes (lib/v2/programmes/explications.ts) */}
+            <ExplicationExo nom={sansPrise(current.name).base} style={{ marginHorizontal: 4 }} />
 
             {current.cible ? (
               <View style={{ marginHorizontal: 4, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 18, backgroundColor: c.accentTint, gap: 3 }}>
