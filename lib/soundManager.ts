@@ -19,6 +19,8 @@ const SOUND_FILES: { [key: string]: any } = {
   'gong': require('../assets/sounds/gong.mp3'),
   'clap': require('../assets/sounds/clap10.mp3'),
   'bell': require('../assets/sounds/bell_end.mp3'),
+  // 30 octobre 2026 : fin du repos de musculation, le « wizz » demande par Houari
+  'wizz': require('../assets/sounds/wizz.mp3'),
 };
 
 /**
@@ -75,7 +77,7 @@ const assurerMode = (): Promise<void> => {
   return modePret;
 };
 
-type NomSon = 'fanfare_badge' | 'level_up' | 'recovery' | 'ring' | 'beep' | 'gong' | 'clap' | 'bell';
+type NomSon = 'fanfare_badge' | 'level_up' | 'recovery' | 'ring' | 'beep' | 'gong' | 'clap' | 'bell' | 'wizz';
 
 export const playSound = async (soundName: NomSon, volume: number = 0.7) => {
   try {
@@ -166,6 +168,11 @@ export const playGongSound = async () => {
  */
 export const playBeepSound = async () => {
   await playSound('beep', 0.5);
+};
+
+/** Fin du repos de musculation, app ouverte (30 octobre 2026) */
+export const playWizzSound = async () => {
+  await playSound('wizz', 0.8);
 };
 
 /**
