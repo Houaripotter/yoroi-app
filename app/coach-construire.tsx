@@ -9,6 +9,9 @@
  *  - « Enregistrer » : ton programme devient le programme en cours (suivi.ts, suivreProgrammePerso), la séance du
  *    jour du coach et de l'accueil le suit. « Supprimer » l'archive après confirmation : tes séances faites restent.
  * Le modèle est dans lib/v2/programmes/monProgramme.ts.
+ * 30 octobre 2026 : « Partir d'un modèle » en haut (Push Pull Legs, Upper Lower, Push Pull + Upper Lower...), les
+ * programmes du catalogue remplissent les jours, modifiables ensuite (lib/v2/programmes/modelesSemaine.ts) ;
+ * les idées de nom passent à la ligne au lieu d'être coupées au bord ; contenu limité à 720 points sur iPad et Mac.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
@@ -34,6 +37,9 @@ import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import { chargerMesSeances } from '@/lib/v2/seance/mesSeances';
 import type { MaSeance } from '@/lib/v2/seance/mesSeances';
 import { programmeParId } from '@/lib/v2/programmes/catalogue';
+import { modelesDisponibles, semaineDuModele, semaineEgaleAuModele } from '@/lib/v2/programmes/modelesSemaine';
+import type { Programme } from '@/lib/v2/programmes/types';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
 import {
   avecExo, avecJour, deplacerExo, exoDepuisNom, joursDuPerso, nombreSeances, nouveauProgrammePerso, peutEnregistrer,
   programmePersoParId, reglerExo, sansExo, titreDeSeance, enregistrerProgrammePerso,
@@ -231,6 +237,21 @@ export default function CoachConstruire() {
     const rangSeance = pp.semaine.slice(0, d).filter((s) => s && s.exos.length).length;
     return teintes[rangSeance % teintes.length];
   };
+  // partir d'un modèle : il remplit les sept jours ; si ta semaine a déjà des exercices, on te demande avant
+  const modeles = useMemo(() => modelesDisponibles(), []);
+  const partirDuModele = (m: Programme) => {
+    const go = () => {
+      notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+      setOuvert(null);
+      setPp((x) => ({ ...x, semaine: semaineDuModele(m) }));
+    };
+    tap();
+    if (!n || semaineEgaleAuModele(pp.semaine, m)) { go(); return; }
+    appAlert(traduire('Remplacer ta semaine ?'), traduire('Tes jours seront remplis avec ce modèle. Tu pourras tout changer ensuite.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
+      { text: traduire('Remplacer'), onPress: go },
+    ]);
+  };
   const reglage = aRegler ? jourDe(aRegler.jour)?.exos[aRegler.index] ?? null : null;
   const sRegle = aRegler ? jourDe(aRegler.jour) : null;
 
@@ -238,7 +259,7 @@ export default function CoachConstruire() {
 
   return (
     <View style={{ flex: 1, backgroundColor: pa.page }}>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 40, width: '100%', maxWidth: 720, alignSelf: 'center' }} showsVerticalScrollIndicator={false}>
         {/* en tête */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <Pressable
@@ -265,6 +286,27 @@ export default function CoachConstruire() {
             style={{ flex: 1, minHeight: 48, fontSize: 15, fontWeight: '700', color: pa.texte }}
           />
         </View>
+
+        {/* PARTIR D'UN MODÈLE : un programme du catalogue remplit tes jours, tu changes tout ensuite */}
+        <View style={{ marginTop: 20, gap: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {illus.stickers ? <Image source={illus.img('calendrier')} style={{ width: 34, height: 34 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
+            <Ink size={20} weight="black" color={pa.texte} accessibilityRole="header" style={{ flex: 1 }}>{traduire('Partir d’un modèle')}</Ink>
+          </View>
+          <Ink size={13} weight="bold" color={pa.texte2} style={{ marginHorizontal: 1 }}>{traduire('Touche un modèle : il remplit ta semaine, tu changes tout ensuite.')}</Ink>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16, marginTop: 10 }} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 4, gap: 10 }}>
+          {modeles.map((m, k) => (
+            <CarteModele
+              key={m.programme.id}
+              programme={m.programme}
+              sticker={m.sticker}
+              f={[pa.bleu, pa.peche, pa.menthe, pa.lilas, pa.creme][k % 5]}
+              choisi={!!n && semaineEgaleAuModele(pp.semaine, m.programme)}
+              onPress={() => partirDuModele(m.programme)}
+            />
+          ))}
+        </ScrollView>
 
         {/* TA SEMAINE */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 20 }}>
@@ -317,9 +359,10 @@ export default function CoachConstruire() {
                 accessibilityLabel={plein ? `${traduire(nomJour)}, ${traduire(titreDeSeance(s!))}, ${traduirePluriel(s!.exos.length, s!.exos.length > 1, '{0} exercice', '{0} exercices', s!.exos.length)}` : `${traduire(nomJour)}, ${traduire('Repos')}, ${traduire('Ajouter une séance')}`}
                 style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: plein ? f.fond : pa.carte, transform: [{ scale: pressed ? 0.98 : 1 }] }, plein ? null : ombrePastel(pa.ombre)]}
               >
-                <Ink size={15} weight="extraBold" color={plein ? f.titre : pa.texte2} style={{ width: 104 }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{majuscule(traduire(nomJour))}</Ink>
+                <Ink size={15} weight="extraBold" color={plein ? f.titre : pa.texte2} style={{ width: 90 }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{majuscule(traduire(nomJour))}</Ink>
                 {plein ? (
                   <>
+                    {illus.stickers ? <Image source={illus.img('musculation')} style={{ width: 32, height: 32 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
                     <Ink size={15} weight="black" color={pa.texte} style={{ flex: 1 }} numberOfLines={2}>{traduire(titreDeSeance(s!))}</Ink>
                     <Ink size={13} weight="extraBold" color={pa.texte2}>{traduirePluriel(s!.exos.length, s!.exos.length > 1, '{0} exercice', '{0} exercices', s!.exos.length)}</Ink>
                   </>
@@ -512,13 +555,14 @@ function JourOuvert({ jour, s, f, onFermer, onNom, onRegler, onParMuscle, onCher
   return (
     <View style={{ borderRadius: 24, backgroundColor: f.fond, padding: 14, gap: 12 }}>
       <Pressable onPress={onFermer} accessibilityRole="button" accessibilityState={{ expanded: true }} accessibilityLabel={`${jour}, ${titre}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 36 }}>
-        <Ink size={15} weight="extraBold" color={f.titre} style={{ width: 104 }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{jour}</Ink>
+        <Ink size={15} weight="extraBold" color={f.titre} style={{ width: 90 }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{jour}</Ink>
         <Ink size={16} weight="black" color={pa.texte} style={{ flex: 1 }} numberOfLines={2}>{s.exos.length ? titre : traduire('Nouvelle séance')}</Ink>
         {s.exos.length ? <Ink size={13} weight="extraBold" color={pa.texte2}>{traduirePluriel(s.exos.length, s.exos.length > 1, '{0} exercice', '{0} exercices', s.exos.length)}</Ink> : null}
       </Pressable>
 
       {/* le nom de la séance : des idées en un toucher */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -14 }} contentContainerStyle={{ paddingHorizontal: 14, gap: 6 }}>
+      {/* 30 octobre 2026 : les idées passent à la ligne, plus aucune coupée au bord de la carte */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
         {NOMS_SEANCE.map((x) => {
           const on = s.titre === x;
           return (
@@ -527,7 +571,7 @@ function JourOuvert({ jour, s, f, onFermer, onNom, onRegler, onParMuscle, onCher
             </Pressable>
           );
         })}
-      </ScrollView>
+      </View>
 
       {s.exos.length ? (
         <View style={{ gap: 2 }}>
@@ -560,6 +604,42 @@ function JourOuvert({ jour, s, f, onFermer, onNom, onRegler, onParMuscle, onCher
         </Pressable>
       </View>
     </View>
+  );
+}
+
+/** Une carte de modèle : son sticker, le nom du programme, ses séances par semaine ; cochée tant que ta semaine est la sienne */
+function CarteModele({ programme, sticker, f, choisi, onPress }: { programme: Programme; sticker: NomSticker; f: FamillePastel; choisi: boolean; onPress: () => void }) {
+  const pa = usePastel();
+  const illus = useIllustrations();
+  const titre = traduire(programme.titre);
+  const sous = traduire('{0} séances par semaine', programme.joursParSemaine);
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: choisi }}
+      accessibilityLabel={`${traduire('Partir d’un modèle')} : ${titre}, ${sous}`}
+      style={({ pressed }) => [{ width: 164, minHeight: 168, borderRadius: 24, padding: 14, gap: 8, justifyContent: 'space-between', backgroundColor: f.fond, borderWidth: 2, borderColor: choisi ? f.titre : 'transparent', transform: [{ scale: pressed ? 0.96 : 1 }] }, ombrePastel(pa.ombre)]}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        {illus.stickers ? (
+          <Image source={illus.img(sticker)} style={{ width: 58, height: 58, marginLeft: -4, marginTop: -4 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+        ) : (
+          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: pa.carte, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="dumbbell" size={20} color={f.titre} />
+          </View>
+        )}
+        {choisi ? (
+          <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: f.titre, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="check" size={15} color="#FFFFFF" strokeWidth={3} />
+          </View>
+        ) : null}
+      </View>
+      <View style={{ gap: 4 }}>
+        <Ink size={15} weight="black" color={pa.texte} numberOfLines={3} style={{ lineHeight: 19 }}>{titre}</Ink>
+        <Ink size={12} weight="extraBold" color={f.titre} numberOfLines={1}>{sous}</Ink>
+      </View>
+    </Pressable>
   );
 }
 
