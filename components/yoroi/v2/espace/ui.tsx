@@ -3,7 +3,7 @@
  * lignes de reglage, interrupteurs, segments, pas a pas et plaques kozane.
  */
 import React from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Switch, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, Switch, View } from 'react-native';
 import type { RefreshControlProps, StyleProp, ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,7 @@ import { Tampon } from '@/components/yoroi/v2/tampons/Tampon';
 import { P } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 
 // ============================================
 // ICONES (traits SVG, pas de dependance externe)
@@ -255,6 +256,8 @@ export function Card({ children, style, glass }: { children: React.ReactNode; st
 
 type RowProps = {
   icon?: IconName;
+  /** 30 octobre 2026 : le sticker a la place de l'icone (reglage Illustrations sur Stickers) */
+  sticker?: NomSticker;
   iconTint?: string;
   label: string;
   sub?: string;
@@ -268,9 +271,11 @@ type RowProps = {
   badge?: string;
 };
 
-export function Row({ icon, iconTint, label, sub, subColor, value, onPress, danger, first, right, chevron = true, badge }: RowProps) {
+export function Row({ icon, sticker, iconTint, label, sub, subColor, value, onPress, danger, first, right, chevron = true, badge }: RowProps) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  const illus = useIllustrations();
+  const avecSticker = !!sticker && illus.stickers && !danger;
   const tint = danger ? c.danger : iconTint ?? c.ink;
   return (
     <Pressable
@@ -290,7 +295,9 @@ export function Row({ icon, iconTint, label, sub, subColor, value, onPress, dang
         borderColor: c.divider,
       })}
     >
-      {icon ? (
+      {avecSticker ? (
+        <Image source={illus.img(sticker!)} style={{ width: 36, height: 36, marginVertical: -2 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+      ) : icon ? (
         <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: danger ? c.dangerTint : c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name={icon} size={19} color={tint} />
         </View>
@@ -313,8 +320,9 @@ export function Row({ icon, iconTint, label, sub, subColor, value, onPress, dang
   );
 }
 
-export function ToggleRow({ icon, label, sub, value, onChange, first, disabled }: {
+export function ToggleRow({ icon, sticker, label, sub, value, onChange, first, disabled }: {
   icon?: IconName;
+  sticker?: NomSticker;
   label: string;
   sub?: string;
   value: boolean;
@@ -327,6 +335,7 @@ export function ToggleRow({ icon, label, sub, value, onChange, first, disabled }
   return (
     <Row
       icon={icon}
+      sticker={sticker}
       label={label}
       sub={sub}
       first={first}
