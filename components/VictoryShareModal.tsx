@@ -306,7 +306,7 @@ export default function VictoryShareModal({
             <Text style={[styles.runningStatLabel, { color: secondaryColor }, textShadow]}>
               {traduire("ALLURE")}</Text>
             <View style={styles.paceRow}>
-              <Gauge size={20} color={getCategoryColor()} />
+              <IconeOuSticker sticker="jauge" taille={20}><Gauge size={20} color={getCategoryColor()} /></IconeOuSticker>
               <Text style={[styles.runningPaceValue, { color: textColor }, textShadow]}>
                 {pace} /km
               </Text>
@@ -501,7 +501,7 @@ export default function VictoryShareModal({
         {/* PACE / ALLURE (Si disponible) */}
         {!!sessionData.pace && (
           <View style={[styles.runningStatRow, { marginTop: 4, opacity: 0.9 }]}>
-            <Gauge size={16} color={textColor} />
+            <IconeOuSticker sticker="jauge" taille={16}><Gauge size={16} color={textColor} /></IconeOuSticker>
             <Text style={[styles.statValue, { color: textColor, fontWeight: '700' }, textShadow]}>
               Allure: {sessionData.pace} /km
             </Text>
