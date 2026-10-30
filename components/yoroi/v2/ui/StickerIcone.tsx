@@ -5,9 +5,10 @@
  * en Encre japonaise, l'icone d'avant reste. Passe par useIllustrations : le changement de reglage redessine tout.
  *
  * Ne sont PAS dans la table : les icones purement fonctionnelles (chevron, croix, retour, plus, moins, coche,
- * haut, bas, points de menu, pause) et celles qui n'ont pas de sticker adapte ou dont le sens change selon
- * l'ecran (cadenas, bouclier, oeil, document, info, image, personne, etincelles). Un appel peut imposer un
- * sticker avec la prop sticker, ou le refuser avec sticker={false}.
+ * haut, bas, points de menu, pause), le cadenas (Premium : couronne ; hors Premium, le sticker cadenas est
+ * impose a l'appel) et la tendance (sens lu a la fleche et a la couleur). Un appel peut imposer un sticker avec
+ * la prop sticker, ou le refuser avec sticker={false}.
+ * Troisieme passage (30 octobre 2026) : 38 nouveaux stickers (bouclier, oeil, fanion, profil, info, etc.).
  * Le sticker est dessine un peu plus grand que l'icone (le contour blanc prend de la place), avec une marge
  * negative : la mise en page ne bouge pas.
  */
@@ -76,6 +77,42 @@ export const STICKER_ICONE: Readonly<Record<string, NomSticker>> = {
   video: 'videos',
   film: 'videos',
   run: 'course',
+  // troisieme passage, 30 octobre 2026
+  shield: 'bouclier',
+  eye: 'oeil',
+  flag: 'fanion',
+  user: 'profil',
+  users: 'groupe',
+  people: 'groupe',
+  info: 'info',
+  spark: 'etincelles',
+  image: 'galerie',
+  doc: 'document',
+  file: 'document',
+  bookmark: 'marque_page',
+  pin: 'epingle',
+  settings: 'engrenage',
+  mail: 'enveloppe',
+  alert: 'alerte',
+  phone: 'telephone',
+  tablet: 'telephone',
+  mic: 'micro',
+  gauge: 'jauge',
+  sound: 'haut_parleur',
+  volume: 'haut_parleur',
+  external: 'lien_externe',
+  exit: 'quitter',
+  quote: 'citation',
+  brain: 'cerveau',
+  calc: 'calculatrice',
+  percent: 'pourcentage',
+  fork: 'assiette',
+  bowl: 'assiette',
+  cross: 'croix_soin',
+  leaf: 'feuille',
+  wifi: 'wifi',
+  list: 'liste',
+  grid: 'grille',
 };
 
 /** Le sticker d'une icone, s'il y en a un */
