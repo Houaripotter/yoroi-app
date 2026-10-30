@@ -56,7 +56,7 @@ export function Stars({ value, size = 14, onChange }: { value: number; size?: nu
   return (
     <View style={{ flexDirection: 'row', gap: onChange ? 6 : 2 }}>
       {[1, 2, 3, 4, 5].map((i) => {
-        const star = <Icon name="star" size={size} color={i <= value ? P.gold : P.dashed} fill={i <= value ? P.goldLight : 'none'} width={1.8} />;
+        const star = <Icon sticker={false} name="star" size={size} color={i <= value ? P.gold : P.dashed} fill={i <= value ? P.goldLight : 'none'} width={1.8} />;
         if (!onChange) return <View key={i}>{star}</View>;
         return (
           <Pressable key={i} onPress={() => { tap(); onChange(i); }} accessibilityRole="button" accessibilityLabel={traduire("{0} sur 5 : {1}", i, QUALITY_LABELS[i])} hitSlop={4} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
