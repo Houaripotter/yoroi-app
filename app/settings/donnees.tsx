@@ -273,35 +273,35 @@ export default function MesDonnees() {
     <View style={{ flex: 1 }}>
       <EspaceScreen title={traduire("Mes données")} subtitle={traduire("Elles restent sur ton téléphone")} gap={14}>
         <Card>
-          <ValueRow first icon="restore" label={traduire("Restaurer une sauvegarde")} onPress={handleImport} />
-          <ValueRow icon="download" label={traduire("Exporter")} sub={traduire("Tableur, fichier complet, texte")} onPress={() => go('/export-data')} />
-          <ValueRow icon="doc" label={traduire("Bilan en PDF")} sub={traduire("Pour ton coach ou ton médecin")} value={isPremium ? undefined : traduire('Premium')} valueColor={c.goldDeep} onPress={handlePDF} />
+          <ValueRow first sticker="coffre_ouvert" icon="restore" label={traduire("Restaurer une sauvegarde")} onPress={handleImport} />
+          <ValueRow sticker="partager" icon="download" label={traduire("Exporter")} sub={traduire("Tableur, fichier complet, texte")} onPress={() => go('/export-data')} />
+          <ValueRow sticker="bilan" icon="doc" label={traduire("Bilan en PDF")} sub={traduire("Pour ton coach ou ton médecin")} value={isPremium ? undefined : traduire('Premium')} valueColor={c.goldDeep} onPress={handlePDF} />
         </Card>
 
         <SectionTitle title={traduire("Importer et ranger")} />
         <Card>
-          <ValueRow first icon="upload" label={traduire("Importer un tableur")} sub={traduire("Pesées et mensurations")} onPress={() => go('/import-csv')} />
-          <ValueRow icon="dumbbell" label={traduire("Importer des séances")} sub={traduire("Depuis une autre app")} onPress={() => go('/import-workouts')} />
-          <ValueRow icon="table" label={traduire("Tableau du corps")} sub={traduire("Poids, composition et mensurations")} onPress={() => go('/companion')} />
+          <ValueRow first sticker="tableur" icon="upload" label={traduire("Importer un tableur")} sub={traduire("Pesées et mensurations")} onPress={() => go('/import-csv')} />
+          <ValueRow sticker="musculation" icon="dumbbell" label={traduire("Importer des séances")} sub={traduire("Depuis une autre app")} onPress={() => go('/import-workouts')} />
+          <ValueRow sticker="corps" icon="table" label={traduire("Tableau du corps")} sub={traduire("Poids, composition et mensurations")} onPress={() => go('/companion')} />
           <ValueRow icon="broom" label={traduire("Nettoyer les doublons")} sub={traduire("Séances importées en double")} onPress={handleDedupe} />
           <ValueRow icon="trash" label={traduire("Vider le cache")} sub={traduire("Tes données restent")} onPress={handleClearCache} />
-          <ValueRow icon="sync" label={Platform.OS === 'ios' ? traduire('Synchro iPhone et iPad') : traduire('Synchro entre appareils')} sub={traduire("Sans internet")} onPress={() => go('/sync-devices')} />
+          <ValueRow sticker="sauvegarde" icon="sync" label={Platform.OS === 'ios' ? traduire('Synchro iPhone et iPad') : traduire('Synchro entre appareils')} sub={traduire("Sans internet")} onPress={() => go('/sync-devices')} />
         </Card>
 
         <SectionTitle title={traduire("Confidentialité")} />
         <Card>
           {VERROU_DISPONIBLE ? (
-            <ToggleRow first icon="lock" label={traduire("Verrouiller l’app")} sub={Platform.OS === 'ios' ? traduire('Face ID ou Touch ID à l’ouverture') : traduire('Empreinte à l’ouverture')} value={bioOn} onChange={handleBiometric} />
+            <ToggleRow first sticker="donnees_telephone" icon="lock" label={traduire("Verrouiller l’app")} sub={Platform.OS === 'ios' ? traduire('Face ID ou Touch ID à l’ouverture') : traduire('Empreinte à l’ouverture')} value={bioOn} onChange={handleBiometric} />
           ) : null}
-          <ValueRow first={!VERROU_DISPONIBLE} icon="shield" label={traduire("Confidentialité")} sub={privacySub} onPress={() => go('/privacy-data')} />
-          <ValueRow icon="doc" label={traduire("Politique de confidentialité")} onPress={() => go('/privacy-policy')} />
+          <ValueRow first={!VERROU_DISPONIBLE} sticker="sans_compte" icon="shield" label={traduire("Confidentialité")} sub={privacySub} onPress={() => go('/privacy-data')} />
+          <ValueRow sticker="conditions" icon="doc" label={traduire("Politique de confidentialité")} onPress={() => go('/privacy-policy')} />
         </Card>
 
         {Platform.OS === 'ios' ? (
           <>
             <SectionTitle title={traduire("Diagnostic")} />
             <Card>
-              <ValueRow first icon="doc" label={traduire("Exporter les données brutes des séances")} sub={traduire("30 derniers jours, pour caler tes zones cardiaques")} onPress={handleDiagnostic} />
+              <ValueRow first sticker="tableur" icon="doc" label={traduire("Exporter les données brutes des séances")} sub={traduire("30 derniers jours, pour caler tes zones cardiaques")} onPress={handleDiagnostic} />
             </Card>
           </>
         ) : null}
