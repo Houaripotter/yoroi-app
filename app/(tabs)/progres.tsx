@@ -89,6 +89,8 @@ import { grammes, phraseCardio, phraseCorps, phraseForce, phrasePhotos, phraseSa
 import type { FaitsProgres, Phrase, SensObjectif } from '@/lib/v2/progres/phrasesProgres';
 import { traduire } from '@/lib/i18n/tr';
 import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
+import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
+import { Colonne, LargeurPage, Rangee } from '@/components/yoroi/v2/PageLarge';
 
 /** 80 kg plutot que 80,0 kg, une decimale sinon (comme la carte Poids de l'accueil) */
 const kgShort = (v: number) => (Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : formatKg(v));
@@ -139,6 +141,11 @@ export default function Progres() {
   const illus = useIllustrations();
   const [section, setSection] = useState<ThemeProgres>('Corps');
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  // 30 octobre 2026 : en grand ecran, deux colonnes (les themes, puis leur detail)
+  const page = usePageLarge();
+  const grand = page.grand;
+  const colGauche = 400;
+  const colDroite = page.largeur - colGauche - 24;
   // la visite guidee remonte l'onglet en haut, puis le fait defiler jusqu'a ce qu'elle montre
   const scrollY = useRef(0);
   useEffect(
@@ -263,19 +270,24 @@ export default function Progres() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
+      <LargeurPage actif={grand} largeur={page.largeur}>
       <Animated.ScrollView
         ref={scrollRef}
         refreshControl={refreshControl}
         onScroll={(e) => {
           const y = e.nativeEvent.contentOffset.y;
           scrollY.current = y;
-          const dessus = tuilesBas.current > 0 && y > tuilesBas.current - insets.top - 20;
+          // en grand ecran, les themes restent dans la colonne de gauche : pas de barre collee
+          const dessus = !grand && tuilesBas.current > 0 && y > tuilesBas.current - insets.top - 20;
           if (dessus !== collee) setCollee(dessus);
         }}
         scrollEventThrottle={32}
-        contentContainerStyle={{ paddingBottom: insets.bottom + INK_TAB_BAR_SPACE, paddingHorizontal: 16 }}
+        contentContainerStyle={grand ? { paddingTop: 20, paddingBottom: insets.bottom + 40, paddingHorizontal: page.marge } : { paddingBottom: insets.bottom + INK_TAB_BAR_SPACE, paddingHorizontal: 16 }}
         showsVerticalScrollIndicator={false}
       >
+        {/* 30 octobre 2026 : en grand ecran, les themes a gauche et leur detail a droite ; sur iPhone, comme avant */}
+        <Rangee actif={grand} espace={24}>
+        <Colonne actif={grand} largeur={colGauche} espace={0}>
         {/* PAR THEME, Progres, et le bilan de ta semaine en rond */}
         <View style={{ paddingTop: insets.top + 8, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
           <View style={{ flex: 1, minWidth: 0 }}>
@@ -330,6 +342,8 @@ export default function Progres() {
           </View>
         )}
 
+        </Colonne>
+        <Colonne actif={grand} largeur={colDroite} espace={0}>
         <View style={{ marginHorizontal: -16 }}>
           {section === 'Corps' ? (
             <>
@@ -401,7 +415,10 @@ export default function Progres() {
             </TourAnchor>
           </>
         ) : null}
+        </Colonne>
+        </Rangee>
       </Animated.ScrollView>
+      </LargeurPage>
 
       {/* les themes restent sous ton pouce quand tu descends dans le detail */}
       {collee ? (
