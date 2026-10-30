@@ -983,7 +983,7 @@ function PastillePremium() {
   const c = theme.colors;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: c.accentTint, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
-      <Icon name="lock" size={12} color={c.accent} />
+      <Icon sticker="couronne" name="lock" size={12} color={c.accent} />
       <Ink size={11} weight="extraBold" color={c.accent}>{traduire("Premium")}</Ink>
     </View>
   );
