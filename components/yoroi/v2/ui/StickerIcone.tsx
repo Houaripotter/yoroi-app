@@ -8,7 +8,8 @@
  * haut, bas, points de menu, pause), le cadenas (Premium : couronne ; hors Premium, le sticker cadenas est
  * impose a l'appel) et la tendance (sens lu a la fleche et a la couleur). Un appel peut imposer un sticker avec
  * la prop sticker, ou le refuser avec sticker={false}.
- * Troisieme passage (30 octobre 2026) : 38 nouveaux stickers (bouclier, oeil, fanion, profil, info, etc.).
+ * Troisieme passage (30 octobre 2026) : 38 nouveaux stickers (bouclier, oeil, fanion, profil, info, etc.),
+ * et les icones de l'espace Sante (SanteIcon) passent aussi par cette table.
  * Le sticker est dessine un peu plus grand que l'icone (le contour blanc prend de la place), avec une marge
  * negative : la mise en page ne bouge pas.
  */
@@ -113,6 +114,17 @@ export const STICKER_ICONE: Readonly<Record<string, NomSticker>> = {
   wifi: 'wifi',
   list: 'liste',
   grid: 'grille',
+  // icones de l'espace Sante (SanteIcon)
+  thermo: 'thermometre',
+  cloud: 'nuage_ok',
+  bike: 'sport_velo',
+  swim: 'sport_nage',
+  walk: 'sport_marche',
+  muscle: 'muscle',
+  food: 'assiette',
+  lungs: 'souffle',
+  speed: 'jauge',
+  battery: 'energie',
 };
 
 /** Le sticker d'une icone, s'il y en a un */
