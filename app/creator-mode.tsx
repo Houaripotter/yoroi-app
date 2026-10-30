@@ -132,7 +132,7 @@ const STICKER_OUTIL: Record<string, NomSticker> = {
   halloween: 'lanterne', noel: 'montagne_drapeau', aucune: 'lune_soleil',
   onboarding: 'presentation', paywall: 'abonnement', visite: 'torii', nouveautes: 'presentation', animations: 'play', bibliotheques: 'musculation',
   scenes: 'fuji', personnages: 'kimono', images: 'carte_tresor', chargement: 'refresh', rang: 'medaille_or', bienvenue: 'coffre_ouvert', premium: 'abonnement', kit: 'appareil_photo',
-  nouvel: 'debuter', installation: 'refresh', heny: 'refresh', gratuit: 'cle', capture: 'appareil_photo', notif: 'rappels', notifs: 'rappels', chrono: 'chrono', fenetres: 'noter', sons: 'gong',
+  nouvel: 'debuter', installation: 'refresh', heny: 'refresh', gratuit: 'cadenas', capture: 'appareil_photo', notif: 'rappels', notifs: 'rappels', chrono: 'chrono', fenetres: 'noter', sons: 'gong',
 };
 const ID_RACCOURCIS = new Set(RACCOURCIS.map((r) => r.id));
 
@@ -510,13 +510,13 @@ function Studio() {
                   {outilsTrouves.length === 0 && rubriquesVisibles.length === 0 && !effacerVisible ? (
                     <Note>{traduire('Rien ne correspond. Essaie un autre mot : paywall, Heny, notification, saison.')}</Note>
                   ) : null}
-                  <Button tone="ghost" icon="lock" label={traduire('Verrouiller le Studio')} onPress={lockStudio} />
+                  <Button tone="ghost" icon="lock" sticker="cadenas" label={traduire('Verrouiller le Studio')} onPress={lockStudio} />
                 </>
               ) : (
                 <>
                   <SectionListe titre={traduire('État')}>
                     {bascules.map((b) => (
-                      <LigneOutil key={b.id} label={b.label} sous={etatCourt[b.id] ?? b.state} sticker={b.sticker ?? 'cle'} icon={b.icon} on={!!b.on} busy={busy === b.id} bascule={b.ton} onPress={b.run} />
+                      <LigneOutil key={b.id} label={b.label} sous={etatCourt[b.id] ?? b.state} sticker={b.sticker ?? 'cadenas'} icon={b.icon} on={!!b.on} busy={busy === b.id} bascule={b.ton} onPress={b.run} />
                     ))}
                   </SectionListe>
 
@@ -527,7 +527,7 @@ function Studio() {
                   <SectionListe titre={traduire('Tout le Studio')}>{RUBRIQUES.map(ligneRubrique)}</SectionListe>
 
                   <View style={{ gap: 6 }}>
-                    <Button tone="ghost" icon="lock" label={traduire('Verrouiller le Studio')} onPress={lockStudio} />
+                    <Button tone="ghost" icon="lock" sticker="cadenas" label={traduire('Verrouiller le Studio')} onPress={lockStudio} />
                     <Note>{traduire('Sans jeton valide, rien du Studio n’est visible ni ouvrable dans l’app. Le jeton n’est jamais affiché.')}</Note>
                   </View>
 
