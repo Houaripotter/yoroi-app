@@ -391,7 +391,7 @@ export function Segmented<T extends string | number>({ options, value, onChange 
   );
 }
 
-export function Button({ label, onPress, tone = 'ink', loading, disabled, icon, small }: {
+export function Button({ label, onPress, tone = 'ink', loading, disabled, icon, small, sticker }: {
   label: string;
   onPress: () => void;
   tone?: 'ink' | 'accent' | 'ghost' | 'gold' | 'danger';
@@ -399,6 +399,8 @@ export function Button({ label, onPress, tone = 'ink', loading, disabled, icon, 
   disabled?: boolean;
   icon?: IconName;
   small?: boolean;
+  /** 30 octobre 2026 : impose (ou refuse avec false) le sticker de l'icone */
+  sticker?: NomSticker | false;
 }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
@@ -408,7 +410,7 @@ export function Button({ label, onPress, tone = 'ink', loading, disabled, icon, 
   const fg = tone === 'ink' ? c.background : tone === 'accent' ? c.onPrimary : tone === 'danger' ? c.onAccent : c.ink;
   // 28 octobre 2026 : l'action principale (accent, taille normale) prend le bouton partage
   if (tone === 'accent' && !small) {
-    return <BoutonPrincipal label={label} onPress={onPress} disabled={disabled} loading={loading} tailleTexte={16} haptique="light" icone={icon ? (col) => <Icon name={icon} size={18} color={col} stroke={2.4} /> : undefined} />;
+    return <BoutonPrincipal label={label} onPress={onPress} disabled={disabled} loading={loading} tailleTexte={16} haptique="light" icone={icon ? (col) => <Icon name={icon} size={18} color={col} stroke={2.4} sticker={sticker} /> : undefined} />;
   }
   return (
     <Pressable
@@ -435,7 +437,7 @@ export function Button({ label, onPress, tone = 'ink', loading, disabled, icon, 
     >
       {loading ? <ActivityIndicator color={fg} /> : (
         <>
-          {icon ? <Icon name={icon} size={18} color={fg} stroke={2.4} /> : null}
+          {icon ? <Icon name={icon} size={18} color={fg} stroke={2.4} sticker={sticker} /> : null}
           <Ink size={small ? 14 : 16} weight="extraBold" color={fg}>{label}</Ink>
         </>
       )}
