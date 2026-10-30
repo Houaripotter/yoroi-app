@@ -53,6 +53,7 @@ import { P, blancA } from '@/components/yoroi/livePalette';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
 import { traduire, traduirePluriel, LANG, LOCALE, DECIMAL } from '@/lib/i18n/tr';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
+import { StickerSinon } from '@/components/yoroi/v2/ui/StickerSinon';
 
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1500;
@@ -767,7 +768,7 @@ export default function WorkoutDetailScreen() {
             </Glass>
           ) : details?.heartRateSamples && details.heartRateSamples.length > 0 && userZones?.source !== 'custom' ? (
             <Glass onPress={() => router.push('/heart-zones-settings' as any)} label={traduire("Configurer tes zones cardiaques")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Icon name="heart" size={26} color={c.accent} />
+              <StickerSinon nom="coeur" taille={40}><Icon name="heart" size={26} color={c.accent} /></StickerSinon>
               <View style={{ flex: 1 }}>
                 <Ink size={15} weight="extraBold">{traduire("Configure tes zones cardiaques")}</Ink>
                 <Ink size={13} color={c.textSecondary}>{traduire("Pour voir le temps passé dans chaque zone.")}</Ink>
@@ -829,7 +830,7 @@ export default function WorkoutDetailScreen() {
 
           {details?.vo2Max != null && details.vo2Max > 0 ? (
             <Glass style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Icon name="gauge" size={26} color={c.indigo} />
+              <StickerSinon nom="souffle" taille={40}><Icon name="gauge" size={26} color={c.indigo} /></StickerSinon>
               <View style={{ flex: 1 }}>
                 <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("VO2 max mesurée par ta montre")}</Ink>
                 <Ink size={24} weight="black" tight>
