@@ -26,3 +26,12 @@ export function decisionFinRepos(o: { finMs: number | null; maintenant: number; 
   if (o.etatApp !== 'active') return 'attendre';
   return o.maintenant - o.finMs <= RETARD_SON_MS ? 'son' : 'discret';
 }
+
+/**
+ * Revue du 30 octobre 2026 : 1,5 s apres la fin du repos, la barre se retire. Si tu as valide la serie suivante
+ * entre temps, un NOUVEAU repos a commence : il ne doit pas etre efface. Seul le repos qui vient de finir part.
+ */
+export function retirerReposFini<D extends { restEndsAt?: number | null }>(d: D, fin: number | null): D {
+  if (d.restEndsAt == null || d.restEndsAt !== fin) return d;
+  return { ...d, restEndsAt: null };
+}
