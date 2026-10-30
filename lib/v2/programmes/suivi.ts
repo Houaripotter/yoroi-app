@@ -645,7 +645,8 @@ export function semainePersoDepuisLibre(pp: ProgrammePerso, s: SemaineLibre): { 
         // la première fois, la séance elle même (son sid) ; ensuite une copie, séance nouvelle
         const garde = !pris.has(c.s) && !!src.sid;
         pris.add(c.s);
-        seance = { ...(src.titre ? { titre: src.titre } : {}), exos: src.exos.map((e) => ({ ...e })), ...(garde ? { sid: src.sid } : {}) };
+        // 30 octobre 2026 : la séance garde sa brique (briques.ts), une seule à changer pour tous ses jours
+        seance = { ...(src.titre ? { titre: src.titre } : {}), exos: src.exos.map((e) => ({ ...e })), ...(garde ? { sid: src.sid } : {}), ...(src.brique ? { brique: src.brique } : {}) };
       }
     } else {
       ancien = idAutre(c);
