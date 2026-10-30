@@ -7,6 +7,7 @@ import { TourGate } from '@/components/yoroi/v2/tour/TourGate';
 import { PropositionSemaine } from '@/components/yoroi/v2/cartes/PropositionCarte';
 import { BilanAuto } from '@/components/yoroi/v2/bilan/BilanAuto';
 import { SeanceEnCours } from '@/components/yoroi/v2/seance/SeanceEnCours';
+import { RouvrirLePlus } from '@/lib/v2/nav/RouvrirLePlus';
 
 export default function TabsLayout() {
   const router = useRouter();
@@ -30,6 +31,8 @@ export default function TabsLayout() {
       <PropositionSemaine />
       {/* 16 octobre : le bilan d'une pesee ou d'une seance arrivee de la montre */}
       <BilanAuto />
+      {/* 30 octobre 2026 : sur iOS, le + remplace par une page se rouvre quand tu reviens ici */}
+      <RouvrirLePlus />
     </View>
   );
 }

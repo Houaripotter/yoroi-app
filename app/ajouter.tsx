@@ -16,11 +16,15 @@
  * « Dicte ta séance » et « En direct », et « Autres façons » en liste fine. Sans programme : la meme carte propose
  * le creneau prevu aujourd'hui, sinon de choisir un programme. Memes actions, memes donnees, memes ancres de visite.
  * Ancienne version : _archive_ancien_design_2026-10-09/maquettes_choisies_2026-10-27/app/ajouter.tsx.
+ * 30 octobre 2026 (Houari : « seul le premier marche », « Poids, c'est trop caché ») : Poids et Mensurations ouvrent
+ * une fenetre au milieu avec leurs trois choix en grandes cartes ; une page normale remplace la feuille sur iOS
+ * (lib/v2/nav/depuisLePlus.ts) ; en grande largeur la feuille et la fenetre restent centrees et etroites.
+ * Version d'avant : _archive_ancien_design_2026-10-09/retours_2026-10-30/app/ajouter.tsx.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Image, PanResponder, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Animated, Easing, Image, PanResponder, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRootNavigationState, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -56,10 +60,11 @@ import { personnageImage } from '@/components/yoroi/v2/espace/assets';
 import { useIdentite } from '@/lib/v2/espace/useIdentite';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { ecranSousLePlus, memoriserRetourAuPlus, oublierRetourAuPlus, parDessusLaFeuille } from '@/lib/v2/nav/depuisLePlus';
 
-// 26 octobre 2026 : illustrations des cartes Poids et Mensurations (Gemini) ; le personnage en attendant
-const IMG_PESEE: ImageSourcePropType | null = null;
-const IMG_MESURES: ImageSourcePropType | null = null;
+/** Largeur maximale de la feuille et de la fenetre des choix (iPad, Mac) */
+const LARGEUR_FEUILLE = 640;
+const LARGEUR_FENETRE = 480;
 
 type Other = { key: string; title: string; sub: string; href: string; params?: Record<string, string> };
 
@@ -82,6 +87,10 @@ export default function Ajouter() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
+  // 30 octobre 2026 : sur iPad et Mac la feuille garde une largeur de telephone, centree
+  const largeurFeuille = Math.min(width, LARGEUR_FEUILLE);
+  const etatNav = useRootNavigationState();
+  const { onglet: ongletDemande } = useLocalSearchParams<{ onglet?: string }>();
   const [draft, setDraft] = useState<SeanceDraft | null>(null);
   const [favs, setFavs] = useState<string[]>(DEFAULT_SPORTS.slice(0, 3));
   const [femme, setFemme] = useState(false);
@@ -92,7 +101,9 @@ export default function Ajouter() {
   const [sync, setSync] = useState<'idle' | 'busy' | string>('idle');
   // 26 octobre 2026 (Houari : « l'utilisateur se perd ») : trois entrees claires en haut, dans cet ordre,
   // et seulement les choix de celle qui est choisie en dessous
-  const [onglet, setOnglet] = useState<'seance' | 'mesures' | 'poids'>('seance');
+  // 30 octobre 2026 : Poids et Mensurations ouvrent une fenetre au milieu ; le + rouvert au retour la remontre
+  const [onglet, setOnglet] = useState<'seance' | 'mesures' | 'poids'>(ongletDemande === 'poids' || ongletDemande === 'mesures' ? ongletDemande : 'seance');
+  useEffect(() => oublierRetourAuPlus(), []);
   // 27 octobre 2026 : la visite guidee montre chaque onglet du menu (lib/v2/visite/ongletPlus.ts)
   useEffect(() => ecouterOngletPlus(setOnglet), []);
   // fermer en glissant vers le bas (feuille en haut de son defilement) ou sur le cote
@@ -197,9 +208,17 @@ export default function Ajouter() {
   // Le retour depuis l'ecran ouvert ramene a l'Accueil, pas a la feuille.
   const open = (href: string, params?: Record<string, string>) => {
     impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+    const cible = params ? { pathname: href as any, params } : (href as any);
     // 26 octobre 2026 (Houari : « quand j'appuie sur retour, ca quitte le + ») : l'ecran s'ouvre PAR DESSUS
     // la feuille ; le retour ramene au +, pas a l'Accueil
-    router.push(params ? { pathname: href as any, params } : (href as any));
+    if (parDessusLaFeuille(href, Platform.OS)) {
+      router.push(cible);
+      return;
+    }
+    // 30 octobre 2026 : sur iOS une page normale poussee ici s'ouvrait DERRIERE la feuille (seul le premier choix
+    // marchait). Elle remplace la feuille ; le + se rouvre quand tu reviens sur les onglets (lib/v2/nav/RouvrirLePlus.tsx)
+    if (ecranSousLePlus(etatNav as any) === '(tabs)') memoriserRetourAuPlus({ onglet });
+    router.replace(cible);
   };
 
   // une seance faite : la saisie du sport en mode « seance faite » (jour, heure, duree, details), sans chrono
@@ -287,7 +306,7 @@ export default function Ajouter() {
 
   return (
     <Pressable onPress={() => router.back()} style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.45)', justifyContent: 'flex-end' }} accessibilityLabel={traduire("Fermer")}>
-      <Animated.View {...geste.panHandlers} style={{ transform: [{ translateX: glisse.x }, { translateY: glisse.y }] }}>
+      <Animated.View {...geste.panHandlers} style={{ width: largeurFeuille, alignSelf: 'center', transform: [{ translateX: glisse.x }, { translateY: glisse.y }] }}>
       <Pressable onPress={() => {}} style={{ backgroundColor: P.paper, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingTop: 10, maxHeight: height * 0.92 }}>
         <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: P.pastelEteint, marginBottom: 14 }} accessibilityLabel={traduire('Glisse vers le bas pour fermer')} />
         <ScrollView ref={defileRef} bounces={false} showsVerticalScrollIndicator={false} scrollEventThrottle={16} onScroll={(e) => { defileY.current = e.nativeEvent.contentOffset.y; enHaut.current = e.nativeEvent.contentOffset.y <= 2; }} contentContainerStyle={{ paddingHorizontal: MARGE, paddingBottom: insets.bottom + 24 }}>
@@ -309,7 +328,7 @@ export default function Ajouter() {
 
           {/* 1. L'action principale : ton programme du jour, en grande carte lilas */}
           <TourAnchor id="ajouter.jour" rayon={26}>
-            <CarteDuJour {...carte} image={perso} largeur={width - 2 * MARGE} />
+            <CarteDuJour {...carte} image={perso} largeur={largeurFeuille - 2 * MARGE} />
           </TourAnchor>
 
           {/* 2. Les trois onglets, en tuiles pastel avec sticker (memes onglets qu'avant, ordre de la maquette) */}
@@ -336,7 +355,6 @@ export default function Ajouter() {
             })}
           </TourAnchor>
 
-          {onglet === 'seance' ? (<>
           {/* 3. Note ta seance du jour : tes sports en pastilles avec sticker */}
           <TourAnchor id="ajouter.seance" rayon={23} style={{ marginTop: 18 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -387,47 +405,6 @@ export default function Ajouter() {
               </Pressable>
             ))}
           </TourAnchor>
-          </>) : null}
-
-          {/* MENSURATIONS (meme style de grande carte, en sable) */}
-          {onglet === 'mesures' ? (
-            <TourAnchor id="ajouter.detail" rayon={26} style={{ marginTop: 14 }}>
-            <Hero
-              titre={traduire('Tes mensurations')}
-              sous={traduire('taille, bras, cuisses, au ruban')}
-              image={IMG_MESURES ?? illus.img('metre_ruban')}
-              fond={P.tuileSableFond}
-              texte={P.tuileSableTexte}
-              onPress={() => open('/add-measurement')}
-              a11y={traduire('Ajouter mes mensurations')}
-              puces={[
-                { t: traduire('Mesurer'), on: () => open('/add-measurement') },
-                { t: traduire('Évolution'), on: () => open('/measurements-detail') },
-                { t: traduire('Photo'), on: () => open('/photos') },
-              ]}
-            />
-            </TourAnchor>
-          ) : null}
-
-          {/* POIDS : a la main, par photo de la balance, composition (en menthe) */}
-          {onglet === 'poids' ? (
-            <TourAnchor id="ajouter.detail" rayon={26} style={{ marginTop: 14 }}>
-            <Hero
-              titre={traduire('Ta pesée')}
-              sous={traduire('ton poids du jour, ta composition')}
-              image={IMG_PESEE ?? illus.img('balance')}
-              fond={P.tuileMentheFond}
-              texte={P.tuileMentheTexte}
-              onPress={() => open('/pesee')}
-              a11y={traduire('Pesée, ton poids du jour')}
-              puces={[
-                { t: traduire('Poids'), on: () => open('/pesee') },
-                { t: traduire('Par photo'), on: () => open('/balance-photo') },
-                { t: traduire('Composition'), on: () => open('/body-composition') },
-              ]}
-            />
-            </TourAnchor>
-          ) : null}
 
           {/* Autre chose : de petites pilules blanches, toujours visibles */}
           <Ink size={15} weight="black" style={{ marginTop: 18 }} accessibilityRole="header">{traduire("Autre chose")}</Ink>
@@ -447,6 +424,40 @@ export default function Ajouter() {
         </ScrollView>
       </Pressable>
       </Animated.View>
+
+      {/* 30 octobre 2026 (Houari : « crée une pop up au milieu, là c'est trop caché ») : les trois choix, en grand */}
+      {onglet === 'poids' ? (
+        <FenetreChoix
+          titre={traduire('Ta pesée')}
+          sous={traduire('ton poids du jour, ta composition')}
+          sticker={illus.img('balance')}
+          fond={P.tuileMentheFond}
+          texte={P.tuileMentheTexte}
+          largeur={Math.min(width - 32, LARGEUR_FENETRE)}
+          onFermer={() => setOnglet('seance')}
+          choix={[
+            { t: traduire('Poids'), s: traduire('ton poids du jour'), st: illus.img('balance'), on: () => open('/pesee') },
+            { t: traduire('Par photo'), s: traduire('ton IA lit ta balance'), st: illus.img('appareil_photo'), on: () => open('/balance-photo') },
+            { t: traduire('Composition'), s: traduire('Masse grasse, muscle, eau'), st: illus.img('corps'), on: () => open('/body-composition') },
+          ]}
+        />
+      ) : null}
+      {onglet === 'mesures' ? (
+        <FenetreChoix
+          titre={traduire('Tes mensurations')}
+          sous={traduire('taille, bras, cuisses, au ruban')}
+          sticker={illus.img('metre_ruban')}
+          fond={P.tuileSableFond}
+          texte={P.tuileSableTexte}
+          largeur={Math.min(width - 32, LARGEUR_FENETRE)}
+          onFermer={() => setOnglet('seance')}
+          choix={[
+            { t: traduire('Mesurer'), s: traduire('une fois par mois, le matin'), st: illus.img('metre_ruban'), on: () => open('/add-measurement') },
+            { t: traduire('Évolution'), s: traduire('Tes courbes'), st: illus.img('bilan'), on: () => open('/measurements-detail') },
+            { t: traduire('Photo'), s: traduire('Photo de forme'), st: illus.img('appareil_photo'), on: () => open('/photos') },
+          ]}
+        />
+      ) : null}
     </Pressable>
   );
 }
@@ -520,26 +531,74 @@ function Facon({ titre, sous, sticker, a11y, onPress }: { titre: string; sous: s
 }
 
 /**
- * Grande carte des onglets Poids et Mensurations : l'aplat pastel de sa tuile, titre, une ligne, des pilules
- * blanches, et le sticker a droite.
+ * 30 octobre 2026 : la fenetre des choix de Poids et de Mensurations, au milieu de l'ecran. Fond assombri, entree
+ * douce (fondu et leger grossissement), fermeture par la croix ou en touchant dehors. Trois grandes cartes pastel
+ * avec sticker, titre et une ligne. La grande carte « Hero » d'avant est dans l'archive du 30 octobre.
  */
-function Hero({ titre, sous, image, fond, texte, onPress, a11y, puces }: { titre: string; sous: string; image: ImageSourcePropType | null; fond: string; texte: string; onPress: () => void; a11y: string; puces: { t: string; on: () => void }[] }) {
+function FenetreChoix({ titre, sous, sticker, fond, texte, largeur, choix, onFermer }: { titre: string; sous: string; sticker: ImageSourcePropType; fond: string; texte: string; largeur: number; choix: { t: string; s: string; st: ImageSourcePropType; on: () => void }[]; onFermer: () => void }) {
+  const entree = useRef(new Animated.Value(0)).current;
+  const ferme = useRef(false);
+  useEffect(() => {
+    Animated.timing(entree, { toValue: 1, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, [entree]);
+  const fermer = () => {
+    if (ferme.current) return;
+    ferme.current = true;
+    impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+    Animated.timing(entree, { toValue: 0, duration: 150, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(() => onFermer());
+  };
+  // un choix : la page s'ouvre tout de suite (la fenetre part avec la feuille, ou reste dessous si la page passe par dessus)
+  const choisir = (on: () => void) => {
+    if (ferme.current) return;
+    on();
+  };
   return (
-    <View style={{ minHeight: 150, borderRadius: 26, backgroundColor: fond, overflow: 'hidden', padding: 16 }}>
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={a11y} style={({ pressed }) => ({ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, opacity: pressed ? 0.9 : 1 })}>
-        {image ? <Image source={image} style={{ position: 'absolute', right: 14, top: 16, width: 92, height: 92 }} resizeMode="contain" /> : null}
-      </Pressable>
-      <View pointerEvents="none" style={{ gap: 4, maxWidth: '62%' }}>
-        <Ink size={19} weight="black" tight color={texte}>{titre}</Ink>
-        <Ink size={12.5} weight="bold" color={P.ink2} numberOfLines={2}>{sous}</Ink>
-      </View>
-      <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 'auto', paddingTop: 16 }}>
-        {puces.map((p) => (
-          <Pressable key={p.t} onPress={p.on} accessibilityRole="button" hitSlop={4} style={({ pressed }) => ({ height: 40, paddingHorizontal: 16, borderRadius: 20, justifyContent: 'center', backgroundColor: pressed ? P.line2 : P.white })}>
-            <Ink size={13.5} weight="black" color={texte}>{p.t}</Ink>
-          </Pressable>
-        ))}
-      </View>
+    <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 }]}>
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(29,32,41,0.5)', opacity: entree }]} />
+      <Pressable onPress={fermer} style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel={traduire('Fermer')} />
+      <TourAnchor id="ajouter.detail" rayon={30}>
+        <Animated.View
+          accessibilityViewIsModal
+          // toucher la carte (hors boutons) ne doit pas remonter au fond de la feuille, qui ferme le +
+          onStartShouldSetResponder={() => true}
+          style={{ width: largeur, borderRadius: 30, backgroundColor: P.paper, padding: 18, opacity: entree, transform: [{ scale: entree.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }) }], shadowColor: '#1D2033', shadowOpacity: 0.18, shadowRadius: 28, shadowOffset: { width: 0, height: 12 }, elevation: 8 }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 58, height: 58, borderRadius: 20, backgroundColor: fond, alignItems: 'center', justifyContent: 'center' }}>
+              <Image source={sticker} style={{ width: 44, height: 44 }} resizeMode="contain" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Ink size={21} weight="black" tight color={texte} accessibilityRole="header">{titre}</Ink>
+              <Ink size={12.5} weight="bold" color={P.ink2} numberOfLines={2}>{sous}</Ink>
+            </View>
+            <Pressable onPress={fermer} hitSlop={8} accessibilityRole="button" accessibilityLabel={traduire('Fermer')} style={({ pressed }) => ({ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? P.line2 : P.white })}>
+              <Svg width={16} height={16} viewBox="0 0 24 24">
+                <Path d="M6 6l12 12M18 6L6 18" stroke={P.ink} strokeWidth={2.6} strokeLinecap="round" fill="none" />
+              </Svg>
+            </Pressable>
+          </View>
+          <View style={{ gap: 10, marginTop: 16 }}>
+            {choix.map((c) => (
+              <Pressable
+                key={c.t}
+                onPress={() => choisir(c.on)}
+                accessibilityRole="button"
+                accessibilityLabel={`${c.t}, ${c.s}`}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 84, borderRadius: 24, paddingHorizontal: 14, paddingVertical: 12, backgroundColor: fond, borderWidth: 2, borderColor: pressed ? texte : 'transparent', transform: [{ scale: pressed ? 0.98 : 1 }] })}
+              >
+                <View style={{ width: 60, height: 60, borderRadius: 20, backgroundColor: P.white, alignItems: 'center', justifyContent: 'center' }}>
+                  <Image source={c.st} style={{ width: 46, height: 46 }} resizeMode="contain" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Ink size={17} weight="black" color={texte} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{c.t}</Ink>
+                  <Ink size={12.5} weight="bold" color={P.ink2} numberOfLines={2}>{c.s}</Ink>
+                </View>
+                <Chevron />
+              </Pressable>
+            ))}
+          </View>
+        </Animated.View>
+      </TourAnchor>
     </View>
   );
 }
