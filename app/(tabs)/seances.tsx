@@ -39,7 +39,7 @@ import type { Training } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
 import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
-import { largeurColonne } from '@/lib/v2/nav/grandEcran';
+import { colonnesPour, largeurColonne, largeurCote } from '@/lib/v2/nav/grandEcran';
 import { Colonne, GrilleColonnes, LargeurPage, Rangee } from '@/components/yoroi/v2/PageLarge';
 import { formatDuration, formatTonnage as tonnageText } from '@/lib/v2/trainingWeek';
 import { todayISO } from '@/lib/v2/weightStats';
@@ -154,8 +154,10 @@ export default function Seances() {
   // 30 octobre 2026 : en grand ecran, la page centree en colonnes (maquette _propositions/grand_ecran_2026-10-30/seances.png)
   const page = usePageLarge();
   const grand = page.grand;
-  const col3 = largeurColonne(page.largeur, 3);
-  const col2 = page.largeur - col3 - 20;
+  // la colonne de cote (Cette semaine, Ce qui vient), les cases de En detail (3, ou 2 sur une page plus etroite)
+  const cote = largeurCote(page.largeur);
+  const col2 = page.largeur - cote - 20;
+  const col3 = largeurColonne(page.largeur, colonnesPour(page.largeur));
   const demi = largeurColonne(page.largeur, 2);
   const sections = useSectionsOuvertes();
   // la visite guidée montre ta dernière séance et ton mois : ces sections restent ouvertes pendant la visite
@@ -288,7 +290,7 @@ export default function Seances() {
         </Colonne>
 
         {/* Ta semaine : l'anneau de ton objectif et les jours de L a D */}
-        <Colonne actif={grand} largeur={col3}>
+        <Colonne actif={grand} largeur={cote}>
         <TourAnchor id="seances.semaine" rayon={24}>
           <SemaineAnneau week={week} plates={plates} trainings={trainings} weeklyGoal={weeklyGoal} onChooseGoal={() => router.push('/settings?objectif=1' as any)} />
         </TourAnchor>
@@ -298,7 +300,7 @@ export default function Seances() {
         {/* Ce qui vient : le prochain entrainement prevu */}
         {/* en grand ecran, Tes chiffres a gauche et Ce qui vient a droite (rangee inversee, meme ordre de lecture sur iPhone) */}
         <Rangee actif={grand} style={{ flexDirection: 'row-reverse' }}>
-        <Colonne actif={grand} largeur={col3}>
+        <Colonne actif={grand} largeur={cote}>
         <Petites texte={traduire('Ce qui vient')} teinte="lilas" style={{ marginTop: 8, marginBottom: -4 }} />
         <TourAnchor id="seances.prochain" rayon={24}>
           <NextUp
