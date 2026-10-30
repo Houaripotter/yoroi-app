@@ -22,6 +22,8 @@ import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { P } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
 /** Palette v2 : vivante depuis la vague 35 (claire ou sombre, voir components/yoroi/livePalette.ts) */
 export { P };
 
@@ -299,11 +301,14 @@ const ICONS: Record<IconName, string> = {
   mic: 'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3',
 };
 
-export function Icon({ name, size = 22, color = P.ink, fill, width = 2.2 }: { name: IconName; size?: number; color?: string; fill?: string; width?: number }) {
+/** 30 octobre 2026 : le sticker de l'icone quand il y en a un (reglage Stickers), voir ui/StickerIcone */
+export function Icon({ name, size = 22, color = P.ink, fill, width = 2.2, sticker }: { name: IconName; size?: number; color?: string; fill?: string; width?: number; sticker?: NomSticker | false }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d={ICONS[name]} stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" fill={fill ?? 'none'} />
-    </Svg>
+    <IconeOuSticker nom={name} sticker={sticker} taille={size}>
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path d={ICONS[name]} stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" fill={fill ?? 'none'} />
+      </Svg>
+    </IconeOuSticker>
   );
 }
 
