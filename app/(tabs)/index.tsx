@@ -108,6 +108,12 @@ import { DecorCarte, DecorScene } from '@/components/yoroi/v2/saisons/DecorSaiso
 import { useSaison } from '@/lib/v2/saisons/useSaison';
 import { traduire } from '@/lib/i18n/tr';
 import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
+import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
+import { largeurColonne } from '@/lib/v2/nav/grandEcran';
+import { Colonne, LargeurPage } from '@/components/yoroi/v2/PageLarge';
+
+/** 30 octobre 2026 : hauteur de la scene en grand ecran (maquette validee par Houari) */
+const HAUTEUR_SCENE_GRAND = 320;
 
 export default function Accueil() {
   const insets = useSafeAreaInsets();
@@ -148,9 +154,14 @@ export default function Accueil() {
   );
 
   const { espace, armure } = data;
+  // 30 octobre 2026 : en grand ecran (Mac, iPad en grande fenetre), la page centree en 3 colonnes : la scene sur 2,
+  // Ton poids sur la troisieme (maquette _propositions/grand_ecran_2026-10-30/accueil.png). Sur iPhone, comme avant.
+  const page = usePageLarge();
+  const grand = page.grand;
+  const colonne = largeurColonne(page.largeur, 3);
   // 27 octobre 2026 : la scene en carte, a 16 points des bords
-  const largeurCarte = largeurEcran - 32;
-  const hauteurScene = hauteurSceneCarte(largeurCarte);
+  const largeurCarte = grand ? page.largeur - colonne - 20 : largeurEcran - 32;
+  const hauteurScene = grand ? HAUTEUR_SCENE_GRAND : hauteurSceneCarte(largeurCarte);
   const rankIndex = Math.max(0, Math.min(4, armure?.rank.index ?? 0));
   // 0 tant que l'utilisateur n'a pas choisi son objectif : on montre alors le nombre de seances seul
   const goal = objectifVise(espace);
@@ -262,7 +273,7 @@ export default function Accueil() {
             return (
               <View key={k} style={{ gap: 10 }}>
                 {k !== 'mois' ? <TitreSection titre={TITRES_SECTIONS[k]} /> : null}
-                <GrilleAccueil tuiles={tuiles} />
+                <GrilleAccueil tuiles={tuiles} largeur={grand ? page.largeur : undefined} />
               </View>
             );
           })}
@@ -305,10 +316,84 @@ export default function Accueil() {
         </View>
       );
     }
-    return <GrilleAccueil tuiles={blocs.flatMap(tuilesDuBloc)} />;
+    return <GrilleAccueil tuiles={blocs.flatMap(tuilesDuBloc)} largeur={grand ? page.largeur : undefined} />;
   };
 
   const bottomSpace = insets.bottom + INK_TAB_BAR_SPACE;
+
+  // 30 octobre 2026 : le grand ecran. Memes blocs, memes donnees, memes reglages ; seule la mise en page change.
+  if (grand) {
+    return (
+      <View style={{ flex: 1, backgroundColor: P.paper }}>
+        <LargeurPage actif largeur={page.largeur}>
+          <Animated.ScrollView ref={scrollRef} refreshControl={refreshControl} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + 28, paddingBottom: insets.bottom + 40, paddingHorizontal: page.marge }} showsVerticalScrollIndicator={false}>
+            <View style={{ zIndex: 2 }}>
+              <EnTeteAccueil name={data.name} photo={espace.identite === 'photo' ? data.photo : null} personnage={espace.personnage} rankIndex={rankIndex} />
+            </View>
+
+            <View style={{ gap: 20, marginTop: 20 }}>
+              {/* la scene sur deux colonnes, Ton poids sur la troisieme */}
+              <View style={{ flexDirection: 'row', gap: 20, alignItems: 'flex-start' }}>
+                <TourAnchor id="accueil.scene" rayon={SCENE_CARTE.rayon} style={{ width: largeurCarte }}>
+                  <SceneHero
+                    carte
+                    largeur={largeurCarte}
+                    hauteur={hauteurScene}
+                    top={insets.top}
+                    scene={espace.scene}
+                    name={data.name}
+                    personnage={espace.personnage}
+                    rankIndex={rankIndex}
+                    photo={espace.identite === 'photo' ? data.photo : null}
+                    decor={saison ? <DecorScene saison={saison} largeur={largeurCarte} hauteur={hauteurScene} haut={HAUT_VOL_CARTE} scrollY={scrollY} dansCarte /> : null}
+                  />
+                </TourAnchor>
+                <Colonne actif largeur={colonne}>
+                  <Enter i={0}>
+                    <TourAnchor id="accueil.poids" rayon={28}>
+                      <CartePoids series={series} targetWeight={data.targetWeight} startWeight={data.startWeight} rankIndex={rankIndex} onPage={setPagePoids} />
+                      {saison && series.length && pagePoids === 0 ? <DecorCarte saison={saison} largeur={colonne} scrollY={scrollY} seuil={hautSceneCarte(insets.top) + hauteurScene + 480} /> : null}
+                    </TourAnchor>
+                  </Enter>
+                </Colonne>
+              </View>
+
+              {/* tes outils, les 7 sur une rangee */}
+              <Enter i={0}>
+                <View style={{ gap: 4 }}>
+                  <TitreSection titre={traduire('Tes outils')} />
+                  <TourAnchor id="accueil.outils" rayon={22}>
+                    <RaccourcisDuJour record={record} largeurGrille={page.largeur} />
+                  </TourAnchor>
+                </View>
+              </Enter>
+
+              {/* Ta semaine en vraie rangee */}
+              {semaineVisible ? (
+                <Enter i={1}>
+                  <TourAnchor id="accueil.semaine" rayon={26}>
+                    <CarteSemaine trainings={data.trainings} goal={goal} series={sante.series} objectifs={objectifsSante} jour={jour} grand />
+                  </TourAnchor>
+                </Enter>
+              ) : null}
+
+              <BackupNotice />
+              <PropositionCoach />
+              {importSante.visible ? <CarteImportSante controle={importSante} onImporte={sante.reload} /> : <CarteSante sante={sante} />}
+
+              {/* les blocs reglables, en 3 colonnes */}
+              <Enter i={1}>{rendreProposition()}</Enter>
+              <FeuilleEau visible={eauOuverte} onClose={() => setEauOuverte(false)} water={data.hydration.amount} waterGoal={data.hydration.goal} />
+
+              <Enter i={2}>
+                <PersonnaliserAccueil />
+              </Enter>
+            </View>
+          </Animated.ScrollView>
+        </LargeurPage>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: P.paper }}>
