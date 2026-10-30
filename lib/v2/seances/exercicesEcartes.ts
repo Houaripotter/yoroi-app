@@ -92,6 +92,17 @@ export function remettreExercice(nom: string): Promise<Ecarte[]> {
   return ecrire((l) => sansEcarte(l, nom));
 }
 
+/**
+ * Liste du selecteur d'exercices : les exercices ecartes restent choisissables expres, mais passent en bas,
+ * dans le meme ordre qu'avant entre eux.
+ */
+export function ecartesEnBas<T>(liste: readonly T[], estEcarte: (x: T) => boolean): T[] {
+  const gardes: T[] = [];
+  const bas: T[] = [];
+  for (const x of liste) (estEcarte(x) ? bas : gardes).push(x);
+  return bas.length ? [...gardes, ...bas] : [...liste];
+}
+
 /** pour les tests : oublie la copie en memoire */
 export function _oublierMemoire(): void {
   memoire = [];
