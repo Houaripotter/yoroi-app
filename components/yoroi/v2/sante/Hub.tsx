@@ -156,7 +156,7 @@ export function ScoreHero({ readiness, onOpen }: { readiness: Readiness | null; 
 // ============================================
 
 export function ConnectSteps({ provider, mode, connecting, onConnect, onPickBrand }: { provider: string; mode: string; connecting: boolean; onConnect: () => void; onPickBrand: (key: string) => void }) {
-  const expoGo = mode === 'expoGo' || mode === 'web';
+  const expoGo = mode === 'expoGo' || mode === 'web' || mode === 'indisponible';
   const brands = WATCHES.filter((w) => (ANDROID ? w.android.ok : w.ios.ok));
   const step = (n: number, title: string, children?: React.ReactNode) => (
     <View style={{ flexDirection: 'row', gap: 12 }}>

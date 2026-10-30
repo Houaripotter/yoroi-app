@@ -17,7 +17,11 @@ import type { MetricKey } from './metrics';
 import type { DayPoint, Phases } from './stats';
 import { formatValue } from './stats';
 
-export type SanteMode = 'web' | 'expoGo' | 'off' | 'live';
+/**
+ * indisponible (30 octobre 2026) : Apple Santé n'existe pas sur cet appareil (app iPhone sur Mac Apple Silicon :
+ * HKHealthStore.isHealthDataAvailable() est faux). Rien n'est propose, comme dans Expo Go.
+ */
+export type SanteMode = 'web' | 'expoGo' | 'indisponible' | 'off' | 'live';
 
 export type SanteSource = {
   mode: SanteMode;
@@ -44,6 +48,11 @@ export async function getSanteSource(): Promise<SanteSource> {
   if (isRunningInExpoGo) return { mode: 'expoGo', provider, platform, lastSync: null };
   try {
     await healthConnect.initialize();
+    // iPhone : HealthKit absent de l'appareil (Mac), on ne propose jamais Apple Santé.
+    // Android : Health Connect peut s'installer, l'ecran de connexion reste propose.
+    if (platform === 'ios' && typeof svc.isAvailable === 'function' && (await Promise.resolve(svc.isAvailable()).catch(() => true)) === false) {
+      return { mode: 'indisponible', provider, platform, lastSync: null };
+    }
     const st = healthConnect.getSyncStatus();
     return { mode: st.isConnected ? 'live' : 'off', provider, platform, lastSync: st.lastSync, failure: st.failureReason };
   } catch (e) {

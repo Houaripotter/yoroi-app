@@ -87,7 +87,9 @@ export function SmallButton({ label, onPress, tone = 'ink', icon, busy, disabled
 export function SourceCard({ source, onConnect, onSync, syncing, connecting }: { source: SanteSource | null; onConnect?: () => void; onSync?: () => void; syncing?: boolean; connecting?: boolean }) {
   if (!source) return null;
   const p = source.provider;
-  if (source.mode === 'expoGo' || source.mode === 'web') {
+  if (source.mode === 'expoGo' || source.mode === 'web' || source.mode === 'indisponible') {
+    // 30 octobre 2026 : sur Mac, toujours les textes de l'app installee (jamais ceux du mode test)
+    const dev = __DEV__ && source.mode !== 'indisponible';
     return (
       <GlassBox style={{ gap: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -96,15 +98,15 @@ export function SourceCard({ source, onConnect, onSync, syncing, connecting }: {
           </View>
           <View style={{ flex: 1 }}>
             <Ink size={17} weight="black" tight>
-              {__DEV__ ? traduire('Disponible dans l’app installée') : traduire('Lecture santé indisponible ici')}
+              {dev ? traduire('Disponible dans l’app installée') : traduire('Lecture santé indisponible ici')}
             </Ink>
             <Ink size={13} weight="bold" color={S.ink2}>
-              {__DEV__ ? (source.mode === 'web' ? traduire('Mode test\u00A0: pas de lecture santé sur le web') : traduire("Mode test : {0} ne s’ouvre pas dans Expo Go", p)) : traduire("{0} n’est pas joignable sur cet appareil", p)}
+              {dev ? (source.mode === 'web' ? traduire('Mode test\u00A0: pas de lecture santé sur le web') : traduire("Mode test : {0} ne s’ouvre pas dans Expo Go", p)) : traduire("{0} n’est pas joignable sur cet appareil", p)}
             </Ink>
           </View>
         </View>
         <Ink size={14} weight="medium" color={S.ink2}>
-          {!__DEV__
+          {!dev
             ? traduire('Tu vois ici ce qui est déjà enregistré dans YOROI. Ouvre l’app sur ton téléphone pour lire tes données de santé en direct.')
             : source.mode === 'web'
             ? traduire('Ouvre YOROI sur ton téléphone pour lire tes données de santé.')
