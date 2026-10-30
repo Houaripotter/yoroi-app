@@ -7,7 +7,7 @@
  * (lib/v2/seance/recherchesIntrouvables.ts) pour ajouter les exercices manquants a la prochaine mise a jour.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { FlatList, Image, Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -27,6 +27,7 @@ import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { chargerEcartes, ecartesEnBas } from '@/lib/v2/seances/exercicesEcartes';
 import { sansPrise } from '@/lib/v2/seance/prise';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 
 type Item = { key: string; name: string; autre?: string; muscle: string; history?: ExerciseHistory; count?: number; rang?: number };
 type Ligne = { kind: 'titre'; key: string; muscle: string; n: number } | { kind: 'exo'; key: string; item: Item };
@@ -50,6 +51,8 @@ type Props = {
 
 export function ExercisePicker({ visible, onClose, onPick, history, recent, already, muscleDepart, titre }: Props) {
   const { theme } = useYoroiTheme();
+  // 30 octobre 2026 : un sticker sur les listes vides (rien en Encre japonaise, comme avant)
+  const illus = useIllustrations();
   const unite = useUnitePoids();
   const c = theme.colors;
   const insets = useSafeAreaInsets();
@@ -229,6 +232,7 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
           ListEmptyComponent={
             query.trim() ? (
               <View style={{ paddingVertical: 28, alignItems: 'center', gap: 14 }}>
+                {illus.stickers ? <Image source={illus.img('recherche')} style={{ width: 64, height: 64 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
                 <View style={{ alignItems: 'center', gap: 4 }}>
                   <Ink size={16} weight="extraBold" style={{ textAlign: 'center' }}>{traduire("Aucun exercice pour « {0} »", query.trim())}</Ink>
                   <Ink size={13} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire("Essaie un autre mot, en français ou en anglais, ou crée l’exercice tel quel.")}</Ink>
@@ -236,7 +240,8 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
                 <BoutonPrincipal onPress={ajouterPerso} haptique="none" accessibilityLabel={traduire("Créer l’exercice {0}", query.trim())} label={traduire("Ajouter « {0} » comme exercice", query.trim())} tailleTexte={16} lignes={1} style={{ alignSelf: 'stretch' }} icone={(col) => <Icon name="plus" size={20} color={col} strokeWidth={2.8} />} />
               </View>
             ) : (
-              <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+              <View style={{ paddingVertical: 40, alignItems: 'center', gap: 12 }}>
+                {illus.stickers ? <Image source={illus.img('carnet_vide')} style={{ width: 64, height: 64 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
                 <Ink size={15} color={c.textSecondary}>{traduire("Aucun exercice ici pour l’instant.")}</Ink>
               </View>
             )
