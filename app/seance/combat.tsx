@@ -592,7 +592,7 @@ export default function SeanceCombat() {
             <Ink size={15} weight="extraBold">− 10</Ink>
           </Pressable>
           <Pressable onPress={togglePause} accessibilityRole="button" accessibilityLabel={t.phase === 'idle' ? traduire('Lancer les rounds') : t.phase === 'done' ? traduire('Encore un round') : t.paused !== null ? traduire('Reprendre') : traduire('Pause')} style={({ pressed }) => ({ width: 84, height: 84, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: t.phase === 'idle' || t.phase === 'done' ? (pressed ? c.primaryPressed : c.primary) : pressed ? c.primary : c.primaryPressed })}>
-            <Icon name={running ? 'pause' : 'play'} size={32} color={c.onPrimary} />
+            <Icon name={running ? 'pause' : 'play'} size={32} color={c.onPrimary} sticker={false} />
           </Pressable>
           <Pressable onPress={() => shift(10)} disabled={t.phase === 'idle' || t.phase === 'done'} accessibilityRole="button" accessibilityLabel={traduire("Avancer de 10 secondes")} style={({ pressed }) => ({ width: 60, height: 60, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.border : c.fillSubtle, opacity: t.phase === 'idle' || t.phase === 'done' ? 0.4 : 1 })}>
             <Ink size={15} weight="extraBold">+ 10</Ink>
