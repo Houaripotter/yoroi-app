@@ -16,6 +16,7 @@ import { formatRelative } from '@/lib/utils/formatDate';
 import logger from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 
 interface SafetyBackup {
   name: string;
@@ -105,7 +106,7 @@ const SafetyBackupRestoreButtonInner: React.FC = () => {
         {restoring ? (
           <ActivityIndicator size="small" color="#fff" />
         ) : (
-          <RotateCcw size={14} color="#fff" strokeWidth={2.5} />
+          <IconeOuSticker sticker="refresh" taille={14}><RotateCcw size={14} color="#fff" strokeWidth={2.5} /></IconeOuSticker>
         )}
         <Text style={styles.btnText}>
           {restoring ? 'Restauration…' : traduire('Annuler la dernière restauration')}
