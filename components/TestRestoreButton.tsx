@@ -19,6 +19,7 @@ import { formatSize } from '@/lib/utils/formatDate';
 import logger from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 
 const TestRestoreButtonInner: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -111,7 +112,7 @@ const TestRestoreButtonInner: React.FC = () => {
       accessibilityRole="button"
     >
       <View style={styles.iconWrap}>
-        {testing ? <ActivityIndicator size="small" color="#10B981" /> : <ClipboardCheck size={18} color="#10B981" />}
+        {testing ? <ActivityIndicator size="small" color="#10B981" /> : <IconeOuSticker sticker="seance_rapide" taille={18}><ClipboardCheck size={18} color="#10B981" /></IconeOuSticker>}
       </View>
       <View style={{ flex: 1 }}>
         <Text style={[styles.title, { color: colors.text }]}>
