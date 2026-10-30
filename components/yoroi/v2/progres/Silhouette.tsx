@@ -1,6 +1,7 @@
 /**
  * Corps illustre avec les mensurations posees autour (30 octobre 2026, remplace l'ancien bonhomme gris).
- * L'illustration suit le genre du profil : homme, ou femme (assets/corps/mensurations, generees avec Gemini).
+ * Mannequin d'anatomie lisse, un seul ton gris pierre, sans visage ni couleur de peau, pour que personne ne se sente exclu.
+ * Il suit le genre du profil : homme, ou femme (assets/corps/mensurations, generes avec Gemini).
  * Chaque mesure a son trait en pointilles pose sur le corps et une etiquette sobre :
  * le nom, la valeur et l'ecart avec la fois d'avant. En saisie, toucher une etiquette la selectionne.
  */
@@ -20,42 +21,42 @@ type Pt = [number, number];
 type Zone = { l: Pt; r: Pt; creux: number; side: 'left' | 'right' };
 type Corps = { src: ImageSourcePropType; w: number; h: number; zones: Record<ViewKey, Zone> };
 
-// Coordonnees en pixels de l'illustration detouree (homme 1253 x 2410, femme 1243 x 2411),
-// relevees sur le contour reel du dessin : bord de peau a l'interieur du trait bleu nuit.
+// Coordonnees en pixels de l'illustration detouree (homme 1312 x 2388, femme 1322 x 2388),
+// relevees sur le contour reel du mannequin.
 const HOMME: Corps = {
   src: require('@/assets/corps/mensurations/homme.webp'),
-  w: 1253,
-  h: 2410,
+  w: 1312,
+  h: 2388,
   zones: {
-    neck: { l: [540, 386], r: [713, 386], creux: 16, side: 'right' },
-    shoulders: { l: [290, 600], r: [963, 600], creux: -30, side: 'left' },
-    chest: { l: [408, 690], r: [846, 690], creux: 30, side: 'left' },
-    arm: { l: [872, 748], r: [1004, 744], creux: 12, side: 'right' },
+    neck: { l: [578, 335], r: [734, 335], creux: 14, side: 'right' },
+    shoulders: { l: [310, 610], r: [1003, 610], creux: -30, side: 'left' },
+    chest: { l: [428, 660], r: [882, 660], creux: 30, side: 'left' },
+    arm: { l: [896, 717], r: [1040, 713], creux: 12, side: 'right' },
     // Avant-bras : sous le coude, au plus large, sur le meme bras que le tour de bras, trait perpendiculaire au bras
-    forearm: { l: [928, 984], r: [1082, 938], creux: 12, side: 'right' },
-    waist: { l: [440, 882], r: [813, 882], creux: 26, side: 'left' },
-    navel: { l: [434, 950], r: [819, 950], creux: 28, side: 'right' },
-    hips: { l: [364, 1330], r: [889, 1330], creux: 34, side: 'left' },
-    thigh: { l: [668, 1515], r: [888, 1515], creux: 16, side: 'right' },
-    calf: { l: [350, 1872], r: [525, 1872], creux: 14, side: 'left' },
+    forearm: { l: [986, 941], r: [1130, 899], creux: 12, side: 'right' },
+    waist: { l: [474, 870], r: [839, 870], creux: 26, side: 'left' },
+    navel: { l: [466, 940], r: [846, 940], creux: 28, side: 'right' },
+    hips: { l: [420, 1270], r: [894, 1270], creux: 34, side: 'left' },
+    thigh: { l: [680, 1410], r: [900, 1410], creux: 16, side: 'right' },
+    calf: { l: [416, 1895], r: [570, 1895], creux: 14, side: 'left' },
   },
 };
 
 const FEMME: Corps = {
   src: require('@/assets/corps/mensurations/femme.webp'),
-  w: 1243,
-  h: 2411,
+  w: 1322,
+  h: 2388,
   zones: {
-    neck: { l: [554, 398], r: [697, 398], creux: 14, side: 'right' },
-    shoulders: { l: [295, 605], r: [948, 605], creux: -30, side: 'left' },
-    chest: { l: [404, 730], r: [838, 730], creux: 30, side: 'left' },
-    arm: { l: [854, 744], r: [978, 740], creux: 12, side: 'right' },
-    forearm: { l: [906, 984], r: [1060, 938], creux: 12, side: 'right' },
-    waist: { l: [449, 915], r: [794, 915], creux: 24, side: 'left' },
-    navel: { l: [430, 990], r: [813, 990], creux: 28, side: 'right' },
-    hips: { l: [346, 1330], r: [897, 1330], creux: 34, side: 'left' },
-    thigh: { l: [656, 1472], r: [892, 1472], creux: 16, side: 'right' },
-    calf: { l: [346, 1890], r: [516, 1890], creux: 14, side: 'left' },
+    neck: { l: [592, 340], r: [730, 340], creux: 12, side: 'right' },
+    shoulders: { l: [340, 615], r: [983, 615], creux: -30, side: 'left' },
+    chest: { l: [452, 690], r: [871, 690], creux: 30, side: 'left' },
+    arm: { l: [898, 714], r: [1018, 710], creux: 12, side: 'right' },
+    forearm: { l: [993, 944], r: [1119, 906], creux: 12, side: 'right' },
+    waist: { l: [495, 885], r: [827, 885], creux: 24, side: 'left' },
+    navel: { l: [472, 970], r: [851, 970], creux: 28, side: 'right' },
+    hips: { l: [400, 1265], r: [922, 1265], creux: 34, side: 'left' },
+    thigh: { l: [688, 1405], r: [917, 1405], creux: 16, side: 'right' },
+    calf: { l: [422, 1900], r: [570, 1900], creux: 14, side: 'left' },
   },
 };
 
@@ -94,6 +95,8 @@ type Props = {
 };
 
 const CALLOUT_H = 42;
+/** largeur minimale d'une colonne d'etiquettes */
+const COL_MIN = 92;
 const BLEU = '#3D5D9E';
 
 function spread(ys: number[], min: number, max: number, gap: number): number[] {
@@ -118,12 +121,14 @@ export function Silhouette({ items, height = 310, active = null, onPressItem }: 
   const c = theme.colors;
   const corps = useCorps();
   const [width, setWidth] = useState(0);
-  const imgH = height - 10;
+  // Le corps retrecit un peu sur petit ecran pour laisser la place aux etiquettes (« à mesurer » en entier)
+  const imgH = Math.min(height - 10, (Math.max(0, width - 2 * COL_MIN - 16) * corps.h) / corps.w);
+  const top0 = (height - imgH) / 2;
   const s = imgH / corps.h;
   const bodyW = corps.w * s;
   const bodyX = (width - bodyW) / 2;
   const colW = Math.max(bodyX - 8, 64);
-  const at = (p: Pt): Pt => [bodyX + p[0] * s, 5 + p[1] * s];
+  const at = (p: Pt): Pt => [bodyX + p[0] * s, top0 + p[1] * s];
 
   const placed = useMemo(() => {
     const out: { item: SilhouetteItem; side: 'left' | 'right'; top: number; anchor: Pt }[] = [];
@@ -133,7 +138,7 @@ export function Silhouette({ items, height = 310, active = null, onPressItem }: 
         .map((it) => {
           const z = corps.zones[it.key];
           const p = side === 'left' ? z.l : z.r;
-          return { item: it, anchor: [bodyX + p[0] * s, 5 + p[1] * s] as Pt };
+          return { item: it, anchor: at(p) };
         })
         .sort((a, b) => a.anchor[1] - b.anchor[1]);
       const tops = spread(
@@ -145,7 +150,7 @@ export function Silhouette({ items, height = 310, active = null, onPressItem }: 
       list.forEach((l, i) => out.push({ ...l, side, top: tops[i] }));
     });
     return out;
-  }, [items, bodyX, s, height, corps]);
+  }, [items, bodyX, s, top0, height, corps]);
 
   const onLayout = (e: LayoutChangeEvent) => setWidth(Math.round(e.nativeEvent.layout.width));
 
@@ -176,7 +181,7 @@ export function Silhouette({ items, height = 310, active = null, onPressItem }: 
           ) : null}
           <Image
             source={corps.src}
-            style={{ position: 'absolute', left: bodyX, top: 5, width: bodyW, height: imgH }}
+            style={{ position: 'absolute', left: bodyX, top: top0, width: bodyW, height: imgH }}
             resizeMode="contain"
             accessibilityIgnoresInvertColors
             accessible={false}
