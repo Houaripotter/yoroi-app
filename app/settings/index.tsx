@@ -59,6 +59,9 @@ import { niveauSuivant, useNiveauCoach } from '@/lib/v2/coachVocal/reglages';
 import { detailNiveauCoach, libelleNiveauCoach, remarqueCoach } from '@/components/yoroi/v2/seance/CoachVocal';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { FeuilleLangue, langueEnCours } from '@/components/yoroi/v2/langue/ChoixLangue';
+import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
+import { largeurColonne } from '@/lib/v2/nav/grandEcran';
+import { Colonne, LargeurPage, Rangee } from '@/components/yoroi/v2/PageLarge';
 
 
 const MODES: { key: string; label: string; court: string; sub: string }[] = [
@@ -167,6 +170,9 @@ export default function Reglages() {
   // ============================================
 
   const go = (href: string) => router.push(href as any);
+  // 30 octobre 2026 : en grand ecran (Mac, iPad en grande fenetre), la page centree, sans barre laterale ici
+  const page = usePageLarge(false);
+  const demi = largeurColonne(page.largeur, 2);
   const rankIndex = armure?.rank.index ?? 0;
   const genre: 'h' | 'f' = espace.personnage === 'guerrier_f' ? 'f' : espace.personnage === 'guerrier_h' ? 'h' : profile?.avatar_gender === 'femme' ? 'f' : 'h';
   // avec la scene qui change, la ligne montre ton choix a toi
@@ -197,7 +203,8 @@ export default function Reglages() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 10 }} showsVerticalScrollIndicator={false}>
+      <LargeurPage actif={page.grand} largeur={page.largeur}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: page.grand ? page.marge : 22, paddingBottom: insets.bottom + 40, gap: 10 }} showsVerticalScrollIndicator={false}>
         <EspaceHeader title={traduire("Réglages")} />
 
         {/* 16 octobre : Personnaliser, tout en haut et bien visible */}
@@ -213,6 +220,9 @@ export default function Reglages() {
           <ProfileHeader profile={profile} espace={espace} rankIndex={rankIndex} onPress={() => go('/profile')} onEditPhoto={() => go(ROUTES_PERSONNALISER.photo)} />
         </View>
 
+        {/* 30 octobre 2026 : en grand ecran, Ton entrainement et Tes reglages cote a cote */}
+        <Rangee actif={page.grand}>
+        <Colonne actif={page.grand} largeur={demi} espace={10}>
         <Groupe title={traduire("Ton entraînement")} />
         <Card>
           <ValueRow first tint={TUILE.indigo} icon="dumbbell" sticker="mes_sports" label={traduire("Mes sports")} value={nbSports ? traduirePluriel(nbSports, nbSports > 1, "{0} sport", "{0} sports", nbSports) : traduire('À choisir')} valueColor={nbSports ? undefined : c.accent} onPress={() => go('/espace/sports')} />
@@ -222,6 +232,8 @@ export default function Reglages() {
           <ValueRow tint={TUILE.bleu} icon="pulse" sticker="bilan" label={traduire("Bilan après chaque mesure")} sub={traduire("Pesée, composition, mensurations et séances")} value={bilanAuto ? traduire('Activé') : traduire('Coupé')} valueColor={bilanAuto ? c.successText : undefined} onPress={() => { const n = !bilanAuto; setBilanAuto(n); ecrireBilanAuto(n).catch(() => {}); }} />
         </Card>
 
+        </Colonne>
+        <Colonne actif={page.grand} largeur={demi} espace={10}>
         {/* 13 octobre, soir : style, appareils et donnees ranges en trois sous-pages, pour une page plus courte.
             Rien n'a ete retire : chaque ligne d'avant est dans sa sous-page. Le bouton Sauvegarder reste ici. */}
         <Groupe title={traduire("Tes réglages")} />
@@ -232,6 +244,9 @@ export default function Reglages() {
           <ValueRow tint={TUILE.or} icon="bell" sticker="gong" label={traduire("Sons de l’app")} sub={traduire("Badges, rangs, records et chronos")} value={sonsOn ? traduire('Activés') : traduire('Coupés')} valueColor={sonsOn ? c.successText : undefined} onPress={() => { const n = !sonsOn; setSonsOn(n); ecrireSonsActifs(n).catch(() => {}); }} />
           <ValueRow tint={TUILE.indigo} icon="dumbbell" sticker="coach" label={traduire("Coach vocal")} sub={remarqueCoach() ?? detailNiveauCoach(coachVocal)} value={libelleNiveauCoach(coachVocal)} valueColor={coachVocal !== 'off' ? c.successText : undefined} onPress={() => setCoachVocal(niveauSuivant(coachVocal))} />
         </Card>
+
+        </Colonne>
+        </Rangee>
 
         <Groupe title="YOROI" />
         <Card>
@@ -275,6 +290,7 @@ export default function Reglages() {
           <Ink size={12} color={c.textMuted}>{traduire("Fait à Marseille, 100 % hors ligne")}</Ink>
         </Pressable>
       </ScrollView>
+      </LargeurPage>
 
       {/* le nombre de seances et, si tu veux, tes jours */}
       <FeuilleLangue visible={langueOpen} onClose={() => setLangueOpen(false)} />
