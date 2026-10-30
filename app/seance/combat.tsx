@@ -49,6 +49,7 @@ import { programmeParId } from '@/lib/v2/programmes/catalogue';
 import { marquerJourFait } from '@/lib/v2/programmes/suivi';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
+import { StickerSinon } from '@/components/yoroi/v2/ui/StickerSinon';
 
 const RPE = [
   { value: 3, label: traduire('Facile') },
@@ -536,7 +537,7 @@ export default function SeanceCombat() {
 
         {draft.form && draft.details ? (
           <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" accessibilityLabel={traduire("Changer le jour et la durée")} style={{ marginHorizontal: 22, marginTop: 4, padding: 16, borderRadius: 22, backgroundColor: c.indigoTint, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Icon name="calendar" size={24} color={c.indigo} />
+            <StickerSinon nom="calendrier" taille={40}><Icon name="calendar" size={24} color={c.indigo} /></StickerSinon>
             <View style={{ flex: 1 }}>
               <Ink size={18} weight="black" tight>{dayLabel(draft.details.date)}, {timeOf(draft.details.startMin)}</Ink>
               <Ink size={13} color={c.textSecondary}>{traduire("{0} de séance. Touche pour changer.", fmtMinutes(draft.details.duration))}</Ink>
