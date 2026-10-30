@@ -1,6 +1,6 @@
 /**
  * Fin de séance : abdos et cardio (26 octobre 2026). Une carte indigo illustree sur la page du programme en cours,
- * et la feuille de choix : rien, abdos, cardio ou les deux, la duree du cardio, et les seances de marche du
+ * et la feuille de choix : rien, abdos, cardio (abdos et cardio cochables ensemble, 30 octobre 2026), la duree du cardio, et les seances de marche du
  * programme gardees ou retirees. La feuille s'ouvre aussi une fois au demarrage du programme.
  * Regles et sources : lib/v2/programmes/finSeance.ts.
  */
@@ -14,14 +14,22 @@ import type { IconName } from '@/components/yoroi/v2/seances/Icon';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { sourceParId } from '@/lib/v2/programmes/sources';
 import { safeOpenURL } from '@/lib/security/validators';
-import { CHOIX_FIN, FIN_PAR_DEFAUT, MINUTES_FIN, NOTE_FIN, SOURCES_FIN, aDesJoursMarche, avecCardio, resumeFin } from '@/lib/v2/programmes/finSeance';
-import type { ChoixFin, FinSeance } from '@/lib/v2/programmes/finSeance';
+import { CHOIX_FIN, FIN_PAR_DEFAUT, MINUTES_FIN, NOTE_FIN, SOURCES_FIN, aDesJoursMarche, avecCardio, basculerCaseFin, caseCochee, resumeFin } from '@/lib/v2/programmes/finSeance';
+import type { CaseFin, FinSeance } from '@/lib/v2/programmes/finSeance';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
 import type { Programme } from '@/lib/v2/programmes/types';
 import { traduire } from '@/lib/i18n/tr';
 import { ton } from '@/components/yoroi/v2/seance/pastel';
+import type { TonSeance } from '@/components/yoroi/v2/seance/pastel';
 import { blancA } from '@/components/yoroi/livePalette';
 
-const ICONE: Record<ChoixFin, IconName> = { rien: 'close', abdos: 'body', cardio: 'steps', les_deux: 'flame' };
+const ICONE: Record<CaseFin, IconName> = { rien: 'close', abdos: 'body', cardio: 'steps' };
+/** 30 octobre 2026 : les stickers de l'app à la place des icônes (Encre japonaise : les icônes d'avant) */
+const STICKER: Record<CaseFin, NomSticker> = { rien: 'carnet', abdos: 'abdos', cardio: 'cardio_zone2' };
+
+/** La couleur vive de chaque case, prise dans les tons pastel de l'app (seance/pastel.ts) */
+const TEINTE: Record<CaseFin, TonSeance> = { rien: 'ciel', abdos: 'peche', cardio: 'menthe' };
 
 /** « Abdos, puis 30 min de marche inclinée », traduit */
 export function texteFin(f: FinSeance | null | undefined): string {
@@ -65,6 +73,7 @@ export function FeuilleFinDeSeance({ visible, programme, valeur, bouton, onValid
 }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  const illus = useIllustrations();
   const [f, setF] = useState<FinSeance>(valeur ?? FIN_PAR_DEFAUT);
   useEffect(() => {
     if (visible) setF(valeur ?? FIN_PAR_DEFAUT);
@@ -75,21 +84,35 @@ export function FeuilleFinDeSeance({ visible, programme, valeur, bouton, onValid
     <Sheet visible={visible} onClose={onClose} title={traduire('Fin de séance')}>
       <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4, lineHeight: 20 }}>{traduire('Ajouté à la fin de chaque séance de musculation. Tu peux changer quand tu veux.')}</Ink>
 
+      {/* trois cases : Abdos et Cardio se cochent ensemble, Rien décoche tout (finSeance.ts, basculerCaseFin) */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 4 }}>
         {CHOIX_FIN.map((o) => {
-          const on = f.choix === o.key;
+          const on = caseCochee(f.choix, o.key);
+          const fond = on ? ton(TEINTE[o.key]).fond : c.fillSoft;
+          const encre = ton(TEINTE[o.key]).encre;
           return (
             <Pressable
               key={o.key}
-              onPress={() => { tap(); setF((x) => ({ ...x, choix: o.key })); }}
-              accessibilityRole="button"
-              accessibilityState={{ selected: on }}
-              style={{ width: '47%', flexGrow: 1, minHeight: 96, borderRadius: 20, padding: 14, gap: 6, backgroundColor: on ? c.primary : c.fillSoft, borderWidth: 2, borderColor: on ? c.detail : 'transparent' }}
+              onPress={() => { tap(); setF((x) => ({ ...x, choix: basculerCaseFin(x.choix, o.key) })); }}
+              accessibilityRole={o.key === 'rien' ? 'radio' : 'checkbox'}
+              accessibilityState={o.key === 'rien' ? { selected: on } : { checked: on }}
+              accessibilityLabel={`${traduire(o.label)}, ${traduire(o.sous)}`}
+              style={({ pressed }) => ({ flexBasis: 100, flexGrow: 1, minHeight: 116, borderRadius: 22, padding: 12, gap: 6, backgroundColor: fond, borderWidth: 2, borderColor: on ? encre : 'transparent', transform: [{ scale: pressed ? 0.97 : 1 }] })}
             >
-              <View style={{ width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: blancA(on ? 0.75 : 1) }}>
-                <Icon name={ICONE[o.key]} size={18} color={c.onPrimary} />
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                {illus.stickers ? (
+                  <Image source={illus.img(STICKER[o.key])} style={{ width: 48, height: 48 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+                ) : (
+                  <View style={{ width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: blancA(on ? 0.75 : 1) }}>
+                    <Icon name={ICONE[o.key]} size={18} color={encre} />
+                  </View>
+                )}
+                {/* la case : ronde pour Rien, carrée pour Abdos et Cardio (on peut cocher les deux) */}
+                <View style={{ width: 26, height: 26, borderRadius: o.key === 'rien' ? 13 : 8, borderWidth: 2, borderColor: on ? encre : c.textMuted, backgroundColor: on ? encre : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                  {on ? <Icon name="check" size={15} color="#FFFFFF" strokeWidth={3} /> : null}
+                </View>
               </View>
-              <Ink size={15} weight="black" tight color={on ? c.onPrimary : c.ink}>{traduire(o.label)}</Ink>
+              <Ink size={16} weight="black" tight color={on ? encre : c.ink}>{traduire(o.label)}</Ink>
               <Ink size={12} weight="bold" color={c.textSecondary}>{traduire(o.sous)}</Ink>
             </Pressable>
           );

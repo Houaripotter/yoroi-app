@@ -4,6 +4,9 @@
  * en zone 2, ou les deux, et la duree du cardio. Les seances de marche deja prevues par le programme
  * (seche, perte de poids...) peuvent aussi etre retirees.
  *
+ * 30 octobre 2026 : la feuille a trois cases (Rien, Abdos, Cardio), Abdos et Cardio cochables ensemble ;
+ * les deux cochés gardent la valeur « les_deux » (basculerCaseFin).
+ *
  * Regles :
  *  - seulement les jours de musculation (pas les rounds, pas le cardio, pas les jours d'etirements tenus) ;
  *  - pas d'abdos ajoutes si le jour a deja un exercice ABDOS ; pas de cardio si le jour en a deja un ;
@@ -33,12 +36,42 @@ export type FinSeance = {
   sansMarche?: boolean;
 };
 
-export const CHOIX_FIN: { key: ChoixFin; label: string; sous: string }[] = [
+/** Une case de la feuille : Rien, Abdos, Cardio */
+export type CaseFin = 'rien' | 'abdos' | 'cardio';
+
+/**
+ * 30 octobre 2026 (Houari : « supprime Les deux, je veux cocher Abdos et Cardio ensemble ») :
+ * trois cases. Abdos et Cardio se cochent ensemble ; Rien décoche tout. La donnée gardée ne change pas :
+ * Abdos et Cardio cochés s'enregistrent toujours « les_deux », et un ancien « les_deux » se lit Abdos + Cardio.
+ */
+export const CHOIX_FIN: { key: CaseFin; label: string; sous: string }[] = [
   { key: 'rien', label: 'Rien', sous: 'Le programme tel quel' },
   { key: 'abdos', label: 'Abdos', sous: 'Un exercice à la fin' },
   { key: 'cardio', label: 'Cardio', sous: 'Marche inclinée en zone 2' },
-  { key: 'les_deux', label: 'Les deux', sous: 'Abdos, puis cardio' },
 ];
+
+/** Le choix enregistré, à partir des deux cases */
+export function choixDepuisCases(abdos: boolean, cardio: boolean): ChoixFin {
+  if (abdos && cardio) return 'les_deux';
+  if (abdos) return 'abdos';
+  if (cardio) return 'cardio';
+  return 'rien';
+}
+
+/** Cette case est cochée pour ce choix (« les_deux » coche Abdos et Cardio) */
+export function caseCochee(choix: ChoixFin, k: CaseFin): boolean {
+  if (k === 'rien') return choix === 'rien';
+  if (k === 'abdos') return choix === 'abdos' || choix === 'les_deux';
+  return choix === 'cardio' || choix === 'les_deux';
+}
+
+/** Toucher une case : Rien décoche tout, Abdos et Cardio s'ajoutent ou se retirent */
+export function basculerCaseFin(choix: ChoixFin, k: CaseFin): ChoixFin {
+  if (k === 'rien') return 'rien';
+  const abdos = caseCochee(choix, 'abdos');
+  const cardio = caseCochee(choix, 'cardio');
+  return k === 'abdos' ? choixDepuisCases(!abdos, cardio) : choixDepuisCases(abdos, !cardio);
+}
 
 export const MINUTES_FIN = [15, 20, 30] as const;
 

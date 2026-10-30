@@ -13,7 +13,8 @@
  * Coach (app/coach.tsx, TesJoursEnCours).
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { DeviceEventEmitter, Pressable, ScrollView, View } from 'react-native';
+import { DeviceEventEmitter, Image, Pressable, View } from 'react-native';
+import { illustration } from '@/components/yoroi/v2/stickers';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { tap } from '@/components/yoroi/v2/seances/ui';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
@@ -212,7 +213,8 @@ export function TesJours({ programme: p, semaine, onSemaine, fin, enBoucle, nu, 
         accessibilityLabel={traduire('Semaines A et B')}
         style={({ pressed }) => ({ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, borderRadius: 20, backgroundColor: pressed ? pal.teinte : pal.page })}
       >
-        <Icon name="repeat" size={17} color={pal.accent} />
+        {/* 30 octobre 2026 : stickers de l'app à la place des icônes */}
+        <Image source={illustration('repeter')} style={{ width: 34, height: 34 }} resizeMode="contain" accessibilityIgnoresInvertColors />
         <View style={{ flex: 1, gap: 1 }}>
           <Ink size={14} weight="extraBold" color={pal.texte}>{traduire('Semaines A et B')}</Ink>
           <Ink size={12} weight="bold" color={pal.texte2}>{traduire('Deux semaines qui alternent')}</Ink>
@@ -302,7 +304,8 @@ function Choix({ titre, actuelle, proposees, persoNom, onChoisir }: {
       {proposees.autres.length ? (
         <>
           <Ink size={12} weight="extraBold" color={pal.texte2}>{traduire('Autres séances')}</Ink>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+          {/* 30 octobre 2026 : les familles passent à la ligne, plus aucune coupée au bord de la carte */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {proposees.autres.map((f) => {
               const on = f.famille === famille;
               return (
@@ -317,7 +320,7 @@ function Choix({ titre, actuelle, proposees, persoNom, onChoisir }: {
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </View>
           <View style={{ gap: 8 }}>{liste.map((x, k) => ligne(x, k + 1, persoNom(x.programme)))}</View>
         </>
       ) : null}
@@ -337,8 +340,8 @@ function LigneChoix({ titre, sous, on, fond, encre, onPress, repos }: { titre: s
       accessibilityLabel={sous ? `${titre}, ${sous}` : titre}
       style={({ pressed }) => ({ minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, borderRadius: 18, backgroundColor: pressed ? pal.teinte : pal.carte, borderWidth: 2, borderColor: on ? pal.indigo : 'transparent' })}
     >
-      <View style={{ width: 30, height: 30, borderRadius: 10, backgroundColor: repos ? pal.page : fond, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name={repos ? 'moon' : 'dumbbell'} size={15} color={encre} />
+      <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: repos ? pal.page : fond, alignItems: 'center', justifyContent: 'center' }}>
+        <Image source={illustration(repos ? 'sommeil' : 'musculation')} style={{ width: 30, height: 30 }} resizeMode="contain" accessibilityIgnoresInvertColors />
       </View>
       <View style={{ flex: 1, gap: 1 }}>
         <Ink size={14} weight="extraBold" color={pal.texte} numberOfLines={1}>{titre}</Ink>
@@ -353,7 +356,7 @@ function Note({ texte, attention }: { texte: string; attention?: boolean }) {
   const pal = usePaletteProgramme();
   return (
     <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', padding: 12, borderRadius: 18, backgroundColor: attention ? pal.orangeTint : pal.teinte }}>
-      <Icon name={attention ? 'target' : 'repeat'} size={16} color={attention ? pal.orange : pal.accent} />
+      <Image source={illustration(attention ? 'objectifs' : 'repeter')} style={{ width: 24, height: 24 }} resizeMode="contain" accessibilityIgnoresInvertColors />
       <Ink size={12} weight="bold" color={pal.texte} style={{ flex: 1, lineHeight: 17 }}>{texte}</Ink>
     </View>
   );

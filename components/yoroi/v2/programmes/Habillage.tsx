@@ -23,7 +23,8 @@ import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { P, blancA } from '@/components/yoroi/livePalette';
-import { illustration } from '@/components/yoroi/v2/stickers';
+import { illustration, useIllustrations } from '@/components/yoroi/v2/stickers';
+import { stickerDeLIcone } from '@/components/yoroi/v2/programmes/stickersIcones';
 import { musclesDeExo } from '@/lib/v2/programmes/musclesExos';
 import { indexGarde, seanceDuPlanLe, seancesAVenir, semaineEffective } from '@/lib/v2/programmes/suivi';
 import { jourDuProgramme, seanceLe, semaineDepuisPlan } from '@/lib/v2/programmes/semaineLibre';
@@ -115,9 +116,11 @@ export function Pastille({ texte, accent, icone, danger }: { texte: string; acce
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const fg = danger ? c.danger : accent ? c.accent : c.textSecondary;
+  const illus = useIllustrations();
+  const st = illus.stickers ? stickerDeLIcone(icone) : null;
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 26, paddingHorizontal: 9, borderRadius: 13, backgroundColor: danger ? c.dangerTint : accent ? c.accentTint : c.fillSubtle }}>
-      {icone ? <Icon name={icone} size={12} color={fg} /> : null}
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 26, paddingHorizontal: 9, paddingLeft: st ? 5 : 9, borderRadius: 13, backgroundColor: danger ? c.dangerTint : accent ? c.accentTint : c.fillSubtle }}>
+      {st ? <Image source={illus.img(st)} style={{ width: 20, height: 20 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : icone ? <Icon name={icone} size={12} color={fg} /> : null}
       <Ink size={12} weight={accent || danger ? 'extraBold' : 'bold'} color={fg}>{texte}</Ink>
     </View>
   );
@@ -127,6 +130,10 @@ export function Pastille({ texte, accent, icone, danger }: { texte: string; acce
 export function RondIcone({ icone, plein }: { icone: IconName; plein?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  const illus = useIllustrations();
+  const st = illus.stickers ? stickerDeLIcone(icone) : null;
+  // 30 octobre 2026 : le sticker à la place de l'icône (stickersIcones.ts), même place de 44 points
+  if (st) return <Image source={illus.img(st)} style={{ width: 44, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />;
   return (
     <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: plein ? c.primary : c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
       <Icon name={icone} size={20} color={plein ? c.onPrimary : c.accentText} />
@@ -207,15 +214,20 @@ export function TuilesPrincipes({ principes }: { principes: string[] }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const [tout, setTout] = useState(false);
+  const illus = useIllustrations();
   if (!principes.length) return null;
   return (
     <>
       <View style={{ gap: 8 }}>
         {principes.slice(0, 3).map((fr, i) => (
           <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 64, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 20, backgroundColor: c.accentTint }}>
-            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.darkCard, alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name={iconeDuPrincipe(fr)} size={19} color={c.onDark} />
-            </View>
+            {illus.stickers && stickerDeLIcone(iconeDuPrincipe(fr)) ? (
+              <Image source={illus.img(stickerDeLIcone(iconeDuPrincipe(fr))!)} style={{ width: 44, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+            ) : (
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.darkCard, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name={iconeDuPrincipe(fr)} size={19} color={c.onDark} />
+              </View>
+            )}
             <Ink size={15} weight="bold" style={{ flex: 1, lineHeight: 21 }}>{debutDuPrincipe(traduire(fr))}</Ink>
           </View>
         ))}
@@ -249,15 +261,20 @@ export function FeuillePrincipes({ visible, principes, onClose }: { visible: boo
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const pal = usePaletteProgramme();
+  const illus = useIllustrations();
   const [ouvert, setOuvert] = useState<number | null>(null);
   return (
     <Sheet visible={visible} onClose={() => { setOuvert(null); onClose(); }}>
       <View style={{ gap: 10 }}>
         <View style={{ borderRadius: 24, backgroundColor: pal.indigo, overflow: 'hidden', padding: 18, gap: 8, minHeight: 120, justifyContent: 'flex-end' }}>
           <Cercles />
-          <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="target" size={23} color="#FFFFFF" />
-          </View>
+          {illus.stickers ? (
+            <Image source={illus.img('objectifs')} style={{ width: 52, height: 52 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+          ) : (
+            <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="target" size={23} color="#FFFFFF" />
+            </View>
+          )}
           <Ink size={24} weight="black" tight color={c.onDark} accessibilityRole="header">{traduire('Comment le suivre')}</Ink>
           <Ink size={13} weight="bold" color={c.onDarkSecondary}>{traduirePluriel(principes.length, principes.length > 1, '{0} règle simple. Touche pour le détail.', '{0} règles simples. Touche pour le détail.', principes.length)}</Ink>
         </View>
@@ -278,9 +295,13 @@ export function FeuillePrincipes({ visible, principes, onClose }: { visible: boo
               style={({ pressed }) => ({ borderRadius: 22, padding: 14, gap: 10, backgroundColor: pressed ? pal.teinte : pal.carte })}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-                <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: t2.fond, alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name={iconeDuPrincipe(fr)} size={22} color={t2.encre} />
-                </View>
+                {illus.stickers && stickerDeLIcone(iconeDuPrincipe(fr)) ? (
+                  <Image source={illus.img(stickerDeLIcone(iconeDuPrincipe(fr))!)} style={{ width: 46, height: 46 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+                ) : (
+                  <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: t2.fond, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name={iconeDuPrincipe(fr)} size={22} color={t2.encre} />
+                  </View>
+                )}
                 <Ink size={15} weight="extraBold" color={pal.texte} style={{ flex: 1, lineHeight: 20 }}>{court}</Ink>
                 {suite ? (
                   <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: pal.teinte, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: deplie ? '-90deg' : '90deg' }] }}>
