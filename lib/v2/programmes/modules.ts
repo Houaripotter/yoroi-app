@@ -23,7 +23,7 @@
  * Donnees pures, testees dans __tests__/unit/modules.test.ts.
  */
 import { PROGRAMMES, programmeParId } from './catalogue';
-import { FIN_PAR_DEFAUT, aDesJoursMuscu, avecFinSeance, estJourMuscu, lireFinSeance, minutesValides } from './finSeance';
+import { FIN_PAR_DEFAUT, aDesJoursMuscu, avecFinSeance, estJourMuscu, finActive, lireFinSeance, minutesValides } from './finSeance';
 import type { AvecFin, ChoixFin, ContexteFin, ExoFin, FinSeance } from './finSeance';
 import type { CardioProgramme, ExoProgramme, JourProgramme, Programme } from './types';
 
@@ -251,7 +251,7 @@ export function avecModules<J extends JourProgramme>(jour: J, ctx: ContexteModul
   const etirements = extras.includes('mobilite') ? etirementsPour(jour) : undefined;
   const base = { ...jour, exos } as J;
   // abdos (en dernier) et cardio de la fin de seance
-  const avecFin = (ctx?.fin && ctx.fin.choix !== 'rien' ? avecFinSeance(base, ctx) : base) as J & AvecModules;
+  const avecFin = (finActive(ctx?.fin) ? avecFinSeance(base, ctx) : base) as J & AvecModules;
   return { ...avecFin, ...(etirements ? { finEtirements: etirements } : {}), finFaite: true, modulesFaits: true };
 }
 
