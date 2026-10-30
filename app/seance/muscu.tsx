@@ -77,6 +77,7 @@ import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { BoutonCoachVocal, useCoachVocal } from '@/components/yoroi/v2/seance/CoachVocal';
 import { cibleDefilement } from '@/lib/v2/seances/defilementExo';
 import { DUREE_MESSAGE_MS } from '@/lib/v2/seances/finRepos';
+import { encouragement, etatSerie, nouvelleSerie, remettreSerie, sansSerie, seriesAFaire } from '@/lib/v2/seances/seriesSaisie';
 import { chargerMinuteurRepos, enregistrerMinuteurRepos, reposApresSerie } from '@/lib/v2/seances/minuteurRepos';
 import { objectifExo, seriesVisees, texteReps, texteSerie } from '@/lib/v2/seances/objectifExo';
 import { chargerReglages, cranDe, enregistrerCran, typeReglage, CRAN_MAX } from '@/lib/v2/seances/reglagesMachine';
@@ -613,7 +614,8 @@ export default function SeanceMuscu() {
 
   const addSet = (ex: LiveExercise) => {
     const last = ex.sets[ex.sets.length - 1];
-    const s: LiveSet = { id: uid(), weight: last?.weight ?? 0, reps: last?.reps ?? 10, done: false };
+    // 30 octobre 2026 (H3) : la serie d'avant, ou les repetitions de l'objectif si elle n'en a pas
+    const s: LiveSet = { id: uid(), ...nouvelleSerie(last, ex.cible?.repsMin ?? ex.objectifReps), done: false };
     updateExercise(ex.id, (e) => ({ ...e, sets: [...e.sets, s] }));
     impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
   };
@@ -660,12 +662,27 @@ export default function SeanceMuscu() {
     setFinishOpen(false);
   };
 
-  const askSetAction = (ex: LiveExercise, index: number) => {
-    appAlert(traduire("Série {0}", index + 1), undefined, [
-      { text: traduire('Annuler'), style: 'cancel' },
-      { text: traduire('Supprimer la série'), style: 'destructive', onPress: () => updateExercise(ex.id, (e) => ({ ...e, sets: e.sets.filter((_, i) => i !== index) })) },
-    ]);
+  /* 30 octobre 2026 (H1) : supprimer une serie d'un geste, sans fenetre ; remplie, « Annuler » quelques secondes.
+     Il reste toujours au moins une serie (lib/v2/seances/seriesSaisie.ts). */
+  const [annulable, setAnnulable] = useState<{ exId: string; serie: LiveSet; index: number } | null>(null);
+  useEffect(() => {
+    if (!annulable) return;
+    const t = setTimeout(() => setAnnulable(null), 5000);
+    return () => clearTimeout(t);
+  }, [annulable]);
+  const supprimerSerie = (ex: LiveExercise, index: number) => {
+    const serie = ex.sets[index];
+    if (!serie || ex.sets.length <= 1) return;
+    updateExercise(ex.id, (e) => ({ ...e, sets: sansSerie(e.sets, index) }));
+    setAnnulable(etatSerie(serie) === 'vide' ? null : { exId: ex.id, serie, index });
+    impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
   };
+  const annulerSuppression = () => {
+    const a = annulable;
+    setAnnulable(null);
+    if (a) updateExercise(a.exId, (e) => ({ ...e, sets: remettreSerie(e.sets, a.serie, a.index) }));
+  };
+  const askSetAction = (ex: LiveExercise, index: number) => supprimerSerie(ex, index);
 
   const moveExercise = (id: string, dir: -1 | 1) =>
     update((d) => {
@@ -711,7 +728,8 @@ export default function SeanceMuscu() {
   // Resume pour la feuille de fin
   const summary = useMemo(() => {
     const done = (draft?.exercises ?? []).flatMap((e) => e.sets.filter((s) => s.done));
-    const pending = (draft?.exercises ?? []).reduce((n, e) => n + seriesRestantes(e), 0);
+    // 30 octobre 2026 (H2) : une serie vide est ignoree, elle ne compte pas comme oubliee
+    const pending = (draft?.exercises ?? []).reduce((n, e) => n + (e.laisse ? 0 : seriesAFaire(e.sets)), 0);
     // series restantes qui ont des repetitions : les seules que « Tout valider » peut valider
     const pendingValid = (draft?.exercises ?? []).reduce((n, e) => n + (e.laisse ? 0 : e.sets.filter((s) => !s.done && s.reps > 0).length), 0);
     return {
@@ -1086,15 +1104,15 @@ export default function SeanceMuscu() {
 
             <View style={{ flexDirection: 'row', paddingHorizontal: 8, marginTop: 6 }}>
               <Ink size={12} weight="bold" color={c.textMuted} style={{ width: 44 }}>{traduire("Série")}</Ink>
-              <Ink size={12} weight="bold" color={c.textMuted} style={{ flex: 1, textAlign: 'center' }}>{lb ? 'Livres' : 'Kilos'}</Ink>
+              <Ink size={12} weight="bold" color={c.textMuted} style={{ flex: 1, textAlign: 'center' }}>{lb ? traduire('LB') : traduire('KG')}</Ink>
               <Ink size={12} weight="bold" color={c.textMuted} style={{ flex: 1, textAlign: 'center' }}>{traduire("Répétitions")}</Ink>
-              <View style={{ width: 48 }} />
+              <View style={{ width: current.sets.length > 1 ? 82 : 48 }} />
             </View>
 
             {current.sets.map((s, i) => {
               if (i === activeIndex) {
                 return (
-                  <View key={s.id} onLayout={(e) => { serieBas.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height; }} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 2, borderColor: c.primary, padding: 14, gap: 12, shadowColor: c.shadow, shadowOpacity: 0.07, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 }}>
+                  <View key={s.id} onLayout={(e) => { serieBas.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height; }} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 2, borderColor: etatSerie(s) === 'moitie' ? intensite(3).text : c.primary, padding: 14, gap: 12, shadowColor: c.shadow, shadowOpacity: 0.07, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 }}>
                       <View style={{ minWidth: 32, height: 32, paddingHorizontal: 8, borderRadius: 12, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
                         <Ink size={15} weight="black" color={c.onPrimary}>{String(i + 1)}</Ink>
@@ -1105,7 +1123,32 @@ export default function SeanceMuscu() {
                         {!draft.form && objectif && texteReps(objectif) ? <Ink size={13} weight="extraBold" color={c.accent}>{texteReps(objectif)}</Ink> : null}
                       </View>
                       {s.prevWeight !== undefined ? <Ink size={12} weight="bold" color={c.textMuted} numberOfLines={1}>{traduire("la dernière fois {0}", setLabel({ weight: s.prevWeight, reps: s.prevReps ?? 0 }, unite))}</Ink> : null}
+                      {current.sets.length > 1 ? (
+                        <Pressable onPress={() => supprimerSerie(current, i)} accessibilityRole="button" accessibilityLabel={traduire('Supprimer la série')} hitSlop={8} style={({ pressed }) => ({ width: 32, height: 32, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : 'transparent' })}>
+                          <Icon name="close" size={14} color={c.textMuted} strokeWidth={2.6} />
+                        </Pressable>
+                      ) : null}
                     </View>
+                    {/* 30 octobre 2026 (H2) : une charge sans repetitions se voit, sans rien bloquer d'autre */}
+                    {etatSerie(s) === 'moitie' ? (
+                      <View style={{ alignSelf: 'flex-start', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 12, backgroundColor: intensite(3).tint }}>
+                        <Ink size={13} weight="extraBold" color={intensite(3).text}>{traduire('Il manque les répétitions')}</Ink>
+                      </View>
+                    ) : null}
+                    {/* (H4) la derniere fois au haut de l'objectif : un palier de plus, sans chiffre de kilos */}
+                    {(() => {
+                      if (draft.form || i !== 0 || current.sets.some((x) => x.done)) return null;
+                      if (current.cible?.raison === 'monte' || current.cible?.raison === 'variante' || libre?.raison === 'monte') return null;
+                      const objectifReps = current.cible ? { repsMax: current.cible.repsMax, secondes: current.cible.secondes } : current.objectifReps ? { repsMax: current.objectifReps } : null;
+                      const enc = encouragement(hCurrent?.travail ?? hCurrent?.lastSets, objectifReps);
+                      if (!enc) return null;
+                      const charge = enc.weight > 0 ? (lb ? traduire('{0} lb', fmtNum(saisieDepuisKg(enc.weight, unite))) : traduire('{0} kg', fmtNum(enc.weight))) : null;
+                      return (
+                        <Ink size={13} weight="bold" color={c.accentText}>
+                          {charge ? traduire('La dernière fois : {0} × {1}. Essaie un palier de plus.', charge, enc.reps) : traduire('La dernière fois : {0} répétitions. Essaie un palier de plus.', enc.reps)}
+                        </Ink>
+                      );
+                    })()}
                     <View style={{ flexDirection: 'row', gap: 10 }}>
                       <View style={{ flex: 1 }}>
                         <Stepper layout="stack" value={saisieDepuisKg(s.weight, unite)} step={lb ? 2 : 1} fine={lb ? 1 : 0.5} saut={lb ? 20 : 10} max={lb ? 1100 : 500} decimals unit={lb ? traduire('livres') : traduire('kilos')} size={38} button={50} uniteForte={lb ? traduire('LB') : traduire('KG')} onChange={(v) => setValue(current.id, s.id, { weight: kgDepuisSaisie(v, unite) })} />
@@ -1145,7 +1188,7 @@ export default function SeanceMuscu() {
                   onLongPress={() => askSetAction(current, i)}
                   accessibilityRole="button"
                   accessibilityLabel={s.done ? traduire("Série {0} validée, {1}. Toucher pour la modifier", i + 1, setLabel(s, unite)) : traduire("Série {0} prévue, {1}", i + 1, setLabel(s, unite))}
-                  style={[pending ? { backgroundColor: c.fillSoft, borderRadius: 18 } : carteBlanche(c.surface, c.divider), { flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 8, borderRadius: 18 }]}
+                  style={[pending ? { backgroundColor: c.fillSoft, borderRadius: 18 } : { backgroundColor: ton('menthe').fond }, { flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 8, borderRadius: 18 }]}
                 >
                   <Ink size={16} weight="extraBold" color={c.textSecondary} style={{ width: 44, textAlign: 'center' }}>{i + 1}</Ink>
                   {/* 30 octobre 2026 (F) : l'unite en gros, aux deux tiers du chiffre */}
@@ -1162,6 +1205,11 @@ export default function SeanceMuscu() {
                       )
                     ) : null}
                   </View>
+                  {current.sets.length > 1 ? (
+                    <Pressable onPress={() => supprimerSerie(current, i)} accessibilityRole="button" accessibilityLabel={traduire('Supprimer la série {0}', i + 1)} hitSlop={6} style={({ pressed }) => ({ width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? blancA(0.7) : 'transparent' })}>
+                      <Icon name="close" size={13} color={c.textMuted} strokeWidth={2.6} />
+                    </Pressable>
+                  ) : null}
                 </Pressable>
               );
             })}
@@ -1283,13 +1331,18 @@ export default function SeanceMuscu() {
             !current
               ? { quoi: 'ajouter' }
               : activeIndex >= 0 && !enPlus
-                ? { quoi: 'valider', serie: activeIndex + 1, total: Math.max(objectif?.total ?? current.sets.length, activeIndex + 1), detail: setLabel(current.sets[activeIndex], unite), possible: current.sets[activeIndex].reps > 0 }
+                ? { quoi: 'valider', serie: activeIndex + 1, total: Math.max(objectif?.total ?? current.sets.length, activeIndex + 1), detail: setLabel(current.sets[activeIndex], unite), possible: current.sets[activeIndex].reps > 0 || (etatSerie(current.sets[activeIndex]) === 'vide' && current.sets.length > 1) }
                 : nextEx
                   ? { quoi: 'suivant', nom: sansTiret(traduire(nomFr(nextEx.name))) }
                   : { quoi: 'terminer' }
           }
           aSuivre={activeIndex >= 0 && !enPlus && nextEx ? sansTiret(traduire(nomFr(nextEx.name))) : null}
-          onValider={() => current && activeIndex >= 0 && validate(current, activeIndex)}
+          onValider={() => {
+            if (!current || activeIndex < 0) return;
+            // 30 octobre 2026 (H2) : une serie vide est ignoree (retiree), la suivante prend sa place
+            if (etatSerie(current.sets[activeIndex]) === 'vide' && current.sets.length > 1) return supprimerSerie(current, activeIndex);
+            validate(current, activeIndex);
+          }}
           onSuivant={() => nextEx && update((d) => allerAExercice(d, nextEx.id))}
           onTerminer={() => setFinishOpen(true)}
           onAjouter={() => setPickerOpen(true)}
@@ -1310,6 +1363,15 @@ export default function SeanceMuscu() {
             impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
           }}
         />
+      ) : null}
+
+      {annulable ? (
+        <View accessibilityLiveRegion="polite" style={{ position: 'absolute', left: 16, right: 16, bottom: insets.bottom + 150, flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, paddingLeft: 16, paddingRight: 8, borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, shadowColor: c.shadow, shadowOpacity: 0.14, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}>
+          <Ink size={14} weight="bold" style={{ flex: 1 }}>{traduire('Série supprimée')}</Ink>
+          <Pressable onPress={annulerSuppression} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.accentTint })}>
+            <Ink size={14} weight="extraBold" color={c.accentText}>{traduire('Annuler')}</Ink>
+          </Pressable>
+        </View>
       ) : null}
 
       {reposFiniVu ? (
