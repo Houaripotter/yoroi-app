@@ -76,7 +76,8 @@ import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { BoutonCoachVocal, useCoachVocal } from '@/components/yoroi/v2/seance/CoachVocal';
 import { cibleDefilement } from '@/lib/v2/seances/defilementExo';
-import { DUREE_MESSAGE_MS, decisionFinRepos } from '@/lib/v2/seances/finRepos';
+import { completerExercice } from '@/lib/v2/seances/exerciceEnregistre';
+import { DUREE_MESSAGE_MS, decisionFinRepos, retirerReposFini } from '@/lib/v2/seances/finRepos';
 import { alternativesCardio, annulerFinCardio, estCardioFin, demarrer as demarrerChrono, dureeFinaleSec, ecouleMs, enCours as chronoEnCours, finObjectifMs, fmtChrono, nomCardioFin, nouveauChrono, objectifAtteint, pause as pauseChrono, programmerFinCardio } from '@/lib/v2/seances/cardioFin';
 import type { ChronoCardio } from '@/lib/v2/seances/cardioFin';
 import { playWizzSound } from '@/lib/soundManager';
@@ -922,14 +923,8 @@ export default function SeanceMuscu() {
             records.push({ name: e.name, weight: top.weight, reps: top.reps, kind: h && top.weight > h.bestWeight ? 'charge' : 'max' });
           }
           const out: Exercise = { ...(e.orig ?? {}), name: e.name, muscle_group: e.muscle, weight: best.weight, reps: best.reps, sets: setsData.length, setsData };
-          if (e.notes && e.notes.trim()) out.notes = e.notes.trim();
-          // 30 octobre 2026 (J) : cardio, la duree reelle (minutes) et la distance si tu l'as notee (champs existants d'Exercise)
-          if (e.cardio) {
-            out.duration = Math.round((done[0]?.reps ?? 0) / 60);
-            if (e.cardio.distanceKm && e.cardio.distanceKm > 0) out.distance = e.cardio.distanceKm;
-          }
-          else delete out.notes;
-          return out;
+          // la note, et pour le cardio la duree reelle (minutes) et la distance (lib/v2/seances/exerciceEnregistre.ts)
+          return completerExercice(out, e, done[0]?.reps ?? 0);
         })
         .filter((e): e is Exercise => e !== null);
 
@@ -1457,7 +1452,9 @@ export default function SeanceMuscu() {
           onAdd={(sec) => update((d) => ({ ...d, restEndsAt: (d.restEndsAt ?? Date.now()) + sec * 1000, restTotal: d.restTotal + sec }))}
           onSkip={() => update((d) => ({ ...d, restEndsAt: null }))}
           onFinish={(enRetard) => {
-            if (!enRetard) return void setTimeout(() => update((d) => ({ ...d, restEndsAt: null })), 1500);
+            // seul le repos qui vient de finir part : un repos relance entre temps reste (lib/v2/seances/finRepos.ts)
+            const fin = draft.restEndsAt;
+            if (!enRetard) return void setTimeout(() => update((d) => retirerReposFini(d, fin)), 1500);
             update((d) => ({ ...d, restEndsAt: null }));
             setReposFiniVu(true);
             impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
