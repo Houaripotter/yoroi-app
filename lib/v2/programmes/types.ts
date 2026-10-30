@@ -28,6 +28,11 @@ export type ExoProgramme = {
   poidsDuCorps?: boolean;
   /** exercice tenu (suspension, marche du fermier) : repsMin et repsMax sont des secondes */
   secondes?: boolean;
+  /**
+   * 30 octobre 2026 : un exercice cardio avec son chrono (la brique Cardio, briques.ts) : sa durée en minutes.
+   * Pendant la séance il devient l'exercice cardio de lib/v2/seances/cardioFin.ts (« Remplacer » : du cardio).
+   */
+  minutes?: number;
 };
 
 /** Seance en rounds (sac de frappe, shadow) : elle s'ouvre dans le chrono de rounds */
