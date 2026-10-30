@@ -14,6 +14,8 @@ import { safeOpenURL } from '@/lib/security/validators';
 import { Card, P, Press, tap } from '@/components/yoroi/v2/accueil/kit';
 import type { Source } from '@/lib/v2/nutrition/formulas';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
 
 export { P, tap };
 
@@ -103,11 +105,14 @@ const PATHS = {
 
 export type NIconName = keyof typeof PATHS;
 
-export function NIcon({ name, size = 22, color = P.ink, width = 2.2 }: { name: NIconName; size?: number; color?: string; width?: number }) {
+/** 30 octobre 2026 : le sticker de l'icone quand il y en a un (reglage Stickers), voir ui/StickerIcone */
+export function NIcon({ name, size = 22, color = P.ink, width = 2.2, sticker }: { name: NIconName; size?: number; color?: string; width?: number; sticker?: NomSticker | false }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d={PATHS[name]} stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </Svg>
+    <IconeOuSticker nom={name} sticker={sticker} taille={size}>
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path d={PATHS[name]} stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </Svg>
+    </IconeOuSticker>
   );
 }
 
