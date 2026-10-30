@@ -36,15 +36,15 @@ export default function Aide() {
   return (
     <EspaceScreen title={traduire("Aide et questions")} subtitle={traduire("Comprendre YOROI et nous écrire")}>
       <Card>
-        <ValueRow first icon="image" label={traduire("Revoir la présentation")} sub={traduire("Personnage, Santé, scène, puis la visite")} onPress={() => router.push('/nouveautes?revoir=1' as any)} />
-        <ValueRow icon="spark" label={traduire("Revoir la visite guidée")} sub={traduire("Je te montre l’app, écran par écran")} onPress={() => lancerVisite(router)} />
-        <ValueRow icon="doc" label={traduire("Savoir")} sub={traduire("Règles des sports et sources scientifiques")} onPress={() => router.push('/savoir' as any)} />
+        <ValueRow first sticker="presentation" icon="image" label={traduire("Revoir la présentation")} sub={traduire("Personnage, Santé, scène, puis la visite")} onPress={() => router.push('/nouveautes?revoir=1' as any)} />
+        <ValueRow sticker="boussole" icon="spark" label={traduire("Revoir la visite guidée")} sub={traduire("Je te montre l’app, écran par écran")} onPress={() => lancerVisite(router)} />
+        <ValueRow sticker="carnet" icon="doc" label={traduire("Savoir")} sub={traduire("Règles des sports et sources scientifiques")} onPress={() => router.push('/savoir' as any)} />
         {/* 18 octobre 2026 (Houari : « les sources des calculs doivent être visibles ») : un acces direct */}
-        <ValueRow icon="doc" label={traduire("Sources scientifiques")} sub={traduire("Les études derrière les calculs de YOROI")} onPress={() => router.push('/scientific-sources' as any)} />
-        <ValueRow icon="mail" label={traduire("Boîte à idées")} sub={traduire("Une idée, un bug ? Écris à l’équipe")} onPress={() => mail(traduire('Idée pour YOROI'))} />
+        <ValueRow sticker="recherche" icon="doc" label={traduire("Sources scientifiques")} sub={traduire("Les études derrière les calculs de YOROI")} onPress={() => router.push('/scientific-sources' as any)} />
+        <ValueRow sticker="carnet_papier" icon="mail" label={traduire("Boîte à idées")} sub={traduire("Une idée, un bug ? Écris à l’équipe")} onPress={() => mail(traduire('Idée pour YOROI'))} />
         {/* 18 octobre 2026 : la page Aide et contact du site (questions frequentes, abonnement, donnees) */}
-        <ValueRow icon="globe" label={traduire("Aide en ligne")} sub={traduire("Achats, abonnement, données : les réponses")} onPress={() => void safeOpenURL(APP_CONFIG.site.support)} />
-        <ValueRow icon="share" label={traduire("Partager YOROI")} sub={traduire("Avec un partenaire d’entraînement")} onPress={shareApp} />
+        <ValueRow sticker="aide" icon="globe" label={traduire("Aide en ligne")} sub={traduire("Achats, abonnement, données : les réponses")} onPress={() => void safeOpenURL(APP_CONFIG.site.support)} />
+        <ValueRow sticker="partager" icon="share" label={traduire("Partager YOROI")} sub={traduire("Avec un partenaire d’entraînement")} onPress={shareApp} />
       </Card>
       <PopupComponent />
     </EspaceScreen>
