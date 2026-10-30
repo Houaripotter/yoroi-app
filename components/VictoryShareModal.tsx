@@ -41,6 +41,7 @@ import { calculatePace, formatDuration, formatDistance, formatValue, BenchmarkEn
 import { LinearGradient } from 'expo-linear-gradient';
 import { logger } from '@/lib/security/logger';
 import { traduire } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 
 export interface VictorySessionData {
   exerciseName: string;
@@ -319,7 +320,7 @@ export default function VictoryShareModal({
             <Text style={[styles.runningStatLabel, { color: secondaryColor }, textShadow]}>
               {traduire("TEMPS")}</Text>
             <View style={styles.paceRow}>
-              <Clock size={18} color={getCategoryColor()} />
+              <IconeOuSticker sticker="chrono" taille={18}><Clock size={18} color={getCategoryColor()} /></IconeOuSticker>
               <Text style={[styles.runningTimeValue, { color: textColor }, textShadow]}>
                 {timeDisplay}
               </Text>
@@ -330,7 +331,7 @@ export default function VictoryShareModal({
         {/* Calories */}
         {!!sessionData.calories && sessionData.calories > 0 && (
           <View style={styles.runningStatRow}>
-            <Flame size={16} color="#EF4444" />
+            <IconeOuSticker sticker="flamme" taille={16}><Flame size={16} color="#EF4444" /></IconeOuSticker>
             <Text style={[styles.runningCaloriesText, { color: textColor }, textShadow]}>
               {sessionData.calories} kcal
             </Text>
@@ -355,7 +356,7 @@ export default function VictoryShareModal({
 
         {/* Performance: Weight × Reps */}
         <View style={styles.forcePerformanceRow}>
-          <Dumbbell size={24} color={getCategoryColor()} />
+          <IconeOuSticker sticker="musculation" taille={24}><Dumbbell size={24} color={getCategoryColor()} /></IconeOuSticker>
           <Text style={[styles.performanceValue, { color: getCategoryColor() }, textShadow]}>
             {sessionData.performance}
           </Text>
@@ -365,7 +366,7 @@ export default function VictoryShareModal({
         <View style={styles.statsRow}>
           {!!sessionData.duration && sessionData.duration > 0 && (
             <View style={styles.statItem}>
-              <Clock size={14} color={textColor} />
+              <IconeOuSticker sticker="chrono" taille={14}><Clock size={14} color={textColor} /></IconeOuSticker>
               <Text style={[styles.statValue, { color: textColor }, textShadow]}>
                 {formatDuration(sessionData.duration)}
               </Text>
@@ -373,7 +374,7 @@ export default function VictoryShareModal({
           )}
           {!!sessionData.calories && sessionData.calories > 0 && (
             <View style={styles.statItem}>
-              <Flame size={14} color="#EF4444" />
+              <IconeOuSticker sticker="flamme" taille={14}><Flame size={14} color="#EF4444" /></IconeOuSticker>
               <Text style={[styles.statValue, { color: textColor }, textShadow]}>
                 {sessionData.calories} kcal
               </Text>
@@ -404,7 +405,7 @@ export default function VictoryShareModal({
           </Text>
         ) : sessionData.duration && sessionData.duration > 0 ? (
           <View style={styles.combatDurationRow}>
-            <Timer size={28} color={getCategoryColor()} />
+            <IconeOuSticker sticker="chrono" taille={28}><Timer size={28} color={getCategoryColor()} /></IconeOuSticker>
             <Text style={[styles.combatDurationText, { color: getCategoryColor() }, textShadow]}>
               {formatDuration(sessionData.duration)}
             </Text>
@@ -415,7 +416,7 @@ export default function VictoryShareModal({
         <View style={styles.statsRow}>
           {!!sessionData.duration && sessionData.duration > 0 && sessionData.performance && sessionData.performance !== '--' && (
             <View style={styles.statItem}>
-              <Clock size={14} color={textColor} />
+              <IconeOuSticker sticker="chrono" taille={14}><Clock size={14} color={textColor} /></IconeOuSticker>
               <Text style={[styles.statValue, { color: textColor }, textShadow]}>
                 {formatDuration(sessionData.duration)}
               </Text>
@@ -423,7 +424,7 @@ export default function VictoryShareModal({
           )}
           {!!sessionData.calories && sessionData.calories > 0 && (
             <View style={styles.statItem}>
-              <Flame size={14} color="#EF4444" />
+              <IconeOuSticker sticker="flamme" taille={14}><Flame size={14} color="#EF4444" /></IconeOuSticker>
               <Text style={[styles.statValue, { color: textColor }, textShadow]}>
                 {sessionData.calories} kcal
               </Text>
@@ -431,7 +432,7 @@ export default function VictoryShareModal({
           )}
           {sessionData.rpe && (
             <View style={styles.statItem}>
-              <Target size={14} color="#F59E0B" />
+              <IconeOuSticker sticker="objectifs" taille={14}><Target size={14} color="#F59E0B" /></IconeOuSticker>
               <Text style={[styles.statValue, { color: textColor }, textShadow]}>
                 RPE {sessionData.rpe}
               </Text>
@@ -511,7 +512,7 @@ export default function VictoryShareModal({
         <View style={[styles.statsRow, { marginTop: 8 }]}>
           {!!sessionData.duration && (
             <View style={styles.statItem}>
-              <Clock size={16} color={textColor} />
+              <IconeOuSticker sticker="chrono" taille={16}><Clock size={16} color={textColor} /></IconeOuSticker>
               <Text style={[styles.statValue, { color: textColor, fontSize: 15 }, textShadow]}>
                 {formatDuration(sessionData.duration)}
               </Text>
@@ -519,7 +520,7 @@ export default function VictoryShareModal({
           )}
           {!!sessionData.calories && (
             <View style={styles.statItem}>
-              <Flame size={16} color="#EF4444" fill="#EF4444" />
+              <IconeOuSticker sticker="flamme" taille={16}><Flame size={16} color="#EF4444" fill="#EF4444" /></IconeOuSticker>
               <Text style={[styles.statValue, { color: textColor, fontSize: 15 }, textShadow]}>
                 {sessionData.calories} kcal
               </Text>
@@ -547,7 +548,7 @@ export default function VictoryShareModal({
             <X size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
-            <Trophy size={20} color="#F59E0B" />
+            <IconeOuSticker sticker="trophee" taille={20}><Trophy size={20} color="#F59E0B" /></IconeOuSticker>
             <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
               {traduire("Victoire !")}</Text>
           </View>
@@ -628,7 +629,7 @@ export default function VictoryShareModal({
                     {/* PR Badge */}
                     {sessionData.isPR && (
                       <View style={styles.prBanner}>
-                        <Award size={16} color="#F59E0B" />
+                        <IconeOuSticker sticker="medaille_or" taille={16}><Award size={16} color="#F59E0B" /></IconeOuSticker>
                         <Text style={styles.prText}>{traduire("NOUVEAU RECORD")}</Text>
                       </View>
                     )}
@@ -751,7 +752,7 @@ export default function VictoryShareModal({
                     style={[styles.photoPickerBtn, { backgroundColor: getCategoryColor() }]}
                     onPress={takePhoto}
                   >
-                    <Camera size={22} color="#FFFFFF" />
+                    <IconeOuSticker sticker="appareil_photo" taille={22}><Camera size={22} color="#FFFFFF" /></IconeOuSticker>
                     <Text style={styles.photoPickerBtnText}>{traduire("Prendre une photo")}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -777,7 +778,7 @@ export default function VictoryShareModal({
                   style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
                   onPress={takePhoto}
                 >
-                  <Camera size={18} color={colors.textPrimary} />
+                  <IconeOuSticker sticker="appareil_photo" taille={18}><Camera size={18} color={colors.textPrimary} /></IconeOuSticker>
                   <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>{traduire("Nouvelle")}</Text>
                 </TouchableOpacity>
               </View>
@@ -794,7 +795,7 @@ export default function VictoryShareModal({
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
                   <>
-                    <Share2 size={20} color="#FFFFFF" />
+                    <IconeOuSticker sticker="partager" taille={20}><Share2 size={20} color="#FFFFFF" /></IconeOuSticker>
                     <Text style={styles.shareBtnText}>{traduire("Partager")}</Text>
                   </>
                 )}
@@ -804,7 +805,7 @@ export default function VictoryShareModal({
                 onPress={saveToGallery}
                 disabled={isLoading}
               >
-                <Download size={20} color={colors.textPrimary} />
+                <IconeOuSticker sticker="sauvegarde" taille={20}><Download size={20} color={colors.textPrimary} /></IconeOuSticker>
               </TouchableOpacity>
             </View>
 
