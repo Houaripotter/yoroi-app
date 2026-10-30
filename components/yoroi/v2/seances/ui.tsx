@@ -3,7 +3,7 @@
  * cartes, puces, boutons et feuille du bas.
  */
 import React from 'react';
-import { Modal, Pressable, ScrollView, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,6 +21,7 @@ import { P } from '@/components/yoroi/livePalette';
 import { Pastille } from '@/components/yoroi/v2/dojo/Kozane';
 import { traduire } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 
 export const tap = () => {
   impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
@@ -229,12 +230,15 @@ export function Sheet({ visible, onClose, title, children }: { visible: boolean;
 }
 
 /** Ligne de liste dans une feuille ou une carte */
-export function Row({ title, sub, onPress, icon, right, danger }: { title: string; sub?: string; onPress?: () => void; icon?: IconName; right?: React.ReactNode; danger?: boolean }) {
+export function Row({ title, sub, onPress, icon, sticker, right, danger }: { title: string; sub?: string; onPress?: () => void; icon?: IconName; /** 30 octobre 2026 : le sticker a la place de l'icone (reglage Illustrations sur Stickers) */ sticker?: NomSticker; right?: React.ReactNode; danger?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  const illus = useIllustrations();
   const content = (
     <>
-      {icon ? (
+      {sticker && illus.stickers ? (
+        <Image source={illus.img(sticker)} style={{ width: 40, height: 40 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+      ) : icon ? (
         <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: danger ? c.dangerTint : c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name={icon} size={20} color={danger ? c.danger : c.ink} />
         </View>
