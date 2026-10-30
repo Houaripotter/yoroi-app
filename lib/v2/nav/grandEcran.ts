@@ -81,3 +81,21 @@ export function rangeesTrois<T>(tuiles: (TuileTrois<T> | null | undefined | fals
   fermer();
   return out;
 }
+
+/**
+ * La colonne de cote (Ton poids sur l'accueil, Cette semaine dans Seances) : un tiers environ de la page, jamais
+ * moins de 300 points (lisible a 1024) ni plus de 420.
+ */
+export function largeurCote(largeurPage: number): number {
+  return Math.max(300, Math.min(420, Math.round(largeurPage * 0.32)));
+}
+
+/** Combien de colonnes pour une grille de cartes : 3 sur une page large, 2 sur une page plus etroite (iPad, 1024) */
+export function colonnesPour(largeurPage: number): 2 | 3 {
+  return largeurPage >= 1000 ? 3 : 2;
+}
+
+/** Les cartes Tes outils : 7 sur une rangee si elles gardent 140 points, sinon sur plusieurs rangees (au moins 3 par rangee) */
+export function colonnesOutils(largeurGrille: number, espace = 12): number {
+  return Math.min(7, Math.max(3, Math.floor((largeurGrille + espace) / (140 + espace))));
+}
