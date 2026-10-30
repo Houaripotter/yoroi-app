@@ -3,9 +3,12 @@
  * validee par Houari). Sur Mac et iPad en grande fenetre, elle remplace la barre d'onglets du bas (InkTabBar, qui
  * reste celle de l'iPhone) : le nom YOROI, le bouton Enregistrer (le meme + que sur iPhone), Accueil, Seances,
  * Progres, Dojo, puis Reglages et ton rond de profil en bas. L'onglet ouvert est une pilule pastel, comme sur iPhone.
+ * 30 octobre 2026 (valide par Houari) : avec le reglage Illustrations sur Stickers, les onglets prennent les memes
+ * stickers que sur iPhone (torii, musculation, bilan, kabuto) et Reglages l'engrenage, toujours en pleine couleur ;
+ * l'onglet ouvert garde sa pilule pastel avec un sticker un peu plus grand. En Encre japonaise, les icones reviennent.
  */
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -18,12 +21,13 @@ import { RondProfil } from '@/components/yoroi/v2/accueil/Scene';
 import { useIdentite } from '@/lib/v2/espace/useIdentite';
 import { LARGEUR_BARRE_LATERALE } from '@/lib/v2/nav/grandEcran';
 import { traduire } from '@/lib/i18n/tr';
+import { STICKERS, useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 
-const ICONS: Record<string, { label: string; d: string[]; join?: boolean }> = {
-  index: { label: 'Accueil', d: ['M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'], join: true },
-  seances: { label: 'Séances', d: ['M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11'] },
-  progres: { label: 'Progrès', d: ['M3 17l5-5 4 3 8-8', 'M15 7h5v5'], join: true },
-  dojo: { label: 'Dojo', d: ['M3 6h18M5 9.5h14M7 6v15M17 6v15'] },
+const ICONS: Record<string, { label: string; d: string[]; join?: boolean; sticker: NomSticker }> = {
+  index: { label: 'Accueil', d: ['M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'], join: true, sticker: 'torii' },
+  seances: { label: 'Séances', d: ['M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11'], sticker: 'musculation' },
+  progres: { label: 'Progrès', d: ['M3 17l5-5 4 3 8-8', 'M15 7h5v5'], join: true, sticker: 'bilan' },
+  dojo: { label: 'Dojo', d: ['M3 6h18M5 9.5h14M7 6v15M17 6v15'], sticker: 'kabuto' },
 };
 const ORDRE = ['index', 'seances', 'progres', 'dojo'];
 /** la roue dentee de Reglages */
@@ -33,6 +37,12 @@ const ROUE = [
 ];
 
 type Props = BottomTabBarProps & { onPressAdd: () => void };
+
+/** Le sticker d'un onglet en pleine couleur : 30 ouvert, 26 sinon (la ligne garde sa hauteur) */
+function StickerOnglet({ nom, ouvert }: { nom: NomSticker; ouvert?: boolean }) {
+  const t = ouvert ? 30 : 26;
+  return <Image source={STICKERS[nom]} style={{ width: t, height: t, margin: (21 - t) / 2 }} resizeMode="contain" accessibilityIgnoresInvertColors />;
+}
 
 function Icone({ d, couleur, join }: { d: string[]; couleur: string; join?: boolean }) {
   return (
@@ -51,6 +61,7 @@ export function BarreLaterale({ state, navigation, onPressAdd }: Props) {
   const router = useRouter();
   const { profile, armure } = useIdentite();
   const prenom = profile?.name?.trim().split(' ')[0] || traduire('Athlète');
+  const illus = useIllustrations();
 
   const onglet = (name: string) => {
     const index = state.routes.findIndex((r) => r.name === name);
@@ -72,7 +83,7 @@ export function BarreLaterale({ state, navigation, onPressAdd }: Props) {
           accessibilityState={{ selected: focused }}
           style={({ pressed }) => [styles.ligne, focused ? { backgroundColor: c.primary } : pressed ? { backgroundColor: c.accentTint } : null]}
         >
-          <Icone d={icon.d} join={icon.join} couleur={focused ? c.onPrimary : c.textSecondary} />
+          {illus.stickers ? <StickerOnglet nom={icon.sticker} ouvert={focused} /> : <Icone d={icon.d} join={icon.join} couleur={focused ? c.onPrimary : c.textSecondary} />}
           <Ink size={15.5} weight={focused ? 'black' : 'extraBold'} color={focused ? c.onPrimary : c.textSecondary} numberOfLines={1}>
             {traduire(icon.label)}
           </Ink>
@@ -123,7 +134,7 @@ export function BarreLaterale({ state, navigation, onPressAdd }: Props) {
         accessibilityLabel={traduire('Réglages')}
         style={({ pressed }) => [styles.ligne, pressed ? { backgroundColor: c.accentTint } : null]}
       >
-        <Icone d={ROUE} join couleur={c.textSecondary} />
+        {illus.stickers ? <StickerOnglet nom="engrenage" /> : <Icone d={ROUE} join couleur={c.textSecondary} />}
         <Ink size={15.5} weight="extraBold" color={c.textSecondary} numberOfLines={1}>
           {traduire('Réglages')}
         </Ink>
