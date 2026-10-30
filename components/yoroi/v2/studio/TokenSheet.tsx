@@ -90,7 +90,7 @@ export function TokenSheet({ visible, onClose, onUnlocked }: { visible: boolean;
         <View style={{ backgroundColor: c.background, borderRadius: 28, padding: 20, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="lock" size={22} color={c.accent} />
+              <Icon sticker="cle" name="lock" size={22} color={c.accent} />
             </View>
             <View style={{ flex: 1, gap: 2 }}>
               <Ink size={20} weight="black" tight>{traduire("Studio YOROI")}</Ink>
