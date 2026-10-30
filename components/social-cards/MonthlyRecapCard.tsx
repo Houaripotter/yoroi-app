@@ -5,6 +5,7 @@ import { Calendar, TrendingDown, TrendingUp, Award } from 'lucide-react-native';
 import { MonthStats } from '@/lib/social-cards/useMonthStats';
 import { ThemeColors } from '@/lib/ThemeContext';
 import { traduire } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 
 // ============================================
 // MONTHLY RECAP CARD - Récap mensuel avec calendrier
@@ -101,7 +102,7 @@ export const MonthlyRecapCard = React.memo(forwardRef<View, MonthlyRecapCardProp
           {/* HEADER */}
           <View style={styles.header}>
             <View style={styles.headerRow}>
-              <Calendar size={20} color={colors.accent} />
+              <IconeOuSticker sticker="calendrier" taille={20}><Calendar size={20} color={colors.accent} /></IconeOuSticker>
               <Text style={[styles.monthTitle, { color: colors.accent }]}>
                 {stats.monthName.toUpperCase()} {stats.year}
               </Text>
@@ -167,7 +168,7 @@ export const MonthlyRecapCard = React.memo(forwardRef<View, MonthlyRecapCardProp
           {/* MEILLEURE SEMAINE */}
           {stats.bestWeek.daysActive > 0 && (
             <View style={[styles.bestWeekContainer, { backgroundColor: colors.backgroundElevated || colors.card }]}>
-              <Award size={18} color={colors.gold || colors.accent} />
+              <IconeOuSticker sticker="medaille_or" taille={18}><Award size={18} color={colors.gold || colors.accent} /></IconeOuSticker>
               <Text style={[styles.bestWeekText, { color: colors.textPrimary }]}>
                 {traduire("Meilleure semaine: Semaine {0} • {1} jours", stats.bestWeek.weekNumber, stats.bestWeek.daysActive)}</Text>
             </View>
