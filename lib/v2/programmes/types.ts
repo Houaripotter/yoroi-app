@@ -64,6 +64,11 @@ export type JourProgramme = {
   exos: ExoProgramme[];
   rounds?: RoundsProgramme;
   cardio?: CardioProgramme;
+  /**
+   * 30 octobre 2026 : une séance d'un programme construit par toi (monProgramme.ts) : son jour dans ta semaine
+   * (0 = lundi), `b` dans ta semaine B. Son id ne dépend plus du jour : déplacée, elle garde son id (séances faites).
+   */
+  jourPerso?: { d: number; b?: boolean };
 };
 
 export type Programme = {

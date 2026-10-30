@@ -77,5 +77,7 @@ export function semaineDuModele(p: Programme): (SeancePerso | null)[] {
 /** Le modèle choisi correspond encore à ta semaine (rien changé depuis) : sa carte reste marquée */
 export function semaineEgaleAuModele(semaine: readonly (SeancePerso | null)[], p: Programme): boolean {
   const m = semaineDuModele(p);
-  return semaine.length === 7 && semaine.every((s, d) => JSON.stringify(s && s.exos.length ? s : null) === JSON.stringify(m[d]));
+  // 30 octobre 2026 : l'identité de la séance (sid, monProgramme.ts) ne compte pas, seulement son contenu
+  const sansSid = (s: SeancePerso | null) => { if (!s || !s.exos.length) return null; const { sid: _sid, ...reste } = s; return reste; };
+  return semaine.length === 7 && semaine.every((s, d) => JSON.stringify(sansSid(s)) === JSON.stringify(sansSid(m[d] ?? null)));
 }

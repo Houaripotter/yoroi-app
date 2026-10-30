@@ -30,6 +30,12 @@ export type SeancePerso = {
   /** ton nom (« Push », « Jambes ») ; absent : déduit des muscles (titreParDefaut) */
   titre?: string;
   exos: ExoProgramme[];
+  /**
+   * 30 octobre 2026 : l'identité stable de la séance (son id : « perso-…-<sid> », idSeancePerso). Elle suit la séance
+   * quand tu la changes de jour : tes séances faites et tes progrès la retrouvent toujours. Les programmes d'avant
+   * n'en avaient pas : chaque séance reçoit l'id qu'elle avait alors, celui de son jour (« d3 », « b3 »), rien ne change.
+   */
+  sid?: string;
 };
 
 export type RappelPerso = { actif: boolean; heure: string };
@@ -136,6 +142,12 @@ export function joursDuPerso(pp: Pick<ProgrammePerso, 'semaine'>): number[] {
 /** Le plan du programme (planJours.ts) : le jour de chaque séance, dans l'ordre des séances */
 export const planDuPerso = joursDuPerso;
 
+/** 30 octobre 2026 : tes jours de séance, semaine B comprise quand elle alterne (les rappels, rappelProgramme.ts) */
+export function joursDeSeancePerso(pp: Pick<ProgrammePerso, 'semaine' | 'semaineB' | 'ab'>): number[] {
+  const b = pp.ab && pp.semaineB ? pp.semaineB.map((s, d) => (s && s.exos.length ? d : -1)).filter((d) => d >= 0) : [];
+  return Array.from(new Set([...joursDuPerso(pp), ...b])).sort((x, y) => x - y);
+}
+
 export function nombreSeances(pp: Pick<ProgrammePerso, 'semaine'>): number {
   return joursDuPerso(pp).length;
 }
@@ -210,17 +222,82 @@ export const idJourPerso = (id: string, jour: number) => `${id}-d${jour}`;
 
 export const idJourPersoB = (id: string, jour: number) => `${id}-b${jour}`;
 
+/** 30 octobre 2026 : l'id d'une séance de ton programme, stable (sid) ; les séances d'avant gardent « d3 », « b3 » */
+export const idSeancePerso = (id: string, sid: string) => `${id}-${sid}`;
+const SID = /^[a-z0-9]{1,24}$/;
+const sidValide = (v: unknown): v is string => typeof v === 'string' && SID.test(v);
+
+/** L'id de la séance de ce jour (null : repos), A ou B */
+export function idDuJourPerso(pp: Pick<ProgrammePerso, 'id' | 'semaine' | 'semaineB'>, jour: number, b = false): string | null {
+  const s = (b ? pp.semaineB : pp.semaine)?.[jour];
+  if (!s || !s.exos.length) return null;
+  return idSeancePerso(pp.id, sidValide(s.sid) ? s.sid : `${b ? 'b' : 'd'}${jour}`);
+}
+
+/**
+ * Chaque séance reçoit son sid : le sien (le premier qui le porte, un double en reçoit un autre), sinon celui de
+ * son jour (« d3 », « b3 », comme ses ids d'avant), sinon un autre libre. Calcul pur, le même à chaque lecture.
+ */
+function avecSids(semaine: (SeancePerso | null)[], semaineB: (SeancePerso | null)[] | null): { semaine: (SeancePerso | null)[]; semaineB: (SeancePerso | null)[] | null } {
+  const vus = new Set<string>();
+  const garder = (l: (SeancePerso | null)[]) => l.map((s) => {
+    if (s && sidValide(s.sid) && !vus.has(s.sid)) {
+      vus.add(s.sid);
+      return s.sid;
+    }
+    return null;
+  });
+  const ga = garder(semaine);
+  const gb = semaineB ? garder(semaineB) : null;
+  const finir = (l: (SeancePerso | null)[], g: (string | null)[], prefixe: string) => l.map((s, d) => {
+    if (!s) return null;
+    let sid = g[d];
+    if (!sid) {
+      let c = `${prefixe}${d}`;
+      let k = 0;
+      while (vus.has(c)) c = `${prefixe}${d}x${++k}`;
+      sid = c;
+      vus.add(sid);
+    }
+    return { ...s, sid };
+  });
+  return { semaine: finir(semaine, ga, 'd'), semaineB: semaineB && gb ? finir(semaineB, gb, 'b') : null };
+}
+
+/**
+ * Avant d'écrire un programme déjà enregistré : une séance nouvelle (sans sid, ou un double) reçoit un sid neuf,
+ * jamais celui d'une séance d'avant (ses séances faites ne lui sont pas attribuées).
+ */
+export function avecSidsNeufs(pp: ProgrammePerso, maintenant = Date.now()): ProgrammePerso {
+  const tous = new Set([...pp.semaine, ...(pp.semaineB ?? [])].map((s) => s?.sid).filter(sidValide));
+  const vus = new Set<string>();
+  let k = 0;
+  const neuf = () => {
+    let c: string;
+    do c = `n${maintenant.toString(36)}${(k++).toString(36)}`; while (tous.has(c) || vus.has(c));
+    return c;
+  };
+  const l = (x: (SeancePerso | null)[]) => x.map((s) => {
+    if (!s) return s;
+    const sid = sidValide(s.sid) && !vus.has(s.sid) ? s.sid : neuf();
+    vus.add(sid);
+    return { ...s, sid };
+  });
+  return { ...pp, semaine: l(pp.semaine), ...(pp.semaineB ? { semaineB: l(pp.semaineB) } : {}) };
+}
+
 export function versProgramme(pp: ProgrammePerso): Programme {
+  // 30 octobre 2026 : chaque séance a son id stable (sid), son jour est dit à part (jourPerso)
   const jours = joursDuPerso(pp).map((d) => {
     const s = pp.semaine[d]!;
-    return { id: idJourPerso(pp.id, d), titre: titreDeSeance(s), muscles: musclesDeSeance(s.exos), exos: s.exos.map((e) => ({ ...e })) };
+    return { id: idDuJourPerso(pp, d)!, titre: titreDeSeance(s), muscles: musclesDeSeance(s.exos), exos: s.exos.map((e) => ({ ...e })), jourPerso: { d } };
   });
   // 28 octobre 2026 : ta semaine B, après tes séances de la semaine A ; ta semaine dit quel jour fait quoi
-  const joursB = (pp.semaineB ?? []).map((s, d) => (s && s.exos.length ? { id: idJourPersoB(pp.id, d), titre: titreDeSeance(s), muscles: musclesDeSeance(s.exos), exos: s.exos.map((e) => ({ ...e })) } : null)).filter((j): j is NonNullable<typeof j> => !!j);
+  const joursB = (pp.semaineB ?? []).map((s, d) => (s && s.exos.length ? { id: idDuJourPerso(pp, d, true)!, titre: titreDeSeance(s), muscles: musclesDeSeance(s.exos), exos: s.exos.map((e) => ({ ...e })), jourPerso: { d, b: true } } : null)).filter((j): j is NonNullable<typeof j> => !!j);
   const semaineLibre: SemaineLibre | undefined = joursB.length
     ? {
-        a: pp.semaine.map((s, d) => (s && s.exos.length ? { p: pp.id, s: idJourPerso(pp.id, d) } : null)),
-        b: (pp.semaineB ?? semaineVide()).map((s, d) => (s && s.exos.length ? { p: pp.id, s: idJourPersoB(pp.id, d) } : null)),
+        a: pp.semaine.map((_, d) => { const id = idDuJourPerso(pp, d); return id ? { p: pp.id, s: id } : null; }),
+        b: (pp.semaineB ?? semaineVide()).map((_, d) => { const id = idDuJourPerso(pp, d, true); return id ? { p: pp.id, s: id } : null; }),
         ...(pp.ab && pp.depuis ? { ab: true } : {}),
         ...(pp.depuis ? { depuis: pp.depuis } : {}),
       }
@@ -280,11 +357,13 @@ export function nettoyerPerso(x: unknown): ProgrammePerso | null {
       if (!s || typeof s !== 'object' || !Array.isArray(s.exos)) return null;
       const exos = s.exos.map(nettoyerExo).filter((e): e is ExoProgramme => !!e).slice(0, MAX_EXOS_SEANCE);
       if (!exos.length) return null;
-      return { ...(typeof s.titre === 'string' && s.titre.trim() ? { titre: s.titre.trim().slice(0, 40) } : {}), exos };
+      return { ...(typeof s.titre === 'string' && s.titre.trim() ? { titre: s.titre.trim().slice(0, 40) } : {}), exos, ...(sidValide(s.sid) ? { sid: s.sid } : {}) };
     });
   };
-  const semaine = lireSemainePerso(p.semaine);
-  const semaineB = Array.isArray(p.semaineB) ? lireSemainePerso(p.semaineB) : null;
+  // 30 octobre 2026 : chaque séance a son sid (les programmes d'avant : celui de son jour, leurs ids ne changent pas)
+  const sids = avecSids(lireSemainePerso(p.semaine), Array.isArray(p.semaineB) ? lireSemainePerso(p.semaineB) : null);
+  const semaine = sids.semaine;
+  const semaineB = sids.semaineB;
   const depuis = typeof p.depuis === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.depuis) ? p.depuis : undefined;
   const rappel = p.rappel && typeof p.rappel === 'object' && typeof p.rappel.heure === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(p.rappel.heure) ? { actif: !!p.rappel.actif, heure: p.rappel.heure } : undefined;
   return {
@@ -382,9 +461,12 @@ async function ecrireListe(liste: ProgrammePerso[]): Promise<void> {
 
 /** Crée ou met à jour (même id) ; renvoie le programme tel qu'enregistré */
 export async function enregistrerProgrammePerso(pp: ProgrammePerso, maintenant = new Date()): Promise<ProgrammePerso> {
-  const propre = nettoyerPerso({ ...pp, modifieLe: jourLocal(maintenant) });
-  if (!propre || !peutEnregistrer(propre)) throw new Error('programme vide');
+  if (!nettoyerPerso(pp) || !peutEnregistrer(pp)) throw new Error('programme vide');
   const liste = await chargerPourEcrire();
+  // 30 octobre 2026 : déjà enregistré, une séance nouvelle reçoit un sid neuf (jamais celui d'une séance d'avant)
+  const existe = liste.some((p) => p.id === pp.id);
+  const propre = nettoyerPerso({ ...(existe ? avecSidsNeufs(pp, maintenant.getTime()) : pp), modifieLe: jourLocal(maintenant) });
+  if (!propre || !peutEnregistrer(propre)) throw new Error('programme vide');
   const i = liste.findIndex((p) => p.id === propre.id);
   const suite = i >= 0 ? liste.map((p, k) => (k === i ? { ...propre, creeLe: p.creeLe } : p)) : [...liste, propre];
   await ecrireListe(suite);
@@ -410,7 +492,7 @@ export async function modifierProgrammePerso(id: string, changer: (pp: Programme
   if (i < 0) return null;
   const suite = changer(liste[i]);
   if (!suite) return null;
-  const propre = nettoyerPerso({ ...suite, id, creeLe: liste[i].creeLe, modifieLe: jourLocal(maintenant) });
+  const propre = nettoyerPerso({ ...avecSidsNeufs(suite, maintenant.getTime()), id, creeLe: liste[i].creeLe, modifieLe: jourLocal(maintenant) });
   if (!propre || !peutEnregistrer(propre)) return null;
   await ecrireListe(liste.map((p, k) => (k === i ? propre : p)));
   return propre;

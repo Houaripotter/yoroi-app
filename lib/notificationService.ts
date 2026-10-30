@@ -17,7 +17,7 @@ import { saveNotification } from '@/lib/notificationHistoryService';
 import { contenuSansSante } from '@/lib/v2/notifications/texte';
 import { noter } from '@/lib/v2/notifications/mesure';
 import { datesRappelSeance, messageSeance } from '@/lib/v2/notifications/discipline';
-import { chargerProgrammeActif, seancesAuxDates, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { chargerProgrammeActif, joursPourRappels, seancesAuxDates, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import { messageDuJour } from '@/lib/v2/programmes/lancer';
 import { getEspace, objectifVise } from '@/lib/v2/espace';
 import { traduire } from '@/lib/i18n/tr';
@@ -502,19 +502,23 @@ class NotificationService {
     } catch {
       // sans objectif lisible : les rappels suivent seulement tes jours
     }
-    const dates = datesRappelSeance({
-      jours: days,
+    // 24 octobre 2026 : avec un programme en cours, le rappel dit la seance du jour (« Aujourd'hui : Pectoraux... »).
+    // Les seances deja faites n'ont pas de rappel, et la liste est reprogrammee apres chaque seance : l'ordre suit le programme.
+    const actif = await chargerProgrammeActif().catch(() => null);
+    // 30 octobre 2026 : ton programme a toi, ou une semaine A et B : les rappels suivent ta semaine du moment (B comprise)
+    const r = joursPourRappels(actif, days);
+    const candidates = datesRappelSeance({
+      jours: r.jours,
       heure: time,
       faites: (trainings ?? []).map((t: any) => String(t?.date ?? '')),
       objectifSemaine: objectif,
       now: new Date(),
     });
-
-    // 24 octobre 2026 : avec un programme en cours, le rappel dit la seance du jour (« Aujourd'hui : Pectoraux... »).
-    // Les seances deja faites n'ont pas de rappel, et la liste est reprogrammee apres chaque seance : l'ordre suit le programme.
-    const actif = await chargerProgrammeActif().catch(() => null);
     // 27 octobre 2026 : avec tes jours séance par séance (Tes jours), chaque date dit la séance de son jour
-    const prevues = actif ? seancesAuxDates(actif, dates) : [];
+    const prevues0 = actif ? seancesAuxDates(actif, candidates) : [];
+    const garde = candidates.map((_, k) => k).filter((k) => !r.seulementSeances || !!prevues0[k]);
+    const dates = garde.map((k) => candidates[k]);
+    const prevues = garde.map((k) => prevues0[k]);
 
     for (const [k, date] of dates.entries()) {
       const prevue = prevues[k];

@@ -19,7 +19,7 @@ import { extrasDe, finDesModules, lireModules, modulesActifs, normaliserModules 
 import type { ModuleId } from './modules';
 import { MACHINE_BY_ID } from '@/lib/v2/seance/machines';
 import { estProgrammePerso } from './registrePerso';
-import { CLE_PROGRAMMES_PERSO, archiverProgrammePerso, chargerProgrammesPerso, enregistrerProgrammePerso, idJourPerso, idJourPersoB, joursDuPerso, modifierProgrammePerso, nouveauProgrammePerso } from './monProgramme';
+import { CLE_PROGRAMMES_PERSO, archiverProgrammePerso, chargerProgrammesPerso, enregistrerProgrammePerso, idDuJourPerso, joursDuPerso, modifierProgrammePerso, nouveauProgrammePerso } from './monProgramme';
 import type { ProgrammePerso, SeancePerso } from './monProgramme';
 import { caseLe, casesDe, idAutre, jourDeRef, jourDuProgramme, lireDuree, lireSemaine, lundiIso, planDepuisSemaine, planProjete, seanceLe, semaineDepuisBoucle, semaineDepuisPlan, semaineUtile, semaineUtilisePerso } from './semaineLibre';
 import type { CaseSemaine, SemaineLibre } from './semaineLibre';
@@ -101,7 +101,8 @@ export function lireDouleurs(v: unknown): Region[] | undefined {
 export function planDuProgrammePerso(p: Programme): number[] | null {
   if (!estProgrammePerso(p.id)) return null;
   // 28 octobre 2026 : les séances de ta semaine B (« -b3 ») n'ont pas de jour dans le plan, ta semaine les place
-  const plan = p.jours.map((j) => (/-b\d$/.test(j.id) ? REPOS : Number(/-d(\d)$/.exec(j.id)?.[1] ?? -9)));
+  // 30 octobre 2026 : le jour vient de la séance (jourPerso, ids stables) ; les programmes d'avant : de son id
+  const plan = p.jours.map((j) => (j.jourPerso ? (j.jourPerso.b ? REPOS : j.jourPerso.d) : /-b\d$/.test(j.id) ? REPOS : Number(/-d(\d)$/.exec(j.id)?.[1] ?? -9)));
   const places = plan.filter((d) => d !== REPOS);
   return plan.every((d) => d === REPOS || (d >= 0 && d <= 6)) && places.length > 0 && new Set(places).size === places.length ? plan : null;
 }
@@ -488,7 +489,8 @@ async function garderCommeMonProgramme_(nom: string, duree?: number | null): Pro
     const k = indexJour(dt);
     const c = casesDe(s, 'a')[k];
     const avant = c ? (c.p === p.id ? c.s : idAutre(c)) : null;
-    return avant && avant === f.jourId && enr.semaine[k] ? { ...f, jourId: idJourPerso(enr.id, k) } : f;
+    const nouvel = idDuJourPerso(enr, k);
+    return avant && avant === f.jourId && nouvel ? { ...f, jourId: nouvel } : f;
   });
   const { plan: _p, semaine: _s, remplacements: _r, duree: _d, points: _pt, ...reste } = a;
   const suite: ProgrammeActif = { ...reste, id: enr.id, faits, ...(plan ? { plan, jours: joursDuPlan(plan) } : {}), ...(d !== undefined ? { duree: d } : a.duree !== undefined ? { duree: a.duree } : {}), ...(a.points?.length ? { points: a.points } : {}) };
@@ -610,26 +612,41 @@ async function annulerMixtePonctuel_(): Promise<void> {
  * ---------------------------------------------------------------------------------------------- */
 type ChampsSemainePerso = Pick<ProgrammePerso, 'semaine' | 'semaineB' | 'ab' | 'depuis'>;
 
+/** Une place dans ta semaine : le jour (0 = lundi), dans ta semaine B ou non */
+export type PlacePerso = { d: number; b: boolean };
+
 /**
- * Ta semaine libre (cases) en séances à toi. Une case de ton programme reprend sa séance (copie, mêmes exercices) ;
- * une séance d'un autre programme est copiée dans ton programme. `renommes` : l'id d'avant de chaque séance vers
- * ses ids dans la nouvelle semaine (pour tes exercices changés à la main). null : une case introuvable ou une
- * séance sans exercice (rounds, cardio) : rien n'est écrit.
+ * Ta semaine libre (cases) en séances à toi. Une case de ton programme reprend sa séance avec son id stable (sid) :
+ * déplacée, elle reste la même séance (tes séances faites et tes progrès la retrouvent) ; posée une deuxième fois,
+ * la copie est une séance nouvelle. Une séance d'un autre programme est copiée dans ton programme (séance nouvelle).
+ * `places` : l'id d'avant de chaque séance vers ses places dans la nouvelle semaine (tes exercices changés à la main
+ * les suivent). null : une case introuvable ou une séance sans exercice (rounds, cardio) : rien n'est écrit.
  */
-export function semainePersoDepuisLibre(pp: ProgrammePerso, s: SemaineLibre): { champs: ChampsSemainePerso; renommes: Map<string, string[]> } | null {
+export function semainePersoDepuisLibre(pp: ProgrammePerso, s: SemaineLibre): { champs: ChampsSemainePerso; places: Map<string, PlacePerso[]> } | null {
   let ok = true;
-  const renommes = new Map<string, string[]>();
-  const copie = (x: SeancePerso): SeancePerso => ({ ...(x.titre ? { titre: x.titre } : {}), exos: x.exos.map((e) => ({ ...e })) });
-  const versSeance = (c: CaseSemaine, nouvelId: string): SeancePerso | null => {
+  const places = new Map<string, PlacePerso[]>();
+  const pris = new Set<string>();
+  // les séances de ton programme par id (A puis B)
+  const siennes = new Map<string, SeancePerso>();
+  for (const b of [false, true]) {
+    (b ? pp.semaineB ?? [] : pp.semaine).forEach((x, d) => {
+      const id = idDuJourPerso(pp, d, b);
+      if (x && id && !siennes.has(id)) siennes.set(id, x);
+    });
+  }
+  const versSeance = (c: CaseSemaine, place: PlacePerso): SeancePerso | null => {
     if (!c) return null;
     let seance: SeancePerso | null = null;
     let ancien: string;
     if (c.p === pp.id) {
       ancien = c.s;
-      const dA = [0, 1, 2, 3, 4, 5, 6].find((d) => c.s === idJourPerso(pp.id, d));
-      const dB = [0, 1, 2, 3, 4, 5, 6].find((d) => c.s === idJourPersoB(pp.id, d));
-      const src = dA !== undefined ? pp.semaine[dA] : dB !== undefined ? pp.semaineB?.[dB] : null;
-      if (src && src.exos.length) seance = copie(src);
+      const src = siennes.get(c.s);
+      if (src && src.exos.length) {
+        // la première fois, la séance elle même (son sid) ; ensuite une copie, séance nouvelle
+        const garde = !pris.has(c.s) && !!src.sid;
+        pris.add(c.s);
+        seance = { ...(src.titre ? { titre: src.titre } : {}), exos: src.exos.map((e) => ({ ...e })), ...(garde ? { sid: src.sid } : {}) };
+      }
     } else {
       ancien = idAutre(c);
       const j = jourDeRef(c, pp.id);
@@ -644,16 +661,16 @@ export function semainePersoDepuisLibre(pp: ProgrammePerso, s: SemaineLibre): { 
       ok = false;
       return null;
     }
-    renommes.set(ancien, [...(renommes.get(ancien) ?? []), nouvelId]);
+    places.set(ancien, [...(places.get(ancien) ?? []), place]);
     return seance;
   };
-  const semaine = s.a.map((c, d) => versSeance(c, idJourPerso(pp.id, d)));
+  const semaine = s.a.map((c, d) => versSeance(c, { d, b: false }));
   // ta semaine B : celle de Tes jours ; absente, celle d'avant est gardée telle quelle
-  const semaineB = s.b ? s.b.map((c, d) => versSeance(c, idJourPersoB(pp.id, d))) : pp.semaineB;
+  const semaineB = s.b ? s.b.map((c, d) => versSeance(c, { d, b: true })) : pp.semaineB;
   if (!ok || !semaine.some((x) => !!x)) return null;
   const ab = !!s.ab && !!s.b;
   const depuis = s.depuis ?? pp.depuis;
-  return { champs: { semaine, semaineB, ab: ab || undefined, depuis }, renommes };
+  return { champs: { semaine, semaineB, ab: ab || undefined, depuis }, places };
 }
 
 /** Tes exercices changés à la main suivent leur séance dans la nouvelle semaine ; ceux d'une séance retirée partent */
@@ -674,20 +691,23 @@ async function modifierSemainePerso_(semaine: SemaineLibre): Promise<boolean> {
   const s = lireSemaine(semaine);
   if (!semaineUtile(s)) return false;
   await chargerProgrammesPerso();
-  const sortie: { renommes?: Map<string, string[]> } = {};
+  const sortie: { places?: Map<string, PlacePerso[]> } = {};
   const enr = await enFileProgramme(CLE_PROGRAMMES_PERSO, () =>
     modifierProgrammePerso(a.id, (pp) => {
       const r = semainePersoDepuisLibre(pp, s);
       if (!r) return null;
-      sortie.renommes = r.renommes;
+      sortie.places = r.places;
       return { ...pp, ...r.champs };
     }),
   );
-  if (!enr || !sortie.renommes) return false;
+  if (!enr || !sortie.places) return false;
+  // les ids de chaque séance une fois enregistrée (une séance nouvelle a reçu son sid à l'écriture)
+  const renommes = new Map<string, string[]>();
+  for (const [ancien, l] of sortie.places) renommes.set(ancien, l.map((x) => idDuJourPerso(enr, x.d, x.b)).filter((x): x is string => !!x));
   const q = programmeParId(enr.id);
   const plan = q ? planDuProgrammePerso(q) : null;
   if (!q || !plan) return false;
-  const remplacements = remplacementsRenommes(a.remplacements, sortie.renommes);
+  const remplacements = remplacementsRenommes(a.remplacements, renommes);
   const { remplacements: _r, plan: _p, ...reste } = a;
   const suite: ProgrammeActif = { ...reste, plan, jours: joursDuPlan(plan), ...(remplacements ? { remplacements } : {}) };
   const j = joursDeLaSemaine(suite, q, new Date(), false);
@@ -1088,6 +1108,19 @@ export function seancesAuxDates(a: ProgrammeActif, dates: readonly Date[]): ({ p
   }
   const suite = seancesAVenir(a, dates.length);
   return dates.map((_, k) => suite[k] ?? null);
+}
+
+/**
+ * 30 octobre 2026 : les rappels de séance d'un programme à toi, ou d'une semaine qui alterne A et B, suivent ta
+ * semaine du moment (semaine B comprise, et ta semaine mixte ponctuelle) : chaque date de séance a son rappel, un jour
+ * de repos n'en a pas. `jours` (comme Date.getDay, 0 = dimanche) : les jours à essayer ; `seulementSeances` : ne garder
+ * que les dates où seancesAuxDates trouve une séance. Sinon, les jours du réglage, comme avant.
+ */
+export function joursPourRappels(a: ProgrammeActif | null, joursReglage: readonly number[]): { jours: number[]; seulementSeances: boolean } {
+  const p = a ? programmeParId(a.id) : null;
+  const s = a && p ? semaineEffective(a, p) : null;
+  if (a && p && s && (estProgrammePerso(p.id) || (s.ab && s.b))) return { jours: [0, 1, 2, 3, 4, 5, 6], seulementSeances: true };
+  return { jours: [...joursReglage], seulementSeances: false };
 }
 
 /** Jours conseilles (0 = lundi) pour recevoir le message, selon les jours par semaine du programme */

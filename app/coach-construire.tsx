@@ -45,7 +45,7 @@ import type { Programme } from '@/lib/v2/programmes/types';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
 import {
   avecExo, avecJour, deplacerExo, exoDepuisNom, joursDuPerso, nombreSeances, nouveauProgrammePerso, peutEnregistrer,
-  programmePersoParId, reglerExo, sansExo, titreDeSeance, enregistrerProgrammePerso, CLE_PROGRAMMES_PERSO, semaineVide,
+  programmePersoParId, reglerExo, sansExo, titreDeSeance, enregistrerProgrammePerso, CLE_PROGRAMMES_PERSO, semaineVide, joursDeSeancePerso,
 } from '@/lib/v2/programmes/monProgramme';
 import type { ProgrammePerso, RappelPerso, SeancePerso } from '@/lib/v2/programmes/monProgramme';
 import { appliquerRappelProgramme, lireRappelSeance } from '@/lib/v2/programmes/rappelProgramme';
@@ -188,7 +188,8 @@ export default function CoachConstruire() {
         // 30 octobre 2026 : dans la file de tes programmes (suivi.ts), jamais en même temps qu'un autre enregistrement
         const sauve = await enFileProgramme(CLE_PROGRAMMES_PERSO, () => enregistrerProgrammePerso({ ...normal, rappel }));
         await suivreProgrammePerso(sauve);
-        const r = await appliquerRappelProgramme(rappel, joursDuPerso(sauve));
+        // 30 octobre 2026 : les jours de ta semaine B aussi ; chaque date suit ensuite ta semaine (joursPourRappels)
+        const r = await appliquerRappelProgramme(rappel, joursDeSeancePerso(sauve));
         if (r === 'refuse') {
           setRefuse(true);
           setRappel((x) => ({ ...x, actif: false }));
