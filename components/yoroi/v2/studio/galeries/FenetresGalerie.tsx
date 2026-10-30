@@ -192,6 +192,7 @@ export function FenetresGalerie() {
         />
         <Ligne
           icon="lock"
+          sticker="cadenas"
           label={traduire("Mot de passe")}
           sub={traduire("Saisie masquée, 6 caractères au moins")}
           onPress={() => {
