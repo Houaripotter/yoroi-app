@@ -3,6 +3,8 @@
  */
 import type { ImageSourcePropType } from 'react-native';
 import { demoEnLigne, sourceDemosActive } from './demosTest';
+import { NOMS_FR } from '@/lib/v2/seance/rechercheExo';
+import { sansPrise } from '@/lib/v2/seance/prise';
 
 /** « Développé Couché (Barre) » -> « developpe_couche_barre » */
 export function demoSlug(nom: string): string {
@@ -39,12 +41,46 @@ export const MEME_MOUVEMENT: Record<string, string> = {
   fentes_bulgares: 'squat_bulgare',
 };
 
+/**
+ * 30 octobre 2026 (verification du Studio Gym visual) : le meme mouvement se lit dans les deux sens. Avant, seul
+ * le premier nom reprenait l'animation du second : « Écartés à la Poulie Haute » (programmes) restait sans GIF
+ * alors que « Cable Crossover » en a un.
+ */
+const MEME_INVERSE: Record<string, string> = Object.fromEntries(Object.entries(MEME_MOUVEMENT).map(([a, b]) => [b, a]));
+
+/**
+ * 30 octobre 2026 : le choix d'exercice en seance enregistre le nom francais affiche (NOMS_FR, « Écartés vis à vis
+ * (poulies) ») et les programmes le nom de la bibliotheque (« Cable Crossover »). Le GIF est range sous le nom de la
+ * bibliotheque : on le retrouve aussi depuis le nom francais.
+ */
+let nomBiblioParSlug: Map<string, string> | null = null;
+function slugBibliotheque(cle: string): string | null {
+  if (!nomBiblioParSlug) {
+    nomBiblioParSlug = new Map();
+    for (const [biblio, fr] of Object.entries(NOMS_FR)) {
+      const s = demoSlug(fr);
+      if (!nomBiblioParSlug.has(s)) nomBiblioParSlug.set(s, demoSlug(biblio));
+    }
+  }
+  return nomBiblioParSlug.get(cle) ?? null;
+}
+
+function gifDeCle(cle: string): ImageSourcePropType[] | null {
+  return demoEnLigne(cle)
+    ?? (MEME_MOUVEMENT[cle] ? demoEnLigne(MEME_MOUVEMENT[cle]) : null)
+    ?? (MEME_INVERSE[cle] ? demoEnLigne(MEME_INVERSE[cle]) : null);
+}
+
 /** Une ou deux images : deux s'enchainent en fondu, une seule est deja animee */
 /** Le GIF Gym visual d'un exercice, seulement en mode createur avec la source choisie dans le Studio */
 export function demoDe(nom: string | undefined | null): ImageSourcePropType[] | null {
   if (!nom) return null;
   // public : aucune animation (26 octobre 2026)
   if (sourceDemosActive() === 'aucune') return null;
-  const cle = demoSlug(nom);
-  return demoEnLigne(cle) ?? (MEME_MOUVEMENT[cle] ? demoEnLigne(MEME_MOUVEMENT[cle]) : null);
+  // la prise ajoutee au nom (« (prise large) », lib/v2/seance/prise.ts) ne change pas le mouvement
+  const cle = demoSlug(sansPrise(nom).base);
+  const gif = gifDeCle(cle);
+  if (gif) return gif;
+  const biblio = slugBibliotheque(cle);
+  return biblio ? gifDeCle(biblio) : null;
 }

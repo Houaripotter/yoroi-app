@@ -15,6 +15,7 @@ import { INFO_GV, chargerGymvisual, filtrer } from '@/lib/v2/studio/bibliotheque
 import type { ExoLibre } from '@/lib/v2/studio/bibliothequesLibres';
 import { traduire } from '@/lib/i18n/tr';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
+import { nomFr } from '@/lib/v2/seance/rechercheExo';
 
 const BLANC = '#FFFFFF';
 
@@ -94,7 +95,7 @@ export function ExercicesLibresGalerie() {
             <View style={{ padding: 10, gap: 2 }}>
               <Ink size={13} weight="extraBold" numberOfLines={2}>{sansTiret(item.nom)}</Ink>
               {item.yoroi ? (
-                <Ink size={11} weight="bold" color={c.accent} numberOfLines={1}>{traduire(item.yoroi)}</Ink>
+                <Ink size={11} weight="bold" color={c.accent} numberOfLines={1}>{sansTiret(traduire(nomFr(item.yoroi)))}</Ink>
               ) : (
                 <Ink size={11} color={c.textMuted} numberOfLines={1}>{item.materiel}</Ink>
               )}
@@ -115,7 +116,7 @@ export function ExercicesLibresGalerie() {
               <View style={{ gap: 4 }}>
                 <Ink size={22} weight="black" tight>{sansTiret(ouvert.nom)}</Ink>
                 {ouvert.autres.length ? <Ink size={13} color={c.textSecondary}>{ouvert.autres.join(' · ')}</Ink> : null}
-                {ouvert.yoroi ? <Ink size={14} weight="bold" color={c.accent}>{traduire('Dans YOROI : {0}', traduire(ouvert.yoroi))}</Ink> : null}
+                {ouvert.yoroi ? <Ink size={14} weight="bold" color={c.accent}>{traduire('Dans YOROI : {0}', sansTiret(traduire(nomFr(ouvert.yoroi))))}</Ink> : null}
               </View>
               <Ink size={14} color={c.textSecondary}>{[ouvert.materiel, ...ouvert.muscles].filter(Boolean).join(' · ')}</Ink>
               {ouvert.description ? <Ink size={15}>{ouvert.description}</Ink> : null}

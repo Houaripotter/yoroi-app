@@ -5,6 +5,9 @@
  */
 import type { Training } from '@/lib/database';
 import { EXERCISES } from '@/lib/exercises';
+import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
+import { NOMS_FR } from '@/lib/v2/seance/rechercheExo';
+import { sansPrise } from '@/lib/v2/seance/prise';
 import { exercisesOf as allExercisesOf, mondayOf, tonnage, workSetsOf } from '@/lib/v2/trainingWeek';
 import { shiftDays } from './format';
 
@@ -119,11 +122,31 @@ const GROUP_ALIASES: Record<string, MuscleName> = {
 
 const LIBRARY = new Map(EXERCISES.map((e) => [strip(e.name), e.muscle_group]));
 
+/**
+ * 30 octobre 2026 (verification du lien avec les exercices de l'app) : la petite liste ci dessus (58 exercices) ne
+ * connait pas la bibliotheque des seances et des programmes (constants/exerciseLibrary.ts). Un exercice enregistre
+ * sans groupe musculaire retrouve le sien dans la bibliotheque, par son nom ou par son nom francais affiche.
+ */
+let bibliotheque: Map<string, string> | null = null;
+function muscleBibliotheque(nom: string): string | undefined {
+  if (!bibliotheque) {
+    bibliotheque = new Map();
+    for (const e of EXERCISE_LIBRARY) if (e.muscle && !bibliotheque.has(strip(e.name))) bibliotheque.set(strip(e.name), e.muscle);
+    for (const [biblio, fr] of Object.entries(NOMS_FR)) {
+      const m = bibliotheque.get(strip(biblio));
+      if (m && !bibliotheque.has(strip(fr))) bibliotheque.set(strip(fr), m);
+    }
+  }
+  return bibliotheque.get(strip(sansPrise(nom).base));
+}
+
 export function muscleOf(e: { name: string; muscle_group?: string }): MuscleName | null {
   const g = e.muscle_group ? GROUP_ALIASES[strip(e.muscle_group)] : undefined;
   if (g) return g;
   const lib = LIBRARY.get(strip(e.name));
   if (lib && GROUP_ALIASES[strip(lib)]) return GROUP_ALIASES[strip(lib)];
+  const biblio = muscleBibliotheque(e.name);
+  if (biblio && GROUP_ALIASES[strip(biblio)]) return GROUP_ALIASES[strip(biblio)];
   const n = strip(e.name);
   if (/couche|pec|pompe|dips|ecarte/.test(n)) return 'Pectoraux';
   if (/traction|rowing|tirage|souleve|deadlift/.test(n)) return 'Dos';
