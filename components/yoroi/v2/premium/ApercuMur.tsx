@@ -112,7 +112,7 @@ export function scenesApercu(rankIndex: number, max = 12): { id: SceneId; verrou
 function Cadenas({ taille = 22 }: { taille?: number }) {
   return (
     <View style={{ position: 'absolute', top: 5, right: 5, width: taille, height: taille, borderRadius: taille / 2, backgroundColor: 'rgba(20,22,31,0.62)', alignItems: 'center', justifyContent: 'center' }}>
-      <Icon name="lock" size={taille * 0.52} color="#FFFFFF" stroke={2.6} />
+      <Icon sticker="couronne" name="lock" size={taille * 0.52} color="#FFFFFF" stroke={2.6} />
     </View>
   );
 }
