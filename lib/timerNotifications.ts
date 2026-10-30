@@ -4,12 +4,13 @@
 // ============================================
 
 import * as Notifications from 'expo-notifications';
-import { Platform, AppState } from 'react-native';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import { saveNotification } from '@/lib/notificationHistoryService';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { traduire } from '@/lib/i18n/tr';
+import { installerGestionnaireNotifications } from '@/lib/v2/notifications/gestionnaire';
 import { sourceNotif, src, type SourceTexte } from '@/lib/notificationLangue';
 
 /**
@@ -42,21 +43,8 @@ const DEFAULT_SETTINGS: TimerNotifSettings = {
   workoutFinished: true,
 };
 
-// Configuration des notifications, priorité max, affichage même en premier plan
-Notifications.setNotificationHandler({
-  handleNotification: async (n) => {
-    // 26 octobre 2026 : fin de repos avec l'app ouverte, l'ecran bippe deja (lib/v2/seance/rappelRepos.ts)
-    if (n?.request?.content?.data?.type === 'rest_finished' && AppState.currentState === 'active') {
-      return { shouldShowAlert: false, shouldPlaySound: false, shouldSetBadge: false, shouldShowBanner: false, shouldShowList: false };
-    }
-    return {
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    priority: Notifications.AndroidNotificationPriority.MAX,
-  } as Notifications.NotificationBehavior;
-  },
-});
+// Affichage même en premier plan, fin de minuteur en priorité max : le gestionnaire commun (30 octobre 2026)
+installerGestionnaireNotifications();
 
 // Canal Android haute priorité (crée une fois au démarrage)
 if (Platform.OS === 'android') {

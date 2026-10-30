@@ -16,21 +16,14 @@ import {
 import logger from './security/logger';
 import { saveNotification } from './notificationHistoryService';
 import { traduire } from '@/lib/i18n/tr';
+import { installerGestionnaireNotifications } from '@/lib/v2/notifications/gestionnaire';
 
 // ═══════════════════════════════════════════════
 // CONFIGURATION
 // ═══════════════════════════════════════════════
 
-// Configurer le handler de notifications
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// 30 octobre 2026 : le gestionnaire commun (fin de repos cachee app ouverte), jamais un gestionnaire a part
+installerGestionnaireNotifications();
 
 // Identifiant du canal de notification (Android)
 const CITATION_CHANNEL_ID = 'yoroi-citations';
