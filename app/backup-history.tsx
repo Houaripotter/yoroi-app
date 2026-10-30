@@ -38,6 +38,7 @@ import {
 } from '@/lib/cloudFolderService';
 import { ChargementBloc } from '@/components/yoroi/v2/chargement/Chargement';
 import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
+import { StickerSinon } from '@/components/yoroi/v2/ui/StickerSinon';
 
 interface BackupFile {
   name: string;
@@ -359,7 +360,7 @@ export default function BackupHistoryScreen() {
           <ChargementBloc />
         ) : backups.length === 0 ? (
           <Card style={{ padding: 18, gap: 6, alignItems: 'center' }}>
-            <Icon name="archive" size={34} color={c.textMuted} />
+            <StickerSinon nom="coffre_ferme" taille={56}><Icon name="archive" size={34} color={c.textMuted} /></StickerSinon>
             <Ink size={16} weight="extraBold">{traduire("Ta bibliothèque est vide")}</Ink>
             <Ink size={14} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire("Crée ta première sauvegarde. Elle garde ton historique si tu changes de téléphone.")}</Ink>
           </Card>
