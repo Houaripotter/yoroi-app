@@ -6,7 +6,7 @@
  * « Ajouter « xxx » comme exercice » quand rien ne correspond. Les recherches sans resultat sont gardees en local
  * (lib/v2/seance/recherchesIntrouvables.ts) pour ajouter les exercices manquants a la prochaine mise a jour.
  */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
@@ -25,6 +25,8 @@ import { traduire } from '@/lib/i18n/tr';
 import { noterRecherche } from '@/lib/v2/seance/recherchesIntrouvables';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
+import { chargerEcartes, ecartesEnBas } from '@/lib/v2/seances/exercicesEcartes';
+import { sansPrise } from '@/lib/v2/seance/prise';
 
 type Item = { key: string; name: string; autre?: string; muscle: string; history?: ExerciseHistory; count?: number; rang?: number };
 type Ligne = { kind: 'titre'; key: string; muscle: string; n: number } | { kind: 'exo'; key: string; item: Item };
@@ -89,15 +91,23 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
 
   const alreadySet = useMemo(() => new Set(already.map(normName)), [already]);
 
+  // 30 octobre 2026 : tes exercices ecartes (Remplacer, en seance) restent choisissables, en bas, marques « Écarté »
+  const [ecartes, setEcartes] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!visible) return;
+    chargerEcartes().then((l) => setEcartes(new Set(l.map((e) => normName(e.nom)))), () => {});
+  }, [visible]);
+  const estEcarte = useCallback((i: Item) => ecartes.has(i.key) || ecartes.has(normName(sansPrise(i.name).base)) || (!!i.autre && ecartes.has(normName(i.autre))), [ecartes]);
+
   const list = useMemo<Item[]>(() => {
     // en tapant, on cherche partout : le filtre de muscle ne cache plus rien
-    if (query.trim()) return chercherExos(all, query);
+    if (query.trim()) return ecartesEnBas(chercherExos(all, query), estEcarte);
     if (group === 'recents') {
-      return recent.map((k) => all.find((i) => i.key === k)).filter((i): i is Item => !!i).slice(0, 40);
+      return ecartesEnBas(recent.map((k) => all.find((i) => i.key === k)).filter((i): i is Item => !!i).slice(0, 40), estEcarte);
     }
     const base = group ? all.filter((i) => i.muscle === group) : all;
-    return [...base].sort((a, b) => (b.history?.count ?? 0) - (a.history?.count ?? 0) || a.name.localeCompare(b.name, 'fr'));
-  }, [all, query, group, recent]);
+    return ecartesEnBas([...base].sort((a, b) => (b.history?.count ?? 0) - (a.history?.count ?? 0) || a.name.localeCompare(b.name, 'fr')), estEcarte);
+  }, [all, query, group, recent, estEcarte]);
 
   // « Tous » sans recherche : un titre par muscle, dans l'ordre des muscles
   const lignes = useMemo<Ligne[]>(() => {
@@ -272,6 +282,7 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
                 <View style={{ flex: 1, gap: 2 }}>
                   <Ink size={16} weight="extraBold" numberOfLines={1}>{sansTiret(traduire(item.name))}</Ink>
                   <Ink size={12} color={c.textMuted} numberOfLines={1}>
+                    {estEcarte(item) ? <Ink size={12} weight="extraBold" color={c.textSecondary}>{`${traduire('Écarté')}, `}</Ink> : null}
                     {niceGroup(item.muscle)}
                     {last && item.history ? `, ${setLabel(last, unite)} ${relativeDay(item.history.lastDate)}` : ''}
                   </Ink>
