@@ -72,6 +72,16 @@ export type LiveExercise = {
    * Rien n'est efface : tu peux y revenir, elles sont encore la.
    */
   laisse?: boolean;
+  /** 30 octobre 2026 : series visees, retenues a la creation (une serie ajoutee en plus ne les repousse pas) */
+  objectifSeries?: number;
+  /** repetitions visees par une seance de « Mes séances » (sans programme) */
+  objectifReps?: number;
+  /** cran de la machine ou de la poulie note pendant la seance (lib/v2/seances/reglagesMachine.ts) */
+  cran?: number | null;
+  /** case du programme d'ou vient l'exercice (jour, index dans le jour adapte), pour retenir un remplacement */
+  caseProg?: { jourId: string; index: number };
+  /** nom de l'exercice prevu, quand tu l'as remplace pendant la seance */
+  remplaceEnSeance?: string;
 };
 
 /** Changer d'exercice : celui qu'on quitte avec au moins une serie faite est « laisse » (plus repropose) */
@@ -116,6 +126,8 @@ export type MuscuDraft = DraftBase & {
   maSeance?: string;
   /** 25 octobre 2026 : appuis de la Dynamic Island deja appliques (ids) et date du dernier, en ms (lib/v2/seance/actionsIle.ts) */
   ile?: { maj: number; ids: string[] };
+  /** 30 octobre 2026 : minuteur de repos coupe (lib/v2/seances/minuteurRepos.ts), aucun repos apres une serie */
+  sansRepos?: boolean;
 };
 
 export type RoundIntensity = 'detendu' | 'technique' | 'guerre';
