@@ -1,6 +1,6 @@
 /**
  * Corps illustre avec les mensurations posees autour (30 octobre 2026, remplace l'ancien bonhomme gris).
- * Mannequin d'anatomie lisse, un seul ton gris pierre, sans visage ni couleur de peau, pour que personne ne se sente exclu.
+ * Carte des muscles bleu ardoise (style des apps de musculation), sans visage, sans cheveux ni couleur de peau, pour que personne ne se sente exclu.
  * Il suit le genre du profil : homme, ou femme (assets/corps/mensurations, generes avec Gemini).
  * Chaque mesure a son trait en pointilles pose sur le corps et une etiquette sobre :
  * le nom, la valeur et l'ecart avec la fois d'avant. En saisie, toucher une etiquette la selectionne.
@@ -21,42 +21,42 @@ type Pt = [number, number];
 type Zone = { l: Pt; r: Pt; creux: number; side: 'left' | 'right' };
 type Corps = { src: ImageSourcePropType; w: number; h: number; zones: Record<ViewKey, Zone> };
 
-// Coordonnees en pixels de l'illustration detouree (homme 1312 x 2388, femme 1322 x 2388),
-// relevees sur le contour reel du mannequin.
+// Coordonnees en pixels de l'illustration detouree (homme 1290 x 2407, femme 1292 x 2430),
+// relevees sur le contour reel de la carte des muscles.
 const HOMME: Corps = {
   src: require('@/assets/corps/mensurations/homme.webp'),
-  w: 1312,
-  h: 2388,
+  w: 1290,
+  h: 2407,
   zones: {
-    neck: { l: [578, 335], r: [734, 335], creux: 14, side: 'right' },
-    shoulders: { l: [310, 610], r: [1003, 610], creux: -30, side: 'left' },
-    chest: { l: [428, 660], r: [882, 660], creux: 30, side: 'left' },
-    arm: { l: [896, 717], r: [1040, 713], creux: 12, side: 'right' },
+    neck: { l: [563, 345], r: [727, 345], creux: 14, side: 'right' },
+    shoulders: { l: [294, 590], r: [996, 590], creux: -30, side: 'left' },
+    chest: { l: [420, 680], r: [884, 680], creux: 30, side: 'left' },
+    arm: { l: [895, 747], r: [1022, 743], creux: 12, side: 'right' },
     // Avant-bras : sous le coude, au plus large, sur le meme bras que le tour de bras, trait perpendiculaire au bras
-    forearm: { l: [986, 941], r: [1130, 899], creux: 12, side: 'right' },
-    waist: { l: [474, 870], r: [839, 870], creux: 26, side: 'left' },
-    navel: { l: [466, 940], r: [846, 940], creux: 28, side: 'right' },
-    hips: { l: [420, 1270], r: [894, 1270], creux: 34, side: 'left' },
-    thigh: { l: [680, 1410], r: [900, 1410], creux: 16, side: 'right' },
-    calf: { l: [416, 1895], r: [570, 1895], creux: 14, side: 'left' },
+    forearm: { l: [948, 965], r: [1090, 909], creux: 12, side: 'right' },
+    waist: { l: [456, 895], r: [835, 895], creux: 26, side: 'left' },
+    navel: { l: [446, 965], r: [845, 965], creux: 28, side: 'right' },
+    hips: { l: [396, 1290], r: [894, 1290], creux: 34, side: 'left' },
+    thigh: { l: [668, 1420], r: [901, 1420], creux: 16, side: 'right' },
+    calf: { l: [397, 1900], r: [565, 1900], creux: 14, side: 'left' },
   },
 };
 
 const FEMME: Corps = {
   src: require('@/assets/corps/mensurations/femme.webp'),
-  w: 1322,
-  h: 2388,
+  w: 1292,
+  h: 2430,
   zones: {
-    neck: { l: [592, 340], r: [730, 340], creux: 12, side: 'right' },
-    shoulders: { l: [340, 615], r: [983, 615], creux: -30, side: 'left' },
-    chest: { l: [452, 690], r: [871, 690], creux: 30, side: 'left' },
-    arm: { l: [898, 714], r: [1018, 710], creux: 12, side: 'right' },
-    forearm: { l: [993, 944], r: [1119, 906], creux: 12, side: 'right' },
-    waist: { l: [495, 885], r: [827, 885], creux: 24, side: 'left' },
-    navel: { l: [472, 970], r: [851, 970], creux: 28, side: 'right' },
-    hips: { l: [400, 1265], r: [922, 1265], creux: 34, side: 'left' },
-    thigh: { l: [688, 1405], r: [917, 1405], creux: 16, side: 'right' },
-    calf: { l: [422, 1900], r: [570, 1900], creux: 14, side: 'left' },
+    neck: { l: [567, 380], r: [726, 380], creux: 12, side: 'right' },
+    shoulders: { l: [319, 600], r: [974, 600], creux: -30, side: 'left' },
+    chest: { l: [438, 690], r: [860, 690], creux: 30, side: 'left' },
+    arm: { l: [874, 762], r: [1006, 758], creux: 12, side: 'right' },
+    forearm: { l: [948, 976], r: [1080, 924], creux: 12, side: 'right' },
+    waist: { l: [477, 920], r: [816, 920], creux: 24, side: 'left' },
+    navel: { l: [455, 990], r: [838, 990], creux: 28, side: 'right' },
+    hips: { l: [386, 1290], r: [907, 1290], creux: 34, side: 'left' },
+    thigh: { l: [670, 1420], r: [908, 1420], creux: 16, side: 'right' },
+    calf: { l: [399, 1900], r: [561, 1900], creux: 14, side: 'left' },
   },
 };
 
