@@ -18,13 +18,14 @@ function complet<J extends JourProgramme>(j: J): J & AvecModules {
   return x.finFaite || x.modulesFaits ? x : avecModules(j, contexteFinPour(j));
 }
 
-/** « Fin de séance : 30 minutes de marche inclinée... », puis « Étirements : ... », pour les notes de la seance */
+/**
+ * « Étirements : ... », pour les notes de la seance. 30 octobre 2026 : le cardio de fin de seance n'est plus ecrit
+ * ici, c'est un vrai exercice avec son chrono dans la seance (lib/v2/seances/cardioFin.ts).
+ */
 export function noteFinCardio(j: JourProgramme): string {
   const x = complet(j);
-  const c = x.finCardio;
   const e = x.finEtirements;
   const notes = [
-    c ? traduire('Fin de séance : {0}', traduire(c.consigne)) : '',
     e ? traduire('Étirements, {0} min : {1}', e.minutes, traduire(e.consigne)) : '',
   ].filter(Boolean);
   return notes.join('\n\n');
