@@ -21,6 +21,7 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P } from '@/components/yoroi/livePalette';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { StickerSinon } from '@/components/yoroi/v2/ui/StickerSinon';
 
 export function ClubLogo({ club, size = 52 }: { club: Club; size?: number }) {
   const src = club.logo_uri ? getClubLogoSource(club.logo_uri) : null;
@@ -114,7 +115,7 @@ export function PlanClubs({ trainings, onChanged }: { trainings: Training[]; onC
       {outdoor.length ? (
         <Glass style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="mountain" size={24} color={c.successText} />
+            <StickerSinon nom="montagne_drapeau" taille={44}><Icon name="mountain" size={24} color={c.successText} /></StickerSinon>
           </View>
           <View style={{ flex: 1 }}>
             <Ink size={16} weight="extraBold">{traduire("En extérieur")}</Ink>
@@ -126,7 +127,7 @@ export function PlanClubs({ trainings, onChanged }: { trainings: Training[]; onC
       <SectionTitle title={traduire("Tes objectifs")} action={traduire("Régler")} onAction={() => router.push('/training-goals?tab=training' as any)} />
       {goals.length === 0 ? (
         <Glass onPress={() => router.push('/training-goals?tab=training' as any)} label={traduire("Fixer un objectif")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Icon name="target" size={24} color={c.accent} />
+          <StickerSinon nom="objectifs" taille={40}><Icon name="target" size={24} color={c.accent} /></StickerSinon>
           <View style={{ flex: 1 }}>
             <Ink size={15} weight="extraBold">{traduire("Un objectif par sport")}</Ink>
             <Ink size={13} color={c.textSecondary}>{traduire("Par exemple trois séances de JJB par semaine.")}</Ink>
