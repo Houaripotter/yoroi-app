@@ -62,6 +62,7 @@ import { FeuilleLangue, langueEnCours } from '@/components/yoroi/v2/langue/Choix
 import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
 import { largeurColonne } from '@/lib/v2/nav/grandEcran';
 import { Colonne, LargeurPage, Rangee } from '@/components/yoroi/v2/PageLarge';
+import { chargerEcartes } from '@/lib/v2/seances/exercicesEcartes';
 
 
 const MODES: { key: string; label: string; court: string; sub: string }[] = [
@@ -123,8 +124,10 @@ export default function Reglages() {
   }, [profile?.profile_photo]);
 
   // Au retour d'une sous-page ou du studio : on relit l'etat
+  const [nbEcartes, setNbEcartes] = useState(0);
   useFocusEffect(
     useCallback(() => {
+      chargerEcartes().then((l) => setNbEcartes(l.length), () => {});
       loadValues();
       reloadStatus();
     }, [loadValues, reloadStatus]),
@@ -229,6 +232,8 @@ export default function Reglages() {
           <ValueRow tint={TUILE.bleu} icon="calendar" sticker="calendrier" label={traduire("Calendrier et clubs")} onPress={() => go('/planning?tab=mois')} />
           <ValueRow tint={TUILE.mousse} icon="target" sticker="objectif_semaine" label={traduire("Objectif de la semaine")} sub={espace.joursSemaine?.length ? joursTexte(espace.joursSemaine).replace(/^./, (x) => x.toUpperCase()) : undefined} value={obj ? traduirePluriel(obj, obj > 1, "{0} séance", "{0} séances", obj) : traduire('À choisir')} valueColor={obj ? undefined : c.accent} onPress={() => setObjectifOpen(true)} />
           <ValueRow tint={TUILE.or} icon="bell" sticker="rappels" label={traduire("Rappels")} value={remValue} onPress={() => go('/notifications')} />
+          {/* 30 octobre 2026 : exercices écartés en séance (lib/v2/seances/exercicesEcartes.ts) */}
+          <ValueRow tint={TUILE.ardoise} icon="dumbbell" sticker="refresh" label={traduire('Exercices écartés')} value={nbEcartes ? String(nbEcartes) : traduire('Aucun')} onPress={() => go('/settings/exercices-ecartes')} />
           <ValueRow tint={TUILE.bleu} icon="pulse" sticker="bilan" label={traduire("Bilan après chaque mesure")} sub={traduire("Pesée, composition, mensurations et séances")} value={bilanAuto ? traduire('Activé') : traduire('Coupé')} valueColor={bilanAuto ? c.successText : undefined} onPress={() => { const n = !bilanAuto; setBilanAuto(n); ecrireBilanAuto(n).catch(() => {}); }} />
         </Card>
 
