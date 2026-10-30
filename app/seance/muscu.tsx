@@ -91,7 +91,8 @@ import { alternativesPour } from '@/lib/v2/seances/alternatives';
 import { remplacerExercice } from '@/lib/v2/programmes/suivi';
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { StickerOuIcone } from '@/components/yoroi/v2/profil/Rubriques';
-import { useIllustrations } from '@/components/yoroi/v2/stickers';
+import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+import { StickerSinon } from '@/components/yoroi/v2/ui/StickerSinon';
 
 const INTENSITIES = [
   { value: 3, label: 'Facile' },
@@ -1138,6 +1139,7 @@ export default function SeanceMuscu() {
               return (
                 <View style={[carteBlanche(c.surface, c.divider), { marginHorizontal: 4, paddingVertical: 10, paddingHorizontal: 14, gap: 6 }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <StickerSinon nom="reglage_machine" taille={36} />
                     <View style={{ flex: 1, gap: 2 }}>
                       <Ink size={15} weight="extraBold">{traduire('Réglage')}</Ink>
                       {avant != null ? <Ink size={12} weight="bold" color={c.textMuted}>{traduire('Dernière fois : cran {0}', avant)}</Ink> : null}
@@ -1844,13 +1846,17 @@ function CarteCardio({ chrono, fait, dureeFaite, maintenant, onDemarrer, onPause
   );
 }
 
+// 30 octobre 2026 : le sticker a la place de l'icone quand il y en a un (reglage Illustrations sur Stickers)
+const STICKER_MENU: Partial<Record<'up' | 'down' | 'pencil' | 'trash' | 'swap', NomSticker>> = { up: 'fleches_haut_bas', down: 'fleches_haut_bas', pencil: 'crayon', trash: 'corbeille' };
+
 function MenuRow({ icon, label, onPress, danger, disabled }: { icon: 'up' | 'down' | 'pencil' | 'trash' | 'swap'; label: string; onPress: () => void; danger?: boolean; disabled?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  const sticker = STICKER_MENU[icon];
   const color = disabled ? c.textMuted : danger ? c.danger : c.ink;
   return (
     <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 54, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, backgroundColor: pressed ? c.fillSubtle : c.fillSoft, opacity: disabled ? 0.5 : 1 })}>
-      <Icon name={icon} size={20} color={color} />
+      {sticker ? <StickerSinon nom={sticker} taille={30}><Icon name={icon} size={20} color={color} /></StickerSinon> : <Icon name={icon} size={20} color={color} />}
       <Ink size={15} weight="bold" color={color}>{label}</Ink>
     </Pressable>
   );
