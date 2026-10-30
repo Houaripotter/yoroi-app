@@ -283,8 +283,8 @@ export default function MesDonnees() {
           <ValueRow first sticker="tableur" icon="upload" label={traduire("Importer un tableur")} sub={traduire("Pesées et mensurations")} onPress={() => go('/import-csv')} />
           <ValueRow sticker="musculation" icon="dumbbell" label={traduire("Importer des séances")} sub={traduire("Depuis une autre app")} onPress={() => go('/import-workouts')} />
           <ValueRow sticker="corps" icon="table" label={traduire("Tableau du corps")} sub={traduire("Poids, composition et mensurations")} onPress={() => go('/companion')} />
-          <ValueRow icon="broom" label={traduire("Nettoyer les doublons")} sub={traduire("Séances importées en double")} onPress={handleDedupe} />
-          <ValueRow icon="trash" label={traduire("Vider le cache")} sub={traduire("Tes données restent")} onPress={handleClearCache} />
+          <ValueRow sticker="balai" icon="broom" label={traduire("Nettoyer les doublons")} sub={traduire("Séances importées en double")} onPress={handleDedupe} />
+          <ValueRow sticker="corbeille" icon="trash" label={traduire("Vider le cache")} sub={traduire("Tes données restent")} onPress={handleClearCache} />
           <ValueRow sticker="sauvegarde" icon="sync" label={Platform.OS === 'ios' ? traduire('Synchro iPhone et iPad') : traduire('Synchro entre appareils')} sub={traduire("Sans internet")} onPress={() => go('/sync-devices')} />
         </Card>
 
