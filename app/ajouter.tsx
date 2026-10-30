@@ -21,10 +21,10 @@
  * (lib/v2/nav/depuisLePlus.ts) ; en grande largeur la feuille et la fenetre restent centrees et etroites.
  * Version d'avant : _archive_ancien_design_2026-10-09/retours_2026-10-30/app/ajouter.tsx.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Easing, Image, PanResponder, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
-import { useLocalSearchParams, useRootNavigationState, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRootNavigationState, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -60,7 +60,7 @@ import { personnageImage } from '@/components/yoroi/v2/espace/assets';
 import { useIdentite } from '@/lib/v2/espace/useIdentite';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
-import { ecranSousLePlus, memoriserRetourAuPlus, oublierRetourAuPlus, parDessusLaFeuille } from '@/lib/v2/nav/depuisLePlus';
+import { ecranSousLePlus, marquerPageOuverteDepuisLePlus, memoriserRetourAuPlus, oublierRetourAuPlus, parDessusLaFeuille, prendreFermetureDuPlus } from '@/lib/v2/nav/depuisLePlus';
 
 /** Largeur maximale de la feuille et de la fenetre des choix (iPad, Mac) */
 const LARGEUR_FEUILLE = 640;
@@ -104,6 +104,13 @@ export default function Ajouter() {
   // 30 octobre 2026 : Poids et Mensurations ouvrent une fenetre au milieu ; le + rouvert au retour la remontre
   const [onglet, setOnglet] = useState<'seance' | 'mesures' | 'poids'>(ongletDemande === 'poids' || ongletDemande === 'mesures' ? ongletDemande : 'seance');
   useEffect(() => oublierRetourAuPlus(), []);
+  // 30 octobre 2026 : retour d'une page ouverte par dessus apres un enregistrement reussi : le + se ferme, tu
+  // reviens la ou tu etais avant le + (sans enregistrer, le + reste ouvert)
+  useFocusEffect(
+    useCallback(() => {
+      if (prendreFermetureDuPlus() && router.canGoBack()) router.back();
+    }, [router]),
+  );
   // 27 octobre 2026 : la visite guidee montre chaque onglet du menu (lib/v2/visite/ongletPlus.ts)
   useEffect(() => ecouterOngletPlus(setOnglet), []);
   // fermer en glissant vers le bas (feuille en haut de son defilement) ou sur le cote
@@ -209,6 +216,7 @@ export default function Ajouter() {
   const open = (href: string, params?: Record<string, string>) => {
     impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
     const cible = params ? { pathname: href as any, params } : (href as any);
+    marquerPageOuverteDepuisLePlus();
     // 26 octobre 2026 (Houari : « quand j'appuie sur retour, ca quitte le + ») : l'ecran s'ouvre PAR DESSUS
     // la feuille ; le retour ramene au +, pas a l'Accueil
     if (parDessusLaFeuille(href, Platform.OS)) {

@@ -59,9 +59,47 @@ export function memoriserRetourAuPlus(etat: EtatPlus, maintenant = Date.now()): 
   retour = { ...etat, quand: maintenant };
 }
 
-/** Le + est ouvert : plus rien a rouvrir */
+/** Le + est ouvert : plus rien a rouvrir ni a fermer */
 export function oublierRetourAuPlus(): void {
   retour = null;
+  pageOuverte = false;
+  fermerLePlus = false;
+}
+
+/*
+ * 30 octobre 2026 (decision pour Houari) : apres un ENREGISTREMENT reussi dans une page ouverte depuis le +, le + ne se
+ * rouvre pas, tu reviens la ou tu etais avant le +. Sans enregistrer, le retour ramene au +. Meme regle partout :
+ * sur iOS on ne rouvre pas la feuille remplacee, sur Android et le web (page par dessus) la feuille se ferme au retour.
+ * Le signal : l'evenement YOROI_DATA_CHANGED que chaque enregistrement envoie (ecoute dans RouvrirLePlus).
+ */
+let pageOuverte = false;
+let fermerLePlus = false;
+
+/** Une page vient d'etre ouverte depuis le + */
+export function marquerPageOuverteDepuisLePlus(): void {
+  pageOuverte = true;
+  fermerLePlus = false;
+}
+
+/** Quelque chose vient d'etre enregistre : compte seulement si une page ouverte depuis le + est en cours */
+export function signalerEnregistrement(): void {
+  if (!pageOuverte) return;
+  retour = null;
+  fermerLePlus = true;
+}
+
+/** La feuille du + revient au premier plan : vrai s'il faut la fermer (enregistre), une seule fois */
+export function prendreFermetureDuPlus(): boolean {
+  const f = fermerLePlus;
+  fermerLePlus = false;
+  pageOuverte = false;
+  return f;
+}
+
+/** Tu es revenu sur les onglets : la page ouverte depuis le + est finie */
+export function finirPageDepuisLePlus(): void {
+  pageOuverte = false;
+  fermerLePlus = false;
 }
 
 /** Tu reviens sur les onglets : l'etat du + a rouvrir, une seule fois, sinon null */
