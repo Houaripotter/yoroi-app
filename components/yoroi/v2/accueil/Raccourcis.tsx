@@ -131,8 +131,18 @@ function demoDuMoment(): CarteData[] {
   return ordonnerDuMoment({ seance: DEMO_SEANCE_MUSCU, semaine: DEMO_SEMAINE, exploits: [t('record_charge'), t('palier_total'), t('annee_progression'), t('serie_semaines')].filter((c): c is CarteData => !!c) });
 }
 
-export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?: number; record?: { titre: string; valeur: string } | null } = {}) {
+/** 30 octobre 2026 (grand ecran) : les 7 cartes sur une rangee fixe de cette largeur, plus grandes, sans defilement */
+const ESPACE_GRILLE_OUTILS = 12;
+function tailleCartes(largeurGrille?: number) {
+  if (!largeurGrille) return { l: CARTE_L, h: CARTE_H, sticker: STICKER, titreL: TITRE_L, sousL: SOUS_L, titre: 10, ligne: 15 };
+  const l = Math.floor((largeurGrille - 6 * ESPACE_GRILLE_OUTILS) / 7);
+  const sticker = 60;
+  return { l, h: 120, sticker, titreL: l - MARGE - STICKER_DROITE - sticker - 6, sousL: l - MARGE - STICKER_DROITE - sticker - 4, titre: 11, ligne: 16 };
+}
+
+export function RaccourcisDuJour({ record = null, largeurGrille }: { water?: number; waterGoal?: number; record?: { titre: string; valeur: string } | null; largeurGrille?: number } = {}) {
   const router = useRouter();
+  const tc = tailleCartes(largeurGrille);
   const { theme } = useYoroiTheme();
   const demo = useGlobalSearchParams<{ demo?: string }>().demo === '1';
   const outils = outilsAccueil();
@@ -203,16 +213,8 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
   };
   const pastille = nouvelles.length > 0 && !ouverte;
 
-  return (
-    <>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ marginHorizontal: -16, marginTop: 6 - HAUT_RANGEE }}
-        contentContainerStyle={{ paddingLeft: 16, paddingRight: 16, paddingTop: HAUT_RANGEE, paddingBottom: 8, gap: 10 }}
-        accessibilityLabel={traduire("Tes outils")}
-      >
-        {outils.map((o) => {
+  // 30 octobre 2026 : les cartes, posees dans la rangee qui defile (iPhone) ou la rangee fixe (grand ecran)
+  const cartesOutils = outils.map((o) => {
           const t = TEINTES[o.teinte];
           // la ligne principale : un vrai chiffre quand il existe, sinon une phrase neutre
           const ligne =
@@ -241,19 +243,19 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
                 const douce = blanche ? P.ink2 : ENCRE_DOUCE;
                 const image = illus.stickers ? illus.img(o.sticker) : o.img ?? illus.img(o.sticker);
                 return (
-                  <View style={[{ width: CARTE_L, height: CARTE_H, borderRadius: 20, backgroundColor: fond }, blanche ? ombreCarte : null]}>
+                  <View style={[{ width: tc.l, height: tc.h, borderRadius: 20, backgroundColor: fond }, blanche ? ombreCarte : null]}>
                   {/* le clip des apercus est sur cette boite interieure : la pastille Beta peut deborder de la carte */}
                   <View style={{ flex: 1, borderRadius: 20, overflow: 'hidden', paddingHorizontal: MARGE, paddingTop: MARGE, paddingBottom: MARGE }}>
                     {/* le sticker, meme taille et meme place sur toutes les cartes */}
                     {o.key === 'partager' && !illus.stickers ? (
                       <ApercuPartage />
                     ) : (
-                      <Image source={image} resizeMode="contain" style={{ position: 'absolute', right: STICKER_DROITE, top: STICKER_HAUT, width: STICKER, height: STICKER }} accessibilityIgnoresInvertColors />
+                      <Image source={image} resizeMode="contain" style={{ position: 'absolute', right: STICKER_DROITE, top: STICKER_HAUT, width: tc.sticker, height: tc.sticker }} accessibilityIgnoresInvertColors />
                     )}
                     {/* le petit titre en capitales, en haut a gauche, jamais sous le sticker */}
-                    <View style={{ width: TITRE_L, minHeight: 14, flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={{ width: tc.titreL, minHeight: 14, flexDirection: 'row', alignItems: 'center' }}>
                       <Ink
-                        size={10}
+                        size={tc.titre}
                         weight="black"
                         color={blanche ? (paletteSombre() ? P.accentText : t.titre) : t.titre}
                         numberOfLines={lignesLibelleOutil(o.title)}
@@ -267,12 +269,12 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
                     {/* la ligne principale, en bas a gauche : meme marge et meme ligne de base partout */}
                     <View style={{ marginTop: 'auto' }}>
                       {sous ? (
-                        <Ink size={11.5} weight="bold" color={douce} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ lineHeight: 15, marginBottom: 1, maxWidth: SOUS_L }}>
+                        <Ink size={11.5} weight="bold" color={douce} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ lineHeight: 15, marginBottom: 1, maxWidth: tc.sousL }}>
                           {sous}
                         </Ink>
                       ) : null}
                       <Ink
-                        size={15}
+                        size={tc.ligne}
                         weight="black"
                         color={encre}
                         numberOfLines={sous ? 1 : 2}
@@ -297,8 +299,25 @@ export function RaccourcisDuJour({ record = null }: { water?: number; waterGoal?
               </TourAnchor>
             </Press>
           );
-        })}
+        });
+
+  return (
+    <>
+      {largeurGrille ? (
+        <View style={{ flexDirection: 'row', gap: ESPACE_GRILLE_OUTILS, marginTop: 6 - HAUT_RANGEE, paddingTop: HAUT_RANGEE, paddingBottom: 8 }} accessibilityLabel={traduire("Tes outils")}>
+          {cartesOutils}
+        </View>
+      ) : (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ marginHorizontal: -16, marginTop: 6 - HAUT_RANGEE }}
+        contentContainerStyle={{ paddingLeft: 16, paddingRight: 16, paddingTop: HAUT_RANGEE, paddingBottom: 8, gap: 10 }}
+        accessibilityLabel={traduire("Tes outils")}
+      >
+        {cartesOutils}
       </ScrollView>
+      )}
       <FeuillePartage visible={ouverte} onClose={fermer} cartes={cartes} nouvelles={nouvelles} demo={demo} />
     </>
   );
