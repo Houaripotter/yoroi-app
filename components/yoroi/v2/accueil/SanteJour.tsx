@@ -14,7 +14,7 @@
  * toucher une mesure ouvre son ecran (/sante/<mesure>). Texte toujours en contraste AA sur son fond.
  */
 import React, { useState } from 'react';
-import { Pressable, View, useWindowDimensions } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import Svg, { Circle, Path as SvgPath } from 'react-native-svg';
@@ -29,6 +29,7 @@ import { paletteSombre } from '@/components/yoroi/livePalette';
 import { carteNeutre, teinte } from './domaines';
 import type { Domaine } from './domaines';
 import { traduire } from '@/lib/i18n/tr';
+import { useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
 
 const RAYON = 22;
 
@@ -121,7 +122,7 @@ function a11yMesure(m: MesureSanteJour, o: ObjectifsSante | null | undefined): s
 
 /** Largeur reelle de la grille (onLayout), estimee d'abord a partir de l'ecran */
 function useColonnes(marge: number): [number, (w: number) => void] {
-  const { width } = useWindowDimensions();
+  const width = useLargeurEcran();
   const [w, setW] = useState(Math.min(width, 560) - 44 - marge);
   return [w, setW];
 }
