@@ -12,6 +12,7 @@
  * Rien ne sort du téléphone.
  */
 import type { LiveExercise, MuscuDraft } from './model';
+import { reposApresSerie } from '@/lib/v2/seances/minuteurRepos';
 
 /** Un exercice tel que le natif le voit */
 export type ExoIle = { id: string; nom: string; faites: number; total: number; repos: number };
@@ -54,7 +55,8 @@ export function planIle(d: MuscuDraft, t: TextesIle, nomDe: (e: LiveExercise) =>
   }));
   const i = d.exercises.findIndex((e) => e.id === d.currentId);
   // maj : le natif ignore un plan plus ancien que son dernier appui (ios/Yoroi/Widgets/YoroiWidgetsModule.swift)
-  return { exos, cur: i >= 0 ? i : 0, debutMs: d.startedAt, t, rappel, maj: d.ile?.maj ?? 0 };
+  // minuteur de repos coupe : le natif ne programme aucune notification de fin de repos
+  return { exos, cur: i >= 0 ? i : 0, debutMs: d.startedAt, t, rappel: rappel && !d.sansRepos, maj: d.ile?.maj ?? 0 };
 }
 
 /** Une action rangée par le natif dans la file partagée */
@@ -126,8 +128,8 @@ export function appliquerActionsIle(d: MuscuDraft, actions: ActionIle[]): MuscuD
       ...r,
       exercises,
       currentId: fait && apres ? apres.id : ex.id,
-      restEndsAt: boucle ? null : a.at + repos * 1000,
-      restTotal: boucle ? 0 : repos,
+      // 30 octobre 2026 : minuteur de repos coupe, pas de repos (lib/v2/seances/minuteurRepos.ts)
+      ...reposApresSerie({ sansRepos: r.sansRepos, pasDeRepos: boucle, secondes: repos, maintenant: a.at }),
     };
   }
   return r;
