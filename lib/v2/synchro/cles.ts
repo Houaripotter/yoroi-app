@@ -141,7 +141,34 @@ export const CLES_ELEMENTS: readonly SpecCle[] = [
     },
   },
   { cle: '@yoroi_smart_reminders_settings', type: 'rappels', forme: 'objet' },
+  // Revue du 30 octobre 2026 : les reglages de la seance en direct, jusque la gardes sur un seul appareil
+  // cran de la machine ou de la poulie, par exercice (lib/v2/seances/reglagesMachine.ts) : champ par champ
+  { cle: 'yoroi_reglages_machine_v1', type: 'reglages', forme: 'objet' },
+  // exercices ecartes (lib/v2/seances/exercicesEcartes.ts) : un par nom, « Remettre » laisse une pierre tombale
+  {
+    cle: 'yoroi_exercices_ecartes_v1', type: 'programmes', forme: 'liste', idChamp: 'nom',
+    evenements: ['YOROI_PROGRAMME_CHANGED'],
+    apres: async () => {
+      try {
+        // la copie en memoire lue par les seances des programmes (perso.ts) est relue
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        await (require('@/lib/v2/seances/exercicesEcartes') as typeof import('@/lib/v2/seances/exercicesEcartes')).chargerEcartes();
+      } catch { /* relue a la prochaine ouverture */ }
+    },
+  },
+  // interrupteur du minuteur de repos (lib/v2/seances/minuteurRepos.ts) : '0' ou '1'
+  { cle: 'yoroi_minuteur_repos_v1', type: 'reglages', forme: 'valeur' },
 ];
+
+/**
+ * Revue du 30 octobre 2026 : evenement emis apres un enregistrement qui n'a pas d'autre evenement (cran, exercice
+ * ecarte, minuteur). lib/peerSyncService.ts l'ecoute : l'envoi part 4 s apres vers les appareils appaires relies.
+ */
+export const EVENEMENT_A_SYNCHRONISER = 'YOROI_SYNCHRO_A_ENVOYER';
+
+export function signalerASynchroniser(): void {
+  try { DeviceEventEmitter.emit(EVENEMENT_A_SYNCHRONISER); } catch { /* sans synchro */ }
+}
 
 export const SPEC_PAR_CLE = new Map(CLES_ELEMENTS.map((s) => [s.cle, s]));
 
