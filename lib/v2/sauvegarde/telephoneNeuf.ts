@@ -8,7 +8,7 @@
  * (on garde ce qui est la et on remplit seulement les cases vides).
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
+import { lireCoffreBrut } from '@/lib/v2/coffre/migrationCoffre';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 /** Tables qui contiennent ce que l'utilisateur a note (hors donnees relues depuis Sante) */
@@ -31,7 +31,6 @@ export const USER_DATA_SECURE_KEYS = [
   '@yoroi_injuries', '@yoroi_fasting_history',
 ];
 
-const secureKey = (k: string) => k.replace(/[^a-zA-Z0-9._-]/g, '_');
 
 /** Une valeur stockee contient-elle quelque chose ? (liste ou objet non vide, texte non vide) */
 export function hasContent(raw: string | null | undefined): boolean {
@@ -70,7 +69,8 @@ export async function isFreshPhone(db: SQLiteDatabase | null): Promise<boolean> 
     const pairs = (await AsyncStorage.multiGet(USER_DATA_KEYS)) ?? [];
     if (pairs.some(([, v]) => hasContent(v))) return false;
     for (const k of USER_DATA_SECURE_KEYS) {
-      if (hasContent(await SecureStore.getItemAsync(secureKey(k)))) return false;
+      // 28 octobre 2026 : coffre ou base a part (lib/v2/coffre/migrationCoffre.ts)
+      if (hasContent(await lireCoffreBrut(k))) return false;
     }
     return true;
   } catch {

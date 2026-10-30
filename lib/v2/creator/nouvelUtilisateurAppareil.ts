@@ -5,7 +5,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
-import * as SecureStore from 'expo-secure-store';
+import { coffreParNom } from '@/lib/v2/coffre/migrationCoffre';
 import * as SQLite from 'expo-sqlite';
 import { openDatabase } from '@/lib/database';
 import { demoActive } from '@/lib/v2/demo/garde';
@@ -83,11 +83,8 @@ export function serviceNouvelUtilisateur(): ServiceNouvelUtilisateur {
       multiSet: (pairs) => AsyncStorage.multiSet(pairs),
       multiRemove: (k) => AsyncStorage.multiRemove(k as string[]),
     },
-    coffre: {
-      lire: (nom) => SecureStore.getItemAsync(nom),
-      ecrire: (nom, v) => SecureStore.setItemAsync(nom, v, { keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK }),
-      effacer: (nom) => SecureStore.deleteItemAsync(nom),
-    },
+    // 28 octobre 2026 : les grosses listes du coffre sont dans une base a part, mises de cote comme le reste
+    coffre: coffreParNom,
     demoActive: () => demoActive(),
     nomsCoffre: (cles) => nomsCoffreAMettreDeCote([...CLES_SECURE_CONNUES, ...SECURE_DATA_KEYS], cles, COFFRE_GARDE),
     log: { info: (m) => logger.info(m), warn: (m, e) => logger.warn(m, e) },

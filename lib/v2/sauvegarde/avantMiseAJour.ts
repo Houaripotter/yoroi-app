@@ -11,7 +11,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
-import * as SecureStore from 'expo-secure-store';
+import { lireCoffreBrut } from '@/lib/v2/coffre/migrationCoffre';
 import * as SQLite from 'expo-sqlite';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
@@ -157,7 +157,8 @@ async function writeSnapshot(database: SQLite.SQLiteDatabase, keys: string[], ha
     try {
       const obj: Record<string, string> = {};
       for (const k of SECURE_DATA_KEYS) {
-        const v = await SecureStore.getItemAsync(k.replace(/[^a-zA-Z0-9._-]/g, '_')).catch(() => null);
+        // 28 octobre 2026 : les grosses listes sont lues la ou elles sont rangees (coffre ou base a part)
+        const v = await lireCoffreBrut(k).catch(() => null);
         if (v) obj[k] = v;
       }
       await FileSystem.writeAsStringAsync(`${dir}securestore.json`, JSON.stringify(obj));

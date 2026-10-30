@@ -16,8 +16,9 @@
  * - une valeur deja presente et differente est gardee telle quelle (comptee dans "gardees").
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
 import type { SQLiteDatabase } from 'expo-sqlite';
+// 28 octobre 2026 : les grosses listes du coffre sont rangees dans une base a part (lib/v2/coffre/migrationCoffre.ts)
+import { ecrireCoffreBrut, lireCoffreBrut } from '@/lib/v2/coffre/migrationCoffre';
 
 /** Cles jamais sauvegardees ni restaurees : propres a ce telephone, a l'abonnement, ou reconstruites seules */
 const STORAGE_SKIP: RegExp[] = [
@@ -51,7 +52,6 @@ export const SECURE_DATA_KEYS = [
   '@yoroi_current_weight', '@yoroi_target_weight',
 ] as const;
 
-const secureKey = (k: string) => k.replace(/[^a-zA-Z0-9._-]/g, '_');
 
 /** Tables jamais copiees telles quelles : catalogue reconstruit, synchro propre a l'appareil, sauvegardes de demo */
 const TABLE_SKIP = new Set(['events_catalog', 'app_metadata', 'sync_state', 'sync_tombstones', 'sqlite_sequence', 'android_metadata']);
@@ -84,7 +84,7 @@ export async function collectSecure(): Promise<Record<string, string>> {
   const out: Record<string, string> = {};
   for (const k of SECURE_DATA_KEYS) {
     try {
-      const v = await SecureStore.getItemAsync(secureKey(k));
+      const v = await lireCoffreBrut(k);
       if (typeof v === 'string' && v.length) out[k] = v;
     } catch {
       // coffre verrouille : la donnee reste aussi dans les sections classiques de la sauvegarde
@@ -181,9 +181,9 @@ export async function restoreSecure(map: unknown, alreadyHandled: Set<string>, p
   for (const [k, v] of Object.entries(map as Record<string, unknown>)) {
     if (typeof v !== 'string' || !allowed.has(k) || alreadyHandled.has(k)) { rep.skipped++; continue; }
     try {
-      const m = mergeStoredValue(await SecureStore.getItemAsync(secureKey(k)), v, preferIncoming);
+      const m = mergeStoredValue(await lireCoffreBrut(k), v, preferIncoming);
       if (m.value != null) {
-        await SecureStore.setItemAsync(secureKey(k), m.value, { keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK });
+        await ecrireCoffreBrut(k, m.value);
         rep.added++;
       }
       if (m.kept) rep.kept++;

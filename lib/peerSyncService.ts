@@ -67,7 +67,13 @@ import MultipeerBridge, { PeerChangedEvent, DataReceivedEvent } from './multipee
 import { openDatabase } from './database';
 import { CLE_PRATIQUES, EVENT_PRATIQUES, pratiquesPourEnvoi, pratiquesRecues, type ClubLeger } from './v2/profil/pratiques';
 import logger from './security/logger';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+// 28 octobre 2026 : listes fusionnees par element, nouvelles donnees, journal du dernier echange (lib/v2/synchro)
+import { FORMAT_ELEMENTS, type EtatEnvoi } from './v2/synchro/fusion';
+import { CLES_ANCIENNES_PAR_ELEMENT } from './v2/synchro/cles';
+import { appliquer as appliquerElements, appliquerAncienFormat, collecter as collecterElements } from './v2/synchro/elements';
+import { NOMS_TABLES_ETENDUES, TABLES_ETENDUES } from './v2/synchro/tables';
+import { ajouter, noterEchange, noterErreur, typeDeTable } from './v2/synchro/journal';
 
 // ============================================
 // CONSTANTES
@@ -76,6 +82,7 @@ import { traduire } from '@/lib/i18n/tr';
 const PROTOCOL_VERSION = '3';
 const LAST_SYNC_KEY = '@yoroi_peer_last_sync';          // affichage (dernière synchro réussie)
 const SINCE_MAP_KEY = '@yoroi_peer_since_v3';           // { deviceId: ts (horloge du pair) }
+const SINCE_X_KEY = '@yoroi_peer_since_x_v1';           // idem pour le format par element (tables et cles ajoutees le 28 octobre 2026)
 const DEVICE_ID_KEY = '@yoroi_peer_device_id';          // identifiant unique de cet appareil
 const HAD_V2_KEY = '@yoroi_peer_had_v2';                // a déjà synchronisé avec l'ancienne version
 const CHUNK_MAX_BYTES = 150 * 1024;                     // taille max d'un message avant chiffrement (base64 : +33 %)
@@ -123,6 +130,8 @@ const TABLES: Array<[string, TableSpec]> = [
   ['achievements', { textPk: true, natural: d => (d.id != null ? `ach:${d.id}` : null) }],
   ['progression_items', {}],
   ['practice_logs', { fks: { item_id: 'progression_items' }, requiresParent: ['item_id'] }],
+  // 28 octobre 2026 : eau, objectif de poids, objectifs (envoyees seulement a un telephone a jour, voir tables.ts)
+  ...TABLES_ETENDUES,
 ];
 const TABLE_ORDER = new Map(TABLES.map(([t], i) => [t, i]));
 const SPEC = new Map(TABLES);
@@ -138,8 +147,8 @@ const SYNC_KV_KEYS = [
   '@yoroi_drill_tracker',
   '@yoroi_gameplan_checked',
   '@yoroi_tool_favorites',
-  '@yoroi_benchmarks_v2',
-  '@yoroi_skills_v2',
+  // 28 octobre 2026 : '@yoroi_benchmarks_v2' et '@yoroi_skills_v2' retirees, le carnet est range sans @ et passe
+  // desormais par element (lib/v2/synchro/cles.ts). Partenaires, records, charges et photos y sont aussi fusionnes.
   '@yoroi_personal_records',
   '@yoroi_training_loads',
   '@yoroi_health_bonus_history',
@@ -182,6 +191,11 @@ interface SyncMessage {
   tombs?: Tombstone[];
   kv3?: KVDelta;
   legacy?: boolean;    // l'expéditeur a déjà synchronisé en v2
+  // 28 octobre 2026 : format par element. Absent chez un telephone pas encore a jour, qui ignore ces champs.
+  fx?: number;                          // version du format par element connue de l'expediteur
+  sinceX?: Record<string, number>;      // HANDSHAKE : jusqu'ou on a recu le format par element de chaque pair
+  elems?: EtatEnvoi[];                  // SYNC_DATA : elements modifies (listes, reglages ajoutes)
+  rappel?: boolean;                     // HANDSHAKE : « Synchroniser maintenant », l'autre envoie aussi le sien
   // v2 (compatibilité)
   lastSyncTs?: string;
   tables?: Record<string, any[]>;
@@ -251,6 +265,7 @@ let queue: Promise<unknown> = Promise.resolve();
 const enqueue = <T>(label: string, fn: () => Promise<T>): Promise<T | undefined> => {
   const run = queue.then(fn).catch(err => {
     logger.error(`[PeerSync] Erreur ${label}:`, err);
+    void noterErreur(`${label} : ${String((err as Error)?.message ?? err)}`).catch(() => undefined);
     return undefined;
   });
   queue = run;
@@ -427,7 +442,7 @@ export const oublierTousLesAppareils = async (): Promise<void> => {
 };
 
 // Réassemblage des paquets reçus (par synchro)
-const pendingIncoming = new Map<string, { from: string; device: string; failures: number }>();
+const pendingIncoming = new Map<string, { from: string; device: string; failures: number; compte: Record<string, number>; erreurs: string[] }>();
 
 // ============================================
 // API PUBLIQUE
@@ -504,7 +519,8 @@ export const forceSync = async (): Promise<number> => {
   const peers = await MultipeerBridge.getConnectedPeers();
   if (peers.length === 0 || Object.keys(paires).length === 0) return 0;
   try {
-    await sendHandshake();
+    // rappel : l'autre telephone renvoie aussi sa demande, l'echange part dans les deux sens
+    await sendHandshake(true);
     return relies.size;
   } catch (err) {
     logger.error('[PeerSync] Erreur forceSync:', err);
@@ -540,8 +556,9 @@ const onPeerChanged = async (event: PeerChangedEvent) => {
   }
 };
 
-const sendHandshake = async () => {
+const sendHandshake = async (rappel = false) => {
   const since = await loadSinceMap();
+  const sinceX = await loadSinceMap(SINCE_X_KEY);
   const legacyRaw = await AsyncStorage.getItem(LAST_SYNC_KEY);
   let lastSyncTs = '1970-01-01 00:00:00';
   try { if (legacyRaw) lastSyncTs = JSON.parse(legacyRaw).legacyTs ?? lastSyncTs; } catch { /* ignore */ }
@@ -555,6 +572,9 @@ const sendHandshake = async () => {
       to,
       since,
       lastSyncTs,
+      fx: FORMAT_ELEMENTS,
+      sinceX,
+      ...(rappel ? { rappel: true } : {}),
     } satisfies SyncMessage);
   }
 };
@@ -596,6 +616,7 @@ const onDataReceived = async (event: DataReceivedEvent) => {
     switch (msg.type) {
       case 'HANDSHAKE':
         enqueue('envoi delta', () => sendDeltaTo(msg));
+        if (msg.rappel) await sendHandshake();
         break;
       case 'SYNC_DATA':
         enqueue('import', () => handleSyncData(msg));
@@ -618,6 +639,10 @@ const sendDeltaTo = async (hs: SyncMessage) => {
   if (!peerId) return;
   if (await demoBlocksSync()) return;
   const sinceMs = Number(hs.since?.[myDeviceId] ?? 0) || 0;
+  // Format par element : seulement si le pair le connait. Son « depuis » est a part (voir tables.ts).
+  const etendu = (Number(hs.fx) || 0) >= 1 && !!hs.sinceX && typeof hs.sinceX === 'object';
+  const sinceXMs = etendu ? Number(hs.sinceX?.[myDeviceId] ?? 0) || 0 : 0;
+  const compte: Record<string, number> = {};
 
   setStatus({ isSyncing: true });
   try {
@@ -633,6 +658,7 @@ const sendDeltaTo = async (hs: SyncMessage) => {
     let seq = 0;
     let rows: SyncItem[] = [];
     let tombs: Tombstone[] = [];
+    let elems: EtatEnvoi[] = [];
     let size = 0;
     let totalRows = 0;
 
@@ -651,15 +677,20 @@ const sendDeltaTo = async (hs: SyncMessage) => {
         kv3,
         legacy: hadV2Sync,
         ts: scanTs,
+        ...(etendu ? { fx: FORMAT_ELEMENTS, elems } : {}),
       } satisfies SyncMessage);
       rows = [];
       tombs = [];
+      elems = [];
       size = 0;
     };
 
     const existing = await existingTables(db);
     for (const [table] of TABLES) {
       if (!existing.has(table)) continue;
+      const ext = NOMS_TABLES_ETENDUES.has(table);
+      if (ext && !etendu) continue; // un telephone pas a jour ne saurait pas quoi en faire
+      const depuis = ext ? sinceXMs : sinceMs;
       const PAGE = 200;
       // Pagination par rowid (et non OFFSET) : une suppression pendant l'envoi ne fait sauter aucune ligne
       for (let lastRowid = -1; ;) {
@@ -668,7 +699,7 @@ const sendDeltaTo = async (hs: SyncMessage) => {
              JOIN sync_state s ON s.tbl = ? AND s.uid = t.sync_uid
            WHERE s.changed_at > ? AND (s.src IS NULL OR s.src != ?) AND t.rowid > ?
            ORDER BY t.rowid LIMIT ?`,
-          [table, sinceMs, peerId, lastRowid, PAGE]
+          [table, depuis, peerId, lastRowid, PAGE]
         )) as Record<string, any>[];
         if (page.length === 0) break;
         lastRowid = Number(page[page.length - 1].__rid);
@@ -683,15 +714,19 @@ const sendDeltaTo = async (hs: SyncMessage) => {
           rows.push(item);
           size += itemSize;
           totalRows++;
+          ajouter(compte, typeDeTable(table), 1);
         }
         if (page.length < PAGE) break;
       }
     }
 
-    const tombRows = (await db.getAllAsync(
-      'SELECT tbl, uid, deleted_at FROM sync_tombstones WHERE changed_at > ? AND (src IS NULL OR src != ?) ORDER BY deleted_at ASC',
-      [sinceMs, peerId]
-    )) as Array<{ tbl: string; uid: string; deleted_at: number }>;
+    const tombRows = ((await db.getAllAsync(
+      'SELECT tbl, uid, deleted_at, changed_at FROM sync_tombstones WHERE changed_at > ? AND (src IS NULL OR src != ?) ORDER BY deleted_at ASC',
+      [etendu ? Math.min(sinceMs, sinceXMs) : sinceMs, peerId]
+    )) as Array<{ tbl: string; uid: string; deleted_at: number; changed_at: number }>).filter(tr =>
+      NOMS_TABLES_ETENDUES.has(tr.tbl) ? etendu && Number(tr.changed_at) > sinceXMs : Number(tr.changed_at) > sinceMs
+    );
+    ajouter(compte, 'suppressions', tombRows.length);
     for (const tr of tombRows) {
       const item: Tombstone = { t: tr.tbl, uid: tr.uid, u: Number(tr.deleted_at) };
       const itemSize = 80 + tr.uid.length;
@@ -700,10 +735,33 @@ const sendDeltaTo = async (hs: SyncMessage) => {
       size += itemSize;
     }
 
+    // Elements (listes fusionnees, reglages ajoutes) : en morceaux, parents avant leurs sous elements
+    let erreursEnvoi: string[] = [];
+    if (etendu) {
+      const c = await collecterElements(sinceXMs, peerId);
+      erreursEnvoi = c.erreurs;
+      for (const [type, n] of Object.entries(c.compte)) ajouter(compte, type, n ?? 0);
+      for (const etat of c.etats) {
+        const PAR = 300;
+        const parts: EtatEnvoi[] = [];
+        for (let i = 0; i < Math.max(etat.items.length, 1); i += PAR) {
+          parts.push({ ...etat, items: etat.items.slice(i, i + PAR), tombs: i === 0 ? etat.tombs : [] });
+        }
+        for (const part of parts) {
+          const partSize = JSON.stringify(part).length;
+          if (size > 0 && size + partSize > CHUNK_MAX_BYTES) await flush(false);
+          elems.push(part);
+          size += partSize;
+        }
+      }
+    }
+
     // Réglages (AsyncStorage) dans le dernier paquet
     const kv3 = await collectKVDelta(formatKvTs(sinceMs));
+    ajouter(compte, 'reglages', Object.keys(kv3).filter(k => !(etendu && CLES_ANCIENNES_PAR_ELEMENT.has(k))).length);
     await flush(true, kv3);
 
+    await noterEchange('envoye', { quand: new Date().toISOString(), appareil: hs.device, compte, erreurs: erreursEnvoi });
     logger.info(`[PeerSync] Envoyé à ${hs.device}: ${totalRows} lignes, ${tombRows.length} suppressions, ${Object.keys(kv3).length} réglages (${seq} paquet(s))`);
   } finally {
     setStatus({ isSyncing: false });
@@ -733,7 +791,7 @@ const handleSyncData = async (msg: SyncMessage) => {
     // Au premier paquet d'une synchro : mettre à jour notre propre état local
     // pour que les conflits soient jugés sur des informations à jour
     if (!pendingIncoming.has(msg.syncId)) {
-      pendingIncoming.set(msg.syncId, { from, device: msg.device, failures: 0 });
+      pendingIncoming.set(msg.syncId, { from, device: msg.device, failures: 0, compte: {}, erreurs: [] });
       if (Date.now() - lastScanAt > 3000) await scanAll(db);
     }
     const pending = pendingIncoming.get(msg.syncId)!;
@@ -761,7 +819,10 @@ const handleSyncData = async (msg: SyncMessage) => {
       for (const item of items) {
         if (!SPEC.has(item.t) || !existing.has(item.t)) continue;
         try {
-          if (await applyRow(db, item, resolver, from)) applied++;
+          if (await applyRow(db, item, resolver, from)) {
+            applied++;
+            ajouter(pending.compte, typeDeTable(item.t), 1);
+          }
         } catch (err) {
           pending.failures++;
           logger.warn(`[PeerSync] Ligne non appliquée (${item.t}):`, err);
@@ -770,7 +831,10 @@ const handleSyncData = async (msg: SyncMessage) => {
       for (const tomb of msg.tombs ?? []) {
         if (!SPEC.has(tomb.t) || !existing.has(tomb.t)) continue;
         try {
-          if (await applyTombstone(db, tomb, from)) applied++;
+          if (await applyTombstone(db, tomb, from)) {
+            applied++;
+            ajouter(pending.compte, 'suppressions', 1);
+          }
         } catch (err) {
           pending.failures++;
           logger.warn(`[PeerSync] Suppression non appliquée (${tomb.t}):`, err);
@@ -790,11 +854,21 @@ const handleSyncData = async (msg: SyncMessage) => {
       DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
     }
 
+    // Elements (format par element) : listes fusionnees, reglages ajoutes
+    if ((Number(msg.fx) || 0) >= 1 && Array.isArray(msg.elems) && msg.elems.length) {
+      const r = await appliquerElements(msg.elems, from);
+      pending.failures += r.echecs;
+      pending.erreurs.push(...r.erreurs);
+      for (const [type, n] of Object.entries(r.compte)) ajouter(pending.compte, type, n ?? 0);
+      if (r.cles.length) suppressBackgroundScanUntil = Date.now() + 20000;
+    }
+
     if (msg.last) {
       pendingIncoming.delete(msg.syncId);
 
       let kvApplied = 0;
-      if (msg.kv3) kvApplied = await applyKVDelta(msg.kv3);
+      if (msg.kv3) kvApplied = await applyKVDelta(msg.kv3, { from, fx: Number(msg.fx) || 0 });
+      ajouter(pending.compte, 'reglages', kvApplied);
       if (kvApplied > 0) {
         suppressBackgroundScanUntil = Date.now() + 20000;
         DeviceEventEmitter.emit('YOROI_PARTNERS_CHANGED');
@@ -808,6 +882,12 @@ const handleSyncData = async (msg: SyncMessage) => {
         const since = await loadSinceMap();
         since[from] = Math.max(since[from] ?? 0, peerTs);
         await AsyncStorage.setItem(SINCE_MAP_KEY, JSON.stringify(since));
+        // le format par element n'avance que s'il a vraiment ete envoye
+        if ((Number(msg.fx) || 0) >= 1) {
+          const sinceX = await loadSinceMap(SINCE_X_KEY);
+          sinceX[from] = Math.max(sinceX[from] ?? 0, peerTs);
+          await AsyncStorage.setItem(SINCE_X_KEY, JSON.stringify(sinceX));
+        }
       } else {
         logger.warn(`[PeerSync] ${pending.failures} élément(s) non appliqué(s) : la synchro avec ${msg.device} sera reprise`);
       }
@@ -822,6 +902,14 @@ const handleSyncData = async (msg: SyncMessage) => {
       } satisfies SyncMessage);
 
       await markSynced(msg.device);
+      await noterEchange('recu', {
+        quand: new Date().toISOString(),
+        appareil: msg.device,
+        compte: pending.compte,
+        erreurs: pending.failures > 0
+          ? [traduirePluriel(pending.failures, pending.failures > 1, '{0} élément non appliqué, il sera repris à la prochaine synchro', '{0} éléments non appliqués, ils seront repris à la prochaine synchro', pending.failures), ...pending.erreurs]
+          : pending.erreurs,
+      });
       logger.info(`[PeerSync] Synchro reçue de ${msg.device} terminée`);
     }
   } finally {
@@ -1494,8 +1582,13 @@ async function collectKVDelta(sinceTs: string): Promise<KVDelta> {
   return result;
 }
 
-/** Applique les réglages reçus. Retourne le nombre de clés modifiées. */
-async function applyKVDelta(kv: KVDelta): Promise<number> {
+/**
+ * Applique les réglages reçus. Retourne le nombre de clés modifiées.
+ * 28 octobre 2026 : les listes (partenaires, records, charges, photos) ne sont plus remplacees entieres.
+ * D'un telephone a jour (fx >= 1), elles arrivent par element (elems) et leur valeur entiere est ignoree ;
+ * d'un ancien telephone, la valeur entiere est fusionnee sans rien retirer (lib/v2/synchro/elements.ts).
+ */
+async function applyKVDelta(kv: KVDelta, opts: { from?: string; fx?: number } = {}): Promise<number> {
   let applied = 0;
   let pratiquesChangees = false;
   try {
@@ -1508,6 +1601,21 @@ async function applyKVDelta(kv: KVDelta): Promise<number> {
 
     for (const [key, payload] of Object.entries(kv)) {
       if (!(SYNC_KV_KEYS as readonly string[]).includes(key)) continue;
+      if (CLES_ANCIENNES_PAR_ELEMENT.has(key)) {
+        if ((opts.fx ?? 0) >= 1 || !payload || typeof payload.updatedAt !== 'string') continue;
+        try {
+          const r = await appliquerAncienFormat(key, payload.value ?? null, payload.updatedAt, opts.from ?? '');
+          if (r) {
+            // la liste fusionnee repart vers l'ancien telephone (elle contient tout, la sienne et la notre)
+            timestamps[key] = formatKvTs(Date.now());
+            hashes[key] = fastHash(r.valeur ?? '__null__');
+            applied++;
+          }
+        } catch (e) {
+          logger.warn(`[PeerSync] Fusion de ${key} remise a plus tard:`, e);
+        }
+        continue;
+      }
       const localTs = timestamps[key] ?? '1970-01-01 00:00:00';
       if (payload.updatedAt > localTs) {
         let value = payload.value;
@@ -1569,9 +1677,9 @@ async function getOrCreateDeviceId(): Promise<string> {
   return id;
 }
 
-async function loadSinceMap(): Promise<Record<string, number>> {
+async function loadSinceMap(cle: string = SINCE_MAP_KEY): Promise<Record<string, number>> {
   try {
-    const raw = await AsyncStorage.getItem(SINCE_MAP_KEY);
+    const raw = await AsyncStorage.getItem(cle);
     const parsed = raw ? JSON.parse(raw) : {};
     return parsed && typeof parsed === 'object' ? parsed : {};
   } catch {
@@ -1600,6 +1708,9 @@ export const __test__ = {
   setDeviceId: (id: string) => { myDeviceId = id; },
   collectKVDelta,
   applyKVDelta,
+  sendHandshake,
+  /** la file d'attente actuelle (tests : attendre la fin d'un envoi ou d'un import) */
+  attendre: () => queue,
 };
 
 export default { initPeerSync, stopPeerSync, onSyncStatusChange, getSyncStatus, forceSync, getMyDeviceName, isPeerSyncAvailable };

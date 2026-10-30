@@ -30,6 +30,7 @@ import {
   stopPeerSync,
 } from '@/lib/peerSyncService';
 import type { SyncStatus } from '@/lib/peerSyncService';
+import EtatSynchro from '@/components/yoroi/v2/synchro/EtatSynchro';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 function DevicesScene({ connected, peers }: { connected: boolean; peers: number }) {
@@ -140,7 +141,7 @@ export default function SyncDevicesScreen() {
     : null;
 
   return (
-    <DetailScreen title={Platform.OS === 'ios' ? traduire('iPhone et iPad') : traduire('Tes appareils')} subtitle={traduire("Synchronisation locale")}>
+    <DetailScreen title={traduire('Tes appareils')} subtitle={traduire("Synchronisation locale")}>
       <GlassBox style={{ gap: 12, alignItems: 'center' }}>
         <DevicesScene connected={isConnected} peers={n} />
         <Ink size={22} weight="black" tight style={{ textAlign: 'center' }}>
@@ -164,6 +165,12 @@ export default function SyncDevicesScreen() {
         <ActionRow first icon="phone" title={myName} sub={traduire("Cet appareil")} color={S.accent} tint={S.accentSoft} />
         <ActionRow icon="history" title={lastSyncStr || traduire('Aucune pour le moment')} sub={status.lastSyncDevice ? traduire("Dernière synchro, avec {0}, voir le journal", status.lastSyncDevice) : traduire('Dernière synchro, voir le journal')} onPress={() => router.push('/sync-history' as any)} color={S.indigo} tint={S.indigoSoft} />
       </CardBox>
+
+      {/* 28 octobre 2026 : etat du dernier echange, type par type, et la synchro a la demande */}
+      <Label>{traduire("Dernier échange")}</Label>
+      <EtatSynchro />
+      <SmallButton label={syncing ? traduire('Synchronisation') : traduire('Synchroniser maintenant')} tone="red" icon="sync" busy={syncing} disabled={!isAvailable || status.paires.length === 0} onPress={handleForceSync} />
+      {msg ? <Notice text={traduire(msg.text)} tone={msg.tone} /> : null}
 
       <Label aside={status.paires.length ? `${n} en ligne` : undefined}>{traduire("Tes appareils")}</Label>
       {status.paires.length ? (
@@ -243,8 +250,6 @@ export default function SyncDevicesScreen() {
         </View>
       )}
 
-      <SmallButton label={syncing ? 'Synchronisation' : traduire('Forcer la synchronisation')} tone="red" icon="sync" busy={syncing} disabled={!isAvailable || status.paires.length === 0} onPress={handleForceSync} />
-      {msg ? <Notice text={traduire(msg.text)} tone={msg.tone} /> : null}
 
       <Label>{traduire("Comment ça marche")}</Label>
       <CardBox>

@@ -3,6 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import logger from './logger';
 import { SECURE_DATA_KEYS } from '@/lib/v2/sauvegarde/fusion';
+// 28 octobre 2026 : mensurations, blessures, nuits, humeur, compositions, jeunes rangees dans une base, plus dans le coffre
+import { ecritDansLeCoffre, ecrireRoute, effacerRoute, estVolumineuse, lireRoute, migrerDepuisCoffre } from '@/lib/v2/coffre/migrationCoffre';
 
 /**
  * Nettoie la clé pour être compatible avec SecureStore
@@ -94,9 +96,14 @@ export const secureStorage = {
         return true;
       }
 
+      if (estVolumineuse(key) && (await ecrireRoute(key, stringValue))) {
+        if (aUnMiroir(key)) await ecrireMiroir(key, stringValue);
+        return true;
+      }
       await SecureStore.setItemAsync(safeKey, stringValue, {
         keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
       });
+      if (estVolumineuse(key)) await ecritDansLeCoffre(key);
       if (aUnMiroir(key)) await ecrireMiroir(key, stringValue);
       return true;
     } catch (error) {
@@ -115,8 +122,11 @@ export const secureStorage = {
         return localStorage.getItem(safeKey);
       }
 
+      const route = await lireRoute(key);
+      if (route.trouve) return route.valeur ? decoder(route.valeur) : null;
       const value = await apresLecture(key, safeKey, await SecureStore.getItemAsync(safeKey));
       if (!value) return null;
+      if (estVolumineuse(key)) await migrerDepuisCoffre(key, value);
       return decoder(value);
     } catch (error) {
       logger.error(`SecureStorage read error (${key}):`, error);
@@ -141,6 +151,8 @@ export const secureStorage = {
     if (Platform.OS === 'web') {
       return localStorage.getItem(safeKey);
     }
+    const route = await lireRoute(key);
+    if (route.trouve) return route.valeur ? decoder(route.valeur) : null;
     let brut: string | null;
     try {
       brut = await SecureStore.getItemAsync(safeKey);
@@ -151,6 +163,7 @@ export const secureStorage = {
     }
     const value = await apresLecture(key, safeKey, brut);
     if (!value) return null;
+    if (estVolumineuse(key)) await migrerDepuisCoffre(key, value);
     return decoder(value);
   },
 
@@ -169,6 +182,7 @@ export const secureStorage = {
         await AsyncStorage.removeItem(miroirCle(key));
         miroirsVerifies.delete(key);
       }
+      if (estVolumineuse(key)) await effacerRoute(key);
       await SecureStore.deleteItemAsync(safeKey);
       return true;
     } catch (error) {
