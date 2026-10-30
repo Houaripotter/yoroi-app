@@ -3,6 +3,8 @@
  */
 import React from 'react';
 import Svg, { Path } from 'react-native-svg';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
 
 export type CIconName =
   | 'back' | 'chevron' | 'plus' | 'minus' | 'close' | 'check' | 'trash' | 'edit' | 'share' | 'camera' | 'mic' | 'play' | 'pause' | 'stop'
@@ -58,12 +60,15 @@ const PATHS: Record<CIconName, string[]> = {
   search: ['M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z', 'M20 20l-4-4'],
 };
 
-export function CIcon({ name, size = 22, color = '#1D2029', width = 2.2, fill }: { name: CIconName; size?: number; color?: string; width?: number; fill?: string }) {
+/** 30 octobre 2026 : le sticker de l'icone quand il y en a un (reglage Stickers), voir ui/StickerIcone */
+export function CIcon({ name, size = 22, color = '#1D2029', width = 2.2, fill, sticker }: { name: CIconName; size?: number; color?: string; width?: number; fill?: string; sticker?: NomSticker | false }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      {PATHS[name].map((d, i) => (
-        <Path key={i} d={d} stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" fill={i === 0 && fill ? fill : 'none'} />
-      ))}
-    </Svg>
+    <IconeOuSticker nom={name} sticker={sticker} taille={size}>
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        {PATHS[name].map((d, i) => (
+          <Path key={i} d={d} stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" fill={i === 0 && fill ? fill : 'none'} />
+        ))}
+      </Svg>
+    </IconeOuSticker>
   );
 }
