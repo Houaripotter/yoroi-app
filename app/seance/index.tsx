@@ -44,6 +44,7 @@ import { OMBRE_CARTE, carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { HabillageBoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { StickerSinon } from '@/components/yoroi/v2/ui/StickerSinon';
 
 type Hero = {
   over: string;
@@ -363,7 +364,7 @@ export default function OnSentraine() {
         {/* 28 octobre 2026 : en direct, les sprints guidés (app/seance/sprints.tsx) */}
         {direct && !later ? (
           <Pressable onPress={() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); router.push('/seance/sprints' as any); }} accessibilityRole="button" accessibilityLabel={traduire('Sprints guidés, échauffement, sprints et récupération')} style={({ pressed }) => [carteBlanche(c.surface, c.divider), { minHeight: 64, borderRadius: 18, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 12, opacity: pressed ? 0.85 : 1 }]}>
-            <Icon name="bolt" size={22} color={c.accent} />
+            <StickerSinon nom="course" taille={36}><Icon name="bolt" size={22} color={c.accent} /></StickerSinon>
             <View style={{ flex: 1 }}>
               <Ink size={15} weight="extraBold">{traduire('Sprints guidés')}</Ink>
               <Ink size={12} color={c.textMuted}>{traduire('Échauffement, sprints, récupération, la voix te guide')}</Ink>
@@ -405,7 +406,7 @@ export default function OnSentraine() {
         {/* vague 37 : ta montre, en un toucher, quand elle est reliee */}
         {!later && !direct && provider ? (
           <Pressable onPress={syncWatch} accessibilityRole="button" accessibilityLabel={traduire("Récupérer tes séances depuis {0}", provider)} style={({ pressed }) => [carteBlanche(c.surface, c.divider), { minHeight: 56, borderRadius: 18, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 12, opacity: pressed ? 0.85 : 1 }]}>
-            <Icon name="clock" size={22} color={c.accent} />
+            <StickerSinon nom="sante_appareils" taille={36}><Icon name="clock" size={22} color={c.accent} /></StickerSinon>
             <View style={{ flex: 1 }}>
               <Ink size={12} weight="bold" color={c.textMuted}>{traduire("Ta montre, via {0}", provider)}</Ink>
               <Ink size={15} weight="extraBold" numberOfLines={2}>{sync === 'idle' ? traduire('Récupérer tes séances') : sync === 'busy' ? 'Synchro en cours...' : sync}</Ink>
