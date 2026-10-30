@@ -64,7 +64,8 @@ export function IconBtn({ icon, label, onPress, tone = 'light', size = 44 }: { i
   return (
     <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={6}>
       <View style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg, borderWidth: tone === 'light' ? 1 : 0, borderColor: P.white, alignItems: 'center', justifyContent: 'center' }, tone === 'light' ? { shadowColor: '#1D2029', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 } : null]}>
-        <CIcon name={icon} size={size * 0.45} color={fg} />
+        {/* 30 octobre 2026 : lecture et pause vont ensemble, la lecture reste une icone ici */}
+        <CIcon name={icon} size={size * 0.45} color={fg} sticker={icon === 'play' ? false : undefined} />
       </View>
     </Press>
   );
