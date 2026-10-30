@@ -2,8 +2,9 @@
  * Synchronisation locale iPhone et iPad (refonte v2) : appareils appaires, appairage par code,
  * cet appareil, derniere synchro (ouvre le journal de synchro), forcer l'envoi, aide. 100 % en local.
  *
- * 13 octobre 2026 : la synchro ne tourne que pendant que cet ecran est ouvert, et seulement avec un appareil
- * appaire par un code a 6 chiffres. Voir lib/peerSyncService.ts et lib/v2/sync/appairage.ts.
+ * 13 octobre 2026 : seulement avec un appareil appaire par un code a 6 chiffres. Voir lib/peerSyncService.ts.
+ * 30 octobre 2026 : la synchro est automatique (lib/v2/synchro/auto.ts) quand l'app est ouverte et un appareil
+ * appaire proche ; cet ecran la garde en marche pour appairer, il ne l'arrete plus en se fermant.
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, TextInput, View } from 'react-native';
@@ -23,12 +24,11 @@ import {
   forceSync,
   getMyDeviceName,
   getSyncStatus,
-  initPeerSync,
   isPeerSyncAvailable,
   onSyncStatusChange,
   oublierAppareil,
-  stopPeerSync,
 } from '@/lib/peerSyncService';
+import { garderSynchro } from '@/lib/v2/synchro/auto';
 import type { SyncStatus } from '@/lib/peerSyncService';
 import EtatSynchro from '@/components/yoroi/v2/synchro/EtatSynchro';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
@@ -69,14 +69,15 @@ export default function SyncDevicesScreen() {
   const [maintenant, setMaintenant] = useState(Date.now());
 
   useEffect(() => {
-    // La synchro tourne seulement pendant que cet ecran est ouvert
-    if (isAvailable) initPeerSync().catch(() => {});
+    // Ecran ouvert : la recherche tourne, meme sans appareil appaire (pour appairer). En le quittant, la synchro
+    // automatique continue si un appareil est appaire, sinon elle s'arrete.
+    const relacher = isAvailable ? garderSynchro('ecran') : () => undefined;
     const unsub = onSyncStatusChange(setStatus);
     const tn = setTimeout(() => setMyName(getMyDeviceName()), 500);
     return () => {
       unsub();
       clearTimeout(tn);
-      stopPeerSync().catch(() => {});
+      relacher();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -91,7 +92,7 @@ export default function SyncDevicesScreen() {
   useEffect(() => {
     if (status.appairageResultat === 'reussi') {
       setSaisie(null);
-      setMsg({ tone: 'good', text: traduire('Appareil appairé. Tes données se synchronisent quand YOROI est ouvert sur cet écran, sur les deux appareils.') });
+      setMsg({ tone: 'good', text: traduire('Appareil appairé. La synchronisation est automatique quand tes appareils sont proches et YOROI ouvert.') });
     } else if (status.appairageResultat === 'expire') {
       setMsg({ tone: 'bad', text: traduire('Le code a expiré. Recommence l’appairage.') });
     } else if (status.appairageResultat === 'annule') {
@@ -119,7 +120,7 @@ export default function SyncDevicesScreen() {
     setMsg(null);
     try {
       const count = await forceSync();
-      if (count === 0) setMsg({ tone: 'bad', text: traduire("Aucun appareil appairé à proximité. Ouvre cet écran sur ton autre appareil, à côté de ce téléphone, avec le wifi et le réseau local autorisés.") });
+      if (count === 0) setMsg({ tone: 'bad', text: traduire("Aucun appareil appairé à proximité. Ouvre YOROI sur ton autre appareil, à côté de toi, avec le wifi et le réseau local autorisés.") });
       else setMsg({ tone: 'good', text: traduirePluriel(count, count > 1, "Synchronisation envoyée à {0} appareil. Les données se mettent à jour dans quelques secondes.", "Synchronisation envoyée à {0} appareils. Les données se mettent à jour dans quelques secondes.", count) });
     } catch (e: any) {
       setMsg({ tone: 'bad', text: traduire("Erreur : {0}", e?.message || traduire('inconnue')) });
@@ -155,11 +156,12 @@ export default function SyncDevicesScreen() {
             : isConnected
               ? traduire('Tes données se synchronisent')
               : status.paires.length
-                ? traduire('Ouvre cet écran sur ton autre appareil, à côté de ce téléphone')
+                ? traduire('Ouvre YOROI sur ton autre appareil, à côté de toi')
                 : traduire('Appaire d’abord ton autre appareil avec un code')}
         </Ink>
         {isAvailable && !isConnected && status.paires.length > 0 ? <ActivityIndicator size="small" color={S.accent} /> : null}
       </GlassBox>
+      {isAvailable ? <Notice text={traduire('La synchronisation est automatique quand tes appareils sont proches et YOROI ouvert.')} tone="neutral" /> : null}
 
       <CardBox>
         <ActionRow first icon="phone" title={myName} sub={traduire("Cet appareil")} color={S.accent} tint={S.accentSoft} />
@@ -254,8 +256,10 @@ export default function SyncDevicesScreen() {
       <Label>{traduire("Comment ça marche")}</Label>
       <CardBox>
         <ActionRow first icon="shield" title={traduire("100 % en local")} sub={traduire("Sans internet ni serveur, par Bluetooth et wifi direct. Tes données sont chiffrées de bout en bout.")} color={S.indigo} tint={S.indigoSoft} />
-        <ActionRow icon="lock" title={traduire("Seulement tes appareils")} sub={traduire("Un appareil n'est synchronisé qu'après un appairage par code. Un téléphone inconnu à côté de toi ne reçoit rien.")} color={S.mossText} tint={S.mossSoft} />
-        <ActionRow icon="wifi" title={traduire("Quand cet écran est ouvert")} sub={traduire("La synchronisation tourne pendant que cet écran est ouvert sur les deux appareils, proches l'un de l'autre.")} color={S.accent} tint={S.accentSoft} />
+        <ActionRow icon="lock" title={traduire("Seulement tes appareils")} sub={traduire("Un appareil n'est synchronisé qu'après un appairage par code. Un téléphone inconnu à côté de toi ne reçoit rien et ne peut pas s'appairer sans le code affiché sur ton écran.")} color={S.mossText} tint={S.mossSoft} />
+        <ActionRow icon="wifi" title={traduire("Toute seule")} sub={traduire("Dès que YOROI est ouvert sur deux appareils appairés proches, ils échangent tout seuls. Rien ne tourne en arrière plan, pour ta batterie.")} color={S.accent} tint={S.accentSoft} />
+        <ActionRow icon="watch" title={traduire("Ta montre")} sub={traduire("Elle passe par ton iPhone : ce qu'elle enregistre repart ensuite vers tes autres appareils appairés.")} color={S.indigo} tint={S.indigoSoft} />
+        <ActionRow icon="tablet" title={traduire("Plus de deux appareils")} sub={traduire("Appaire chaque appareil avec les autres, une fois : iPhone, iPad et Mac finissent avec les mêmes données.")} color={S.mossText} tint={S.mossSoft} />
         <ActionRow icon="info" title={traduire("Si rien ne démarre")} sub={traduire("Réglages, Confidentialité, Réseau local : vérifie que YOROI est activé.")} color={S.gold} tint={S.goldSoft} />
       </CardBox>
     </DetailScreen>

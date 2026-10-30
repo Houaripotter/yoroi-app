@@ -22,6 +22,8 @@ import { ScreenshotModeProvider } from '@/lib/ScreenshotModeContext';
 import { SportPackProvider } from '@/lib/SportPackContext';
 import FakeStatusBar from '@/components/FakeStatusBar';
 import { SynchroMontre } from '@/lib/v2/montre/SynchroMontre';
+// 30 octobre 2026 : synchro automatique entre tes appareils appaires, app au premier plan (lib/v2/synchro/auto.ts)
+import { SynchroAuto } from '@/components/yoroi/v2/synchro/SynchroAuto';
 import { LiensWidgets } from '@/lib/v2/widgets/LiensWidgets';
 import { AnnulerSuppression } from '@/components/yoroi/v2/seances/AnnulerSuppression';
 import { AvatarProvider } from '@/lib/AvatarContext';
@@ -720,6 +722,7 @@ export default function RootLayout() {
                   <AvatarProvider>
                     <BadgeProvider>
                       <SynchroMontre />
+                      <SynchroAuto />
                       <RootLayoutContent />
                     </BadgeProvider>
                   </AvatarProvider>
