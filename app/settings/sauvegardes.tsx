@@ -50,11 +50,11 @@ export default function DonneesEtSauvegardes() {
   return (
     <EspaceScreen title={traduire("Données et sauvegardes")} subtitle={traduire("Pas de compte : tout reste sur ton téléphone")} gap={14}>
       <Card>
-        <ValueRow first tint={TUILE.mousse} icon="save" label={traduire("Sauvegarde")} sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/backup-history')} action={<MiniAction label={traduire("Sauvegarder")} onPress={backupNow} busy={busy} />} />
+        <ValueRow first tint={TUILE.mousse} sticker="sauvegarde" icon="save" label={traduire("Sauvegarde")} sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/backup-history')} action={<MiniAction label={traduire("Sauvegarder")} onPress={backupNow} busy={busy} />} />
         {/* les copies faites seules avant chaque mise a jour, a voir, partager et remettre */}
-        <ValueRow tint={TUILE.ardoise} icon="archive" label={traduire("Copies de sécurité automatiques")} sub={traduire("Faites avant chaque mise à jour")} onPress={() => go('/settings/copies-securite')} />
-        <ValueRow tint={TUILE.indigo} icon="shield" label={traduire("Mes données")} value={traduire("Exporter, effacer")} onPress={() => go('/settings/donnees')} />
-        <ValueRow tint={TUILE.or} icon="camera" label={traduire("Coffre photos")} value={nbPhotos ? traduirePluriel(nbPhotos, nbPhotos > 1, "{0} photo", "{0} photos", nbPhotos) : undefined} onPress={() => go('/photos')} />
+        <ValueRow tint={TUILE.ardoise} sticker="coffre_ferme" icon="archive" label={traduire("Copies de sécurité automatiques")} sub={traduire("Faites avant chaque mise à jour")} onPress={() => go('/settings/copies-securite')} />
+        <ValueRow tint={TUILE.indigo} sticker="donnees" icon="shield" label={traduire("Mes données")} value={traduire("Exporter, effacer")} onPress={() => go('/settings/donnees')} />
+        <ValueRow tint={TUILE.or} sticker="appareil_photo" icon="camera" label={traduire("Coffre photos")} value={nbPhotos ? traduirePluriel(nbPhotos, nbPhotos > 1, "{0} photo", "{0} photos", nbPhotos) : undefined} onPress={() => go('/photos')} />
       </Card>
       <PopupComponent />
     </EspaceScreen>
