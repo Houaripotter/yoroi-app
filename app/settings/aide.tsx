@@ -41,7 +41,7 @@ export default function Aide() {
         <ValueRow sticker="carnet" icon="doc" label={traduire("Savoir")} sub={traduire("Règles des sports et sources scientifiques")} onPress={() => router.push('/savoir' as any)} />
         {/* 18 octobre 2026 (Houari : « les sources des calculs doivent être visibles ») : un acces direct */}
         <ValueRow sticker="recherche" icon="doc" label={traduire("Sources scientifiques")} sub={traduire("Les études derrière les calculs de YOROI")} onPress={() => router.push('/scientific-sources' as any)} />
-        <ValueRow sticker="carnet_papier" icon="mail" label={traduire("Boîte à idées")} sub={traduire("Une idée, un bug ? Écris à l’équipe")} onPress={() => mail(traduire('Idée pour YOROI'))} />
+        <ValueRow sticker="boite_idees" icon="mail" label={traduire("Boîte à idées")} sub={traduire("Une idée, un bug ? Écris à l’équipe")} onPress={() => mail(traduire('Idée pour YOROI'))} />
         {/* 18 octobre 2026 : la page Aide et contact du site (questions frequentes, abonnement, donnees) */}
         <ValueRow sticker="aide" icon="globe" label={traduire("Aide en ligne")} sub={traduire("Achats, abonnement, données : les réponses")} onPress={() => void safeOpenURL(APP_CONFIG.site.support)} />
         <ValueRow sticker="partager" icon="share" label={traduire("Partager YOROI")} sub={traduire("Avec un partenaire d’entraînement")} onPress={shareApp} />
