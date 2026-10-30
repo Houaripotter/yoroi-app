@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Star, Check, X, Search } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { traduire } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 
 const FAV_KEY = 'bjj_fav_submissions_v2';
 
@@ -366,7 +367,7 @@ export function BJJBodyMap({
             <TouchableOpacity onPress={toggleSearchMe} style={[styles.searchBtn, showSearchMe && { backgroundColor: 'rgba(34,197,94,0.2)' }]}>
               {showSearchMe
                 ? <X size={22} color="#22C55E" />
-                : <Search size={22} color={mutedColor} />}
+                : <IconeOuSticker sticker="recherche" taille={22}><Search size={22} color={mutedColor} /></IconeOuSticker>}
             </TouchableOpacity>
           </View>
           {showSearchMe && (
@@ -429,7 +430,7 @@ export function BJJBodyMap({
             <TouchableOpacity onPress={toggleSearchOpp} style={[styles.searchBtn, showSearchOpp && { backgroundColor: 'rgba(239,68,68,0.2)' }]}>
               {showSearchOpp
                 ? <X size={22} color="#EF4444" />
-                : <Search size={22} color={mutedColor} />}
+                : <IconeOuSticker sticker="recherche" taille={22}><Search size={22} color={mutedColor} /></IconeOuSticker>}
             </TouchableOpacity>
           </View>
           {showSearchOpp && (
