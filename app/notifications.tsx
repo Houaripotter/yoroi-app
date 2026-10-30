@@ -330,7 +330,7 @@ export default function TesNotifications() {
       {allowed === false ? (
         <Animated.View entering={ENTREE} style={{ borderRadius: 22, backgroundColor: c.goldTint, borderWidth: 1, borderColor: '#E9DCC0', padding: 16, gap: 12 }}>
           <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-            <Icon name="lock" size={22} color={c.goldDeep} />
+            <Icon sticker="rappels" name="lock" size={22} color={c.goldDeep} />
             <View style={{ flex: 1, gap: 2 }}>
               <Ink size={16} weight="extraBold">{traduire("Les notifications sont bloquées")}</Ink>
               <Ink size={13} color={c.textSecondary}>{traduire("Tant qu’elles le sont, aucun rappel ne peut arriver{0}: il suffit de les autoriser une fois.", NB)}</Ink>
