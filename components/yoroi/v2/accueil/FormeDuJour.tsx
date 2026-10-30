@@ -7,7 +7,7 @@
  * Vague 37 : la tuile Eau ouvre une feuille pour ajouter ET retirer (FeuilleEau), le detail reste a un toucher.
  */
 import React, { useMemo, useState } from 'react';
-import { View, useWindowDimensions } from 'react-native';
+import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import type { SleepEntry } from '@/lib/sleepService';
@@ -21,6 +21,7 @@ import { Icon, P, Press, useAccent } from './kit';
 import { FeuilleEau } from './EauFeuille';
 import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
 import { DECIMAL, traduire } from '@/lib/i18n/tr';
+import { useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
 
 type IconKey = 'bolt' | 'moon' | 'drop' | 'body';
 
@@ -94,7 +95,7 @@ function Tuile({ width, icon, iconColor, label, value, unit, hint, hintColor, ga
 
 export function FormeDuJour({ forme, sleep, sleepGoal, water, waterGoal }: { forme: FormeResult | null; sleep: SleepEntry[]; sleepGoal: number; water: number; waterGoal: number }) {
   const router = useRouter();
-  const { width } = useWindowDimensions();
+  const width = useLargeurEcran();
   const w = Math.floor((width - 44 - 10) / 2);
   const { points } = useMeasuresData();
   const taille = useMemo(() => viewSeries(points, 'waist'), [points]);
