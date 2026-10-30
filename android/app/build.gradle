@@ -101,8 +101,8 @@ android {
         minSdkVersion Integer.parseInt(findProperty('android.minSdkVersion') ?: rootProject.ext.minSdkVersion.toString())
         // Health Connect (react-native-health-connect) requires minSdk 26
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 56
-        versionName "3.0.1"
+        versionCode 59
+        versionName "3.0.2"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
