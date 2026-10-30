@@ -34,6 +34,11 @@ export type FinSeance = {
   minutes: number;
   /** true : les seances de marche du programme sont retirees de la rotation */
   sansMarche?: boolean;
+  /**
+   * 30 octobre 2026 : le choix d'une seance precise (id du jour, aussi « @programme/séance » en semaine mixte et
+   * les seances de la semaine B), a la place du choix pour toutes les seances.
+   */
+  parJour?: Record<string, ChoixFin>;
 };
 
 /** Une case de la feuille : Rien, Abdos, Cardio */
@@ -104,7 +109,34 @@ export function lireFinSeance(x: unknown): FinSeance | undefined {
   const choix = CHOIX_VALIDES.includes(o.choix as ChoixFin) ? (o.choix as ChoixFin) : 'rien';
   const fin: FinSeance = { choix, minutes: minutesValides(o.minutes) };
   if (o.sansMarche === true) fin.sansMarche = true;
+  if (o.parJour && typeof o.parJour === 'object') {
+    const pj: Record<string, ChoixFin> = {};
+    for (const [k, v] of Object.entries(o.parJour as Record<string, unknown>).slice(0, 60)) {
+      if (k && k.length <= 200 && CHOIX_VALIDES.includes(v as ChoixFin)) pj[k] = v as ChoixFin;
+    }
+    if (Object.keys(pj).length) fin.parJour = pj;
+  }
   return fin;
+}
+
+/** Le choix qui vaut pour cette seance : le sien s'il y en a un, sinon celui de toutes les seances */
+export function choixDuJour(f: FinSeance | null | undefined, jourId: string): ChoixFin {
+  if (!f) return 'rien';
+  return f.parJour?.[jourId] ?? f.choix;
+}
+
+/** Une fin de seance qui ajoute quelque chose a au moins une seance */
+export function finActive(f: FinSeance | null | undefined): boolean {
+  return !!f && (f.choix !== 'rien' || Object.values(f.parJour ?? {}).some((c) => c !== 'rien'));
+}
+
+/** Le choix d'une seance change (null : elle reprend le choix de toutes les seances) */
+export function avecChoixDuJour(f: FinSeance, jourId: string, choix: ChoixFin | null): FinSeance {
+  const pj = { ...(f.parJour ?? {}) };
+  if (choix === null || choix === f.choix) delete pj[jourId];
+  else pj[jourId] = choix;
+  const { parJour: _p, ...reste } = f;
+  return Object.keys(pj).length ? { ...reste, parJour: pj } : reste;
 }
 
 export const avecAbdos = (f: FinSeance | null | undefined): boolean => !!f && (f.choix === 'abdos' || f.choix === 'les_deux');
@@ -140,6 +172,15 @@ export function exoAbdosFin(materiel: Materiel): ExoProgramme & ExoFin {
   return { nom: 'Relevé de jambes (Sol)', muscle: 'ABDOS', series: 3, repsMin: 10, repsMax: 15, reposSec: 90, conseil: 'Bas du dos collé au sol, descends lentement.', poidsDuCorps: true, fin: true };
 }
 
+/**
+ * 30 octobre 2026 : 2 exercices d'abdos a la fin (Houari : « 2 a 3 exercices ») : la planche, puis l'exercice
+ * d'avant (poulie haute en salle, releve de jambes sinon). Noms exacts de constants/exerciseLibrary.ts.
+ */
+export function exosAbdosFin(materiel: Materiel): (ExoProgramme & ExoFin)[] {
+  const planche: ExoProgramme & ExoFin = { nom: 'Gainage Planche', muscle: 'ABDOS', series: 3, repsMin: 30, repsMax: 45, reposSec: 60, secondes: true, poidsDuCorps: true, conseil: 'Corps gainé de la tête aux talons, le bassin ne tombe pas.', fin: true };
+  return [planche, exoAbdosFin(materiel)];
+}
+
 export function cardioFin(minutes: number): CardioProgramme {
   const m = minutesValides(minutes);
   return { sport: 'marche', minutes: m, consigne: CONSIGNE_FIN[m] };
@@ -164,10 +205,16 @@ export type ContexteFin = { fin: FinSeance | null | undefined; materiel: Materie
 export function avecFinSeance<J extends JourProgramme>(jour: J, ctx: ContexteFin | null | undefined): J & AvecFin {
   const j = jour as J & AvecFin;
   if (j.finFaite) return j;
-  const f = ctx?.fin;
+  const fin = ctx?.fin;
+  // 30 octobre 2026 : le choix de cette seance, sinon celui de toutes les seances
+  const f = fin ? { ...fin, choix: choixDuJour(fin, jour.id) } : fin;
   if (!f || f.choix === 'rien' || !estJourMuscu(jour)) return j;
   let exos = jour.exos as (ExoProgramme & ExoFin)[];
-  if (avecAbdos(f) && !jour.exos.some((e) => e.muscle === 'ABDOS')) exos = [...exos, exoAbdosFin(ctx!.materiel)];
+  // pas d'abdos si la seance en a deja, jamais deux fois le meme exercice
+  if (avecAbdos(f) && !jour.exos.some((e) => e.muscle === 'ABDOS')) {
+    const deja = new Set(jour.exos.map((e) => e.nom));
+    exos = [...exos, ...exosAbdosFin(ctx!.materiel).filter((e) => !deja.has(e.nom))];
+  }
   const ajout: AvecFin = { finFaite: true };
   if (avecCardio(f) && !jour.cardio) ajout.finCardio = cardioFin(f.minutes);
   return { ...jour, exos, ...ajout } as J & AvecFin;
@@ -198,7 +245,7 @@ export function retenirFinActive(id: string | null, fin?: FinSeance, modules?: r
  * Le contexte porte aussi le programme (lib/v2/programmes/modules.ts alterne les seances de grip et de cou).
  */
 export function contexteFinPour(jour: JourProgramme): ContexteFin | null {
-  const finUtile = !!actif?.fin && actif.fin.choix !== 'rien';
+  const finUtile = finActive(actif?.fin);
   if (!actif || (!finUtile && !actif.modules?.length)) return null;
   const p = programmeParId(actif.id);
   if (!p || !(p.jours.includes(jour) || estAutre(jour))) return null;
