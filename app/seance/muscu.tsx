@@ -77,7 +77,7 @@ import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { BoutonCoachVocal, useCoachVocal } from '@/components/yoroi/v2/seance/CoachVocal';
 import { cibleDefilement } from '@/lib/v2/seances/defilementExo';
 import { DUREE_MESSAGE_MS, decisionFinRepos } from '@/lib/v2/seances/finRepos';
-import { alternativesCardio, annulerFinCardio, demarrer as demarrerChrono, dureeFinaleSec, ecouleMs, enCours as chronoEnCours, finObjectifMs, fmtChrono, nomCardioFin, nouveauChrono, objectifAtteint, pause as pauseChrono, programmerFinCardio } from '@/lib/v2/seances/cardioFin';
+import { alternativesCardio, annulerFinCardio, estCardioFin, demarrer as demarrerChrono, dureeFinaleSec, ecouleMs, enCours as chronoEnCours, finObjectifMs, fmtChrono, nomCardioFin, nouveauChrono, objectifAtteint, pause as pauseChrono, programmerFinCardio } from '@/lib/v2/seances/cardioFin';
 import type { ChronoCardio } from '@/lib/v2/seances/cardioFin';
 import { playWizzSound } from '@/lib/soundManager';
 import { encouragement, etatSerie, nouvelleSerie, remettreSerie, sansSerie, seriesAFaire } from '@/lib/v2/seances/seriesSaisie';
@@ -86,7 +86,7 @@ import { objectifExo, seriesVisees, texteReps, texteSerie } from '@/lib/v2/seanc
 import { chargerReglages, cranDe, enregistrerCran, typeReglage, CRAN_MAX } from '@/lib/v2/seances/reglagesMachine';
 import type { Reglages } from '@/lib/v2/seances/reglagesMachine';
 import { libelleHauteurPoulie } from '@/lib/v2/seances/hauteurPoulie';
-import { chargerEcartes, ecarterExercice, nomsEcartes } from '@/lib/v2/seances/exercicesEcartes';
+import { chargerEcartes, ecarterExercice, ecartesEnMemoire, nomsEcartes } from '@/lib/v2/seances/exercicesEcartes';
 import { alternativesPour } from '@/lib/v2/seances/alternatives';
 import { remplacerExercice } from '@/lib/v2/programmes/suivi';
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
@@ -282,6 +282,11 @@ export default function SeanceMuscu() {
             const legeres = prog && actif && actif.id === prog.id ? actif.legeres ?? [] : [];
             const horsLegere = trainings.filter((t) => !legeres.some((d) => t.date.slice(0, 10) >= d && t.date.slice(0, 10) <= plusJours(d, 6)));
             exercises = jour.exos.map((e) => {
+              // 30 octobre 2026 : la brique Cardio de ta semaine (lib/v2/programmes/briques.ts) : l'exercice cardio et son chrono
+              if (e.minutes && estCardioFin(e.nom)) {
+                const ec = ecartesEnMemoire();
+                return exoCardio(e.minutes, ec.has(e.nom) ? nomCardioFin(ec) : e.nom);
+              }
               const prop = legere ? proposerLegere(e, seancesDeLExo(trainings, e.nom)) : proposer(e, seancesDeLExo(horsLegere, e.nom));
               // series proposees ; « la derniere fois » reste ta vraie derniere seance (rien si premiere fois)
               const hx = h.map.get(normName(e.nom));
