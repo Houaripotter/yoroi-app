@@ -33,6 +33,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import { traduire } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 
 // Limites de zoom pour éviter d'aller trop loin
 const ZOOM_MIN = 1;
@@ -415,11 +416,11 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
         <View style={[styles.controlPanel, { backgroundColor: colors.backgroundCard }]}>
           <View style={styles.controlHeader}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Pencil size={13} color="#4ADE80" />
+              <IconeOuSticker sticker="crayon" taille={13}><Pencil size={13} color="#4ADE80" /></IconeOuSticker>
               <Text style={styles.controlTitle}>{selectedZone.label.toUpperCase()}</Text>
             </View>
             <TouchableOpacity onPress={copySelectedZone} style={styles.copyBtn}>
-              <Copy size={14} color="#4ADE80" />
+              <IconeOuSticker sticker="dupliquer" taille={14}><Copy size={14} color="#4ADE80" /></IconeOuSticker>
               <Text style={styles.copyBtnText}>{traduire("Copier")}</Text>
             </TouchableOpacity>
           </View>
@@ -560,11 +561,11 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
         <View style={[styles.controlPanel, { backgroundColor: colors.backgroundCard }]}>
           <View style={styles.controlHeader}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Pencil size={13} color="#4ADE80" />
+              <IconeOuSticker sticker="crayon" taille={13}><Pencil size={13} color="#4ADE80" /></IconeOuSticker>
               <Text style={styles.controlTitle}>{selectedZone.label.toUpperCase()}</Text>
             </View>
             <TouchableOpacity onPress={copySelectedZone} style={styles.copyBtn}>
-              <Copy size={14} color="#4ADE80" />
+              <IconeOuSticker sticker="dupliquer" taille={14}><Copy size={14} color="#4ADE80" /></IconeOuSticker>
               <Text style={styles.copyBtnText}>{traduire("Copier")}</Text>
             </TouchableOpacity>
           </View>
@@ -617,7 +618,7 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
           <Text style={[styles.helpText, { color: colors.textSecondary }]}>
             {traduire("Touche une zone pour la modifier")}</Text>
           <TouchableOpacity onPress={copyAllZones} style={styles.copyAllBtn}>
-            <Copy size={18} color="white" />
+            <IconeOuSticker sticker="dupliquer" taille={18}><Copy size={18} color="white" /></IconeOuSticker>
             <Text style={styles.copyAllBtnText}>{traduire("COPIER TOUTES LES ZONES ({0})", activeZones.length)}</Text>
           </TouchableOpacity>
         </View>
