@@ -169,7 +169,11 @@ export default function CoachSais() {
         {/* les familles */}
         {!g && !recherche.trim() ? (
           <>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 }}>
+            {/* 30 octobre 2026 : ton programme mixte, PPL, Upper Lower et Full body à ta façon (app/programme-mixte.tsx) */}
+            <Animated.View entering={FadeInDown.duration(320)} style={{ marginTop: 14 }}>
+              <CarteMixte onPress={() => { tap(); router.push('/programme-mixte' as any); }} />
+            </Animated.View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 }}>
               {GROUPES_PROGRAMMES.map((x, k) => (
                 <Animated.View key={x.id} entering={FadeInDown.duration(320).delay(30 * k)} style={{ width: '47%', flexGrow: 1 }}>
                   <CarteFamille pa={pa} id={x.id} label={traduire(x.label)} ids={x.ids} onPress={() => { tap(); setFamille(x.id); }} />
@@ -216,6 +220,40 @@ export default function CoachSais() {
         ) : null}
       </ScrollView>
     </View>
+  );
+}
+
+/** « Mixte, à ta façon » : pleine largeur, trois pastilles (PPL, Upper Lower, Full body) qui se mélangent */
+function CarteMixte({ onPress }: { onPress: () => void }) {
+  const pa = usePastel();
+  const titre = traduire('Mixte, à ta façon');
+  const sous = traduire('Mélange PPL, Upper Lower, Full body');
+  const pastilles: { t: string; f: FamillePastel }[] = [
+    { t: 'PPL', f: pa.peche },
+    { t: 'UL', f: pa.bleu },
+    { t: 'FB', f: pa.menthe },
+  ];
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${titre}, ${sous}`}
+      style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 96, borderRadius: 26, paddingVertical: 16, paddingHorizontal: 16, backgroundColor: pa.carte, borderWidth: 2, borderColor: pa.bordChoisi, transform: [{ scale: pressed ? 0.98 : 1 }] }, ombrePastel(pa.ombre)]}
+    >
+      <View style={{ width: 68, height: 56 }}>
+        {pastilles.map((x, k) => (
+          <View key={x.t} style={{ position: 'absolute', left: k * 16, top: k % 2 ? 14 : 0, width: 40, height: 40, borderRadius: 20, backgroundColor: x.f.fond, borderWidth: 2, borderColor: pa.carte, alignItems: 'center', justifyContent: 'center' }}>
+            <Ink size={10.5} weight="black" color={x.f.titre}>{x.t}</Ink>
+          </View>
+        ))}
+      </View>
+      <View style={{ flex: 1, gap: 3 }}>
+        <Capitales texte={traduire('Nouveau')} couleur={pa.bleu.titre} taille={10.5} />
+        <Ink size={18} weight="black" color={pa.texte}>{titre}</Ink>
+        <Ink size={12.5} weight="bold" color={pa.texte2}>{sous}</Ink>
+      </View>
+      <Icon name="chevron" size={16} color={pa.texte3} />
+    </Pressable>
   );
 }
 

@@ -63,7 +63,8 @@ export type TesJoursProps = {
 /** La semaine à montrer : la tienne, sinon tes séances dans l'ordre sur tes jours (programme en boucle) */
 export function semaineAffichee(a: ProgrammeActif | null, p: Programme, plan?: readonly number[] | null, jours?: readonly number[]): { semaine: SemaineLibre; enBoucle: boolean } {
   const enCours = !!a && a.id === p.id;
-  const s = enCours ? semaineEffective(a, p) : semaineEffective(plan ? { plan: [...plan], jours: jours ? [...jours] : undefined } : null, p);
+  // 30 octobre 2026 : ta semaine normale, jamais la semaine mixte ponctuelle posée par dessus (mixte.ts)
+  const s = enCours ? semaineEffective(a, p, false) : semaineEffective(plan ? { plan: [...plan], jours: jours ? [...jours] : undefined } : null, p);
   if (s) return { semaine: s, enBoucle: false };
   const j = enCours ? joursDuProgramme(a, p) : jours ?? joursDuProgramme(null, p);
   return { semaine: semaineDepuisBoucle(p, j, enCours ? a?.fin : null), enBoucle: true };
@@ -298,8 +299,13 @@ function Choix({ titre, actuelle, proposees, persoNom, onChoisir }: {
     <View style={{ gap: 10, padding: 12, borderRadius: 22, backgroundColor: pal.page }}>
       <Ink size={14} weight="black" color={pal.texte}>{titre}</Ink>
 
-      <Ink size={12} weight="extraBold" color={pal.texte2}>{traduire('Ce programme')}</Ink>
-      <View style={{ gap: 8 }}>{proposees.ceProgramme.map((x, k) => ligne(x, k, ''))}</View>
+      {/* 30 octobre 2026 : ton mixte part d'un programme vide (mixte.ts, BASE_MIXTE) : pas de « Ce programme » */}
+      {proposees.ceProgramme.length ? (
+        <>
+          <Ink size={12} weight="extraBold" color={pal.texte2}>{traduire('Ce programme')}</Ink>
+          <View style={{ gap: 8 }}>{proposees.ceProgramme.map((x, k) => ligne(x, k, ''))}</View>
+        </>
+      ) : null}
 
       {proposees.autres.length ? (
         <>

@@ -27,6 +27,7 @@ import { Capitales, nomCourt, ombrePastel, usePastel } from '@/components/yoroi/
 import type { FamillePastel } from '@/components/yoroi/v2/programmes/Habillage';
 import { MiniSemaine, PuceConseil } from '@/components/yoroi/v2/programmes/ChoixVisuels';
 import { TesJoursEnCours } from '@/components/yoroi/v2/programmes/TesJours';
+import { BandeauMixte } from '@/components/yoroi/v2/programmes/Mixte';
 import { PointRegularite } from '@/components/yoroi/v2/programmes/GarderProgramme';
 import { BoutonLecture } from '@/components/yoroi/v2/programmes/Lecture';
 import { CarteDeuxFois } from '@/components/yoroi/v2/frequence/CarteDeuxFois';
@@ -215,6 +216,8 @@ export default function CoachScreen() {
         {/* « Tes jours » du programme du catalogue en cours, modifiables d'ici (TesJours.tsx) ; le tien se modifie dans sa page */}
         {/* 28 octobre 2026 : à la fin de chaque cycle, ta régularité (GarderProgramme.tsx), sans rien bloquer */}
         {p && actif ? <View style={{ marginTop: 10 }}><PointRegularite programme={p} actif={actif} onChanger={() => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } })} /></View> : null}
+        {/* 30 octobre 2026 : une semaine mixte ponctuelle tourne : jusqu'à quand, et « Annuler » (Mixte.tsx) */}
+        <BandeauMixte style={{ marginTop: 10 }} />
         {/* 30 octobre 2026 : chaque muscle 2 fois par semaine, le coach le rappelle à partir du jeudi (CarteDeuxFois.tsx) */}
         <CarteDeuxFois style={{ marginTop: 10 }} />
         {p && !actifPerso ? <View style={{ marginTop: 10 }}><TesJoursEnCours programme={p} /></View> : null}

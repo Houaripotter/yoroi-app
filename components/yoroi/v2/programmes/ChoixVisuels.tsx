@@ -612,7 +612,7 @@ export function RondsNombre<T extends number>({ options, valeur, onChoisir, libe
  * Combien de jours par semaine (27 octobre 2026, avant la liste du départ) : tuiles pastel, deux par ligne,
  * le chiffre en grand, la semaine en sept barres (jours conseillés, suivi.ts) et le nombre de programmes.
  */
-export function TuilesJours({ options, valeur, onChoisir, nombre }: { options: readonly number[]; valeur?: number; onChoisir: (n: number) => void; nombre: (n: number) => number }) {
+export function TuilesJours({ options, valeur, onChoisir, nombre, legende }: { options: readonly number[]; valeur?: number; onChoisir: (n: number) => void; nombre: (n: number) => number; /** 30 octobre 2026 : une ligne à la place du nombre de programmes (ton mixte) */ legende?: (n: number) => string }) {
   const pa = usePastel();
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
@@ -620,7 +620,7 @@ export function TuilesJours({ options, valeur, onChoisir, nombre }: { options: r
         const on = n === valeur;
         const f = famillePastel(pa, k);
         const combien = nombre(n);
-        const texteCombien = combien > 1 ? traduire('{0} programmes', combien) : traduire('{0} programme', combien);
+        const texteCombien = legende ? legende(n) : combien > 1 ? traduire('{0} programmes', combien) : traduire('{0} programme', combien);
         return (
           <Pressable
             key={n}

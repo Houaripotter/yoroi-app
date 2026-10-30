@@ -59,6 +59,7 @@ import { infosHero } from '@/lib/v2/programmes/heroJour';
 import { CarteDeuxFois } from '@/components/yoroi/v2/frequence/CarteDeuxFois';
 import { TesJours, TesJoursEnCours, semaineAffichee } from '@/components/yoroi/v2/programmes/TesJours';
 import { RappelSeance } from '@/components/yoroi/v2/programmes/RappelSeance';
+import { BandeauMixte, BoutonSemaineMixte } from '@/components/yoroi/v2/programmes/Mixte';
 import { ChoisirCharge } from '@/components/yoroi/v2/programmes/ChoisirCharge';
 import { CartePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
 import { CarteFinDeSeance, FeuilleFinDeSeance } from '@/components/yoroi/v2/programmes/FinDeSeance';
@@ -340,6 +341,9 @@ export default function ProgrammeDetail() {
           />
         )}
 
+        {/* 30 octobre 2026 : une semaine mixte ponctuelle tourne : jusqu'à quand, et « Annuler » (Mixte.tsx) */}
+        {enCours ? <BandeauMixte /> : null}
+
         {/* 2. TES CHIFFRES : semaine, séances de la semaine, charge (moyenne réelle de tes gains) */}
         <TuilesStats tuiles={tuiles} />
 
@@ -361,6 +365,7 @@ export default function ProgrammeDetail() {
 
         {/* 27 octobre 2026 : Tes jours, la séance de chaque jour (Push lundi, Pull mardi...), modifiable à tout moment */}
         {/* ton programme construit : ses jours se changent dans « Je construis le mien » */}
+        {perso && enCours ? <BoutonSemaineMixte /> : null}
         {perso ? (
           <Pressable
             onPress={() => { tap(); router.push({ pathname: '/coach-construire' as any, params: { id: p.id } }); }}
@@ -376,6 +381,8 @@ export default function ProgrammeDetail() {
         ) : enCours ? (
           <View style={{ gap: 18 }} onLayout={(e) => { tesJoursY.current = e.nativeEvent.layout.y; }}>
             <TesJoursEnCours programme={p} />
+            {/* 30 octobre 2026 : PPL, Upper Lower, Full body pour quelques jours, ton programme reprend après */}
+            <BoutonSemaineMixte />
             <View style={{ backgroundColor: pal.carte, borderRadius: 24, padding: 18 }}>
               <ChoixDuree valeur={actif?.duree ?? (DUREES.includes(p.semaines as 8) ? p.semaines : undefined)} onChange={(d) => void enregistrerDuree(d)} />
             </View>

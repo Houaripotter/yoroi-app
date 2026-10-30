@@ -21,9 +21,11 @@ import { MACHINE_BY_ID } from '@/lib/v2/seance/machines';
 import { estProgrammePerso } from './registrePerso';
 import { CLE_PROGRAMMES_PERSO, archiverProgrammePerso, chargerProgrammesPerso, enregistrerProgrammePerso, idJourPerso, joursDuPerso, nouveauProgrammePerso } from './monProgramme';
 import type { ProgrammePerso, SeancePerso } from './monProgramme';
-import { casesDe, idAutre, jourDeRef, jourDuProgramme, lireDuree, lireSemaine, lundiIso, planDepuisSemaine, planProjete, seanceLe, semaineDepuisBoucle, semaineDepuisPlan, semaineUtile, semaineUtilisePerso } from './semaineLibre';
+import { caseLe, casesDe, idAutre, jourDeRef, jourDuProgramme, lireDuree, lireSemaine, lundiIso, planDepuisSemaine, planProjete, seanceLe, semaineDepuisBoucle, semaineDepuisPlan, semaineUtile, semaineUtilisePerso } from './semaineLibre';
 import type { CaseSemaine, SemaineLibre } from './semaineLibre';
 import { LIBELLE_REGION } from './blessures';
+import { estIso, lirePonctuel, ponctuelCouvre } from './mixte';
+import type { MixtePonctuel } from './mixte';
 import type { Region } from './blessures';
 
 const CLE = 'yoroi_programme_actif_v1';
@@ -75,6 +77,17 @@ export type ProgrammeActif = {
   duree?: number;
   /** 28 octobre 2026 : les points de régularité déjà vus (numéro du cycle, 1 le premier) */
   points?: number[];
+  /**
+   * 30 octobre 2026 : une semaine mixte ponctuelle (mixte.ts) posée par dessus ce programme, de `du` à `jusquau`
+   * inclus. Pendant ces jours, la séance du jour, la suite, les rappels et ta semaine la suivent ; après, elle est
+   * ignorée et ta semaine normale revient. Ton programme, sa semaine, tes séances faites ne sont pas touchés.
+   */
+  ponctuel?: MixtePonctuel;
+  /**
+   * 30 octobre 2026 : programme temporaire (semaine mixte lancée sans programme en cours) : après ce jour (date
+   * locale, inclus), il n'y a plus de programme en cours. Rien n'est effacé.
+   */
+  jusquau?: string;
 };
 
 /** Les zones du Guide, lues sans faire confiance au stockage */
@@ -127,6 +140,13 @@ export async function chargerProgrammeActif(): Promise<ProgrammeActif | null> {
     const raw = await AsyncStorage.getItem(CLE);
     if (!raw) return null;
     const brut = JSON.parse(raw) as ProgrammeActif;
+    // 30 octobre 2026 : un programme temporaire (semaine mixte) terminé : plus de programme en cours, rien n'est effacé
+    const auj = jourLocal();
+    const jusquau = brut && estIso(brut.jusquau) ? brut.jusquau : undefined;
+    if (jusquau && jusquau < auj) {
+      retenirFinActive(null);
+      return null;
+    }
     // ton programme construit : sa semaine est lue avant (programmeParId le trouve ensuite, registrePerso.ts)
     if (brut && estProgrammePerso(brut.id)) await chargerProgrammesPerso();
     const p = brut && programmeParId(brut.id);
@@ -135,21 +155,25 @@ export async function chargerProgrammeActif(): Promise<ProgrammeActif | null> {
       return null;
     }
     // fin de seance : absente dans les anciennes versions, illisible = ignoree
-    const { fin: _f, modules: _m, plan: _p, douleurs: _d, semaine: _s, duree: _du, points: _pt, ...reste } = brut;
+    const { fin: _f, modules: _m, plan: _p, douleurs: _d, semaine: _s, duree: _du, points: _pt, ponctuel: _pc, jusquau: _ju, ...reste } = brut;
     const fin = lireFinSeance(brut.fin);
     // 28 octobre 2026 : ta semaine libre, lue strictement ; ton programme construit garde la semaine de sa page
     const semaine = estProgrammePerso(brut.id) ? null : lireSemaine(brut.semaine);
     if (semaine && semaineUtilisePerso(semaine)) await chargerProgrammesPerso();
     const duree = lireDuree(brut.duree);
+    // 30 octobre 2026 : ta semaine mixte ponctuelle, lue strictement ; finie, elle est ignorée (ta semaine revient)
+    const pc = lirePonctuel(brut.ponctuel);
+    const ponctuel = pc && pc.jusquau >= auj ? pc : null;
+    if (ponctuel && semaineUtilisePerso(ponctuel.semaine)) await chargerProgrammesPerso();
     const points = Array.isArray(brut.points) ? Array.from(new Set(brut.points.filter((x) => Number.isInteger(x) && x > 0))).slice(-50) : [];
     const modules = lireModules(brut.modules);
     const douleurs = lireDouleurs(brut.douleurs);
     // plan illisible ou d'une autre version du programme : ignoré, tes jours prennent le relais.
     // Ton programme construit : toujours la semaine que tu as construite (modifiée ou non depuis)
     const plan = planDuProgrammePerso(p) ?? planValide(p, brut.plan, fin);
-    const a: ProgrammeActif = { ...reste, ...(fin ? { fin } : {}), ...(modules ? { modules } : {}), ...(douleurs ? { douleurs } : {}), ...(plan ? { plan, jours: joursDuPlan(plan) } : {}), ...(semaineUtile(semaine) ? { semaine } : {}), ...(duree !== undefined ? { duree } : {}), ...(points.length ? { points } : {}), faits: Array.isArray(brut.faits) ? brut.faits : [], prochain: 0 };
+    const a: ProgrammeActif = { ...reste, ...(fin ? { fin } : {}), ...(modules ? { modules } : {}), ...(douleurs ? { douleurs } : {}), ...(plan ? { plan, jours: joursDuPlan(plan) } : {}), ...(semaineUtile(semaine) ? { semaine } : {}), ...(duree !== undefined ? { duree } : {}), ...(points.length ? { points } : {}), ...(ponctuel ? { ponctuel } : {}), ...(jusquau ? { jusquau } : {}), faits: Array.isArray(brut.faits) ? brut.faits : [], prochain: 0 };
     if (a.semaine) {
-      const j = joursDeLaSemaine(a, p, new Date());
+      const j = joursDeLaSemaine(a, p, new Date(), false);
       if (j.length) a.jours = j;
     }
     a.prochain = indexGarde(p, a, Math.min(Math.max(0, brut.prochain | 0), p.jours.length - 1));
@@ -175,7 +199,7 @@ async function ecrire(a: ProgrammeActif | null): Promise<void> {
  * `modules` (26 octobre 2026) : la liste complete choisie au depart (Questionnaire.tsx). Donnee, elle decide aussi
  * des abdos et du cardio ; `fin` garde alors la duree du cardio et les seances de marche.
  */
-async function demarrerProgramme_(id: string, jours?: number[], fin?: FinSeance | null, modules?: readonly ModuleId[] | null, plan?: readonly number[] | null, options?: { douleurs?: readonly Region[] | null; semaine?: SemaineLibre | null; duree?: number | null }): Promise<ProgrammeActif | null> {
+async function demarrerProgramme_(id: string, jours?: number[], fin?: FinSeance | null, modules?: readonly ModuleId[] | null, plan?: readonly number[] | null, options?: { douleurs?: readonly Region[] | null; semaine?: SemaineLibre | null; duree?: number | null; jusquau?: string | null }): Promise<ProgrammeActif | null> {
   if (estProgrammePerso(id)) await chargerProgrammesPerso();
   const p = programmeParId(id);
   if (!p) return null;
@@ -203,6 +227,7 @@ async function demarrerProgramme_(id: string, jours?: number[], fin?: FinSeance 
   }
   const d = lireDuree(options?.duree);
   if (d !== undefined) a.duree = d;
+  if (estIso(options?.jusquau)) a.jusquau = options!.jusquau!;
   a.prochain = indexGarde(p, a, 0);
   await ecrire(a);
   return a;
@@ -286,7 +311,7 @@ async function enregistrerSemaine_(semaine: SemaineLibre): Promise<boolean> {
   const plan = planDepuisSemaine(p, s, a.fin);
   const { plan: _p, semaine: _s, ...reste } = a;
   const suite: ProgrammeActif = { ...reste, semaine: s, ...(plan ? { plan } : {}) };
-  const j = joursDeLaSemaine(suite, p, new Date());
+  const j = joursDeLaSemaine(suite, p, new Date(), false);
   if (j.length) suite.jours = j;
   await ecrire(suite);
   return true;
@@ -307,30 +332,62 @@ async function marquerPointVu_(cycle: number): Promise<void> {
   await ecrire({ ...a, points: [...(a.points ?? []), cycle].slice(-50) });
 }
 
-/** La semaine qui compte : la tienne (semaine libre), celle de ton programme construit, sinon celle du plan. null : en boucle */
-export function semaineEffective(a: Pick<ProgrammeActif, 'plan' | 'jours' | 'fin' | 'semaine'> | null, p: Programme): SemaineLibre | null {
+/**
+ * La semaine qui compte : la tienne (semaine libre), celle de ton programme construit, sinon celle du plan. null : en boucle.
+ * 30 octobre 2026 : `avecPonctuel` (par défaut) : pendant une semaine mixte ponctuelle, un programme en boucle a aussi
+ * une semaine (ses séances dans l'ordre sur tes jours), pour que chaque date ait sa séance ; la semaine mixte elle même
+ * s'applique jour par jour (seanceDeLaSemaine). false : la semaine normale seule (Tes jours, Garder, enregistrement).
+ */
+export function semaineEffective(a: Pick<ProgrammeActif, 'plan' | 'jours' | 'fin' | 'semaine' | 'ponctuel'> | null, p: Programme, avecPonctuel = true): SemaineLibre | null {
   if (!estProgrammePerso(p.id)) {
     const s = lireSemaine(a?.semaine);
     if (semaineUtile(s)) return s;
   }
   if (semaineUtile(p.semaineLibre)) return p.semaineLibre;
   const plan = planDeBase(a, p);
-  return plan ? semaineDepuisPlan(p, plan) : null;
+  if (plan) return semaineDepuisPlan(p, plan);
+  const pc = avecPonctuel ? ponctuelDe(a) : null;
+  if (pc && pc.jusquau >= jourLocal()) return semaineDepuisBoucle(p, joursValides(a?.jours) ?? joursConseilles(p.joursParSemaine), a?.fin);
+  return null;
 }
 
-/** La séance de ta semaine ce jour-là ; une marche retirée par ta fin de séance n'y est jamais */
-function seanceDeLaSemaine(a: Pick<ProgrammeActif, 'fin'> | null, p: Programme, s: SemaineLibre, d: Date): JourProgramme | null {
-  const j = seanceLe(s, p, d);
+const ponctuelsLus = new WeakMap<object, MixtePonctuel | null>();
+/** La semaine mixte ponctuelle d'un programme en cours, lue strictement (une fois par objet) */
+function ponctuelDe(a: Pick<ProgrammeActif, 'ponctuel'> | null | undefined): MixtePonctuel | null {
+  const v = a?.ponctuel;
+  if (!v || typeof v !== 'object') return null;
+  if (ponctuelsLus.has(v)) return ponctuelsLus.get(v)!;
+  const pc = lirePonctuel(v);
+  ponctuelsLus.set(v, pc);
+  return pc;
+}
+
+/** La semaine mixte ponctuelle qui couvre cette date, sinon null */
+export function ponctuelLe(a: Pick<ProgrammeActif, 'ponctuel'> | null | undefined, date: Date): MixtePonctuel | null {
+  const pc = ponctuelDe(a);
+  return pc && ponctuelCouvre(pc, jourLocal(date)) ? pc : null;
+}
+
+/**
+ * La séance de ta semaine ce jour-là ; une marche retirée par ta fin de séance n'y est jamais.
+ * 30 octobre 2026 : un jour couvert par ta semaine mixte ponctuelle prend sa séance à elle.
+ */
+function seanceDeLaSemaine(a: Pick<ProgrammeActif, 'fin' | 'ponctuel'> | null, p: Programme, s: SemaineLibre, d: Date, avecPonctuel = true): JourProgramme | null {
+  const pc = avecPonctuel ? ponctuelLe(a, d) : null;
+  const j = pc ? jourDeRef(caseLe(pc.semaine, d), p.id) : seanceLe(s, p, d);
   if (j && p.jours.includes(j) && joursRetires(p, a?.fin).includes(j.id)) return null;
   return j;
 }
 
-/** Tes jours d'entraînement de la semaine de cette date (semaines A et B comprises), 0 = lundi */
-function joursDeLaSemaine(a: Pick<ProgrammeActif, 'plan' | 'jours' | 'fin' | 'semaine'>, p: Programme, date: Date): number[] {
-  const s = semaineEffective(a, p);
+/**
+ * Tes jours d'entraînement de la semaine de cette date (semaines A et B comprises), 0 = lundi.
+ * `avecPonctuel` false : ceux de ta semaine normale (ce qui est enregistré ne dépend jamais de la semaine mixte).
+ */
+function joursDeLaSemaine(a: Pick<ProgrammeActif, 'plan' | 'jours' | 'fin' | 'semaine' | 'ponctuel'>, p: Programme, date: Date, avecPonctuel = true): number[] {
+  const s = semaineEffective(a, p, avecPonctuel);
   if (!s) return [];
   const lundi = ajouterJours(date, -indexJour(date));
-  return [0, 1, 2, 3, 4, 5, 6].filter((k) => !!seanceDeLaSemaine(a, p, s, ajouterJours(lundi, k)));
+  return [0, 1, 2, 3, 4, 5, 6].filter((k) => !!seanceDeLaSemaine(a, p, s, ajouterJours(lundi, k), avecPonctuel));
 }
 
 /** Le dernier jour prévu raté (comme coach.ts jourRate), quel que soit le jour de la semaine A ou B */
@@ -380,7 +437,7 @@ export function pointDeRegularite(a: ProgrammeActif, p: Programme, aujourdhui = 
 /** « Garder comme mon programme » est possible : un programme du catalogue, que des séances d'exercices dans ta semaine */
 export function peutGarder(a: ProgrammeActif | null, p: Programme | null | undefined): boolean {
   if (!a || !p || a.id !== p.id || estProgrammePerso(p.id)) return false;
-  const s = semaineEffective(a, p) ?? semaineDepuisBoucle(p, joursDuProgramme(a, p), a.fin);
+  const s = semaineEffective(a, p, false) ?? semaineDepuisBoucle(p, joursDuProgramme(a, p), a.fin);
   const cases = [...s.a, ...(s.ab && s.b ? s.b : [])].filter((c): c is NonNullable<CaseSemaine> => !!c);
   return cases.length > 0 && cases.every((c) => {
     const j = jourDeRef(c, p.id);
@@ -398,7 +455,7 @@ async function garderCommeMonProgramme_(nom: string, duree?: number | null): Pro
   const a = await chargerProgrammeActif();
   const p = a && programmeParId(a.id);
   if (!a || !p || !peutGarder(a, p)) return null;
-  const s = semaineEffective(a, p) ?? semaineDepuisBoucle(p, joursDuProgramme(a, p), a.fin);
+  const s = semaineEffective(a, p, false) ?? semaineDepuisBoucle(p, joursDuProgramme(a, p), a.fin);
   const versSeance = (c: CaseSemaine): SeancePerso | null => {
     const j = jourDeRef(c, p.id);
     if (!j || !j.exos.length) return null;
@@ -435,11 +492,127 @@ async function garderCommeMonProgramme_(nom: string, duree?: number | null): Pro
   });
   const { plan: _p, semaine: _s, remplacements: _r, duree: _d, points: _pt, ...reste } = a;
   const suite: ProgrammeActif = { ...reste, id: enr.id, faits, ...(plan ? { plan, jours: joursDuPlan(plan) } : {}), ...(d !== undefined ? { duree: d } : a.duree !== undefined ? { duree: a.duree } : {}), ...(a.points?.length ? { points: a.points } : {}) };
-  const j = joursDeLaSemaine(suite, q, new Date());
+  const j = joursDeLaSemaine(suite, q, new Date(), false);
   if (j.length) suite.jours = j;
   suite.prochain = indexGarde(q, suite, 0);
   await ecrire(suite);
   return suite;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * 30 octobre 2026 : ton programme mixte (mixte.ts, app/programme-mixte.tsx)
+ * ---------------------------------------------------------------------------------------------- */
+/** Avant de remplacer ton programme en cours par un mixte, une copie telle quelle est gardée à part */
+export const CLE_AVANT_MIXTE = 'yoroi_programme_actif_avant_mixte_v1';
+async function garderAvantMixte(): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(CLE);
+    if (raw) await AsyncStorage.setItem(CLE_AVANT_MIXTE, raw);
+  } catch {
+    // rien a faire : le programme en cours reste lisible tel quel
+  }
+}
+
+/**
+ * Ta semaine mixte en séances à toi (monProgramme.ts). Tes exercices changés à la main dans ton programme en cours
+ * suivent. null : une case introuvable, ou une séance sans exercice (rounds, cardio) : rien n'est écrit.
+ */
+function mixteVersPerso(nom: string, s: SemaineLibre, a: ProgrammeActif | null, duree: number | undefined): ProgrammePerso | null {
+  let ok = true;
+  const versSeance = (c: CaseSemaine): SeancePerso | null => {
+    if (!c) return null;
+    const j = jourDeRef(c, a?.id ?? '');
+    if (!j || !j.exos.length || j.rounds || j.cardio) {
+      ok = false;
+      return null;
+    }
+    const r = a ? appliquerRemplacements(j, a.remplacements) : j;
+    return {
+      titre: j.titre.slice(0, 40),
+      exos: r.exos.map((e) => ({ nom: e.nom, muscle: e.muscle, series: e.series, repsMin: e.repsMin, repsMax: e.repsMax, reposSec: e.reposSec, ...(e.conseil ? { conseil: e.conseil } : {}), ...(e.poidsDuCorps ? { poidsDuCorps: true } : {}), ...(e.secondes ? { secondes: true } : {}) })),
+    };
+  };
+  const ab = !!s.ab && !!s.b;
+  const pp: ProgrammePerso = {
+    ...nouveauProgrammePerso(),
+    nom: nom.trim().slice(0, 40),
+    semaine: s.a.map(versSeance),
+    ...(ab ? { semaineB: s.b!.map(versSeance), ab: true, depuis: s.depuis } : {}),
+    ...(duree !== undefined ? { duree } : {}),
+    origine: 'mixte',
+  };
+  return ok ? pp : null;
+}
+
+/**
+ * « Habituel » : ta semaine mixte devient un programme à toi dans « Mes programmes » et ton programme en cours,
+ * pour la durée choisie (0 = sans fin, par défaut). Ta fin de séance, tes modules et tes zones à ménager suivent.
+ * L'historique et les charges (par nom d'exercice) continuent ; ton programme d'avant est gardé à part.
+ */
+async function creerMixteHabituel_(nom: string, semaine: SemaineLibre, duree?: number | null): Promise<ProgrammeActif | null> {
+  const s = lireSemaine(semaine);
+  if (!semaineUtile(s)) return null;
+  if (semaineUtilisePerso(s)) await chargerProgrammesPerso();
+  const a = await chargerProgrammeActif();
+  const d = lireDuree(duree) ?? 0;
+  const pp = mixteVersPerso(nom, s, a, d);
+  if (!pp) return null;
+  const enr = await enFileProgramme(CLE_PROGRAMMES_PERSO, () => enregistrerProgrammePerso(pp));
+  if (!programmeParId(enr.id)) return null;
+  await garderAvantMixte();
+  const modules = a ? modulesActifs(a) : [];
+  return demarrerProgramme_(enr.id, joursDuPerso(enr), a?.fin ?? null, modules.length ? modules : null, null, { douleurs: a?.douleurs ?? null, duree: d });
+}
+
+/**
+ * « Ponctuel » : ta semaine mixte d'aujourd'hui jusqu'à `jusquau` inclus. Avec un programme en cours, elle se pose
+ * par dessus (ProgrammeActif.ponctuel) sans rien remplacer. Sans programme : un programme temporaire, archivé
+ * d'office (il n'encombre pas « Mes programmes »), qui s'arrête tout seul après `jusquau`.
+ */
+async function lancerMixtePonctuel_(nom: string, semaine: SemaineLibre, jusquau: string, aujourdhui = new Date()): Promise<ProgrammeActif | null> {
+  const s = lireSemaine(semaine);
+  if (!semaineUtile(s)) return null;
+  const pc = lirePonctuel({ semaine: s, du: jourLocal(aujourdhui), jusquau, nom });
+  if (!pc) return null;
+  if (semaineUtilisePerso(s)) await chargerProgrammesPerso();
+  const a = await chargerProgrammeActif();
+  const p = a && programmeParId(a.id);
+  if (a && p) {
+    const cases = [...pc.semaine.a, ...(pc.semaine.ab && pc.semaine.b ? pc.semaine.b : [])];
+    if (cases.some((c) => !!c && !jourDeRef(c, p.id))) return null;
+    const suite: ProgrammeActif = { ...a, ponctuel: pc };
+    await ecrire(suite);
+    return suite;
+  }
+  const pp = mixteVersPerso(pc.nom ?? nom, pc.semaine, null, 0);
+  if (!pp) return null;
+  const enr = await enFileProgramme(CLE_PROGRAMMES_PERSO, () => enregistrerProgrammePerso({ ...pp, archive: jourLocal(aujourdhui) }));
+  if (!programmeParId(enr.id)) return null;
+  return demarrerProgramme_(enr.id, joursDuPerso(enr), null, null, null, { duree: 0, jusquau: pc.jusquau });
+}
+
+/** « Annuler » : ta semaine mixte s'arrête, ta semaine normale revient ; un programme temporaire s'arrête */
+async function annulerMixtePonctuel_(): Promise<void> {
+  const a = await chargerProgrammeActif();
+  if (!a) return;
+  if (a.ponctuel) {
+    const { ponctuel: _pc, ...reste } = a;
+    await ecrire(reste);
+    return;
+  }
+  if (a.jusquau) await ecrire(null);
+}
+
+/** La semaine mixte en cours aujourd'hui (bandeau « Semaine mixte jusqu'à dimanche ») ; null : aucune */
+export function mixteEnCours(a: ProgrammeActif | null, aujourdhui = new Date()): { jusquau: string; nom?: string; temporaire: boolean } | null {
+  if (!a) return null;
+  const pc = ponctuelLe(a, aujourdhui);
+  if (pc) return { jusquau: pc.jusquau, ...(pc.nom ? { nom: pc.nom } : {}), temporaire: false };
+  if (estIso(a.jusquau) && a.jusquau >= jourLocal(aujourdhui)) {
+    const p = programmeParId(a.id);
+    return { jusquau: a.jusquau, ...(p ? { nom: p.titre } : {}), temporaire: true };
+  }
+  return null;
 }
 
 /**
@@ -522,7 +695,7 @@ export function indexDuPlan(a: ProgrammeActif, p: Programme, aujourdhui = new Da
 }
 
 /** La seance prevue ce jour la par ta semaine (null : repos ce jour, ou programme sans plan) */
-export function seanceDuPlanLe(a: Pick<ProgrammeActif, 'plan' | 'jours' | 'fin' | 'semaine'> | null, p: Programme, date: Date): JourProgramme | null {
+export function seanceDuPlanLe(a: Pick<ProgrammeActif, 'plan' | 'jours' | 'fin' | 'semaine' | 'ponctuel'> | null, p: Programme, date: Date): JourProgramme | null {
   const s = semaineEffective(a, p);
   return s ? seanceDeLaSemaine(a, p, s, date) : null;
 }
@@ -599,7 +772,9 @@ async function marquerJourFait_(programmeId: string, jourId: string, trainingId?
   // la date de la seance (saisie apres coup) compte, pas celle de l'enregistrement
   const jour = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : jourLocal();
   const faits = [...a.faits, { date: jour, jourId, ...(trainingId ? { trainingId } : {}) }].slice(-400);
-  await ecrire({ ...a, faits, prochain: idx >= 0 ? indexGarde(p, a, idx + 1) : a.prochain });
+  // 30 octobre 2026 : une séance faite pendant ta semaine mixte ponctuelle ne fait pas avancer ton programme
+  const mixte = !!ponctuelLe(a, new Date(`${jour}T12:00:00`));
+  await ecrire({ ...a, faits, prochain: idx >= 0 && !mixte ? indexGarde(p, a, idx + 1) : a.prochain });
 }
 
 /** Semaine du programme (1 la premiere semaine) */
@@ -880,6 +1055,15 @@ export function marquerPointVu(...a: Parameters<typeof marquerPointVu_>): Return
 }
 export function garderCommeMonProgramme(...a: Parameters<typeof garderCommeMonProgramme_>): ReturnType<typeof garderCommeMonProgramme_> {
   return enFileProgramme(CLE, () => garderCommeMonProgramme_(...a)) as ReturnType<typeof garderCommeMonProgramme_>;
+}
+export function creerMixteHabituel(...a: Parameters<typeof creerMixteHabituel_>): ReturnType<typeof creerMixteHabituel_> {
+  return enFileProgramme(CLE, () => creerMixteHabituel_(...a)) as ReturnType<typeof creerMixteHabituel_>;
+}
+export function lancerMixtePonctuel(...a: Parameters<typeof lancerMixtePonctuel_>): ReturnType<typeof lancerMixtePonctuel_> {
+  return enFileProgramme(CLE, () => lancerMixtePonctuel_(...a)) as ReturnType<typeof lancerMixtePonctuel_>;
+}
+export function annulerMixtePonctuel(...a: Parameters<typeof annulerMixtePonctuel_>): ReturnType<typeof annulerMixtePonctuel_> {
+  return enFileProgramme(CLE, () => annulerMixtePonctuel_(...a)) as ReturnType<typeof annulerMixtePonctuel_>;
 }
 export function remplacerExercice(...a: Parameters<typeof remplacerExercice_>): ReturnType<typeof remplacerExercice_> {
   return enFileProgramme(CLE, () => remplacerExercice_(...a)) as ReturnType<typeof remplacerExercice_>;
