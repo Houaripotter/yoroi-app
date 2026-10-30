@@ -132,8 +132,15 @@ export default function CompetitionsScreen() {
             <MedalIcon kind={medal} size={40} />
           ) : n >= 0 && !dim ? (
             <>
-              <Ink size={17} weight="black" color={c.accent} style={{ lineHeight: 19 }}>{n === 0 ? 'J' : String(n)}</Ink>
-              <Ink size={9} weight="bold" color={c.textSecondary} style={{ lineHeight: 11 }}>{n > 1 ? traduire('jours') : traduire('jour')}</Ink>
+              {/* 30 octobre 2026 : le jour même, « Aujourd’hui » traduit ; minimum 11 points */}
+              {n === 0 ? (
+                <Ink size={11} weight="black" color={c.accent} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ lineHeight: 14, paddingHorizontal: 3 }}>{traduire('Aujourd’hui')}</Ink>
+              ) : (
+                <>
+                  <Ink size={17} weight="black" color={c.accent} style={{ lineHeight: 19 }}>{String(n)}</Ink>
+                  <Ink size={11} weight="bold" color={c.textSecondary} style={{ lineHeight: 13 }}>{n > 1 ? traduire('jours') : traduire('jour')}</Ink>
+                </>
+              )}
             </>
           ) : (
             <Icon name="trophy" size={22} color={c.textMuted} />

@@ -75,7 +75,7 @@ function Tete({ texte, exemple }: { texte: string; exemple?: boolean }) {
       <Ink size={10} weight="extraBold" color={pal.texte2} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85} style={{ flex: 1, lineHeight: 12 }}>{texte}</Ink>
       {exemple ? (
         <View style={{ backgroundColor: c.accentTint, borderRadius: 999, paddingHorizontal: 5, paddingVertical: 1 }}>
-          <Ink size={8} weight="black" color={c.accent} style={{ letterSpacing: 0.6 }}>{traduire('EXEMPLE')}</Ink>
+          <Ink size={11} weight="black" color={c.accent} style={{ letterSpacing: 0.4 }}>{traduire('EXEMPLE')}</Ink>
         </View>
       ) : null}
     </View>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { EcranChargement } from '@/components/yoroi/v2/chargement/Chargement';
+import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { Redirect } from "expo-router";
 import { AppState, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -50,6 +51,7 @@ const etatUtilisateur = () =>
   });
 
 export default function Index() {
+  const { theme } = useYoroiTheme();
   const [destination, setDestination] = useState<Destination | null>(null);
 
   useEffect(() => {
@@ -116,8 +118,9 @@ export default function Index() {
 
   if (!destination) {
     // Attente : le meme ecran de chargement que la racine (il reprend sans rejouer l'introduction)
+    // 30 octobre 2026 : le fond suit le theme (sombre compris), plus de clair ecrit en dur
     return (
-      <View style={{ flex: 1, backgroundColor: "#F2F1EC" }}>
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <EcranChargement />
       </View>
     );

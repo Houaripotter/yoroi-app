@@ -138,8 +138,15 @@ export function PlanEvents({ competitions }: { competitions: Competition[] }) {
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 20, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}
       >
         <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: CAT_TINT[e.category] ?? c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
-          <Ink size={16} weight="black" style={{ lineHeight: 18 }}>{n <= 0 ? 'J' : String(n)}</Ink>
-          <Ink size={9} weight="bold" color={c.textSecondary} style={{ lineHeight: 11 }}>{n <= 0 ? 'jour' : n > 1 ? 'jours' : 'jour'}</Ink>
+          {/* 30 octobre 2026 : le jour même, « Aujourd’hui » traduit (plus « J » au dessus de « jour ») ; minimum 11 points */}
+          {n <= 0 ? (
+            <Ink size={11} weight="black" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ lineHeight: 14, paddingHorizontal: 3 }}>{traduire('Aujourd’hui')}</Ink>
+          ) : (
+            <>
+              <Ink size={16} weight="black" style={{ lineHeight: 18 }}>{String(n)}</Ink>
+              <Ink size={11} weight="bold" color={c.textSecondary} style={{ lineHeight: 13 }}>{n > 1 ? traduire('jours') : traduire('jour')}</Ink>
+            </>
+          )}
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={15} weight="extraBold" numberOfLines={2}>{traduire(e.title)}</Ink>
