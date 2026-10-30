@@ -49,7 +49,7 @@ import { alternativesCardio } from '@/lib/v2/seances/cardioFin';
 import { PROGRAMMES, programmeParId } from '@/lib/v2/programmes/catalogue';
 import { MODELES_VISIBLES, joursDuModele, modelesDisponibles, nomCourt, seanceDepuisJour, semaineDuModele, semaineEgaleAuModele } from '@/lib/v2/programmes/modelesSemaine';
 import type { ModeleSemaine } from '@/lib/v2/programmes/modelesSemaine';
-import { BRIQUES, GROUPES_BRIQUES, MINUTES_CARDIO, briqueParId, briquesDuPerso, creerBrique, estExoCardio, joursDeBrique, modifierBrique, poserBrique, seanceDeCle } from '@/lib/v2/programmes/briques';
+import { BRIQUES, GROUPES_BRIQUES, MINUTES_CARDIO, briqueParId, briquesDuPerso, creerBrique, estExoCardio, joursAPrevenir, joursDeBrique, modifierBrique, poserBrique, seanceDeCle } from '@/lib/v2/programmes/briques';
 import type { DefBrique, TeinteBrique } from '@/lib/v2/programmes/briques';
 import {
   avecExo, deplacerExo, exoDepuisNom, joursDuPerso, nombreSeances, nouveauProgrammePerso, peutEnregistrer,
@@ -719,6 +719,12 @@ export default function CoachConstruire() {
       <Sheet visible={!!reglage} onClose={() => setARegler(null)} title={reglage ? sansTiret(traduire(nomFr(reglage.nom))) : ''}>
         {reglage && aRegler ? (
           <View style={{ gap: 16, paddingHorizontal: 2, paddingBottom: 6 }}>
+            {/* revue du 30 octobre 2026 : brique posee sur plusieurs jours, le changement vaut partout (briques.ts) */}
+            {joursAPrevenir(pp, aRegler.cle).length ? (
+              <Ink size={13.5} weight="bold" color={pa.texte2} style={{ lineHeight: 19 }}>
+                {traduire('Ce changement vaut pour tous ses jours : {0}.', joursAPrevenir(pp, aRegler.cle).map((j) => (j.b ? traduire('{0}, autre semaine', traduire(JOURS[j.d])) : traduire(JOURS[j.d]))).join(', '))}
+              </Ink>
+            ) : null}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Ink size={15} weight="black" color={pa.texte} style={{ flex: 1 }}>{traduire('Séries')}</Ink>
               <Rond label="−" a11y={traduire('Une série de moins')} onPress={() => changerBrique(aRegler.cle, (s) => reglerExo(s, aRegler.index, { series: reglage.series - 1 }))} />
