@@ -117,8 +117,25 @@ export type BoutonPrincipalProps = {
   style?: StyleProp<ViewStyle>;
   /** style ajoute au bouton lui meme (alignement du contenu, padding) */
   styleBouton?: StyleProp<ViewStyle>;
+  /**
+   * Le fond remplit toute la hauteur du cadre (rangee de boutons de hauteurs differentes).
+   * Par defaut : oui seulement si le cadre est etire par `style` (flex, flexGrow ou height), voir cadreEtire().
+   */
+  remplir?: boolean;
   testID?: string;
 };
+
+/**
+ * 30 octobre 2026 (Houari : « un bloc bleu geant Commencer prend toute la page programme ») :
+ * le fond du bouton avait toujours flexGrow 1, pour prendre la hauteur du voisin dans une rangee.
+ * Sous Yoga (iOS, iPad, Mac), dans une colonne dont la hauteur n'est pas fixee (carte du haut de la page
+ * programme, dans un ScrollView), ce flexGrow s'etirait sur toute la hauteur disponible : bouton geant,
+ * et la page ne defilait plus jusqu'en bas. Maintenant le fond ne grandit que si le cadre lui meme est etire.
+ */
+export function cadreEtire(style: StyleProp<ViewStyle>): boolean {
+  const s = (StyleSheet.flatten(style) ?? {}) as ViewStyle;
+  return Number(s.flex) > 0 || Number(s.flexGrow) > 0 || (s.height !== undefined && s.height !== null && s.height !== 'auto');
+}
 
 export function BoutonPrincipal({
   label,
@@ -137,8 +154,10 @@ export function BoutonPrincipal({
   haptique = 'medium',
   style,
   styleBouton,
+  remplir,
   testID,
 }: BoutonPrincipalProps) {
+  const etire = remplir ?? cadreEtire(style);
   const { fort, fond, texte } = useCouleursBoutonPrincipal(disabled);
   const actif = !disabled && !loading;
   const [largeur, setLargeur] = React.useState(0);
@@ -183,8 +202,9 @@ export function BoutonPrincipal({
           onLayout={surMesure}
           style={[
             {
-              // flexGrow : dans une rangee, le bouton prend la hauteur du voisin (meme hauteur qu'Annuler)
-              flexGrow: 1,
+              // flexGrow seulement si le cadre est etire : dans une rangee, meme hauteur que le voisin (Annuler) ;
+              // jamais dans une colonne libre, ou Yoga l'etirait sur toute la page (30 octobre 2026)
+              ...(etire ? { flexGrow: 1 } : null),
               minHeight: hauteur,
               borderRadius: rayon,
               paddingHorizontal: padding,

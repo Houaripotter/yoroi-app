@@ -34,6 +34,9 @@ import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { illustration } from '@/components/yoroi/v2/stickers';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
+/** 30 octobre 2026 : largeur maximale du contenu sur iPad et Mac */
+const LARGEUR_CONTENU = 720;
+
 // la carte programme : le torii, le chemin (meme image que le tampon « Quoi faire »)
 const TORII: ImageSourcePropType = require('@/assets/avatars/app/ornements/torii.webp');
 
@@ -156,7 +159,9 @@ export default function ZonesScreen() {
   };
 
   const presets = useMemo(() => RACCOURCIS_ZONES.map((r) => ({ ...r, nb: seanceZones(r.zones).length, minutes: minutesDe(r.zones) })), []);
-  const largeurTuile = Math.floor((width - 44 - 10) / 2);
+  // 30 octobre 2026 : sur iPad et Mac, le contenu garde 720 points au plus, centré (plus de vignettes géantes)
+  const largeurContenu = Math.min(width, LARGEUR_CONTENU);
+  const largeurTuile = Math.floor((largeurContenu - 44 - 10) / 2);
   const derniereEstUnPreset = !!raccourciActif(derniereFois);
 
   const titreEcran = mode === 'choix' ? traduire('Quoi faire ?') : mode === 'muscles' ? traduire('Choisis tes muscles') : presetActif ? traduire(presetActif.nom) : traduire('Ta séance');
@@ -164,7 +169,7 @@ export default function ZonesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
-      <ScrollView ref={defile} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + (mode === 'choix' ? 40 : 120), gap: 14 }} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={defile} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + (mode === 'choix' ? 40 : 120), gap: 14, width: '100%', maxWidth: LARGEUR_CONTENU, alignSelf: 'center' }} showsVerticalScrollIndicator={false}>
         <EnTete titre={titreEcran} sousTitre={sousTitre} onRetour={retour} repli="/programmes" style={{ marginHorizontal: -16, marginTop: -8 }} />
 
         {/* 1. CHOIX : les seances toutes faites en grosses cartes */}
@@ -200,9 +205,7 @@ export default function ZonesScreen() {
                 accessibilityRole="button"
                 style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, borderRadius: 22, backgroundColor: pressed ? P.white : c.accentTint })}
               >
-                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: P.white, alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name="repeat" size={19} color={c.onPrimary} />
-                </View>
+                <Image source={illustration('repeter')} style={{ width: 44, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
                 <View style={{ flex: 1, gap: 1 }}>
                   <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('Refaire ta dernière séance')}</Ink>
                   <Ink size={16} weight="black" numberOfLines={2}>{titreZones(derniereFois, traduire)}</Ink>
@@ -294,9 +297,7 @@ export default function ZonesScreen() {
               accessibilityRole="button"
               style={({ pressed }) => [carteBlanche(c.surface, c.divider), { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, opacity: pressed ? 0.88 : 1 }]}
             >
-              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name="body" size={19} color={c.accentText} />
-              </View>
+              <Image source={illustration('corps')} style={{ width: 44, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
               <View style={{ flex: 1, gap: 1 }}>
                 <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('YOROI te propose les exercices')}</Ink>
                 <Ink size={16} weight="black">{traduire('Je choisis mes muscles')}</Ink>
@@ -368,11 +369,11 @@ export default function ZonesScreen() {
               <Ink size={22} weight="black" tight>{titre}</Ink>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {[
-                  { icone: 'dumbbell' as const, t: traduire('{0} exercices', exos.length) },
-                  { icone: 'clock' as const, t: traduire('environ {0} min', minutes) },
+                  { icone: 'musculation' as const, t: traduire('{0} exercices', exos.length) },
+                  { icone: 'chrono' as const, t: traduire('environ {0} min', minutes) },
                 ].map((p) => (
-                  <View key={p.icone} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: blancA(0.7) }}>
-                    <Icon name={p.icone} size={15} color={P.etiquettePrune} />
+                  <View key={p.icone} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: 34, paddingLeft: 6, paddingRight: 12, borderRadius: 17, backgroundColor: blancA(0.7) }}>
+                    <Image source={illustration(p.icone)} style={{ width: 24, height: 24 }} resizeMode="contain" accessibilityIgnoresInvertColors />
                     <Ink size={13} weight="extraBold" color={P.etiquettePrune}>{p.t}</Ink>
                   </View>
                 ))}
@@ -423,7 +424,7 @@ export default function ZonesScreen() {
       {/* le bouton, en bas, des qu'on a choisi */}
       {mode !== 'choix' ? (
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingTop: 10, paddingBottom: insets.bottom + 10, backgroundColor: c.background }}>
-          <BoutonPrincipal onPress={commencer} disabled={!exos.length} hauteur={62} rayon={22} styleBouton={{ justifyContent: 'flex-start', gap: 12, paddingHorizontal: 16 }}>
+          <BoutonPrincipal style={{ width: '100%', maxWidth: LARGEUR_CONTENU - 32, alignSelf: 'center' }} onPress={commencer} disabled={!exos.length} hauteur={62} rayon={22} styleBouton={{ justifyContent: 'flex-start', gap: 12, paddingHorizontal: 16 }}>
             {(col) => (
               <>
                 <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: exos.length ? 'rgba(255,255,255,0.18)' : blancA(0.7), alignItems: 'center', justifyContent: 'center' }}>

@@ -205,6 +205,9 @@ export function BigButton({ label, onPress, tone = 'accent', icon, style }: { la
 }
 
 /** Feuille qui monte du bas */
+/** Largeur maximale d'une feuille du bas (iPad, Mac) ; sur iPhone la feuille prend toute la largeur */
+export const LARGEUR_MAX_FEUILLE = 760;
+
 export function Sheet({ visible, onClose, title, children }: { visible: boolean; onClose: () => void; title?: string; children: React.ReactNode }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
@@ -212,7 +215,8 @@ export function Sheet({ visible, onClose, title, children }: { visible: boolean;
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable onPress={onClose} accessibilityLabel={traduire("Fermer")} style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.45)', justifyContent: 'flex-end' }}>
-        <Pressable onPress={() => {}} style={{ backgroundColor: c.background, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingTop: 12, paddingHorizontal: 22, paddingBottom: insets.bottom + 22, maxHeight: '88%' }}>
+        {/* 30 octobre 2026 : sur iPad et Mac, la feuille garde une largeur lisible, centrée (plus de cartes étirées sur 2000 points) */}
+        <Pressable onPress={() => {}} style={{ backgroundColor: c.background, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingTop: 12, paddingHorizontal: 22, paddingBottom: insets.bottom + 22, maxHeight: '88%', width: '100%', maxWidth: LARGEUR_MAX_FEUILLE, alignSelf: 'center' }}>
           <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: c.border, marginBottom: 12 }} />
           {title ? <Ink size={22} weight="black" tight style={{ paddingHorizontal: 4, marginBottom: 10 }}>{title}</Ink> : null}
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 10 }}>

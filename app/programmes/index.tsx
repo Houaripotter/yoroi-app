@@ -116,7 +116,8 @@ export default function ProgrammesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
-      <ScrollView refreshControl={refreshControl} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 40, gap: 14 }} showsVerticalScrollIndicator={false}>
+      {/* 30 octobre 2026 : contenu limité à 720 points et centré sur iPad et Mac */}
+      <ScrollView refreshControl={refreshControl} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 40, gap: 14, width: '100%', maxWidth: 720, alignSelf: 'center' }} showsVerticalScrollIndicator={false}>
         <EnTete titre={traduire('Programmes')} sousTitre={traduire('des séances prêtes à suivre, basées sur des études')} repli="/(tabs)/seances" fond={c.background} style={{ marginHorizontal: -16, marginTop: -8 }} />
 
         {programmesFavoris.length ? (
@@ -209,7 +210,7 @@ export default function ProgrammesScreen() {
               accessibilityRole="button"
               style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 50, paddingHorizontal: 18, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: pressed ? blancA(0.75) : c.surface })}
             >
-              <Icon name="target" size={18} color={c.onPrimary} />
+              {illus.stickers ? <Image source={illus.img('objectifs')} style={{ width: 28, height: 28 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : <Icon name="target" size={18} color={c.onPrimary} />}
               <Ink size={15} weight="black" color={c.onPrimary}>{traduire('Trouver mon programme')}</Ink>
             </Pressable>
           </View>

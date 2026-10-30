@@ -307,7 +307,9 @@ export default function ProgrammeDetail() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
-      <ScrollView ref={defilement} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 40, gap: 18 }} showsVerticalScrollIndicator={false}>
+      {/* 30 octobre 2026 : la page défile jusqu'en bas (le bouton Commencer ne s'étire plus, BoutonPrincipal.tsx),
+          marge basse pour la zone sûre, contenu limité à 720 points et centré sur iPad et Mac */}
+      <ScrollView ref={defilement} style={{ flex: 1 }} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 56, gap: 18, width: '100%', maxWidth: 720, alignSelf: 'center' }} showsVerticalScrollIndicator={false}>
         {/* 26 octobre 2026 : maquette D aux couleurs de E (Houari : « je préfère D mais avec les couleurs de E ») */}
         <EnTeteRond salut={salutation(nom)} titre={enCours ? traduire('Ton programme') : traduire('Programme')} droite={perso ? undefined : etoile} repli="/programmes" />
 
@@ -432,9 +434,7 @@ export default function ProgrammeDetail() {
         </View>
         {retires.includes(jVu.id) ? (
           <Pressable onPress={() => { tap(); setFinOuverte('page'); }} accessibilityRole="button" style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? pal.teinte : pal.carte, borderRadius: 22, padding: 14 })}>
-            <View style={{ width: 50, height: 50, borderRadius: 16, backgroundColor: pal.orangeTint, alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="steps" size={24} color={pal.orange} />
-            </View>
+            <Image source={illustration('cardio_zone2')} style={{ width: 50, height: 50 }} resizeMode="contain" accessibilityIgnoresInvertColors />
             <Ink size={14} weight="bold" color={pal.texte} style={{ flex: 1 }}>{traduire('Retirée de ton programme. Touche pour la remettre.')}</Ink>
           </Pressable>
         ) : (
