@@ -38,6 +38,9 @@ import { INK_TAB_BAR_SPACE } from '@/components/yoroi/v2/InkTabBar';
 import type { Training } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
 import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
+import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
+import { largeurColonne } from '@/lib/v2/nav/grandEcran';
+import { Colonne, GrilleColonnes, LargeurPage, Rangee } from '@/components/yoroi/v2/PageLarge';
 import { formatDuration, formatTonnage as tonnageText } from '@/lib/v2/trainingWeek';
 import { todayISO } from '@/lib/v2/weightStats';
 import { useSeancesData } from '@/lib/v2/seances/useSeancesData';
@@ -148,6 +151,12 @@ export default function Seances() {
   // 28 octobre 2026 (maquette A) : la barre compacte « Séances » en haut quand l'onglet a défilé
   const [compact, setCompact] = useState(false);
   const { width } = useWindowDimensions();
+  // 30 octobre 2026 : en grand ecran, la page centree en colonnes (maquette _propositions/grand_ecran_2026-10-30/seances.png)
+  const page = usePageLarge();
+  const grand = page.grand;
+  const col3 = largeurColonne(page.largeur, 3);
+  const col2 = page.largeur - col3 - 20;
+  const demi = largeurColonne(page.largeur, 2);
   const sections = useSectionsOuvertes();
   // la visite guidée montre ta dernière séance et ton mois : ces sections restent ouvertes pendant la visite
   const visite = useVisiteEnCours();
@@ -221,6 +230,7 @@ export default function Seances() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
+      <LargeurPage actif={grand} largeur={page.largeur}>
       <ScrollView
         ref={scrollRef}
         onScroll={(ev) => {
@@ -229,7 +239,7 @@ export default function Seances() {
           if (bas !== compact) setCompact(bas);
         }}
         scrollEventThrottle={32}
-        contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: insets.bottom + INK_TAB_BAR_SPACE + 10, paddingHorizontal: 16, gap: 12 }}
+        contentContainerStyle={grand ? { paddingTop: insets.top + 28, paddingBottom: insets.bottom + 40, paddingHorizontal: page.marge, gap: 16 } : { paddingTop: insets.top + 12, paddingBottom: insets.bottom + INK_TAB_BAR_SPACE + 10, paddingHorizontal: 16, gap: 12 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         refreshControl={refreshControl}
@@ -270,16 +280,25 @@ export default function Seances() {
         {importSante && loaded && trainings.length > 0 && importedCount === 0 ? <CarteImportSeances onPress={() => setImportOpen(true)} /> : null}
 
         {/* 28 octobre 2026 (maquette A) : la seance du jour d'abord (programme du Coach, creneau prevu, ou le Coach) */}
+        <Rangee actif={grand}>
+        <Colonne actif={grand} largeur={col2}>
         <TourAnchor id="seances.programme" rayon={30}>
           <CarteDuJour trainings={trainings} weeklyGoal={weeklyGoal} femme={femme} next={next} onCoach={() => router.push('/coach' as any)} />
         </TourAnchor>
+        </Colonne>
 
         {/* Ta semaine : l'anneau de ton objectif et les jours de L a D */}
+        <Colonne actif={grand} largeur={col3}>
         <TourAnchor id="seances.semaine" rayon={24}>
           <SemaineAnneau week={week} plates={plates} trainings={trainings} weeklyGoal={weeklyGoal} onChooseGoal={() => router.push('/settings?objectif=1' as any)} />
         </TourAnchor>
+        </Colonne>
+        </Rangee>
 
         {/* Ce qui vient : le prochain entrainement prevu */}
+        {/* en grand ecran, Tes chiffres a gauche et Ce qui vient a droite (rangee inversee, meme ordre de lecture sur iPhone) */}
+        <Rangee actif={grand} style={{ flexDirection: 'row-reverse' }}>
+        <Colonne actif={grand} largeur={col3}>
         <Petites texte={traduire('Ce qui vient')} teinte="lilas" style={{ marginTop: 8, marginBottom: -4 }} />
         <TourAnchor id="seances.prochain" rayon={24}>
           <NextUp
@@ -291,10 +310,14 @@ export default function Seances() {
             onCreate={() => router.push('/slots' as any)}
           />
         </TourAnchor>
+        </Colonne>
 
         {/* Tes chiffres de la semaine : duree, tonnage, charge, jours */}
+        <Colonne actif={grand} largeur={col2}>
         <Petites texte={traduire('Tes chiffres de la semaine')} teinte="creme" style={{ marginTop: 8, marginBottom: -4 }} />
         <WeekTiles week={week} onOpenCharge={() => router.push('/charge' as any)} />
+        </Colonne>
+        </Rangee>
 
         {/* En detail : les sections repliables, chacune avec son resume */}
         <Petites
@@ -304,8 +327,9 @@ export default function Seances() {
           action={Object.values(sections.ouvert).some(Boolean) ? traduire('Tout replier') : traduire('Tout déplier')}
           onAction={() => sections.toutes(!Object.values(sections.ouvert).some(Boolean))}
         />
-        <View style={{ gap: 10 }}>
+        <View style={grand ? { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: 20 } : { gap: 10 }}>
           {lastVM && last ? (
+            <Colonne actif={grand} largeur={col3}>
             <TourAnchor id="seances.derniere" rayon={24}>
               <SectionRepliable
                 titre={traduire('Ta dernière séance')}
@@ -318,9 +342,11 @@ export default function Seances() {
                 <LastSessionBody vm={lastVM} onOpen={() => router.push({ pathname: '/workout-detail', params: { id: String(last.id) } } as any)} />
               </SectionRepliable>
             </TourAnchor>
+            </Colonne>
           ) : null}
 
           {mesSeances ? (
+            <Colonne actif={grand} largeur={col3}>
             <SectionRepliable
               titre={traduire('Mes séances')}
               resume={resumeMesSeances(mesSeances)}
@@ -331,8 +357,10 @@ export default function Seances() {
             >
               <MesSeancesListe liste={mesSeances} />
             </SectionRepliable>
+            </Colonne>
           ) : null}
 
+          <Colonne actif={grand} largeur={col3}>
           <TourAnchor id="seances.mois" rayon={24}>
             <SectionRepliable
               titre={traduire('Ton mois')}
@@ -350,8 +378,10 @@ export default function Seances() {
               <MoisPastilles trainings={trainings} competitions={competitions} onOpen={() => router.push('/planning?tab=mois' as any)} />
             </SectionRepliable>
           </TourAnchor>
+          </Colonne>
 
           {hasMuscles ? (
+            <Colonne actif={grand} largeur={col3}>
             <SectionRepliable
               titre={traduire('Muscles travaillés')}
               resume={(() => {
@@ -363,10 +393,12 @@ export default function Seances() {
               ouvert={sections.ouvert.muscles}
               onBasculer={() => sections.basculer('muscles')}
             >
-              <MusclesSemaine loads={muscles} frequence={frequence} largeur={width - 32 - 28} />
+              <MusclesSemaine loads={muscles} frequence={frequence} largeur={grand ? col3 - 28 : width - 32 - 28} />
             </SectionRepliable>
+            </Colonne>
           ) : null}
 
+          <Colonne actif={grand} largeur={col3}>
           <SectionRepliable
             titre={traduire('Tes records')}
             resume={(() => {
@@ -417,6 +449,7 @@ export default function Seances() {
               <Icon name="chevron" size={15} color={c.accentText} />
             </Pressable>
           </SectionRepliable>
+          </Colonne>
         </View>
 
         {/* Historique */}
@@ -526,9 +559,14 @@ export default function Seances() {
               <Ink size={16} weight="black" tight>{sansTiret(traduire(g.title))}</Ink>
               <Ink size={12} weight="bold" color={c.textSecondary}>{groupLine(g, unite)}</Ink>
             </View>
+            {/* en grand ecran, tes seances sur deux colonnes */}
+            <GrilleColonnes actif={grand}>
             {g.items.map((t) => (
-              <HistoryCard key={t.id ?? `${t.date}${t.start_time}`} t={t} femme={femme} stamps={t.id ? records.stampedTrainings.get(t.id) ?? 0 : 0} />
+              <Colonne key={t.id ?? `${t.date}${t.start_time}`} actif={grand} largeur={demi}>
+              <HistoryCard t={t} femme={femme} stamps={t.id ? records.stampedTrainings.get(t.id) ?? 0 : 0} />
+              </Colonne>
             ))}
+            </GrilleColonnes>
           </View>
         ))}
         {groups.length > groupsShown ? (
@@ -539,6 +577,7 @@ export default function Seances() {
           />
         ) : null}
       </ScrollView>
+      </LargeurPage>
 
       {compact ? (
         <Animated.View
