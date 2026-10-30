@@ -15,6 +15,7 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 import { formatRelative } from '@/lib/utils/formatDate';
 import { traduire } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 
 const BackupStatusHeaderInner: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -122,7 +123,7 @@ const BackupStatusHeaderInner: React.FC = () => {
           accessibilityRole="button"
           accessibilityState={{ disabled: triggering }}
         >
-          <RefreshCw size={14} color="#fff" strokeWidth={2.5} />
+          <IconeOuSticker sticker="refresh" taille={14}><RefreshCw size={14} color="#fff" strokeWidth={2.5} /></IconeOuSticker>
           <Text style={styles.btnText}>
             {triggering ? traduire('Sauvegarde…') : traduire('Sauvegarder')}
           </Text>
@@ -136,7 +137,7 @@ const BackupStatusHeaderInner: React.FC = () => {
             accessibilityLabel={traduire("Partager la sauvegarde par email ou messagerie")}
             accessibilityRole="button"
           >
-            <Share2 size={14} color={color} strokeWidth={2.5} />
+            <IconeOuSticker sticker="partager" taille={14}><Share2 size={14} color={color} strokeWidth={2.5} /></IconeOuSticker>
             <Text style={[styles.btnTextSecondary, { color }]}>{traduire("Partager")}</Text>
           </TouchableOpacity>
         )}
