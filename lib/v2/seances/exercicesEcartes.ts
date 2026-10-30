@@ -1,10 +1,11 @@
 /**
  * Exercices ecartes (30 octobre 2026) : « Pas dans ma salle » ou « Ça me fait mal », choisis en remplacant
  * un exercice pendant la seance. Un exercice ecarte n'est plus propose : ni comme alternative, ni dans les
- * seances des programmes (lib/v2/programmes/perso.ts, jourPourToi). Garde sur ce telephone seulement ;
+ * seances des programmes (lib/v2/programmes/perso.ts, jourPourToi). Partage avec tes appareils appaires (lib/v2/synchro/cles.ts) ;
  * Reglages, « Exercices écartés », le remet. « Machine occupée » n'ecarte rien : ca ne vaut que pour la seance.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { signalerASynchroniser } from '@/lib/v2/synchro/cles';
 
 export const CLE_EXERCICES_ECARTES = 'yoroi_exercices_ecartes_v1';
 
@@ -75,6 +76,7 @@ function ecrire(change: (l: Ecarte[]) => Ecarte[]): Promise<Ecarte[]> {
     memoire = l;
     try {
       await AsyncStorage.setItem(CLE_EXERCICES_ECARTES, JSON.stringify(l));
+      signalerASynchroniser();
     } catch {
       // rien a faire : la liste reste en memoire pour cette ouverture de l'app
     }
