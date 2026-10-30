@@ -13,6 +13,7 @@ import { relativeSync } from '@/lib/v2/sante/stats';
 import type { SanteSource } from '@/lib/v2/sante/data';
 import { SanteIcon } from './SanteIcon';
 import type { SanteIconName } from './SanteIcon';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
 import { P, P_CLAIR, P_SOMBRE, paletteSombre } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -67,14 +68,14 @@ export function Label({ children, aside }: { children: string; aside?: string })
 }
 
 /** Bouton compact (44 points mini) */
-export function SmallButton({ label, onPress, tone = 'ink', icon, busy, disabled }: { label: string; onPress: () => void; tone?: 'ink' | 'red' | 'light'; icon?: SanteIconName; busy?: boolean; disabled?: boolean }) {
+export function SmallButton({ label, onPress, tone = 'ink', icon, busy, disabled, sticker }: { label: string; onPress: () => void; tone?: 'ink' | 'red' | 'light'; icon?: SanteIconName; busy?: boolean; disabled?: boolean; sticker?: NomSticker | false }) {
   // 27 octobre 2026 (refonte Pastel) : le bouton principal en pastel, texte bleu nuit
   const bg = tone === 'red' ? P.primary : tone === 'ink' ? S.ink : P.white;
   const fg = tone === 'light' ? S.ink : tone === 'red' ? P.onPrimary : paletteSombre() ? P_SOMBRE.paper : '#FFFFFF';
   return (
     <Press onPress={busy || disabled ? undefined : onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={label} disabled={busy || disabled}>
       <View style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 16, backgroundColor: bg, borderWidth: tone === 'light' ? 1 : 0, borderColor: S.line2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: disabled ? 0.45 : 1 }}>
-        {busy ? <ActivityIndicator size="small" color={fg} /> : icon ? <SanteIcon name={icon} size={17} color={fg} width={2.3} /> : null}
+        {busy ? <ActivityIndicator size="small" color={fg} /> : icon ? <SanteIcon name={icon} size={17} color={fg} width={2.3} sticker={sticker} /> : null}
         <Ink size={14} weight="extraBold" color={fg}>
           {label}
         </Ink>
@@ -211,11 +212,11 @@ export function InfoBlock({ icon, title, color = S.ink, tint = S.line2, children
 }
 
 /** Ligne d'action dans une carte : icone, titre, sous-titre, chevron ou etat */
-export function ActionRow({ icon, title, sub, onPress, color = S.ink, tint = S.line2, busy, right, first }: { icon: SanteIconName; title: string; sub?: string; onPress?: () => void; color?: string; tint?: string; busy?: boolean; right?: React.ReactNode; first?: boolean }) {
+export function ActionRow({ icon, title, sub, onPress, color = S.ink, tint = S.line2, busy, right, first, sticker }: { icon: SanteIconName; title: string; sub?: string; onPress?: () => void; color?: string; tint?: string; busy?: boolean; right?: React.ReactNode; first?: boolean; sticker?: NomSticker | false }) {
   const body = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingVertical: 10, borderTopWidth: first ? 0 : 1, borderTopColor: S.line2 }}>
       <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-        <SanteIcon name={icon} size={20} color={color} />
+        <SanteIcon name={icon} size={20} color={color} sticker={sticker} />
       </View>
       <View style={{ flex: 1, gap: 1 }}>
         <Ink size={15} weight="extraBold">
@@ -347,7 +348,7 @@ export function Notice({ text, tone = 'neutral' }: { text: string; tone?: 'neutr
   const fg = tone === 'good' ? S.mossText : tone === 'bad' ? S.danger : S.ink2;
   return (
     <View style={{ borderRadius: 16, backgroundColor: bg, padding: 12, flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-      <SanteIcon name={tone === 'good' ? 'check' : 'info'} size={16} color={fg} width={2.4} />
+      <SanteIcon name={tone === 'good' ? 'check' : 'info'} size={16} color={fg} width={2.4} sticker={false} />
       <Ink size={13} weight="bold" color={fg} style={{ flex: 1 }}>
         {text}
       </Ink>
