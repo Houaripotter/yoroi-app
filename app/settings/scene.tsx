@@ -121,7 +121,7 @@ function Badge({ type, surImage = true }: { type: Repere; surImage?: boolean }) 
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 22, paddingHorizontal: 8, borderRadius: 11, backgroundColor: bg }}>
       {type === 'animee' ? <PictoLecture size={9} color={c.goldLight} /> : null}
       {type === 'son' ? <PictoSon size={11} color={c.goldLight} /> : null}
-      {type === 'premium' || type === 'annuel' ? <Icon name="lock" size={10} color={c.goldLight} stroke={2.8} /> : null}
+      {type === 'premium' || type === 'annuel' ? <Icon sticker="couronne" name="lock" size={10} color={c.goldLight} stroke={2.8} /> : null}
       <Ink size={11} weight="extraBold" color={fg} maxFontSizeMultiplier={1.2}>
         {label}
       </Ink>
@@ -345,7 +345,7 @@ export default function TaScene() {
           </Ink>
           {verrou && focus !== choisie ? (
             <Pressable onPress={() => ouvrirPaywall('scenes')} accessibilityRole="button" style={({ pressed }) => ({ alignSelf: 'flex-start', marginTop: 2, height: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: pressed ? P.primaryPressed : P.primary })}>
-              <Icon name="lock" size={12} color={P.onPrimary} stroke={2.6} />
+              <Icon sticker="couronne" name="lock" size={12} color={P.onPrimary} stroke={2.6} />
               <Ink size={12.5} weight="black" color={P.onPrimary}>
                 {fiche.annuel ? traduire('Voir l’abonnement annuel') : traduire('Débloquer')}
               </Ink>
@@ -419,7 +419,7 @@ export default function TaScene() {
               </View>
               {!isPremium ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 24, paddingHorizontal: 9, borderRadius: 12, backgroundColor: P.tuileSableFond }}>
-                  <Icon name="lock" size={11} color={P.tuileSableTexte} stroke={2.6} />
+                  <Icon sticker="couronne" name="lock" size={11} color={P.tuileSableTexte} stroke={2.6} />
                   <Ink size={11} weight="extraBold" color={P.tuileSableTexte}>
                     {traduire("Premium")}</Ink>
                 </View>
@@ -428,13 +428,13 @@ export default function TaScene() {
             {/* 14 octobre : l'etat reel, pour ne jamais avoir l'air de marcher sans marcher */}
             {!isPremium && rotation !== 'fixe' ? (
               <Pressable onPress={() => ouvrirPaywall('scenes')} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 14, backgroundColor: c.fillSoft }}>
-                <Icon name="lock" size={16} color={c.goldDeep} stroke={2.4} />
+                <Icon sticker="couronne" name="lock" size={16} color={c.goldDeep} stroke={2.4} />
                 <Ink size={13} weight="bold" color={c.ink} style={{ flex: 1 }}>
                   {traduire("Premium n’est pas actif : la scène qui change à chaque ouverture s’arrête. Touche ici pour voir Premium.")}</Ink>
               </Pressable>
             ) : !isPremium ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 14, backgroundColor: c.fillSoft }}>
-                <Icon name="lock" size={16} color={c.goldDeep} stroke={2.4} />
+                <Icon sticker="couronne" name="lock" size={16} color={c.goldDeep} stroke={2.4} />
                 <Ink size={13} weight="bold" color={c.textSecondary} style={{ flex: 1 }}>
                   {traduire("Réservé à Premium : touche un pack pour voir l’offre.")}</Ink>
               </View>
@@ -680,7 +680,7 @@ function Vignette({
           </View>
         ) : locked ? (
           <View pointerEvents="none" style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: 13, backgroundColor: P_CLAIR.tuileSableFond, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="lock" size={12} color={P_CLAIR.tuileSableTexte} stroke={2.6} />
+            <Icon sticker="couronne" name="lock" size={12} color={P_CLAIR.tuileSableTexte} stroke={2.6} />
           </View>
         ) : null}
         {/* le contour de ta scene (3 points, bleu nuit), ou plus fin sur la scene montree en apercu */}
