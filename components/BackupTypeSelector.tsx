@@ -13,6 +13,7 @@ import { exportDataToJSON } from '@/lib/exportService';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 
 const BackupTypeSelectorInner: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -58,7 +59,7 @@ const BackupTypeSelectorInner: React.FC = () => {
         {exporting === 'full' ? (
           <ActivityIndicator color="#0EA5E9" size="small" />
         ) : (
-          <Download size={16} color="#0EA5E9" />
+          <IconeOuSticker sticker="sauvegarde" taille={16}><Download size={16} color="#0EA5E9" /></IconeOuSticker>
         )}
       </TouchableOpacity>
 
@@ -72,7 +73,7 @@ const BackupTypeSelectorInner: React.FC = () => {
         accessibilityRole="button"
       >
         <View style={[styles.iconWrap, { backgroundColor: '#8B5CF620' }]}>
-          <FileText size={20} color="#8B5CF6" />
+          <IconeOuSticker sticker="carnet_papier" taille={20}><FileText size={20} color="#8B5CF6" /></IconeOuSticker>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.optionTitle, { color: colors.text }]}>{traduire("Légère (sans photos)")}</Text>
@@ -82,7 +83,7 @@ const BackupTypeSelectorInner: React.FC = () => {
         {exporting === 'light' ? (
           <ActivityIndicator color="#8B5CF6" size="small" />
         ) : (
-          <Download size={16} color="#8B5CF6" />
+          <IconeOuSticker sticker="sauvegarde" taille={16}><Download size={16} color="#8B5CF6" /></IconeOuSticker>
         )}
       </TouchableOpacity>
     </View>
