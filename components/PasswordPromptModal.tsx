@@ -13,6 +13,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { Lock, X } from 'lucide-react-native';
 import { appPassword } from '@/components/yoroi/v2/fenetre/api';
 import { traduire } from '@/lib/i18n/tr';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 
 interface Props {
   visible: boolean;
@@ -71,7 +72,7 @@ export const PasswordPromptModal: React.FC<Props> = ({
           {/* Header */}
           <View style={styles.header}>
             <View style={[styles.iconWrap, { backgroundColor: '#0EA5E920' }]}>
-              <Lock size={18} color="#0EA5E9" />
+              <IconeOuSticker sticker="cle" taille={18}><Lock size={18} color="#0EA5E9" /></IconeOuSticker>
             </View>
             <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
             <TouchableOpacity onPress={handleCancel} hitSlop={8}>
