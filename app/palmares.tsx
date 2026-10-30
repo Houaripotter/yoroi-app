@@ -28,6 +28,7 @@ import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
+import { StickerSinon } from '@/components/yoroi/v2/ui/StickerSinon';
 
 const SCENE = require('@/assets/avatars/app/monde/scenes/remparts.webp');
 
@@ -190,7 +191,7 @@ export default function PalmaresScreen() {
 
           {streak && streak.n >= 2 ? (
             <Glass style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              {streak.type === 'victoire' ? <Hanko size={36} color={c.gold} /> : <Icon name="flame" size={28} color={c.accent} />}
+              {streak.type === 'victoire' ? <Hanko size={36} color={c.gold} /> : <StickerSinon nom="flamme" taille={40}><Icon name="flame" size={28} color={c.accent} /></StickerSinon>}
               <Ink size={16} weight="black" tight style={{ flex: 1 }}>{streak.type === 'victoire' ? traduire("{0} victoires d’affilée", streak.n) : traduire("{0} défaites d’affilée", streak.n)}</Ink>
             </Glass>
           ) : null}
