@@ -7,7 +7,7 @@
  * Memes donnees que la grille A, rien d'invente : une mesure absente n'apparait pas.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { Modal, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { paletteSombre, paperA } from '@/components/yoroi/livePalette';
@@ -34,6 +34,7 @@ import { CarrouselSemaines } from './AnneauxSemaine';
 import type { SemaineRangee } from './AnneauxSemaine';
 import type { StyleValeurs } from '@/lib/v2/accueil/proposition';
 import { traduire, LOCALE } from '@/lib/i18n/tr';
+import { useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
 
 export function TitreSection({ titre, sous }: { titre: string; sous?: string }) {
   return (
@@ -103,7 +104,7 @@ export function TableauDuJour({
   eauHistorique?: HydrationDay[] | null;
 }) {
   const router = useRouter();
-  const { width } = useWindowDimensions();
+  const width = useLargeurEcran();
   // ecran etroit (375) : anneaux et chiffres un cran plus petits, rien ne se coupe
   const etroit = width < 385;
   // 17 octobre nuit (planche C5) : carte claire ; seul le disque des anneaux est noir. A gauche, tes trois valeurs
@@ -562,7 +563,7 @@ function MiniEauPassee({ eau, goal }: { eau: { amount: number; goal: number | nu
 
 /** Proposition C : les tuiles en defilement horizontal, largeur fixe, meme hauteur */
 export function Carrousel({ titre, items }: { titre: string; items: { cle: string; contenu: React.ReactNode }[] }) {
-  const { width } = useWindowDimensions();
+  const width = useLargeurEcran();
   if (!items.length) return null;
   // deux tuiles et le bord de la suivante : la tuile coupee a droite dit qu'on peut faire defiler ;
   // une seule tuile : toute la largeur, rien a faire defiler
