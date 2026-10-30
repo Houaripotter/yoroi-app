@@ -3,6 +3,8 @@
  */
 import React from 'react';
 import Svg, { Circle, Path } from 'react-native-svg';
+import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
 
 export type IconName =
   | 'back' | 'chevron' | 'chevronLeft' | 'plus' | 'search' | 'trash' | 'edit' | 'share' | 'check' | 'close'
@@ -63,13 +65,16 @@ const PATHS: Record<IconName, string[]> = {
   star: ['M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z'],
 };
 
-export function Icon({ name, size = 22, color = '#1D2029', strokeWidth = 2.2, fill }: { name: IconName; size?: number; color?: string; strokeWidth?: number; fill?: string }) {
+/** 30 octobre 2026 : le sticker de l'icone quand il y en a un (reglage Stickers), voir ui/StickerIcone */
+export function Icon({ name, size = 22, color = '#1D2029', strokeWidth = 2.2, fill, sticker }: { name: IconName; size?: number; color?: string; strokeWidth?: number; fill?: string; sticker?: NomSticker | false }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      {PATHS[name].map((d, i) => (
-        <Path key={i} d={d} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" fill={fill && i === 0 ? fill : 'none'} />
-      ))}
-    </Svg>
+    <IconeOuSticker nom={name} sticker={sticker} taille={size}>
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        {PATHS[name].map((d, i) => (
+          <Path key={i} d={d} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" fill={fill && i === 0 ? fill : 'none'} />
+        ))}
+      </Svg>
+    </IconeOuSticker>
   );
 }
 
