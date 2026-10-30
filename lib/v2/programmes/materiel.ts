@@ -216,6 +216,8 @@ const FICHES: Record<string, Fiche> = {
 };
 
 export const nomsAvecFiche = (): string[] => Object.keys(FICHES);
+/** Le materiel de l'exercice, une combinaison par facon de le faire ([[]] : rien) ; null sans fiche */
+export const besoinDe = (nom: string): Equipement[][] | null => (FICHES[nom] ? FICHES[nom].besoin.map((c) => [...c]) : null);
 export const remplacantsDe = (nom: string): string[] =>
   (FICHES[nom]?.remplacants ?? []).map((r) => (typeof r === 'string' ? r : r.nom));
 
