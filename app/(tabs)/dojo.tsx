@@ -58,6 +58,8 @@ import type { Gender } from '@/lib/v2/dojo/personnages';
 import { carteBlanche, ton } from '@/components/yoroi/v2/seance/pastel';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
+import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
+import { Colonne, LargeurPage, Rangee } from '@/components/yoroi/v2/PageLarge';
 
 const NB = ' ';
 const SHORT_MONTHS = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
@@ -306,22 +308,28 @@ export default function Dojo() {
   const nextSeal = seals.filter((s) => !s.earned && s.target > 1).sort((a, b) => b.current / b.target - a.current / a.target)[0];
 
   // Mesures de la scene
-  const W = width - 32;
+  // 30 octobre 2026 : en grand ecran, ton personnage et ta journee a gauche, le reste du Dojo a droite ; sur iPhone, comme avant
+  const page = usePageLarge();
+  const grand = page.grand;
+  const colGauche = 460;
+  const colDroite = page.largeur - colGauche - 20;
+  const W = grand ? colDroite : width - 32;
   // vague 47 : scene un peu plus basse pour que ta serie et ton coffre se voient sans defiler
-  const heroH = Math.round(Math.min(370, Math.max(320, W * 1.0)));
+  const heroH = grand ? 460 : Math.round(Math.min(370, Math.max(320, W * 1.0)));
   const figH = heroH - 112;
   const figW = Math.round((figH * 3) / 4);
   const plateT = 58;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
+      <LargeurPage actif={grand} largeur={page.largeur}>
       <ScrollView
         ref={scrollRef}
         onScroll={(ev) => {
           scrollY.current = ev.nativeEvent.contentOffset.y;
         }}
         scrollEventThrottle={32}
-        contentContainerStyle={{ paddingTop: insets.top + 10, paddingHorizontal: 16, paddingBottom: insets.bottom + INK_TAB_BAR_SPACE, gap: 14 }}
+        contentContainerStyle={grand ? { paddingTop: insets.top + 28, paddingHorizontal: page.marge, paddingBottom: insets.bottom + 40, gap: 20 } : { paddingTop: insets.top + 10, paddingHorizontal: 16, paddingBottom: insets.bottom + INK_TAB_BAR_SPACE, gap: 14 }}
         showsVerticalScrollIndicator={false}
         refreshControl={refreshControl}
       >
@@ -362,6 +370,8 @@ export default function Dojo() {
           </Pressable>
         </View>
 
+        <Rangee actif={grand}>
+        <Colonne actif={grand} largeur={colGauche} espace={14}>
         {/* Scene : ton personnage et ton rang */}
         <Section i={0} ancre="hero">
           <TourAnchor id="dojo.rang" rayon={30}>
@@ -410,6 +420,8 @@ export default function Dojo() {
           </Section>
         ) : null}
 
+        </Colonne>
+        <Colonne actif={grand} largeur={colDroite} espace={14}>
         {/* Vague 45 : « Ta prochaine recompense », la piece qui se construit et la barre vers le prochain rang, toujours visibles */}
         <Section i={1} ancre="recompense">
           <TourAnchor id="dojo.recompense" rayon={22}>
@@ -603,7 +615,10 @@ export default function Dojo() {
             ]}
           />
         </Section>
+        </Colonne>
+        </Rangee>
       </ScrollView>
+      </LargeurPage>
 
       <VisiteDojo
         visible={visite}
