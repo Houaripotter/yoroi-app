@@ -244,7 +244,7 @@ export default function SyncDevicesScreen() {
       ) : (
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <View style={{ flex: 1 }}>
-            <SmallButton label={traduire("Afficher un code")} tone="ink" icon="lock" disabled={!isAvailable} onPress={() => { void afficherCode(); }} />
+            <SmallButton label={traduire("Afficher un code")} tone="ink" icon="lock" sticker="cadenas" disabled={!isAvailable} onPress={() => { void afficherCode(); }} />
           </View>
           <View style={{ flex: 1 }}>
             <SmallButton label={traduire("Entrer un code")} tone="light" icon="link" disabled={!isAvailable} onPress={() => setSaisie('')} />
@@ -256,7 +256,7 @@ export default function SyncDevicesScreen() {
       <Label>{traduire("Comment ça marche")}</Label>
       <CardBox>
         <ActionRow first icon="shield" title={traduire("100 % en local")} sub={traduire("Sans internet ni serveur, par Bluetooth et wifi direct. Tes données sont chiffrées de bout en bout.")} color={S.indigo} tint={S.indigoSoft} />
-        <ActionRow icon="lock" title={traduire("Seulement tes appareils")} sub={traduire("Un appareil n'est synchronisé qu'après un appairage par code. Un téléphone inconnu à côté de toi ne reçoit rien et ne peut pas s'appairer sans le code affiché sur ton écran.")} color={S.mossText} tint={S.mossSoft} />
+        <ActionRow icon="lock" sticker="cadenas" title={traduire("Seulement tes appareils")} sub={traduire("Un appareil n'est synchronisé qu'après un appairage par code. Un téléphone inconnu à côté de toi ne reçoit rien et ne peut pas s'appairer sans le code affiché sur ton écran.")} color={S.mossText} tint={S.mossSoft} />
         <ActionRow icon="wifi" title={traduire("Toute seule")} sub={traduire("Dès que YOROI est ouvert sur deux appareils appairés proches, ils échangent tout seuls. Rien ne tourne en arrière plan, pour ta batterie.")} color={S.accent} tint={S.accentSoft} />
         <ActionRow icon="watch" title={traduire("Ta montre")} sub={traduire("Elle passe par ton iPhone : ce qu'elle enregistre repart ensuite vers tes autres appareils appairés.")} color={S.indigo} tint={S.indigoSoft} />
         <ActionRow icon="tablet" title={traduire("Plus de deux appareils")} sub={traduire("Appaire chaque appareil avec les autres, une fois : iPhone, iPad et Mac finissent avec les mêmes données.")} color={S.mossText} tint={S.mossSoft} />
