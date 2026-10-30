@@ -8,7 +8,7 @@
 import { PRECISION_EXO } from '@/lib/v2/programmes/musclesExos';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { accordSouleve, formatTonnage, tonnageOfSets } from '@/lib/v2/trainingWeek';
-import { Image, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, Switch, TextInput, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, ImpactFeedbackStyle, notificationAsync, NotificationFeedbackType } from 'expo-haptics';
@@ -76,6 +76,17 @@ import type { Prise } from '@/lib/v2/seance/prise';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { BoutonCoachVocal, useCoachVocal } from '@/components/yoroi/v2/seance/CoachVocal';
+import { cibleDefilement } from '@/lib/v2/seances/defilementExo';
+import { chargerMinuteurRepos, enregistrerMinuteurRepos, reposApresSerie } from '@/lib/v2/seances/minuteurRepos';
+import { objectifExo, seriesVisees, texteReps, texteSerie } from '@/lib/v2/seances/objectifExo';
+import { chargerReglages, cranDe, enregistrerCran, typeReglage, CRAN_MAX } from '@/lib/v2/seances/reglagesMachine';
+import type { Reglages } from '@/lib/v2/seances/reglagesMachine';
+import { libelleHauteurPoulie } from '@/lib/v2/seances/hauteurPoulie';
+import { chargerEcartes, ecarterExercice, nomsEcartes } from '@/lib/v2/seances/exercicesEcartes';
+import { alternativesPour } from '@/lib/v2/seances/alternatives';
+import { remplacerExercice } from '@/lib/v2/programmes/suivi';
+import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
+import { StickerOuIcone } from '@/components/yoroi/v2/profil/Rubriques';
 
 const INTENSITIES = [
   { value: 3, label: 'Facile' },
@@ -96,7 +107,8 @@ function makeSets(planned: SetValue[], withPrev: boolean): LiveSet[] {
 
 function exerciseFrom(name: string, muscle: string | undefined, h: ExerciseHistory | undefined, planned?: SetValue[]): LiveExercise {
   const base = planned ?? h?.lastSets ?? [{ weight: 0, reps: 10 }, { weight: 0, reps: 10 }, { weight: 0, reps: 10 }];
-  return { id: uid(), name, muscle: muscle ?? h?.muscle, sets: makeSets(base, !!(planned || h)) };
+  const sets = makeSets(base, !!(planned || h));
+  return { id: uid(), name, muscle: muscle ?? h?.muscle, sets, objectifSeries: seriesVisees(sets) };
 }
 
 /** Exercice d'une seance enregistree, series deja validees (modification) */
@@ -249,7 +261,9 @@ export default function SeanceMuscu() {
                 const last = hx?.lastSets[Math.min(i, (hx?.lastSets.length ?? 1) - 1)];
                 return { id: uid(), weight: sv.weight, reps: sv.reps, done: false, ...(last ? { prevWeight: last.weight, prevReps: last.reps } : {}) };
               });
-              const ex: LiveExercise = { id: uid(), name: e.nom, muscle: e.muscle ?? hx?.muscle, sets };
+              // 30 octobre 2026 : la case du programme (pour retenir un remplacement) et les series visees
+              const k = prog ? protege.exos.findIndex((x) => x.nom === e.nom) : -1;
+              const ex: LiveExercise = { id: uid(), name: e.nom, muscle: e.muscle ?? hx?.muscle, sets, objectifSeries: seriesVisees(sets), ...(prog && k >= 0 ? { caseProg: { jourId: jour.id, index: k } } : {}) };
               const zone = 'zone' in e && e.zone ? e.zone : null;
               const conseil = zone
                 ? e.impossible
@@ -270,7 +284,8 @@ export default function SeanceMuscu() {
             if (m) {
               exercises = m.exos.map((e) => {
                 const hx = h.map.get(normName(e.nom));
-                return { id: uid(), name: e.nom, muscle: e.muscle ?? hx?.muscle, sets: makeSets(seriesPrevues(e, hx?.travail ?? hx?.lastSets), !!hx) };
+                const sets = makeSets(seriesPrevues(e, hx?.travail ?? hx?.lastSets), !!hx);
+                return { id: uid(), name: e.nom, muscle: e.muscle ?? hx?.muscle, sets, objectifSeries: e.series, objectifReps: e.reps };
               });
               if (!label) label = m.nom;
               maSeance = m.id;
@@ -404,6 +419,118 @@ export default function SeanceMuscu() {
   const current = draft?.exercises.find((e) => e.id === draft.currentId) ?? draft?.exercises[0] ?? null;
   const activeIndex = current ? current.sets.findIndex((s) => !s.done) : -1;
 
+  /* 30 octobre 2026 (A) : au passage a l'exercice suivant, la carte du nouvel exercice se pose sous l'en-tete,
+     sa premiere serie visible. Avant, rien ne gerait le defilement : la liste gardait la position de l'exercice
+     d'avant, au mauvais endroit dans la nouvelle page (lib/v2/seances/defilementExo.ts). */
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollY = useRef(0);
+  const vueH = useRef(0);
+  const basMasque = useRef(0);
+  const carteY = useRef(0);
+  const serieBas = useRef<number | null>(null);
+  const exoVu = useRef<string | null>(null);
+  useEffect(() => {
+    const id = current?.id ?? null;
+    if (!id || exoVu.current === null) {
+      exoVu.current = id;
+      return;
+    }
+    if (exoVu.current === id) return;
+    exoVu.current = id;
+    serieBas.current = null;
+    // la nouvelle page se mesure d'abord (onLayout), puis on defile en douceur
+    const t = setTimeout(() => {
+      const y = cibleDefilement({ scrollY: scrollY.current, vueH: vueH.current, basMasque: basMasque.current, carteY: carteY.current, serieBas: serieBas.current });
+      if (y !== null) scrollRef.current?.scrollTo({ y, animated: true });
+    }, 120);
+    return () => clearTimeout(t);
+  }, [current?.id]);
+
+  /* (B) minuteur de repos : active par defaut, ton choix est garde (lib/v2/seances/minuteurRepos.ts) */
+  const [minuteurOn, setMinuteurOn] = useState<boolean | null>(null);
+  useEffect(() => {
+    chargerMinuteurRepos().then(setMinuteurOn, () => setMinuteurOn(true));
+  }, []);
+  const sansReposVoulu = minuteurOn === null ? null : !minuteurOn;
+  useEffect(() => {
+    if (sansReposVoulu === null || !draft || !!draft.sansRepos === sansReposVoulu) return;
+    update((d) => ({ ...d, sansRepos: sansReposVoulu || undefined, ...(sansReposVoulu ? { restEndsAt: null, restTotal: 0 } : {}) }));
+  }, [sansReposVoulu, draft?.sansRepos, !!draft]); // eslint-disable-line react-hooks/exhaustive-deps
+  const changerMinuteur = (on: boolean) => {
+    setMinuteurOn(on);
+    void enregistrerMinuteurRepos(on);
+  };
+
+  /* (C) series visees retenues sur chaque exercice (une serie ajoutee en plus ne les repousse pas) */
+  useEffect(() => {
+    if (!draft || draft.form || !draft.exercises.some((e) => e.objectifSeries === undefined)) return;
+    update((d) => ({ ...d, exercises: d.exercises.map((e) => (e.objectifSeries === undefined ? { ...e, objectifSeries: seriesVisees(e.sets) } : e)) }));
+  }, [draft?.exercises, draft?.form]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* (D) le cran de la machine de la derniere fois, lu une fois a l'ouverture (lib/v2/seances/reglagesMachine.ts) */
+  const [cransAvant, setCransAvant] = useState<Reglages>({});
+  const [reglageOuvert, setReglageOuvert] = useState<string[]>([]);
+  useEffect(() => {
+    chargerReglages().then(setCransAvant, () => {});
+  }, []);
+  const changerCran = (ex: LiveExercise, v: number) => {
+    const cran = v > 0 ? v : null;
+    updateExercise(ex.id, (e) => ({ ...e, cran }));
+    void enregistrerCran(ex.name, cran);
+  };
+
+  /* (E) remplacer un exercice : la raison, puis une alternative a la fois (lib/v2/seances/alternatives.ts) */
+  const [ecartes, setEcartes] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    chargerEcartes().then((l) => setEcartes(nomsEcartes(l)), () => {});
+  }, []);
+  const [remplacerFor, setRemplacerFor] = useState<{ id: string; raison: 'occupee' | 'salle' | 'douleur' | null; liste: string[]; i: number } | null>(null);
+  const ouvrirRemplacer = (ex: LiveExercise) => setRemplacerFor({ id: ex.id, raison: null, liste: [], i: 0 });
+  const choisirRaison = (raison: 'occupee' | 'salle' | 'douleur') => {
+    const ex = draft?.exercises.find((e) => e.id === remplacerFor?.id);
+    if (!ex || !draft) return setRemplacerFor(null);
+    const liste = alternativesPour(ex.name, { muscle: ex.muscle, ecartes, deja: draft.exercises.map((e) => e.name) });
+    setRemplacerFor({ id: ex.id, raison, liste, i: 0 });
+  };
+  const prendreAlternative = (nom: string) => {
+    const r = remplacerFor;
+    const ex = draft?.exercises.find((e) => e.id === r?.id);
+    setRemplacerFor(null);
+    if (!r || !ex || !draft || !r.raison) return;
+    const h = hist.map.get(normName(nom));
+    // (E3) meme objectif de series et de repetitions ; charges de ta derniere fois sur l'exercice choisi
+    const reps = ex.cible?.repsMin ?? ex.objectifReps ?? ex.sets.find((x) => !x.done)?.reps ?? 10;
+    const sets: LiveSet[] = ex.sets.map((_, i) => {
+      const last = h?.lastSets[Math.min(i, (h?.lastSets.length ?? 1) - 1)];
+      return { id: uid(), weight: last?.weight ?? 0, reps: last?.reps ?? reps, done: false, ...(last ? { prevWeight: last.weight, prevReps: last.reps } : {}) };
+    });
+    const original = sansPrise(ex.name).base;
+    updateExercise(ex.id, (e) => {
+      const { cran: _c, ...reste } = e;
+      return {
+        ...reste,
+        name: nom,
+        muscle: EXERCISE_LIBRARY.find((x) => x.name === nom)?.muscle ?? e.muscle,
+        sets,
+        objectifSeries: e.objectifSeries ?? seriesVisees(e.sets),
+        remplaceEnSeance: e.remplaceEnSeance ?? e.name,
+        ...(e.cible ? { cible: { repsMin: e.cible.repsMin, repsMax: e.cible.repsMax, reposSec: e.cible.reposSec, ...(e.cible.secondes ? { secondes: true } : {}) } } : {}),
+      };
+    });
+    impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+    // (E4) machine occupee : pour cette seance seulement. (E5) pas dans ma salle, ca me fait mal : pour toujours
+    if (r.raison === 'occupee') return;
+    void ecarterExercice(original, r.raison).then((l) => setEcartes(nomsEcartes(l)));
+    const prog = draft.programme;
+    const cas = ex.caseProg;
+    if (prog && cas) {
+      // programme fixe en cours : le choix est retenu dans sa case, comme « Changer » sur la page du programme
+      void chargerProgrammeActif()
+        .then((a) => (a && a.id === prog.id ? remplacerExercice(cas.jourId, cas.index, nom) : undefined))
+        .catch(() => {});
+    }
+  };
+
   const addExercise = (name: string, muscle?: string) => {
     setPickerOpen(false);
     const ex = exerciseFrom(name, muscle, hist.map.get(normName(name)));
@@ -436,8 +563,8 @@ export default function SeanceMuscu() {
       ...d,
       exercises: d.exercises.map((e) => (e.id === ex.id ? { ...e, sets } : e)),
       // seance de programme : le repos prevu pour cet exercice ; drop set suivi d'un autre drop set : pas de repos
-      restEndsAt: d.form || ex.sets[index + 1]?.type === 'dropset' ? null : Date.now() + (d.reposManuel ? d.restSec : ex.cible?.reposSec ?? d.restSec) * 1000,
-      restTotal: d.form || ex.sets[index + 1]?.type === 'dropset' ? 0 : d.reposManuel ? d.restSec : ex.cible?.reposSec ?? d.restSec,
+      // 30 octobre 2026 : minuteur de repos coupe, pas de repos du tout (lib/v2/seances/minuteurRepos.ts)
+      ...reposApresSerie({ sansRepos: d.sansRepos, pasDeRepos: d.form || ex.sets[index + 1]?.type === 'dropset', secondes: d.reposManuel ? d.restSec : ex.cible?.reposSec ?? d.restSec, maintenant: Date.now() }),
     }));
     if (record) {
       setFreshRecord(set.id);
@@ -749,7 +876,12 @@ export default function SeanceMuscu() {
   const bottomSpace = insets.bottom + (restOn ? 110 : barreOn ? 130 : 30);
   const hCurrent = current ? hist.map.get(normName(current.name)) : undefined;
   const lastBest = hCurrent ? bestSet(hCurrent.lastSets) : null;
-  const currentDone = current ? current.sets.length > 0 && current.sets.every((s) => s.done) : false;
+  // 30 octobre 2026 (C) : l'objectif de series de l'exercice (lib/v2/seances/objectifExo.ts)
+  const objectif = current ? objectifExo(current) : null;
+  // objectif atteint en direct : l'exercice est boucle, une serie ajoutee en plus reste possible sans etre poussee
+  const enPlus = !draft.form && !!objectif?.atteint && activeIndex >= 0;
+  const currentDone = current ? (current.sets.length > 0 && current.sets.every((s) => s.done)) || enPlus : false;
+  basMasque.current = Math.max(0, bottomSpace - 14);
   // 26 octobre 2026 : un exercice laisse (passe apres au moins une serie) n'est plus repropose
   const nextEx = current ? draft.exercises.find((e, i) => i > draft.exercises.indexOf(current) && seriesRestantes(e) > 0) ?? draft.exercises.find((e) => e.id !== current.id && seriesRestantes(e) > 0) : undefined;
   const menuEx = draft.exercises.find((e) => e.id === menuFor) ?? null;
@@ -801,11 +933,11 @@ export default function SeanceMuscu() {
         </View>
       ) : null}
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: bottomSpace, gap: 12 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} onScroll={(e) => { scrollY.current = e.nativeEvent.contentOffset.y; }} scrollEventThrottle={32} onLayout={(e) => { vueH.current = e.nativeEvent.layout.height; }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: bottomSpace, gap: 12 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" showsVerticalScrollIndicator={false}>
         {!current ? (
           <EmptyStart
             image={sportImage(draft.sport, femme, 1)}
-            recent={hist.recent.slice(0, 8).map((k) => hist.map.get(k)!).filter(Boolean)}
+            recent={hist.recent.map((k) => hist.map.get(k)!).filter((h) => h && !ecartes.has(sansPrise(h.name).base)).slice(0, 8)}
             onPick={(h) => addExercise(h.name, h.muscle)}
             onLibrary={() => setPickerOpen(true)}
           />
@@ -828,7 +960,7 @@ export default function SeanceMuscu() {
                 </View>
               );
             })()}
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingHorizontal: 4, marginTop: 4 }}>
+            <View onLayout={(e) => { carteY.current = e.nativeEvent.layout.y; }} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingHorizontal: 4, marginTop: 4 }}>
               <View style={{ flex: 1, gap: 4 }}>
                 {draft.exercises.length > 1 ? (
                   <Ink size={13} weight="extraBold" color={c.accent}>{traduire('EXERCICE {0} SUR {1}', draft.exercises.indexOf(current) + 1, draft.exercises.length)}</Ink>
@@ -854,6 +986,13 @@ export default function SeanceMuscu() {
                         : traduire('Objectif du jour : {0} répétitions sur chaque série à {1} kilos.', libre.reps, fmtNum(saisieDepuisKg(libre.charge, unite)))}
                   </Ink>
                 ) : null}
+                {/* 30 octobre 2026 (E) : machine occupee, pas dans ta salle, ou qui te fait mal */}
+                {!draft.form && !current.sets.some((x) => x.done) ? (
+                  <Pressable onPress={() => ouvrirRemplacer(current)} accessibilityRole="button" accessibilityLabel={traduire('Remplacer l’exercice')} hitSlop={8} style={{ alignSelf: 'flex-start', minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <StickerOuIcone sticker="refresh" icon="sync" size={22} />
+                    <Ink size={13} weight="extraBold" color={c.accentText}>{traduire('Remplacer')}</Ink>
+                  </Pressable>
+                ) : null}
               </View>
               <Pressable onPress={() => setMenuFor(current.id)} accessibilityRole="button" accessibilityLabel={traduire("Options de l'exercice")} style={[carteBlanche(c.surface, c.divider), { width: 46, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }]}>
                 <Icon name="more" size={20} />
@@ -867,6 +1006,36 @@ export default function SeanceMuscu() {
 
             {/* 30 octobre 2026 : position, mouvement, à éviter, en trois lignes (lib/v2/programmes/explications.ts) */}
             <ExplicationExo nom={sansPrise(current.name).base} style={{ marginHorizontal: 4 }} />
+
+            {/* 30 octobre 2026 (D) : le cran de la machine ou de la poulie, et la hauteur de la poulie quand elle est standard */}
+            {(() => {
+              if (draft.form) return null;
+              const type = typeReglage(current.name);
+              const hauteur = libelleHauteurPoulie(current.name);
+              const avant = cranDe(cransAvant, current.name);
+              const valeur = current.cran !== undefined ? current.cran : avant;
+              if (type === 'aucun' && valeur == null && !hauteur) return null;
+              const ouvert = type === 'ouvert' || valeur != null || !!hauteur || reglageOuvert.includes(current.id);
+              if (!ouvert) {
+                return (
+                  <Pressable onPress={() => setReglageOuvert((l) => [...l, current.id])} accessibilityRole="button" hitSlop={6} style={{ alignSelf: 'flex-start', marginHorizontal: 4, minHeight: 36, justifyContent: 'center' }}>
+                    <Ink size={13} weight="extraBold" color={c.textSecondary}>{traduire('Noter le réglage de la machine')}</Ink>
+                  </Pressable>
+                );
+              }
+              return (
+                <View style={[carteBlanche(c.surface, c.divider), { marginHorizontal: 4, paddingVertical: 10, paddingHorizontal: 14, gap: 6 }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Ink size={15} weight="extraBold">{traduire('Réglage')}</Ink>
+                      {avant != null ? <Ink size={12} weight="bold" color={c.textMuted}>{traduire('Dernière fois : cran {0}', avant)}</Ink> : null}
+                    </View>
+                    <Stepper value={valeur ?? 0} step={1} min={0} max={CRAN_MAX} unit={traduire('cran')} size={20} button={38} format={(v) => (v > 0 ? traduire('cran {0}', v) : traduire('Aucun'))} onChange={(v) => changerCran(current, v)} />
+                  </View>
+                  {hauteur ? <Ink size={13} weight="bold" color={c.accentText}>{traduire(hauteur)}</Ink> : null}
+                </View>
+              );
+            })()}
 
             {current.cible ? (
               <View style={{ marginHorizontal: 4, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 18, backgroundColor: c.accentTint, gap: 3 }}>
@@ -910,12 +1079,16 @@ export default function SeanceMuscu() {
             {current.sets.map((s, i) => {
               if (i === activeIndex) {
                 return (
-                  <View key={s.id} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 2, borderColor: c.primary, padding: 14, gap: 12, shadowColor: c.shadow, shadowOpacity: 0.07, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 }}>
+                  <View key={s.id} onLayout={(e) => { serieBas.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height; }} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 2, borderColor: c.primary, padding: 14, gap: 12, shadowColor: c.shadow, shadowOpacity: 0.07, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 }}>
                       <View style={{ minWidth: 32, height: 32, paddingHorizontal: 8, borderRadius: 12, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
                         <Ink size={15} weight="black" color={c.onPrimary}>{String(i + 1)}</Ink>
                       </View>
-                      <Ink size={16} weight="black" style={{ flex: 1 }}>{s.type === 'dropset' ? traduire('Drop set, charge baissée') : traduire("Série {0}", i + 1)}</Ink>
+                      <View style={{ flex: 1, gap: 1 }}>
+                        <Ink size={16} weight="black">{s.type === 'dropset' ? traduire('Drop set, charge baissée') : !draft.form && objectif ? texteSerie(objectif, i + 1 - current.sets.slice(0, i).filter((x) => x.type === 'warmup' || x.type === 'dropset').length) : traduire("Série {0}", i + 1)}</Ink>
+                        {/* 30 octobre 2026 (C) : les repetitions visees, seulement quand le programme ou ta seance les donne */}
+                        {!draft.form && objectif && texteReps(objectif) ? <Ink size={13} weight="extraBold" color={c.accent}>{texteReps(objectif)}</Ink> : null}
+                      </View>
                       {s.prevWeight !== undefined ? <Ink size={12} weight="bold" color={c.textMuted} numberOfLines={1}>{traduire("la dernière fois {0}", setLabel({ weight: s.prevWeight, reps: s.prevReps ?? 0 }, unite))}</Ink> : null}
                     </View>
                     <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -927,8 +1100,9 @@ export default function SeanceMuscu() {
                         <Stepper layout="stack" value={s.reps} step={1} max={200} unit={traduire("répétitions")} size={38} button={50} hint={i > 0 && s.prevReps === undefined ? traduire("comme la série {0}", i) : traduire('répétitions')} onChange={(v) => setValue(current.id, s.id, { reps: v })} />
                       </View>
                     </View>
-                    {/* en saisie apres coup, le bouton reste dans la carte ; en direct, il est dans la barre fixe du bas */}
-                    {draft.form ? (
+                    {/* en saisie apres coup, le bouton reste dans la carte ; en direct, il est dans la barre fixe du bas,
+                        sauf pour une serie en plus de l'objectif : la barre invite alors a passer a la suite */}
+                    {draft.form || enPlus ? (
                       <BoutonPrincipal
                         onPress={() => validate(current, i)}
                         disabled={s.reps <= 0}
@@ -1054,7 +1228,15 @@ export default function SeanceMuscu() {
 
         {/* Reglages de la seance */}
         <View style={[carteBlanche(c.surface, c.divider), { marginTop: 10, padding: 16, gap: 12 }]}>
-          {!draft.form ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {/* 30 octobre 2026 (B) : coupe, aucun repos ne se lance apres une serie, donc ni son ni notification */}
+          {!draft.form ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Icon name="clock" size={20} color={c.textSecondary} />
+              <Ink size={15} weight="bold" style={{ flex: 1 }}>{traduire('Minuteur de repos')}</Ink>
+              <Switch value={minuteurOn !== false} onValueChange={changerMinuteur} trackColor={{ true: c.primary, false: c.border }} thumbColor={c.surface} accessibilityLabel={traduire('Minuteur de repos')} />
+            </View>
+          ) : null}
+          {!draft.form && minuteurOn !== false ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Icon name="clock" size={20} color={c.textSecondary} />
             <Ink size={15} weight="bold" style={{ flex: 1 }}>{traduire("Repos entre les séries")}</Ink>
             <Pressable onPress={() => changeRest(-15)} accessibilityLabel={traduire("Moins 15 secondes de repos")} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
@@ -1084,13 +1266,13 @@ export default function SeanceMuscu() {
           etape={
             !current
               ? { quoi: 'ajouter' }
-              : activeIndex >= 0
-                ? { quoi: 'valider', serie: activeIndex + 1, total: current.sets.length, detail: setLabel(current.sets[activeIndex], unite), possible: current.sets[activeIndex].reps > 0 }
+              : activeIndex >= 0 && !enPlus
+                ? { quoi: 'valider', serie: activeIndex + 1, total: Math.max(objectif?.total ?? current.sets.length, activeIndex + 1), detail: setLabel(current.sets[activeIndex], unite), possible: current.sets[activeIndex].reps > 0 }
                 : nextEx
                   ? { quoi: 'suivant', nom: sansTiret(traduire(nomFr(nextEx.name))) }
                   : { quoi: 'terminer' }
           }
-          aSuivre={activeIndex >= 0 && nextEx ? sansTiret(traduire(nomFr(nextEx.name))) : null}
+          aSuivre={activeIndex >= 0 && !enPlus && nextEx ? sansTiret(traduire(nomFr(nextEx.name))) : null}
           onValider={() => current && activeIndex >= 0 && validate(current, activeIndex)}
           onSuivant={() => nextEx && update((d) => allerAExercice(d, nextEx.id))}
           onTerminer={() => setFinishOpen(true)}
@@ -1153,6 +1335,66 @@ export default function SeanceMuscu() {
             ) : null}
           </View>
         ) : null}
+      </Sheet>
+
+      {/* 30 octobre 2026 (E) : remplacer un exercice, la raison puis une alternative a la fois */}
+      <Sheet visible={!!remplacerFor} onClose={() => setRemplacerFor(null)} title={traduire('Remplacer l’exercice')}>
+        {(() => {
+          const r = remplacerFor;
+          const ex = r ? draft.exercises.find((e) => e.id === r.id) : null;
+          if (!r || !ex) return null;
+          const garder = (
+            <Pressable onPress={() => setRemplacerFor(null)} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
+              <Ink size={14} weight="extraBold" color={c.textSecondary} numberOfLines={1}>{traduire('Garder {0}', sansTiret(traduire(nomFr(ex.name))))}</Ink>
+            </Pressable>
+          );
+          if (!r.raison) {
+            const raisons: { id: 'occupee' | 'salle' | 'douleur'; label: string; sub: string; sticker: 'sablier' | 'barre' | 'recuperation'; icon: 'timer' | 'dumbbell' | 'heart' }[] = [
+              { id: 'occupee', label: traduire('Machine occupée'), sub: traduire('Pour cette séance seulement'), sticker: 'sablier', icon: 'timer' },
+              { id: 'salle', label: traduire('Pas dans ma salle'), sub: traduire('Il ne te sera plus proposé'), sticker: 'barre', icon: 'dumbbell' },
+              { id: 'douleur', label: traduire('Ça me fait mal'), sub: traduire('Il ne te sera plus proposé'), sticker: 'recuperation', icon: 'heart' },
+            ];
+            return (
+              <View style={{ gap: 8 }}>
+                {raisons.map((x) => (
+                  <Pressable key={x.id} onPress={() => choisirRaison(x.id)} accessibilityRole="button" accessibilityLabel={`${x.label}, ${x.sub}`} style={({ pressed }) => ({ minHeight: 64, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, backgroundColor: pressed ? c.fillSubtle : c.fillSoft })}>
+                    <StickerOuIcone sticker={x.sticker} icon={x.icon} size={38} />
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Ink size={15} weight="extraBold">{x.label}</Ink>
+                      <Ink size={12.5} color={c.textSecondary}>{x.sub}</Ink>
+                    </View>
+                  </Pressable>
+                ))}
+                {garder}
+              </View>
+            );
+          }
+          if (r.liste.length === 0) {
+            return (
+              <View style={{ gap: 10 }}>
+                <Ink size={14} color={c.textSecondary}>{traduire('Pas d’autre exercice du même muscle à te proposer.')}</Ink>
+                {garder}
+              </View>
+            );
+          }
+          const nom = r.liste[r.i % r.liste.length];
+          return (
+            <View style={{ gap: 12 }}>
+              <View style={{ alignItems: 'center', gap: 8 }}>
+                <ExoDemo nom={nom} taille={120} arrondi={20} />
+                <Ink size={20} weight="black" tight style={{ textAlign: 'center' }}>{sansTiret(traduire(nomFr(nom)))}</Ink>
+                <Ink size={12.5} weight="bold" color={c.textMuted}>{traduire('{0} sur {1}', (r.i % r.liste.length) + 1, r.liste.length)}</Ink>
+              </View>
+              <BoutonPrincipal onPress={() => prendreAlternative(nom)} label={traduire('Je prends')} rayon={20} tailleTexte={16} />
+              {r.liste.length > 1 ? (
+                <Pressable onPress={() => setRemplacerFor({ ...r, i: r.i + 1 })} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 50, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.fillSoft })}>
+                  <Ink size={15} weight="extraBold">{traduire('Suivante')}</Ink>
+                </Pressable>
+              ) : null}
+              {garder}
+            </View>
+          );
+        })()}
       </Sheet>
 
       {/* Note d'un exercice */}
