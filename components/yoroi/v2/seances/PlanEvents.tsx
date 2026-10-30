@@ -154,7 +154,7 @@ export function PlanEvents({ competitions }: { competitions: Competition[] }) {
           <Ink size={11} weight="bold" color={c.textMuted} numberOfLines={2}>{[getSportTagLabel(e.sport_tag), e.federation].filter(Boolean).join(', ')}</Ink>
         </View>
         <Pressable onPress={() => toggleSave(e)} accessibilityRole="button" accessibilityLabel={on ? traduire('Retirer de tes événements') : traduire('Garder cet événement')} hitSlop={6} style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.ink : c.fillSubtle }}>
-          <Icon name={on ? 'bookmarkOn' : 'bookmark'} size={19} color={on ? P.paper : c.ink} />
+          <Icon sticker={false} name={on ? 'bookmarkOn' : 'bookmark'} size={19} color={on ? P.paper : c.ink} />
         </Pressable>
       </Pressable>
     );
