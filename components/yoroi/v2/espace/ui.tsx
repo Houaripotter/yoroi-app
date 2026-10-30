@@ -18,6 +18,7 @@ import { P } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+import { IconeOuSticker, stickerDeLIcone } from '@/components/yoroi/v2/ui/StickerIcone';
 
 // ============================================
 // ICONES (traits SVG, pas de dependance externe)
@@ -90,15 +91,18 @@ const ICONS: Record<string, string[]> = {
 
 export type IconName = keyof typeof ICONS;
 
-export function Icon({ name, size = 20, color, stroke = 2.2 }: { name: IconName; size?: number; color?: string; stroke?: number }) {
+/** 30 octobre 2026 : le sticker de l'icone quand il y en a un (reglage Stickers), voir ui/StickerIcone */
+export function Icon({ name, size = 20, color, stroke = 2.2, sticker }: { name: IconName; size?: number; color?: string; stroke?: number; sticker?: NomSticker | false }) {
   const { theme } = useYoroiTheme();
   const col = color ?? theme.colors.ink;
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      {ICONS[name].map((d) => (
-        <Path key={d} d={d} stroke={col} strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
-      ))}
-    </Svg>
+    <IconeOuSticker nom={name} sticker={sticker} taille={size}>
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        {ICONS[name].map((d) => (
+          <Path key={d} d={d} stroke={col} strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+        ))}
+      </Svg>
+    </IconeOuSticker>
   );
 }
 
@@ -275,7 +279,9 @@ export function Row({ icon, sticker, iconTint, label, sub, subColor, value, onPr
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const illus = useIllustrations();
-  const avecSticker = !!sticker && illus.stickers && !danger;
+  // 30 octobre 2026 : sans sticker donne, celui de l'icone s'il existe (ui/StickerIcone)
+  const stk = sticker ?? stickerDeLIcone(icon);
+  const avecSticker = !!stk && illus.stickers && !danger;
   const tint = danger ? c.danger : iconTint ?? c.ink;
   return (
     <Pressable
@@ -296,7 +302,7 @@ export function Row({ icon, sticker, iconTint, label, sub, subColor, value, onPr
       })}
     >
       {avecSticker ? (
-        <Image source={illus.img(sticker!)} style={{ width: 36, height: 36, marginVertical: -2 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+        <Image source={illus.img(stk!)} style={{ width: 36, height: 36, marginVertical: -2 }} resizeMode="contain" accessibilityIgnoresInvertColors />
       ) : icon ? (
         <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: danger ? c.dangerTint : c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name={icon} size={19} color={tint} />
@@ -516,6 +522,9 @@ export function Check({ size = 26 }: { size?: number }) {
 
 export function LockBadge({ size = 24 }: { size?: number }) {
   const { theme } = useYoroiTheme();
+  const illus = useIllustrations();
+  // 30 octobre 2026 : en Stickers, la couronne Premium a la place du cadenas
+  if (illus.stickers) return <Image source={illus.img('couronne')} style={{ width: size, height: size }} resizeMode="contain" accessibilityIgnoresInvertColors />;
   return (
     <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: 'rgba(29,32,41,0.78)', alignItems: 'center', justifyContent: 'center' }}>
       <Icon name="lock" size={size * 0.52} color={theme.colors.goldLight} stroke={2.6} />
