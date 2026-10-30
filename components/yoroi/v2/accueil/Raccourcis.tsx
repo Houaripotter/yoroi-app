@@ -43,6 +43,7 @@ import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/sticker
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { ECHELLE_MIN_LIBELLE, lierFinDeLigne, lignesLibelleOutil } from '@/lib/v2/accueil/libelleOutil';
 import { PastilleBeta } from './PastilleBeta';
+import { colonnesOutils } from '@/lib/v2/nav/grandEcran';
 
 const CARTE_A: ImageSourcePropType = require('@/assets/avatars/app/carnet/partage_nuit.webp');
 const CARTE_B: ImageSourcePropType = require('@/assets/avatars/app/carnet/partage_sakura.webp');
@@ -135,9 +136,13 @@ function demoDuMoment(): CarteData[] {
 const ESPACE_GRILLE_OUTILS = 12;
 function tailleCartes(largeurGrille?: number) {
   if (!largeurGrille) return { l: CARTE_L, h: CARTE_H, sticker: STICKER, titreL: TITRE_L, sousL: SOUS_L, titre: 10, ligne: 15 };
-  const l = Math.floor((largeurGrille - 6 * ESPACE_GRILLE_OUTILS) / 7);
-  const sticker = 60;
-  return { l, h: 120, sticker, titreL: l - MARGE - STICKER_DROITE - sticker - 6, sousL: l - MARGE - STICKER_DROITE - sticker - 4, titre: 11, ligne: 16 };
+  // 7 par rangee quand elles gardent 140 points, sinon sur deux rangees (iPad, fenetre de 1024)
+  const n = colonnesOutils(largeurGrille, ESPACE_GRILLE_OUTILS);
+  const l = Math.floor((largeurGrille - (n - 1) * ESPACE_GRILLE_OUTILS) / n);
+  // le sticker grandit seulement quand la carte a la place : le petit titre ne se coupe jamais
+  const large = l >= 175;
+  const sticker = large ? 60 : STICKER;
+  return { l, h: large ? 120 : 108, sticker, titreL: l - MARGE - STICKER_DROITE - sticker - 6, sousL: l - MARGE - STICKER_DROITE - sticker - 4, titre: large ? 11 : 10, ligne: large ? 16 : 15 };
 }
 
 export function RaccourcisDuJour({ record = null, largeurGrille }: { water?: number; waterGoal?: number; record?: { titre: string; valeur: string } | null; largeurGrille?: number } = {}) {
@@ -304,7 +309,7 @@ export function RaccourcisDuJour({ record = null, largeurGrille }: { water?: num
   return (
     <>
       {largeurGrille ? (
-        <View style={{ flexDirection: 'row', gap: ESPACE_GRILLE_OUTILS, marginTop: 6 - HAUT_RANGEE, paddingTop: HAUT_RANGEE, paddingBottom: 8 }} accessibilityLabel={traduire("Tes outils")}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: ESPACE_GRILLE_OUTILS, rowGap: HAUT_RANGEE, marginTop: 6 - HAUT_RANGEE, paddingTop: HAUT_RANGEE, paddingBottom: 8 }} accessibilityLabel={traduire("Tes outils")}>
           {cartesOutils}
         </View>
       ) : (
