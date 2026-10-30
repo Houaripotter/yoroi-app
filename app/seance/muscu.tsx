@@ -91,6 +91,7 @@ import { alternativesPour } from '@/lib/v2/seances/alternatives';
 import { remplacerExercice } from '@/lib/v2/programmes/suivi';
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { StickerOuIcone } from '@/components/yoroi/v2/profil/Rubriques';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
 
 const INTENSITIES = [
   { value: 3, label: 'Facile' },
@@ -142,6 +143,7 @@ function muscleId(g?: string): string | null {
 
 export default function SeanceMuscu() {
   const { theme } = useYoroiTheme();
+  const illus = useIllustrations();
   const c = theme.colors;
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -1386,13 +1388,13 @@ export default function SeanceMuscu() {
           {/* 30 octobre 2026 (B) : coupe, aucun repos ne se lance apres une serie, donc ni son ni notification */}
           {!draft.form ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Icon name="clock" size={20} color={c.textSecondary} />
+              {illus.stickers ? <Image source={illus.img('sablier')} style={{ width: 30, height: 30, marginVertical: -4 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : <Icon name="clock" size={20} color={c.textSecondary} />}
               <Ink size={15} weight="bold" style={{ flex: 1 }}>{traduire('Minuteur de repos')}</Ink>
               <Switch value={minuteurOn !== false} onValueChange={changerMinuteur} trackColor={{ true: c.primary, false: c.border }} thumbColor={c.surface} accessibilityLabel={traduire('Minuteur de repos')} />
             </View>
           ) : null}
           {!draft.form && minuteurOn !== false ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Icon name="clock" size={20} color={c.textSecondary} />
+            {illus.stickers ? <Image source={illus.img('chrono')} style={{ width: 30, height: 30, marginVertical: -4 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : <Icon name="clock" size={20} color={c.textSecondary} />}
             <Ink size={15} weight="bold" style={{ flex: 1 }}>{traduire("Repos entre les séries")}</Ink>
             <Pressable onPress={() => changeRest(-15)} accessibilityLabel={traduire("Moins 15 secondes de repos")} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="minus" size={16} strokeWidth={2.8} />
