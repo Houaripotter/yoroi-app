@@ -14,11 +14,11 @@ import type { IconName } from '@/components/yoroi/v2/seances/Icon';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { sourceParId } from '@/lib/v2/programmes/sources';
 import { safeOpenURL } from '@/lib/security/validators';
-import { CHOIX_FIN, FIN_PAR_DEFAUT, MINUTES_FIN, NOTE_FIN, SOURCES_FIN, aDesJoursMarche, avecCardio, basculerCaseFin, caseCochee, resumeFin } from '@/lib/v2/programmes/finSeance';
+import { CHOIX_FIN, FIN_PAR_DEFAUT, MINUTES_FIN, NOTE_FIN, SOURCES_FIN, aDesJoursMarche, avecCardio, avecChoixDuJour, basculerCaseFin, caseCochee, choixDuJour, resumeFin } from '@/lib/v2/programmes/finSeance';
 import type { CaseFin, FinSeance } from '@/lib/v2/programmes/finSeance';
 import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
-import type { Programme } from '@/lib/v2/programmes/types';
+import type { JourProgramme, Programme } from '@/lib/v2/programmes/types';
 import { traduire } from '@/lib/i18n/tr';
 import { ton } from '@/components/yoroi/v2/seance/pastel';
 import type { TonSeance } from '@/components/yoroi/v2/seance/pastel';
@@ -56,6 +56,7 @@ export function CarteFinDeSeance({ fin, femme, onPress }: { fin: FinSeance | nul
         <Ink size={18} weight="black" tight color={c.ink}>{traduire('Abdos et cardio')}</Ink>
         <Ink size={13} weight="bold" color={c.textSecondary}>{texteFin(fin)}</Ink>
         {retire ? <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('Séances de marche du programme retirées')}</Ink> : null}
+        {fin?.parJour && Object.keys(fin.parJour).length ? <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('Réglé séance par séance')}</Ink> : null}
         <Ink size={13} weight="black" color={ton('menthe').encre} style={{ marginTop: 4 }}>{traduire('Choisir')}</Ink>
       </View>
     </Pressable>
@@ -63,9 +64,11 @@ export function CarteFinDeSeance({ fin, femme, onPress }: { fin: FinSeance | nul
 }
 
 /** La feuille de choix. `bouton` : « Valider » sur la page, « Commencer le programme » au demarrage */
-export function FeuilleFinDeSeance({ visible, programme, valeur, bouton, onValider, onClose }: {
+export function FeuilleFinDeSeance({ visible, programme, seances, valeur, bouton, onValider, onClose }: {
   visible: boolean;
   programme: Programme;
+  /** 30 octobre 2026 : les séances de musculation de ta semaine, chacune avec ses cases Abdos et Cardio */
+  seances?: readonly JourProgramme[];
   valeur: FinSeance | null | undefined;
   bouton: string;
   onValider: (f: FinSeance) => void;
@@ -119,7 +122,41 @@ export function FeuilleFinDeSeance({ visible, programme, valeur, bouton, onValid
         })}
       </View>
 
-      {avecCardio(f) ? (
+      {/* 30 octobre 2026 : jour par jour (semaine mixte, semaines A et B) ; une séance sans choix suit celui du dessus */}
+      {seances && seances.length > 1 ? (
+        <View style={{ gap: 8, paddingHorizontal: 4 }}>
+          <Ink size={15} weight="extraBold">{traduire('Séance par séance')}</Ink>
+          {seances.map((j) => {
+            const ch = choixDuJour(f, j.id);
+            const caseJour = (k: 'abdos' | 'cardio') => {
+              const on = caseCochee(ch, k);
+              const encre = ton(TEINTE[k]).encre;
+              return (
+                <Pressable
+                  key={k}
+                  onPress={() => { tap(); setF((x) => avecChoixDuJour(x, j.id, basculerCaseFin(choixDuJour(x, j.id), k))); }}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: on }}
+                  accessibilityLabel={`${traduire(j.titre)}, ${k === 'abdos' ? traduire('Abdos en fin de séance') : traduire('Cardio en fin de séance')}`}
+                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingHorizontal: 10, borderRadius: 14, borderWidth: 2, borderColor: on ? encre : 'transparent', backgroundColor: on ? ton(TEINTE[k]).fond : c.fillSoft, opacity: pressed ? 0.85 : 1 })}
+                >
+                  {illus.stickers ? <Image source={illus.img(STICKER[k])} style={{ width: 26, height: 26 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : <Icon name={ICONE[k]} size={16} color={encre} />}
+                  <Ink size={13} weight="extraBold" color={on ? encre : c.ink}>{traduire(k === 'abdos' ? 'Abdos' : 'Cardio')}</Ink>
+                </Pressable>
+              );
+            };
+            return (
+              <View key={j.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}>
+                <Ink size={14} weight="bold" style={{ flex: 1 }} numberOfLines={2}>{traduire(j.titre)}</Ink>
+                {caseJour('abdos')}
+                {caseJour('cardio')}
+              </View>
+            );
+          })}
+        </View>
+      ) : null}
+
+      {avecCardio(f) || Object.values(f.parJour ?? {}).some((x) => x === 'cardio' || x === 'les_deux') ? (
         <View style={{ gap: 8, paddingHorizontal: 4 }}>
           <Ink size={15} weight="extraBold">{traduire('Durée du cardio')}</Ink>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
