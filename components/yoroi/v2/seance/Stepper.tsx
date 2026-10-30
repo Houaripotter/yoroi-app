@@ -3,6 +3,7 @@
  * 16 octobre : `fine` ajoute deux petits boutons de reglage fin sous les gros (les kilos : pas de 1, et 0,5).
  * 30 octobre : `saut` (10 kg, 20 lb) pour monter vite la charge : a la 3e tape rapide, ou apres 1 s d'appui long
  * (regles dans lib/v2/seances/pasRapide.ts). Sans `saut`, rien ne change.
+ * 30 octobre 2026 : `uniteForte` (« KG ») lisible d'un coup d'oeil a cote du chiffre, plus en petit dessous.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
@@ -36,9 +37,11 @@ type Props = {
   fine?: number;
   /** pas des tapes rapides et de l'appui long prolonge (10 pour les kilos, 20 pour les livres) */
   saut?: number;
+  /** unite affichee a cote du chiffre, en gros (« KG », « LB ») : aux deux tiers du chiffre, couleur du texte */
+  uniteForte?: string;
 };
 
-export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size = 26, decimals = false, format, hint, dark = false, button = 38, layout = 'row', fine, saut }: Props) {
+export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size = 26, decimals = false, format, hint, dark = false, button = 38, layout = 'row', fine, saut, uniteForte }: Props) {
   const stack = layout === 'stack';
   const { theme } = useYoroiTheme();
   const c = theme.colors;
@@ -182,7 +185,10 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
       accessibilityLabel={traduire("{0} {1}, toucher pour saisir", shown, unit)}
       style={{ alignSelf: 'stretch', minHeight: 48, alignItems: 'center', justifyContent: 'center' }}
     >
-      <Ink size={size} weight="black" tight color={ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ fontVariant: ['tabular-nums'] }}>{shown}</Ink>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', gap: 4, maxWidth: '100%' }}>
+        <Ink size={size} weight="black" tight color={ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ fontVariant: ['tabular-nums'], flexShrink: 1 }}>{shown}</Ink>
+        {uniteForte ? <Ink size={Math.round(size * 0.67)} weight="black" tight color={ink} numberOfLines={1}>{uniteForte}</Ink> : null}
+      </View>
     </Pressable>
   );
 
@@ -227,7 +233,10 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
             accessibilityLabel={traduire("{0} {1}, toucher pour saisir", shown, unit)}
             style={{ minWidth: button + 12, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
           >
-            <Ink size={size} weight="black" tight color={ink} style={{ fontVariant: ['tabular-nums'] }}>{shown}</Ink>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 3 }}>
+              <Ink size={size} weight="black" tight color={ink} style={{ fontVariant: ['tabular-nums'] }}>{shown}</Ink>
+              {uniteForte ? <Ink size={Math.round(size * 0.67)} weight="black" tight color={ink}>{uniteForte}</Ink> : null}
+            </View>
           </Pressable>
         )}
         {renderBtn(1)}
