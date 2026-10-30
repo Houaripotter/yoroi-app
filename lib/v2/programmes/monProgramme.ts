@@ -36,6 +36,12 @@ export type SeancePerso = {
    * n'en avaient pas : chaque séance reçoit l'id qu'elle avait alors, celui de son jour (« d3 », « b3 »), rien ne change.
    */
   sid?: string;
+  /**
+   * 30 octobre 2026 (Ta semaine en briques, briques.ts) : la brique de la séance (« push », « abdos », une brique
+   * à toi). Changer une brique recopie ses exercices sur chaque jour qui la porte ; chaque jour garde son sid.
+   * Les programmes d'avant n'en avaient pas : chaque jour devient sa propre brique (« j » + son sid).
+   */
+  brique?: string;
 };
 
 export type RappelPerso = { actif: boolean; heure: string };
@@ -60,6 +66,8 @@ export type ProgrammePerso = {
   duree?: number;
   /** le programme du catalogue d'où il vient */
   origine?: string;
+  /** 30 octobre 2026 : tes briques posées sur aucun jour (briques.ts), gardées pour les reposer */
+  briques?: SeancePerso[];
 };
 
 function jourLocal(d = new Date()): string {
@@ -226,6 +234,9 @@ export const idJourPersoB = (id: string, jour: number) => `${id}-b${jour}`;
 export const idSeancePerso = (id: string, sid: string) => `${id}-${sid}`;
 const SID = /^[a-z0-9]{1,24}$/;
 const sidValide = (v: unknown): v is string => typeof v === 'string' && SID.test(v);
+const BRIQUE = /^[a-z0-9_]{1,32}$/;
+export const briqueValide = (v: unknown): v is string => typeof v === 'string' && BRIQUE.test(v);
+export const MAX_BRIQUES_GARDEES = 40;
 
 /** L'id de la séance de ce jour (null : repos), A ou B */
 export function idDuJourPerso(pp: Pick<ProgrammePerso, 'id' | 'semaine' | 'semaineB'>, jour: number, b = false): string | null {
@@ -343,6 +354,8 @@ function nettoyerExo(x: unknown): ExoProgramme | null {
     ...(typeof e.conseil === 'string' ? { conseil: e.conseil } : {}),
     ...(e.poidsDuCorps ? { poidsDuCorps: true } : {}),
     ...(e.secondes ? { secondes: true } : {}),
+    // 30 octobre 2026 : la durée de la brique Cardio (briques.ts), en minutes
+    ...(typeof e.minutes === 'number' && Number.isFinite(e.minutes) && e.minutes > 0 ? { minutes: borne(e.minutes, 5, 120, 30) } : {}),
   };
 }
 
@@ -357,13 +370,26 @@ export function nettoyerPerso(x: unknown): ProgrammePerso | null {
       if (!s || typeof s !== 'object' || !Array.isArray(s.exos)) return null;
       const exos = s.exos.map(nettoyerExo).filter((e): e is ExoProgramme => !!e).slice(0, MAX_EXOS_SEANCE);
       if (!exos.length) return null;
-      return { ...(typeof s.titre === 'string' && s.titre.trim() ? { titre: s.titre.trim().slice(0, 40) } : {}), exos, ...(sidValide(s.sid) ? { sid: s.sid } : {}) };
+      return { ...(typeof s.titre === 'string' && s.titre.trim() ? { titre: s.titre.trim().slice(0, 40) } : {}), exos, ...(sidValide(s.sid) ? { sid: s.sid } : {}), ...(briqueValide(s.brique) ? { brique: s.brique } : {}) };
     });
   };
   // 30 octobre 2026 : chaque séance a son sid (les programmes d'avant : celui de son jour, leurs ids ne changent pas)
   const sids = avecSids(lireSemainePerso(p.semaine), Array.isArray(p.semaineB) ? lireSemainePerso(p.semaineB) : null);
-  const semaine = sids.semaine;
-  const semaineB = sids.semaineB;
+  // 30 octobre 2026 : une séance sans brique (programmes d'avant) devient sa propre brique, tirée de son sid
+  const avecBrique = (l: (SeancePerso | null)[]) => l.map((s) => (s && !s.brique ? { ...s, brique: `j${s.sid}` } : s));
+  const semaine = avecBrique(sids.semaine);
+  const semaineB = sids.semaineB ? avecBrique(sids.semaineB) : null;
+  const posees = new Set([...semaine, ...(semaineB ?? [])].map((s) => s?.brique).filter((x): x is string => !!x));
+  const briques = (Array.isArray(p.briques) ? p.briques : [])
+    .map((s) => {
+      if (!s || typeof s !== 'object' || !Array.isArray(s.exos) || !briqueValide(s.brique) || posees.has(s.brique)) return null;
+      posees.add(s.brique);
+      const exos = s.exos.map(nettoyerExo).filter((e): e is ExoProgramme => !!e).slice(0, MAX_EXOS_SEANCE);
+      if (!exos.length) return null;
+      return { ...(typeof s.titre === 'string' && s.titre.trim() ? { titre: s.titre.trim().slice(0, 40) } : {}), exos, brique: s.brique } as SeancePerso;
+    })
+    .filter((s): s is SeancePerso => !!s)
+    .slice(0, MAX_BRIQUES_GARDEES);
   const depuis = typeof p.depuis === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.depuis) ? p.depuis : undefined;
   const rappel = p.rappel && typeof p.rappel === 'object' && typeof p.rappel.heure === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(p.rappel.heure) ? { actif: !!p.rappel.actif, heure: p.rappel.heure } : undefined;
   return {
@@ -379,6 +405,7 @@ export function nettoyerPerso(x: unknown): ProgrammePerso | null {
     ...(depuis ? { depuis } : {}),
     ...(p.duree === 0 || p.duree === 8 || p.duree === 12 ? { duree: p.duree } : {}),
     ...(typeof p.origine === 'string' && p.origine.length <= 120 ? { origine: p.origine } : {}),
+    ...(briques.length ? { briques } : {}),
   };
 }
 
