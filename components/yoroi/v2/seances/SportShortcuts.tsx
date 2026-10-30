@@ -9,6 +9,7 @@ import { sportImage, sportShortName, sportTint } from '@/lib/v2/seance/sportVisu
 import { tap } from './ui';
 import { Icon } from './Icon';
 import { P } from '@/components/yoroi/livePalette';
+import { StickerSinon } from '@/components/yoroi/v2/ui/StickerSinon';
 
 export function SportShortcuts({ sports, femme, onPick }: { sports: string[]; femme: boolean; onPick: (sport: string) => void }) {
   const { theme } = useYoroiTheme();
@@ -28,7 +29,7 @@ export function SportShortcuts({ sports, femme, onPick }: { sports: string[]; fe
           >
             <View style={{ height: 96, borderRadius: 18, backgroundColor: sportTint(s), overflow: 'hidden', alignItems: 'center', borderWidth: 1, borderColor: P.white }}>
               {img ? <Image source={img} style={{ position: 'absolute', top: 4, width: 96, height: 128 }} resizeMode="contain" /> : (
-                <View style={{ flex: 1, justifyContent: 'center' }}><Icon name="dumbbell" size={32} color={c.textSecondary} /></View>
+                <View style={{ flex: 1, justifyContent: 'center' }}><StickerSinon nom="musculation" taille={56}><Icon name="dumbbell" size={32} color={c.textSecondary} /></StickerSinon></View>
               )}
             </View>
             <Ink size={13} weight="extraBold" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ textAlign: 'center' }}>{name}</Ink>
