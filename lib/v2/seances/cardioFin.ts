@@ -99,6 +99,18 @@ export function fmtChrono(sec: number): string {
   return h > 0 ? `${h}:${p(m)}:${p(r)}` : `${p(m)}:${p(r)}`;
 }
 
+/**
+ * Revue du 30 octobre 2026 : un cardio supprime ou remplace pendant la seance. La notification « Cardio terminé »
+ * n'existe que si son chrono tourne et que la fin n'a pas encore ete signalee : alors on l'annule, et pour un
+ * remplacement on la reprogramme (nouveau nom) sur le temps qui reste. Sinon on ne touche a rien : la
+ * notification d'un autre cardio de la seance (meme identifiant) n'est pas annulee par erreur.
+ */
+export function suiteFinCardio(c: ChronoCardio | null | undefined, maintenant: number, remplace: boolean): { annuler: boolean; reprogrammerDans: number | null } {
+  if (!c || !enCours(c) || c.signale) return { annuler: false, reprogrammerDans: null };
+  const resteSec = Math.floor((c.objectifSec * 1000 - ecouleMs(c, maintenant)) / 1000);
+  return { annuler: true, reprogrammerDans: remplace && resteSec > 0 ? resteSec : null };
+}
+
 /* eslint-disable @typescript-eslint/no-require-imports */
 export const ID_FIN_CARDIO = 'yoroi.seance.cardio';
 
