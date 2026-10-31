@@ -9,6 +9,7 @@ import { durationOf, mondayOf, setsCount, tonnageParts } from '@/lib/v2/training
 import { libelleUnite, versUnitePoids, type UnitePoids } from '@/lib/v2/unitePoids';
 import { familyOf, firstSport, parseExercises, parseRounds, workSets } from './sessionData';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { cardioFait, libelleCardio } from './cardioJour';
 
 export { MUSCLE_ORDER };
 export type { MuscleName };
@@ -138,6 +139,9 @@ export function topExercises(t: Training, max = 3, unite: UnitePoids = 'kg'): { 
     .filter((e) => e && e.name)
     .slice(0, max)
     .map((e) => {
+      // 31 octobre 2026 : le cardio de fin de seance dit ce qui a ete fait, « 20 min de vélo », pas « 1200 répétitions »
+      const c = cardioFait([e]);
+      if (c) return { name: e.name, best: libelleCardio(c.type, c.minutes), sets: 0 };
       const s = workSets(e);
       const top = s.reduce<{ weight: number; reps: number } | null>((b, x) => (!b || (x.weight || 0) * 100 + (x.reps || 0) > b.weight * 100 + b.reps ? { weight: x.weight || 0, reps: x.reps || 0 } : b), null);
       const fmt = (n: number) => (Math.round(n * 10) / 10).toString().replace('.', DECIMAL);
