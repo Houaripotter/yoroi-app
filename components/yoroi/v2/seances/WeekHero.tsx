@@ -8,7 +8,7 @@
  * 28 octobre 2026 (maquette A « Aujourd'hui d'abord ») : l'onglet Seances affiche la carte de la semaine (SemaineAnneau)
  * et les quatre chiffres (WeekTiles) separement ; WeekHero les garde ensemble pour qui l'utiliserait encore.
  */
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -86,8 +86,12 @@ export function couleursTuile(t: TeinteTuile): { fond: string; texte: string } {
   return { fond, texte };
 }
 
+/** 31 octobre 2026 (grand ecran) : les 4 tuiles de la semaine en 4 carres alignes */
+const TuilesEnLigne = React.createContext(false);
+
 function Tile({ label, value, children, onPress, a11y, teinte, sticker, aide }: { label: string; value: string; children: React.ReactNode; onPress?: () => void; a11y?: string; teinte: TeinteTuile; sticker?: NomSticker; aide?: string }) {
   const [aideOuverte, setAideOuverte] = useState(false);
+  const enLigne = useContext(TuilesEnLigne);
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const t = couleursTuile(teinte);
@@ -110,7 +114,9 @@ function Tile({ label, value, children, onPress, a11y, teinte, sticker, aide }: 
       {aide && aideOuverte ? <Ink size={11} weight="bold" color={c.textSecondary} style={{ marginTop: 4, lineHeight: 14 }}>{aide}</Ink> : null}
     </>
   );
-  const style = { flexBasis: '47%' as const, flexGrow: 1, paddingVertical: 12, paddingHorizontal: 12, borderRadius: 22, backgroundColor: t.fond, gap: 2, minHeight: 104 };
+  const style = enLigne
+    ? { flexBasis: 0, flexGrow: 1, paddingVertical: 16, paddingHorizontal: 16, borderRadius: 24, backgroundColor: t.fond, gap: 2, minHeight: 132 }
+    : { flexBasis: '47%' as const, flexGrow: 1, paddingVertical: 12, paddingHorizontal: 12, borderRadius: 22, backgroundColor: t.fond, gap: 2, minHeight: 104 };
   // une aide au toucher (kilos soulevés) : le toucher l'ouvre et la referme
   if (!onPress && aide) {
     return (
@@ -131,7 +137,7 @@ function Tile({ label, value, children, onPress, a11y, teinte, sticker, aide }: 
  * 28 octobre 2026 (maquette A) : les quatre chiffres de la semaine, seuls (la carte de la semaine est dans
  * SemaineAnneau.tsx), et la phrase de comparaison dessous. Memes calculs qu'avant.
  */
-export function WeekTiles({ week, onOpenCharge }: { week: WeekCompare; onOpenCharge: () => void }) {
+export function WeekTiles({ week, onOpenCharge, enLigne = false }: { week: WeekCompare; onOpenCharge: () => void; /** grand ecran : les 4 tuiles sur une rangee */ enLigne?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const cur = week.current;
@@ -142,8 +148,9 @@ export function WeekTiles({ week, onOpenCharge }: { week: WeekCompare; onOpenCha
   const loadPct = prev.load > 0 ? Math.round(((cur.load - prev.load) / prev.load) * 100) : 0;
   const full = week.previousFull;
   return (
+    <TuilesEnLigne.Provider value={enLigne}>
     <View style={{ gap: 8 }}>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+      <View style={{ flexDirection: 'row', flexWrap: enLigne ? 'nowrap' : 'wrap', gap: enLigne ? 20 : 10 }}>
         <Tile teinte="creme" sticker="sablier" label={traduire("durée")} value={cur.minutes ? fmtMin(cur.minutes) : `0${NB}min`}>
           <Trend couleur={couleursTuile('creme').texte} delta={cur.minutes - prev.minutes} text={fmtMin(cur.minutes - prev.minutes)} hasPrev={hasPrev} />
         </Tile>
@@ -163,6 +170,7 @@ export function WeekTiles({ week, onOpenCharge }: { week: WeekCompare; onOpenCha
           : traduire('Comparé à la semaine passée au même jour.')}
       </Ink>
     </View>
+    </TuilesEnLigne.Provider>
   );
 }
 
