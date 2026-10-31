@@ -8,11 +8,14 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { intensite } from '@/lib/v2/intensite';
 import { traduire } from '@/lib/i18n/tr';
+import { useFeuilleCentree } from '@/lib/v2/nav/useGrandEcran';
 
 export function Sheet({ visible, onClose, title, children, scroll = false }: { visible: boolean; onClose: () => void; title?: string; children: React.ReactNode; scroll?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const insets = useSafeAreaInsets();
+  // 31 octobre 2026 : en grand ecran, une fenetre centree
+  const centree = useFeuilleCentree();
   const body = (
     <View style={{ gap: 12 }}>
       {title ? <Ink size={22} weight="black" tight style={{ paddingHorizontal: 4 }}>{title}</Ink> : null}
@@ -20,10 +23,10 @@ export function Sheet({ visible, onClose, title, children, scroll = false }: { v
     </View>
   );
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType={centree ? 'fade' : 'slide'} onRequestClose={onClose} statusBarTranslucent supportedOrientations={centree ? ['portrait', 'landscape'] : undefined}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.45)', justifyContent: 'flex-end' }} accessibilityLabel={traduire("Fermer")}>
-          <Pressable onPress={() => {}} style={{ backgroundColor: c.background, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingTop: 12, paddingHorizontal: 22, paddingBottom: insets.bottom + 20, maxHeight: '88%' }}>
+        <Pressable onPress={onClose} style={[{ flex: 1, backgroundColor: 'rgba(29,32,41,0.45)', justifyContent: 'flex-end' }, centree?.fond]} accessibilityLabel={traduire("Fermer")}>
+          <Pressable onPress={() => {}} style={[{ backgroundColor: c.background, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingTop: 12, paddingHorizontal: 22, paddingBottom: insets.bottom + 20, maxHeight: '88%' }, centree ? { ...centree.carte, paddingBottom: 22 } : null]}>
             <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: c.border, marginBottom: 14 }} />
             {scroll ? <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>{body}</ScrollView> : body}
           </Pressable>
