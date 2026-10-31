@@ -55,6 +55,9 @@ import { saisieDirecte } from '@/lib/v2/nav/direct';
 import { traduire, traduirePluriel, LANG, LOCALE, DECIMAL } from '@/lib/i18n/tr';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { StickerSinon } from '@/components/yoroi/v2/ui/StickerSinon';
+import { resumeCardioDe } from '@/lib/v2/seances/exerciceEnregistre';
+import { infoCardio } from '@/lib/v2/seances/cardioChoix';
+import { fmtNum } from '@/lib/v2/seance/format';
 
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1500;
@@ -551,6 +554,9 @@ export default function WorkoutDetailScreen() {
                 const sets = ex.setsData && ex.setsData.length > 0 ? ex.setsData : workSets(ex);
                 const vol = sets.filter((s) => s.type !== 'warmup').reduce((a, s) => a + (s.weight || 0) * (s.reps || 0), 0);
                 const isRec = recordKeys.has(`force:${cleRecordExercice(ex.name ?? '')}`) || recordKeys.has(`reps:${cleRecordExercice(ex.name ?? '')}`);
+                // 31 octobre 2026 : le cardio de fin de seance, sa duree est rangee en secondes dans la serie : pas de ligne « 1800 répétitions »
+                const cardio = resumeCardioDe(ex);
+                const cardioSeance = !!cardio || (ex.muscle_group === 'CARDIO' && (ex.duration ?? 0) > 0);
                 return (
                   <Glass key={`${ex.name}${idx}`} style={{ gap: 10 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -560,7 +566,7 @@ export default function WorkoutDetailScreen() {
                       </View>
                       {isRec ? <Hanko size={22} /> : null}
                     </View>
-                    {sets.length > 0 && sets.some((s) => s.weight > 0 || s.reps > 0) ? (
+                    {!cardioSeance && sets.length > 0 && sets.some((s) => s.weight > 0 || s.reps > 0) ? (
                       <View style={{ gap: 6 }}>
                         {sets.map((s, si) => {
                           const m = estimatedMax(s.weight, s.reps);
@@ -583,6 +589,18 @@ export default function WorkoutDetailScreen() {
                     {(ex.distance ?? 0) > 0 || (ex.duration ?? 0) > 0 || ex.pace || (ex.calories ?? 0) > 0 || (ex.stairs ?? 0) > 0 ? (
                       <Ink size={14} weight="bold" color={c.textSecondary}>
                         {[(ex.distance ?? 0) > 0 ? `${formatKg(ex.distance!, 2)} km` : '', (ex.duration ?? 0) > 0 ? formatDuration(ex.duration!) : '', ex.pace ? traduire("allure {0}", ex.pace) : '', (ex.calories ?? 0) > 0 ? `${ex.calories} kcal` : '', (ex.stairs ?? 0) > 0 ? traduire("{0} étages", ex.stairs) : ''].filter(Boolean).join(', ')}
+                      </Ink>
+                    ) : null}
+                    {cardio ? (
+                      <Ink size={14} weight="bold" color={c.textSecondary}>
+                        {[
+                          traduire(infoCardio(cardio.type).label),
+                          typeof cardio.penteMoy === 'number' ? traduire('pente moyenne {0} %', fmtNum(cardio.penteMoy, 1)) : '',
+                          typeof cardio.vitesseMoy === 'number' ? traduire('{0} km/h en moyenne', fmtNum(cardio.vitesseMoy, 1)) : '',
+                          typeof cardio.niveauMoy === 'number' ? traduire('niveau moyen {0}', fmtNum(cardio.niveauMoy, 1)) : '',
+                          cardio.fcMoy ? traduire('{0} bpm en moyenne', cardio.fcMoy) : '',
+                          cardio.fcMoy && cardio.zone2 ? traduire('zone 2 : {0} à {1} bpm', cardio.zone2.min, cardio.zone2.max) : '',
+                        ].filter(Boolean).join(', ')}
                       </Ink>
                     ) : null}
                     {ex.notes ? <Ink size={13} color={c.textSecondary}>{ex.notes}</Ink> : null}
