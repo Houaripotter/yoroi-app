@@ -78,7 +78,7 @@ import { BoutonCoachVocal, useCoachVocal } from '@/components/yoroi/v2/seance/Co
 import { cibleDefilement } from '@/lib/v2/seances/defilementExo';
 import { completerExercice } from '@/lib/v2/seances/exerciceEnregistre';
 import { DUREE_MESSAGE_MS, decisionFinRepos, retirerReposFini } from '@/lib/v2/seances/finRepos';
-import { alternativesCardio, annulerFinCardio, estCardioFin, demarrer as demarrerChrono, dureeFinaleSec, ecouleMs, enCours as chronoEnCours, finObjectifMs, fmtChrono, nomCardioFin, nouveauChrono, objectifAtteint, pause as pauseChrono, programmerFinCardio } from '@/lib/v2/seances/cardioFin';
+import { alternativesCardio, annulerFinCardio, estCardioFin, demarrer as demarrerChrono, dureeFinaleSec, ecouleMs, enCours as chronoEnCours, finObjectifMs, fmtChrono, nomCardioFin, nouveauChrono, objectifAtteint, pause as pauseChrono, programmerFinCardio, suiteFinCardio } from '@/lib/v2/seances/cardioFin';
 import type { ChronoCardio } from '@/lib/v2/seances/cardioFin';
 import { playWizzSound } from '@/lib/soundManager';
 import { encouragement, etatSerie, nouvelleSerie, remettreSerie, sansSerie, seriesAFaire } from '@/lib/v2/seances/seriesSaisie';
@@ -269,7 +269,8 @@ export default function SeanceMuscu() {
           const zones = prog ? [] : lireZones(param1(raw.zones));
           const jourSource = prog && jourDuProg ? jourDuProg : zones.length ? { id: 'zones', titre: titreZones(zones, traduire), muscles: [], exos: seanceZones(zones) } : null;
           if (jourSource) {
-            const [trainings, h, actif, materiel, blessures, machines] = await Promise.all([trainingsP, histP, chargerProgrammeActif(), chargerMateriel(), getActiveInjuries().catch(() => []), chargerMachines()]);
+            // revue du 30 octobre 2026 : tes exercices ecartes lus avant jourPourToi (app fermee, la copie en memoire est vide)
+            const [trainings, h, actif, materiel, blessures, machines] = await Promise.all([trainingsP, histP, chargerProgrammeActif(), chargerMateriel(), getActiveInjuries().catch(() => []), chargerMachines(), chargerEcartes().catch(() => [])]);
             // ton materiel et tes douleurs declarees : chaque exercice impossible ou qui charge une zone douloureuse
             // est remplace par le plus proche (lib/v2/programmes/materiel.ts, blessures.ts)
             // puis tes exercices changes a la main sur la page du programme en cours (lib/v2/programmes/perso.ts)
@@ -587,6 +588,10 @@ export default function SeanceMuscu() {
     if (ex.cardio) {
       // meme objectif de duree, chrono garde
       updateExercise(ex.id, (e) => ({ ...e, name: nom, remplaceEnSeance: e.remplaceEnSeance ?? e.name }));
+      // revue du 30 octobre 2026 : la notification de fin repart avec le bon nom (cardioFin.ts, suiteFinCardio)
+      const suite = suiteFinCardio(ex.cardio, Date.now(), true);
+      if (suite.reprogrammerDans) void programmerFinCardio(suite.reprogrammerDans, traduire('Cardio terminé'), traduire('{0} : objectif de {1} min atteint', sansTiret(traduire(nomFr(nom))), Math.round(ex.cardio.objectifSec / 60)));
+      else if (suite.annuler) void annulerFinCardio();
       impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
       if (r.raison !== 'occupee') void ecarterExercice(ex.name, r.raison).then((l) => setEcartes(nomsEcartes(l)));
       return;
@@ -780,6 +785,8 @@ export default function SeanceMuscu() {
         style: 'destructive',
         onPress: () => {
           setMenuFor(null);
+          // revue du 30 octobre 2026 : un cardio retire pendant que son chrono tourne ne sonne plus (cardioFin.ts)
+          if (suiteFinCardio(draft?.exercises.find((e) => e.id === id)?.cardio, Date.now(), false).annuler) void annulerFinCardio();
           update((d) => {
             const list = d.exercises.filter((e) => e.id !== id);
             return { ...d, exercises: list, currentId: d.currentId === id ? list[0]?.id ?? null : d.currentId };
