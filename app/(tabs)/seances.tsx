@@ -41,7 +41,7 @@ import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualis
 import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
 import { colonnesPour, largeurColonne, largeurCote } from '@/lib/v2/nav/grandEcran';
 import { Colonne, GrilleColonnes, LargeurPage, Rangee } from '@/components/yoroi/v2/PageLarge';
-import { formatDuration, formatTonnage as tonnageText } from '@/lib/v2/trainingWeek';
+import { accordSouleve, formatDuration, formatTonnage as tonnageText } from '@/lib/v2/trainingWeek';
 import { todayISO } from '@/lib/v2/weightStats';
 import { useSeancesData } from '@/lib/v2/seances/useSeancesData';
 import { firstSport, isoOf, parseExercises, relativeDay, sessionTitle } from '@/lib/v2/seances/sessionData';
@@ -83,6 +83,7 @@ import { P } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { OMBRE_CARTE } from '@/components/yoroi/v2/seance/pastel';
+import { aideKilos, libelleKilos } from '@/lib/v2/seances/kilosSouleves';
 
 type Grouping = 'semaine' | 'mois';
 type Filter = { kind: 'tous' } | { kind: 'montre' } | { kind: 'sport'; sport: string };
@@ -102,7 +103,7 @@ function groupLine(g: HistoryGroup, unite: UnitePoids = 'kg'): string {
   const parts = [traduirePluriel(g.sessions, g.sessions > 1, "{0} séance", "{0} séances", g.sessions)];
   if (g.days !== g.sessions) parts.push(traduirePluriel(g.days, g.days > 1, "{0} jour", "{0} jours", g.days));
   if (g.minutes) parts.push(formatDuration(g.minutes));
-  if (g.tonnageKg >= 100) parts.push(tonnageText(g.tonnageKg, unite));
+  if (g.tonnageKg >= 100) parts.push(`${tonnageText(g.tonnageKg, unite)} ${accordSouleve(g.tonnageKg, unite)}`);
   if (g.rounds) parts.push(traduirePluriel(g.rounds, g.rounds > 1, "{0} round", "{0} rounds", g.rounds));
   if (g.distanceKm > 0) parts.push(`${fr1(g.distanceKm)} km`);
   return parts.join(', ');
@@ -202,7 +203,8 @@ export default function Seances() {
     if (f.minutes) facts.push({ label: traduire('durée'), value: h.value, unit: h.unit || undefined });
     if (f.tonnageKg > 0) {
       const tn = formatTonnage(f.tonnageKg, unite);
-      facts.push({ label: 'tonnage', value: tn.value, unit: tn.unit });
+      // 31 octobre 2026 : « Kilos soulevés » au lieu de « tonnage », avec son aide au toucher
+      facts.push({ label: libelleKilos(), value: tn.value, unit: tn.unit, aide: aideKilos('seance') });
     }
     if (f.sets > 0) facts.push({ label: traduire('séries'), value: String(f.sets) });
     if (f.rounds > 0 && facts.length < 3) facts.push({ label: 'rounds', value: String(f.rounds) });
