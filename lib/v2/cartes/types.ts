@@ -41,7 +41,10 @@ export type StatKey =
   | 'meilleur'
   | 'techniques'
   | 'soumissions'
-  | 'exploit';
+  | 'exploit'
+  /** 31 octobre 2026 : le cardio de fin de seance, pente moyenne et FC moyenne du cardio seul */
+  | 'pente'
+  | 'fc_cardio';
 
 export type StatValue = {
   key: StatKey;
@@ -99,6 +102,9 @@ export type DonneesSeance = {
   intensite?: number;
   /** 31 octobre 2026 : soumissions placees, lues dans les rounds saisis (absentes ou 0 sinon) */
   soumissions?: number;
+  /** 31 octobre 2026 : cardio de fin de seance (exercice cardio de la musculation), pente moyenne et FC moyenne du cardio */
+  penteCardio?: number;
+  fcCardio?: number;
 };
 
 /**
