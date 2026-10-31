@@ -28,10 +28,14 @@ export function nomCourt(d: CarteData): string {
     if (t === 'annee_progression') return traduire('Mon année');
     return d.exploit.surtitre;
   }
+  if (d.moment === 'mois') return traduire('Mon mois');
+  if (d.moment === 'annee') return traduire('Mon année');
   return d.moment === 'seance' ? traduire('Ma séance') : d.moment === 'pesee' ? traduire('Ma pesée') : traduire('Ma semaine');
 }
 
 export function lienEditeur(d: CarteData): string {
+  // 31 octobre 2026 (bibliotheque) : ton mois, ton annee
+  if ((d.moment === 'mois' || d.moment === 'annee') && d.periode) return `/carte?moment=${d.moment}&ref=${encodeURIComponent(d.periode.ref)}`;
   if (d.moment === 'exploit' && d.source) return `/carte?moment=exploit&src=${d.source.type}&ref=${encodeURIComponent(d.source.ref)}&cle=${encodeURIComponent(d.cle)}`;
   if (d.moment === 'avant_apres' && d.avantApres) return `/carte?moment=avant_apres&avant=${encodeURIComponent(d.avantApres.avant.id)}&apres=${encodeURIComponent(d.avantApres.apres.id)}`;
   const [m, id] = d.cle.split(':');
