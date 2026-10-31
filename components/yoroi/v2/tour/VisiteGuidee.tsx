@@ -214,8 +214,7 @@ export function VisiteGuidee() {
   const [finMessage, setFinMessage] = useState<string | null>(null);
   const [vitesse, vitesseSuivante] = useVitesseVoix();
   const debutRef = useRef(0);
-  // 28 octobre 2026 : la pastille Exemple (la bulle reste dessous) et la page montree de la carte Ton poids
-  const pastilleRef = useRef(true);
+  // 28 octobre 2026 : la page montree de la carte Ton poids
   const pagePoidsRef = useRef(0);
   // 28 octobre 2026 soir (captures de Houari : la bulle sous la Dynamic Island) : tout est place dans le repere de la
   // visite ; si elle ne commence pas tout en haut de la fenetre, la zone sure (barre d'etat, Dynamic Island) est decalee
@@ -226,7 +225,7 @@ export function VisiteGuidee() {
   const [defilable, setDefilable] = useState(false);
   // la bulle apparait d'un coup, une fois placee (plus d'animation d'entree qui la montre a moitie a la mauvaise place)
   const bOpacity = useSharedValue(0);
-  /** L'ecran pour placer le cadre et la bulle : sous la pastille Exemple, au dessus du bord bas, et le haut de la barre */
+  /** L'ecran pour placer le cadre et la bulle : sous la zone sure, au dessus du bord bas, et le haut de la barre */
   const ecranDe = (menuOuvert: boolean): Ecran => {
     const dy = rootYRef.current;
     // jamais sous la barre d etat ni la Dynamic Island ; zone sure encore inconnue (0) : 47 points, la hauteur d un iPhone a encoche
@@ -234,7 +233,8 @@ export function VisiteGuidee() {
     return {
       W,
       H,
-      haut: hautSur + (pastilleRef.current ? 46 : 10) - dy,
+      // 30 octobre 2026 : plus de pastille Exemple en haut (la mention est dans la bulle), la bulle monte jusqu'a la zone sure
+      haut: hautSur + 10 - dy,
       bas: H - insets.bottom - 10 - dy,
       // le menu + couvre la barre : ses elements descendent jusqu'au bas de l'ecran
       barre: (menuOuvert ? H - insets.bottom - 4 : hautDeBarre(H, insets.bottom)) - dy,
@@ -503,7 +503,7 @@ export function VisiteGuidee() {
     let cid = ids[0] ?? '';
     const estOnglet = (k: string) => k.startsWith('onglet.');
     const ecran = ecranDe(!!e.menuPlus);
-    const hBulle = estimerBulle(e.titre, e.texte, Math.min(W - 24, 440));
+    const hBulle = estimerBulle(e.titre, e.texte, Math.min(W - 24, 440)) + HAUT_LIGNE_DEMO;
 
     /** Position de l'ancre (avec ses ancres « avec » dans le meme cadre, et coupee par son ancre « dans ») */
     const mesurer = async (id0: string): Promise<Box | null> => {
@@ -867,9 +867,6 @@ export function VisiteGuidee() {
   }
 
   const e = ETAPES[index];
-  // la pastille « Exemple » en haut : la bulle du haut se pose juste dessous
-  const pastille = exemple !== 'non';
-  pastilleRef.current = pastille;
   const last = index === ETAPES.length - 1;
   const first = index === 0;
   const { n: nPartie, sur: surPartie } = rangDansPartie(index);
@@ -880,9 +877,12 @@ export function VisiteGuidee() {
   const ecranBulle = ecranDe(menu);
   // petit telephone et grande carte (Ton poids sur un iPhone SE) : la bulle se fait compacte (sans la ligne de
   // progression, sticker plus petit) pour tenir a cote de l'element. Decide sur l'estimation, stable d'un rendu a l'autre.
-  const compact = !!hole && placerBulle(hole, estimerBulle(e.titre, e.texte, bubbleW), ecranBulle).couvre;
+  const compact = !!hole && placerBulle(hole, estimerBulle(e.titre, e.texte, bubbleW) + HAUT_LIGNE_DEMO, ecranBulle).couvre;
+  // 30 octobre 2026 (Houari : la petite pastille « Exemple : profil de démo » en haut, moche) : la mention passe dans la
+  // bulle, en tete, plus grande, avec un sticker. A chaque etape ; bulle compacte (petit telephone) : a la premiere seulement.
+  const ligneDemo = exemple !== 'non' && (first || !compact);
   const mesuree = bulle && bulle.i === index ? bulle.h : null;
-  const estimee = estimerBulle(e.titre, e.texte, bubbleW) - (compact ? 38 : 0);
+  const estimee = estimerBulle(e.titre, e.texte, bubbleW) + (ligneDemo ? HAUT_LIGNE_DEMO : 0) - (compact ? 38 : 0);
   // une mesure aberrante (plus haute que l'ecran) ne doit jamais renvoyer la bulle tout en haut
   const hBulle = Math.min(mesuree ?? estimee, Math.max(estimee * 1.5, 180), H * 0.7);
   const place = placerBulle(hole, hBulle, ecranBulle);
@@ -948,16 +948,6 @@ export function VisiteGuidee() {
         <View style={[s.fingerCore, { backgroundColor: isDark ? '#FFFFFF' : c.detail }]} />
       </Animated.View>
 
-      {/* 18 octobre : tout ce que montre la visite est un exemple, jamais tes donnees */}
-      {pastille ? (
-        <View pointerEvents="none" style={[s.pastilleWrap, { top: insets.top + 6 }]}>
-          <View style={[s.pastille, { backgroundColor: c.surface, borderColor: c.border }]} accessibilityRole="text" accessibilityLabel={exemple === 'oui' ? traduire('Exemple : profil de démo. Ce ne sont pas tes données') : traduire('Préparation de l’exemple')}>
-            <View style={[s.pastillePoint, { backgroundColor: c.detail }]} />
-            <Ink size={12.5} weight="extraBold" color={c.ink}>{exemple === 'oui' ? traduire('Exemple : profil de démo') : traduire('Préparation de l’exemple…')}</Ink>
-          </View>
-        </View>
-      ) : null}
-
       {ready ? (
         // 28 octobre 2026 : la bulle au style de l'app (carte blanche, partie en petites capitales colorees, sticker,
         // bouton pastel) ; invisible le temps d'etre mesuree, puis posee a sa place
@@ -972,6 +962,15 @@ export function VisiteGuidee() {
           style={[s.bubbleWrap, { width: bubbleW, left: (W - bubbleW) / 2, top: 0, transform: [{ translateY: bubbleTop }] }]}
         >
         <Animated.View style={[s.bubble, { backgroundColor: c.surface, borderColor: c.border, shadowColor: '#000' }, bulleStyle]}>
+          {/* 18 octobre : tout ce que montre la visite est un exemple, jamais tes donnees (30 octobre 2026 : dans la bulle) */}
+          {ligneDemo ? (
+            <View testID="visite-ligne-demo" style={[s.ligneDemo, { backgroundColor: c.accentTint }]} accessibilityRole="text" accessibilityLabel={exemple === 'oui' ? traduire('Exemple : profil de démo. Ce ne sont pas tes données') : traduire('Préparation de l’exemple')}>
+              <Image source={illus.img('profil')} style={s.stickerDemo} resizeMode="contain" accessibilityIgnoresInvertColors />
+              <Ink size={15} weight="black" color={c.accentText} style={{ flex: 1, lineHeight: 20 }}>
+                {exemple === 'oui' ? traduire('Profil de démo : ces données sont un exemple') : traduire('Préparation de l’exemple…')}
+              </Ink>
+            </View>
+          ) : null}
           <View style={s.head}>
             <Ink size={11.5} weight="black" color={c.accentText} numberOfLines={1} style={{ flexShrink: 1, letterSpacing: 1.3 }}>
               {PARTIES[e.partie].toUpperCase()}
@@ -1067,6 +1066,9 @@ export function VisiteGuidee() {
   );
 }
 
+/** 30 octobre 2026 : la hauteur de la ligne « Profil de démo » en tete de bulle (souvent 2 lignes de 20 + 2 x 8 + 10 dessous) */
+const HAUT_LIGNE_DEMO = 66;
+
 const s = StyleSheet.create({
   finger: {
     position: 'absolute',
@@ -1109,9 +1111,8 @@ const s = StyleSheet.create({
   passer: { height: 34, borderRadius: 17, borderWidth: 1.5, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' },
   voixBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   vitesseBtn: { minWidth: 44, height: 34, borderRadius: 17, paddingHorizontal: 9, alignItems: 'center', justifyContent: 'center' },
-  pastilleWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
-  pastille: { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 999, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 6 },
-  pastillePoint: { width: 7, height: 7, borderRadius: 4 },
+  ligneDemo: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 10 },
+  stickerDemo: { width: 30, height: 30 },
   fin: {
     position: 'absolute',
     left: 24,
