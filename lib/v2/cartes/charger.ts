@@ -16,6 +16,7 @@ import { carteBilan } from '@/lib/v2/bilan/charger';
 import { familleDe, nombre } from './chiffres';
 import { cleMoment, isoJour, lundiDe, raisonPesee } from './moments';
 import { visuelsDeSeance } from './visuelsSeance';
+import { chiffresCardio } from '@/lib/v2/seances/exerciceEnregistre';
 import { bilanAnnee, bilanMois, cleExploit, exploitsPesee, exploitsSeance } from './exploits';
 import type { CarteData, Exploit, RecordCarte } from './types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
@@ -133,12 +134,16 @@ export async function chargerSeance(id: number): Promise<CarteData | null> {
 
 /** Les chiffres d'une seance enregistree (la carte, ou la seance precedente de l'Affiche de gala) */
 function donneesDeSeance(t: Training, records: RecordCarte[]): NonNullable<CarteData['seance']> {
+  // 31 octobre 2026 : le cardio de fin de seance d'une musculation (lib/v2/seances/exerciceEnregistre.ts)
+  const cardio = chiffresCardio(t.exercises);
   return {
     dureeMin: durationOf(t),
     rounds: t.rounds ?? (Array.isArray(t.combat_rounds) ? t.combat_rounds.length : 0),
     series: setsCount(t),
     tonnage: tonnage(t),
-    distanceKm: t.distance ?? 0,
+    distanceKm: t.distance && t.distance > 0 ? t.distance : cardio.distanceKm ?? 0,
+    ...(cardio.penteMoy !== undefined ? { penteCardio: cardio.penteMoy } : {}),
+    ...(cardio.fcMoy !== undefined ? { fcCardio: cardio.fcMoy } : {}),
     fcMoy: t.heart_rate ?? 0,
     fcMax: t.max_heart_rate ?? 0,
     calories: t.calories ?? 0,
