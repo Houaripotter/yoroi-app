@@ -10,7 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
-import { personnageImage, SPORT_ILLUS } from '@/components/yoroi/v2/espace/assets';
+import { personnageImage } from '@/components/yoroi/v2/espace/assets';
 import { SignatureCarte } from './SignatureCarte';
 
 export type CardVariant = 'papier' | 'laque' | 'photo';
@@ -281,22 +281,14 @@ export function RankTag({ p, name, onPanel }: { p: CardPalette; kanji?: string; 
   );
 }
 
-/** Guerrier du rang, ou illustration du sport quand elle existe */
+/**
+ * Ton personnage, au rang de ton armure.
+ * 31 octobre 2026 (Houari : « soit le personnage de l'utilisateur, soit rien ») : avant, le Guerrier laissait sa
+ * place à l'illustration générique du sport ; plus jamais. sport reste accepté pour les appels existants.
+ * Ancienne version : _archive_ancien_design_2026-10-09/personnage_partout_2026-10-31/figureFor_cardKit.tsx.txt
+ */
 export function figureFor(opts: { personnage: string; rankIndex: number; genre: 'h' | 'f'; sport?: string | null }): ImageSourcePropType {
-  const sport = opts.sport ? normaliseSport(opts.sport) : null;
-  const illu = sport ? SPORT_ILLUS.find((s) => s.id === sport) : undefined;
-  if (illu && (opts.personnage === 'guerrier_h' || opts.personnage === 'guerrier_f')) return opts.genre === 'f' ? illu.f : illu.h;
   return personnageImage(opts.personnage, opts.rankIndex, opts.genre);
-}
-
-function normaliseSport(raw: string): string {
-  const id = raw.split(',')[0].trim().toLowerCase();
-  if (id === 'course' || id === 'running' || id === 'trail') return 'running';
-  if (id === 'crosstraining' || id === 'cross_training' || id === 'crossfit' || id === 'hyrox') return 'crossfit';
-  if (id === 'bjj' || id === 'jjb' || id === 'grappling' || id === 'luta_livre') return 'jjb';
-  if (id === 'boxe' || id === 'boxing' || id === 'boxe_anglaise' || id === 'kickboxing' || id === 'muay_thai') return 'boxe';
-  if (id === 'muscu' || id === 'musculation' || id === 'street_workout' || id === 'powerlifting') return 'musculation';
-  return id;
 }
 
 /** Sol sous le guerrier : trait au pinceau */
