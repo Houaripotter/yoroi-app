@@ -10,7 +10,8 @@
  * La logique est pure et testée (__tests__/unit/rappelRepos.test.ts) ; useRappelFinRepos la branche sur l'app.
  */
 import { useEffect, useRef } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
+import { annulerAlarmeRepos, delaiRetraitPremierPlan, estIdAlarme, programmerAlarmeRepos, chargerSonnerieRepos, retirerAlarmeRepos, retirerToutesAlarmesRepos } from '@/lib/v2/seances/alarmeRepos';
 
 export const TYPE_FIN_REPOS = 'rest_finished';
 const CLE_DEMANDE = 'yoroi_rappel_repos_demande_v1';
@@ -26,8 +27,8 @@ export function delaiFinRepos(finMs: number | null | undefined, maintenant: numb
 export type DepsRappelRepos = {
   maintenant: () => number;
   autorise: () => Promise<boolean>;
-  /** programme la notification dans `secondes`, renvoie son identifiant */
-  planifier: (secondes: number) => Promise<string | null>;
+  /** programme la notification dans `secondes` (fin exacte en ms : finMs), renvoie son identifiant */
+  planifier: (secondes: number, finMs?: number) => Promise<string | null>;
   annuler: (id: string) => Promise<void>;
 };
 
@@ -63,7 +64,7 @@ export function creerRappelRepos(deps: DepsRappelRepos) {
       ok = false;
     }
     if (!ok || ma !== generation) return;
-    const nouveau = await deps.planifier(secondes).catch(() => null);
+    const nouveau = await deps.planifier(secondes, fin ?? undefined).catch(() => null);
     if (!nouveau) return;
     if (ma !== generation) {
       await deps.annuler(nouveau).catch(() => {});
@@ -133,6 +134,8 @@ export const ID_RAPPEL_REPOS = 'yoroi.seance.repos';
 
 /** Seance terminee ou abandonnee : plus aucun rappel de repos */
 export async function retirerRappelsRepos(): Promise<void> {
+  // 31 octobre 2026 : ni l'alarme de fin de repos (lib/v2/seances/alarmeRepos.ts)
+  await retirerToutesAlarmesRepos().catch(() => {});
   try {
     const Notif = require('expo-notifications');
     await Notif.cancelScheduledNotificationAsync(ID_RAPPEL_REPOS).catch(() => {});
@@ -152,20 +155,60 @@ export async function retirerRappelIle(): Promise<void> {
   }
 }
 
+/** « Repos terminé » (Pendant la séance) n'est pas coupé : l'alarme le respecte comme la notification */
+async function finReposVoulue(): Promise<boolean> {
+  try {
+    const { timerNotifications } = require('@/lib/timerNotifications');
+    const minuteur = await timerNotifications.loadSettings();
+    return minuteur?.restFinished !== false;
+  } catch {
+    return true;
+  }
+}
+
+/** Son du minuteur YOROI (wizz) pour la notification, comme les autres minuteurs ; 'default' si indisponible */
+function sonFinRepos(): string {
+  try {
+    return (require('@/lib/timerNotifications') as typeof import('@/lib/timerNotifications')).timerSound();
+  } catch {
+    return 'default';
+  }
+}
+
 function depsApp(titre: () => string, corps: () => string = () => ''): DepsRappelRepos {
   return {
     maintenant: () => Date.now(),
-    autorise: rappelReposAutorise,
-    planifier: async (secondes) => {
+    // 31 octobre 2026 : l'autorisation est verifiee dans planifier, par voie (alarme, puis notification)
+    autorise: async () => true,
+    planifier: async (secondes, finMs) => {
+      // 31 octobre 2026 : d'abord l'alarme du systeme (AlarmKit, iOS 26), qui sonne comme le minuteur d'Apple
+      if (await finReposVoulue()) {
+        const fin = typeof finMs === 'number' ? finMs : Date.now() + secondes * 1000;
+        const alarme = await programmerAlarmeRepos(fin, titre(), corps());
+        if (alarme) return alarme;
+      }
+      if (!(await rappelReposAutorise())) return null;
       const Notif = require('expo-notifications');
+      // Sonnerie de fin de repos allumee, sans alarme possible : son du minuteur et niveau urgent (time sensitive)
+      const sonnerie = await chargerSonnerieRepos();
       return Notif.scheduleNotificationAsync({
         // identifiant fixe : un nouveau repos remplace l'ancien, et la fin de seance le retire
         identifier: ID_RAPPEL_REPOS,
-        content: { title: titre(), body: corps(), sound: 'default', data: { type: TYPE_FIN_REPOS } },
+        content: {
+          title: titre(),
+          body: corps(),
+          sound: sonnerie ? sonFinRepos() : 'default',
+          data: { type: TYPE_FIN_REPOS },
+          ...(sonnerie && Platform.OS === 'ios' ? { interruptionLevel: 'timeSensitive' as const } : {}),
+        },
         trigger: { type: Notif.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: secondes },
       });
     },
     annuler: async (id) => {
+      if (estIdAlarme(id)) {
+        await annulerAlarmeRepos(id);
+        return;
+      }
       const Notif = require('expo-notifications');
       await Notif.cancelScheduledNotificationAsync(id);
     },
@@ -201,5 +244,17 @@ export function useRappelFinRepos(finMs: number | null | undefined, titre: strin
 
   useEffect(() => {
     void rappel.current!.changerFin(finMs ?? null);
+  }, [finMs]);
+
+  // 31 octobre 2026 : app ouverte a la fin du repos, l'ecran sonne deja (RestBar) : l'alarme du systeme est
+  // retiree 1,5 s avant, pour ne pas sonner deux fois. Telephone verrouille, ce minuteur JS ne tourne pas :
+  // l'alarme sonne.
+  useEffect(() => {
+    const d = delaiRetraitPremierPlan(finMs, Date.now());
+    if (d === null) return;
+    const t = setTimeout(() => {
+      if (AppState.currentState === 'active' && estIdAlarme(rappel.current?.idProgramme())) void retirerAlarmeRepos();
+    }, d);
+    return () => clearTimeout(t);
   }, [finMs]);
 }
