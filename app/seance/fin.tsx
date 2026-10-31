@@ -14,6 +14,7 @@
  * Parametre : id de la seance enregistree.
  * La demande de note passe par la feuille YOROI 5 secondes apres « Terminer » (lib/v2/bilan/avis.ts).
  */
+import { usePersonnageUtilisateur } from '@/components/yoroi/v2/perso/usePersonnageUtilisateur';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Ornement } from '@/components/yoroi/v2/ornements/Ornement';
 import { BackHandler, Pressable, ScrollView, View } from 'react-native';
@@ -35,7 +36,7 @@ import { createSlotFromIdea, loadSessionExtras, slotIdeaText } from '@/lib/v2/se
 import type { SessionExtras } from '@/lib/v2/seance/extras';
 import { fmtMinutes, fmtNum } from '@/lib/v2/seance/format';
 import { getSeanceResult } from '@/lib/v2/seance/save';
-import { sportImage, sportTint } from '@/lib/v2/seance/sportVisuals';
+import { sportTint } from '@/lib/v2/seance/sportVisuals';
 import { accordSouleve, formatTonnage, setsCount, tonnage } from '@/lib/v2/trainingWeek';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { versUnitePoids } from '@/lib/v2/unitePoids';
@@ -68,6 +69,8 @@ type Reward = { xp: number; records: string[]; weekHeld: boolean; weekXp: number
 type RankParty = { data: CelebrationData; personnage: string };
 
 export default function SeanceFin() {
+  // 31 octobre 2026 (Houari : « soit le personnage de l'utilisateur, soit rien ») : ton personnage, ou rien
+  const persoUtilisateur = usePersonnageUtilisateur();
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const router = useRouter();
@@ -252,7 +255,7 @@ export default function SeanceFin() {
   const ecarts = ligneComparaison(bilan?.comparaison?.lignes);
   const comparaison = bilan?.comparaison && ecarts ? traduire("Par rapport au {0} : {1}", dateCourte(bilan.comparaison.depuis), ecarts) : null;
   const sportPrincipal = String(result?.sport ?? '').split(',')[0].trim();
-  const imageSport = sportPrincipal ? sportImage(sportPrincipal, femme, 0) : null;
+  const imageSport = persoUtilisateur;
 
   const ouvrir = (href: string) => router.push(href as any);
 
