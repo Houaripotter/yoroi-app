@@ -28,6 +28,10 @@ export type StatKey =
   | 'temps_total'
   | 'poids_semaine'
   | 'serie_semaines'
+  /** 31 octobre 2026 : denivele positif (course), repetitions totales (muscu), intensite ressentie sur 10 */
+  | 'denivele'
+  | 'repetitions'
+  | 'intensite'
   | 'exploit';
 
 export type StatValue = {
@@ -63,6 +67,27 @@ export type DonneesSeance = {
   /** secondes par zone, 5 valeurs, ou absent */
   zones?: number[] | null;
   records: RecordCarte[];
+  /**
+   * 31 octobre 2026 (cartes en 6 modeles) : les visuels du sport, lus dans la vraie seance, absents sinon.
+   * trace : le parcours GPS, points ramenes entre 0 et 1 (x vers la droite, y vers le bas), ratio = largeur sur hauteur.
+   */
+  trace?: { points: [number, number][]; ratio: number } | null;
+  /** temps de chaque kilometre, en secondes */
+  splits?: { km: number; secondes: number }[] | null;
+  /** denivele positif, en metres */
+  deniveleM?: number;
+  /** repetitions totales de la seance */
+  repetitions?: number;
+  /** meilleure serie de chaque exercice (charge la plus lourde), les plus lourdes d'abord */
+  meilleures?: { nom: string; poids: number; reps: number }[] | null;
+  /** tonnage de chaque serie de travail, dans l'ordre, pour les barres */
+  barres?: number[] | null;
+  /** frequence cardiaque au fil de la seance, en battements par minute, au plus 60 valeurs */
+  courbeFc?: number[] | null;
+  /** themes techniques saisis (sports de combat) */
+  techniques?: string[] | null;
+  /** intensite ressentie, de 1 a 10 */
+  intensite?: number;
 };
 
 export type RaisonPesee = {
@@ -210,7 +235,13 @@ export type Exploit = {
 
 export type Masque = 'aucun' | 'ecart' | 'pourcentage';
 
-export type ModeleId = 'affiche' | 'bandeau' | 'colonne' | 'ticket' | 'cadre' | 'geant' | 'anneau' | 'minimal' | 'record' | 'semaine';
+/**
+ * 31 octobre 2026 : six modeles proposes, Affiche, Bandeau, Neon nuit, Ticket, Medaille, Tableau de score.
+ * Les anciens ids restent dans le type pour les reglages deja memorises : ils retombent sur l'Affiche.
+ */
+export type ModeleId = 'affiche' | 'bandeau' | 'neon' | 'ticket' | 'medaille' | 'score' | 'colonne' | 'cadre' | 'geant' | 'anneau' | 'minimal' | 'record' | 'semaine';
+/** 31 octobre 2026 : la palette des fonds unis, huit couleurs franches */
+export type CouleurId = 'rouge' | 'bleu' | 'jaune' | 'vert' | 'orange' | 'violet' | 'rose' | 'noir';
 export type FormatId = 'story' | 'post' | 'carre';
 export type FondId =
   | 'scene'
@@ -227,6 +258,8 @@ export type FondId =
   | 'brume'
   | 'noir'
   | 'uni'
+  /** 31 octobre 2026 : fond de couleur unie, la couleur est dans OptionsCarte.couleur */
+  | 'couleur'
   /** 24 octobre 2026 : une de tes scenes (voir lib/v2/cartes/scenesFond.ts) */
   | `scene:${string}`;
 
@@ -234,6 +267,10 @@ export type OptionsCarte = {
   modele: ModeleId;
   format: FormatId;
   fond: FondId;
+  /** 31 octobre 2026 : la couleur du fond uni (et du bandeau, du neon) ; absente, le rouge */
+  couleur?: CouleurId;
+  /** 31 octobre 2026 : le papier du Ticket de caisse, Clair (blanc) ou Sombre (noir) ; absent, Clair */
+  papier?: 'clair' | 'sombre';
   sombre: boolean;
   personnage: boolean;
   masque: Masque;
