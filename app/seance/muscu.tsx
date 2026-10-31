@@ -75,6 +75,7 @@ import type { Prise } from '@/lib/v2/seance/prise';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { DUREE_PASTILLE_MS, PastilleAjout, SeriePrevue } from '@/components/yoroi/v2/seance/SeriePrevue';
+import { correctionPossible, corrigerSerie } from '@/lib/v2/seances/correctionSerie';
 import { BoutonCoachVocal, useCoachVocal } from '@/components/yoroi/v2/seance/CoachVocal';
 import { cibleDefilement } from '@/lib/v2/seances/defilementExo';
 import { completerExercice } from '@/lib/v2/seances/exerciceEnregistre';
@@ -470,6 +471,11 @@ export default function SeanceMuscu() {
   const [serieAjoutee, setSerieAjoutee] = useState<string | null>(null);
   const minuteurAjout = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (minuteurAjout.current) clearTimeout(minuteurAjout.current); }, []);
+  // 31 octobre 2026 : correction d'une serie deja validee (lib/v2/seances/correctionSerie.ts), a part de la serie en cours
+  const [correction, setCorrection] = useState<{ exId: string; setId: string; weight: number; reps: number } | null>(null);
+  const [serieCorrigee, setSerieCorrigee] = useState<string | null>(null);
+  const minuteurCorrige = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (minuteurCorrige.current) clearTimeout(minuteurCorrige.current); }, []);
   const exoVu = useRef<string | null>(null);
   useEffect(() => {
     const id = current?.id ?? null;
@@ -676,6 +682,29 @@ export default function SeanceMuscu() {
     } else {
       impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
     }
+  };
+
+  /** Enregistre la correction : la serie reste validee, sans repos ni pre-remplissage, la serie en cours ne bouge pas */
+  const enregistrerCorrection = () => {
+    if (!draft || !correction) return;
+    const ex = draft.exercises.find((e) => e.id === correction.exId);
+    const avant = ex?.sets.find((x) => x.id === correction.setId);
+    if (!ex || !avant) return setCorrection(null);
+    const h = hist.map.get(normName(ex.name));
+    const essai = corrigerSerie(ex.sets, correction.setId, correction, h);
+    if (!essai) return;
+    const { setId, weight, reps } = correction;
+    updateExercise(ex.id, (e) => ({ ...e, sets: corrigerSerie(e.sets, setId, { weight, reps }, h)?.sets ?? e.sets }));
+    setCorrection(null);
+    if (essai.record && !avant.record) {
+      setFreshRecord(setId);
+      notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+    } else {
+      impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+    }
+    setSerieCorrigee(setId);
+    if (minuteurCorrige.current) clearTimeout(minuteurCorrige.current);
+    minuteurCorrige.current = setTimeout(() => setSerieCorrigee(null), DUREE_PASTILLE_MS);
   };
 
   /**
@@ -1285,6 +1314,45 @@ export default function SeanceMuscu() {
                   </View>
                 );
               }
+              // 31 octobre 2026 : une serie validee touchee s'ouvre en correction ici, les autres lignes restent visibles
+              if (s.done && correction && correction.exId === current.id && correction.setId === s.id) {
+                return (
+                  <View key={s.id} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 2, borderColor: ton('menthe').encre, padding: 14, gap: 12 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 }}>
+                      <View style={{ minWidth: 32, height: 32, paddingHorizontal: 8, borderRadius: 12, backgroundColor: ton('menthe').fond, alignItems: 'center', justifyContent: 'center' }}>
+                        <Ink size={15} weight="black" color={ton('menthe').encre}>{String(i + 1)}</Ink>
+                      </View>
+                      <Ink size={16} weight="black" style={{ flex: 1 }}>{traduire('Corriger la série {0}', i + 1)}</Ink>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                      <View style={{ flex: 1 }}>
+                        <Stepper layout="stack" value={saisieDepuisKg(correction.weight, unite)} step={lb ? 2 : 1} fine={lb ? 1 : 0.5} saut={lb ? 20 : 10} max={lb ? 1100 : 500} decimals unit={lb ? traduire('livres') : traduire('kilos')} size={38} button={50} uniteForte={lb ? traduire('LB') : traduire('KG')} onChange={(v) => setCorrection((x) => (x ? { ...x, weight: kgDepuisSaisie(v, unite) } : x))} />
+                      </View>
+                      <View style={{ width: 1, backgroundColor: c.divider, marginVertical: 6 }} />
+                      <View style={{ flex: 1 }}>
+                        <Stepper layout="stack" value={correction.reps} step={1} max={200} unit={traduire('répétitions')} size={38} button={50} hint={traduire('répétitions')} onChange={(v) => setCorrection((x) => (x ? { ...x, reps: v } : x))} />
+                      </View>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                      <Pressable onPress={() => setCorrection(null)} accessibilityRole="button" accessibilityLabel={traduire('Annuler')} style={({ pressed }) => ({ minHeight: 58, paddingHorizontal: 18, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.fillSoft })}>
+                        <Ink size={15} weight="extraBold" color={c.textSecondary}>{traduire('Annuler')}</Ink>
+                      </Pressable>
+                      <View style={{ flex: 1 }}>
+                        <BoutonPrincipal
+                          onPress={enregistrerCorrection}
+                          disabled={!correctionPossible(correction)}
+                          accessibilityLabel={traduire('Enregistrer la correction de la série {0}', i + 1)}
+                          label={traduire('Enregistrer')}
+                          hauteur={58}
+                          rayon={20}
+                          tailleTexte={17}
+                          icone={(col) => <Icon name="check" size={24} color={col} strokeWidth={3} />}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                );
+              }
               const pending = !s.done;
               // 31 octobre 2026 : les series prevues apres celle en cours se voient toutes, en petit, sous la carte
               // (avant : une phrase grise « Puis encore 3 series prevues ») ; celle qu'on vient d'ajouter arrive animee
@@ -1306,7 +1374,9 @@ export default function SeanceMuscu() {
                 <Pressable
                   key={s.id}
                   onPress={() => {
-                    if (s.done) setValue(current.id, s.id, { done: false, record: false });
+                    // 31 octobre 2026 : plus de « devalidation » (la serie redevenait celle en cours et, pendant le repos,
+                    // plus aucun bouton pour la revalider) : elle s'ouvre en correction, la serie en cours ne bouge pas
+                    if (s.done) setCorrection({ exId: current.id, setId: s.id, weight: s.weight, reps: s.reps });
                   }}
                   onLongPress={() => askSetAction(current, i)}
                   accessibilityRole="button"
@@ -1332,6 +1402,11 @@ export default function SeanceMuscu() {
                     <Pressable onPress={() => supprimerSerie(current, i)} accessibilityRole="button" accessibilityLabel={traduire('Supprimer la série {0}', i + 1)} hitSlop={6} style={({ pressed }) => ({ width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? blancA(0.7) : 'transparent' })}>
                       <Icon name="close" size={13} color={c.textMuted} strokeWidth={2.6} />
                     </Pressable>
+                  ) : null}
+                  {serieCorrigee === s.id ? (
+                    <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: -14, zIndex: 2, alignItems: 'center' }}>
+                      <PastilleAjout cle={`corrigee-${s.id}`} texte={traduire('Série {0} corrigée', i + 1)} />
+                    </View>
                   ) : null}
                 </Pressable>
               );
