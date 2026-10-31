@@ -1,42 +1,37 @@
 /**
- * Cartes a partager (nuit du 14 octobre 2026) : le dessin d'une carte, toujours a 360 points de large
+ * Cartes a partager : le dessin d'une carte, toujours a 360 points de large
  * (story 360 x 640, post 360 x 450, carre 360 x 360), exportee en 1080 de large (capture x 3).
- * Dix modeles tres differents : Affiche, Minimal, Record, Semaine, Objectif, Bandeau, Colonne, Ticket, Polaroid, Geant.
- * Chaque bloc n'apparait que si sa donnee existe. Rouge seulement pour un record.
- * Tailles de texte calculees a la longueur (adjustsFontSizeToFit ne marche pas sur le web) : rien n'est coupe.
- * 17 octobre 2026 : la date tout en haut, le club de la seance (logo rond et nom) s'il y en a un, le sport en grand ;
- * le milieu reste libre pour la photo ou la scene ; les chiffres regroupes en bas ; la signature collee en bas,
- * sur le degrade du fond ; le record avec son trophee dore pose avec les chiffres, sans cadre rouge.
- * 17 octobre 2026 (cartes v4) : chaque modele a un nom parlant et une ligne d'explication ; Anneau devient Objectif et
- * n'est propose qu'avec un vrai objectif ; trois modeles en plus : Minimal (un seul grand chiffre), Record (le record
- * en vedette avec le trophee et l'ancien record), Semaine (tes 7 jours, les sports faits et tes clubs).
- * `sansPersonne` retire toute personne de la carte : ni personnage, ni ta photo de fond.
- * 17 octobre 2026 : carte Avant apres (tes deux photos de corps), dessinee par AvantApresVue, sans personnage ni decor.
+ * 31 octobre 2026 : six modeles, ceux choisis parmi les 20 maquettes (_propositions/cartes_partage_2026-10-31) :
+ * Affiche (par defaut), Bandeau, Neon nuit, Ticket de caisse, Medaille, Tableau de score.
+ * Le fond est ta photo ou une couleur franche (8 au choix) ; plus de scenes ni de personnage sur la carte.
+ * Chaque modele se decline par sport : le trace GPS s'il existe (sinon tes kilometres ou le sticker du sport),
+ * tes meilleures series en musculation, tes techniques en JJB. Une donnee absente ne donne aucune ligne.
+ * Le pied (logo, YOROI, badges des stores) remonte de 70 points en Story, au-dessus de la barre de reponse d'Instagram.
+ * L'ancien dessin (10 modeles, scenes, personnage) est archive dans _archive_ancien_design_2026-10-09/cartes_10_modeles_2026-10-31.
  */
-import React, { forwardRef, useState } from 'react';
+import React, { forwardRef, useId } from 'react';
 import { Image, Platform, View } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import type { ImageSourcePropType, TextStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle, Line as SvgLine, Path } from 'react-native-svg';
+import Svg, { Circle, Defs, G, Line as SvgLine, Path, Pattern, Polygon, RadialGradient, Rect, Stop, Text as SvgText, TextPath } from 'react-native-svg';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { TropheeRecord } from '@/components/yoroi/v2/charts/core';
 import type { FontWeightKey } from '@/components/yoroi/tokens';
-import { chiffresAffiches, nombre, titreCarte } from '@/lib/v2/cartes/chiffres';
+import { chiffresAffiches, titreCarte } from '@/lib/v2/cartes/chiffres';
 import { exploitVisible } from '@/lib/v2/cartes/exploits';
 import { getClubLogoSource } from '@/lib/sports';
 import type { CarteData, Exploit, FormatId, Grand, ModeleId, OptionsCarte, StatValue } from '@/lib/v2/cartes/types';
-import { BADGES, MENTION_STORES, SLOGANS, fondMeta } from './fonds';
-import { SCENE_FOCUS, sceneForNow } from '@/components/yoroi/v2/accueil/images';
-import { devNow } from '@/lib/v2/creator/devClock';
-import type { SceneId } from '@/lib/v2/espace';
-import { cadrageScene, sceneDuFond, voilesFond } from '@/lib/v2/cartes/scenesFond';
+import { BADGES } from './fonds';
 import { AvantApresVue } from './AvantApresVue';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
-import { chargeGrand, donneesEnUnite, exploitEnUnite, statsEnUnite } from '@/lib/v2/cartes/unite';
+import { donneesEnUnite, exploitEnUnite, statsEnUnite } from '@/lib/v2/cartes/unite';
 import type { UnitePoids } from '@/lib/v2/unitePoids';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
-import { sansTiret } from '@/lib/v2/texte/sansTiret';
+import { couleurDe, rgba } from '@/lib/v2/cartes/couleurs';
+import type { CouleurCarte } from '@/lib/v2/cartes/couleurs';
+import { blocDetail, ligneRecord, numeroTicket, stickerDeCarte, visuelDuSport } from '@/lib/v2/cartes/detailsSport';
+import type { BlocDetail, VisuelSport } from '@/lib/v2/cartes/detailsSport';
+import { STICKERS } from '@/components/yoroi/v2/stickers';
+import { traduire } from '@/lib/i18n/tr';
 import { ZONES_PLEIN } from '@/lib/v2/zones/couleursZones';
 
 export const CARTE_W = 360;
@@ -47,55 +42,29 @@ export const EXPORT: Record<FormatId, { w: number; h: number }> = {
   post: { w: 1080, h: 1350 },
   carre: { w: 1080, h: 1080 },
 };
-
-const LOGO = require('@/assets/logo d\'app/yoroi-logo2.png');
-
-export type Palette = {
-  ink: string;
-  ink2: string;
-  muted: string;
-  line: string;
-  panel: string;
-  accent: string;
-  record: string;
-  track: string;
-  shadow: TextStyle;
+/** 31 octobre 2026 : en Story, le pied remonte de 70 points (210 pixels) pour ne pas passer sous la barre de reponse */
+export const REMONTEE_PIED_STORY = 70;
+/** Marges du haut et du bas de chaque format, pied compris */
+export const MARGES: Record<FormatId, { haut: number; bas: number }> = {
+  story: { haut: 50, bas: 16 + REMONTEE_PIED_STORY },
+  post: { haut: 22, bas: 16 },
+  carre: { haut: 18, bas: 14 },
 };
 
-export function paletteDe(sombre: boolean): Palette {
-  return sombre
-    ? {
-        ink: '#FFFFFF',
-        ink2: 'rgba(255,255,255,0.82)',
-        muted: 'rgba(255,255,255,0.72)',
-        line: 'rgba(255,255,255,0.24)',
-        panel: 'rgba(16,17,22,0.86)',
-        accent: '#A9BDE8',
-        record: '#E5484F',
-        track: 'rgba(255,255,255,0.3)',
-        shadow: { textShadowColor: 'rgba(0,0,0,0.45)', textShadowRadius: 10, textShadowOffset: { width: 0, height: 1 } },
-      }
-    : {
-        ink: '#1D2029',
-        ink2: '#3F434F',
-        muted: '#6B6E78',
-        line: 'rgba(29,32,41,0.16)',
-        panel: 'rgba(255,255,255,0.92)',
-        accent: '#2C4A84',
-        record: '#B0282E',
-        track: 'rgba(29,32,41,0.16)',
-        shadow: {},
-      };
-}
+const LOGO = require('@/assets/logo d\'app/yoroi-logo2.png');
+const OR = { clair: '#FFE27A', milieu: '#F5C518', fonce: '#C8930E', bord: '#B07A06', encre: '#3A2600' };
+const LED = '#FFD21F';
+const BLANC = '#FFFFFF';
+const NOIR = '#0B0B0D';
+const ENCRE_PAPIER = '#14161C';
 
 export type VisuelsCarte = {
-  /** image de la scene d'accueil */
+  /** image de la scene d'accueil (plus dessinee depuis le 31 octobre 2026, gardee pour les appels existants) */
   scene?: ImageSourcePropType | null;
-  /** 24 octobre 2026 : l'id de la scene d'accueil, pour cadrer la carte sur son centre d'interet */
-  sceneId?: SceneId | null;
+  sceneId?: string | null;
   /** photo personnelle (uri) */
   photo?: string | null;
-  /** personnage de l'utilisateur, null si « Sans personnage » */
+  /** personnage de l'utilisateur (plus dessine depuis le 31 octobre 2026) */
   personnage?: ImageSourcePropType | null;
 };
 
@@ -104,7 +73,14 @@ type Props = { data: CarteData; options: OptionsCarte; visuels: VisuelsCarte };
 /** Taille de police pour que le texte tienne sur une ligne dans la largeur donnee */
 export function fit(text: string, largeur: number, max: number, k = 0.6): number {
   const n = Math.max(1, text.length);
-  return Math.max(10, Math.min(max, Math.floor(largeur / (n * k))));
+  return Math.max(9, Math.min(max, Math.floor(largeur / (n * k))));
+}
+
+/** Le gros chiffre : valeur et unite, taille calculee pour tenir dans la largeur */
+export function tailleHeros(g: Grand, largeur: number, max: number): number {
+  const u = g.unit ?? '';
+  const n = g.value.length + (u ? u.length * 0.36 + 0.3 : 0);
+  return Math.max(20, Math.min(max, Math.floor(largeur / (n * 0.62))));
 }
 
 function T({ children, size, weight = 'medium', color, style, lines = 1 }: { children: React.ReactNode; size: number; weight?: FontWeightKey; color: string; style?: TextStyle | TextStyle[]; lines?: number }) {
@@ -115,80 +91,64 @@ function T({ children, size, weight = 'medium', color, style, lines = 1 }: { chi
   );
 }
 
+/** Petit libelle en capitales espacees (DISTANCE, DUREE...) */
+function Lbl({ children, color, size = 10.5, centre, style }: { children: string; color: string; size?: number; centre?: boolean; style?: TextStyle }) {
+  return <T size={size} weight="black" color={color} style={[{ letterSpacing: size * 0.14, textAlign: centre ? 'center' : 'left' }, style ?? {}]}>{children.toUpperCase()}</T>;
+}
+
+function lueur(couleur: string, r = 16): TextStyle {
+  return { textShadowColor: couleur, textShadowRadius: r, textShadowOffset: { width: 0, height: 0 } };
+}
+
+/** L'encre posee sur l'encre : la couleur du fond, ou le blanc si le fond est noir ou blanc */
+function contreEncre(ink: string, coul: CouleurCarte): string {
+  if (ink !== BLANC) return BLANC;
+  return coul.fond === NOIR ? ENCRE_PAPIER : coul.fond;
+}
+
 // ============================================
-// FOND
+// CONTEXTE D'UN DESSIN
 // ============================================
 
-/** Le fond est une image (scene, photo, decor) : les voiles du haut et du bas la rendent lisible */
-function fondImage(o: OptionsCarte, v: VisuelsCarte): ImageSourcePropType | null {
-  const meta = fondMeta(o.fond);
-  // 24 octobre 2026 : une de tes scenes choisie dans « Tes scènes », en image fixe (jamais la video)
-  const sid = sceneDuFond(o.fond);
-  if (sid) return sceneForNow(sid, devNow());
-  return o.fond === 'photo' && v.photo ? { uri: v.photo } : o.fond === 'scene' ? v.scene ?? null : meta.image ?? null;
+type Ctx = {
+  d: CarteData;
+  o: OptionsCarte;
+  W: number;
+  H: number;
+  L: number;
+  story: boolean;
+  carre: boolean;
+  stats: StatValue[];
+  titre: string;
+  u: UnitePoids;
+  coul: CouleurCarte;
+  /** ta photo en fond, null sinon */
+  photo: string | null;
+  /** encre du texte pose sur le fond */
+  ink: string;
+  padTop: number;
+  padBas: number;
+};
+
+const PAD = 24;
+
+/** L'image du fond (expo-image sur iPhone, avec une cle de recyclage : aucune image precedente ne reste) */
+function Photo({ uri }: { uri: string }) {
+  const plein = { position: 'absolute' as const, left: 0, top: 0, right: 0, bottom: 0, width: '100%' as const, height: '100%' as const };
+  if (Platform.OS === 'ios') return <ExpoImage key={uri} recyclingKey={uri} source={{ uri }} style={plein} contentFit="cover" transition={0} cachePolicy="memory-disk" />;
+  return <Image key={uri} source={{ uri }} style={plein} resizeMode="cover" />;
 }
 
-/** Centre d'interet de la scene du fond (fraction de sa largeur), null si le fond n'est pas une scene */
-function focusDuFond(o: OptionsCarte, v: VisuelsCarte): number | null {
-  const sid = sceneDuFond(o.fond) ?? (o.fond === 'scene' ? v.sceneId ?? null : null);
-  return sid ? SCENE_FOCUS[sid] ?? 0.5 : null;
-}
-
-/** Cle stable d'une image de fond : le numero du require, ou l'adresse de la photo */
-function cleImage(src: ImageSourcePropType): string {
-  if (typeof src === 'number') return `r${src}`;
-  const u = (src as { uri?: string }).uri;
-  return u ? `u${u}` : 'x';
-}
-
-/**
- * L'image du fond (bug du 17 octobre 2026) : sur iPhone, dans les vignettes reduites de « Tes cartes du moment »,
- * la vue native recyclee d'un badge des stores restait affichee a la place de la scene, etiree et floue
- * (« charg », « PONIB », « oog »), et la scene ne s'affichait jamais. Sur iOS le fond passe par expo-image,
- * avec une cle de recyclage propre a chaque image : rien de l'image precedente ne reste. Partout ailleurs
- * l'Image de React Native est remontee a chaque changement de source. Le degrade neutre reste toujours dessous :
- * pendant le chargement, c'est lui qu'on voit.
- */
-function ImageFond({ src, cadrage }: { src: ImageSourcePropType; cadrage?: { width: number; left: number } | null }) {
-  const cle = cleImage(src);
-  // une scene paysage dans la carte portrait : elle glisse pour garder son centre d'interet au milieu
-  const plein = cadrage
-    ? { position: 'absolute' as const, left: cadrage.left, top: 0, width: cadrage.width, height: '100%' as const }
-    : { position: 'absolute' as const, left: 0, top: 0, right: 0, bottom: 0, width: '100%' as const, height: '100%' as const };
-  if (Platform.OS === 'ios') {
-    return <ExpoImage key={cle} recyclingKey={cle} source={src as never} style={plein} contentFit="cover" transition={0} cachePolicy="memory-disk" />;
-  }
-  return <Image key={cle} source={src} style={plein} resizeMode="cover" />;
-}
-
-function Fond({ o, v, h, w = CARTE_W, fenetre, fort }: { o: OptionsCarte; v: VisuelsCarte; h: number; w?: number; fenetre?: boolean; fort?: boolean }) {
-  const meta = fondMeta(o.fond);
-  const src = fondImage(o, v);
-  const degrade = meta.degrade ?? (o.sombre ? ['#2A2E39', '#121318'] : ['#F6F5F0', '#E2DFD6']);
-  const voile = o.sombre ? '10,11,14' : '246,245,240';
-  // un fond uni de l'autre ton recoit un voile plein, pour que le texte reste lisible
-  const contraire = !src && !!meta.degrade && (o.sombre ? !!meta.clair : !meta.clair);
-  const photo = o.fond === 'photo';
-  // 17 octobre : le milieu reste clair pour voir la photo ou la scene ; le texte vit en haut et en bas, sur ses degrades
-  // 24 octobre : voiles nettement alleges (valeurs et anciennes valeurs dans voilesFond)
-  const vf = voilesFond(o.sombre, photo, fort);
-  const focus = src ? focusDuFond(o, v) : null;
-  const cadrage = focus !== null ? cadrageScene(focus, w, h) : null;
+/** Le fond : couleur unie, ou ta photo avec un voile noir dose pour que le texte blanc reste lisible */
+function Fond({ c, voile = 0.42, bas = 0.55, fond }: { c: Ctx; voile?: number; bas?: number; fond?: string }) {
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, height: h }}>
-      {/* le degrade toujours dessous : fond neutre tant que l'image n'est pas la */}
-      <LinearGradient colors={degrade as [string, string]} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-      {src ? <ImageFond src={src} cadrage={cadrage} /> : null}
-      {contraire ? <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, backgroundColor: `rgba(${voile},0.84)` }} /> : null}
-      {src && !fenetre ? (
+    <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, backgroundColor: fond ?? c.coul.fond }}>
+      {c.photo ? (
         <>
-          {vf.general > 0 ? <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, backgroundColor: `rgba(${voile},${vf.general})` }} /> : null}
-          <LinearGradient colors={[`rgba(${voile},${vf.haut})`, `rgba(${voile},0)`]} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: h * vf.hautHauteur }} />
-          <LinearGradient
-            colors={[`rgba(${voile},0)`, `rgba(${voile},${vf.basMilieu})`, `rgba(${voile},${vf.basFin})`]}
-            locations={[0, vf.basMilieuPos, 1]}
-            style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: h * vf.basHauteur }}
-          />
+          <Photo uri={c.photo} />
+          <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, backgroundColor: `rgba(0,0,0,${voile})` }} />
+          <LinearGradient colors={['rgba(0,0,0,0)', `rgba(0,0,0,${bas})`]} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '55%' }} />
+          <LinearGradient colors={['rgba(0,0,0,0.35)', 'rgba(0,0,0,0)']} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: '22%' }} />
         </>
       ) : null}
     </View>
@@ -196,147 +156,8 @@ function Fond({ o, v, h, w = CARTE_W, fenetre, fort }: { o: OptionsCarte; v: Vis
 }
 
 // ============================================
-// PETITS BLOCS
+// PETITS BLOCS COMMUNS
 // ============================================
-
-/** La signature, collee en bas de la carte : logo, YOROI : Musculation, MMA, Boxe, badges des stores */
-export function Signature({ pal, slogan, compact }: { pal: Palette; slogan: number; compact?: boolean }) {
-  const s = SLOGANS[slogan] ?? SLOGANS[0];
-  const logo = compact ? 30 : 36;
-  const bh = compact ? 17 : 20;
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }} accessibilityLabel={`${s}. ${MENTION_STORES}`}>
-      <Image source={LOGO} style={{ width: logo, height: logo, borderRadius: logo * 0.24 }} />
-      <View style={{ flex: 1, minWidth: 0, gap: compact ? 3 : 4 }}>
-        <T size={fit(s, 250, compact ? 12 : 14, 0.52)} weight="extraBold" color={pal.ink} style={pal.shadow}>{s}</T>
-        <View style={{ flexDirection: 'row', gap: 6 }}>
-          <Image source={BADGES.apple.image} style={{ width: Math.round(bh * BADGES.apple.ratio), height: bh }} resizeMode="contain" />
-          <Image source={BADGES.google.image} style={{ width: Math.round(bh * BADGES.google.ratio), height: bh }} resizeMode="contain" />
-        </View>
-      </View>
-    </View>
-  );
-}
-
-function Valeur({ s, size, pal, unitRatio = 0.32, align }: { s: StatValue; size: number; pal: Palette; unitRatio?: number; align?: 'flex-start' | 'flex-end' | 'center' }) {
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: Math.max(3, size * 0.06), justifyContent: align }}>
-      <T size={size} weight="black" color={pal.ink} style={[{ letterSpacing: -size * 0.04, fontVariant: ['tabular-nums'], lineHeight: Math.round(size * 1.08) }, pal.shadow]}>{s.value}</T>
-      {s.unit ? <T size={Math.max(11, Math.round(size * unitRatio))} weight="extraBold" color={pal.ink2} style={pal.shadow}>{s.unit}</T> : null}
-    </View>
-  );
-}
-
-/** Le chiffre et son libelle ; les zones sont dessinees en barre */
-function Chiffre({ s, size, pal, largeur, align = 'flex-start', labelEnHaut, hero }: { s: StatValue; size: number; pal: Palette; largeur: number; align?: 'flex-start' | 'flex-end' | 'center'; labelEnHaut?: boolean; hero?: boolean }) {
-  const txt = `${s.value}${s.unit ? ` ${s.unit}` : ''}`;
-  const sz = Math.min(size, fit(txt, largeur, size, 0.6));
-  const label = (
-    <T size={hero ? 15 : Math.max(11, Math.min(13, Math.round(size * 0.4)))} weight={hero ? 'extraBold' : 'bold'} color={hero ? pal.ink2 : pal.muted} style={[{ textAlign: align === 'flex-end' ? 'right' : align === 'center' ? 'center' : 'left' }, pal.shadow]}>
-      {traduire(s.label)}
-    </T>
-  );
-  if (s.key === 'zones' && s.zones) {
-    return (
-      <View style={{ gap: 4, width: largeur, alignItems: align }}>
-        {labelEnHaut ? label : null}
-        <T size={Math.min(sz, fit(s.value, largeur, sz, 0.62))} weight="black" color={pal.ink} style={pal.shadow}>{s.value}</T>
-        <Zones z={s.zones} largeur={Math.min(largeur, 150)} pal={pal} />
-        {labelEnHaut ? null : label}
-      </View>
-    );
-  }
-  return (
-    <View style={{ gap: 1, alignItems: align, maxWidth: largeur }}>
-      {labelEnHaut ? label : null}
-      <Valeur s={s} size={sz} pal={pal} align={align} />
-      {labelEnHaut ? null : label}
-    </View>
-  );
-}
-
-// 28 octobre 2026 : la palette unique des zones (lib/v2/zones/couleursZones.ts)
-const ZONE_COULEURS = ZONES_PLEIN;
-
-function Zones({ z, largeur, pal }: { z: number[]; largeur: number; pal: Palette }) {
-  const total = z.reduce((a, b) => a + b, 0) || 1;
-  return (
-    <View style={{ flexDirection: 'row', width: largeur, height: 8, borderRadius: 4, overflow: 'hidden', backgroundColor: pal.track, gap: 2 }}>
-      {z.map((x, i) => (x > 0 ? <View key={i} style={{ flex: x / total, backgroundColor: ZONE_COULEURS[i] }} /> : null))}
-    </View>
-  );
-}
-
-const LETTRES = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-
-function Jours({ jours, pal, taille = 30 }: { jours: boolean[]; pal: Palette; taille?: number }) {
-  return (
-    <View style={{ flexDirection: 'row', gap: Math.round(taille * 0.22) }}>
-      {jours.map((on, i) => (
-        <View key={i} style={{ alignItems: 'center', gap: 4 }}>
-          <View style={{ width: taille, height: taille, borderRadius: taille / 2, backgroundColor: on ? pal.ink : pal.ink === '#FFFFFF' ? 'rgba(10,11,14,0.35)' : 'rgba(255,255,255,0.55)', borderWidth: 1.5, borderColor: on ? pal.ink : pal.line, alignItems: 'center', justifyContent: 'center' }}>
-            {on ? (
-              <Svg width={taille * 0.5} height={taille * 0.5} viewBox="0 0 24 24">
-                <Path d="M5 12.5l4.5 4.5L19 7.5" stroke={pal.ink === '#FFFFFF' ? '#14161C' : '#FFFFFF'} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
-            ) : null}
-          </View>
-          <T size={10} weight="bold" color={pal.muted} style={pal.shadow}>{LETTRES[i]}</T>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-/**
- * Le record, pose avec les chiffres (17 octobre : plus de cadre rouge au milieu de l'image).
- * Le trophee dore en grand, « Nouveau record » en rouge, l'exercice et la charge en dessous.
- */
-function Record({ data, pal, largeur = 300, centre }: { data: CarteData; pal: Palette; largeur?: number; centre?: boolean }) {
-  const r = data.seance?.records?.[0];
-  if (!r) return null;
-  const plus = (data.seance?.records?.length ?? 0) - 1;
-  const texte = plus > 0 ? traduirePluriel(plus, plus > 1, "{0} et {1} autre", "{0} et {1} autres", sansTiret(r.nom), plus) : `${sansTiret(r.nom)}, ${r.texte}`;
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, maxWidth: largeur, alignSelf: centre ? 'center' : 'flex-start' }}>
-      <TropheeRecord size={30} couleurs={{ fond: '#C9A13B', trophee: '#FFFFFF' }} />
-      <View style={{ flexShrink: 1, minWidth: 0, gap: 1 }}>
-        {/* sur une image sombre le rouge se perd : le libelle prend l'or du trophee ; sur clair, le rouge des records */}
-        <T size={12} weight="black" color={pal.ink === '#FFFFFF' ? '#F2C75C' : pal.record} style={[{ letterSpacing: 0.2 }, pal.shadow]}>{plus > 0 ? traduire('Nouveaux records') : traduire('Nouveau record')}</T>
-        <T size={13} weight="extraBold" color={pal.ink} lines={2} style={pal.shadow}>{texte}</T>
-      </View>
-    </View>
-  );
-}
-
-function BarreObjectif({ data, pal, largeur, legende = true }: { data: CarteData; pal: Palette; largeur: number; legende?: boolean }) {
-  const p = data.pesee;
-  if (!p || !p.objectif || !p.depart || Math.abs(p.depart - p.objectif) < 0.1) return null;
-  const losing = p.objectif < p.depart;
-  const pct = Math.max(0, Math.min(1, (losing ? p.depart - p.poids : p.poids - p.depart) / Math.abs(p.depart - p.objectif)));
-  return (
-    <View style={{ width: largeur, gap: 5 }}>
-      <View style={{ height: 8, borderRadius: 4, backgroundColor: pal.track, overflow: 'hidden' }}>
-        <View style={{ width: `${Math.max(3, pct * 100)}%`, height: 8, borderRadius: 4, backgroundColor: pal.ink }} />
-      </View>
-      {legende ? <T size={11} weight="bold" color={pal.muted} style={pal.shadow}>{traduire("{0} % du chemin vers ton objectif", Math.round(pct * 100))}</T> : null}
-    </View>
-  );
-}
-
-/** Le bloc propre au moment : jours de la semaine, barre d'objectif, record */
-function Extra({ data, pal, largeur, jours = 30, stats }: { data: CarteData; pal: Palette; largeur: number; jours?: number; stats?: StatValue[] }) {
-  if (data.moment === 'semaine' && data.semaine) return <Jours jours={data.semaine.jours} pal={pal} taille={jours} />;
-  // la legende disparait quand le pourcentage est deja un des chiffres
-  if (data.moment === 'pesee') return <BarreObjectif data={data} pal={pal} largeur={largeur} legende={!stats?.some((x) => x.key === 'objectif_pct')} />;
-  return <Record data={data} pal={pal} largeur={largeur} />;
-}
-
-function aUnExtra(data: CarteData): boolean {
-  if (data.moment === 'semaine') return !!data.semaine;
-  if (data.moment === 'pesee') return !!(data.pesee?.objectif && data.pesee?.depart);
-  return !!data.seance?.records?.length;
-}
 
 /** Initiales d'un club sans logo : « Team Marseille » donne « TM » */
 export function initialesClub(nom: string): string {
@@ -344,793 +165,901 @@ export function initialesClub(nom: string): string {
   return (mots.length > 1 ? mots[0][0] + mots[1][0] : (mots[0] ?? '').slice(0, 2)).toUpperCase();
 }
 
-/** Le club de la seance : son logo rond (ou ses initiales) et son nom, sur une pastille lisible sur une photo */
-function ClubPuce({ club, pal, max }: { club: NonNullable<CarteData['club']>; pal: Palette; max: number }) {
+/** Le club que tu as saisi : son logo rond (ou ses initiales) et son nom */
+function ClubPuce({ club, ink, max }: { club: NonNullable<CarteData['club']>; ink: string; max: number }) {
   const src = club.logo ? getClubLogoSource(club.logo) : null;
-  const sombre = pal.ink === '#FFFFFF';
-  const D = 26;
+  const D = 22;
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, maxWidth: max, height: 32, paddingLeft: 3, paddingRight: 11, borderRadius: 16, backgroundColor: sombre ? 'rgba(10,11,14,0.46)' : 'rgba(255,255,255,0.78)', borderWidth: 1, borderColor: pal.line }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, maxWidth: max, height: 28, paddingLeft: 3, paddingRight: 10, borderRadius: 14, backgroundColor: rgba(ink === BLANC ? '#000000' : '#FFFFFF', 0.22), borderWidth: 1, borderColor: rgba(ink, 0.3) }}>
       {src ? (
-        <Image source={src} style={{ width: D, height: D, borderRadius: D / 2, backgroundColor: '#FFFFFF' }} resizeMode="cover" />
+        <Image source={src} style={{ width: D, height: D, borderRadius: D / 2, backgroundColor: BLANC }} resizeMode="cover" />
       ) : (
-        <View style={{ width: D, height: D, borderRadius: D / 2, backgroundColor: pal.ink, alignItems: 'center', justifyContent: 'center' }}>
-          <T size={10} weight="black" color={sombre ? '#14161C' : '#FFFFFF'}>{initialesClub(club.nom)}</T>
+        <View style={{ width: D, height: D, borderRadius: D / 2, backgroundColor: ink, alignItems: 'center', justifyContent: 'center' }}>
+          <T size={9} weight="black" color={ink === BLANC ? ENCRE_PAPIER : BLANC}>{initialesClub(club.nom)}</T>
         </View>
       )}
-      <T size={12} weight="extraBold" color={pal.ink} style={{ flexShrink: 1 }}>{traduire(club.nom)}</T>
+      <T size={11} weight="extraBold" color={ink} style={{ flexShrink: 1 }}>{club.nom}</T>
     </View>
   );
 }
 
-/**
- * Le haut de chaque carte (17 octobre) : la date tout en haut, le club de la seance a droite s'il y en a un,
- * puis le sport (ou le titre du moment) en grand. Centre : le club, la date, puis le titre, les uns sous les autres.
- */
-function Haut({ d, titre, pal, largeur, max = 28, centre, sansTitre }: { d: CarteData; titre: string; pal: Palette; largeur: number; max?: number; centre?: boolean; sansTitre?: boolean }) {
-  const club = d.club?.nom ? <ClubPuce club={d.club} pal={pal} max={centre ? largeur : Math.round(largeur * 0.56)} /> : null;
-  const date = <T size={13} weight="extraBold" color={pal.ink2} style={[{ flexShrink: 1, letterSpacing: 0.1, textAlign: centre ? 'center' : 'left' }, pal.shadow]}>{d.sousTitre}</T>;
+/** Le haut : la date en capitales, le nom de la seance en grand ; le club a droite s'il y en a un */
+function EnTete({ c, ink, centre, max, sansTitre }: { c: Ctx; ink: string; centre?: boolean; max?: number; sansTitre?: boolean }) {
+  const m = max ?? (c.story ? 28 : c.carre ? 21 : 24);
+  const club = c.d.club?.nom ? <ClubPuce club={c.d.club} ink={ink} max={centre ? c.L : Math.round(c.L * 0.5)} /> : null;
+  const date = <Lbl color={rgba(ink, 0.88)} size={c.story ? 11.5 : 10.5} centre={centre} style={{ flexShrink: 1 }}>{c.d.sousTitre}</Lbl>;
   return (
-    <View style={{ width: largeur, gap: 6, alignItems: centre ? 'center' : 'stretch' }}>
+    <View style={{ gap: 3, alignItems: centre ? 'center' : 'stretch' }}>
       {centre ? (
         <>
-          {club}
+          {club ? <View style={{ marginBottom: 6 }}>{club}</View> : null}
           {date}
         </>
       ) : (
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, minHeight: club ? 32 : undefined }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           {date}
           {club}
         </View>
       )}
-      {sansTitre ? null : <T size={fit(titre, largeur, max, 0.58)} weight="black" color={pal.ink} style={[{ letterSpacing: -0.5, textAlign: centre ? 'center' : 'left' }, pal.shadow]}>{titre}</T>}
+      {sansTitre ? null : <T size={fit(c.titre, c.L, m, 0.6)} weight="black" color={ink} style={{ letterSpacing: -0.4, textAlign: centre ? 'center' : 'left' }}>{c.titre}</T>}
+    </View>
+  );
+}
+
+/** Un chiffre : valeur et unite sur la meme ligne de base */
+function Valeur({ value, unit, size, color, unitColor, style, align }: { value: string; unit?: string; size: number; color: string; unitColor?: string; style?: TextStyle; align?: 'flex-start' | 'center' | 'flex-end' }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: Math.max(2, size * 0.05), justifyContent: align }}>
+      <T size={size} weight="black" color={color} style={[{ letterSpacing: -size * 0.045, fontVariant: ['tabular-nums'], lineHeight: Math.round(size * 1.06) }, style ?? {}]}>{value}</T>
+      {unit ? <T size={Math.max(10, Math.round(size * 0.34))} weight="black" color={unitColor ?? color} style={style}>{unit}</T> : null}
+    </View>
+  );
+}
+
+/** Le chiffre vedette : son libelle en capitales au-dessus (ou dessous), la valeur en enorme */
+function Hero({ s, largeur, max, ink, labelColor, centre, glow, labelDessous }: { s: { value: string; unit?: string; label?: string }; largeur: number; max: number; ink: string; labelColor?: string; centre?: boolean; glow?: string; labelDessous?: boolean }) {
+  const size = tailleHeros({ value: s.value, unit: s.unit }, largeur, max);
+  const label = s.label ? <Lbl color={labelColor ?? ink} size={max > 80 ? 11.5 : 10.5} centre={centre}>{traduire(s.label)}</Lbl> : null;
+  return (
+    <View style={{ alignItems: centre ? 'center' : 'flex-start', gap: 2 }}>
+      {labelDessous ? null : label}
+      <Valeur value={s.value} unit={s.unit} size={size} color={ink} style={glow ? lueur(glow, 18) : undefined} align={centre ? 'center' : 'flex-start'} />
+      {labelDessous ? label : null}
+    </View>
+  );
+}
+
+/** La barre des zones cardiaques */
+function Zones({ z, largeur, track, h = 8 }: { z: number[]; largeur: number; track: string; h?: number }) {
+  const total = z.reduce((a, b) => a + b, 0) || 1;
+  return (
+    <View style={{ flexDirection: 'row', width: largeur, height: h, borderRadius: h / 2, overflow: 'hidden', backgroundColor: track, gap: 2 }}>
+      {z.map((x, i) => (x > 0 ? <View key={i} style={{ flex: x / total, backgroundColor: ZONES_PLEIN[i] }} /> : null))}
+    </View>
+  );
+}
+
+/** Les petits chiffres en rangee (3 au plus), separes par un filet si demande */
+function Stats({ stats, ink, labelColor, largeur, size, centre, filets, filetColor, glow }: { stats: StatValue[]; ink: string; labelColor?: string; largeur: number; size: number; centre?: boolean; filets?: boolean; filetColor?: string; glow?: string }) {
+  if (!stats.length) return null;
+  const n = stats.length;
+  const gap = 10;
+  const col = (largeur - gap * (n - 1)) / n;
+  return (
+    <View style={{ flexDirection: 'row', gap, width: largeur }}>
+      {stats.map((s, i) => {
+        const txt = `${s.value}${s.unit ? ` ${s.unit}` : ''}`;
+        const sz = Math.min(size, fit(txt, col - (filets && i ? 8 : 0), size, 0.62));
+        return (
+          <View key={`${s.key}${i}`} style={{ width: col, gap: 3, alignItems: centre ? 'center' : 'flex-start', borderLeftWidth: filets && i ? 1.5 : 0, borderColor: filetColor ?? rgba(ink, 0.4), paddingLeft: filets && i && !centre ? 8 : 0 }}>
+            <Lbl color={labelColor ?? rgba(ink, 0.85)} size={size > 24 ? 10 : 9} centre={centre}>{traduire(s.label)}</Lbl>
+            {s.key === 'zones' && s.zones ? (
+              <View style={{ gap: 4, alignItems: centre ? 'center' : 'flex-start' }}>
+                <T size={Math.min(sz, fit(s.value, col, sz, 0.62))} weight="black" color={ink}>{s.value}</T>
+                <Zones z={s.zones} largeur={Math.min(col, 110)} track={rgba(ink, 0.25)} h={6} />
+              </View>
+            ) : (
+              <Valeur value={s.value} unit={s.unit} size={sz} color={ink} style={glow ? lueur(glow, 10) : undefined} align={centre ? 'center' : 'flex-start'} />
+            )}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+/** Les lignes du sport (meilleures series, techniques, kilometres) : titre en capitales, une ligne par donnee */
+function Lignes({ bloc, ink, droiteColor, largeur, size = 14, titreColor, filet, sansTitre }: { bloc: BlocDetail; ink: string; droiteColor?: string; largeur: number; size?: number; titreColor?: string; filet?: string; sansTitre?: boolean }) {
+  return (
+    <View style={{ width: largeur, gap: 2 }}>
+      {sansTitre || !bloc.titre ? null : <Lbl color={titreColor ?? rgba(ink, 0.85)} size={10}>{bloc.titre}</Lbl>}
+      {bloc.lignes.map((l, i) => (
+        <View key={`${l.gauche}${i}`} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingVertical: Math.round(size * 0.3), borderTopWidth: i ? 1 : 0, borderColor: filet ?? rgba(ink, 0.3) }}>
+          <T size={size} weight="extraBold" color={ink} style={{ flexShrink: 1 }}>{l.gauche}</T>
+          {l.droite ? <T size={size} weight="black" color={droiteColor ?? ink} style={{ fontVariant: ['tabular-nums'] }}>{l.droite}</T> : null}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** Le record de la seance dans une pastille pleine */
+function RecordPastille({ texte, fond, ink, size = 13, bord }: { texte: string; fond: string; ink: string; size?: number; bord?: string }) {
+  return (
+    <View style={{ alignSelf: 'stretch', borderRadius: 12, backgroundColor: fond, paddingHorizontal: 12, paddingVertical: 6, gap: 1, borderWidth: bord ? 1.5 : 0, borderColor: bord }}>
+      <Lbl color={rgba(ink, 0.8)} size={9}>{traduire('Record battu')}</Lbl>
+      <T size={size} weight="black" color={ink}>{texte}</T>
+    </View>
+  );
+}
+
+/** Le pied de chaque carte : le logo YOROI, le mot YOROI et les deux badges officiels des stores */
+export function Pied({ ink, compact, centre, sansLogo }: { ink: string; compact?: boolean; centre?: boolean; sansLogo?: boolean }) {
+  const logo = compact ? 26 : 30;
+  const bh = compact ? 17 : 20;
+  const badges = (
+    <View style={{ flexDirection: 'row', gap: 5 }}>
+      <Image source={BADGES.apple.image} style={{ width: Math.round(bh * BADGES.apple.ratio), height: bh }} resizeMode="contain" />
+      <Image source={BADGES.google.image} style={{ width: Math.round(bh * BADGES.google.ratio), height: bh }} resizeMode="contain" />
+    </View>
+  );
+  const marque = sansLogo ? null : (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+      <Image source={LOGO} style={{ width: logo, height: logo, borderRadius: logo * 0.24 }} />
+      <T size={compact ? 17 : 20} weight="black" color={ink} style={{ letterSpacing: 1.6 }}>YOROI</T>
+    </View>
+  );
+  if (centre) {
+    return (
+      <View style={{ alignItems: 'center', gap: 7 }} accessibilityLabel={traduire('YOROI, sur iPhone et Android')}>
+        {marque}
+        {badges}
+      </View>
+    );
+  }
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: sansLogo ? 'center' : 'space-between', gap: 8 }} accessibilityLabel={traduire('YOROI, sur iPhone et Android')}>
+      {marque}
+      {badges}
+    </View>
+  );
+}
+
+// ============================================
+// LES VISUELS DU SPORT
+// ============================================
+
+type TraceData = Extract<VisuelSport, { type: 'trace' }>['trace'];
+
+/** Le trace GPS : un trait epais, le point de depart rond ; en neon, des halos sous le trait */
+function Trace({ trace, couleur, epais = 0.03, glow, depart }: { trace: TraceData; couleur: string; epais?: number; glow?: boolean; depart?: string }) {
+  const pts = trace.points;
+  const maxX = Math.max(...pts.map((p) => p[0]), 0.01);
+  const maxY = Math.max(...pts.map((p) => p[1]), 0.01);
+  const m = 0.06;
+  const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(3)} ${p[1].toFixed(3)}`).join(' ');
+  const [x0, y0] = pts[0];
+  return (
+    <Svg width="100%" height="100%" viewBox={`${-m} ${-m} ${maxX + 2 * m} ${maxY + 2 * m}`}>
+      {glow ? <Path d={d} stroke={couleur} strokeOpacity={0.14} strokeWidth={epais * 4.2} fill="none" strokeLinecap="round" strokeLinejoin="round" /> : null}
+      {glow ? <Path d={d} stroke={couleur} strokeOpacity={0.3} strokeWidth={epais * 2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" /> : null}
+      <Path d={d} stroke={couleur} strokeWidth={epais} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx={x0} cy={y0} r={epais * 1.15} fill={depart ?? couleur} stroke={couleur} strokeWidth={epais * 0.55} />
+    </Svg>
+  );
+}
+
+/** Des barres verticales (kilometres, series) : la meilleure surlignee */
+function Barres({ valeurs, couleur, meilleur, glow, inverse }: { valeurs: number[]; couleur: string; meilleur?: string; glow?: boolean; inverse?: boolean }) {
+  const n = valeurs.length;
+  const max = Math.max(...valeurs);
+  const min = Math.min(...valeurs);
+  // kilometres : plus rapide = plus haut (inverse) ; series : plus lourde = plus haute
+  const h = (v: number) => (inverse ? 0.35 + (0.65 * (max - v)) / Math.max(1, max - min) : 0.15 + (0.85 * v) / Math.max(1, max));
+  const best = inverse ? valeurs.indexOf(min) : valeurs.indexOf(max);
+  const w = 100 / n;
+  return (
+    <Svg width="100%" height="100%" viewBox="0 0 100 60" preserveAspectRatio="none">
+      {valeurs.map((v, i) => {
+        const bh = h(v) * 56;
+        const fill = i === best && meilleur ? meilleur : couleur;
+        return (
+          <G key={i}>
+            {glow ? <Rect x={i * w + w * 0.08} y={60 - bh - 2} width={w * 0.84} height={bh + 2} rx={1.2} fill={fill} opacity={0.25} /> : null}
+            <Rect x={i * w + w * 0.18} y={60 - bh} width={w * 0.64} height={bh} rx={1} fill={fill} />
+          </G>
+        );
+      })}
+    </Svg>
+  );
+}
+
+/** La courbe cardiaque de la seance */
+function Courbe({ valeurs, couleur, glow }: { valeurs: number[]; couleur: string; glow?: boolean }) {
+  const max = Math.max(...valeurs);
+  const min = Math.min(...valeurs);
+  const d = valeurs.map((v, i) => `${i ? 'L' : 'M'}${((i / (valeurs.length - 1)) * 100).toFixed(2)} ${(56 - ((v - min) / Math.max(1, max - min)) * 52).toFixed(2)}`).join(' ');
+  return (
+    <Svg width="100%" height="100%" viewBox="-2 -2 104 62" preserveAspectRatio="none">
+      {glow ? <Path d={d} stroke={couleur} strokeOpacity={0.18} strokeWidth={6} fill="none" strokeLinecap="round" strokeLinejoin="round" /> : null}
+      {glow ? <Path d={d} stroke={couleur} strokeOpacity={0.35} strokeWidth={3.4} fill="none" strokeLinecap="round" strokeLinejoin="round" /> : null}
+      <Path d={d} stroke={couleur} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+const LETTRES = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+function Jours({ jours, ink, fond, taille }: { jours: boolean[]; ink: string; fond: string; taille: number }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: Math.round(taille * 0.2), justifyContent: 'center' }}>
+      {jours.map((on, i) => (
+        <View key={i} style={{ alignItems: 'center', gap: 4 }}>
+          <View style={{ width: taille, height: taille, borderRadius: taille / 2, backgroundColor: on ? ink : 'transparent', borderWidth: 2, borderColor: on ? ink : rgba(ink, 0.4), alignItems: 'center', justifyContent: 'center' }}>
+            {on ? (
+              <Svg width={taille * 0.5} height={taille * 0.5} viewBox="0 0 24 24">
+                <Path d="M5 12.5l4.5 4.5L19 7.5" stroke={fond} strokeWidth={3.2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+            ) : null}
+          </View>
+          <T size={10} weight="black" color={rgba(ink, 0.8)}>{LETTRES[i]}</T>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** Le sticker YOROI du sport, en grand, quand il n'y a ni trace ni lignes */
+function Sticker({ d, max }: { d: CarteData; max: number }) {
+  return (
+    <View style={{ width: '100%', height: '100%', maxHeight: max, alignItems: 'center', justifyContent: 'center' }}>
+      <Image source={STICKERS[stickerDeCarte(d)]} style={{ width: '100%', height: '100%', maxWidth: max, maxHeight: max }} resizeMode="contain" />
     </View>
   );
 }
 
 /**
- * La place libre entre le haut et les chiffres : la photo ou la scene s'y voit, le personnage s'y tient,
- * ses pieds pouvant descendre de `descente` points a cote des chiffres (jamais sur un texte du haut).
+ * Le visuel au milieu de la carte, dans la place qui reste (il se reduit, il ne coupe rien).
+ * glow : il brille dans la couleur choisie (Neon nuit).
  */
-function Zone({ fig, descente = 0, droite = -14, ratio = 0.7, maxW }: { fig: ImageSourcePropType | null; descente?: number; droite?: number; ratio?: number; maxW?: number }) {
-  // hauteur mesuree : le personnage tient exactement dans la place libre (aspectRatio en absolu varie selon la plateforme)
-  const [h, setH] = useState(0);
-  const brut = Math.max(0, h - 4 + descente);
-  const fh = maxW && brut * ratio > maxW ? Math.round(maxW / ratio) : brut;
+function Visuel({ c, v, couleur, glow, meilleur, sticker = 150, fond }: { c: Ctx; v: VisuelSport; couleur: string; glow?: boolean; meilleur?: string; sticker?: number; fond?: string }) {
+  let dedans: React.ReactNode = null;
+  if (v.type === 'trace') dedans = <Trace trace={v.trace} couleur={couleur} glow={glow} depart={fond} />;
+  else if (v.type === 'splits') dedans = <Barres valeurs={v.splits.map((x) => x.secondes)} couleur={couleur} meilleur={meilleur} glow={glow} inverse />;
+  else if (v.type === 'barres') dedans = <Barres valeurs={v.barres} couleur={couleur} meilleur={meilleur ?? (glow ? BLANC : undefined)} glow={glow} />;
+  else if (v.type === 'courbe') dedans = <Courbe valeurs={v.courbe} couleur={couleur} glow={glow} />;
+  else if (v.type === 'zones') return <View style={{ width: c.L, alignItems: 'center' }}><Zones z={v.zones} largeur={c.L} track={rgba(c.ink, 0.25)} h={c.story ? 18 : 12} /></View>;
+  else if (v.type === 'jours') return <Jours jours={v.jours} ink={couleur} fond={fond ?? c.coul.fond} taille={c.story ? 36 : c.carre ? 26 : 30} />;
+  else dedans = <Sticker d={c.d} max={sticker} />;
+  // la place libre du milieu : le dessin la remplit sans jamais pousser le reste (rendu du 31 octobre)
   return (
-    <View style={{ flex: 1, minHeight: 0 }} onLayout={fig ? (e) => setH(Math.round(e.nativeEvent.layout.height)) : undefined}>
-      {/* trop petit, il ferait figurine : on ne le montre pas */}
-      {fig && fh > 90 ? (
-        <View pointerEvents="none" style={{ position: 'absolute', right: droite, top: 4, width: Math.round(fh * ratio), height: fh }}>
-          <Image source={fig} style={{ width: Math.round(fh * ratio), height: fh }} resizeMode="contain" />
+    <View style={{ flex: 1, alignSelf: 'stretch', minHeight: 0 }}>
+      <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }}>{dedans}</View>
+    </View>
+  );
+}
+
+/** Le chemin vers ton objectif de poids, seulement s'il est choisi */
+function cheminObjectif(d: CarteData): number | null {
+  const p = d.pesee;
+  if (!p || !p.objectif || !p.depart || Math.abs(p.depart - p.objectif) < 0.1) return null;
+  const losing = p.objectif < p.depart;
+  return Math.max(0, Math.min(1, (losing ? p.depart - p.poids : p.poids - p.depart) / Math.abs(p.depart - p.objectif)));
+}
+
+function BarreChemin({ pct, ink, largeur }: { pct: number; ink: string; largeur: number }) {
+  return (
+    <View style={{ width: largeur, gap: 6 }}>
+      <View style={{ height: 14, borderRadius: 7, backgroundColor: rgba(ink, 0.22), overflow: 'hidden' }}>
+        <View style={{ width: `${Math.max(3, pct * 100)}%`, height: 14, borderRadius: 7, backgroundColor: ink }} />
+      </View>
+      <Lbl color={rgba(ink, 0.85)} size={10}>{traduire('{0} % du chemin vers ton objectif', Math.round(pct * 100))}</Lbl>
+    </View>
+  );
+}
+
+/** Combien de lignes du sport chaque format peut porter sans rien couper */
+function maxLignes(c: Ctx, story: number, post: number, carre = 0): number {
+  return c.story ? story : c.carre ? carre : post;
+}
+
+// ============================================
+// 1. AFFICHE : couleur unie, chiffre enorme, trace ou visuel du sport, 3 stats
+// ============================================
+
+function Affiche(c: Ctx) {
+  const [hero, ...rest] = c.stats;
+  const v = visuelDuSport(c.d);
+  const bloc = v.type === 'trace' ? null : blocDetail(c.d, c.u, maxLignes(c, 3, 2));
+  const rec = c.carre ? null : ligneRecord(c.d, c.u);
+  const chemin = c.d.moment === 'pesee' ? cheminObjectif(c.d) : null;
+  const max = c.story ? 118 : c.carre ? 70 : 88;
+  return (
+    <View style={{ flex: 1, paddingTop: c.padTop, paddingBottom: c.padBas, paddingHorizontal: PAD }}>
+      <Fond c={c} />
+      <EnTete c={c} ink={c.ink} />
+      {hero ? <View style={{ marginTop: c.story ? 16 : 8 }}><Hero s={hero} largeur={c.L} max={max} ink={c.ink} /></View> : null}
+      <View style={{ flex: 1, minHeight: 0, justifyContent: 'center', alignItems: 'center', paddingVertical: c.story ? 14 : 8, gap: 10 }}>
+        {chemin !== null && !c.carre ? (
+          <BarreChemin pct={chemin} ink={c.ink} largeur={c.L} />
+        ) : bloc ? (
+          <>
+            <Lignes bloc={bloc} ink={c.ink} largeur={c.L} size={c.story ? 15 : 13} />
+            {rec ? <RecordPastille texte={rec} fond={c.ink} ink={contreEncre(c.ink, c.coul)} /> : null}
+          </>
+        ) : c.d.moment === 'pesee' && c.carre ? null : (
+          <Visuel c={c} v={v} couleur={c.ink} sticker={c.story ? 170 : 110} fond={c.photo ? '#000000' : c.coul.fond} />
+        )}
+      </View>
+      {rest.length ? (
+        <View style={{ borderTopWidth: 2, borderColor: rgba(c.ink, 0.9), paddingTop: c.story ? 12 : 8 }}>
+          <Stats stats={rest.slice(0, 3)} ink={c.ink} largeur={c.L} size={c.story ? 30 : c.carre ? 21 : 24} />
         </View>
       ) : null}
+      <View style={{ marginTop: c.story ? 16 : 10 }}>
+        <Pied ink={c.ink} compact={!c.story} />
+      </View>
     </View>
   );
 }
 
 // ============================================
-// LES MODELES
+// 2. BANDEAU : ta photo plein cadre, le chiffre dessus, un bandeau de couleur pour les stats
 // ============================================
 
-type Ctx = { d: CarteData; o: OptionsCarte; v: VisuelsCarte; pal: Palette; W: number; H: number; stats: StatValue[]; titre: string; fig: ImageSourcePropType | null; padTop: number; padBas: number; /** unite de poids du reglage (18 octobre 2026) */ u: UnitePoids };
-
-const PAD = 22;
-
-/** Grand chiffre en bas a gauche, chiffres secondaires alignes dessous, le personnage debout a droite */
-function Affiche({ d, o, pal, W, stats, titre, fig, padTop, padBas }: Ctx) {
-  const [hero, ...rest] = stats;
-  const story = o.format === 'story';
-  const L = W - PAD * 2;
-  const heroMax = story ? 112 : o.format === 'post' ? 86 : 70;
-  const heroW = L;
-  const extra = aUnExtra(d) && (story || o.format === 'post');
-  // a cote d'un chiffre court, le personnage descend jusqu'aux chiffres secondaires (pieds au niveau du grand chiffre)
-  const heroSz = hero ? Math.min(heroMax, fit(`${hero.value}${hero.unit ? ` ${hero.unit}` : ''}`, L, heroMax, 0.6)) : 0;
-  const heroTexte = hero ? (hero.value.length + (hero.unit ? hero.unit.length * 0.36 + 0.3 : 0)) * 0.62 * heroSz : L;
-  const libre = L - heroTexte;
-  // avec un record, des jours ou une barre au-dessus du chiffre, il reste dans la place libre (rien ne passe sous ses pieds)
-  const descend = hero && hero.key !== 'zones' && libre > 80 && !extra;
+function Bandeau(c: Ctx) {
+  const [hero, ...rest] = c.stats;
+  const v = visuelDuSport(c.d);
+  const bloc = blocDetail(c.d, c.u, maxLignes(c, 3, 2));
+  const rec = c.story ? ligneRecord(c.d, c.u) : null;
+  const inkB = c.coul.encre;
+  const max = c.story ? 110 : c.carre ? 64 : 84;
+  // sans photo, le haut est une nuit teintee de ta couleur ; sur le noir, le bandeau reste noir et le haut s'eclaircit
+  const teinte = c.coul.fond === NOIR ? '#5A5D68' : c.coul.fond;
   return (
-    <View style={{ flex: 1, paddingTop: padTop, paddingBottom: padBas, paddingHorizontal: PAD }}>
-      <Haut d={d} titre={titre} pal={pal} largeur={L} max={story ? 34 : 28} />
-      <Zone fig={fig} descente={descend ? Math.round(heroSz * 1.08) + 18 : 0} maxW={descend ? libre + 30 : undefined} />
-      <View style={{ gap: story ? 12 : 7 }}>
-        {extra ? <Extra data={d} pal={pal} largeur={L} jours={story ? 32 : 26} stats={stats} /> : null}
-        {hero ? <Chiffre s={hero} size={heroMax} pal={pal} largeur={heroW} labelEnHaut hero /> : null}
-        {rest.length ? (
-          <View style={{ flexDirection: 'row', gap: 14, borderTopWidth: 1, borderColor: pal.line, paddingTop: story ? 12 : 8 }}>
-            {rest.map((s) => (
-              <View key={s.key} style={{ flex: 1, minWidth: 0 }}>
-                <Chiffre s={s} size={story ? 30 : 23} pal={pal} largeur={(L - 14 * (rest.length - 1)) / rest.length} />
-              </View>
-            ))}
+    <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, paddingTop: c.padTop, paddingHorizontal: PAD, paddingBottom: 6, overflow: 'hidden' }}>
+        {c.photo ? (
+          <Fond c={c} voile={0.18} bas={0.5} />
+        ) : (
+          <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, backgroundColor: '#101114' }}>
+            <LinearGradient colors={[rgba(teinte, 0.55), 'rgba(16,17,20,0)']} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: '80%' }} />
+          </View>
+        )}
+        <EnTete c={c} ink={BLANC} />
+        <View style={{ flex: 1, minHeight: 0, marginVertical: 8 }}>
+          {v.type === 'trace' && !c.carre ? <View style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: c.L * 0.6 }}><Trace trace={v.trace} couleur={BLANC} depart={c.coul.fond} /></View> : null}
+        </View>
+        {hero ? <Hero s={hero} largeur={c.L} max={max} ink={BLANC} /> : null}
+      </View>
+      <View style={{ backgroundColor: c.coul.fond, paddingHorizontal: PAD, paddingTop: c.story ? 16 : 10, paddingBottom: c.padBas, gap: c.story ? 10 : 7 }}>
+        <Stats stats={rest.slice(0, 3)} ink={inkB} largeur={c.L} size={c.story ? 28 : c.carre ? 20 : 23} />
+        {bloc ? <Lignes bloc={bloc} ink={inkB} largeur={c.L} size={c.story ? 13.5 : 12.5} sansTitre /> : null}
+        {rec ? (
+          <View style={{ gap: 1 }}>
+            <Lbl color={rgba(inkB, 0.85)} size={9.5}>{traduire('Record battu')}</Lbl>
+            <T size={14} weight="black" color={inkB}>{rec}</T>
           </View>
         ) : null}
-        <View style={{ height: story ? 8 : 2 }} />
-        <Signature pal={pal} slogan={o.slogan} compact={!story} />
+        <Pied ink={inkB} compact={!c.story} />
       </View>
     </View>
   );
 }
 
-/** Tous les chiffres a egalite sur une bande en bas, separes par des filets */
-function Bandeau({ d, o, pal, W, stats, titre, fig, padTop, padBas }: Ctx) {
-  const story = o.format === 'story';
-  const L = W - PAD * 2;
-  const n = stats.length;
-  const col = (L - 12 * (n - 1)) / n;
+// ============================================
+// 3. NEON NUIT : photo assombrie ou fond noir, trace, barres ou courbe et chiffre en neon
+// ============================================
+
+function Neon(c: Ctx) {
+  const [hero, ...rest] = c.stats;
+  const neon = c.coul.neon;
+  const v = visuelDuSport(c.d, 'neon');
+  const bloc = c.carre ? null : blocDetail(c.d, c.u, 2);
+  const rec = c.story ? ligneRecord(c.d, c.u) : null;
+  const max = c.story ? 100 : c.carre ? 60 : 78;
   return (
-    <View style={{ flex: 1, paddingTop: padTop, paddingBottom: padBas, paddingHorizontal: PAD }}>
-      <Haut d={d} titre={titre} pal={pal} largeur={L} max={story ? 34 : 28} />
-      <Zone fig={fig} droite={0} />
-      <View style={{ gap: story ? 14 : 9 }}>
-        {aUnExtra(d) ? <Extra data={d} pal={pal} largeur={L} jours={story ? 30 : 24} stats={stats} /> : null}
-        <View style={{ flexDirection: 'row', gap: 12, borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: pal.line, paddingVertical: story ? 12 : 8 }}>
-          {stats.map((s, i) => (
-            <View key={s.key} style={{ width: col, borderLeftWidth: i ? 1 : 0, borderColor: pal.line, paddingLeft: i ? 10 : 0 }}>
-              <Chiffre s={s} size={story ? (n > 3 ? 26 : 34) : n > 3 ? 20 : 26} pal={pal} largeur={col - (i ? 10 : 0)} labelEnHaut />
-            </View>
-          ))}
-        </View>
-        <Signature pal={pal} slogan={o.slogan} compact={!story} />
+    <View style={{ flex: 1, paddingTop: c.padTop, paddingBottom: c.padBas, paddingHorizontal: PAD, alignItems: 'center' }}>
+      <Fond c={c} voile={0.62} bas={0.7} fond="#07080B" />
+      {c.photo ? null : <LinearGradient pointerEvents="none" colors={[rgba(neon, 0.2), 'rgba(7,8,11,0)']} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: '60%' }} />}
+      <EnTete c={c} ink={BLANC} centre />
+      <View style={{ flex: 1, minHeight: 0, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', paddingVertical: c.story ? 14 : 8 }}>
+        <Visuel c={c} v={v} couleur={neon} glow sticker={c.story ? 150 : 100} fond="#07080B" />
+      </View>
+      {hero ? <Hero s={hero} largeur={c.L} max={max} ink={BLANC} labelColor={neon} centre glow={neon} labelDessous /> : null}
+      <View style={{ marginTop: c.story ? 14 : 8 }}>
+        <Stats stats={rest.slice(0, 3)} ink={BLANC} labelColor={neon} largeur={c.L} size={c.story ? 28 : c.carre ? 19 : 23} centre filets filetColor={neon} />
+      </View>
+      {bloc ? <View style={{ marginTop: c.story ? 12 : 8 }}><Lignes bloc={bloc} ink={BLANC} droiteColor={neon} largeur={c.L} size={13} sansTitre filet={rgba(BLANC, 0.18)} /></View> : null}
+      {rec ? <View style={{ marginTop: 10, alignSelf: 'stretch' }}><RecordPastille texte={rec} fond="rgba(0,0,0,0.55)" ink={BLANC} bord={neon} /></View> : null}
+      <View style={{ marginTop: c.story ? 16 : 10, alignSelf: 'stretch' }}>
+        <Pied ink={BLANC} compact={!c.story} centre={!c.carre} />
       </View>
     </View>
   );
 }
 
-/** Les chiffres empiles en colonne a gauche, en bas, le personnage a droite */
-function Colonne({ d, o, v, pal, W, H, stats, titre, fig, padTop, padBas }: Ctx) {
-  const story = o.format === 'story';
-  // en clair sur une image chargee, la colonne monte au milieu ou le voile est leger : un voile pose derriere les chiffres
-  // et des libelles en encre secondaire les gardent lisibles (AA), comme les panneaux des autres modeles
-  const voile = !o.sombre && !!fondImage(o, v);
-  const palC = voile ? { ...pal, muted: pal.ink2 } : pal;
-  const L = W - PAD * 2;
-  const colW = fig ? Math.round(W * 0.56) : L;
-  const n = stats.length;
-  const size = story ? (n > 3 ? 42 : 50) : o.format === 'post' ? (n > 3 ? 28 : 34) : n > 3 ? 21 : 26;
-  const extra = aUnExtra(d) && o.format !== 'carre';
-  // le personnage se tient a droite des chiffres, ses pieds au-dessus de la signature
-  const figW = Math.round(W * 0.42);
-  const figH = Math.min(Math.round(figW / 0.7), Math.round(H * (story ? 0.5 : 0.56)));
-  return (
-    <View style={{ flex: 1, paddingTop: padTop, paddingBottom: padBas, paddingHorizontal: PAD }}>
-      <Figure src={fig} w={figW} h={figH} style={{ right: -14, bottom: padBas + (story ? 54 : 42) }} />
-      <Haut d={d} titre={titre} pal={pal} largeur={L} max={story ? 34 : 28} />
-      <View style={{ flex: 1 }} />
-      <View style={{ gap: story ? 12 : 6 }}>
-        <View>
-          {voile ? <View pointerEvents="none" style={{ position: 'absolute', left: -10, right: -2, top: -6, bottom: -6, borderRadius: 14, backgroundColor: 'rgba(246,245,240,0.82)' }} /> : null}
-          {stats.map((s, i) => (
-            <View key={s.key} style={{ borderTopWidth: i ? 1 : 0, borderColor: pal.line, paddingVertical: story ? 8 : 4, width: colW }}>
-              <Chiffre s={s} size={i === 0 ? Math.round(size * 1.18) : size} pal={palC} largeur={colW} labelEnHaut hero={i === 0} />
-            </View>
-          ))}
-        </View>
-        {extra ? <Extra data={d} pal={pal} largeur={colW} jours={story ? 28 : 22} stats={stats} /> : null}
-        <View style={{ height: story ? 4 : 0 }} />
-        <Signature pal={pal} slogan={o.slogan} compact={!story} />
-      </View>
-    </View>
-  );
-}
+// ============================================
+// 4. TICKET DE CAISSE : une ligne par stat, le total en gros
+// ============================================
 
-/** Un ticket de caisse pose en bas : les lignes de chiffres, puis le total en grand */
-function Ticket({ d, o, pal, W, stats, titre, fig, padTop, padBas }: Ctx) {
-  const story = o.format === 'story';
-  const [hero, ...rest] = stats;
-  const L = W - PAD * 2;
-  const inner = L - 36;
-  const surFondSombre = o.sombre && (o.fond === 'noir' || o.fond === 'ardoise' || o.fond === 'ocean');
-  const panel = pal.ink === '#FFFFFF' ? (surFondSombre ? '#262A34' : 'rgba(18,19,24,0.88)') : 'rgba(255,255,255,0.95)';
-  const sans = { ...pal, shadow: {} };
-  return (
-    <View style={{ flex: 1, paddingTop: padTop, paddingBottom: padBas, paddingHorizontal: PAD }}>
-      <Haut d={d} titre={titre} pal={pal} largeur={L} max={story ? 34 : 28} />
-      <Zone fig={fig} droite={4} ratio={0.75} />
-      <View style={{ gap: story ? 12 : 8 }}>
-        <View style={{ borderRadius: 20, backgroundColor: panel, borderWidth: 1, borderColor: pal.line, paddingHorizontal: 18, paddingTop: story ? 16 : 11, paddingBottom: story ? 16 : 11, gap: story ? 11 : 6 }}>
-          {rest.map((s) => (
-            <View key={s.key} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-              <T size={13} weight="bold" color={pal.ink2} style={{ flexShrink: 1 }}>{traduire(s.label)}</T>
-              {s.key === 'zones' && s.zones ? (
-                <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                  <T size={16} weight="black" color={pal.ink}>{s.value}</T>
-                  <Zones z={s.zones} largeur={110} pal={pal} />
-                </View>
-              ) : (
-                <Valeur s={s} size={story ? 20 : 16} pal={sans} unitRatio={0.6} />
-              )}
-            </View>
-          ))}
-          {aUnExtra(d) && o.format !== 'carre' ? <Extra data={d} pal={sans} largeur={inner} jours={story ? 28 : 22} stats={stats} /> : null}
-          {hero ? (
-            <>
-              <Svg width={inner} height={2}>
-                <SvgLine x1={0} y1={1} x2={inner} y2={1} stroke={pal.ink} strokeOpacity={0.5} strokeWidth={2} strokeDasharray="6 6" />
-              </Svg>
-              <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
-                <T size={13} weight="black" color={pal.ink} style={{ flexShrink: 1, paddingBottom: 8 }} lines={2}>{traduire(hero.label)}</T>
-                {hero.key === 'zones' ? (
-                  <Chiffre s={hero} size={story ? 40 : 30} pal={sans} largeur={inner * 0.62} align="flex-end" />
-                ) : (
-                  <Valeur s={hero} size={Math.min(story ? 62 : 42, fit(`${hero.value} ${hero.unit ?? ''}`, inner * 0.66, story ? 62 : 42, 0.6))} pal={sans} align="flex-end" />
-                )}
-              </View>
-            </>
-          ) : null}
-        </View>
-        <Signature pal={pal} slogan={o.slogan} compact={!story} />
-      </View>
-    </View>
-  );
-}
-
-/** Polaroid : la photo (ou la scene) dans une fenetre en haut, la date et le sport poses dessus ; les chiffres sur le papier */
-function Cadre(c: Ctx) {
-  const { d, o, v, pal, W, H, stats, titre, fig, padBas } = c;
-  const story = o.format === 'story';
-  const [hero, ...rest] = stats;
-  const marge = 12;
-  const fenH = Math.round(H * (story ? 0.52 : o.format === 'post' ? 0.46 : 0.4));
-  const fenW = W - marge * 2;
-  const papier = o.sombre ? '#121318' : '#F4F2EC';
-  const meta = fondMeta(o.fond);
-  const image = !!fondImage(o, v);
-  // le texte pose sur la fenetre : blanc sur une image ou un fond fonce, encre sur un fond clair
-  const fenClaire = !image && (meta.degrade ? !!meta.clair : !o.sombre);
-  const palF = fenClaire ? paletteDe(false) : paletteDe(true);
-  const L = W - (PAD - 2) * 2;
-  return (
-    <View style={{ flex: 1, backgroundColor: papier }}>
-      <View style={{ marginTop: marge, marginHorizontal: marge, height: fenH, borderRadius: 16, overflow: 'hidden' }}>
-        <Fond o={o} v={v} h={fenH} w={fenW} fenetre />
-        {/* 24 octobre 2026 : voiles alleges (avant 0.62 sur 42 % en haut, 0.6 sur 36 % en bas) */}
-        {image ? <LinearGradient pointerEvents="none" colors={['rgba(10,11,14,0.45)', 'rgba(10,11,14,0)']} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: fenH * 0.36 }} /> : null}
-        {image ? <LinearGradient pointerEvents="none" colors={['rgba(10,11,14,0)', 'rgba(10,11,14,0.45)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: fenH * 0.32 }} /> : null}
-        <Figure src={fig} w={fenH * 0.6} h={fenH * 0.8} style={{ right: 4, bottom: 0 }} />
-        {d.moment === 'seance' && aUnExtra(d) && o.format !== 'carre' ? <View style={{ position: 'absolute', left: 14, bottom: 12, right: fig ? fenH * 0.42 : 14 }}><Record data={d} pal={palF} largeur={fenW - 28} /></View> : null}
-        <View style={{ position: 'absolute', left: 14, right: 14, top: story ? 16 : 12 }}>
-          <Haut d={d} titre={titre} pal={palF} largeur={fenW - 28} max={story ? 32 : 26} />
-        </View>
-      </View>
-      <View style={{ flex: 1, paddingHorizontal: PAD - 2, paddingTop: story ? 14 : 8, paddingBottom: padBas, gap: story ? 10 : 6 }}>
-        {aUnExtra(d) && d.moment !== 'seance' && o.format !== 'carre' ? <Extra data={d} pal={pal} largeur={L} jours={story ? 28 : 22} stats={stats} /> : null}
-        {hero ? <Chiffre s={hero} size={story ? 58 : o.format === 'post' ? 40 : 34} pal={pal} largeur={L} labelEnHaut hero={story} /> : null}
-        {rest.length ? (
-          <View style={{ flexDirection: 'row', gap: 10, borderTopWidth: 1, borderColor: pal.line, paddingTop: story ? 10 : 6 }}>
-            {rest.map((s) => (
-              <View key={s.key} style={{ flex: 1, minWidth: 0 }}>
-                <Chiffre s={s} size={story ? 24 : 18} pal={pal} largeur={(L - 10 * (rest.length - 1)) / rest.length} />
-              </View>
-            ))}
-          </View>
-        ) : null}
-        <View style={{ flex: 1 }} />
-        <Signature pal={pal} slogan={o.slogan} compact />
-      </View>
-    </View>
-  );
-}
-
-function Figure({ src, w, h, style }: { src?: ImageSourcePropType | null; w: number; h: number; style: object }) {
-  if (!src) return null;
-  return (
-    <View pointerEvents="none" style={[{ position: 'absolute', width: w, height: h }, style]}>
-      <Image source={src} style={{ width: w, height: h }} resizeMode="contain" />
-    </View>
-  );
-}
-
-/** Le sport en lettres geantes en haut, les chiffres en cases en bas */
-function Geant({ d, o, pal, W, stats, titre, fig, padTop, padBas }: Ctx) {
-  const story = o.format === 'story';
-  const L = W - PAD * 2;
-  const mots = titre.toUpperCase().split(/\s+/).filter(Boolean);
-  // au plus 3 lignes : on regroupe les petits mots
-  const lignes: string[] = [];
-  for (const m of mots) {
-    const last = lignes[lignes.length - 1];
-    if (last && (last.length + m.length + 1 <= 9 || lignes.length >= 3)) lignes[lignes.length - 1] = `${last} ${m}`;
-    else lignes.push(m);
+/** Code-barres decoratif, toujours le meme pour une carte (aucun chiffre n'y est cache) */
+function CodeBarres({ cle, w, h, encre }: { cle: string; w: number; h: number; encre: string }) {
+  let x = 0;
+  let k = 7;
+  for (const ch of cle) k = (k * 31 + ch.charCodeAt(0)) % 9973;
+  const barres: { x: number; w: number }[] = [];
+  while (x < w) {
+    k = (k * 1103 + 12345) % 9973;
+    const bw = 1 + (k % 3);
+    barres.push({ x, w: bw });
+    x += bw + 1 + ((k >> 3) % 3);
   }
-  const maxG = story ? 92 : o.format === 'post' ? 64 : 50;
-  const n = stats.length;
-  const cell = (L - 10) / 2;
   return (
-    <View style={{ flex: 1, paddingTop: padTop, paddingBottom: padBas, paddingHorizontal: PAD }}>
-      <Haut d={d} titre={titre} pal={pal} largeur={L} sansTitre />
-      <View style={{ marginTop: 2 }}>
-        {lignes.map((l, i) => (
-          <T key={i} size={fit(l, L, maxG, 0.9)} weight="black" color={pal.ink} style={[{ letterSpacing: -1.5 }, pal.shadow]}>{l}</T>
-        ))}
-      </View>
-      <Zone fig={fig} droite={-6} />
-      {aUnExtra(d) && o.format !== 'carre' ? <View style={{ marginBottom: story ? 12 : 7 }}><Extra data={d} pal={pal} largeur={L} jours={story ? 30 : 24} stats={stats} /></View> : null}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-        {stats.map((s, i) => {
-          const large = (n === 3 || n === 1) && i === 0;
-          return (
-            <View key={s.key} style={{ width: large ? L : cell, borderRadius: 14, borderWidth: 1.5, borderColor: pal.line, paddingVertical: story ? 10 : 6, paddingHorizontal: 12, backgroundColor: o.sombre ? 'rgba(10,11,14,0.42)' : 'rgba(255,255,255,0.62)' }}>
-              <Chiffre s={s} size={story ? (large ? 42 : 30) : large ? 28 : 21} pal={pal} largeur={(large ? L : cell) - 24} labelEnHaut />
-            </View>
-          );
-        })}
-      </View>
-      <View style={{ height: story ? 12 : 8 }} />
-      <Signature pal={pal} slogan={o.slogan} compact={!story} />
-    </View>
+    <Svg width={w} height={h}>
+      {barres.filter((b) => b.x + b.w <= w).map((b, i) => <Rect key={i} x={b.x} y={0} width={b.w} height={h} fill={encre} />)}
+    </Svg>
   );
 }
 
-/** Proportion vraie dessinee par l'anneau, ou null (simple cercle, sans pretendre a un chiffre) */
-function proportionAnneau(d: CarteData): { segments?: boolean[]; pct?: number } | null {
-  if (d.moment === 'pesee' && d.pesee?.objectif && d.pesee.depart && Math.abs(d.pesee.depart - d.pesee.objectif) >= 0.1) {
-    const p = d.pesee;
-    const losing = p.objectif! < p.depart!;
-    return { pct: Math.max(0, Math.min(1, (losing ? p.depart! - p.poids : p.poids - p.depart!) / Math.abs(p.depart! - p.objectif!))) };
-  }
-  if (d.moment === 'semaine' && d.semaine) {
-    if (d.semaine.objectif > 0) return { pct: Math.min(1, d.semaine.seances / d.semaine.objectif) };
-    return { segments: d.semaine.jours };
-  }
-  return null;
-}
-
-/** Objectif (ex Anneau) : la progression vraie vers ton objectif, ecrite dans l'anneau ou dessous ; ton personnage dedans */
-function Anneau({ d, o, pal, W, stats, titre, fig: figure, padTop, padBas }: Ctx) {
-  const story = o.format === 'story';
-  const L = W - PAD * 2;
-  // en Carre, la place manque : la progression dans l'anneau, sans personnage
-  const fig = o.format === 'carre' ? null : figure;
-  const D = story ? 230 : o.format === 'post' ? 168 : 134;
-  const st = story ? 14 : 11;
-  const r = (D - st) / 2;
-  const prop = proportionAnneau(d);
-  const circ = 2 * Math.PI * r;
-  const arcs: React.ReactNode[] = [];
-  if (prop?.segments) {
-    const seg = circ / 7;
-    prop.segments.forEach((on, i) => {
-      arcs.push(
-        <Circle key={i} cx={D / 2} cy={D / 2} r={r} stroke={on ? pal.ink : pal.track} strokeWidth={st} fill="none" strokeDasharray={`${seg - 8} ${circ - seg + 8}`} strokeDashoffset={-seg * i} transform={`rotate(-90 ${D / 2} ${D / 2})`} />,
-      );
-    });
-  } else if (prop?.pct !== undefined) {
-    arcs.push(<Circle key="t" cx={D / 2} cy={D / 2} r={r} stroke={pal.track} strokeWidth={st} fill="none" />);
-    if (prop.pct > 0.005) arcs.push(<Circle key="p" cx={D / 2} cy={D / 2} r={r} stroke={pal.ink} strokeWidth={st} strokeLinecap="round" fill="none" strokeDasharray={`${circ * prop.pct} ${circ}`} transform={`rotate(-90 ${D / 2} ${D / 2})`} />);
-  } else {
-    arcs.push(<Circle key="c" cx={D / 2} cy={D / 2} r={r} stroke={pal.ink} strokeWidth={2} fill="none" opacity={0.6} />);
-  }
-  // 17 octobre (v4) : la progression vraie est toujours ecrite, dans l'anneau ou juste dessous si ton personnage y est
-  const progres: { value: string; unit?: string; label: string; court: string } | null =
-    prop?.pct === undefined
-      ? null
-      : d.moment === 'semaine' && d.semaine
-        ? { value: `${d.semaine.seances}/${d.semaine.objectif}`, label: traduire('séances de ton objectif'), court: traduire('séances') }
-        : { value: String(Math.round(prop.pct * 100)), unit: '%', label: traduire('du chemin vers ton objectif'), court: traduire('du chemin') };
-  const doublon = d.moment === 'semaine' ? 'seances' : 'objectif_pct';
-  const dessous = (progres ? stats.filter((x) => x.key !== doublon) : stats).slice(0, 3);
-  // dans l'anneau le libelle court tient entre les traits ; dessous, la phrase entiere
-  const progresVue = (taille: number, dedans: boolean) =>
-    progres ? (
-      <View style={{ alignItems: 'center', maxWidth: dedans ? D - st * 2 - 16 : L }}>
-        <Valeur s={{ key: 'objectif_pct', label: progres.label, value: progres.value, unit: progres.unit }} size={taille} pal={pal} align="center" />
-        <T size={story ? 13 : 11} weight="bold" color={pal.ink2} style={[{ textAlign: 'center' }, pal.shadow]}>{dedans ? progres.court : progres.label}</T>
-      </View>
-    ) : null;
+function Pointilles({ w, encre, plein }: { w: number; encre: string; plein?: boolean }) {
   return (
-    <View style={{ flex: 1, paddingTop: padTop, paddingBottom: padBas, paddingHorizontal: PAD, alignItems: 'center' }}>
-      <Haut d={d} titre={titre} pal={pal} largeur={L} max={story ? 30 : 24} centre />
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <View style={{ width: D, height: D, alignItems: 'center', justifyContent: 'center' }}>
-          <Svg width={D} height={D} style={{ position: 'absolute' }}>{arcs}</Svg>
-          {fig ? (
-            <View style={{ width: D - st * 2 - 8, height: D - st * 2 - 8, borderRadius: D, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
-              <Image source={fig} style={{ width: (D - st * 2) * 0.8, height: D - st * 2 - 4 }} resizeMode="contain" />
-            </View>
-          ) : (
-            progresVue(story ? 56 : o.format === 'post' ? 38 : 30, true)
-          )}
-        </View>
-        {fig && progres ? <View style={{ marginTop: story ? 10 : 4 }}>{progresVue(story ? 34 : 24, false)}</View> : null}
-      </View>
-      {d.moment === 'seance' && d.seance?.records?.length && o.format !== 'carre' ? <View style={{ marginBottom: story ? 12 : 8, alignSelf: 'stretch', alignItems: 'center' }}><Record data={d} pal={pal} largeur={L} centre /></View> : null}
-      {dessous.length ? (
-        <View style={{ flexDirection: 'row', gap: 10, alignSelf: 'stretch', justifyContent: 'center', borderTopWidth: 1, borderColor: pal.line, paddingTop: story ? 12 : 8, marginBottom: story ? 14 : 8 }}>
-          {dessous.map((s, i) => (
-            <View key={s.key} style={{ flex: 1, minWidth: 0, alignItems: 'center', borderLeftWidth: i ? 1 : 0, borderColor: pal.line }}>
-              <Chiffre s={s} size={story ? 26 : 19} pal={pal} largeur={(L - 10 * (dessous.length - 1)) / dessous.length - 8} align="center" />
-            </View>
-          ))}
-        </View>
-      ) : null}
-      <View style={{ alignSelf: 'stretch' }}>
-        <Signature pal={pal} slogan={o.slogan} compact={!story} />
-      </View>
-    </View>
-  );
-}
-
-/** Minimal : un seul grand chiffre, le titre en petit et la signature ; rien d'autre */
-function Minimal({ d, o, pal, W, stats, titre, fig, padTop, padBas }: Ctx) {
-  const story = o.format === 'story';
-  const L = W - PAD * 2;
-  const hero = stats[0];
-  const max = story ? 150 : o.format === 'post' ? 112 : 92;
-  return (
-    <View style={{ flex: 1, paddingTop: padTop, paddingBottom: padBas, paddingHorizontal: PAD }}>
-      <Haut d={d} titre={titre} pal={pal} largeur={L} max={story ? 26 : 22} />
-      <Zone fig={fig} />
-      <View style={{ gap: story ? 14 : 8 }}>
-        {hero ? (
-          <View style={{ gap: story ? 2 : 0 }}>
-            <T size={story ? 17 : 14} weight="extraBold" color={pal.ink2} style={pal.shadow}>{traduire(hero.label)}</T>
-            {hero.key === 'zones' && hero.zones ? (
-              <Chiffre s={hero} size={story ? 64 : 44} pal={pal} largeur={L} />
-            ) : (
-              <Heros g={{ value: hero.value, unit: hero.unit }} pal={pal} largeur={L} max={max} />
-            )}
-          </View>
-        ) : null}
-        <View style={{ height: 1, backgroundColor: pal.line }} />
-        <Signature pal={pal} slogan={o.slogan} compact={!story} />
-      </View>
-    </View>
-  );
-}
-
-/** Record : le record de la seance en vedette, le trophee dore, la charge en grand et l'ancien record */
-function RecordVue({ d, o, pal, W, titre, fig, padTop, padBas, u }: Ctx) {
-  const story = o.format === 'story';
-  const carre = o.format === 'carre';
-  const L = W - PAD * 2;
-  const recs = d.seance?.records ?? [];
-  const r = recs[0];
-  const k = story ? 1 : carre ? 0.62 : 0.78;
-  const sombre = pal.ink === '#FFFFFF';
-  const gain = r?.avant && r.poids ? Math.round((r.poids - r.avant) * 10) / 10 : null;
-  const autres = recs.length - 1;
-  return (
-    <View style={{ flex: 1, paddingTop: padTop, paddingBottom: padBas, paddingHorizontal: PAD }}>
-      <Haut d={d} titre={titre} pal={pal} largeur={L} max={story ? 28 : 22} />
-      <Zone fig={fig} />
-      {r ? (
-        <View style={{ gap: story ? 8 : 4 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <TropheeRecord size={Math.round(46 * Math.max(k, 0.7))} couleurs={{ fond: '#C9A13B', trophee: '#FFFFFF' }} />
-            {/* sur une image sombre le rouge se perd : le libelle prend l'or du trophee ; sur clair, le rouge des records */}
-            <T size={story ? 16 : 13} weight="black" color={sombre ? '#F2C75C' : pal.record} style={[{ letterSpacing: 0.2 }, pal.shadow]}>{autres > 0 ? traduire('Nouveaux records') : traduire('Nouveau record')}</T>
-          </View>
-          <T size={fit(r.nom, L, Math.round(30 * k), 0.58)} weight="black" color={pal.ink} style={[{ letterSpacing: -0.4 }, pal.shadow]}>{sansTiret(traduire(r.nom))}</T>
-          {r.poids ? (
-            <Heros g={chargeGrand(r.poids, u)} pal={pal} largeur={L} max={Math.round((carre ? 120 : 140) * k)} />
-          ) : (
-            <T size={story ? 22 : 16} weight="black" color={pal.ink} lines={2} style={pal.shadow}>{traduire(r.texte)}</T>
-          )}
-          {r.poids && r.reps && !carre ? <T size={story ? 16 : 13} weight="extraBold" color={pal.ink2} style={pal.shadow}>{traduirePluriel(r.reps, r.reps > 1, "pour {0} répétition", "pour {0} répétitions", r.reps)}</T> : null}
-          {gain !== null && gain > 0 ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, borderTopWidth: 1, borderColor: pal.line, paddingTop: story ? 10 : 6, marginTop: story ? 4 : 2 }}>
-              <T size={13} weight="bold" color={pal.muted} style={pal.shadow}>{traduire("Ancien record")}</T>
-              <T size={15} weight="black" color={pal.ink2} style={[{ textDecorationLine: 'line-through' }, pal.shadow]}>{`${chargeGrand(r.avant!, u).value} ${chargeGrand(r.avant!, u).unit}`}</T>
-              <View style={{ height: 24, paddingHorizontal: 9, borderRadius: 12, backgroundColor: '#D9B04A', justifyContent: 'center' }}>
-                <T size={13} weight="black" color="#1D2029">{`+${chargeGrand(gain, u).value} ${chargeGrand(gain, u).unit}`}</T>
-              </View>
-            </View>
-          ) : null}
-          {autres > 0 && !carre ? (
-            <T size={12.5} weight="bold" color={pal.ink2} lines={2} style={pal.shadow}>{traduirePluriel(autres, autres > 1, "Et {0} autre : {1}{2}", "Et {0} autres : {1}{2}", autres, recs.slice(1, 3).map((x) => x.nom).join(', '), autres > 2 ? '…' : '')}</T>
-          ) : null}
-          <View style={{ height: story ? 6 : 2 }} />
-          <Signature pal={pal} slogan={o.slogan} compact={!story} />
-        </View>
+    <Svg width={w} height={plein ? 5 : 2}>
+      {plein ? (
+        <>
+          <SvgLine x1={0} y1={1} x2={w} y2={1} stroke={encre} strokeWidth={1.6} />
+          <SvgLine x1={0} y1={4} x2={w} y2={4} stroke={encre} strokeWidth={1.6} />
+        </>
       ) : (
-        <Signature pal={pal} slogan={o.slogan} compact={!story} />
+        <SvgLine x1={0} y1={1} x2={w} y2={1} stroke={encre} strokeWidth={1.4} strokeDasharray="4 3" />
       )}
+    </Svg>
+  );
+}
+
+function LigneTicket({ g, dr, size, encre }: { g: string; dr: string; size: number; encre: string }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 4 }}>
+      <T size={size} weight="extraBold" color={encre} style={{ flexShrink: 1, letterSpacing: 0.3 }}>{g.toUpperCase()}</T>
+      <View style={{ flex: 1, minWidth: 8, height: 1, marginBottom: size * 0.3, borderBottomWidth: 1.2, borderStyle: 'dotted', borderColor: rgba(encre, 0.6) }} />
+      {dr ? <T size={size} weight="black" color={encre} style={{ fontVariant: ['tabular-nums'], letterSpacing: 0.2 }}>{dr.toUpperCase()}</T> : null}
     </View>
   );
 }
 
-const JOURS_COURTS = [traduire('Lun'), traduire('Mar'), traduire('Mer'), traduire('Jeu'), traduire('Ven'), traduire('Sam'), traduire('Dim')];
-
-/** Le rond d'un club : son logo, ou ses initiales */
-function ClubRond({ club, pal, D }: { club: NonNullable<CarteData['club']>; pal: Palette; D: number }) {
-  const src = club.logo ? getClubLogoSource(club.logo) : null;
-  const sombre = pal.ink === '#FFFFFF';
-  if (src) return <Image source={src} style={{ width: D, height: D, borderRadius: D / 2, backgroundColor: '#FFFFFF' }} resizeMode="cover" accessibilityLabel={traduire(club.nom)} />;
+function Ticket(c: Ctx) {
+  const [hero, ...rest] = c.stats;
+  const sombre = c.o.papier === 'sombre';
+  const papier = sombre ? '#17181D' : '#FFFFFF';
+  const encre = sombre ? '#FFFFFF' : ENCRE_PAPIER;
+  const v = visuelDuSport(c.d);
+  const trace = c.story && v.type === 'trace' ? v : null;
+  const bloc = trace ? null : blocDetail(c.d, c.u, maxLignes(c, 3, 2));
+  const rec = c.carre ? null : ligneRecord(c.d, c.u);
+  const num = numeroTicket(c.d);
+  const TW = c.L - 12;
+  const inner = TW - 32;
+  const fs = c.story ? 14.5 : c.carre ? 12 : 13;
+  const totalMax = c.story ? 72 : c.carre ? 44 : 54;
+  const dent = 9;
+  const n = Math.ceil(TW / dent);
+  const dents = Array.from({ length: n }, (_, i) => `${(i + 1) * dent},0 ${i * dent + dent / 2},${dent * 0.8}`).reverse().join(' ');
   return (
-    <View style={{ width: D, height: D, borderRadius: D / 2, backgroundColor: pal.ink, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel={traduire(club.nom)}>
-      <T size={Math.max(7, Math.round(D * 0.38))} weight="black" color={sombre ? '#14161C' : '#FFFFFF'}>{initialesClub(club.nom)}</T>
+    <View style={{ flex: 1, paddingTop: c.padTop, paddingBottom: c.padBas, paddingHorizontal: PAD, alignItems: 'center' }}>
+      <Fond c={c} voile={0.35} bas={0.4} />
+      <View style={{ flex: 1, minHeight: 0, justifyContent: 'center' }}>
+        <View style={{ width: TW, transform: [{ rotate: '-1.6deg' }], shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 6 }}>
+          <View style={{ backgroundColor: papier, paddingHorizontal: 16, paddingTop: c.story ? 16 : 11, paddingBottom: c.story ? 12 : 8, gap: c.story ? 7 : 5 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Image source={LOGO} style={{ width: 24, height: 24, borderRadius: 6 }} />
+                <T size={17} weight="black" color={encre} style={{ letterSpacing: 1.4 }}>YOROI</T>
+              </View>
+              <View style={{ alignItems: 'flex-end', flexShrink: 1 }}>
+                {num ? <T size={9.5} weight="black" color={encre} style={{ letterSpacing: 0.8 }}>{traduire('TICKET N° {0}', num)}</T> : null}
+                <T size={9.5} weight="bold" color={rgba(encre, 0.8)} style={{ letterSpacing: 0.6 }}>{c.d.sousTitre.toUpperCase()}</T>
+              </View>
+            </View>
+            <Pointilles w={inner} encre={encre} />
+            <T size={fs + 1.5} weight="black" color={encre} style={{ letterSpacing: 0.8 }}>{c.titre.toUpperCase()}</T>
+            {rest.map((s, i) => <LigneTicket key={`${s.key}${i}`} g={traduire(s.label)} dr={`${s.value}${s.unit ? ` ${s.unit}` : ''}`} size={fs} encre={encre} />)}
+            {bloc ? (
+              <>
+                <Pointilles w={inner} encre={encre} />
+                <T size={fs} weight="black" color={encre} style={{ letterSpacing: 0.8 }}>{bloc.titre.toUpperCase()}</T>
+                {bloc.lignes.map((l, i) => <LigneTicket key={i} g={l.gauche} dr={l.droite ?? ''} size={fs - 0.5} encre={encre} />)}
+              </>
+            ) : null}
+            {trace ? <View style={{ height: 96, alignItems: 'center', paddingVertical: 4 }}><View style={{ width: 120, height: '100%' }}><Trace trace={trace.trace} couleur={encre} epais={0.022} depart={papier} /></View></View> : null}
+            <Pointilles w={inner} encre={encre} plein />
+            {hero ? (
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
+                <T size={fs + 3} weight="black" color={encre} style={{ letterSpacing: 1, paddingBottom: 6 }}>{traduire('TOTAL')}</T>
+                <Valeur value={hero.value} unit={hero.unit} size={tailleHeros(hero, inner * 0.7, totalMax)} color={encre} align="flex-end" />
+              </View>
+            ) : null}
+            {rec ? (
+              <View style={{ backgroundColor: encre, paddingHorizontal: 10, paddingVertical: 5, alignItems: 'center' }}>
+                <T size={11.5} weight="black" color={papier}>{traduire('Record battu : {0}', rec)}</T>
+              </View>
+            ) : null}
+            <T size={10} weight="black" color={encre} style={{ letterSpacing: 2.4, textAlign: 'center', marginTop: 2 }}>{traduire('MERCI, À DEMAIN')}</T>
+            {c.carre ? null : <View style={{ alignItems: 'center' }}><CodeBarres cle={c.d.cle} w={Math.round(inner * 0.86)} h={c.story ? 34 : 22} encre={encre} /></View>}
+          </View>
+          <Svg width={TW} height={dent}>
+            <Polygon points={`0,0 ${n * dent},0 ${dents} 0,${dent * 0.8}`} fill={papier} />
+          </Svg>
+        </View>
+      </View>
+      <View style={{ marginTop: c.story ? 14 : 8, alignSelf: 'stretch' }}>
+        <Pied ink={c.ink} compact sansLogo />
+      </View>
     </View>
   );
 }
 
-function Coche({ on, pal, D }: { on: boolean; pal: Palette; D: number }) {
-  const sombre = pal.ink === '#FFFFFF';
+// ============================================
+// 5. MEDAILLE : pour les records et les etapes franchies
+// ============================================
+
+type PropsMedaille = Ctx & { hero: StatValue | null; rest: StatValue[]; autour: string; surtitre: string; rec: string | null; bloc: BlocDetail | null };
+
+function Medaille(c: PropsMedaille) {
+  const id = useId().replace(/[^a-zA-Z0-9]/g, '');
+  const D = c.story ? 200 : c.carre ? 112 : 150;
+  const ruban = Math.round(D * 0.36);
+  const r = D / 2;
+  const rt = r - D * 0.075;
+  const cercle = `M ${r} ${r} m ${-rt} 0 a ${rt} ${rt} 0 1 1 ${rt * 2} 0 a ${rt} ${rt} 0 1 1 ${-rt * 2} 0`;
+  const fsTour = Math.max(7, Math.round(D * 0.058));
+  // le texte tourne sur tout le cercle : repete autant que la circonference le permet
+  const unTour = `${c.autour} · `.toUpperCase();
+  const tours = Math.max(1, Math.floor((2 * Math.PI * rt) / (unTour.length * fsTour * 0.68)));
+  const tourTexte = unTour.repeat(tours);
+  const rubanW = D * 0.62;
+  const x0 = D * 0.5 - rubanW * 0.5;
+  const bande = (k: number) => {
+    const a = x0 + k * rubanW * 0.13;
+    return `${a},0 ${a + rubanW * 0.065},0 ${a + rubanW * 0.185},${ruban + 6} ${a + rubanW * 0.12},${ruban + 6}`;
+  };
+  const raie = (
+    <G>
+      <Polygon points={`${x0},0 ${x0 + rubanW * 0.38},0 ${x0 + rubanW * 0.5},${ruban + 6} ${x0 + rubanW * 0.12},${ruban + 6}`} fill="#FFFFFF" />
+      {[0, 1, 2].map((k) => <Polygon key={k} points={bande(k)} fill="#111216" />)}
+    </G>
+  );
+  const heroW = D * 0.64;
   return (
-    <View style={{ width: D, height: D, borderRadius: D / 2, backgroundColor: on ? pal.ink : 'transparent', borderWidth: 1.5, borderColor: on ? pal.ink : pal.line, alignItems: 'center', justifyContent: 'center' }}>
-      {on ? (
-        <Svg width={D * 0.56} height={D * 0.56} viewBox="0 0 24 24">
-          <Path d="M5 12.5l4.5 4.5L19 7.5" stroke={sombre ? '#14161C' : '#FFFFFF'} strokeWidth={3.2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <View style={{ flex: 1, paddingTop: c.padTop, paddingBottom: c.padBas, paddingHorizontal: PAD, alignItems: 'center' }}>
+      <Fond c={c} voile={0.45} bas={0.5} />
+      {c.d.club?.nom ? <View style={{ marginBottom: 6 }}><ClubPuce club={c.d.club} ink={c.ink} max={c.L} /></View> : null}
+      <Lbl color={c.ink} size={c.story ? 12 : 10.5} centre>{c.surtitre}</Lbl>
+      <View style={{ flex: 1, minHeight: 0, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: D, height: D + ruban * 0.78 }}>
+          <Svg width={D} height={ruban + 8} style={{ position: 'absolute', top: 0, left: 0 }}>
+            {raie}
+            <G transform={`translate(${D}, 0) scale(-1, 1)`}>{raie}</G>
+          </Svg>
+          <View style={{ position: 'absolute', top: ruban * 0.78, left: 0, width: D, height: D, borderRadius: D / 2, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 8 }}>
+            <Svg width={D} height={D}>
+              <Defs>
+                <RadialGradient id={`or${id}`} cx="40%" cy="35%" r="70%">
+                  <Stop offset="0" stopColor={OR.clair} />
+                  <Stop offset="0.6" stopColor={OR.milieu} />
+                  <Stop offset="1" stopColor={OR.fonce} />
+                </RadialGradient>
+              </Defs>
+              <Circle cx={r} cy={r} r={r - 1} fill={OR.bord} />
+              <Circle cx={r} cy={r} r={r - D * 0.03} fill={`url(#or${id})`} />
+              <Circle cx={r} cy={r} r={r - D * 0.135} fill="none" stroke={OR.bord} strokeOpacity={0.5} strokeWidth={1.2} />
+              <Path id={`tour${id}`} d={cercle} fill="none" />
+              <SvgText fill={OR.encre} fontSize={fsTour} fontFamily="Archivo_900Black" fontWeight="900" letterSpacing={1.2}>
+                <TextPath href={`#tour${id}`} startOffset="0">{tourTexte}</TextPath>
+              </SvgText>
+            </Svg>
+            <View style={{ position: 'absolute', left: 0, top: 0, width: D, height: D, alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+              {c.story ? <Image source={STICKERS[stickerDeCarte(c.d)]} style={{ width: D * 0.2, height: D * 0.2, marginBottom: 2 }} resizeMode="contain" /> : null}
+              {c.hero ? <Valeur value={c.hero.value} unit={c.hero.unit} size={tailleHeros(c.hero, heroW, D * 0.27)} color={OR.encre} align="center" /> : null}
+              {c.hero?.label ? <T size={Math.max(7, fit(c.hero.label, heroW, 10, 0.72))} weight="black" color={OR.encre} style={{ letterSpacing: 1.1, textAlign: 'center' }}>{traduire(c.hero.label).toUpperCase()}</T> : null}
+            </View>
+          </View>
+        </View>
+      </View>
+      <Stats stats={c.rest.slice(0, 3)} ink={c.ink} largeur={c.L} size={c.story ? 28 : c.carre ? 19 : 23} centre />
+      {c.bloc || c.rec ? (
+        <View style={{ marginTop: c.story ? 12 : 8, alignSelf: 'stretch', borderRadius: 14, backgroundColor: 'rgba(0,0,0,0.2)', paddingHorizontal: 14, paddingVertical: 8, gap: 5 }}>
+          {c.bloc ? <Lignes bloc={c.bloc} ink={c.ink} largeur={c.L - 28} size={12.5} sansTitre /> : null}
+          {c.rec ? (
+            <View style={{ gap: 1 }}>
+              <Lbl color={rgba(c.ink, 0.85)} size={9}>{traduire('Record battu')}</Lbl>
+              <T size={13.5} weight="black" color={c.ink}>{c.rec}</T>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+      <View style={{ marginTop: c.story ? 14 : 8, alignSelf: 'stretch' }}>
+        <Pied ink={c.ink} compact={!c.story} centre={c.story} />
+      </View>
+    </View>
+  );
+}
+
+function MedailleSeance(c: Ctx) {
+  const [hero, ...rest] = c.stats;
+  const rec = c.carre ? null : ligneRecord(c.d, c.u);
+  // en Story, une ou deux lignes du sport ; en Publication, seulement le record (la medaille prend la place)
+  const bloc = c.story ? blocDetail(c.d, c.u, rec ? 1 : 2) : null;
+  return <Medaille {...c} hero={hero ?? null} rest={rest} autour={`${c.titre} · ${c.d.sousTitre} · YOROI`} surtitre={c.titre} rec={rec} bloc={bloc} />;
+}
+
+// ============================================
+// 6. TABLEAU DE SCORE : l'esprit combat, chiffres en points lumineux jaunes
+// ============================================
+
+/** Une case noire du tableau, les chiffres en points lumineux (une grille noire posee sur le jaune) */
+function CaseLed({ children, pad = 8, grille = true, style, entete }: { children: React.ReactNode; pad?: number; grille?: boolean; style?: object; entete?: string }) {
+  const id = useId().replace(/[^a-zA-Z0-9]/g, '');
+  return (
+    <View style={[{ backgroundColor: '#000000', borderRadius: 8, padding: pad, overflow: 'hidden', borderWidth: 1, borderColor: '#24252B' }, style]}>
+      {/* le libelle reste net, au-dessus de la grille des points lumineux */}
+      {entete ? <View style={{ zIndex: 2 }}><Lbl color={BLANC} size={pad >= 10 ? 10 : 8.5}>{entete}</Lbl></View> : null}
+      {children}
+      {grille ? (
+        <Svg pointerEvents="none" width="100%" height="100%" style={{ position: 'absolute', left: 0, top: 0, zIndex: 1 }}>
+          <Defs>
+            <Pattern id={`led${id}`} width={3.2} height={3.2} patternUnits="userSpaceOnUse">
+              <Rect x={0} y={0} width={3.2} height={0.9} fill="#000000" />
+              <Rect x={0} y={0} width={0.9} height={3.2} fill="#000000" />
+            </Pattern>
+          </Defs>
+          <Rect x={0} y={0} width="100%" height="100%" fill={`url(#led${id})`} />
         </Svg>
       ) : null}
     </View>
   );
 }
 
-/** Semaine : tes 7 jours, coches, avec les sports faits et le logo du club ; tes chiffres de la semaine dessous */
-function SemaineVue({ d, o, pal, W, stats, titre, fig, padTop, padBas }: Ctx) {
-  const s = d.semaine;
-  const story = o.format === 'story';
-  const carre = o.format === 'carre';
-  const L = W - PAD * 2;
-  const panneau = o.sombre ? 'rgba(10,11,14,0.5)' : 'rgba(255,255,255,0.74)';
-  const jours = (s?.jours ?? []).map((on, i) => ({ on, sports: s?.parJour?.[i]?.sports ?? [], club: s?.parJour?.[i]?.club ?? null }));
-  const [y, m, j0] = (s?.debut ?? '2000-01-01').split('-').map(Number);
-  const num = (i: number) => new Date(y, (m || 1) - 1, (j0 || 1) + i, 12).getDate();
-  // deux chiffres au plus : les jours portent deja le detail de la semaine, les libelles restent entiers
-  const petits = stats.slice(0, 2);
-  const rowH = story ? 36 : 25;
-  const inner = L - 24;
-  const txtW = inner - 52 - 10 - (story ? 22 : 18) - 10 - (story ? 26 : 20) - 8;
+const JOURS_SEMAINE = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'].map((j) => traduire(j.charAt(0).toUpperCase() + j.slice(1)).toLowerCase());
+
+/** « Mardi 13 octobre » devient « 13 octobre » sur le tableau de score, ou le nom du sport a besoin de place */
+export function dateSansJour(sousTitre: string): string {
+  const [premier, ...reste] = sousTitre.split(' ');
+  return reste.length && JOURS_SEMAINE.includes((premier ?? '').toLowerCase()) ? reste.join(' ') : sousTitre;
+}
+
+function Score(c: Ctx) {
+  const [hero, ...rest] = c.stats;
+  const v = visuelDuSport(c.d);
+  const trace = c.story && v.type === 'trace' ? v : null;
+  const bloc = trace ? null : blocDetail(c.d, c.u, maxLignes(c, 3, 2));
+  const rec = c.carre ? null : ligneRecord(c.d, c.u);
+  const inner = c.L - 24;
+  const n = Math.min(3, rest.length);
+  const cellW = n ? (inner - 8 * (n - 1)) / n : inner;
+  const max = c.story ? 92 : c.carre ? 54 : 68;
   return (
-    <View style={{ flex: 1, paddingTop: padTop, paddingBottom: padBas, paddingHorizontal: PAD }}>
-      <Haut d={d} titre={titre} pal={pal} largeur={L} max={story ? 30 : 24} />
-      <Zone fig={fig} />
-      <View style={{ gap: story ? 12 : 7 }}>
-        {carre ? (
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderRadius: 16, backgroundColor: panneau, borderWidth: 1, borderColor: pal.line, paddingVertical: 8, paddingHorizontal: 10 }}>
-            {jours.map((x, i) => (
-              <View key={i} style={{ alignItems: 'center', gap: 4, width: 36 }}>
-                <T size={10} weight="extraBold" color={x.on ? pal.ink : pal.muted}>{JOURS_COURTS[i]}</T>
-                <Coche on={x.on} pal={pal} D={26} />
-                {x.club ? <ClubRond club={x.club} pal={pal} D={16} /> : <View style={{ height: 16 }} />}
+    <View style={{ flex: 1, paddingTop: c.padTop, paddingBottom: c.padBas, paddingHorizontal: PAD }}>
+      <Fond c={c} voile={0.45} bas={0.5} />
+      <View style={{ flex: 1, minHeight: 0, justifyContent: 'center' }}>
+        <View style={{ width: c.L, borderRadius: 18, backgroundColor: '#121316', borderWidth: 4, borderColor: '#2A2B31', padding: 8, gap: 8, shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 8 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 6, paddingTop: 2, gap: 8 }}>
+            <Lbl color={BLANC} size={c.story ? 12 : 10.5} style={{ flexShrink: 1 }}>{c.titre}</Lbl>
+            <Lbl color={BLANC} size={c.story ? 10.5 : 9.5} style={{ flexShrink: 0 }}>{dateSansJour(c.d.sousTitre)}</Lbl>
+          </View>
+          {hero ? (
+            <CaseLed pad={10} entete={traduire(hero.label)}>
+              <Valeur value={hero.value} unit={hero.unit} size={tailleHeros(hero, inner - 20, max)} color={LED} style={lueur('rgba(255,210,31,0.6)', 10)} />
+            </CaseLed>
+          ) : null}
+          {n ? (
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {rest.slice(0, 3).map((s, i) => {
+                const txt = `${s.value}${s.unit ?? ''}`;
+                return (
+                  <CaseLed key={`${s.key}${i}`} pad={7} style={{ width: cellW }} entete={traduire(s.label)}>
+                    <Valeur value={s.value} unit={s.unit} size={Math.min(c.story ? 26 : 20, fit(txt, cellW - 14, c.story ? 26 : 20, 0.64))} color={LED} style={lueur('rgba(255,210,31,0.5)', 8)} />
+                  </CaseLed>
+                );
+              })}
+            </View>
+          ) : null}
+          {trace ? (
+            <CaseLed pad={10} grille={false} style={{ height: 150, alignItems: 'center' }}>
+              <View style={{ width: inner * 0.62, height: '100%' }}><Trace trace={trace.trace} couleur={LED} glow depart="#000000" /></View>
+            </CaseLed>
+          ) : null}
+          {bloc ? (
+            <CaseLed pad={10} grille={false}>
+              <Lignes bloc={bloc} ink={BLANC} droiteColor={LED} largeur={inner - 20} size={c.story ? 13.5 : 12} sansTitre filet="#26272D" />
+            </CaseLed>
+          ) : null}
+          {rec ? (
+            <CaseLed pad={8} grille={false} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ backgroundColor: '#E5202A', borderRadius: 4, paddingHorizontal: 7, paddingVertical: 2 }}>
+                <T size={10} weight="black" color={BLANC} style={{ letterSpacing: 1.2 }}>{traduire('RECORD')}</T>
               </View>
-            ))}
-          </View>
-        ) : (
-          <View style={{ borderRadius: 18, backgroundColor: panneau, borderWidth: 1, borderColor: pal.line, paddingHorizontal: 12, paddingVertical: story ? 8 : 5 }}>
-            {jours.map((x, i) => {
-              const texte = x.sports.join(` ${traduire('et')} `);
-              return (
-                <View key={i} style={{ height: rowH, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: i ? 1 : 0, borderColor: pal.line }}>
-                  <View style={{ width: 52, flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-                    <T size={story ? 13 : 11.5} weight="black" color={x.on ? pal.ink : pal.muted}>{JOURS_COURTS[i]}</T>
-                    <T size={story ? 12 : 10.5} weight="bold" color={pal.muted}>{String(num(i))}</T>
-                  </View>
-                  <Coche on={x.on} pal={pal} D={story ? 22 : 18} />
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    {x.on && texte ? <T size={fit(texte, txtW, story ? 15 : 12.5, 0.55)} weight="extraBold" color={pal.ink}>{texte}</T> : null}
-                  </View>
-                  {x.club ? <ClubRond club={x.club} pal={pal} D={story ? 26 : 20} /> : null}
-                </View>
-              );
-            })}
-          </View>
-        )}
-        {petits.length ? (
-          <View style={{ flexDirection: 'row', gap: 14 }}>
-            {petits.map((st) => (
-              <View key={st.key} style={{ flex: 1, minWidth: 0 }}>
-                <Chiffre s={st} size={story ? 28 : 20} pal={pal} largeur={(L - 14 * (petits.length - 1)) / petits.length} />
-              </View>
-            ))}
-          </View>
-        ) : null}
-        <Signature pal={pal} slogan={o.slogan} compact={!story} />
+              <T size={12.5} weight="black" color={BLANC} style={{ flexShrink: 1 }}>{rec}</T>
+            </CaseLed>
+          ) : null}
+        </View>
+      </View>
+      <View style={{ marginTop: c.story ? 14 : 8 }}>
+        <Pied ink={c.ink} compact={!c.story} />
       </View>
     </View>
   );
 }
 
 // ============================================
-// EXPLOITS : record, palier, compteur, objectif, bilan
+// EXPLOITS : record, palier, compteur, objectif, bilan (Affiche ou Medaille)
 // ============================================
 
-/** Le gros chiffre : valeur et unite sur la meme ligne de base, taille calculee pour tenir */
-export function tailleHeros(g: Grand, largeur: number, max: number): number {
-  const u = g.unit ?? '';
-  // l'unite pese environ 0,32 du chiffre : on la compte dans la largeur
-  const n = g.value.length + (u ? u.length * 0.36 + 0.3 : 0);
-  return Math.max(36, Math.min(max, Math.floor(largeur / (n * 0.6))));
-}
-
-function Heros({ g, pal, largeur, max, couleur, align = 'flex-start' }: { g: Grand; pal: Palette; largeur: number; max: number; couleur?: string; align?: 'flex-start' | 'center' }) {
-  const u = g.unit ?? '';
-  const size = tailleHeros(g, largeur, max);
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: Math.round(size * 0.05), justifyContent: align }}>
-      <T size={size} weight="black" color={couleur ?? pal.ink} style={[{ letterSpacing: -size * 0.05, fontVariant: ['tabular-nums'], lineHeight: Math.round(size * 1.02) }, pal.shadow]}>{g.value}</T>
-      {u ? <T size={Math.max(14, Math.round(size * 0.3))} weight="black" color={pal.ink2} style={pal.shadow}>{u}</T> : null}
-    </View>
-  );
-}
-
-function Pastille({ texte, pal, record, simple }: { texte: string; pal: Palette; record?: boolean; simple?: boolean }) {
-  if (simple) return <T size={12} weight="black" color={record ? pal.record : pal.ink2} style={[{ letterSpacing: 1.6 }, pal.shadow]}>{texte.toUpperCase()}</T>;
-  const fond = record ? pal.record : 'transparent';
-  return (
-    <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 7, paddingLeft: record ? 5 : 12, paddingRight: 12, height: 30, borderRadius: 15, backgroundColor: fond, borderWidth: record ? 0 : 1.5, borderColor: pal.ink }}>
-      {record ? <TropheeRecord size={20} couleurs={{ fond: '#C9A13B', trophee: '#FFFFFF' }} /> : null}
-      <T size={fit(texte.toUpperCase(), 250, 12, 0.66)} weight="black" color={record ? '#FFFFFF' : pal.ink} style={[{ letterSpacing: 1.4 }, record ? {} : pal.shadow]}>{texte.toUpperCase()}</T>
-    </View>
-  );
-}
-
-function Progression({ b, pal, largeur, story }: { b: NonNullable<Exploit['barre']>; pal: Palette; largeur: number; story: boolean }) {
+function Progression({ b, ink, largeur }: { b: NonNullable<Exploit['barre']>; ink: string; largeur: number }) {
   const pct = Math.max(0, Math.min(1, b.fait / Math.max(1, b.total)));
-  const rep = b.attendu !== undefined ? Math.max(0, Math.min(1, b.attendu / Math.max(1, b.total))) : null;
-  const h = story ? 14 : 10;
   return (
-    <View style={{ width: largeur, gap: 7 }}>
-      <View style={{ height: h + 8, justifyContent: 'center' }}>
-        <View style={{ height: h, borderRadius: h / 2, backgroundColor: pal.track, overflow: 'hidden' }}>
-          <View style={{ width: `${Math.max(2.5, pct * 100)}%`, height: h, borderRadius: h / 2, backgroundColor: pal.ink }} />
-        </View>
-        {rep !== null && rep > 0.01 && rep < 0.99 ? (
-          <View style={{ position: 'absolute', left: rep * largeur - 1.5, top: 0, width: 3, height: h + 8, borderRadius: 1.5, backgroundColor: pal.accent }} />
-        ) : null}
+    <View style={{ width: largeur, gap: 6 }}>
+      <View style={{ height: 12, borderRadius: 6, backgroundColor: rgba(ink, 0.22), overflow: 'hidden' }}>
+        <View style={{ width: `${Math.max(2.5, pct * 100)}%`, height: 12, borderRadius: 6, backgroundColor: ink }} />
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
-        <T size={12} weight="bold" color={pal.ink2} style={[{ flexShrink: 1 }, pal.shadow]}>{b.legende}</T>
-        <T size={12} weight="black" color={pal.ink} style={pal.shadow}>{`${Math.round(pct * 100)} %`}</T>
+        <T size={11.5} weight="bold" color={rgba(ink, 0.88)} style={{ flexShrink: 1 }}>{b.legende}</T>
+        <T size={11.5} weight="black" color={ink}>{`${Math.round(pct * 100)} %`}</T>
       </View>
     </View>
   );
 }
 
-function ExploitVue({ d, o, pal, W, fig, padTop, padBas, u }: Ctx) {
-  const e = exploitEnUnite(exploitVisible(d.exploit!, o.masque), u);
-  const story = o.format === 'story';
-  const epure = !!o.epure;
-  const L = W - PAD * 2;
-  const k = story ? 1 : o.format === 'post' ? 0.78 : 0.66;
-  const avecFig = !!fig && !epure;
-  // avec le personnage : le chiffre (ou la liste) a gauche, le personnage debout a droite, ses pieds au niveau du chiffre
-  const heroL = avecFig ? Math.round(L * 0.66) : L;
-  const heroMax = Math.round(150 * k);
-  const nListe = Math.min(e.liste?.length ?? 0, story ? 5 : 4);
-  const hautBloc = nListe
-    ? nListe * Math.round(40 * k * 1.28) + (story ? 4 : 2) * (nListe - 1)
-    : e.hero.value
-      ? Math.round(tailleHeros(e.hero, heroL, heroMax) * 1.02)
-      : 0;
-  const descente = hautBloc + (e.avant ? Math.round(22 * Math.max(k, 0.85)) + (story ? 10 : 6) : 0);
-  const accroche = (
-    <T size={fit(e.accroche, L * 1.55, Math.round(28 * k), 0.6)} weight="black" color={pal.ink} lines={2} style={[{ letterSpacing: -0.4 }, pal.shadow]}>{e.accroche}</T>
-  );
-  const centre = epure;
+function exploitDe(c: Ctx): Exploit {
+  return exploitEnUnite(exploitVisible(c.d.exploit!, c.o.masque), c.u);
+}
+
+function cotesStats(e: Exploit): StatValue[] {
+  return (e.cotes ?? []).slice(0, 3).map((x) => ({ key: 'exploit', label: x.label, value: x.value, unit: x.unit }));
+}
+
+function ExploitAffiche(c: Ctx) {
+  const e = exploitDe(c);
+  const max = c.story ? 130 : c.carre ? 76 : 96;
+  const nListe = Math.min(e.liste?.length ?? 0, c.story ? 5 : c.carre ? 2 : 3);
+  const cotes = c.o.epure ? [] : cotesStats(e);
   return (
-    <>
-      <View style={{ flex: 1, paddingTop: padTop, paddingBottom: padBas, paddingHorizontal: PAD }}>
-        <View style={{ gap: 10, alignItems: centre ? 'center' : 'flex-start' }}>
-          <Haut d={d} titre="" pal={pal} largeur={L} centre={centre} sansTitre />
-          <Pastille texte={e.surtitre} pal={pal} record={e.record} simple={epure} />
-        </View>
-        {/* le personnage prend toute la place libre entre le titre et les chiffres : il ne recouvre jamais un texte */}
-        <View style={{ flex: 1, minHeight: 0 }}>
-          {avecFig ? (
-            <View pointerEvents="none" style={{ position: 'absolute', right: -16, top: 6, bottom: -descente - (story ? 10 : 6), aspectRatio: 0.7 }}>
-              <Image source={fig!} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
-            </View>
-          ) : null}
-        </View>
-        <View style={{ gap: story ? 10 : 6, alignItems: centre ? 'center' : 'flex-start' }}>
-          {e.avant ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <T size={Math.round(13 * Math.max(k, 0.85))} weight="bold" color={pal.muted} style={pal.shadow}>{traduire("Ancien record")}</T>
-              <T size={Math.round(15 * Math.max(k, 0.85))} weight="black" color={pal.ink2} style={[{ textDecorationLine: 'line-through' }, pal.shadow]}>{`${e.avant.value}${e.avant.unit ? ` ${e.avant.unit}` : ''}`}</T>
-            </View>
-          ) : null}
-          {e.liste && e.liste.length ? (
-            <View style={{ gap: story ? 4 : 2, maxWidth: heroL }}>
-              {e.liste.slice(0, story ? 5 : 4).map((x) => (
-                <View key={x} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <View style={{ width: 9 * k + 2, height: 9 * k + 2, borderRadius: 2, backgroundColor: pal.ink, transform: [{ rotate: '45deg' }] }} />
-                  <T size={Math.min(Math.round(40 * k), fit(x, heroL - 24, Math.round(40 * k), 0.68))} weight="black" color={pal.ink} style={[{ letterSpacing: -0.6 }, pal.shadow]}>{x}</T>
-                </View>
-              ))}
-            </View>
-          ) : e.hero.value ? (
-            <Heros g={e.hero} pal={pal} largeur={heroL} max={heroMax} align={centre ? 'center' : 'flex-start'} />
-          ) : null}
-          <View style={{ maxWidth: L }}>{accroche}</View>
-          {e.detail && !epure ? <T size={13} weight="bold" color={pal.ink2} lines={2} style={[{ maxWidth: L, textAlign: centre ? 'center' : 'left' }, pal.shadow]}>{e.detail}</T> : null}
-          {e.barre && (story || o.format === 'post') ? <View style={{ marginTop: story ? 6 : 2 }}><Progression b={e.barre} pal={pal} largeur={L} story={story} /></View> : null}
-          {e.cotes && e.cotes.length && !epure ? (
-            <View style={{ flexDirection: 'row', gap: 14, alignSelf: 'stretch', borderTopWidth: 1, borderColor: pal.line, paddingTop: story ? 12 : 8, marginTop: story ? 4 : 0 }}>
-              {e.cotes.slice(0, 3).map((c) => (
-                <View key={c.label} style={{ flex: 1, minWidth: 0 }}>
-                  <Valeur s={{ key: 'exploit', label: c.label, value: c.value, unit: c.unit }} size={Math.min(Math.round(28 * k), fit(`${c.value} ${c.unit ?? ''}`, (L - 28) / 3, Math.round(28 * k), 0.6))} pal={pal} />
-                  <T size={11} weight="bold" color={pal.muted} style={pal.shadow}>{traduire(c.label)}</T>
-                </View>
-              ))}
-            </View>
-          ) : null}
-          <View style={{ height: story ? 8 : 4 }} />
-          <View style={{ alignSelf: 'stretch' }}>
-            <Signature pal={pal} slogan={o.slogan} compact={!story} />
+    <View style={{ flex: 1, paddingTop: c.padTop, paddingBottom: c.padBas, paddingHorizontal: PAD }}>
+      <Fond c={c} />
+      <EnTete c={c} ink={c.ink} sansTitre />
+      <View style={{ alignSelf: 'flex-start', marginTop: 10, borderRadius: 15, paddingHorizontal: 12, height: 30, justifyContent: 'center', backgroundColor: e.record ? c.ink : 'transparent', borderWidth: 2, borderColor: c.ink }}>
+        <T size={fit(e.surtitre.toUpperCase(), 250, 12, 0.66)} weight="black" color={e.record ? contreEncre(c.ink, c.coul) : c.ink} style={{ letterSpacing: 1.4 }}>{e.surtitre.toUpperCase()}</T>
+      </View>
+      <View style={{ flex: 1, minHeight: 0 }} />
+      <View style={{ gap: c.story ? 10 : 6 }}>
+        {e.avant ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <T size={12.5} weight="bold" color={rgba(c.ink, 0.8)}>{traduire('Ancien record')}</T>
+            <T size={14} weight="black" color={rgba(c.ink, 0.9)} style={{ textDecorationLine: 'line-through' }}>{`${e.avant.value}${e.avant.unit ? ` ${e.avant.unit}` : ''}`}</T>
           </View>
+        ) : null}
+        {nListe ? (
+          <View style={{ gap: 2 }}>
+            {e.liste!.slice(0, nListe).map((x) => <T key={x} size={Math.min(c.story ? 36 : 26, fit(x, c.L, c.story ? 36 : 26, 0.62))} weight="black" color={c.ink} style={{ letterSpacing: -0.5 }}>{x}</T>)}
+          </View>
+        ) : e.hero.value ? (
+          <Valeur value={e.hero.value} unit={e.hero.unit || undefined} size={tailleHeros(e.hero, c.L, max)} color={c.ink} />
+        ) : null}
+        <T size={fit(e.accroche, c.L * 1.6, c.story ? 26 : 20, 0.6)} weight="black" color={c.ink} lines={2} style={{ letterSpacing: -0.3 }}>{e.accroche}</T>
+        {e.detail && !c.carre && !c.o.epure ? <T size={12.5} weight="bold" color={rgba(c.ink, 0.88)} lines={2}>{e.detail}</T> : null}
+        {e.barre && !c.carre ? <View style={{ marginTop: 4 }}><Progression b={e.barre} ink={c.ink} largeur={c.L} /></View> : null}
+        {cotes.length ? (
+          <View style={{ borderTopWidth: 2, borderColor: rgba(c.ink, 0.9), paddingTop: c.story ? 10 : 6 }}>
+            <Stats stats={cotes} ink={c.ink} largeur={c.L} size={c.story ? 26 : 20} />
+          </View>
+        ) : null}
+        <View style={{ marginTop: c.story ? 10 : 4 }}>
+          <Pied ink={c.ink} compact={!c.story} />
         </View>
       </View>
-    </>
+    </View>
   );
 }
+
+function ExploitMedaille(c: Ctx) {
+  const e = exploitDe(c);
+  const hero: StatValue | null = e.hero.value ? { key: 'exploit', label: '', value: e.hero.value, unit: e.hero.unit || undefined } : null;
+  const bloc: BlocDetail | null = c.carre ? null : { titre: '', lignes: [{ gauche: e.accroche }] };
+  return <Medaille {...c} hero={hero} rest={c.o.epure ? [] : cotesStats(e)} autour={`${e.surtitre} · ${c.d.sousTitre} · YOROI`} surtitre={e.surtitre} rec={null} bloc={bloc} />;
+}
+
+// ============================================
+// LE CHOIX DES MODELES
+// ============================================
 
 export type ModeleInfo = { id: ModeleId; nom: string; explication: string };
 
-/** Les modeles, dans l'ordre du choix : un nom parlant et une ligne qui dit ce que montre la carte */
+/** Les six modeles, dans l'ordre du choix ; l'Affiche est le modele par defaut */
 export const MODELES: ModeleInfo[] = [
-  { id: 'affiche', nom: 'Affiche', explication: traduire('Ton chiffre fort en grand, les autres en dessous.') },
-  { id: 'minimal', nom: 'Minimal', explication: traduire('Un seul grand chiffre, ton titre et la signature.') },
-  { id: 'record', nom: traduire('Record'), explication: traduire('Ton record en vedette, avec le trophée et l’ancien record.') },
-  { id: 'semaine', nom: traduire('Semaine'), explication: traduire('Tes 7 jours, avec les sports faits et tes clubs.') },
-  { id: 'anneau', nom: traduire('Objectif'), explication: traduire('L’anneau montre où tu en es de ton objectif.') },
-  { id: 'bandeau', nom: 'Bandeau', explication: traduire('Tous tes chiffres côte à côte, à égalité.') },
-  { id: 'colonne', nom: 'Colonne', explication: traduire('Tes chiffres empilés, du plus fort au plus petit.') },
-  { id: 'ticket', nom: 'Ticket', explication: traduire('Le détail ligne par ligne, puis le total.') },
-  { id: 'cadre', nom: 'Polaroid', explication: traduire('Ta scène ou ta photo encadrée, tes chiffres sur le papier.') },
-  { id: 'geant', nom: traduire('Géant'), explication: traduire('Le nom de ton sport en lettres géantes.') },
+  { id: 'affiche', nom: 'Affiche', explication: traduire('Ton chiffre en énorme sur une couleur franche, le visuel de ton sport et 3 stats.') },
+  { id: 'bandeau', nom: 'Bandeau', explication: traduire('Ta photo en plein cadre, un bandeau de couleur range tes stats.') },
+  { id: 'neon', nom: traduire('Néon nuit'), explication: traduire('Fond de nuit, ton tracé et ton chiffre qui brillent.') },
+  { id: 'ticket', nom: traduire('Ticket de caisse'), explication: traduire('Ta séance en ticket de caisse, le total en gros.') },
+  { id: 'medaille', nom: traduire('Médaille'), explication: traduire('Une médaille dorée, ton chiffre gravé au centre. Pour tes records et tes étapes.') },
+  { id: 'score', nom: traduire('Tableau de score'), explication: traduire('Le panneau d’un stade, tes chiffres en points lumineux.') },
 ];
 
-/** Un modele n'est propose que si ses donnees existent : Objectif sans objectif, Record sans record, jamais */
+export const MODELES_SIX: ModeleId[] = MODELES.map((m) => m.id);
+/** Un exploit (record, palier, bilan) se dessine en Affiche ou en Medaille */
+const MODELES_EXPLOIT: ModeleId[] = ['affiche', 'medaille'];
+
 export function modeleDispo(d: CarteData, id: ModeleId): boolean {
-  if (id === 'anneau') return proportionAnneau(d)?.pct !== undefined;
-  if (id === 'record') return d.moment === 'seance' && !!d.seance?.records?.length;
-  if (id === 'semaine') return d.moment === 'semaine' && !!d.semaine;
-  return true;
+  if (d.moment === 'avant_apres') return id === 'affiche';
+  if (d.moment === 'exploit') return MODELES_EXPLOIT.includes(id);
+  return MODELES_SIX.includes(id);
 }
 
 export function modelesPour(d: CarteData): ModeleInfo[] {
   return MODELES.filter((m) => modeleDispo(d, m.id));
 }
 
-/** Le modele dessine : celui choisi s'il est propose pour cette carte, sinon l'Affiche */
+/** Le modele dessine : celui choisi s'il est propose pour cette carte, sinon l'Affiche (anciens reglages compris) */
 export function modeleEffectif(d: CarteData, id: ModeleId): ModeleId {
   return modeleDispo(d, id) ? id : 'affiche';
 }
 
-/** L'explication du modele pour cette carte (Objectif dit de quel objectif il parle) */
-export function explicationModele(m: ModeleInfo, d: CarteData): string {
-  if (m.id === 'anneau') return d.moment === 'pesee' ? traduire('L’anneau montre le chemin fait vers ton objectif de poids.') : traduire('L’anneau montre tes séances faites sur ton objectif de la semaine.');
+export function explicationModele(m: ModeleInfo, _d?: CarteData): string {
   return m.explication;
+}
+
+/** Les modeles qui proposent le choix Clair ou Sombre (le papier du ticket) */
+export function aClairSombre(id: ModeleId): boolean {
+  return id === 'ticket';
+}
+
+/** Ce qui est dessine : ta photo (sauf « Que mes données » ou personne retiree) et la couleur choisie */
+export function optionsDessinees(o: OptionsCarte, v: VisuelsCarte): { photo: string | null; coul: CouleurCarte } {
+  const photo = o.fond === 'photo' && !!v.photo && !o.epure && !o.sansPersonne ? v.photo : null;
+  return { photo, coul: couleurDe(o.couleur) };
 }
 
 /**
  * La carte. Rendue a 360 de large ; l'apercu la reduit avec une echelle, la capture la prend a sa taille.
- * 17 octobre : la signature est collee en bas (marge fine), la date reste juste sous la barre d'Instagram.
  */
-export const CarteRendu = forwardRef<View, Props>(({ data: brut, options: brutes, visuels }, ref) => {
-  // 18 octobre 2026 : charges calculees en kilos, dessinees dans l'unite du reglage (kg ou lb) ; le poids du corps reste en kilos
+export const CarteRendu = forwardRef<View, Props>(({ data: brut, options, visuels }, ref) => {
+  // 18 octobre 2026 : charges calculees en kilos, dessinees dans l'unite du reglage (kg ou lb)
   const u = useUnitePoids();
   const data = donneesEnUnite(brut, u);
-  // « Que mes données » : fond uni, sans personnage
-  const base: OptionsCarte = brutes.epure ? { ...brutes, fond: 'uni', personnage: false } : brutes;
-  // interrupteur « Mon personnage sur la carte » ou « Ma photo sur la carte » eteint : aucune personne, ta photo laisse place a ta scene
-  const options: OptionsCarte = base.sansPersonne ? { ...base, personnage: false, fond: base.fond === 'photo' ? 'scene' : base.fond } : base;
   const W = CARTE_W;
   const H = HAUTEURS[options.format];
-  const pal = paletteDe(options.sombre);
   if (data.moment === 'avant_apres') {
-    // Avant apres : tes deux photos, sans personnage ni decor
     return (
       <View ref={ref} collapsable={false} style={{ width: W, height: H, overflow: 'hidden', backgroundColor: options.sombre ? '#14161F' : '#F2F1EC' }}>
-        <AvantApresVue d={data} o={options} H={H} signature={<Signature pal={pal} slogan={options.slogan} compact={options.format !== 'story'} />} />
+        <AvantApresVue d={data} o={options} H={H} signature={<Pied ink={options.sombre ? BLANC : ENCRE_PAPIER} compact={options.format !== 'story'} />} />
       </View>
     );
   }
-  const stats = statsEnUnite(chiffresAffiches(brut, options.chiffres, options.masque), u);
-  const titre = titreCarte(brut, options.masque);
-  const fig = options.personnage && visuels.personnage ? visuels.personnage : null;
+  const { photo, coul } = optionsDessinees(options, visuels);
   const story = options.format === 'story';
-  const ctx: Ctx = { d: data, o: options, v: visuels, pal, W, H, stats, titre, fig, padTop: story ? 34 : 20, padBas: story ? 16 : 12, u };
-  const exploit = data.moment === 'exploit' && !!data.exploit;
+  const carre = options.format === 'carre';
+  const stats = statsEnUnite(chiffresAffiches(brut, options.chiffres, options.masque), u);
+  const ctx: Ctx = {
+    d: data,
+    o: options,
+    W,
+    H,
+    L: W - PAD * 2,
+    story,
+    carre,
+    stats,
+    titre: titreCarte(brut, options.masque),
+    u,
+    coul,
+    photo,
+    ink: photo ? BLANC : coul.encre,
+    padTop: MARGES[options.format].haut,
+    padBas: MARGES[options.format].bas,
+  };
   const modele = modeleEffectif(data, options.modele);
-  const Modele = exploit ? ExploitVue : { affiche: Affiche, bandeau: Bandeau, colonne: Colonne, ticket: Ticket, cadre: Cadre, geant: Geant, anneau: Anneau, minimal: Minimal, record: RecordVue, semaine: SemaineVue }[modele] ?? Affiche;
+  const exploit = data.moment === 'exploit' && !!data.exploit;
+  const SIX: Partial<Record<ModeleId, (c: Ctx) => React.ReactElement>> = { affiche: Affiche, bandeau: Bandeau, neon: Neon, ticket: Ticket, medaille: MedailleSeance, score: Score };
+  const Modele = exploit ? (modele === 'medaille' ? ExploitMedaille : ExploitAffiche) : SIX[modele] ?? Affiche;
   return (
-    <View ref={ref} collapsable={false} style={{ width: W, height: H, overflow: 'hidden', backgroundColor: options.sombre ? '#121318' : '#F4F2EC' }}>
-      {exploit || modele !== 'cadre' ? <Fond o={options} v={visuels} h={H} fort={exploit} /> : null}
+    <View ref={ref} collapsable={false} style={{ width: W, height: H, overflow: 'hidden', backgroundColor: coul.fond }}>
       <Modele {...ctx} />
     </View>
   );
