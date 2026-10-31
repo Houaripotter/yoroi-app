@@ -100,7 +100,7 @@
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>YOROI enregistre dans Apple Santé tes pesées et ta masse grasse, les séances que tu notes, ton eau et le sommeil que tu saisis à la main. Rien n'est envoyé à un serveur de YOROI.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>YOROI utilise le réseau local pour synchroniser tes données avec ton iPad appairé par code, seulement quand l'écran de synchronisation est ouvert.</string>
+	<string>YOROI utilise le réseau local pour synchroniser tes données directement entre tes appareils appairés par code (iPhone, iPad, Mac), quand l'app est ouverte. Rien ne passe par internet ni par un serveur de YOROI.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>YOROI utilise ta position seulement quand tu la demandes dans une séance, pour y inscrire le nom du lieu, par exemple ta salle et ta ville. Jamais en arrière-plan, et rien n'est envoyé à un serveur de YOROI.</string>
 	<key>NSMicrophoneUsageDescription</key>
