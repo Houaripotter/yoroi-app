@@ -39,8 +39,8 @@ import type { Training } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
 import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
-import { colonnesPour, largeurColonne, largeurCote } from '@/lib/v2/nav/grandEcran';
-import { Colonne, GrilleColonnes, LargeurPage, Rangee } from '@/components/yoroi/v2/PageLarge';
+import { espaceGrille, largeurCote } from '@/lib/v2/nav/grandEcran';
+import { Bento, BentoEnfants, Case, Colonne, GrilleColonnes, LargeurPage, Rangee } from '@/components/yoroi/v2/PageLarge';
 import { accordSouleve, formatDuration, formatTonnage as tonnageText } from '@/lib/v2/trainingWeek';
 import { todayISO } from '@/lib/v2/weightStats';
 import { useSeancesData } from '@/lib/v2/seances/useSeancesData';
@@ -155,11 +155,12 @@ export default function Seances() {
   // 30 octobre 2026 : en grand ecran, la page centree en colonnes (maquette _propositions/grand_ecran_2026-10-30/seances.png)
   const page = usePageLarge();
   const grand = page.grand;
-  // la colonne de cote (Cette semaine, Ce qui vient), les cases de En detail (3, ou 2 sur une page plus etroite)
+  // 31 octobre 2026 : en grand ecran, tout est dans la grille de la page (2, 3 ou 4 colonnes, page.colonnes) ; ces
+  // largeurs ne servent plus qu'aux Colonne de l'iPhone, inactives (elles rendent leurs enfants tels quels)
   const cote = largeurCote(page.largeur);
   const col2 = page.largeur - cote - 20;
-  const col3 = largeurColonne(page.largeur, colonnesPour(page.largeur));
-  const demi = largeurColonne(page.largeur, 2);
+  // tes seances de l'historique, une par colonne de la grille
+  const demi = page.caseDe(1);
   const sections = useSectionsOuvertes();
   // la visite guidée montre ta dernière séance et ton mois : ces sections restent ouvertes pendant la visite
   const visite = useVisiteEnCours();
@@ -283,6 +284,53 @@ export default function Seances() {
         {/* Importer mes seances : visible en haut tant que rien ne vient de Sante */}
         {importSante && loaded && trainings.length > 0 && importedCount === 0 ? <CarteImportSeances onPress={() => setImportOpen(true)} /> : null}
 
+        {grand ? (
+          <>
+            {/* 31 octobre 2026 (grand ecran) : la carte du jour sur deux colonnes, Ton programme, Cette semaine et Ce qui vient a cote */}
+            <CarteDuJour
+              trainings={trainings}
+              weeklyGoal={weeklyGoal}
+              femme={femme}
+              next={next}
+              onCoach={() => router.push('/coach' as any)}
+              disposer={(programme, carte) => (
+                <Bento
+                  largeur={page.largeur}
+                  colonnes={page.colonnes}
+                  cases={[
+                    { cle: 'jour', span: 2, contenu: <TourAnchor id="seances.programme" rayon={30}>{carte}</TourAnchor> },
+                    programme ? { cle: 'programme', contenu: programme } : null,
+                    {
+                      cle: 'semaine',
+                      contenu: (
+                        <TourAnchor id="seances.semaine" rayon={24}>
+                          <SemaineAnneau week={week} plates={plates} trainings={trainings} weeklyGoal={weeklyGoal} onChooseGoal={() => router.push('/settings?objectif=1' as any)} />
+                        </TourAnchor>
+                      ),
+                    },
+                    {
+                      cle: 'prochain',
+                      contenu: (
+                        <View style={{ gap: 12 }}>
+                          <Petites texte={traduire('Ce qui vient')} teinte="lilas" style={{ marginTop: 4, marginBottom: -4 }} />
+                          <TourAnchor id="seances.prochain" rayon={24}>
+                            <NextUp next={next} femme={femme} validated={validated} slotsCount={slotsCount} onPlanning={() => router.push('/planning' as any)} onCreate={() => router.push('/slots' as any)} />
+                          </TourAnchor>
+                        </View>
+                      ),
+                    },
+                  ]}
+                />
+              )}
+            />
+            {/* les 4 chiffres de la semaine en 4 carres alignes */}
+            <View style={{ gap: 12 }}>
+              <Petites texte={traduire('Tes chiffres de la semaine')} teinte="creme" style={{ marginTop: 8, marginBottom: -4 }} />
+              <WeekTiles week={week} onOpenCharge={() => router.push('/charge' as any)} enLigne />
+            </View>
+          </>
+        ) : (
+          <>
         {/* 28 octobre 2026 (maquette A) : la seance du jour d'abord (programme du Coach, creneau prevu, ou le Coach) */}
         <Rangee actif={grand}>
         <Colonne actif={grand} largeur={col2}>
@@ -323,6 +371,9 @@ export default function Seances() {
         </Colonne>
         </Rangee>
 
+          </>
+        )}
+
         {/* En detail : les sections repliables, chacune avec son resume */}
         <Petites
           texte={traduire('En détail')}
@@ -331,9 +382,9 @@ export default function Seances() {
           action={Object.values(sections.ouvert).some(Boolean) ? traduire('Tout replier') : traduire('Tout déplier')}
           onAction={() => sections.toutes(!Object.values(sections.ouvert).some(Boolean))}
         />
-        <View style={grand ? { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: 20 } : { gap: 10 }}>
+        <BentoEnfants actif={grand} largeur={page.largeur} colonnes={page.colonnes} sinon={{ gap: 10 }}>
           {lastVM && last ? (
-            <Colonne actif={grand} largeur={col3}>
+            <Case>
             <TourAnchor id="seances.derniere" rayon={24}>
               <SectionRepliable
                 titre={traduire('Ta dernière séance')}
@@ -346,11 +397,11 @@ export default function Seances() {
                 <LastSessionBody vm={lastVM} onOpen={() => router.push({ pathname: '/workout-detail', params: { id: String(last.id) } } as any)} />
               </SectionRepliable>
             </TourAnchor>
-            </Colonne>
+            </Case>
           ) : null}
 
           {mesSeances ? (
-            <Colonne actif={grand} largeur={col3}>
+            <Case>
             <SectionRepliable
               titre={traduire('Mes séances')}
               resume={resumeMesSeances(mesSeances)}
@@ -361,10 +412,10 @@ export default function Seances() {
             >
               <MesSeancesListe liste={mesSeances} />
             </SectionRepliable>
-            </Colonne>
+            </Case>
           ) : null}
 
-          <Colonne actif={grand} largeur={col3}>
+          <Case>
           <TourAnchor id="seances.mois" rayon={24}>
             <SectionRepliable
               titre={traduire('Ton mois')}
@@ -382,10 +433,10 @@ export default function Seances() {
               <MoisPastilles trainings={trainings} competitions={competitions} onOpen={() => router.push('/planning?tab=mois' as any)} />
             </SectionRepliable>
           </TourAnchor>
-          </Colonne>
+          </Case>
 
           {hasMuscles ? (
-            <Colonne actif={grand} largeur={col3}>
+            <Case>
             <SectionRepliable
               titre={traduire('Muscles travaillés')}
               resume={(() => {
@@ -397,12 +448,12 @@ export default function Seances() {
               ouvert={sections.ouvert.muscles}
               onBasculer={() => sections.basculer('muscles')}
             >
-              <MusclesSemaine loads={muscles} frequence={frequence} largeur={grand ? col3 - 28 : width - 32 - 28} />
+              <MusclesSemaine loads={muscles} frequence={frequence} largeur={grand ? page.caseDe(1) - 28 : width - 32 - 28} />
             </SectionRepliable>
-            </Colonne>
+            </Case>
           ) : null}
 
-          <Colonne actif={grand} largeur={col3}>
+          <Case>
           <SectionRepliable
             titre={traduire('Tes records')}
             resume={(() => {
@@ -453,8 +504,8 @@ export default function Seances() {
               <Icon name="chevron" size={15} color={c.accentText} />
             </Pressable>
           </SectionRepliable>
-          </Colonne>
-        </View>
+          </Case>
+        </BentoEnfants>
 
         {/* Historique */}
         <TourAnchor
@@ -564,7 +615,7 @@ export default function Seances() {
               <Ink size={12} weight="bold" color={c.textSecondary}>{groupLine(g, unite)}</Ink>
             </View>
             {/* en grand ecran, tes seances sur deux colonnes */}
-            <GrilleColonnes actif={grand}>
+            <GrilleColonnes actif={grand} espace={espaceGrille(page.largeur)}>
             {g.items.map((t) => (
               <Colonne key={t.id ?? `${t.date}${t.start_time}`} actif={grand} largeur={demi}>
               <HistoryCard t={t} femme={femme} stamps={t.id ? records.stampedTrainings.get(t.id) ?? 0 : 0} />
