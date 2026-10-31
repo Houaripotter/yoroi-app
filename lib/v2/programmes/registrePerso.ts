@@ -22,7 +22,25 @@ export function programmePersoParId(id: string | null | undefined): Programme | 
   return registre.get(id as string);
 }
 
-/** Remplace toute la liste (lecture du stockage, enregistrement, archive) */
+const memeContenu = (a: Programme, b: Programme): boolean => {
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Remplace toute la liste (lecture du stockage, enregistrement, archive).
+ * 31 octobre 2026 (Houari : « j'ai fait le Lower, je n'ai pas vu ma séance de cardio ») : un programme relu sans
+ * changement garde le MEME objet. Avant, chaque relecture (chargerProgrammeActif la refait) creait de nouveaux
+ * objets : la seance en direct tenait le jour de l'ancienne copie, et la fin de seance du programme actif, qui
+ * reconnait ses jours par identite (finSeance.ts, contexteFinPour), ne s'appliquait plus. Ni abdos ni cardio ajoutes.
+ */
 export function remplirRegistrePerso(liste: readonly Programme[]): void {
-  registre = new Map(liste.map((p) => [p.id, p]));
+  const avant = registre;
+  registre = new Map(liste.map((p) => {
+    const a = avant.get(p.id);
+    return [p.id, a && memeContenu(a, p) ? a : p];
+  }));
 }
