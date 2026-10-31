@@ -84,6 +84,10 @@ export type LiveExercise = {
   remplaceEnSeance?: string;
   /** 30 octobre 2026 : exercice cardio de fin de seance, son chrono (lib/v2/seances/cardioFin.ts) */
   cardio?: import('@/lib/v2/seances/cardioFin').ChronoCardio;
+  /** 31 octobre 2026 : lie a l'exercice suivant (superset, circuit), sans repos entre les deux (lib/v2/seances/superset.ts) */
+  enchaine?: boolean;
+  /** 31 octobre 2026 : ajoute au bloc par « Toujours dans ce programme » (lib/v2/programmes/enchainements.ts) */
+  ajoutBloc?: boolean;
 };
 
 /** Changer d'exercice : celui qu'on quitte avec au moins une serie faite est « laisse » (plus repropose) */
