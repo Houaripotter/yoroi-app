@@ -3,6 +3,8 @@
  * ton objectif, ou jours entraînés sur 7 sans objectif), la phrase qui dit où tu en es, et les sept jours de L à D :
  * le sticker du sport des jours faits (avec leur nombre s'il y en a plusieurs), aujourd'hui entouré, les jours prévus
  * en pointillés. Mêmes données qu'avant (computeWeekPlates, weekCompare) ; seuls la forme et l'ordre changent.
+ * 31 octobre 2026 (Houari) : chaque jour fait reçoit le tampon « validé » (TamponValide.tsx), un jour prévu passé
+ * sans séance s'efface (discret), un jour sans séance prévue mais avec une séance faite est validé aussi.
  */
 import React from 'react';
 import { Image, Pressable, View } from 'react-native';
@@ -16,6 +18,7 @@ import { PLAN_DAYS_SHORT } from '@/lib/v2/seances/sessionData';
 import type { DayPlate } from './WeekPlates';
 import { stickerDuSport } from './MonthMarks';
 import { Petites, useCarteA, useTeinte } from './kitA';
+import { TamponValide } from './TamponValide';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 function Anneau({ fait, total, taille = 62 }: { fait: number; total: number; taille?: number }) {
@@ -41,7 +44,7 @@ function Anneau({ fait, total, taille = 62 }: { fait: number; total: number; tai
   );
 }
 
-function Jour({ p, sports, lettre }: { p: DayPlate; sports: string[]; lettre: string }) {
+function Jour({ p, sports, lettre, rang }: { p: DayPlate; sports: string[]; lettre: string; rang: number }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const illus = useIllustrations();
@@ -54,9 +57,10 @@ function Jour({ p, sports, lettre }: { p: DayPlate; sports: string[]; lettre: st
   if (fait) fond = { backgroundColor: bleu.fond, borderWidth: p.isToday ? 2.5 : 0, borderColor: indigo };
   else if (p.isToday) fond = { backgroundColor: c.surface, borderWidth: 2.5, borderColor: indigo };
   else if (p.state === 'planned') fond = { borderWidth: 2, borderStyle: 'dashed', borderColor: theme.isDark ? '#4A5578' : '#B9C3E4' };
-  else if (p.state === 'missed') fond = { backgroundColor: c.fillSubtle, borderWidth: 1.5, borderColor: c.border };
+  // jour prévu passé sans séance : discret, juste une case pâle
+  else if (p.state === 'missed') fond = { backgroundColor: c.fillSubtle, opacity: 0.55 };
   else fond = { backgroundColor: theme.isDark ? c.fillSubtle : '#ECEEF5' };
-  const etat = fait ? traduirePluriel(p.count, p.count > 1, '{0} séance', '{0} séances', p.count) : p.state === 'planned' ? traduire('prévu') : p.state === 'missed' ? traduire('manqué') : p.state === 'rest' ? traduire('repos') : traduire('libre');
+  const etat = fait ? `${traduire('Validé')}, ${traduirePluriel(p.count, p.count > 1, '{0} séance', '{0} séances', p.count)}` : p.state === 'planned' ? traduire('prévu') : p.state === 'missed' ? traduire('manqué') : p.state === 'rest' ? traduire('repos') : traduire('libre');
   return (
     <View style={{ flex: 1, alignItems: 'center', gap: 5, minWidth: 0 }} accessible accessibilityLabel={`${lettre}, ${etat}${p.isToday ? `, ${traduire('aujourd’hui')}` : ''}`}>
       <View style={[base, fond]}>
@@ -65,8 +69,9 @@ function Jour({ p, sports, lettre }: { p: DayPlate; sports: string[]; lettre: st
         ) : p.state === 'rest' ? (
           <Svg width={16} height={16} viewBox="0 0 24 24"><Path d="M17 14a6 6 0 1 1-6-7 4.6 4.6 0 0 0 6 7z" fill={c.textMuted} /></Svg>
         ) : null}
+        {fait ? <TamponValide taille={22} delai={rang * 70} /> : null}
         {fait && p.count > 1 && illus.stickers && sticker ? (
-          <View style={{ position: 'absolute', right: -5, top: -6, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 3, backgroundColor: theme.isDark ? '#9DB1FF' : '#23358F', borderWidth: 2, borderColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ position: 'absolute', left: -5, top: -6, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 3, backgroundColor: theme.isDark ? '#9DB1FF' : '#23358F', borderWidth: 2, borderColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
             <Ink size={10} weight="black" color={theme.isDark ? '#1A1E29' : '#FFFFFF'}>{String(p.count)}</Ink>
           </View>
         ) : null}
@@ -116,7 +121,7 @@ export function SemaineAnneau({ week, plates, trainings, weeklyGoal, onChooseGoa
         </View>
       </View>
       <View style={{ marginTop: 12, flexDirection: 'row', gap: 6 }}>
-        {plates.map((p, i) => <Jour key={p.iso} p={p} sports={sportsDuJour(p.iso)} lettre={PLAN_DAYS_SHORT[i]} />)}
+        {plates.map((p, i) => <Jour key={p.iso} p={p} sports={sportsDuJour(p.iso)} lettre={PLAN_DAYS_SHORT[i]} rang={i} />)}
       </View>
     </View>
   );
