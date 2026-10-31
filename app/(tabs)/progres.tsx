@@ -90,7 +90,7 @@ import type { FaitsProgres, Phrase, SensObjectif } from '@/lib/v2/progres/phrase
 import { traduire } from '@/lib/i18n/tr';
 import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
-import { Colonne, LargeurPage, Rangee } from '@/components/yoroi/v2/PageLarge';
+import { Bento, Colonne, LargeurPage, Rangee, type CaseBento } from '@/components/yoroi/v2/PageLarge';
 
 /** 80 kg plutot que 80,0 kg, une decimale sinon (comme la carte Poids de l'accueil) */
 const kgShort = (v: number) => (Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : formatKg(v));
@@ -268,6 +268,156 @@ export default function Progres() {
     router.push({ pathname: '/bilan-periode', params: { type: t } } as any);
   };
 
+  // Tes bilans (ta semaine, ton mois) et la phrase du theme : les memes blocs sur iPhone et en grand ecran
+  const blocBilans = hasData ? (
+          <>
+            <Capitales texte={traduire('Tes bilans')} couleur={teinte('bleu').encre} style={{ marginTop: 28 }} />
+            <TourAnchor id="progres.bilans" rayon={22} style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
+              {(['semaine', 'mois'] as const).map((t) => {
+                const tt = teinte(t === 'semaine' ? 'bleu' : 'lilas');
+                return (
+                  <Pressable
+                    key={t}
+                    onPress={() => ouvrirBilan(t)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t === 'semaine' ? traduire('Bilan, ta semaine') : traduire('Chaque mois, ton mois')}
+                    style={({ pressed }) => ({ flex: 1, minHeight: 70, borderRadius: 22, paddingLeft: 14, paddingRight: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: tt.fond, opacity: pressed ? 0.85 : 1 })}
+                  >
+                    <View style={{ flex: 1, gap: 1, minWidth: 0 }}>
+                      <Ink size={10.5} weight="black" color={tt.encre} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ letterSpacing: 1.2 }}>
+                        {(t === 'semaine' ? traduire('Bilan') : traduire('Chaque mois')).toUpperCase()}
+                      </Ink>
+                      <Ink size={16} weight="black" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
+                        {t === 'semaine' ? traduire('Ta semaine') : traduire('Ton mois')}
+                      </Ink>
+                    </View>
+                    <Image source={illus.img(t === 'semaine' ? 'calendrier' : 'bilan')} style={{ width: 34, height: 34 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+                  </Pressable>
+                );
+              })}
+            </TourAnchor>
+          </>
+  ) : null;
+  const blocPhrase = phrase ? (
+          <PhraseTheme t={info.teinte} titre={traduire(intro.phraseTitre)} phrase={phrase} style={{ marginTop: 12 }} />
+        ) : (
+          <View style={{ marginTop: 12, borderRadius: 24, backgroundColor: teinte(info.teinte).fond, paddingHorizontal: 16, paddingVertical: 14 }}>
+            <Capitales texte={traduire(intro.titre)} couleur={teinte(info.teinte).encre} />
+            <Ink size={14.5} weight="bold" color={c.textSecondary} style={{ marginTop: 4, lineHeight: 20 }}>
+              {traduire(intro.sub)}
+            </Ink>
+          </View>
+        );
+
+  // 31 octobre 2026 (grand ecran, Houari : « l'organisation c'est chiant ») : les themes en barre de filtres en haut,
+  // puis un tableau de bord (Bento) : la courbe ou le heros du theme sur deux colonnes, la phrase et le detail a cote,
+  // le reste dessous, en colonnes equilibrees. Memes blocs, memes donnees que sur iPhone.
+  if (grand) {
+    const n = page.colonnes;
+    const sansMarge = (x: React.ReactNode) => <View style={{ marginHorizontal: -16 }}>{x}</View>;
+    const casePhrase: CaseBento = {
+      cle: `phrase-${section}`,
+      contenu: (
+        <View style={{ gap: 0 }}>
+          {semaine ? (
+            <TourAnchor id="progres.ensemble" rayon={28} style={{ marginBottom: 12 }}>
+              <CarteSemaine phrase={semaine} victoire={victoire} />
+            </TourAnchor>
+          ) : null}
+          {blocPhrase}
+        </View>
+      ),
+    };
+    const caseBilans: CaseBento | null = hasData ? { cle: 'bilans', contenu: <View style={{ marginTop: -28 }}>{blocBilans}</View> } : null;
+    const cases: (CaseBento | null)[] =
+      section === 'Corps'
+        ? [
+            { cle: 'poids', span: 2, contenu: sansMarge(<WeightSection obj={obj} today={today} morceau="heros" />) },
+            casePhrase,
+            { cle: 'poids-detail', contenu: sansMarge(<WeightSection obj={obj} today={today} morceau="detail" />) },
+            // ton corps en quatre cartes (composition, courbes, mensurations, historique) : des colonnes equilibrees
+            { cle: 'corps-composition', contenu: sansMarge(<CorpsSection part="corps" pastel bloc="composition" />) },
+            { cle: 'corps-courbes', contenu: sansMarge(<CorpsSection part="corps" pastel bloc="courbes" />) },
+            { cle: 'corps-mensurations', contenu: sansMarge(<CorpsSection part="corps" pastel bloc="mensurations" />) },
+            caseBilans,
+            { cle: 'corps-historique', contenu: sansMarge(<CorpsSection part="corps" pastel bloc="historique" />) },
+          ]
+        : section === 'Force'
+          ? [
+              { cle: 'force', span: 2, contenu: <HeroForce trainings={trainings} /> },
+              casePhrase,
+              {
+                cle: 'records',
+                contenu: (
+                  <TourAnchor id="progres.records" rayon={22} style={{ gap: 8 }}>
+                    <Capitales texte={traduire('Tes records')} couleur={teinte('bleu').encre} action={traduire('Tout voir')} onAction={() => router.push('/records' as any)} />
+                    <RecordsCard trainings={trainings} femme={femme} />
+                  </TourAnchor>
+                ),
+              },
+              { cle: 'force-detail', span: 2, contenu: sansMarge(<ForceSection part="force" />) },
+              caseBilans,
+            ]
+          : section === 'Cardio'
+            ? [
+                { cle: 'cardio', span: 2, contenu: <HeroCardio trainings={trainings} today={today} /> },
+                casePhrase,
+                { cle: 'cardio-detail', span: 2, contenu: sansMarge(<ForceSection part="cardio" />) },
+                { cle: 'annee', contenu: sansMarge(<AnneeSection />) },
+                caseBilans,
+              ]
+            : section === 'Santé'
+              ? [
+                  { cle: 'sante', span: 2, contenu: <HeroSante forme={forme} /> },
+                  casePhrase,
+                  { cle: 'sante-detail', span: 2, contenu: sansMarge(<HealthNutritionCards />) },
+                  caseBilans,
+                ]
+              : [{ cle: 'photos', span: 2, contenu: sansMarge(<CorpsSection part="photos" />) }, casePhrase, caseBilans];
+    return (
+      <View style={{ flex: 1, backgroundColor: c.background }}>
+        <LargeurPage actif largeur={page.largeur}>
+          <Animated.ScrollView
+            ref={scrollRef}
+            refreshControl={refreshControl}
+            onScroll={(e) => {
+              scrollY.current = e.nativeEvent.contentOffset.y;
+            }}
+            scrollEventThrottle={32}
+            contentContainerStyle={{ paddingTop: insets.top + 28, paddingBottom: insets.bottom + 40, paddingHorizontal: page.marge, gap: 20 }}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* PAR THEME, Progres, la barre des themes et le bilan de ta semaine en rond */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+              <View style={{ minWidth: 150 }}>
+                <Ink size={11.5} weight="black" color={teinte('bleu').encre} style={{ letterSpacing: 1.6 }}>
+                  {traduire('Par thème').toUpperCase()}
+                </Ink>
+                <Ink size={34} weight="black" tight accessibilityRole="header" numberOfLines={1} style={{ letterSpacing: -1, lineHeight: 40 }}>
+                  {traduire('Progrès')}
+                </Ink>
+              </View>
+              <TourAnchor id="progres.onglets" rayon={22} style={{ flex: 1, minWidth: 320, maxWidth: 560, marginLeft: 'auto' }}>
+                <TuilesThemes choisi={section} onChoisir={choisir} />
+              </TourAnchor>
+              {hasData ? (
+                <Pressable
+                  onPress={() => ouvrirBilan('semaine')}
+                  accessibilityRole="button"
+                  accessibilityLabel={traduire('Ta semaine en bilan')}
+                  style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.85 : 1, shadowColor: '#1B2A44', shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 3 })}
+                >
+                  <Image source={illus.img('calendrier')} style={{ width: 30, height: 30 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+                </Pressable>
+              ) : null}
+            </View>
+            <Bento key={section} largeur={page.largeur} colonnes={n} cases={cases} />
+          </Animated.ScrollView>
+        </LargeurPage>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <LargeurPage actif={grand} largeur={page.largeur}>
@@ -331,16 +481,7 @@ export default function Progres() {
         </TourAnchor>
 
         {/* La phrase du theme : ses vrais chiffres, sinon ce qu'il montre */}
-        {phrase ? (
-          <PhraseTheme t={info.teinte} titre={traduire(intro.phraseTitre)} phrase={phrase} style={{ marginTop: 12 }} />
-        ) : (
-          <View style={{ marginTop: 12, borderRadius: 24, backgroundColor: teinte(info.teinte).fond, paddingHorizontal: 16, paddingVertical: 14 }}>
-            <Capitales texte={traduire(intro.titre)} couleur={teinte(info.teinte).encre} />
-            <Ink size={14.5} weight="bold" color={c.textSecondary} style={{ marginTop: 4, lineHeight: 20 }}>
-              {traduire(intro.sub)}
-            </Ink>
-          </View>
-        )}
+        {blocPhrase}
 
         </Colonne>
         <Colonne actif={grand} largeur={colDroite} espace={0}>
@@ -386,35 +527,7 @@ export default function Progres() {
         </View>
 
         {/* Tes bilans : ta semaine et ton mois, tout reuni (app/bilan-periode.tsx) */}
-        {hasData ? (
-          <>
-            <Capitales texte={traduire('Tes bilans')} couleur={teinte('bleu').encre} style={{ marginTop: 28 }} />
-            <TourAnchor id="progres.bilans" rayon={22} style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
-              {(['semaine', 'mois'] as const).map((t) => {
-                const tt = teinte(t === 'semaine' ? 'bleu' : 'lilas');
-                return (
-                  <Pressable
-                    key={t}
-                    onPress={() => ouvrirBilan(t)}
-                    accessibilityRole="button"
-                    accessibilityLabel={t === 'semaine' ? traduire('Bilan, ta semaine') : traduire('Chaque mois, ton mois')}
-                    style={({ pressed }) => ({ flex: 1, minHeight: 70, borderRadius: 22, paddingLeft: 14, paddingRight: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: tt.fond, opacity: pressed ? 0.85 : 1 })}
-                  >
-                    <View style={{ flex: 1, gap: 1, minWidth: 0 }}>
-                      <Ink size={10.5} weight="black" color={tt.encre} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ letterSpacing: 1.2 }}>
-                        {(t === 'semaine' ? traduire('Bilan') : traduire('Chaque mois')).toUpperCase()}
-                      </Ink>
-                      <Ink size={16} weight="black" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
-                        {t === 'semaine' ? traduire('Ta semaine') : traduire('Ton mois')}
-                      </Ink>
-                    </View>
-                    <Image source={illus.img(t === 'semaine' ? 'calendrier' : 'bilan')} style={{ width: 34, height: 34 }} resizeMode="contain" accessibilityIgnoresInvertColors />
-                  </Pressable>
-                );
-              })}
-            </TourAnchor>
-          </>
-        ) : null}
+        {blocBilans}
         </Colonne>
         </Rangee>
       </Animated.ScrollView>
@@ -468,7 +581,8 @@ function pastilleRythme(rate: number | null, sens: SensObjectif | null): { texte
   return { texte: rate < 0 ? traduire('{0} de moins par semaine', grammes(rate)) : traduire('{0} de plus par semaine', grammes(rate)), t: vers ? 'menthe' : 'creme' };
 }
 
-function WeightSection({ obj, today }: { obj: Objectif; today: string }) {
+/** 31 octobre 2026 : en grand ecran, `morceau` coupe la section en deux cartes du tableau de bord (la courbe, le detail) */
+function WeightSection({ obj, today, morceau }: { obj: Objectif; today: string; morceau?: 'heros' | 'detail' }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const router = useRouter();
@@ -491,6 +605,7 @@ function WeightSection({ obj, today }: { obj: Objectif; today: string }) {
   };
 
   if (!loading && series.length === 0) {
+    if (morceau === 'detail') return null;
     return (
       <View>
         <WeightExample />
@@ -513,7 +628,8 @@ function WeightSection({ obj, today }: { obj: Objectif; today: string }) {
   return (
     <View style={{ paddingHorizontal: 16 }}>
       {/* le heros du theme Corps : ton poids, ta courbe, ton chemin */}
-      <CarteB style={{ marginTop: 12, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 }}>
+      {morceau !== 'detail' ? (
+      <CarteB style={{ marginTop: morceau ? 0 : 12, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <Capitales texte={scrub ? traduire('Ce jour') : traduire('Ton poids')} couleur={bleu.encre} style={{ flexShrink: 1 }} />
           {pr && !scrub ? <Pastille texte={pr.texte} t={pr.t} /> : null}
@@ -586,9 +702,12 @@ function WeightSection({ obj, today }: { obj: Objectif; today: string }) {
           </View>
         ) : null}
       </CarteB>
+      ) : null}
 
+      {morceau !== 'heros' ? (
+      <>
       {/* ton poids, le detail */}
-      <Capitales texte={traduire('Ton poids, le détail')} couleur={creme.encre} style={{ marginTop: 22 }} />
+      <Capitales texte={traduire('Ton poids, le détail')} couleur={creme.encre} style={{ marginTop: morceau ? 0 : 22 }} />
       <CarteB style={{ marginTop: 8, flexDirection: 'row', paddingVertical: 14 }}>
         <Stat value={formatKg(last.value)} unit="kg" label={traduire('dernière pesée')} />
         <Stat value={formatKg(tend)} unit="kg" label={traduire('tendance lissée')} border />
@@ -637,6 +756,8 @@ function WeightSection({ obj, today }: { obj: Objectif; today: string }) {
             {traduire(`Ton poids bouge de plus d’un kilo par semaine. C’est rapide : vise plutôt un rythme lent et régulier, et demande conseil à un professionnel de santé si ça dure.`)}
           </Ink>
         </View>
+      ) : null}
+      </>
       ) : null}
     </View>
   );
