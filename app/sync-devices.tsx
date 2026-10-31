@@ -1,5 +1,5 @@
 /**
- * Synchronisation locale iPhone et iPad (refonte v2) : appareils appaires, appairage par code,
+ * Synchronisation locale entre tes appareils, iPhone, iPad et Mac (refonte v2) : appareils appaires, appairage par code,
  * cet appareil, derniere synchro (ouvre le journal de synchro), forcer l'envoi, aide. 100 % en local.
  *
  * 13 octobre 2026 : seulement avec un appareil appaire par un code a 6 chiffres. Voir lib/peerSyncService.ts.
