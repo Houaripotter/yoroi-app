@@ -205,8 +205,9 @@ export default function BilanPeriodeEcran() {
           <BigButton
             label={type === 'semaine' ? traduire('Partager ma semaine') : traduire('Partager mon mois')}
             icon="share"
-            // 31 octobre 2026 : la semaine s'ouvre dans le nouvel atelier des cartes (6 modeles) ; le mois garde sa carte
-            onPress={() => router.push((type === 'semaine' ? `/carte?moment=semaine&debut=${periode.debut}` : '/social-share/monthly-recap-v2') as any)}
+            // 31 octobre 2026 : la semaine et le mois s'ouvrent dans le nouvel atelier des cartes (ancienne carte du mois
+            // archivee dans _archive_ancien_design_2026-10-09/cartes_mois_2026-10-31)
+            onPress={() => router.push((type === 'semaine' ? `/carte?moment=semaine&debut=${periode.debut}` : `/carte?moment=mois&ref=${periode.debut.slice(0, 7)}`) as any)}
           />
         </View>
       ) : null}
