@@ -5,6 +5,7 @@
  * Parametres : sport, label, slotId, resume ('1'), editId, date, time, duration, clubId, intensity, notes
  * (aussi sous les anciens noms prefill...).
  */
+import { usePersonnageUtilisateur } from '@/components/yoroi/v2/perso/usePersonnageUtilisateur';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -32,7 +33,7 @@ import { niveauRpe } from '@/lib/v2/intensite';
 import { initialDetails, readParams, timeOf, wantsForm } from '@/lib/v2/seance/params';
 import { draftAgo, draftRoute, draftTitle } from '@/lib/v2/seance/resume';
 import { saveSeance } from '@/lib/v2/seance/save';
-import { hasDistance, sportImage, sportTint } from '@/lib/v2/seance/sportVisuals';
+import { hasDistance, sportTint } from '@/lib/v2/seance/sportVisuals';
 import { useNow } from '@/lib/v2/seance/useNow';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
@@ -62,6 +63,8 @@ function param1(v: string | string[] | undefined): string | undefined {
 }
 
 export default function SeanceCardio() {
+  // 31 octobre 2026 (Houari : « soit le personnage de l'utilisateur, soit rien ») : ton personnage, ou rien
+  const persoUtilisateur = usePersonnageUtilisateur();
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const router = useRouter();
@@ -225,7 +228,7 @@ export default function SeanceCardio() {
   const runFirst = withDistance && !speedMode;
   const paceSec = distance > 0 && minutes > 0 && !speedMode ? Math.round((minutes * 60) / distance) : 0;
   const pace = distance > 0 && minutes > 0 ? (speedMode ? `${fmtNum(distance / (minutes / 60), 1)} km/h` : `${fmtClock(Math.round((minutes * 60) / distance))} /km`) : null;
-  const image = sportImage(draft.sport, femme, 0);
+  const image = persoUtilisateur;
   const sportName = draft.sport === 'autre' && draft.customName?.trim() ? draft.customName.trim() : getSportName(draft.sport);
   const cat = getSportCategory(draft.sport);
   const withScore = cat === 'collectif' || cat === 'raquettes';
