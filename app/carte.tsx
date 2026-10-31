@@ -18,6 +18,8 @@
  * choisie revient la fois suivante. Autocollants (01, 02, 03) : sortie Story (sur ta photo ou ta couleur) ou Autocollant
  * (PNG transparent, a copier ou enregistrer). Bouton « Partager en story » en tete de la barre du bas.
  * Parametres : moment=seance&id=, moment=pesee&date= (ou id=), moment=semaine&debut=.
+ * 31 octobre 2026 (bibliotheque des cartes) : moment=mois&ref=AAAA-MM, moment=annee&ref=AAAA ;
+ * objectif ou compteur du moment : moment=exploit&src=objectif|compteur&cle=... (en demo : &cle= suffit).
  * Exploit : moment=exploit&src=seance|pesee|mois|annee&ref=...&cle=... (record, palier, compteur, bilan...).
  * ?demo=1 : donnees de demonstration (copie web), avec &sport=combat|course pour une seance, &type= pour un exploit.
  * 17 octobre 2026 : carte Avant apres, moment=avant_apres&avant=<id>&apres=<id> (&flou=0 pour ne pas flouter) ;
@@ -40,6 +42,7 @@ import { estAutocollant } from '@/lib/v2/cartes/directions';
 import { COULEURS, couleurDe } from '@/lib/v2/cartes/couleurs';
 import { useCarte } from '@/components/yoroi/v2/cartes/useCarte';
 import { chargerExploit, chargerPesee, chargerSeance, chargerSemaine } from '@/lib/v2/cartes/charger';
+import { chargerDuMoment, chargerPeriode } from '@/lib/v2/cartes/bibliotheque';
 import { exploitAvecPoids } from '@/lib/v2/cartes/exploits';
 import { basculerChiffre, chiffresDisponibles, MAX_CHIFFRES, MIN_CHIFFRES, NOMS_CHIFFRES } from '@/lib/v2/cartes/chiffres';
 import { demoExploit, demoPhotosAvantApres, demoPour } from '@/lib/v2/cartes/demo';
@@ -201,7 +204,10 @@ export default function CarteEditeur() {
           const liste = p.demo === '1' ? demoPhotosAvantApres([p.photo, p.photo2, p.photo3, p.photo4]) : await chargerPhotosCarte();
           if (alive) setPhotosAA(liste);
           d = carteAvantApres(liste, p.avant, p.apres);
-        } else if (p.demo === '1') d = p.moment === 'exploit' ? demoExploit(p.type) : demoPour(p.moment, p.sport);
+        } else if (p.demo === '1') d = p.moment === 'exploit' ? demoExploit(p.type, p.cle) : demoPour(p.moment, p.sport);
+        // 31 octobre 2026 (bibliotheque) : un objectif ou un compteur du moment, ton mois, ton annee
+        else if (p.moment === 'exploit' && (p.src === 'objectif' || p.src === 'compteur')) d = await chargerDuMoment(p.src, p.cle ?? '');
+        else if ((p.moment === 'mois' || p.moment === 'annee') && p.ref) d = await chargerPeriode(p.moment, p.ref);
         else if (p.moment === 'exploit' && p.src && p.ref) d = await chargerExploit(p.src, p.ref, p.cle ?? '');
         else if (p.moment === 'pesee') d = await chargerPesee({ id: p.id ? Number(p.id) : undefined, date: p.date });
         else if (p.moment === 'semaine' && p.debut) d = await chargerSemaine(p.debut);
@@ -395,7 +401,7 @@ export default function CarteEditeur() {
 
         {actif === 'modele' ? (
           <>
-            <Ink size={14} color={c.textSecondary}>{traduire('Glisse pour voir les 10 modèles, avec ta vraie séance.')}</Ink>
+            <Ink size={14} color={c.textSecondary}>{traduire('Glisse pour voir les modèles, avec tes vrais chiffres.')}</Ink>
             <ScrollView ref={carrousel} horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -22 }} contentContainerStyle={{ paddingHorizontal: 22, gap: 12, paddingVertical: 4 }} accessibilityRole="radiogroup">
               {data
                 ? modeles.map((m) => {
