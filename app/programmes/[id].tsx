@@ -36,7 +36,7 @@ import { chargerProgrammesPerso } from '@/lib/v2/programmes/monProgramme';
 import { QuestionsCoach } from '@/components/yoroi/v2/programmes/QuestionsCoach';
 import { jourPourToi } from '@/lib/v2/programmes/perso';
 import type { ExoPerso } from '@/lib/v2/programmes/perso';
-import { ExercisePicker } from '@/components/yoroi/v2/seance/ExercisePicker';
+import { ChangerExercice } from '@/components/yoroi/v2/seance/ChangerExercice';
 import { MaSalle } from '@/components/yoroi/v2/programmes/MaSalle';
 import { BoutonRond, CarteConseil, EnTeteRond, HeroJour, LigneEtudes, Pastille, SemaineRonds, TitreSection, TuilesStats, musclesDuJour, nomCourt, rondsDeLaSemaine, salutation, tuileCharge, usePaletteProgramme, type Tuile } from '@/components/yoroi/v2/programmes/Habillage';
 import { buildExerciseHistory } from '@/lib/v2/seance/history';
@@ -104,7 +104,7 @@ export default function ProgrammeDetail() {
   // 26 octobre 2026 : Ma salle (machines precises) et « Changer » un exercice du programme en cours
   const [machines, setMachines] = useState<string[] | null>(null);
   const [salleOpen, setSalleOpen] = useState(false);
-  const [aChanger, setAChanger] = useState<{ jourId: string; index: number; muscle: string; original: string } | null>(null);
+  const [aChanger, setAChanger] = useState<{ jourId: string; index: number; muscle: string; original: string; nom: string } | null>(null);
   const historique = useMemo(() => buildExerciseHistory(trainings), [trainings]);
   const [pesees, setPesees] = useState<Weight[]>([]);
   // douleurs declarees dans l'infirmerie : les exercices qui chargent la zone sont remplaces ou signales
@@ -513,7 +513,7 @@ export default function ProgrammeDetail() {
                 e={e}
                 premier={k === 0}
                 raison={e.remplace && materiel && !e.zone ? raisonRemplacement(e.remplace, materiel) : ''}
-                onChanger={enCours && k < jBrutVu.exos.length ? () => { tap(); setAChanger({ jourId: jVu.id, index: k, muscle: jBrutVu.exos[k]?.muscle ?? e.muscle, original: jBrutVu.exos[k]?.nom ?? e.nom }); } : undefined}
+                onChanger={enCours && k < jBrutVu.exos.length ? () => { tap(); setAChanger({ jourId: jVu.id, index: k, muscle: jBrutVu.exos[k]?.muscle ?? e.muscle, original: jBrutVu.exos[k]?.nom ?? e.nom, nom: e.nom }); } : undefined}
                 onRevenir={enCours && e.perso ? () => { tap(); void remplacerExercice(jVu.id, k, null); } : undefined}
               />
             ))}
@@ -650,19 +650,21 @@ export default function ProgrammeDetail() {
         ) : null}
       </ScrollView>
 
-      <ExercisePicker
+      {/* 31 octobre 2026 : « Changer », les equivalents du meme muscle (autre machine d'abord), une recherche par nom
+          et ta machine (components/yoroi/v2/seance/ChangerExercice.tsx) ; le choix est garde dans la case du programme */}
+      <ChangerExercice
         visible={!!aChanger}
         onClose={() => setAChanger(null)}
-        onPick={(nom) => {
+        mode="changer"
+        nom={aChanger?.nom ?? ''}
+        muscle={aChanger?.muscle}
+        history={historique.map}
+        portees={false}
+        onChoisir={(nom) => {
           const x = aChanger;
           setAChanger(null);
           if (x) void remplacerExercice(x.jourId, x.index, nom, x.original);
         }}
-        history={historique.map}
-        recent={historique.recent}
-        already={[]}
-        muscleDepart={aChanger?.muscle}
-        titre={traduire('Changer l’exercice')}
       />
       <MaSalle visible={salleOpen} onClose={() => setSalleOpen(false)} />
       <FeuilleFinDeSeance
