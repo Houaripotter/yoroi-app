@@ -15,44 +15,19 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { signalerASynchroniser } from '@/lib/v2/synchro/cles';
-import { CARDIO_DEFAUT, CARDIO_FIN, NOM_AUTRE_CARDIO } from './cardioFin';
+import { CARDIO_DEFAUT } from './cardioFin';
+import { CLE_CHOIX_CARDIO, TYPE_DEFAUT, choixEnMemoire, estType, infoCardio, lireChoix, nettoyerChoix, retenirChoix, typeDeNom } from './cardioJour';
+import type { ChoixCardio, ChoixGardes, MesureCardio } from './cardioJour';
 import type { SegmentCardio, TypeCardio } from './cardioFin';
 
 export type { SegmentCardio, TypeCardio };
-/** Ce qu'on note pendant ce cardio : pente et vitesse (tapis), un niveau (machines a resistance), ou rien */
-export type MesureCardio = 'tapis' | 'niveau' | 'aucune';
+// 31 octobre 2026 : la liste, les phrases et le choix en memoire vivent dans cardioJour.ts (sans dependance lourde)
+export { TYPES_CARDIO, TYPE_DEFAUT, estType, choixEnMemoire, cardioPrevu, cardioFait, MINUTES_DEFAUT, infoCardio, typeDeNom, cleChoix, choixParDefaut, libelleCardio } from './cardioJour';
+export type { MesureCardio, InfoCardio, ChoixCardio, ChoixGardes } from './cardioJour';
 
-export type InfoCardio = { id: TypeCardio; label: string; nom: string; mesure: MesureCardio; sticker: string };
-
-/** La liste fermee : rien d'autre n'est propose. `nom` : l'exercice de la seance (cardioFin.ts) */
-export const TYPES_CARDIO: readonly InfoCardio[] = [
-  { id: 'marche_inclinee', label: 'Marche inclinée', nom: 'Marche inclinée sur tapis', mesure: 'tapis', sticker: 'sport_marche' },
-  { id: 'tapis_course', label: 'Course sur tapis', nom: 'Course sur tapis', mesure: 'tapis', sticker: 'course' },
-  { id: 'velo', label: 'Vélo', nom: 'Vélo d’appartement', mesure: 'niveau', sticker: 'sport_velo' },
-  { id: 'rameur', label: 'Rameur', nom: 'Rameur', mesure: 'niveau', sticker: 'sport_pagaie' },
-  { id: 'elliptique', label: 'Elliptique', nom: 'Vélo Elliptique', mesure: 'niveau', sticker: 'repeter' },
-  { id: 'escalier', label: 'Escalier', nom: 'Escaliers', mesure: 'niveau', sticker: 'montagne_drapeau' },
-  { id: 'corde', label: 'Corde à sauter', nom: 'Corde à sauter', mesure: 'aucune', sticker: 'flamme' },
-  { id: 'autre', label: 'Autre', nom: NOM_AUTRE_CARDIO, mesure: 'aucune', sticker: 'cardio_zone2' },
-];
-
-export const TYPE_DEFAUT: TypeCardio = 'marche_inclinee';
 export const DUREES_RAPIDES = [10, 15, 20, 30, 45] as const;
-export const MINUTES_DEFAUT = 30;
 export const MINUTES_MIN = 1;
 export const MINUTES_MAX = 180;
-
-export const infoCardio = (t: TypeCardio | null | undefined): InfoCardio => TYPES_CARDIO.find((x) => x.id === t) ?? TYPES_CARDIO[0];
-const estType = (x: unknown): x is TypeCardio => typeof x === 'string' && TYPES_CARDIO.some((t) => t.id === x);
-
-/** Le type d'un exercice cardio d'apres son nom (« Vélo de Biking / Spinning » est un velo) ; null si inconnu */
-export function typeDeNom(nom: string | null | undefined): TypeCardio | null {
-  if (!nom) return null;
-  const direct = TYPES_CARDIO.find((t) => t.nom === nom);
-  if (direct) return direct.id;
-  if (nom === 'Vélo de Biking / Spinning') return 'velo';
-  return CARDIO_FIN.some((c) => c.nom === nom) || nom === NOM_AUTRE_CARDIO ? 'autre' : null;
-}
 
 /** Une duree en minutes entre 1 et 180, ou null */
 export function bornerMinutes(v: unknown): number | null {
@@ -65,41 +40,17 @@ export function bornerMinutes(v: unknown): number | null {
 /* ------------------------------------------------------------------------------------------------
  * Le choix, garde par jour du programme
  * ---------------------------------------------------------------------------------------------- */
-export const CLE_CHOIX_CARDIO = 'yoroi_cardio_choix_v1';
-export type ChoixCardio = { type: TypeCardio; minutes: number };
-export type ChoixGardes = Record<string, ChoixCardio>;
-
-/** « programme|jour », ou « libre » pour une seance hors programme */
-export const cleChoix = (programme?: string | null, jour?: string | null): string => (programme && jour ? `${programme}|${jour}` : 'libre');
-
-export function lireChoix(x: unknown): ChoixCardio | null {
-  if (!x || typeof x !== 'object') return null;
-  const o = x as Record<string, unknown>;
-  const m = bornerMinutes(o.minutes);
-  return estType(o.type) && m !== null ? { type: o.type, minutes: m } : null;
-}
-
-export function nettoyerChoix(x: unknown): ChoixGardes {
-  const out: ChoixGardes = {};
-  if (!x || typeof x !== 'object' || Array.isArray(x)) return out;
-  for (const [k, v] of Object.entries(x as Record<string, unknown>).slice(0, 200)) {
-    const c = lireChoix(v);
-    if (k && k.length <= 240 && c) out[k] = c;
-  }
-  return out;
-}
-
-/** Le choix de ce jour : ton dernier choix, sinon marche inclinee et la duree du programme (30 min sinon) */
-export function choixParDefaut(gardes: ChoixGardes, cle: string, minutesProgramme?: number | null, typeProgramme?: TypeCardio | null): ChoixCardio {
-  return gardes[cle] ?? { type: typeProgramme ?? TYPE_DEFAUT, minutes: bornerMinutes(minutesProgramme) ?? MINUTES_DEFAUT };
-}
+export { CLE_CHOIX_CARDIO, lireChoix, nettoyerChoix } from './cardioJour';
 
 export async function chargerChoix(): Promise<ChoixGardes> {
   try {
     const raw = await AsyncStorage.getItem(CLE_CHOIX_CARDIO);
-    return raw ? nettoyerChoix(JSON.parse(raw)) : {};
+    const g = raw ? nettoyerChoix(JSON.parse(raw)) : {};
+    // la copie en memoire : les ecrans qui annoncent la seance la lisent sans attendre (cardioJour.ts)
+    retenirChoix(g);
+    return g;
   } catch {
-    return {};
+    return choixEnMemoire();
   }
 }
 
@@ -110,9 +61,16 @@ export function enregistrerChoix(cle: string, choix: ChoixCardio): Promise<Choix
     const g = await chargerChoix();
     if (!c) return g;
     const n = { ...g, [cle]: c };
+    retenirChoix(n);
     try {
       await AsyncStorage.setItem(CLE_CHOIX_CARDIO, JSON.stringify(n));
       signalerASynchroniser();
+      // la carte du jour et la page du programme annoncent tout de suite le nouveau cardio
+      try {
+        (require('react-native') as typeof import('react-native')).DeviceEventEmitter.emit('YOROI_PROGRAMME_CHANGED');
+      } catch {
+        // sans ecran ouvert
+      }
     } catch {
       // le choix reste pour cette seance
     }
