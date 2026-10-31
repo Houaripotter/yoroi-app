@@ -29,6 +29,8 @@ import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { libelleMateriel, libelleNiveau, libelleRepos, programmeParId, sportDuProgramme } from '@/lib/v2/programmes/catalogue';
 import { PRECISION_EXO, musclesDeExo } from '@/lib/v2/programmes/musclesExos';
 import { cardioDeLaSemaine, resumeDuJour, routeDuJour } from '@/lib/v2/programmes/lancer';
+// 31 octobre 2026 : le cardio de fin de seance choisi pour ce jour, son vrai type
+import { libelleCardio } from '@/lib/v2/seances/cardioJour';
 import { raisonRemplacement } from '@/lib/v2/programmes/materiel';
 import { LIBELLE_REGION, regionsDesBlessures, unirRegions } from '@/lib/v2/programmes/blessures';
 import { estProgrammePerso } from '@/lib/v2/programmes/registrePerso';
@@ -518,7 +520,7 @@ export default function ProgrammeDetail() {
               />
             ))}
             {jVu.finCardio ? (
-              <CarteEnPlus icone="steps" k={1} surtitre={traduire('Puis, en fin de séance')} titre={traduire('{0} min de marche inclinée', jVu.finCardio.minutes)} texte={traduire(jVu.finCardio.consigne)} />
+              <CarteEnPlus icone="steps" k={1} surtitre={traduire('Puis, en fin de séance')} titre={libelleCardio(jVu.finCardioType ?? 'marche_inclinee', jVu.finCardio.minutes)} texte={traduire(jVu.finCardio.consigne)} />
             ) : null}
             {jVu.rounds ? (
               <CarteEnPlus icone="glove" k={0} surtitre={traduire('Repos de {0} entre les rounds.', libelleRepos(jVu.rounds.reposSec))} titre={resumeDuJour(jVu, semaine)}>
