@@ -3,6 +3,7 @@
  * sinon ton prochain creneau du planning, sinon l'idee de creneau tiree de tes habitudes,
  * sinon une invitation a poser ta semaine. Une seule carte, appuyable.
  */
+import { usePersonnageUtilisateur } from '@/components/yoroi/v2/perso/usePersonnageUtilisateur';
 import React, { useEffect, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -14,7 +15,7 @@ import { getSportName } from '@/lib/sports';
 import { chargerProgrammeActif, prochainJour } from '@/lib/v2/programmes/suivi';
 import { motApresSeance } from '@/lib/v2/programmes/coach';
 import { sportDuProgramme } from '@/lib/v2/programmes/catalogue';
-import { sportImage, sportTint } from '@/lib/v2/seance/sportVisuals';
+import { sportTint } from '@/lib/v2/seance/sportVisuals';
 import { PLAN_DAYS } from '@/lib/v2/seances/sessionData';
 import { findNextSlot } from '@/components/yoroi/v2/seances/NextUp';
 import type { NextSlot } from '@/components/yoroi/v2/seances/NextUp';
@@ -42,6 +43,8 @@ export function EtMaintenant({
   idee: { texte: string; action: string | null; onPress: () => void } | null;
   onOuvrir: (href: string) => void;
 }) {
+  // 31 octobre 2026 (Houari : « soit le personnage de l'utilisateur, soit rien ») : ton personnage, ou rien
+  const persoUtilisateur = usePersonnageUtilisateur();
   const { theme, isDark } = useYoroiTheme();
   const c = theme.colors;
   const [suite, setSuite] = useState<Suite | null>(null);
@@ -103,7 +106,7 @@ export function EtMaintenant({
   );
 
   if (suite) {
-    const img = suite.sport ? sportImage(suite.sport, femme, 1) : null;
+    const img = persoUtilisateur;
     return (
       <Animated.View entering={entree} style={{ marginHorizontal: 22, marginTop: 18, gap: 8 }}>
         {titreBloc}
