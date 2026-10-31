@@ -6,7 +6,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DeviceEventEmitter } from 'react-native';
 import { JOURNAL_VIDE, noterProposition } from './moments';
 import type { JournalCartes } from './moments';
-import type { OptionsCarte, RaisonPesee } from './types';
+import type { ModeleId, OptionsCarte, RaisonPesee } from './types';
+import { COULEURS } from './couleurs';
+
+/** Les six modeles proposes depuis le 31 octobre 2026 (meme liste que CarteRendu.MODELES) */
+export const MODELES_SIX: ModeleId[] = ['affiche', 'bandeau', 'neon', 'ticket', 'medaille', 'score'];
 
 const KEY = 'yoroi_cartes_partage_v1';
 const PREFS_KEY = 'yoroi_cartes_partage_style_v1';
@@ -17,7 +21,9 @@ export type StyleMemorise = Omit<OptionsCarte, 'chiffres'>;
 export const STYLE_DEFAUT: StyleMemorise = {
   modele: 'affiche',
   format: 'story',
-  fond: 'scene',
+  // 31 octobre 2026 : plus de scenes, une couleur franche par defaut (ou ta photo, jamais memorisee)
+  fond: 'couleur',
+  couleur: 'rouge',
   sombre: true,
   personnage: true,
   masque: 'aucun',
@@ -58,16 +64,27 @@ export async function lireStyle(): Promise<StyleMemorise> {
   try {
     const raw = await AsyncStorage.getItem(PREFS_KEY);
     if (!raw) return STYLE_DEFAUT;
-    return { ...STYLE_DEFAUT, ...(JSON.parse(raw) as Partial<StyleMemorise>) };
+    return migrerStyle({ ...STYLE_DEFAUT, ...(JSON.parse(raw) as Partial<StyleMemorise>) });
   } catch {
     return STYLE_DEFAUT;
   }
 }
 
+/**
+ * 31 octobre 2026 : un reglage d'avant la refonte (une scene, un decor, un ancien modele) retombe sur
+ * une couleur franche et l'Affiche. La photo n'est jamais memorisee.
+ */
+export function migrerStyle(s: StyleMemorise): StyleMemorise {
+  const fond = s.fond === 'photo' || s.fond === 'couleur' ? s.fond : 'couleur';
+  const modele = MODELES_SIX.includes(s.modele) ? s.modele : 'affiche';
+  const couleur = COULEURS.some((c) => c.id === s.couleur) ? s.couleur : STYLE_DEFAUT.couleur;
+  return { ...s, fond, modele, couleur };
+}
+
 export async function ecrireStyle(s: StyleMemorise): Promise<void> {
   try {
     // la photo personnelle n'est jamais memorisee comme fond : on revient sur la scene
-    await AsyncStorage.setItem(PREFS_KEY, JSON.stringify({ ...s, fond: s.fond === 'photo' ? 'scene' : s.fond }));
+    await AsyncStorage.setItem(PREFS_KEY, JSON.stringify({ ...s, fond: s.fond === 'photo' ? 'couleur' : s.fond }));
   } catch {
     // facultatif
   }
