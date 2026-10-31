@@ -11,6 +11,7 @@
  * Mesure : premium_gate_hit a l'affichage, premium_gate_cta au bouton (noterMurPremium).
  */
 
+import { usePersonnageUtilisateur } from '@/components/yoroi/v2/perso/usePersonnageUtilisateur';
 import { useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Image, Pressable, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -31,7 +32,7 @@ import { CheckMark, GoldVein, PerkIcon, PerkRow, PremiumBadge, PremiumButton, Pr
 import { traduire } from '@/lib/i18n/tr';
 import { useFondTaScene } from '@/components/yoroi/v2/espace/apercuScene';
 
-const WARRIOR = require('@/assets/avatars/app/guerrier/guerrier_h_5_shogun.webp');
+// 31 octobre 2026 (Houari) : plus de guerrier Shogun par défaut ; ton personnage, ou seulement ta scène
 
 // Une seule liste d'avantages, partagee avec le paywall (lib/v2/premium/offer.ts)
 const PERKS = PREMIUM_ROWS.map((r) => ({ icon: r.perkIcon, label: r.label, desc: r.desc }));
@@ -200,6 +201,7 @@ export function PremiumLockScreen({ featureTitle, source }: { featureTitle?: str
   const heroH = Math.round(Math.min(width * 0.95, 420)) + insets.top;
   // 28 octobre 2026 : ta scene, comme l'accueil (avant : toujours le Dojo)
   const fond = useFondTaScene();
+  const perso = usePersonnageUtilisateur();
 
   // sans historique (le web apres un rechargement, un ecran d'onglet) : retour aux onglets, jamais a l'ecran de demarrage
   const goBack = () => {
@@ -213,9 +215,11 @@ export function PremiumLockScreen({ featureTitle, source }: { featureTitle?: str
       <View style={[styles.hero, { height: heroH }]}>
         <Image source={fond} style={StyleSheet.absoluteFill} resizeMode="cover" />
         <LinearGradient colors={[paperA(0.12), paperA(0.42), c.background]} locations={[0, 0.6, 1]} style={StyleSheet.absoluteFill} />
-        <Animated.View entering={ENTREE} style={styles.warriorWrap} pointerEvents="none">
-          <Image source={WARRIOR} style={{ width: heroH * 0.62, height: heroH * 0.83 }} resizeMode="contain" accessibilityIgnoresInvertColors />
-        </Animated.View>
+        {perso ? (
+          <Animated.View entering={ENTREE} style={styles.warriorWrap} pointerEvents="none">
+            <Image source={perso} style={{ width: heroH * 0.62, height: heroH * 0.83 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+          </Animated.View>
+        ) : null}
         <View style={[styles.topBar, { top: insets.top + 8 }]}>
           <Pressable
             onPress={goBack}
