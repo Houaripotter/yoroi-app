@@ -19,9 +19,10 @@ const laque = paletteOf('laque');
 
 type Tile = { id: string; title: string; text: string; route: string; dark?: boolean; visual: 'plates7' | 'month' | 'year' | 'session' | 'fighter' | 'wrapped' | 'duel' };
 
+// 31 octobre 2026 : Ma seance et Ma semaine ouvrent Mes cartes, le nouvel atelier (6 modeles) ; les autres gardent leur carte
 const TILES: Tile[] = [
-  { id: 'session', title: traduire('Ma séance'), text: traduire('La dernière, en grand'), route: '/social-share/last-session', visual: 'session' },
-  { id: 'week', title: traduire('Ma semaine'), text: traduire('Un rond par jour'), route: '/social-share/weekly-recap-v2', visual: 'plates7', dark: true },
+  { id: 'session', title: traduire('Ma séance'), text: traduire('La dernière, en grand'), route: '/mes-cartes', visual: 'session' },
+  { id: 'week', title: traduire('Ma semaine'), text: traduire('Un rond par jour'), route: '/mes-cartes', visual: 'plates7', dark: true },
   { id: 'month', title: traduire('Mon mois'), text: traduire('Tes jours en un regard'), route: '/social-share/monthly-recap-v2', visual: 'month', dark: true },
   { id: 'year', title: traduire('Mon année'), text: traduire('Ton compteur de jours'), route: '/social-share/year-counter-v2', visual: 'year' },
   { id: 'fighter', title: traduire('Carte de combattant'), text: traduire('Tes chiffres de combattant'), route: '/fighter-card', visual: 'fighter' },
