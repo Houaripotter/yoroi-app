@@ -241,14 +241,21 @@ function Pied({ lien, onLien, note, lien2, onLien2 }: { lien: string; onLien: ()
   );
 }
 
-export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach }: {
+export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach, disposer }: {
   trainings: Training[];
   weeklyGoal: number;
   femme: boolean;
   /** le prochain créneau du planning (findNextSlot) */
   next: NextSlot | null;
   onCoach?: () => void;
+  /**
+   * 31 octobre 2026 (grand écran) : la page place elle-même « Ton programme » (null sans programme) et la carte du
+   * jour, par exemple côte à côte. Sans disposer, comme avant : le programme au dessus de la carte.
+   */
+  disposer?: (programme: React.ReactNode | null, carte: React.ReactNode) => React.ReactNode;
 }) {
+  const poser = (programme: React.ReactNode | null, carte: React.ReactNode) =>
+    disposer ? <>{disposer(programme, carte)}</> : programme ? <View style={{ gap: 12 }}>{programme}{carte}</View> : <>{carte}</>;
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const router = useRouter();
@@ -313,7 +320,7 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach }: {
   const partager = (t: Training) => router.push(`/carte?moment=seance&id=${t.id}` as any);
   const voir = (t: Training) => router.push({ pathname: '/workout-detail', params: { id: String(t.id) } } as any);
 
-  if (!pret) return <View style={{ height: 0 }} />;
+  if (!pret) return poser(null, <View style={{ height: 0 }} />);
 
   // 1. le programme en cours : « Ton programme », puis la carte du jour
   if (vue) {
@@ -335,21 +342,11 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach }: {
     };
     // b. la séance du jour est faite : bravo
     if (faitAujourdhui && !message.seanceDuJour) {
-      return (
-        <View style={{ gap: 12 }}>
-          {carteProgramme}
-          <CarteBravo t={faitAujourdhui.t} nombre={faitAujourdhui.n} ensuite={message.ensuite} onPartager={() => partager(faitAujourdhui.t)} onVoir={() => voir(faitAujourdhui.t)} />
-        </View>
-      );
+      return poser(carteProgramme, <CarteBravo t={faitAujourdhui.t} nombre={faitAujourdhui.n} ensuite={message.ensuite} onPartager={() => partager(faitAujourdhui.t)} onVoir={() => voir(faitAujourdhui.t)} />);
     }
     // c. jour de repos : la prochaine séance prévue
     if (message.etat === 'repos') {
-      return (
-        <View style={{ gap: 12 }}>
-          {carteProgramme}
-          <CarteRepos titre={traduire(jour.titre)} quand={quandProchaine(jours)} texte={message.texte} onFaire={commencerJour} onProgramme={() => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } })} />
-        </View>
-      );
+      return poser(carteProgramme, <CarteRepos titre={traduire(jour.titre)} quand={quandProchaine(jours)} texte={message.texte} onFaire={commencerJour} onProgramme={() => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } })} />);
     }
     const kicker =
       message.etat === 'rattrape' ? traduire('On rattrape aujourd’hui')
@@ -362,9 +359,8 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach }: {
     const nSeries = jour.exos.reduce((n, e) => n + e.series, 0);
     const commencer = commencerJour;
     const note = message.seanceDuJour ? hero.ensuite : message.ensuite;
-    return (
-      <View style={{ gap: 12 }}>
-      {carteProgramme}
+    return poser(
+      carteProgramme,
       <Cadre>
         <EnTete kicker={kicker} titre={sansTiret(traduire(jour.titre))} sous={sansTiret(sous)} serie={serie} art={perso} />
         <View style={{ marginTop: 10, marginRight: marge, flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -398,14 +394,13 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach }: {
         )}
         <Commencer label={traduire('Commencer la séance')} onPress={commencer} />
         <Pied lien={traduire('Voir le programme')} onLien={() => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } })} note={sansTiret(note) || traduire('Ton coach a tout prévu')} />
-      </Cadre>
-      </View>
+      </Cadre>,
     );
   }
 
   // sans programme, une séance faite aujourd'hui : bravo aussi
   if (faitAujourdhui) {
-    return <CarteBravo t={faitAujourdhui.t} nombre={faitAujourdhui.n} onPartager={() => partager(faitAujourdhui.t)} onVoir={() => voir(faitAujourdhui.t)} />;
+    return poser(null, <CarteBravo t={faitAujourdhui.t} nombre={faitAujourdhui.n} onPartager={() => partager(faitAujourdhui.t)} onVoir={() => voir(faitAujourdhui.t)} />);
   }
 
   // 2. un créneau prévu aujourd'hui dans ton planning
@@ -427,23 +422,25 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach }: {
         else router.push({ pathname: '/seance' as any, params });
       });
     };
-    return (
+    return poser(
+      null,
       <Cadre>
         <EnTete kicker={traduire('Aujourd’hui, dans ton planning')} titre={titre} sous={sousPropre} serie={serie} art={perso} />
         <View style={{ height: perso ? 96 : 14 }} />
         <Commencer label={traduire('Commencer la séance')} onPress={lancer} />
         <Pied lien={traduire('Ouvrir le planning')} onLien={() => router.push('/planning' as any)} lien2={traduire('Demander au Coach')} onLien2={() => (onCoach ? onCoach() : router.push('/coach' as any))} />
-      </Cadre>
+      </Cadre>,
     );
   }
 
   // 3. pas de programme : le Coach
-  return (
+  return poser(
+    null,
     <Cadre>
       <EnTete kicker={traduire('Ta séance du jour')} titre={traduire('Ton Coach te prépare tes séances')} sous={traduire('4 questions, et YOROI te dit quoi faire chaque jour. Programmes basés sur des études.')} serie={serie} art={perso} />
       <View style={{ height: perso ? 34 : 6 }} />
       <Commencer label={traduire('Demander au Coach')} onPress={() => (onCoach ? onCoach() : router.push('/coach' as any))} />
       <Pied lien={traduire('Je choisis mes zones')} onLien={() => router.push('/programmes/zones' as any)} lien2={traduire('Tous les programmes')} onLien2={() => router.push('/programmes' as any)} />
-    </Cadre>
+    </Cadre>,
   );
 }
