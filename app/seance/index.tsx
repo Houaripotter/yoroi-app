@@ -17,6 +17,7 @@ import type { ImageSourcePropType } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { usePersonnageUtilisateur } from '@/components/yoroi/v2/perso/usePersonnageUtilisateur';
 import { useYoroiTheme } from '@/components/yoroi';
 import { fontStyle } from '@/components/yoroi/fonts';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -58,6 +59,8 @@ type Hero = {
 const KIND_LABEL = { muscu: 'séries et charges', combat: 'rounds et chrono', cardio: 'chrono, distance, cardio' } as const;
 
 export default function OnSentraine() {
+  // 31 octobre 2026 (Houari) : ton personnage, ou rien ; plus d'illustration de sport par défaut
+  const persoUtilisateur = usePersonnageUtilisateur();
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const router = useRouter();
@@ -232,7 +235,7 @@ export default function OnSentraine() {
 
   const tile = Math.floor((width - 44 - 20) / 3);
   if (forwarding) return <View style={{ flex: 1, backgroundColor: c.background }} />;
-  const heroImg: ImageSourcePropType | null = hero ? sportImage(hero.sport, femme, 1) : null;
+  const heroImg: ImageSourcePropType | null = hero ? persoUtilisateur : null;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
@@ -318,7 +321,7 @@ export default function OnSentraine() {
         {hero && !later ? (
           <Pressable onPress={hero.go} accessibilityRole="button" accessibilityLabel={`${hero.over}, ${hero.title}. ${hero.cta}`} style={({ pressed }) => ({ height: 168, borderRadius: 26, backgroundColor: P.programmeFond, overflow: 'hidden', transform: [{ scale: pressed ? 0.985 : 1 }] })}>
             {heroImg ? <Image source={heroImg} style={{ position: 'absolute', right: -10, bottom: -66, width: 165, height: 220 }} resizeMode="contain" /> : null}
-            <View style={{ position: 'absolute', left: 18, top: 18, maxWidth: width * 0.55, gap: 3 }}>
+            <View style={{ position: 'absolute', left: 18, top: 18, maxWidth: heroImg ? width * 0.55 : width - 44 - 36, gap: 3 }}>
               <Ink size={13} weight="extraBold" color={P.etiquettePrune}>{hero.over}</Ink>
               <Ink size={24} weight="black" tight numberOfLines={2}>{traduire(hero.title)}</Ink>
               <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={1}>{traduire(hero.sub)}</Ink>
@@ -350,7 +353,7 @@ export default function OnSentraine() {
                 {/* l'illustration vit dans sa zone, le nom dessous sur une ligne : jamais l'une sur l'autre */}
                 <View style={{ flex: 1, marginBottom: 4, alignItems: 'center', justifyContent: 'center' }}>
                   {img ? (
-                    <Image source={img} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                    <Image source={img} style={{ width: '78%', height: '78%' }} resizeMode="contain" />
                   ) : (
                     <Ink weight="black" size={64} color="rgba(29,32,41,0.08)">{sportShortName(s).charAt(0)}</Ink>
                   )}
