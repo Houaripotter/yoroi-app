@@ -43,6 +43,7 @@
  * La traduction des réponses pour les règles de choix.ts est dans lib/v2/programmes/guide.ts. Ancien rendu :
  * _archive_ancien_design_2026-10-09/coach_2026-10-27/avant_entree_coach2/.
  */
+import { usePersonnageUtilisateur } from '@/components/yoroi/v2/perso/usePersonnageUtilisateur';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -131,6 +132,8 @@ const BULLE: Partial<Record<Etape, string>> = {
 };
 
 export default function CoachDepart() {
+  // 31 octobre 2026 (Houari : « soit le personnage de l'utilisateur, soit rien ») : ton personnage, ou rien
+  const persoUtilisateur = usePersonnageUtilisateur();
   // 27 octobre 2026 : les couleurs pastel des maquettes Coach (Habillage.tsx, usePastel)
   const pa = usePastel();
   const router = useRouter();
@@ -225,7 +228,7 @@ export default function CoachDepart() {
   const semaineRes = prog && semainePerso?.id === prog.id ? semainePerso.semaine : null;
   const joursSemaine = prog && semaineRes ? joursDeLaLigne(semaineRes, prog, 'a') : [];
   const joursEff = joursSemaine.length ? joursSemaine : planRes ? joursDuPlan(planRes) : joursRes;
-  const img = sportImage(prog ? sportDuProgramme(prog) : 'musculation', femme, 1);
+  const img = persoUtilisateur;
 
   // les étapes du questionnaire, pour la barre de progression
   // juste après l'onboarding, les jours et le sport déjà donnés ne sont pas redemandés
