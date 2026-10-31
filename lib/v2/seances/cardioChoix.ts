@@ -30,9 +30,9 @@ export const TYPES_CARDIO: readonly InfoCardio[] = [
   { id: 'tapis_course', label: 'Course sur tapis', nom: 'Course sur tapis', mesure: 'tapis', sticker: 'course' },
   { id: 'velo', label: 'Vélo', nom: 'Vélo d’appartement', mesure: 'niveau', sticker: 'sport_velo' },
   { id: 'rameur', label: 'Rameur', nom: 'Rameur', mesure: 'niveau', sticker: 'sport_pagaie' },
-  { id: 'elliptique', label: 'Elliptique', nom: 'Vélo Elliptique', mesure: 'niveau', sticker: 'endurance' },
+  { id: 'elliptique', label: 'Elliptique', nom: 'Vélo Elliptique', mesure: 'niveau', sticker: 'repeter' },
   { id: 'escalier', label: 'Escalier', nom: 'Escaliers', mesure: 'niveau', sticker: 'montagne_drapeau' },
-  { id: 'corde', label: 'Corde à sauter', nom: 'Corde à sauter', mesure: 'aucune', sticker: 'sport_vitesse' },
+  { id: 'corde', label: 'Corde à sauter', nom: 'Corde à sauter', mesure: 'aucune', sticker: 'flamme' },
   { id: 'autre', label: 'Autre', nom: NOM_AUTRE_CARDIO, mesure: 'aucune', sticker: 'cardio_zone2' },
 ];
 
