@@ -12,6 +12,7 @@
  */
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { TYPE_FIN_REPOS } from '@/lib/v2/seance/rappelRepos';
+import { NOM_AUTRE_CARDIO } from './cardioJour';
 
 /** Une machine de cardio : nom affiche (sans marque) et l'exercice de la bibliotheque qui la decrit */
 export const CARDIO_FIN: { nom: string; biblio: string }[] = [
@@ -25,8 +26,8 @@ export const CARDIO_FIN: { nom: string; biblio: string }[] = [
   // 31 octobre 2026 : la corde a sauter, pour le choix du cardio de fin de seance (cardioChoix.ts)
   { nom: 'Corde à sauter', biblio: 'Corde à sauter Speed' },
 ];
-/** 31 octobre 2026 : « Autre », un cardio que la liste ne connait pas (pas d'exercice de la bibliotheque) */
-export const NOM_AUTRE_CARDIO = 'Autre cardio';
+/** 31 octobre 2026 : « Autre », un cardio que la liste ne connait pas (cardioJour.ts) */
+export { NOM_AUTRE_CARDIO };
 export const CARDIO_DEFAUT = CARDIO_FIN[0].nom;
 
 export const estCardioFin = (nom: string): boolean => nom === NOM_AUTRE_CARDIO || CARDIO_FIN.some((c) => c.nom === nom);
