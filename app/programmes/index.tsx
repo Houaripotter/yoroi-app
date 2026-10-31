@@ -5,6 +5,7 @@
  * 3. tous les programmes, avec niveau, jours par semaine et duree.
  * La seance s'ouvre dans la saisie muscu habituelle, exercices et charges deja remplis (lib/v2/programmes/progression.ts).
  */
+import { usePersonnageUtilisateur } from '@/components/yoroi/v2/perso/usePersonnageUtilisateur';
 import React, { useEffect, useState } from 'react';
 import { DeviceEventEmitter, Image, Pressable, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -43,6 +44,8 @@ import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualis
 import { StickerSinon } from '@/components/yoroi/v2/ui/StickerSinon';
 
 export default function ProgrammesScreen() {
+  // 31 octobre 2026 (Houari : « soit le personnage de l'utilisateur, soit rien ») : ton personnage, ou rien
+  const persoUtilisateur = usePersonnageUtilisateur();
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const router = useRouter();
@@ -201,8 +204,8 @@ export default function ProgrammesScreen() {
         {!actif || !suite ? (
           // 27 octobre 2026 (refonte Pastel) : la carte ciel douce, plus de grand fond bleu nuit
           <View style={{ borderRadius: 26, backgroundColor: c.carteDouce, overflow: 'hidden', padding: 20, gap: 14, minHeight: 170 }}>
-            {sportImage('musculation', femme, 1) ? <Image source={sportImage('musculation', femme, 1)!} style={{ position: 'absolute', right: -8, bottom: -54, width: 138, height: 190 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
-            <View style={{ maxWidth: '64%', gap: 6 }}>
+            {persoUtilisateur ? <Image source={persoUtilisateur} style={{ position: 'absolute', right: -8, bottom: -54, width: 138, height: 190 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
+            <View style={{ maxWidth: persoUtilisateur ? '64%' : '100%', gap: 6 }}>
               <Ink size={22} weight="black" tight>{traduire('Tu ne sais pas lequel choisir ?')}</Ink>
               <Ink size={14} weight="bold" color={c.textSecondary} style={{ lineHeight: 20 }}>{traduire('Quatre questions et YOROI te conseille le programme qui colle à ton objectif, ton niveau et ton temps.')}</Ink>
             </View>
@@ -313,7 +316,7 @@ function CarteProgramme({ p, femme, enCours, favori, onFavori, onPress, remplace
     <Glass onPress={onPress} label={traduire(p.titre)} style={[carteBlanche(c.surface, c.divider), { gap: 12, padding: 16 }, enCours ? { borderWidth: 2, borderColor: c.primary } : null]}>
       <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
         <View style={{ width: 72, height: 72, borderRadius: 22, backgroundColor: c.accentTint, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
-          {img ? <Image source={img} style={{ width: 72, height: 96, marginBottom: -26 }} resizeMode="contain" /> : <StickerSinon nom="musculation" taille={52}><Icon name="dumbbell" size={28} color={c.accent} /></StickerSinon>}
+          {img ? <Image source={img} style={{ width: 60, height: 60 }} resizeMode="contain" /> : <StickerSinon nom="musculation" taille={52}><Icon name="dumbbell" size={28} color={c.accent} /></StickerSinon>}
         </View>
         <View style={{ flex: 1, gap: 4 }}>
           {enCours ? <Ink size={11} weight="black" color={c.accentText} style={{ letterSpacing: 0.6 }}>{traduire('EN COURS')}</Ink> : null}
