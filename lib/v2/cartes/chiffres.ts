@@ -52,14 +52,38 @@ export function familleDe(categorie: string | null | undefined, sportId?: string
   return 'autre';
 }
 
-/** Ordre de preference des chiffres d'une seance, par famille */
+/**
+ * Ordre de preference des chiffres d'une seance, par famille.
+ * 31 octobre 2026 (cartes ou l'on voit ta tete) : les chiffres cles de chaque sport d'abord.
+ * Muscu : tonnage, series, duree, meilleure serie ou record. Course : distance, allure, duree, denivele.
+ * Combat : duree, rounds, soumissions, techniques. Cardio et autres : duree, distance, calories.
+ * L'atelier en montre 4 au plus ; une donnee absente n'est jamais remplacee par une estimation.
+ */
 export const PRIORITE_SEANCE: Record<Famille, StatKey[]> = {
-  muscu: ['charge', 'series', 'duree', 'repetitions', 'calories', 'fc_moy', 'fc_max', 'zones', 'serie_semaines'],
-  combat: ['rounds', 'duree', 'fc_moy', 'intensite', 'calories', 'fc_max', 'zones', 'serie_semaines'],
-  course: ['distance', 'allure', 'duree', 'denivele', 'fc_moy', 'calories', 'fc_max', 'zones', 'serie_semaines'],
+  muscu: ['charge', 'series', 'duree', 'meilleur', 'repetitions', 'calories', 'fc_moy', 'fc_max', 'zones', 'serie_semaines'],
+  combat: ['duree', 'rounds', 'soumissions', 'techniques', 'intensite', 'fc_moy', 'calories', 'fc_max', 'zones', 'serie_semaines'],
+  course: ['distance', 'allure', 'duree', 'denivele', 'calories', 'fc_moy', 'fc_max', 'zones', 'serie_semaines'],
   collectif: ['duree', 'distance', 'calories', 'fc_moy', 'fc_max', 'zones', 'serie_semaines'],
-  autre: ['duree', 'calories', 'fc_moy', 'distance', 'fc_max', 'zones', 'rounds', 'series', 'charge', 'serie_semaines'],
+  autre: ['duree', 'distance', 'calories', 'fc_moy', 'fc_max', 'zones', 'rounds', 'series', 'charge', 'serie_semaines'],
 };
+
+/** Le cardio qui n'est pas de la course a pied (velo, rameur, natation) : duree, distance, calories, sans allure au km */
+export const PRIORITE_CARDIO: StatKey[] = ['duree', 'distance', 'calories', 'denivele', 'fc_moy', 'fc_max', 'zones', 'serie_semaines'];
+
+/** Les sports ou l'allure au kilometre a un sens */
+const SPORTS_A_PIED = ['running', 'course', 'course_a_pied', 'trail', 'marche', 'randonnee', 'footing'];
+
+/** Course a pied, trail, marche : vrai ; velo, rameur, natation : faux ; sport inconnu : vrai (comme avant) */
+export function aAllure(sport: string | null | undefined): boolean {
+  const id = String(sport ?? '').split(',')[0].trim().toLowerCase();
+  return !id || SPORTS_A_PIED.includes(id);
+}
+
+/** L'ordre des chiffres d'une seance pour ce sport */
+export function prioriteSeance(fam: Famille, sport?: string | null): StatKey[] {
+  if (fam === 'course' && !aAllure(sport)) return PRIORITE_CARDIO;
+  return PRIORITE_SEANCE[fam];
+}
 
 const PRIORITE_PESEE: StatKey[] = ['poids', 'ecart', 'objectif_pct', 'reste', 'serie_semaines'];
 const PRIORITE_SEMAINE: StatKey[] = ['seances', 'temps_total', 'poids_semaine', 'serie_semaines'];
@@ -80,6 +104,17 @@ function pct(ecart: number, base: number): string {
 
 function kgSigne(d: number): string {
   return `${d > 0 ? '+' : d < 0 ? MOINS : ''}${nombre(Math.abs(d), 1)}`;
+}
+
+/**
+ * Ta meilleure serie de la seance, en kilos (l'unite du reglage s'applique au dessin) : le record s'il y en a un,
+ * sinon la serie la plus lourde. null sans charge saisie.
+ */
+export function meilleurDe(s: { records?: { nom: string; poids?: number; reps?: number }[]; meilleures?: { nom: string; poids: number; reps: number }[] | null }): StatValue | null {
+  const r = (s.records ?? []).find((x) => (x.poids ?? 0) > 0 && (x.reps ?? 0) > 0);
+  if (r) return { key: 'meilleur', label: traduire('record, {0}', r.nom.toLowerCase()), value: nombre(r.poids!, 1), unit: `kg × ${r.reps}` };
+  const m = (s.meilleures ?? []).find((x) => x.poids > 0 && x.reps > 0);
+  return m ? { key: 'meilleur', label: m.nom.toLowerCase(), value: nombre(m.poids, 1), unit: `kg × ${m.reps}` } : null;
 }
 
 /**
@@ -110,7 +145,7 @@ export function chiffresDisponibles(d: CarteData, masque: Masque = 'aucun'): Sta
           : null,
       distance: s.distanceKm > 0 ? { key: 'distance', label: 'distance', value: nombre(s.distanceKm, s.distanceKm >= 100 ? 0 : 2), unit: 'km' } : null,
       allure: (() => {
-        const a = fam === 'course' || fam === 'autre' ? allure(s.dureeMin, s.distanceKm) : null;
+        const a = (fam === 'course' || fam === 'autre') && aAllure(d.sport) ? allure(s.dureeMin, s.distanceKm) : null;
         return a ? { key: 'allure', label: 'allure', value: a, unit: '/km' } : null;
       })(),
       fc_moy: s.fcMoy > 0 ? { key: 'fc_moy', label: traduire('FC moyenne'), value: String(Math.round(s.fcMoy)), unit: 'bpm' } : null,
@@ -128,11 +163,16 @@ export function chiffresDisponibles(d: CarteData, masque: Masque = 'aucun'): Sta
       denivele: (s.deniveleM ?? 0) >= 1 ? { key: 'denivele', label: traduire('dénivelé'), value: `+${nombre(s.deniveleM!, 0)}`, unit: 'm' } : null,
       repetitions: (s.repetitions ?? 0) > 0 ? { key: 'repetitions', label: traduire('répétitions'), value: nombre(s.repetitions!, 0) } : null,
       intensite: (s.intensite ?? 0) >= 1 && (s.intensite ?? 0) <= 10 ? { key: 'intensite', label: traduire('intensité'), value: String(Math.round(s.intensite!)), unit: '/10' } : null,
+      // 31 octobre 2026 : ta meilleure serie (le record s'il y en a un), tes techniques et tes soumissions, seulement si saisis
+      meilleur: meilleurDe(s),
+      techniques: (s.techniques?.length ?? 0) > 0 ? { key: 'techniques', label: s.techniques!.length > 1 ? traduire('techniques') : traduire('technique'), value: String(s.techniques!.length) } : null,
+      soumissions: (s.soumissions ?? 0) > 0 ? { key: 'soumissions', label: s.soumissions! > 1 ? traduire('soumissions') : traduire('soumission'), value: String(Math.round(s.soumissions!)) } : null,
       serie_semaines: serieStat,
     };
-    for (const k of PRIORITE_SEANCE[fam]) push(all[k] ?? null);
+    const ordre = prioriteSeance(fam, d.sport);
+    for (const k of ordre) push(all[k] ?? null);
     // les chiffres hors de la liste de la famille restent proposables, a la fin
-    for (const k of Object.keys(all) as StatKey[]) if (!PRIORITE_SEANCE[fam].includes(k)) push(all[k] ?? null);
+    for (const k of Object.keys(all) as StatKey[]) if (!ordre.includes(k)) push(all[k] ?? null);
     return out;
   }
 
@@ -302,6 +342,9 @@ export const NOMS_CHIFFRES: Record<StatKey, string> = {
   jours_actifs: traduire('Jours actifs'),
   objectif_periode: traduire('Objectif'),
   sport_top: traduire('Sport principal'),
+  meilleur: traduire('Meilleure série'),
+  techniques: traduire('Techniques'),
+  soumissions: traduire('Soumissions'),
   exploit: 'Chiffre',
 };
 
