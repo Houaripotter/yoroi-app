@@ -20,6 +20,7 @@ import type { OrnementKey } from '@/components/yoroi/v2/ornements/images';
 import { P } from '@/components/yoroi/livePalette';
 import { Pastille } from '@/components/yoroi/v2/dojo/Kozane';
 import { traduire } from '@/lib/i18n/tr';
+import { useFeuilleCentree } from '@/lib/v2/nav/useGrandEcran';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 
@@ -213,11 +214,13 @@ export function Sheet({ visible, onClose, title, children }: { visible: boolean;
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const insets = useSafeAreaInsets();
+  // 31 octobre 2026 : en grand ecran, une fenetre centree
+  const centree = useFeuilleCentree();
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable onPress={onClose} accessibilityLabel={traduire("Fermer")} style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.45)', justifyContent: 'flex-end' }}>
+    <Modal visible={visible} transparent animationType={centree ? 'fade' : 'slide'} onRequestClose={onClose} supportedOrientations={centree ? ['portrait', 'landscape'] : undefined}>
+      <Pressable onPress={onClose} accessibilityLabel={traduire("Fermer")} style={[{ flex: 1, backgroundColor: 'rgba(29,32,41,0.45)', justifyContent: 'flex-end' }, centree?.fond]}>
         {/* 30 octobre 2026 : sur iPad et Mac, la feuille garde une largeur lisible, centrée (plus de cartes étirées sur 2000 points) */}
-        <Pressable onPress={() => {}} style={{ backgroundColor: c.background, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingTop: 12, paddingHorizontal: 22, paddingBottom: insets.bottom + 22, maxHeight: '88%', width: '100%', maxWidth: LARGEUR_MAX_FEUILLE, alignSelf: 'center' }}>
+        <Pressable onPress={() => {}} style={{ backgroundColor: c.background, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingTop: 12, paddingHorizontal: 22, paddingBottom: insets.bottom + 22, maxHeight: '88%', width: '100%', maxWidth: LARGEUR_MAX_FEUILLE, alignSelf: 'center', ...(centree ? { ...centree.carte, paddingBottom: 22 } : null) }}>
           <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: c.border, marginBottom: 12 }} />
           {title ? <Ink size={22} weight="black" tight style={{ paddingHorizontal: 4, marginBottom: 10 }}>{title}</Ink> : null}
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 10 }}>
