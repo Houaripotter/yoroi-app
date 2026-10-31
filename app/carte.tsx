@@ -10,6 +10,9 @@
  * premier onglet. Modeles en vignettes reelles avec un nom et une ligne d'explication.
  * 17 octobre 2026 (cartes v5) : onglet Fond en premier et ouvert a l'arrivee (Fond, Format, Modele, Chiffres, Plus),
  * avec « Ta photo » en tete de la grille puis Ma scene ; l'interrupteur personnage / photo passe en tete de l'onglet Fond.
+ * 31 octobre 2026 (cartes en 6 modeles) : l'onglet Fond ne propose plus que « Ta photo » (galerie ou appareil photo)
+ * ou « Couleur » (8 couleurs franches) ; plus de scenes, de decors ni de personnage. Clair ou Sombre seulement
+ * pour le papier du Ticket. L'ancien ecran est archive dans _archive_ancien_design_2026-10-09/cartes_10_modeles_2026-10-31.
  * Parametres : moment=seance&id=, moment=pesee&date= (ou id=), moment=semaine&debut=.
  * Exploit : moment=exploit&src=seance|pesee|mois|annee&ref=...&cle=... (record, palier, compteur, bilan...).
  * ?demo=1 : donnees de demonstration (copie web), avec &sport=combat|course pour une seance, &type= pour un exploit.
@@ -22,20 +25,14 @@ import { Image, Pressable, ScrollView, View, useWindowDimensions } from 'react-n
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Image as ExpoImage } from 'expo-image';
 import Animated, { Easing, Extrapolation, interpolate, runOnJS, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon, RoundButton, type IconName } from '@/components/yoroi/v2/espace/ui';
 import { Interrupteur } from '@/components/yoroi/v2/reglages/kit';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
-import { CarteApercu, CARTE_W, explicationModele, HAUTEURS, modeleEffectif, modelesPour } from '@/components/yoroi/v2/cartes/CarteRendu';
-import { FONDS } from '@/components/yoroi/v2/cartes/fonds';
-import { sceneForNow } from '@/components/yoroi/v2/accueil/images';
-import { devNow } from '@/lib/v2/creator/devClock';
-import { ficheScene } from '@/lib/v2/espace/presentation';
-import { fondDeScene } from '@/lib/v2/cartes/scenesFond';
+import { aClairSombre, CarteApercu, CARTE_W, explicationModele, HAUTEURS, modeleEffectif, modelesPour } from '@/components/yoroi/v2/cartes/CarteRendu';
+import { COULEURS, couleurDe } from '@/lib/v2/cartes/couleurs';
 import { useCarte } from '@/components/yoroi/v2/cartes/useCarte';
 import { chargerExploit, chargerPesee, chargerSeance, chargerSemaine } from '@/lib/v2/cartes/charger';
 import { exploitAvecPoids } from '@/lib/v2/cartes/exploits';
@@ -46,7 +43,7 @@ import { chargerPhotosCarte } from '@/lib/v2/cartes/chargerAvantApres';
 import { FLOU } from '@/components/yoroi/v2/cartes/AvantApresVue';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { dateCourte } from '@/lib/v2/photos/outils';
-import type { CarteData, FondId, FormatId, Masque, OptionsCarte, PhotoCarte } from '@/lib/v2/cartes/types';
+import type { CarteData, FormatId, Masque, OptionsCarte, PhotoCarte } from '@/lib/v2/cartes/types';
 import { logger } from '@/lib/security/logger';
 import { traduire } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
@@ -64,8 +61,8 @@ const MASQUES: { id: Masque; nom: string }[] = [
   { id: 'pourcentage', nom: 'En %' },
 ];
 
-/** Colonnes de la grille des fonds : tout tient a l'ecran, rien n'est coupe a droite */
-const COLS_FONDS = 5;
+/** 31 octobre 2026 : les 8 couleurs tiennent sur deux rangees de 4 */
+const COLS_COULEURS = 4;
 const ENTETE = 52;
 /** La phrase de prudence de la carte Avant apres n'est montree qu'une fois */
 const PRUDENCE_KEY = '@yoroi_cartes_avant_apres_prudence_vue';
@@ -215,7 +212,7 @@ export default function CarteEditeur() {
   }, [p.moment, p.id, p.date, p.debut, p.demo, p.sport, p.type, p.src, p.ref, p.cle, p.avant, p.apres, p.photo, p.photo2, p.photo3, p.photo4, aa]);
 
   const k = useCarte(data);
-  // Avant apres : ni personnage, ni decor, ni « Que mes données » ; le flou de l'onglet Photos
+  // Avant apres : ni personnage, ni decor ; le flou de l'onglet Photos
   const o: OptionsCarte = aa ? { ...k.options, fond: 'uni', personnage: false, sansPersonne: true, epure: false, flou } : k.options;
   const choisirAA = (cote: 'avant' | 'apres', id: string) => {
     const x = data?.avantApres;
@@ -271,7 +268,7 @@ export default function CarteEditeur() {
   const voileStyle = useAnimatedStyle(() => ({ opacity: voile.value }));
 
   // 17 octobre (v4) : un fondu enchaine tres doux (180 ms) ; l'ancien apercu, pose au-dessus, s'efface sur le nouveau
-  const signe = JSON.stringify([o.modele, o.format, o.fond, o.sombre, o.personnage, o.masque, o.epure, o.sansPersonne, o.flou, k.chiffres, k.photo]);
+  const signe = JSON.stringify([o.modele, o.format, o.fond, o.couleur, o.papier, o.sombre, o.personnage, o.masque, o.epure, o.sansPersonne, o.flou, k.chiffres, k.photo]);
   const avant = useRef<{ signe: string; depuis: number; o: OptionsCarte; largeur: number } | null>(null);
   const [ancien, setAncien] = useState<{ o: OptionsCarte; largeur: number; n: number } | null>(null);
   useLayoutEffect(() => {
@@ -288,7 +285,7 @@ export default function CarteEditeur() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signe, data]);
 
-  const tuile = Math.floor((width - 44 - (COLS_FONDS - 1) * 8) / COLS_FONDS);
+  const pastilleCouleur = Math.min(64, Math.floor((width - 44 - (COLS_COULEURS - 1) * 12) / COLS_COULEURS));
   // vignettes des modeles : deux par ligne, la carte miniature dans le format choisi
   const caseModele = Math.floor((width - 44 - 10) / 2);
   const boiteH = 150;
@@ -306,21 +303,18 @@ export default function CarteEditeur() {
     { id: 'photos', nom: 'Photos' },
     { id: 'plus', nom: 'Plus' },
   ] : [
-    ...(o.epure ? [] : [{ id: 'fond' as Onglet, nom: 'Fond' }]),
+    { id: 'fond' as Onglet, nom: 'Fond' },
     { id: 'format', nom: 'Format' },
-    ...(exploit ? [] : [{ id: 'modele' as Onglet, nom: traduire('Modèle') }]),
+    { id: 'modele' as Onglet, nom: traduire('Modèle') },
     ...(exploit ? [] : [{ id: 'chiffres' as Onglet, nom: 'Chiffres' }]),
     { id: 'plus', nom: 'Plus' },
   ];
   const actif: Onglet = onglets.some((x) => x.id === onglet) ? onglet : onglets[0].id;
-  // L'interrupteur personnage / photo, en tete du premier onglet (Fond, ou Format si le fond n'est pas propose)
-  const interrupteur = k.personne.possible && !aa && actif === onglets[0].id ? (
-    <View style={{ marginBottom: 6 }}>
-      <LigneInterrupteur c={c} icon={k.personne.icone} titre={k.personne.libelle} sous={k.personne.visible ? traduire('Touche pour l’enlever de la carte') : traduire('Seulement tes chiffres et la signature')} on={k.personne.visible} onPress={k.basculerPersonne} />
-    </View>
-  ) : null;
-  // Fonds : ta photo d'abord (le plus demande), puis ta scene, puis les autres
-  const fondsOrdre = [...FONDS.filter((f) => f.id === 'photo'), ...FONDS.filter((f) => f.id === 'scene'), ...FONDS.filter((f) => f.id !== 'photo' && f.id !== 'scene')];
+  // 31 octobre 2026 : plus d'interrupteur personnage ; le fond se choisit entre ta photo et une couleur
+  const fondPhoto = o.fond === 'photo' && !!k.photo;
+  // avec ta photo, la couleur sert encore au bandeau (Bandeau) et a la lumiere (Neon nuit)
+  const couleurUtile = !fondPhoto || modeleActif === 'bandeau' || modeleActif === 'neon';
+  const titreCouleur = !fondPhoto ? traduire('Ta couleur') : modeleActif === 'bandeau' ? traduire('Couleur du bandeau') : traduire('Couleur du néon');
 
   if (vide) {
     return (
@@ -343,7 +337,6 @@ export default function CarteEditeur() {
       >
         {actif === 'format' ? (
           <>
-            {interrupteur}
             <Ink size={14} color={c.textSecondary}>{traduire("Choisis selon l’endroit où tu la publies.")}</Ink>
             <View style={{ gap: 8 }} accessibilityRole="radiogroup">
               {FORMATS.map((f) => {
@@ -422,94 +415,60 @@ export default function CarteEditeur() {
 
         {actif === 'fond' ? (
           <>
-            {interrupteur}
-            <Ink size={14} color={c.textSecondary}>{traduire("Ta photo, ta scène d’accueil, un décor ou un fond uni.")}</Ink>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 12 }}>
-              {fondsOrdre.map((f) => {
-                const on = o.fond === f.id || (f.id === 'photo' && k.style.fond === 'photo' && !!k.photo);
-                const img = f.id === 'scene' ? k.visuels.scene : f.id === 'photo' ? (k.photo ? { uri: k.photo } : null) : f.image;
+            <Ink size={14} color={c.textSecondary}>{traduire('Ta photo en plein cadre, ou une couleur franche.')}</Ink>
+            <View style={{ flexDirection: 'row', gap: 10 }} accessibilityRole="radiogroup">
+              {[
+                { id: 'photo' as const, nom: traduire('Ta photo'), icon: 'camera' as IconName },
+                { id: 'couleur' as const, nom: traduire('Couleur'), icon: 'image' as IconName },
+              ].map((x) => {
+                const on = x.id === 'photo' ? fondPhoto : !fondPhoto;
                 return (
                   <Pressable
-                    key={f.id}
-                    // 24 octobre 2026 : « Ta photo » deja choisie, un toucher rouvre la galerie pour en mettre une autre
-                    onPress={() => (f.id === 'photo' && (!k.photo || on) ? void k.choisirPhoto('gallery') : k.setStyle(f.id === 'photo' ? { fond: 'photo', sansPersonne: false } : { fond: f.id as FondId }))}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: on }}
-                    accessibilityLabel={f.id === 'photo' ? traduire('Fond Ta photo') : `Fond ${f.nom}`}
-                    accessibilityHint={f.id === 'photo' && on ? traduire('Touche pour choisir une autre photo') : undefined}
-                    style={{ alignItems: 'center', gap: 5, width: tuile }}
+                    key={x.id}
+                    // « Ta photo » sans photo, ou deja choisie : un toucher ouvre la galerie
+                    onPress={() => (x.id === 'photo' ? (!k.photo || on ? void k.choisirPhoto('gallery') : k.setStyle({ fond: 'photo', sansPersonne: false, epure: false })) : k.setStyle({ fond: 'couleur' }))}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: on }}
+                    accessibilityLabel={x.nom}
+                    accessibilityHint={x.id === 'photo' && on ? traduire('Touche pour choisir une autre photo') : undefined}
+                    style={({ pressed }) => ({ flex: 1, minHeight: 92, borderRadius: 18, padding: 6, gap: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.accentTint : pressed ? c.fillSubtle : c.surface, borderWidth: on ? 2 : 1, borderColor: on ? c.accent : c.border })}
                   >
-                    <View style={{ width: tuile, height: tuile, borderRadius: 14, padding: on ? 3 : 0, borderWidth: on ? 2.5 : f.id === 'photo' ? 1.5 : 1, borderColor: on || f.id === 'photo' ? c.accent : c.border, backgroundColor: c.surface }}>
-                      <View style={{ flex: 1, borderRadius: on ? 9 : 13, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: f.id === 'photo' && !k.photo ? c.accentTint : c.surface }}>
-                        {img ? <Image source={img} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }} resizeMode="cover" /> : f.degrade ? <LinearGradient colors={f.degrade} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} /> : f.id === 'uni' ? <LinearGradient colors={o.sombre ? ['#2A2E39', '#121318'] : ['#F6F5F0', '#E4E7F1']} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} /> : null}
-                        {f.id === 'photo' && !k.photo ? <Icon name="camera" size={26} color={c.accent} /> : null}
-                      </View>
-                      {on ? (
-                        <View style={{ position: 'absolute', right: -6, top: -6, width: 20, height: 20, borderRadius: 10, backgroundColor: c.primary, borderWidth: 2, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
-                          <Icon name="check" size={11} color={c.onPrimary} stroke={3.2} />
-                        </View>
-                      ) : null}
-                      {/* 24 octobre 2026 : la petite croix rouge enleve ta photo, la carte revient sur ta scene */}
-                      {f.id === 'photo' && k.photo ? (
-                        <Pressable
-                          onPress={k.enleverPhoto}
-                          hitSlop={10}
-                          accessibilityRole="button"
-                          accessibilityLabel={traduire('Enlever ma photo')}
-                          style={{ position: 'absolute', left: -6, top: -6, width: 22, height: 22, borderRadius: 11, backgroundColor: c.danger, borderWidth: 2, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}
-                        >
-                          <Icon name="close" size={11} color="#FFFFFF" stroke={3.2} />
-                        </Pressable>
-                      ) : null}
+                    <View style={{ width: 54, height: 54, borderRadius: 14, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: x.id === 'couleur' ? couleurDe(o.couleur).fond : c.accentTint }}>
+                      {x.id === 'photo' && k.photo ? <Image source={{ uri: k.photo }} style={{ width: '100%', height: '100%' }} resizeMode="cover" /> : <Icon name={x.icon} size={24} color={x.id === 'couleur' ? couleurDe(o.couleur).encre : c.accent} />}
                     </View>
-                    <Ink size={11} weight={on || f.id === 'photo' ? 'extraBold' : 'bold'} color={on || f.id === 'photo' ? c.accent : c.textSecondary} numberOfLines={2} style={{ textAlign: 'center', lineHeight: 13 }}>{f.id === 'photo' ? traduire('Ta photo') : f.nom}</Ink>
+                    <Ink size={14} weight="extraBold" color={on ? c.accent : c.ink}>{x.nom}</Ink>
                   </Pressable>
                 );
               })}
             </View>
-            {/* 24 octobre 2026 : visibles des qu'une photo est chargee, meme si un autre fond est choisi */}
-            {k.photo || k.photoEnCours || o.fond === 'photo' || k.style.fond === 'photo' ? (
+            {k.photo || k.photoEnCours || fondPhoto ? (
               <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                 <Pastille c={c} on={false} icon="image" label={k.photoEnCours ? traduire('Photo en préparation') : k.photo ? traduire('Changer de photo') : traduire('Galerie')} onPress={() => { if (!k.photoEnCours) void k.choisirPhoto('gallery'); }} />
                 <Pastille c={c} on={false} icon="camera" label={traduire("Prendre une photo")} onPress={() => void k.choisirPhoto('camera')} />
                 {k.photo ? <Pastille c={c} on={false} icon="close" label={traduire('Enlever ma photo')} onPress={k.enleverPhoto} /> : null}
               </View>
-            ) : null}
-            {/* 24 octobre 2026 : toutes tes scenes, par univers, en image fixe sur la carte */}
-            {k.tesScenes.length > 0 ? (
-              <View style={{ gap: 10, marginTop: 6 }}>
-                <View style={{ gap: 2 }}>
-                  <Ink size={16} weight="black" tight accessibilityRole="header">{traduire('Tes scènes')}</Ink>
-                  <Ink size={13} color={c.textSecondary}>{traduire('Toutes les scènes que tu as débloquées.')}</Ink>
+            ) : (
+              <Pastille c={c} on={false} icon="camera" label={traduire("Prendre une photo")} onPress={() => void k.choisirPhoto('camera')} />
+            )}
+            {couleurUtile ? (
+              <>
+                <Titre c={c} icon="image">{titreCouleur}</Titre>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 12 }} accessibilityRole="radiogroup">
+                  {COULEURS.map((x) => {
+                    const on = couleurDe(o.couleur).id === x.id;
+                    return (
+                      <Pressable key={x.id} onPress={() => k.setStyle(fondPhoto ? { couleur: x.id } : { couleur: x.id, fond: 'couleur' })} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={x.nom} style={{ alignItems: 'center', gap: 5, width: pastilleCouleur }}>
+                        <View style={{ width: pastilleCouleur, height: pastilleCouleur, borderRadius: pastilleCouleur / 2, padding: on ? 3 : 0, borderWidth: on ? 3 : 1, borderColor: on ? c.accent : c.border, backgroundColor: c.surface }}>
+                          <View style={{ flex: 1, borderRadius: pastilleCouleur, backgroundColor: x.fond, alignItems: 'center', justifyContent: 'center' }}>
+                            {on ? <Icon name="check" size={20} color={x.encre} stroke={3} /> : null}
+                          </View>
+                        </View>
+                        <Ink size={11.5} weight={on ? 'extraBold' : 'bold'} color={on ? c.accent : c.textSecondary} numberOfLines={1}>{x.nom}</Ink>
+                      </Pressable>
+                    );
+                  })}
                 </View>
-                {k.tesScenes.map((g) => (
-                  <View key={g.key} style={{ gap: 6 }}>
-                    <Ink size={12.5} weight="extraBold" color={c.textSecondary}>{g.titre}</Ink>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 22, paddingTop: 6 }} style={{ marginHorizontal: -22 }}>
-                      {g.scenes.map((sid) => {
-                        const fid = fondDeScene(sid);
-                        const on = o.fond === fid;
-                        const nom = traduire(ficheScene(sid).nom);
-                        return (
-                          <Pressable key={sid} onPress={() => k.setStyle({ fond: fid })} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={traduire('Fond {0}', nom)} style={{ alignItems: 'center', gap: 5, width: tuile }}>
-                            <View style={{ width: tuile, height: Math.round(tuile * 1.25), borderRadius: 14, padding: on ? 3 : 0, borderWidth: on ? 2.5 : 1, borderColor: on ? c.accent : c.border, backgroundColor: c.surface }}>
-                              <View style={{ flex: 1, borderRadius: on ? 9 : 13, overflow: 'hidden' }}>
-                                <ExpoImage source={sceneForNow(sid, devNow()) as never} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={0} cachePolicy="memory-disk" recyclingKey={sid} />
-                              </View>
-                              {on ? (
-                                <View style={{ position: 'absolute', right: -6, top: -6, width: 20, height: 20, borderRadius: 10, backgroundColor: c.primary, borderWidth: 2, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
-                                  <Icon name="check" size={11} color={c.onPrimary} stroke={3.2} />
-                                </View>
-                              ) : null}
-                            </View>
-                            <Ink size={11} weight={on ? 'extraBold' : 'bold'} color={on ? c.accent : c.textSecondary} numberOfLines={1} style={{ textAlign: 'center', lineHeight: 13 }}>{nom}</Ink>
-                          </Pressable>
-                        );
-                      })}
-                    </ScrollView>
-                  </View>
-                ))}
-              </View>
+              </>
             ) : null}
           </>
         ) : null}
@@ -539,12 +498,24 @@ export default function CarteEditeur() {
 
         {actif === 'plus' ? (
           <>
-            {aa ? null : <LigneInterrupteur c={c} icon="eye" titre={traduire("Que mes données")} sous={traduire("Fond uni, sans personnage ni décor")} on={!!o.epure} onPress={() => k.setStyle({ epure: !o.epure })} />}
-            <Titre c={c} icon={o.sombre ? 'moon' : 'sun'}>{traduire("Style")}</Titre>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Pastille c={c} on={o.sombre} icon="moon" label={traduire("Sombre")} onPress={() => k.setStyle({ sombre: true })} />
-              <Pastille c={c} on={!o.sombre} icon="sun" label={traduire("Clair")} onPress={() => k.setStyle({ sombre: false })} />
-            </View>
+            {aa ? (
+              <>
+                <Titre c={c} icon={o.sombre ? 'moon' : 'sun'}>{traduire("Style")}</Titre>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <Pastille c={c} on={o.sombre} icon="moon" label={traduire("Sombre")} onPress={() => k.setStyle({ sombre: true })} />
+                  <Pastille c={c} on={!o.sombre} icon="sun" label={traduire("Clair")} onPress={() => k.setStyle({ sombre: false })} />
+                </View>
+              </>
+            ) : aClairSombre(modeleActif) ? (
+              <>
+                {/* 31 octobre 2026 : Clair ou Sombre, seulement pour le papier du Ticket de caisse */}
+                <Titre c={c} icon={o.papier === 'sombre' ? 'moon' : 'sun'} sous={traduire('Le papier de ton ticket')}>{traduire("Clair ou sombre")}</Titre>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <Pastille c={c} on={o.papier !== 'sombre'} icon="sun" label={traduire("Clair")} onPress={() => k.setStyle({ papier: 'clair' })} />
+                  <Pastille c={c} on={o.papier === 'sombre'} icon="moon" label={traduire("Sombre")} onPress={() => k.setStyle({ papier: 'sombre' })} />
+                </View>
+              </>
+            ) : null}
             {montrePoids ? (
               <>
                 <Titre c={c} icon="scale" sous={traduire("Pour ta vie privée : seulement l’écart ou le pourcentage")}>{traduire("Ton poids")}</Titre>
