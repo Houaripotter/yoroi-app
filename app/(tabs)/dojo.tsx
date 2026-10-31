@@ -610,6 +610,8 @@ export default function Dojo() {
             title={traduire("Combat et partage")}
             items={[
               { label: traduire('Succès de sparring'), sub: traduire('Tes rounds, tes finitions, tes partenaires'), href: '/combat-achievements' },
+              // 31 octobre 2026 : la bibliotheque des cartes, en tete du partage
+              { label: traduire('Mes cartes à partager'), sub: traduire('Séances, records, objectifs, mois et année'), href: '/mes-cartes' },
               { label: traduire('Carte de combattant'), href: '/fighter-card' },
               { label: traduire('Partager tes séances et bilans'), href: '/share-hub' },
             ]}
