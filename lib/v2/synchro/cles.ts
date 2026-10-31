@@ -160,6 +160,27 @@ export const CLES_ELEMENTS: readonly SpecCle[] = [
   { cle: 'yoroi_minuteur_repos_v1', type: 'reglages', forme: 'valeur' },
   // 31 octobre 2026 : interrupteur Sonnerie de fin de repos (lib/v2/seances/alarmeRepos.ts) : '0' ou '1'
   { cle: 'yoroi_sonnerie_fin_repos_v1', type: 'reglages', forme: 'valeur' },
+  // 31 octobre 2026 : tes machines ajoutees depuis « Changer d'exercice » (lib/v2/seances/machinesPerso.ts), une par nom
+  {
+    cle: 'yoroi_machines_perso_v1', type: 'programmes', forme: 'liste', idChamp: 'nom',
+    apres: async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        await (require('@/lib/v2/seances/machinesPerso') as typeof import('@/lib/v2/seances/machinesPerso')).chargerMachinesPerso();
+      } catch { /* relues a la prochaine ouverture */ }
+    },
+  },
+  // 31 octobre 2026 : supersets gardes dans le programme (lib/v2/programmes/enchainements.ts), un jour a la fois
+  {
+    cle: 'yoroi_enchainements_v1', type: 'programmes', forme: 'objet',
+    evenements: ['YOROI_PROGRAMME_CHANGED'],
+    apres: async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        await (require('@/lib/v2/programmes/enchainements') as typeof import('@/lib/v2/programmes/enchainements')).chargerEnchainements();
+      } catch { /* relus a la prochaine ouverture */ }
+    },
+  },
 ];
 
 /**
