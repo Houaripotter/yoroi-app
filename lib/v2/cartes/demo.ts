@@ -3,6 +3,8 @@
  * Jamais montrees a un utilisateur avec ses vraies donnees.
  */
 import type { CarteData, DonneesSeance, Exploit, PhotoCarte } from './types';
+import type { Bibliotheque } from './bibliotheque';
+import { rangerExploits } from './periode';
 
 /** 31 octobre 2026 : un parcours de demonstration (boucle irreguliere), ramene entre 0 et 1 comme un vrai trace */
 function traceDemo(): NonNullable<DonneesSeance['trace']> {
@@ -115,9 +117,93 @@ export const DEMO_SEMAINE: CarteData = {
   cle: 'semaine:demo',
 };
 
+// ============================================
+// BIBLIOTHEQUE DE DEMONSTRATION (31 octobre 2026) : ton mois, ton annee, tes objectifs et tes compteurs,
+// memes formes que les vrais, chiffres fictifs coherents avec les seances et exploits ci-dessus
+// ============================================
+
+/** Une autre semaine de demonstration, plus calme */
+export const DEMO_SEMAINE_2: CarteData = {
+  ...DEMO_SEMAINE,
+  sousTitre: traduire('Du 12 au 18 octobre'),
+  semaine: { ...DEMO_SEMAINE.semaine!, debut: '2026-10-12', jours: [true, true, false, true, false, false, true], seances: 4, minutes: 296, poidsFin: 84.9, poidsEcart: -0.4, sports: [{ nom: 'Musculation', n: 2 }, { nom: 'Jiu jitsu brésilien', n: 1 }, { nom: traduire('Course à pied'), n: 1 }] },
+  serieSemaines: 7,
+  cle: 'semaine:demo2',
+};
+
+export const DEMO_MOIS: CarteData = {
+  moment: 'mois',
+  titre: traduire('Mon mois'),
+  sousTitre: traduire('Octobre 2026'),
+  sport: 'musculation',
+  famille: 'muscu',
+  periode: { type: 'mois', ref: '2026-10', debut: '2026-10-01', fin: '2026-10-31', enCours: false, seances: 19, minutes: 1410, joursActifs: 17, sports: [{ nom: 'Musculation', n: 8 }, { nom: 'Jiu jitsu brésilien', n: 7 }, { nom: traduire('Course à pied'), n: 4 }], distanceKm: 38.4, tonnage: 96400, rounds: 42, parSemaine: 4, semainesTenues: 4, semainesComptees: 4, objectifAnnee: null, precedent: 18 },
+  serieSemaines: 6,
+  grille: grilleDemo(),
+  dateIso: '2026-10-31',
+  cle: 'mois:demo',
+};
+
+export const DEMO_MOIS_SEPT: CarteData = {
+  ...DEMO_MOIS,
+  sousTitre: traduire('Septembre 2026'),
+  sport: 'jjb',
+  famille: 'combat',
+  periode: { type: 'mois', ref: '2026-09', debut: '2026-09-01', fin: '2026-09-30', enCours: false, seances: 18, minutes: 1290, joursActifs: 16, sports: [{ nom: 'Jiu jitsu brésilien', n: 8 }, { nom: 'Musculation', n: 6 }, { nom: traduire('Course à pied'), n: 4 }], distanceKm: 64.2, tonnage: 71800, rounds: 54, parSemaine: 4, semainesTenues: 4, semainesComptees: 4, objectifAnnee: null, precedent: 15 },
+  dateIso: '2026-09-30',
+  cle: 'mois:demo2',
+};
+
+export const DEMO_ANNEE: CarteData = {
+  moment: 'annee',
+  titre: traduire('Mon année'),
+  sousTitre: traduire('2026, jusqu’ici'),
+  sport: 'musculation',
+  famille: 'muscu',
+  periode: { type: 'annee', ref: '2026', debut: '2026-01-01', fin: '2026-10-31', enCours: true, seances: 186, minutes: 14880, joursActifs: 168, sports: [{ nom: 'Musculation', n: 74 }, { nom: 'Jiu jitsu brésilien', n: 68 }, { nom: traduire('Course à pied'), n: 44 }], distanceKm: 690, tonnage: 812000, rounds: 880, parSemaine: 4, semainesTenues: 38, semainesComptees: 43, objectifAnnee: { fait: 186, total: 208, attendu: 172 }, precedent: 142 },
+  serieSemaines: 6,
+  grille: grilleDemo(),
+  dateIso: '2026-10-31',
+  cle: 'annee:demo',
+};
+
+export const DEMO_ANNEE_2025: CarteData = {
+  ...DEMO_ANNEE,
+  sousTitre: '2025',
+  sport: 'jjb',
+  famille: 'combat',
+  periode: { type: 'annee', ref: '2025', debut: '2025-01-01', fin: '2025-12-31', enCours: false, seances: 142, minutes: 9960, joursActifs: 131, sports: [{ nom: 'Jiu jitsu brésilien', n: 61 }, { nom: 'Musculation', n: 52 }, { nom: traduire('Course à pied'), n: 29 }], distanceKm: 410, tonnage: 520000, rounds: 610, parSemaine: 3, semainesTenues: 41, semainesComptees: 52, objectifAnnee: { fait: 142, total: 156 }, precedent: 0 },
+  serieSemaines: 0,
+  dateIso: '2025-12-31',
+  cle: 'annee:demo2',
+};
+
+function duMoment(e: Exploit, src: 'objectif' | 'compteur', sousTitre: string, plus: Partial<CarteData> = {}): CarteData {
+  return { moment: 'exploit', titre: e.surtitre, sousTitre, exploit: e, sport: null, source: { type: src, ref: e.date }, dateIso: e.date, cle: `${src}:${e.type}`, ...plus };
+}
+
+const objectifDemo = (e: Exploit, sousTitre: string, plus?: Partial<CarteData>) => duMoment(e, 'objectif', sousTitre, plus);
+const compteurDemo = (e: Exploit, sousTitre: string, plus?: Partial<CarteData>) => duMoment(e, 'compteur', sousTitre, plus);
+
+export const DEMO_OBJECTIFS: CarteData[] = [
+  objectifDemo({ type: 'semaine_objectif', date: '2026-10-31', surtitre: traduire('Objectif de la semaine'), hero: { value: '3/4', unit: '' }, accroche: traduire('Encore {0} séance cette semaine', 1), barre: { fait: 3, total: 4, legende: traduire('{0} sur {1} séances', 3, 4) }, cotes: [{ label: traduire('semaines d’affilée'), value: '6' }], priorite: 1 }, traduire('Cette semaine'), { serieSemaines: 6, grille: grilleDemo(), sport: 'jjb' }),
+  objectifDemo({ type: 'annee_progression', date: '2026-10-31', surtitre: traduire('Objectif {0}', 2026), hero: { value: '186', unit: traduire('sur {0}', 208) }, accroche: traduire('{0} séances par semaine, toute l’année', 4), detail: traduire('En avance de 14 séances sur ton rythme'), barre: { fait: 186, total: 208, attendu: 172, legende: traduire('En avance de 14 séances sur ton rythme') }, cotes: [{ label: traduire('de l’objectif'), value: '89', unit: '%' }, { label: traduire('séances à faire'), value: '22' }], priorite: 2 }, traduire('Samedi 31 octobre'), { sport: 'musculation' }),
+  objectifDemo({ type: 'chemin_poids', date: '2026-10-31', surtitre: traduire('Objectif de poids'), hero: { value: '59', unit: '%' }, accroche: traduire('du chemin vers mon objectif'), detail: traduire('Objectif : {0} kg, parti de {1} kg', '80', '91,2'), detailPoids: true, barre: { fait: 59, total: 100, legende: traduire('du chemin vers mon objectif') }, cotes: [{ label: traduire('perdus depuis le départ'), value: '−6,6', unit: 'kg' }, { label: traduire('avant l’objectif'), value: '4,6', unit: 'kg' }, { label: traduire('aujourd’hui'), value: '84,6', unit: 'kg', poids: true }], masque: { ecart: { hero: { value: '59', unit: '%' }, accroche: traduire('du chemin vers mon objectif') }, pourcentage: { hero: { value: '59', unit: '%' }, accroche: traduire('du chemin vers mon objectif') } }, priorite: 3 }, traduire('Aujourd’hui')),
+];
+
+export const DEMO_COMPTEURS: CarteData[] = [
+  compteurDemo({ type: 'cumul_seances', date: '2026-10-31', surtitre: traduire('Depuis le début'), hero: { value: '328', unit: traduire('séances') }, accroche: traduire('depuis {0} {1}', traduire('février'), 2025), cotes: [{ label: traduire('d’entraînement'), value: '412', unit: 'h' }, { label: traduire('jours actifs'), value: '291' }], priorite: 1 }, traduire('Samedi 31 octobre'), { sport: 'jjb' }),
+  compteurDemo({ type: 'cumul_heures', date: '2026-10-31', surtitre: traduire('En {0}', 2026), hero: { value: '248', unit: traduire('heures') }, accroche: traduire('d’entraînement cette année'), cotes: [{ label: traduire('séances'), value: '186' }], priorite: 2 }, traduire('Samedi 31 octobre'), { sport: 'musculation' }),
+  compteurDemo({ type: 'cumul_km', date: '2026-10-31', surtitre: traduire('En {0}', 2026), hero: { value: '690', unit: 'km' }, accroche: traduire('parcourus cette année'), priorite: 3 }, traduire('Samedi 31 octobre'), { sport: 'running' }),
+  compteurDemo({ type: 'cumul_tonnage', date: '2026-10-31', surtitre: traduire('En {0}', 2026), hero: { value: '812', unit: 'tonnes' }, accroche: traduire('soulevées cette année'), priorite: 4 }, traduire('Samedi 31 octobre'), { sport: 'musculation' }),
+  compteurDemo({ type: 'cumul_rounds', date: '2026-10-31', surtitre: traduire('En {0}', 2026), hero: { value: '880', unit: 'rounds' }, accroche: traduire('sur le tapis ou sur le ring cette année'), priorite: 5 }, traduire('Samedi 31 octobre'), { sport: 'jjb' }),
+];
+
 export function demoPour(moment: string | undefined, sport?: string): CarteData {
   if (moment === 'pesee') return DEMO_PESEE;
   if (moment === 'semaine') return DEMO_SEMAINE;
+  if (moment === 'mois') return sport === 'combat' ? DEMO_MOIS_SEPT : DEMO_MOIS;
+  if (moment === 'annee') return sport === 'combat' ? DEMO_ANNEE_2025 : DEMO_ANNEE;
   if (sport === 'combat') return DEMO_SEANCE_COMBAT;
   if (sport === 'course') return DEMO_SEANCE_COURSE;
   return DEMO_SEANCE_MUSCU;
@@ -154,8 +240,11 @@ export const DEMO_EXPLOITS: CarteData[] = [
   ex({ type: 'objectif_poids', date: '2026-12-02', surtitre: traduire('Objectif atteint'), hero: { value: '80', unit: 'kg' }, accroche: 'Je l’ai fait', detail: traduire('Parti de 91,2 kg'), detailPoids: true, cotes: [{ label: traduire('perdus depuis le début'), value: '−11,2', unit: 'kg' }], masque: { ecart: { hero: { value: '−11,2', unit: 'kg' }, accroche: traduire('perdus depuis le début') }, pourcentage: { hero: { value: '−12,3', unit: '%' }, accroche: traduire('perdus depuis le début') } }, priorite: 14 }, traduire('Mercredi 2 décembre')),
 ];
 
-export function demoExploit(type?: string): CarteData {
+export function demoExploit(type?: string, cle?: string): CarteData {
   if (type === 'bilan_corps' || type === 'bilan_seance') return demoCarteBilan(type === 'bilan_corps' ? 'corps' : 'seance');
+  // bibliotheque : un objectif ou un compteur du moment, retrouve par sa cle
+  const duMomentDemo = cle ? [...DEMO_OBJECTIFS, ...DEMO_COMPTEURS].find((c) => c.cle === cle) : undefined;
+  if (duMomentDemo) return duMomentDemo;
   return DEMO_EXPLOITS.find((c) => c.exploit?.type === type) ?? DEMO_EXPLOITS[0];
 }
 
@@ -175,4 +264,19 @@ export function demoPhotosAvantApres(uris: (string | undefined)[] = []): PhotoCa
 
 export function demoAvantApres(uris: (string | undefined)[] = [], avantId?: string, apresId?: string): CarteData {
   return carteAvantApres(demoPhotosAvantApres(uris), avantId, apresId)!;
+}
+
+/** La bibliotheque de demonstration : pleine, chiffres fictifs (?demo=1) */
+export function bibliothequeDemo(): Bibliotheque {
+  const r = rangerExploits(DEMO_EXPLOITS);
+  return {
+    seances: [DEMO_SEANCE_MUSCU, DEMO_SEANCE_COMBAT, DEMO_SEANCE_COURSE],
+    records: r.records,
+    objectifs: [...DEMO_OBJECTIFS, ...r.objectifs.filter((c) => c.exploit?.type !== 'annee_progression' && c.exploit?.type !== 'annee_atteinte')],
+    semaines: [DEMO_SEMAINE, DEMO_SEMAINE_2],
+    mois: [DEMO_MOIS, DEMO_MOIS_SEPT],
+    annees: [DEMO_ANNEE, DEMO_ANNEE_2025],
+    compteurs: [...DEMO_COMPTEURS, ...r.compteurs.filter((c) => c.exploit?.type !== 'compteur')],
+    pesees: [DEMO_PESEE, ...r.poids.filter((c) => c.exploit?.type !== 'objectif_poids')],
+  };
 }
