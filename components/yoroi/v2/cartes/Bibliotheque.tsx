@@ -51,7 +51,7 @@ export function resumeCarte(d: CarteData, masque: Masque = 'aucun'): string {
   if (d.moment === 'avant_apres') return d.sousTitre;
   return chiffresAffiches(d, chiffresParDefaut(d, masque), masque)
     .slice(0, 3)
-    .map((s) => `${s.value}${s.unit ? ` ${s.unit}` : ['rounds', 'series', 'seances'].includes(s.key) ? ` ${s.label.split(',')[0]}` : ''}`)
+    .map((s) => `${s.value}${s.unit ? ` ${s.unit}` : ['rounds', 'series', 'seances', 'techniques', 'soumissions'].includes(s.key) ? ` ${s.label.split(',')[0]}` : ''}`)
     .join(', ');
 }
 
