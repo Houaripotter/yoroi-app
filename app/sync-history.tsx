@@ -27,7 +27,7 @@ const EVENT_LOOK: Record<string, { icon: SanteIconName; color: string; tint: str
   safety_backup: { icon: 'shield', color: S.gold, tint: S.goldSoft, label: traduire('Sauvegarde de sécurité') },
   cloud_push: { icon: 'upload', color: S.mossText, tint: S.mossSoft, label: traduire('Envoi vers le cloud') },
   cloud_pull: { icon: 'cloud', color: S.mossText, tint: S.mossSoft, label: traduire('Récupération depuis le cloud') },
-  peer_sync: { icon: 'tablet', color: S.accent, tint: S.accentSoft, label: traduire('Synchro iPhone et iPad') },
+  peer_sync: { icon: 'tablet', color: S.accent, tint: S.accentSoft, label: traduire('Synchro entre tes appareils') },
   import_file: { icon: 'download', color: S.ink2, tint: '#ECE9E2', label: traduire('Import de fichier') },
   restore_safety: { icon: 'restore', color: S.gold, tint: S.goldSoft, label: traduire('Retour à un état précédent') },
   watch_sync: { icon: 'watch', color: S.accent, tint: S.accentSoft, label: traduire('Synchro de la montre') },
