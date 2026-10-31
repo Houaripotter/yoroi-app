@@ -14,13 +14,15 @@ import type { TeinteA } from './kitA';
 import { P } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
+import { TuileChiffre } from './EnTeteSeance';
 
 export type LastSessionVM = {
   title: string;
   when: string;
   tint: string;
   art: ImageSourcePropType | null;
-  facts: { label: string; value: string; unit?: string }[];
+  /** aide : petite explication au toucher (31 octobre 2026, kilos soulevés) */
+  facts: { label: string; value: string; unit?: string; aide?: string }[];
   exercises: { name: string; best: string }[];
   stamps: number;
 };
@@ -106,7 +108,7 @@ export function LastSessionBody({ vm, onOpen }: { vm: LastSessionVM; onOpen?: ()
     <View style={{ gap: 10 }}>
       {vm.facts.length ? (
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          {vm.facts.map((f, i) => <Fait key={f.label} f={f} teinte={TEINTES_FAITS[i % 3]} />)}
+          {vm.facts.map((f, i) => (f.aide ? <TuileChiffre key={f.label} valeur={f.value} unite={f.unit} libelle={traduire(f.label)} aide={f.aide} teinte={TEINTES_FAITS[i % 3]} /> : <Fait key={f.label} f={f} teinte={TEINTES_FAITS[i % 3]} />))}
         </View>
       ) : null}
       {vm.exercises.length > 0 ? (
