@@ -14,6 +14,7 @@ export function moyenneFc(mesures: readonly number[]): number | null {
   return Math.round(ok.reduce((a, b) => a + b, 0) / ok.length);
 }
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 export async function fcMoyenneEntre(debutMs: number, finMs: number): Promise<number | null> {
   if (Platform.OS !== 'ios' || !(finMs > debutMs) || finMs - debutMs < 60_000) return null;
   try {
@@ -31,3 +32,4 @@ export async function fcMoyenneEntre(debutMs: number, finMs: number): Promise<nu
     return null;
   }
 }
+/* eslint-enable @typescript-eslint/no-require-imports */
