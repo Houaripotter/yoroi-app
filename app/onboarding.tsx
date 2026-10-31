@@ -24,6 +24,8 @@
  * 28 octobre 2026 : mode retour de la 3.0 (/onboarding?mode=retour, lib/v2/onboarding/retour.ts) : un utilisateur existant
  *   revoit l'onboarding une fois, tout est prerempli avec ses vraies donnees, rien n'est ecrit sauf ce qu'il change,
  *   « Plus tard » en haut de chaque ecran, Sante seulement si jamais demandee, Premium seulement s'il n'est pas abonne.
+ * 31 octobre 2026 : « Où as-tu entendu parler de YOROI ? » (facultatif, vrais logos) juste apres Ta tranche d'age,
+ *   numero SOURCE a la fin pour ne decaler aucun ecran ; jamais en mode retour (components/yoroi/v2/onboarding/Source.tsx).
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, BackHandler, Platform, StyleSheet, View } from 'react-native';
@@ -76,6 +78,7 @@ import { Accroche } from '@/components/yoroi/v2/onboarding/Accroche';
 import { Prenom } from '@/components/yoroi/v2/onboarding/Prenom';
 import { Toi } from '@/components/yoroi/v2/onboarding/Toi';
 import { Age } from '@/components/yoroi/v2/onboarding/Age';
+import { Source } from '@/components/yoroi/v2/onboarding/Source';
 import { Univers } from '@/components/yoroi/v2/onboarding/Univers';
 import { rangNom } from '@/lib/v2/dojo/univers';
 import type { ChoixUnivers } from '@/lib/v2/dojo/choisirUnivers';
@@ -144,9 +147,12 @@ const SCENE = 20;
 const DERNIER_NUMERO = SCENE;
 // 28 octobre 2026 : l'accueil du mode retour de la 3.0, en tete (hors apercu du Studio)
 const ACCUEIL_RETOUR = 21;
+// 31 octobre 2026 : ou tu as entendu parler de YOROI, juste apres Ta tranche d'age (numero a la fin, rien n'est decale)
+const SOURCE = 22;
+const NUMERO_MAX = SOURCE;
 /** l'ordre reel du parcours (Ta scene apres Ton univers, Sante apres Ton plan), pour le sens de l'animation et la mesure */
-const ordreDe = (p: number) => (p === ACCUEIL_RETOUR ? -1 : p === SCENE ? UNIVERS + 0.5 : p === SANTE ? RESULTAT + 0.5 : p);
-const NAMES = ['ouverture', 'prenom', 'toi', 'age', 'univers', 'objectif', 'frein', 'affirmation', 'sport', 'sante', 'poids', 'taille', 'cap', 'rythme', 'moment_pesee', 'demonstration', 'comparaison', 'preparation', 'plan', 'premium', 'scene', 'retour_accueil'];
+const ordreDe = (p: number) => (p === ACCUEIL_RETOUR ? -1 : p === SOURCE ? AGE + 0.5 : p === SCENE ? UNIVERS + 0.5 : p === SANTE ? RESULTAT + 0.5 : p);
+const NAMES = ['ouverture', 'prenom', 'toi', 'age', 'univers', 'objectif', 'frein', 'affirmation', 'sport', 'sante', 'poids', 'taille', 'cap', 'rythme', 'moment_pesee', 'demonstration', 'comparaison', 'preparation', 'plan', 'premium', 'scene', 'retour_accueil', 'source'];
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
 
@@ -252,7 +258,7 @@ export default function OnboardingScreen() {
       if (!alive) return;
       if (saved && saved.page > OUVERTURE) {
         // la preparation se refait : l'enregistrement final est sans doublon
-        const p = saved.page >= FORGE && saved.page !== SCENE && saved.page !== SANTE ? COMPARAISON : saved.page;
+        const p = saved.page >= FORGE && saved.page !== SCENE && saved.page !== SANTE && saved.page !== SOURCE ? COMPARAISON : saved.page;
         const next = { ...saved, page: p };
         draftRef.current = next;
         setD(next);
@@ -312,7 +318,7 @@ export default function OnboardingScreen() {
   // ===== Navigation =====
   const goTo = useCallback(
     (p: number) => {
-      const target = Math.max(0, Math.min(Math.max(DERNIER_NUMERO, ACCUEIL_RETOUR), p));
+      const target = Math.max(0, Math.min(NUMERO_MAX, p));
       // mesure : les choix de l'ecran quitte partent seulement quand on avance
       if (ordreDe(target) > ordreDe(draftRef.current.page)) choixOnboarding(NAMES[draftRef.current.page], draftRef.current);
       setDir(ordreDe(target) >= ordreDe(draftRef.current.page) ? 1 : -1);
@@ -333,6 +339,8 @@ export default function OnboardingScreen() {
     if (p === POIDS) return SPORT;
     if (p === SANTE) return RESULTAT;
     if (p === SCENE) return UNIVERS;
+    if (p === SOURCE) return AGE;
+    if (p === UNIVERS) return retour ? AGE : SOURCE;
     if (p === OBJECTIF) return SCENE;
     if (p === RYTHME) return sensDe(objectifsDuBrouillon(draftRef.current)) === 'stable' ? TAILLE : CAP;
     if (p === RESULTAT) return COMPARAISON;
@@ -765,7 +773,17 @@ export default function OnboardingScreen() {
           />
         );
       case AGE:
-        return <Age nav={nav({ skip: () => skip({ trancheAge: null }, UNIVERS) })} value={d.trancheAge} onPick={(t) => answer('tranche_age', { trancheAge: t })} onNext={() => goTo(UNIVERS)} />;
+        return <Age nav={nav({ skip: () => skip({ trancheAge: null }, retour ? UNIVERS : SOURCE) })} value={d.trancheAge} onPick={(t) => answer('tranche_age', { trancheAge: t })} onNext={() => goTo(retour ? UNIVERS : SOURCE)} />;
+      case SOURCE:
+        return (
+          <Source
+            nav={{ ...nav(), progress: progressOf(AGE + 0.5, firstAnswered, PRENOM, RESULTAT) }}
+            value={d.source ?? null}
+            onPick={(s) => answer('source', { source: s })}
+            onNext={() => goTo(UNIVERS)}
+            onSkip={() => skip({ source: null }, UNIVERS)}
+          />
+        );
       case UNIVERS:
         return <Univers nav={nav()} genre={genre} genreConnu={genreCalcul != null} value={univers} onPick={(v) => answer('univers', { univers: v, ...(v !== draftRef.current.univers ? { scene: null } : {}) })} onNext={() => goTo(SCENE)} />;
       case SCENE:

@@ -23,6 +23,7 @@ import { transport } from './telemetryTransport';
 import type { SourcePaywall, SourcePremium } from '@/lib/v2/premium/sources';
 import type { SourcePartage } from '@/lib/v2/partage/mesure';
 import type { TrancheAge } from '@/lib/v2/onboarding/trancheAge';
+import type { SourceConnu } from '@/lib/v2/onboarding/sourceConnu';
 
 /** Heure de debut d'execution du bundle JavaScript : sert a first_screen_rendered */
 const T0 = Date.now();
@@ -63,7 +64,7 @@ export type NiveauStockage = 'proche' | 'critique';
 export type CauseStockage = 'total' | 'cle';
 
 export type EtapeOnboarding =
-  | 'accroche' | 'prenom' | 'toi' | 'age' | 'univers' | 'objectif' | 'frein' | 'affirmation' | 'sport' | 'poids'
+  | 'accroche' | 'prenom' | 'toi' | 'age' | 'source' | 'univers' | 'objectif' | 'frein' | 'affirmation' | 'sport' | 'poids'
   | 'taille' | 'cap' | 'rythme' | 'moment' | 'demo' | 'comparaison' | 'forge' | 'resultat' | 'premium';
 
 /** Choix de l'onboarding. Le frein ne part qu'en renseigne ou passe : il peut contenir une blessure. */
@@ -73,7 +74,9 @@ export type ChoixOnboarding =
   | 'perdre' | 'prendre' | 'combat' | 'maintenir'
   | 'muscu' | 'cardio' | 'autre'
   | 'regle' | 'sante'
-  | 'reveil' | 'douche' | 'midi' | 'soir' | 'heure';
+  | 'reveil' | 'douche' | 'midi' | 'soir' | 'heure'
+  // 31 octobre 2026 : ou tu as entendu parler de YOROI (liste fermee de lib/v2/onboarding/sourceConnu.ts)
+  | SourceConnu;
 
 /** Noms d'ecran normalises : construits a partir des segments de route, jamais de valeur dedans */
 export type Ecran = string & { readonly __ecran: unique symbol };
@@ -155,6 +158,8 @@ export interface Proprietes {
   genre?: 'homme' | 'femme' | 'autre' | 'non_renseigne';
   /** 26 octobre 2026 : tranche d'age (liste fermee), jamais l'age ni la date de naissance */
   tranche_age?: TrancheAge | 'non_renseigne';
+  /** 31 octobre 2026 : ou tu as entendu parler de YOROI (liste fermee) */
+  source_connu?: SourceConnu | 'non_renseigne';
   famille_principale?: Famille;
   statut_premium?: Statut;
   univers?: 'japon' | 'classique' | 'aucun';

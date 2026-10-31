@@ -9,6 +9,8 @@
  *  . 26 octobre 2026 : le genre peut valoir « autre » (le repere homme ou femme des calculs ne part pas) ;
  *    la tranche d'age part en propriete utilisateur tranche_age (jamais l'age ni la date de naissance),
  *    l'evenement de l'ecran ne dit que renseigne ou passe.
+ *  . 31 octobre 2026 : ou tu as entendu parler de YOROI part en identifiant de liste fermee (tiktok, amis, club...),
+ *    en choix de l'etape source et en propriete utilisateur source_connu ; jamais de texte libre.
  */
 import { familleDeSport, setProprietes, track, trancheNombre, type ChoixOnboarding, type EtapeOnboarding, type Famille } from '@/utils/telemetry';
 import type { Draft } from './draft';
@@ -19,6 +21,7 @@ const ETAPES: Record<string, EtapeOnboarding> = {
   prenom: 'prenom',
   toi: 'toi',
   age: 'age',
+  source: 'source',
   univers: 'univers',
   objectif: 'objectif',
   frein: 'frein',
@@ -85,6 +88,10 @@ export function choixOnboarding(nomEcran: string, d: Draft): void {
     case 'age':
       choix(d.trancheAge ? 'renseigne' : 'passe');
       setProprietes({ tranche_age: d.trancheAge ?? 'non_renseigne' });
+      return;
+    case 'source':
+      choix(d.source ?? 'passe');
+      setProprietes({ source_connu: d.source ?? 'non_renseigne' });
       return;
     case 'univers':
       choix(d.univers);

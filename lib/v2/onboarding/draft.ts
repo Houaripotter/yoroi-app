@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isChoixUnivers, type ChoixUnivers } from '@/lib/v2/dojo/choisirUnivers';
 import { CHOIX_RAPPELS_VIDE, type ChoixRappels } from '@/lib/v2/notifications/discipline';
 import { isTrancheAge, type TrancheAge } from './trancheAge';
+import { isSourceConnu, type SourceConnu } from './sourceConnu';
 
 export const DRAFT_KEY = '@yoroi_onboarding_draft_v3';
 
@@ -86,6 +87,8 @@ export type Draft = {
   rappels: ChoixRappels;
   /** 27 octobre 2026 : la scene de ton accueil choisie juste apres Ton univers (null : celle de l'univers) */
   scene?: string | null;
+  /** 31 octobre 2026 : ou tu as entendu parler de YOROI (ecran facultatif, liste fermee, lib/v2/onboarding/sourceConnu.ts) */
+  source?: SourceConnu | null;
 };
 
 export const EMPTY_DRAFT: Draft = {
@@ -114,6 +117,7 @@ export const EMPTY_DRAFT: Draft = {
   peseeHeure: null,
   univers: 'japon',
   rappels: CHOIX_RAPPELS_VIDE,
+  source: null,
 };
 
 /** Ecrans de la version 3 (0 a 10) vers ceux de la version 4 (0 a 16) */
@@ -173,6 +177,7 @@ export async function loadDraft(): Promise<Draft | null> {
       peseeHeure: typeof d.peseeHeure === 'string' ? d.peseeHeure : null,
       rappels: rappelsValides(d.rappels),
       scene: typeof d.scene === 'string' ? d.scene : null,
+      source: isSourceConnu(d.source) ? d.source : null,
     };
   } catch {
     return null;

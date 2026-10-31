@@ -34,6 +34,7 @@ import { objectifsDuBrouillon, weightGoalDe } from './objectifs';
 import { NOUVEAUTES_30_KEY } from './parcours';
 import { peseeAConserver, profilFusionne } from './fusion';
 import { ONBOARDING_VU_VERSION_KEY, VERSION_ONBOARDING } from './retour';
+import { SOURCE_CONNU_KEY } from './sourceConnu';
 import { connecterSante } from '@/lib/v2/sante/connecter';
 import type { IssueConnexion } from '@/lib/v2/sante/connexion';
 
@@ -230,6 +231,9 @@ export async function saveOnboarding(d: Draft): Promise<void> {
       heure: d.peseeMoment === 'heure' ? d.peseeHeure ?? '07:00' : null,
     });
   }
+
+  // 31 octobre 2026 : ou tu as entendu parler de YOROI, garde sur le telephone (rien si l'ecran a ete passe)
+  if (d.source) await AsyncStorage.setItem(SOURCE_CONNU_KEY, d.source).catch(() => {});
 
   await AsyncStorage.setItem(LEGAL_ACCEPTED_KEY, 'true');
   await AsyncStorage.setItem(ONBOARDING_DONE_KEY, 'true');
