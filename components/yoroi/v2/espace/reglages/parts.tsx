@@ -21,6 +21,7 @@ import { BusteRond } from '@/components/yoroi/v2/espace/BusteRond';
 import { Icon, RoundButton } from '../ui';
 import type { IconName } from '../ui';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { useFeuilleCentree } from '@/lib/v2/nav/useGrandEcran';
 import { getWeightProgress } from '@/lib/database';
 import { MiniCarteAthlete } from '@/components/yoroi/v2/profil/MiniCarteAthlete';
 import { usePratiques } from '@/lib/v2/profil/usePratiques';
@@ -232,11 +233,13 @@ export function Sheet({ visible, onClose, title, subtitle, children }: { visible
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const insets = useSafeAreaInsets();
+  // 31 octobre 2026 : en grand ecran, une fenetre centree
+  const centree = useFeuilleCentree();
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(29,32,41,0.45)' }}>
-        <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel={traduire("Fermer")} />
-        <View style={{ backgroundColor: c.background, borderTopLeftRadius: 30, borderTopRightRadius: 30, maxHeight: '88%' }}>
+    <Modal visible={visible} transparent animationType={centree ? 'fade' : 'slide'} onRequestClose={onClose} supportedOrientations={centree ? ['portrait', 'landscape'] : undefined}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(29,32,41,0.45)' }, centree?.fond]}>
+        <Pressable style={centree ? { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 } : { flex: 1 }} onPress={onClose} accessibilityLabel={traduire("Fermer")} />
+        <View style={[{ backgroundColor: c.background, borderTopLeftRadius: 30, borderTopRightRadius: 30, maxHeight: '88%' }, centree ? { ...centree.carte, overflow: 'hidden' } : null]}>
           <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: c.border, marginTop: 10 }} />
           <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 12, paddingBottom: insets.bottom + 22, gap: 14 }} keyboardShouldPersistTaps="handled">
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
