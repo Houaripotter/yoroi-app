@@ -43,7 +43,7 @@ export function plageSemaine(lundi: string): string {
   return traduire("Du {0} {1} au {2} {3}", a.getDate(), MOIS[a.getMonth()], b.getDate(), MOIS[b.getMonth()]);
 }
 
-async function serieSemaines(): Promise<number> {
+export async function serieSemaines(): Promise<number> {
   try {
     return (await getArmureState()).weekStreak ?? 0;
   } catch {
@@ -201,9 +201,9 @@ export function rangDansAnnee(liste: Training[], t: Training): number {
   return liste.filter((x) => x.date.slice(0, 4) === an && (x.id === t.id || avant(x, t))).length;
 }
 
-type Contexte = { depart: number | null; objectif: number | null; sens: 'perte' | 'prise' | null; pesees: Weight[] };
+export type Contexte = { depart: number | null; objectif: number | null; sens: 'perte' | 'prise' | null; pesees: Weight[] };
 
-async function contextePoids(): Promise<Contexte> {
+export async function contextePoids(): Promise<Contexte> {
   const [profile, espace, ws] = await Promise.all([getProfile().catch(() => null), getEspace().catch(() => null), getWeights().catch(() => [] as Weight[])]);
   const pesees = (ws ?? []).filter((w) => w.weight > 0).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.id ?? 0) - (b.id ?? 0)));
   const depart = departDuChemin(profile, pesees.map((w) => ({ date: w.date, value: w.weight })));
@@ -213,7 +213,7 @@ async function contextePoids(): Promise<Contexte> {
   return { depart, objectif: tg > 0 ? tg : null, sens, pesees };
 }
 
-function carteDePesee(ctx: Contexte, idx: number, serie: number): CarteData {
+export function carteDePesee(ctx: Contexte, idx: number, serie: number): CarteData {
   const w = ctx.pesees[idx];
   const historique = ctx.pesees.slice(0, idx).map((x) => x.weight);
   const raison = raisonPesee({ poids: w.weight, historique, depart: ctx.depart, objectif: ctx.objectif, sens: ctx.sens });
@@ -301,7 +301,7 @@ export async function chargerSemaine(lundi: string, deja?: { trainings?: Trainin
 // EXPLOITS
 // ============================================
 
-async function parSemaine(): Promise<number> {
+export async function parSemaine(): Promise<number> {
   try {
     return objectifVise(await getEspace());
   } catch {
@@ -309,7 +309,7 @@ async function parSemaine(): Promise<number> {
   }
 }
 
-async function toutesSeances(): Promise<Training[]> {
+export async function toutesSeances(): Promise<Training[]> {
   return dedupeTrainings((await getTrainings().catch(() => [])) ?? []);
 }
 
