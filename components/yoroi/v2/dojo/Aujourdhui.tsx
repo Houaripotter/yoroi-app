@@ -7,6 +7,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Image, Pressable, View } from 'react-native';
+import { PisteInterrupteur } from '@/components/yoroi/Interrupteur';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
@@ -167,9 +168,7 @@ export function Aujourdhui({ serie, coffre, onOuvrir, onVerre, suite, onCadeau, 
       <Ink size={12} color={c.textMuted}>{traduire("Un jour sans geste par semaine est pardonné, ta série ne casse pas.")}</Ink>
 
       <Pressable onPress={basculerRappel} accessibilityRole="switch" accessibilityState={{ checked: rappel }} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 32 }}>
-        <View style={{ width: 34, height: 20, borderRadius: 10, padding: 2, backgroundColor: rappel ? c.detail : c.fillSubtle, alignItems: rappel ? 'flex-end' : 'flex-start' }}>
-          <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#FFFFFF' }} />
-        </View>
+        <PisteInterrupteur on={rappel} largeur={34} hauteur={20} />
         <Ink size={12} color={c.textSecondary} style={{ flex: 1 }}>{rappel ? traduire('Petit rappel à 19 h si ton coffre t’attend encore') : traduire('Rappel du soir coupé')}</Ink>
       </Pressable>
     </View>

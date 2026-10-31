@@ -6,7 +6,8 @@
  * Ce composant ne programme rien : il rend le choix, l'appelant l'applique (appliquerChoixRappels).
  */
 import React, { useState } from 'react';
-import { Image, Pressable, Switch, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
+import { Interrupteur } from '@/components/yoroi/Interrupteur';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { selectionAsync } from 'expo-haptics';
@@ -14,7 +15,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
-import { ChoiceChips, SWITCH_OFF, TimeField, sayTime } from './parts';
+import { ChoiceChips, TimeField, sayTime } from './parts';
 import { FREQUENCE_LABEL } from '@/lib/v2/notifications/discipline';
 import type { ChoixRappels, FrequencePesee } from '@/lib/v2/notifications/discipline';
 import { ouvrirReglagesSysteme, permissionPourRappels } from '@/lib/v2/notifications/rappels';
@@ -55,16 +56,12 @@ function Ligne({ icon, titre, sous, on, onToggle, children }: { icon: IconName; 
           <Ink size={15} weight="extraBold">{titre}</Ink>
           <Ink size={12.5} color={c.textSecondary} style={{ lineHeight: 17 }}>{sous}</Ink>
         </View>
-        <Switch
+        <Interrupteur
           value={on}
           onValueChange={(v) => {
             hap();
             onToggle(v);
           }}
-          trackColor={{ false: SWITCH_OFF, true: c.accent }}
-          thumbColor="#FFFFFF"
-          {...({ activeThumbColor: '#FFFFFF' } as object)}
-          ios_backgroundColor={SWITCH_OFF}
           accessibilityLabel={titre}
         />
       </View>

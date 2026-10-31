@@ -7,6 +7,7 @@
  */
 import React from 'react';
 import { Image, Pressable, View } from 'react-native';
+import { PisteInterrupteur } from '@/components/yoroi/Interrupteur';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { famillePastel, usePastel } from '@/components/yoroi/v2/programmes/Habillage';
@@ -63,9 +64,7 @@ export function GrilleModules({ possibles, modules, onBasculer, onPourquoi }: { 
                 </View>
               )}
               {/* l'interrupteur des maquettes, dessiné : la tuile entière reste la case à cocher */}
-              <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ width: 44, height: 26, borderRadius: 13, padding: 3, backgroundColor: on ? pa.menthe.barre : pa.carte, alignItems: on ? 'flex-end' : 'flex-start' }}>
-                <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: on ? pa.carte : pa.ligne }} />
-              </View>
+              <PisteInterrupteur on={on} largeur={44} hauteur={26} />
             </View>
             <Ink size={15} weight="black" tight color={pa.texte} numberOfLines={2}>{traduire(m.label)}</Ink>
             <Ink size={12} weight="bold" color={pa.texte2} numberOfLines={2}>{traduire(m.sous)}</Ink>

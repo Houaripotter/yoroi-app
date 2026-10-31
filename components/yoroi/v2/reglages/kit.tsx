@@ -7,7 +7,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { P } from '@/components/yoroi/livePalette';
+import { PisteInterrupteur } from '@/components/yoroi/Interrupteur';
 
 /** Tuiles d'icone : indigo, bleu, mousse, or, ardoise */
 export const TUILE = {
@@ -29,15 +29,9 @@ export function Groupe({ title, sub }: { title: string; sub?: string }) {
   );
 }
 
-/** Interrupteur de ligne (indigo quand il est actif) */
+/** Interrupteur de ligne : l'interrupteur commun dessine (31 octobre 2026, piste franche allumee) */
 export function Interrupteur({ on }: { on: boolean }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
-  return (
-    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 46, height: 28, borderRadius: 14, backgroundColor: on ? c.detail : c.fillSubtle, padding: 3, alignItems: on ? 'flex-end' : 'flex-start' }}>
-      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: P.white }} />
-    </View>
-  );
+  return <PisteInterrupteur on={on} />;
 }
 
 /** Libelle de l'apercu, au-dessus d'une illustration */

@@ -22,6 +22,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { PisteInterrupteur } from '@/components/yoroi/Interrupteur';
 import Animated, { FadeIn, LinearTransition, ZoomIn } from 'react-native-reanimated';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { playBadgeSound } from '@/lib/soundManager';
@@ -535,9 +536,7 @@ export default function CoachConstruire() {
           >
             {illus.stickers ? <Image source={illus.img('rappels')} style={{ width: 30, height: 30 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
             <Ink size={14} weight="extraBold" color={pa.texte} style={{ flex: 1, paddingLeft: illus.stickers ? 0 : 6 }}>{traduire('Rappel à {0}, les jours de séance', libelleHeureRappel(rappel.heure).replace(/ /g, ' '))}</Ink>
-            <View style={{ width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: rappel.actif ? pa.creme.barre : pa.ligne, alignItems: rappel.actif ? 'flex-end' : 'flex-start' }}>
-              <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFFFFF' }} />
-            </View>
+            <PisteInterrupteur on={rappel.actif} />
           </Pressable>
           {rappel.actif ? (
             <View style={{ gap: 8, paddingLeft: 6, paddingBottom: 10 }}>

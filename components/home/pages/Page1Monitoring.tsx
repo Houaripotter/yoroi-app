@@ -3,7 +3,8 @@
 // ============================================
 
 import React, { useState, useEffect, useRef, useMemo, memo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, useWindowDimensions, Animated, FlatList, Easing, Switch, DeviceEventEmitter, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, useWindowDimensions, Animated, FlatList, Easing, DeviceEventEmitter, RefreshControl } from 'react-native';
+import { Interrupteur } from '@/components/yoroi/Interrupteur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
@@ -885,11 +886,9 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
               <View style={hStyles.notifRow}>
                 {notifEnabled ? <Bell size={14} color="#06B6D4" /> : <BellOff size={14} color={colors.textMuted} />}
                 <Text style={[hStyles.notifLabel, { color: colors.textPrimary }]}>Rappels</Text>
-                <Switch
+                <Interrupteur
                   value={notifEnabled}
                   onValueChange={handleToggleNotif}
-                  trackColor={{ false: isDark ? '#333' : '#DDD', true: '#06B6D480' }}
-                  thumbColor={notifEnabled ? '#06B6D4' : '#999'}
                   style={{ transform: [{ scaleX: 0.75 }, { scaleY: 0.75 }] }}
                 />
               </View>

@@ -33,6 +33,15 @@ export type YoroiColors = {
   onPrimary: string;
   /** le bleu vif des petits details (traits de courbe, coches, anneaux) */
   detail: string;
+  /**
+   * 31 octobre 2026 (Houari : « quand les toggles sont activés, on dirait qu'ils sont désactivés ») :
+   * piste d'un interrupteur allume, franche et saturee, rond blanc dessus ; et piste eteinte, gris neutre
+   * (components/yoroi/Interrupteur.tsx)
+   */
+  switchOn: string;
+  switchOff: string;
+  /** le rond de l'interrupteur : blanc dans tous les modes */
+  switchThumb: string;
   /** Erreurs, suppressions, alertes (blessure, recuperation basse) */
   danger: string;
   dangerPressed: string;
@@ -84,6 +93,9 @@ const dojo: YoroiColors = {
   primaryPressed: '#C9D3FB',
   onPrimary: '#23358F',
   detail: '#4C6EF5',
+  switchOn: '#4C6EF5',
+  switchOff: '#C9CDD8',
+  switchThumb: '#FFFFFF',
   // Le rouge soie ne sert plus qu'aux erreurs, suppressions et alertes
   danger: '#B0282E',
   dangerPressed: '#8C1E23',
@@ -130,6 +142,10 @@ const nuit: YoroiColors = {
   primaryPressed: '#33406A',
   onPrimary: '#DCE3FF',
   detail: '#8FA8DE',
+  // en sombre aussi le bleu reste franc (pas l'indigo eclairci, trop pale pour une piste allumee)
+  switchOn: '#4C6EF5',
+  switchOff: '#3B4150',
+  switchThumb: '#FFFFFF',
   danger: '#EC7A70',
   dangerPressed: '#D45F55',
   dangerTint: '#3A2326',
@@ -167,6 +183,9 @@ const sakura: YoroiColors = {
   primaryPressed: '#F0CAD7',
   onPrimary: '#9A2D54',
   detail: '#C23B6B',
+  switchOn: '#D23A6E',
+  switchOff: '#D9C3CA',
+  switchThumb: '#FFFFFF',
   shadow: '#3C1424',
 };
 
@@ -186,6 +205,9 @@ const matcha: YoroiColors = {
   primaryPressed: '#CBDAC7',
   onPrimary: '#2F512D',
   detail: '#3E6A3B',
+  switchOn: '#3C8A39',
+  switchOff: '#C8CFC0',
+  switchThumb: '#FFFFFF',
   shadow: '#1E2814',
 };
 

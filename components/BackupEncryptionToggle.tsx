@@ -5,7 +5,8 @@
 // ============================================
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Switch } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Interrupteur } from '@/components/yoroi/Interrupteur';
 import { Lock, Unlock, Key } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import {
@@ -142,11 +143,9 @@ const BackupEncryptionToggleInner: React.FC = () => {
               : traduire('Backups en clair, quiconque peut les ouvrir')}
           </Text>
         </View>
-        <Switch
+        <Interrupteur
           value={enabled}
           onValueChange={handleToggle}
-          trackColor={{ false: '#767577', true: accent + '60' }}
-          thumbColor={enabled ? accent : '#f4f3f4'}
         />
       </View>
 

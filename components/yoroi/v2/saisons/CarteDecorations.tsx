@@ -8,6 +8,7 @@
  */
 import React from 'react';
 import { Pressable, View } from 'react-native';
+import { PisteInterrupteur } from '@/components/yoroi/Interrupteur';
 import { useSharedValue } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -24,14 +25,9 @@ const TEINTES: Record<SaisonId, { clair: string; sombre: string; bord: string }>
   noel: { clair: 'rgba(21,128,61,0.14)', sombre: 'rgba(34,197,94,0.18)', bord: 'rgba(21,128,61,0.45)' },
 };
 
-/** Le gros interrupteur de la carte (60 x 36) */
-function GrosInterrupteur({ on, couleur }: { on: boolean; couleur: string }) {
-  const { theme } = useYoroiTheme();
-  return (
-    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 60, height: 36, borderRadius: 18, backgroundColor: on ? couleur : theme.colors.fillSubtle, padding: 4, alignItems: on ? 'flex-end' : 'flex-start' }}>
-      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 2 }} />
-    </View>
-  );
+/** Le gros interrupteur de la carte (60 x 36) : l'interrupteur commun, piste franche (31 octobre 2026) */
+function GrosInterrupteur({ on }: { on: boolean; couleur?: string }) {
+  return <PisteInterrupteur on={on} largeur={60} hauteur={36} />;
 }
 
 /** Les deux petits dessins : la saison en tete en grand devant, l'autre plus petite derriere */

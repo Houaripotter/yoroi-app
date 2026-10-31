@@ -4,7 +4,8 @@
  * resultat (medaille) et combats qui alimentent le palmares, statut, camp et check-list. Parametre : id.
  */
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, DeviceEventEmitter, Image, ImageBackground, Switch, View } from 'react-native';
+import { ActivityIndicator, DeviceEventEmitter, Image, ImageBackground, View } from 'react-native';
+import { Interrupteur } from '@/components/yoroi/Interrupteur';
 import * as WebBrowser from 'expo-web-browser';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
@@ -267,7 +268,7 @@ export default function CompetitionDetailScreen() {
                   {extra.pesee ? traduire('J moins 30, J moins 7, la veille et la pesée') : traduire('J moins 30, J moins 7 et la veille')}
                 </Ink>
               </View>
-              <Switch value={!!extra.rappels} onValueChange={toggleReminders} trackColor={{ true: P.accent, false: P.line }} thumbColor={P.white} accessibilityLabel={traduire("Rappels de la compétition")} />
+              <Interrupteur value={!!extra.rappels} onValueChange={toggleReminders} accessibilityLabel={traduire("Rappels de la compétition")} />
             </View>
             {extra.url ? (
               <>

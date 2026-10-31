@@ -14,6 +14,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { DeviceEventEmitter, Image, Pressable, View } from 'react-native';
+import { PisteInterrupteur } from '@/components/yoroi/Interrupteur';
 import { illustration } from '@/components/yoroi/v2/stickers';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { tap } from '@/components/yoroi/v2/seances/ui';
@@ -221,9 +222,7 @@ export function TesJours({ programme: p, semaine, onSemaine, fin, enBoucle, nu, 
           <Ink size={14} weight="extraBold" color={pal.texte}>{traduire('Semaines A et B')}</Ink>
           <Ink size={12} weight="bold" color={pal.texte2}>{traduire('Deux semaines qui alternent')}</Ink>
         </View>
-        <View style={{ width: 50, height: 30, borderRadius: 15, padding: 3, backgroundColor: ab ? pal.indigo : pal.anneau, alignItems: ab ? 'flex-end' : 'flex-start' }}>
-          <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: pal.carte }} />
-        </View>
+        <PisteInterrupteur on={ab} largeur={50} hauteur={30} />
       </Pressable>
 
       {/* ce qu'il faut savoir, sans rien bloquer */}

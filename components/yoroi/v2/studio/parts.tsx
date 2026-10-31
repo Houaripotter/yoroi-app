@@ -20,6 +20,7 @@ import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage'
 import { traduire } from '@/lib/i18n/tr';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import { paletteSombre } from '@/components/yoroi/livePalette';
+import { PisteInterrupteur } from '@/components/yoroi/Interrupteur';
 import Svg, { Path } from 'react-native-svg';
 
 // ===== Contexte du Studio =====
@@ -401,14 +402,10 @@ export const TAILLE_STICKER_BASCULE = 30;
 const LARGEUR_CARTE = 108;
 const HAUTEUR_CARTE = 92;
 
-/** Interrupteur pastel, purement visuel : la tuile entiere porte le toucher et l'etat */
-export function Interrupteur({ on, piste }: { on: boolean; piste: string }) {
-  const eteint = paletteSombre() ? 'rgba(255,255,255,0.18)' : '#D6DAE6';
-  return (
-    <View pointerEvents="none" style={{ width: 38, height: 22, borderRadius: 11, backgroundColor: on ? piste : eteint, justifyContent: 'center' }}>
-      <View style={{ position: 'absolute', top: 3, left: on ? 19 : 3, width: 16, height: 16, borderRadius: 8, backgroundColor: '#FFFFFF', shadowColor: '#000000', shadowOpacity: 0.15, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 }} />
-    </View>
-  );
+/** Interrupteur purement visuel : la tuile entiere porte le toucher et l'etat. 31 octobre 2026 : piste franche
+ * allumee (l'interrupteur commun), le pastel de la tuile ne sert plus a la piste */
+export function Interrupteur({ on }: { on: boolean; piste?: string }) {
+  return <PisteInterrupteur on={on} largeur={38} hauteur={22} />;
 }
 
 /** Tuile pastel a interrupteur (trois par ligne) : sticker, interrupteur, nom, etat court */
@@ -674,14 +671,9 @@ export function SectionListe({ titre, children }: { titre: string; children: Rea
   );
 }
 
-/** Interrupteur pastel de la maquette B (46 x 28), purement visuel : la ligne entiere porte le toucher */
-export function InterrupteurListe({ on, piste }: { on: boolean; piste: string }) {
-  const b = couleursListe();
-  return (
-    <View pointerEvents="none" style={{ width: 46, height: 28, borderRadius: 14, backgroundColor: on ? piste : b.eteint }}>
-      <View style={{ position: 'absolute', top: 3, left: on ? 21 : 3, width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFFFFF', shadowColor: '#000000', shadowOpacity: 0.18, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1 }} />
-    </View>
-  );
+/** Interrupteur de la maquette B (46 x 28), purement visuel : la ligne entiere porte le toucher (piste franche, 31 octobre 2026) */
+export function InterrupteurListe({ on }: { on: boolean; piste?: string }) {
+  return <PisteInterrupteur on={on} />;
 }
 
 /**

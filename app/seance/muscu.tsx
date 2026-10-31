@@ -8,7 +8,8 @@
 import { PRECISION_EXO } from '@/lib/v2/programmes/musclesExos';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { accordSouleve, formatTonnage, tonnageOfSets } from '@/lib/v2/trainingWeek';
-import { AppState, Image, Pressable, ScrollView, Switch, TextInput, Vibration, View } from 'react-native';
+import { AppState, Image, Pressable, ScrollView, TextInput, Vibration, View } from 'react-native';
+import { Interrupteur } from '@/components/yoroi/Interrupteur';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, ImpactFeedbackStyle, notificationAsync, NotificationFeedbackType } from 'expo-haptics';
@@ -1497,7 +1498,7 @@ export default function SeanceMuscu() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               {illus.stickers ? <Image source={illus.img('sablier')} style={{ width: 30, height: 30, marginVertical: -4 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : <Icon name="clock" size={20} color={c.textSecondary} />}
               <Ink size={15} weight="bold" style={{ flex: 1 }}>{traduire('Minuteur de repos')}</Ink>
-              <Switch value={minuteurOn !== false} onValueChange={changerMinuteur} trackColor={{ true: c.primary, false: c.border }} thumbColor={c.surface} accessibilityLabel={traduire('Minuteur de repos')} />
+              <Interrupteur value={minuteurOn !== false} onValueChange={changerMinuteur} accessibilityLabel={traduire('Minuteur de repos')} />
             </View>
           ) : null}
           {/* 31 octobre 2026 : sonnerie de fin de repos, alarme du systeme quand le telephone le permet (lib/v2/seances/alarmeRepos.ts) */}

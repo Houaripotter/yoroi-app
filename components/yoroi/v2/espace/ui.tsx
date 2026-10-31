@@ -3,7 +3,8 @@
  * lignes de reglage, interrupteurs, segments, pas a pas et plaques kozane.
  */
 import React from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, Switch, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native';
+import { Interrupteur } from '@/components/yoroi/Interrupteur';
 import type { RefreshControlProps, StyleProp, ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -336,8 +337,6 @@ export function ToggleRow({ icon, sticker, label, sub, value, onChange, first, d
   first?: boolean;
   disabled?: boolean;
 }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
   return (
     <Row
       icon={icon}
@@ -347,16 +346,13 @@ export function ToggleRow({ icon, sticker, label, sub, value, onChange, first, d
       first={first}
       chevron={false}
       right={
-        <Switch
+        <Interrupteur
           value={value}
           disabled={disabled}
           onValueChange={(v) => {
             selectionAsync().catch(() => {});
             onChange(v);
           }}
-          trackColor={{ false: c.fillSubtle, true: c.accent }}
-          thumbColor="#FFFFFF"
-          ios_backgroundColor={c.fillSubtle}
           accessibilityLabel={label}
         />
       }

@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import { Pressable, View } from 'react-native';
+import { PisteInterrupteur } from '@/components/yoroi/Interrupteur';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import type { SleepEntry } from '@/lib/sleepService';
@@ -159,9 +160,7 @@ export function Stepper({ value, onMinus, onPlus, label, color = P.ink }: { valu
 export function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <Pressable onPress={() => { tap(); onChange(!value); }} accessibilityRole="switch" accessibilityState={{ checked: value }} accessibilityLabel={label} hitSlop={8} style={{ width: 56, height: 44, justifyContent: 'center' }}>
-      <View style={{ width: 54, height: 32, borderRadius: 16, backgroundColor: value ? P.indigo : P.line, padding: 3, alignItems: value ? 'flex-end' : 'flex-start' }}>
-        <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: P.white }} />
-      </View>
+      <PisteInterrupteur on={value} largeur={54} hauteur={32} />
     </Pressable>
   );
 }

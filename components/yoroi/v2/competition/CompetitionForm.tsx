@@ -4,7 +4,8 @@
  * La categorie conseillee est calculee depuis ta derniere pesee.
  */
 import React, { useMemo, useState } from 'react';
-import { Image, ScrollView, Switch, View } from 'react-native';
+import { Image, ScrollView, View } from 'react-native';
+import { Interrupteur } from '@/components/yoroi/Interrupteur';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Sheet } from '@/components/yoroi/v2/seance/Sheet';
 import { Card, Icon, P, Press } from '@/components/yoroi/v2/accueil/kit';
@@ -167,7 +168,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
           <Ink size={15} weight="extraBold">{traduire("Me rappeler la compétition")}</Ink>
           <Ink size={12} weight="bold" color={P.ink2}>{traduire("Un mois avant, une semaine avant, la veille et le jour de la pesée")}</Ink>
         </View>
-        <Switch value={draft.rappels} onValueChange={(rappels) => set({ rappels })} trackColor={{ true: P.accent, false: P.line }} thumbColor={P.white} accessibilityLabel={traduire("Me rappeler la compétition")} />
+        <Interrupteur value={draft.rappels} onValueChange={(rappels) => set({ rappels })} accessibilityLabel={traduire("Me rappeler la compétition")} />
       </Card>
 
       <Sheet visible={sportOpen} onClose={() => setSportOpen(false)} title={traduire("Ton sport")} scroll>

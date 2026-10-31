@@ -4,6 +4,7 @@
  */
 import React, { useRef } from 'react';
 import { Pressable, View } from 'react-native';
+import { PisteInterrupteur } from '@/components/yoroi/Interrupteur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { ChoiceRow, Sheet } from '@/components/yoroi/v2/seance/Sheet';
@@ -72,9 +73,7 @@ export function ToggleRow({ label, hint, value, onChange }: { label: string; hin
           <Ink size={15} weight="bold">{label}</Ink>
           {hint ? <Ink size={12} weight="medium" color={P.muted}>{hint}</Ink> : null}
         </View>
-        <View style={{ width: 50, height: 30, borderRadius: 15, backgroundColor: value ? P.detail : paletteSombre() ? P.dashed : '#C9CEDF', padding: 3, alignItems: value ? 'flex-end' : 'flex-start' }}>
-          <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: P.white }} />
-        </View>
+        <PisteInterrupteur on={value} largeur={50} hauteur={30} />
       </View>
     </Press>
   );

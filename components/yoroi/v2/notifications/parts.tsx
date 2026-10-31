@@ -4,7 +4,8 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
-import { Platform, Pressable, Switch, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
+import { Interrupteur } from '@/components/yoroi/Interrupteur';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { selectionAsync } from 'expo-haptics';
@@ -317,16 +318,12 @@ export function MiniToggle({ label, sub, value, onChange }: { label: string; sub
         <Ink size={14} weight="bold">{label}</Ink>
         {sub ? <Ink size={12} color={c.textMuted}>{sub}</Ink> : null}
       </View>
-      <Switch
+      <Interrupteur
         value={value}
         onValueChange={(v) => {
           hap();
           onChange(v);
         }}
-        trackColor={{ false: SWITCH_OFF, true: c.accent }}
-        thumbColor="#FFFFFF"
-        {...({ activeThumbColor: '#FFFFFF' } as object)}
-        ios_backgroundColor={SWITCH_OFF}
         accessibilityLabel={label}
       />
     </View>
@@ -447,17 +444,13 @@ export function NotifCard({ icon, title, summary, pitch, on, onToggle, preview, 
             )}
           </View>
         </Pressable>
-        <Switch
+        <Interrupteur
           value={on}
           onValueChange={(v) => {
             hap();
             if (v) setOpen(true);
             onToggle(v);
           }}
-          trackColor={{ false: SWITCH_OFF, true: c.accent }}
-        thumbColor="#FFFFFF"
-          {...({ activeThumbColor: '#FFFFFF' } as object)}
-          ios_backgroundColor={SWITCH_OFF}
           accessibilityLabel={title}
         />
       </View>

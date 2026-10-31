@@ -13,6 +13,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, View } from 'react-native';
+import { PisteInterrupteur } from '@/components/yoroi/Interrupteur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { Gesture, GestureDetector, GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
@@ -80,23 +81,9 @@ function Poignee() {
   );
 }
 
-/** Interrupteur pastel (46 x 28) : fond pastel et rond bleu nuit quand le bloc est affiche */
+/** Interrupteur du bloc (46 x 28) : l'interrupteur commun, piste franche quand le bloc est affiche (31 octobre 2026) */
 function Interrupteur({ on }: { on: boolean }) {
-  const x = useSharedValue(on ? 21 : 3);
-  useEffect(() => {
-    x.value = withTiming(on ? 21 : 3, { duration: 160 });
-  }, [on, x]);
-  const rond = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
-  return (
-    <View style={{ width: 46, height: 28, borderRadius: 14, backgroundColor: on ? P.primary : P.line2 }}>
-      <Animated.View
-        style={[
-          { position: 'absolute', top: 3, left: 0, width: 22, height: 22, borderRadius: 11, backgroundColor: on ? P.accent : P.pureWhite, shadowColor: '#1D2033', shadowOpacity: 0.15, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-          rond,
-        ]}
-      />
-    </View>
-  );
+  return <PisteInterrupteur on={on} />;
 }
 
 type LigneProps = {

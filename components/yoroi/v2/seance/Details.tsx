@@ -13,6 +13,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, TextInput, View } from 'react-native';
+import { PisteInterrupteur } from '@/components/yoroi/Interrupteur';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { selectionAsync } from 'expo-haptics';
@@ -413,14 +414,9 @@ function ClubMark({ club, size }: { club: Club; size: number }) {
   );
 }
 
+/** 31 octobre 2026 : l'interrupteur commun (piste franche allumee, rond blanc) */
 function Toggle({ on }: { on: boolean }) {
-  const { theme } = useYoroiTheme();
-  const d = teinte('seances');
-  return (
-    <View style={{ width: 48, height: 30, borderRadius: 15, padding: 3, backgroundColor: on ? d.plein : theme.colors.border, alignItems: on ? 'flex-end' : 'flex-start', justifyContent: 'center' }}>
-      <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: on ? d.surPlein : '#FFFFFF' }} />
-    </View>
-  );
+  return <PisteInterrupteur on={on} largeur={48} hauteur={30} />;
 }
 
 /** Petits pictos du lieu, dessines au trait */

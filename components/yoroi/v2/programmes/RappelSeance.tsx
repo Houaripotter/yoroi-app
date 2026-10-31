@@ -7,6 +7,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
+import { PisteInterrupteur } from '@/components/yoroi/Interrupteur';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Chip, Glass, tap } from '@/components/yoroi/v2/seances/ui';
@@ -115,9 +116,7 @@ export function RappelSeance({ programme, actif, jours }: { programme: Programme
               : traduire('Choisis une heure : YOROI te rappelle ta séance tes jours d’entraînement.')}
           </Ink>
         </View>
-        <View style={{ width: 48, height: 28, borderRadius: 14, padding: 3, backgroundColor: on ? c.accent : c.fillSubtle, alignItems: on ? 'flex-end' : 'flex-start' }}>
-          <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: on ? c.onAccent : c.textMuted }} />
-        </View>
+        <PisteInterrupteur on={on} largeur={48} hauteur={28} />
       </Pressable>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
