@@ -168,6 +168,9 @@ export function chiffresDisponibles(d: CarteData, masque: Masque = 'aucun'): Sta
       techniques: (s.techniques?.length ?? 0) > 0 ? { key: 'techniques', label: s.techniques!.length > 1 ? traduire('techniques') : traduire('technique'), value: String(s.techniques!.length) } : null,
       soumissions: (s.soumissions ?? 0) > 0 ? { key: 'soumissions', label: s.soumissions! > 1 ? traduire('soumissions') : traduire('soumission'), value: String(Math.round(s.soumissions!)) } : null,
       serie_semaines: serieStat,
+      // 31 octobre 2026 : le cardio de fin de seance, seulement s'il a ete note
+      pente: typeof s.penteCardio === 'number' ? { key: 'pente', label: traduire('pente moyenne'), value: nombre(s.penteCardio, 1), unit: '%' } : null,
+      fc_cardio: (s.fcCardio ?? 0) > 0 ? { key: 'fc_cardio', label: traduire('FC moyenne du cardio'), value: String(Math.round(s.fcCardio!)), unit: 'bpm' } : null,
     };
     const ordre = prioriteSeance(fam, d.sport);
     for (const k of ordre) push(all[k] ?? null);
@@ -346,6 +349,8 @@ export const NOMS_CHIFFRES: Record<StatKey, string> = {
   techniques: traduire('Techniques'),
   soumissions: traduire('Soumissions'),
   exploit: 'Chiffre',
+  pente: traduire('Pente moyenne'),
+  fc_cardio: traduire('FC moyenne du cardio'),
 };
 
 /**
