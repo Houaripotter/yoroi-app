@@ -356,7 +356,20 @@ function nettoyerExo(x: unknown): ExoProgramme | null {
     ...(e.secondes ? { secondes: true } : {}),
     // 30 octobre 2026 : la durée de la brique Cardio (briques.ts), en minutes
     ...(typeof e.minutes === 'number' && Number.isFinite(e.minutes) && e.minutes > 0 ? { minutes: borne(e.minutes, 5, 120, 30) } : {}),
+    // 31 octobre 2026 : lié au suivant (superset, lib/v2/seances/superset.ts) ; absent dans les programmes d'avant
+    ...(e.enchaine === true ? { enchaine: true } : {}),
   };
+}
+
+/**
+ * Migration du 31 octobre 2026 (champ `enchaine`, facultatif) : les programmes d'avant n'en ont pas et se lisent
+ * tels quels. Un lien sur le dernier exercice d'une séance ne mène à rien : il tombe. Rien d'autre ne change.
+ */
+export function exosLiesPropres(exos: ExoProgramme[]): ExoProgramme[] {
+  const der = exos.length - 1;
+  if (der < 0 || !exos[der].enchaine) return exos;
+  const { enchaine: _e, ...reste } = exos[der];
+  return [...exos.slice(0, der), reste];
 }
 
 export function nettoyerPerso(x: unknown): ProgrammePerso | null {
@@ -368,7 +381,7 @@ export function nettoyerPerso(x: unknown): ProgrammePerso | null {
     return semaineVide().map((_, d) => {
       const s = brut[d] as SeancePerso | null | undefined;
       if (!s || typeof s !== 'object' || !Array.isArray(s.exos)) return null;
-      const exos = s.exos.map(nettoyerExo).filter((e): e is ExoProgramme => !!e).slice(0, MAX_EXOS_SEANCE);
+      const exos = exosLiesPropres(s.exos.map(nettoyerExo).filter((e): e is ExoProgramme => !!e).slice(0, MAX_EXOS_SEANCE));
       if (!exos.length) return null;
       return { ...(typeof s.titre === 'string' && s.titre.trim() ? { titre: s.titre.trim().slice(0, 40) } : {}), exos, ...(sidValide(s.sid) ? { sid: s.sid } : {}), ...(briqueValide(s.brique) ? { brique: s.brique } : {}) };
     });
@@ -384,7 +397,7 @@ export function nettoyerPerso(x: unknown): ProgrammePerso | null {
     .map((s) => {
       if (!s || typeof s !== 'object' || !Array.isArray(s.exos) || !briqueValide(s.brique) || posees.has(s.brique)) return null;
       posees.add(s.brique);
-      const exos = s.exos.map(nettoyerExo).filter((e): e is ExoProgramme => !!e).slice(0, MAX_EXOS_SEANCE);
+      const exos = exosLiesPropres(s.exos.map(nettoyerExo).filter((e): e is ExoProgramme => !!e).slice(0, MAX_EXOS_SEANCE));
       if (!exos.length) return null;
       return { ...(typeof s.titre === 'string' && s.titre.trim() ? { titre: s.titre.trim().slice(0, 40) } : {}), exos, brique: s.brique } as SeancePerso;
     })
