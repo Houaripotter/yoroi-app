@@ -37,7 +37,9 @@ import type { SessionExtras } from '@/lib/v2/seance/extras';
 import { fmtMinutes, fmtNum } from '@/lib/v2/seance/format';
 import { getSeanceResult } from '@/lib/v2/seance/save';
 import { sportTint } from '@/lib/v2/seance/sportVisuals';
-import { accordSouleve, formatTonnage, setsCount, tonnage } from '@/lib/v2/trainingWeek';
+import { accordSouleve, exercisesOf, formatTonnage, setsCount, tonnage } from '@/lib/v2/trainingWeek';
+import { cardioFait, libelleCardio } from '@/lib/v2/seances/cardioJour';
+import type { ChoixCardio } from '@/lib/v2/seances/cardioJour';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { versUnitePoids } from '@/lib/v2/unitePoids';
 import type { SeanceResult } from '@/lib/v2/seance/save';
@@ -79,6 +81,12 @@ export default function SeanceFin() {
   // 18 octobre 2026 : charges et tonnage dans l'unite du reglage (kg ou lb), stockage en kilos
   const unite = useUnitePoids();
   const id = Number(params.id);
+  // 31 octobre 2026 : le cardio de fin de seance vraiment fait (type, duree reelle), rien s'il a ete passe
+  const [cardio, setCardio] = useState<ChoixCardio | null>(null);
+  useEffect(() => {
+    if (!id) return;
+    getTrainingById(id).then((t) => setCardio(cardioFait(exercisesOf(t))), () => setCardio(null));
+  }, [id]);
   const [result, setResult] = useState<SeanceResult | null>(null);
   const [reward, setReward] = useState<Reward | null>(null);
   const [extras, setExtras] = useState<SessionExtras | null>(null);
@@ -307,6 +315,9 @@ export default function SeanceFin() {
 
             {/* 2. Les grands chiffres, puis les records de la seance */}
             <TuilesStats tuiles={tuiles} anime={anime} pret />
+            {cardio ? (
+              <Ink size={15} weight="extraBold" color={c.textSecondary} style={{ marginTop: 10, paddingHorizontal: 24, textAlign: 'center' }}>{traduire('Puis {0}', libelleCardio(cardio.type, cardio.minutes))}</Ink>
+            ) : null}
             <RecordsSeance lignes={records} anime={anime} />
 
             {/* 3. Un seul bloc de progression */}
