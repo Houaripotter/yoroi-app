@@ -19,16 +19,21 @@ const laque = paletteOf('laque');
 
 type Tile = { id: string; title: string; text: string; route: string; dark?: boolean; visual: 'plates7' | 'month' | 'year' | 'session' | 'fighter' | 'wrapped' | 'duel' };
 
-// 31 octobre 2026 : Ma seance et Ma semaine ouvrent Mes cartes, le nouvel atelier (6 modeles) ; les autres gardent leur carte
-const TILES: Tile[] = [
-  { id: 'session', title: traduire('Ma séance'), text: traduire('La dernière, en grand'), route: '/mes-cartes', visual: 'session' },
-  { id: 'week', title: traduire('Ma semaine'), text: traduire('Un rond par jour'), route: '/mes-cartes', visual: 'plates7', dark: true },
-  { id: 'month', title: traduire('Mon mois'), text: traduire('Tes jours en un regard'), route: '/social-share/monthly-recap-v2', visual: 'month', dark: true },
-  { id: 'year', title: traduire('Mon année'), text: traduire('Ton compteur de jours'), route: '/social-share/year-counter-v2', visual: 'year' },
-  { id: 'fighter', title: traduire('Carte de combattant'), text: traduire('Tes chiffres de combattant'), route: '/fighter-card', visual: 'fighter' },
-  { id: 'wrapped', title: traduire('Bilan de l’année'), text: traduire('L’histoire de ton année'), route: '/wrapped', visual: 'wrapped', dark: true },
-  { id: 'duel', title: traduire('Carte de duel'), text: traduire('Toi contre ton partenaire'), route: '/sparring-partners', visual: 'duel' },
-];
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+// 31 octobre 2026 : Ma seance et Ma semaine ouvrent Mes cartes ; Mon mois et Mon annee ouvrent le nouvel atelier
+// sur le mois et l'annee en cours (bibliotheque des cartes) ; les autres gardent leur carte
+function tuiles(now: Date): Tile[] {
+  return [
+    { id: 'session', title: traduire('Ma séance'), text: traduire('La dernière, en grand'), route: '/mes-cartes', visual: 'session' },
+    { id: 'week', title: traduire('Ma semaine'), text: traduire('Un rond par jour'), route: '/mes-cartes', visual: 'plates7', dark: true },
+    { id: 'month', title: traduire('Mon mois'), text: traduire('Ton temps, tes séances, tes sports'), route: `/carte?moment=mois&ref=${now.getFullYear()}-${pad2(now.getMonth() + 1)}`, visual: 'month', dark: true },
+    { id: 'year', title: traduire('Mon année'), text: traduire('Combien de temps, combien de fois'), route: `/carte?moment=annee&ref=${now.getFullYear()}`, visual: 'year' },
+    { id: 'fighter', title: traduire('Carte de combattant'), text: traduire('Tes chiffres de combattant'), route: '/fighter-card', visual: 'fighter' },
+    { id: 'wrapped', title: traduire('Bilan de l’année'), text: traduire('L’histoire de ton année'), route: '/wrapped', visual: 'wrapped', dark: true },
+    { id: 'duel', title: traduire('Carte de duel'), text: traduire('Toi contre ton partenaire'), route: '/sparring-partners', visual: 'duel' },
+  ];
+}
 
 export default function ShareHubScreen() {
   const { width } = useWindowDimensions();
@@ -88,7 +93,7 @@ export default function ShareHubScreen() {
           <View style={{ flex: 1, justifyContent: 'flex-end', padding: 14 }}>
             <Glass style={{ maxWidth: '64%', padding: 14, gap: 4 }}>
               <Ink size={20} weight="black" tight>{traduire("Mes cartes")}</Ink>
-              <Ink size={13} weight="medium" color={P.ink2}>{traduire("Tes séances, tes pesées et tes semaines, prêtes à poster")}</Ink>
+              <Ink size={13} weight="medium" color={P.ink2}>{traduire("Tes séances, tes records, tes objectifs, ton mois et ton année")}</Ink>
             </Glass>
           </View>
         </View>
@@ -96,7 +101,7 @@ export default function ShareHubScreen() {
       </Enter>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-        {TILES.map((t, i) => {
+        {tuiles(new Date()).map((t, i) => {
           const p = t.dark ? laque : papier;
           return (
             <Enter key={t.id} i={i + 1}>
