@@ -4,6 +4,8 @@
 // au-dessus de la carte (sans chevauchement). Le voile papier garde la carte et les boutons lisibles.
 // ============================================
 
+import { traduire } from '@/lib/i18n/tr';
+import { usePersonnageUtilisateur } from '@/components/yoroi/v2/perso/usePersonnageUtilisateur';
 import React from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { StyleSheet, View, Image, Pressable, StatusBar, useWindowDimensions } from 'react-native';
@@ -16,7 +18,7 @@ import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { FondEpoque } from '@/components/yoroi/v2/fonds/FondEpoque';
 
-const RONIN = require('@/assets/avatars/app/guerrier/guerrier_h_4_ronin.webp');
+// 31 octobre 2026 (Houari) : plus de ronin par défaut ; ton personnage, sinon un en-tête plus court sans figure
 
 function tap() {
   try {
@@ -32,7 +34,8 @@ export default function NotFoundScreen() {
   const { width } = useWindowDimensions();
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const heroH = Math.round(Math.min(width * 0.95, 420)) + insets.top;
+  const perso = usePersonnageUtilisateur();
+  const heroH = perso ? Math.round(Math.min(width * 0.95, 420)) + insets.top : insets.top + 120;
 
   const goHome = () => {
     tap();
@@ -51,9 +54,11 @@ export default function NotFoundScreen() {
       <View style={[styles.container, { backgroundColor: c.background }]}>
         <FondEpoque fond="sakura" voile="clair" />
         <View style={{ height: heroH, overflow: 'hidden' }}>
-          <Animated.View entering={ENTREE} style={styles.warrior} pointerEvents="none">
-            <Image source={RONIN} style={{ width: heroH * 0.6, height: heroH * 0.8 }} resizeMode="contain" accessibilityLabel="Un ronin perdu" />
-          </Animated.View>
+          {perso ? (
+            <Animated.View entering={ENTREE} style={styles.warrior} pointerEvents="none">
+              <Image source={perso} style={{ width: heroH * 0.6, height: heroH * 0.8 }} resizeMode="contain" accessibilityLabel={traduire('Ton personnage, perdu')} />
+            </Animated.View>
+          ) : null}
         </View>
 
         <Animated.View entering={ENTREE} style={[styles.glass, { shadowColor: c.shadow }]}>
