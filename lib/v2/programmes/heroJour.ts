@@ -15,6 +15,7 @@ import { guideCharge, niveauCharge } from './charge';
 import { indexJour, prochainJourPrevu } from './coach';
 import type { MessageCoach } from './coach';
 import { caseCochee, choixDuJour, estJourMuscu } from './finSeance';
+import { cardioPrevu, libelleCardio } from '@/lib/v2/seances/cardioJour';
 import { modulesActifs, moduleParId } from './modules';
 import { faitsCetteSemaine, seancesAVenir } from './suivi';
 import type { ProgrammeActif } from './suivi';
@@ -29,7 +30,7 @@ export type InfosHero = {
   pourquoi: string;
   /** « Puis ensuite : Push B, jeudi » ; un jour de repos : « Prochaine séance : jeudi, Push B. » */
   ensuite: string;
-  /** « + Abdos », « + 20 min de marche » : un jour de musculation, seulement ce qui est ajouté */
+  /** « + Abdos », « + 20 min de vélo » : un jour de musculation, seulement ce qui est ajouté */
   ajouts: string[];
 };
 
@@ -66,7 +67,11 @@ export function ajoutsDuJour(jour: JourProgramme, actif: ProgrammeActif | null):
     m === 'abdos' ? caseCochee(choix, 'abdos') && !jour.exos.some((e) => e.muscle === 'ABDOS') : m === 'cardio' ? caseCochee(choix, 'cardio') && !jour.cardio : true;
   return modulesActifs(actif).filter(garder).map((m) =>
     m === 'cardio'
-      ? traduire('+ {0} min de marche', actif.fin?.minutes ?? 30)
+      ? (() => {
+          // 31 octobre 2026 : le cardio choisi pour ce jour, pas « marche » ecrit en dur (lib/v2/seances/cardioJour.ts)
+          const c = cardioPrevu(actif.id, jour.id, actif.fin?.minutes ?? 30);
+          return traduire('+ {0}', libelleCardio(c.type, c.minutes));
+        })()
       : traduire('+ {0}', traduire(moduleParId(m)?.label ?? m)),
   );
 }
