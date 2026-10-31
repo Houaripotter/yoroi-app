@@ -89,7 +89,7 @@ export const MODULES: ModuleInfo[] = [
   {
     id: 'cardio',
     label: 'Cardio zone 2',
-    sous: 'Marche inclinée en zone 2',
+    sous: 'Au choix, en zone 2',
     pourquoi: 'La marche inclinée en zone 2 ajoute de la dépense avec peu de fatigue : tu dois pouvoir parler en phrases complètes.',
     depuis: 'fin',
     sources: ['persinger2004', 'hofmann2014'],
