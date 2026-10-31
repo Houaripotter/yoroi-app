@@ -101,7 +101,7 @@ const CLE_THEME = 'yoroi.progres.theme';
 /** Le titre et la phrase de chaque theme quand il n'a pas encore de chiffre (les intros d'avant, rien ne disparait) */
 const INTRO: Record<ThemeProgres, { titre: string; phraseTitre: string; sub: string }> = {
   Corps: { titre: 'Ton corps', phraseTitre: 'Ton corps en une phrase', sub: 'Ton poids, ta composition et tes mensurations, mesure après mesure.' },
-  Force: { titre: 'Ta force', phraseTitre: 'Ta force en une phrase', sub: 'Ton maximum estimé, tes séries par muscle et ton tonnage.' },
+  Force: { titre: 'Ta force', phraseTitre: 'Ta force en une phrase', sub: 'Ton maximum estimé, tes séries par muscle et tes kilos soulevés.' },
   Cardio: { titre: 'Ton endurance', phraseTitre: 'Ton endurance en une phrase', sub: 'Tes séances et leur durée semaine après semaine, ton effort et ton année.' },
   Santé: { titre: 'Ta santé', phraseTitre: 'Ta santé en une phrase', sub: 'Ta montre, ton sommeil, ton cœur, ta nutrition et tes soins.' },
   Photos: { titre: 'Tes photos', phraseTitre: 'Tes photos en une phrase', sub: 'Ta transformation en images. Elles restent sur ton téléphone.' },
