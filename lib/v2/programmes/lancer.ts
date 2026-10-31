@@ -7,6 +7,7 @@
  * (mobilite) part dans les notes et le resume, apres le cardio.
  */
 import { traduire } from '@/lib/i18n/tr';
+import { libelleCardio } from '@/lib/v2/seances/cardioJour';
 import { contexteFinPour } from './finSeance';
 import { avecModules } from './modules';
 import type { AvecModules } from './modules';
@@ -69,7 +70,8 @@ export function resumeDuJour(jour: JourProgramme, semaine = 1): string {
     return traduire('{0} min de cardio', m);
   }
   const base = traduire('{0} exercices, {1} séries', j.exos.length, j.exos.reduce((n, e) => n + e.series, 0));
-  const avecMarche = j.finCardio ? traduire('{0}, puis {1} min de marche', base, j.finCardio.minutes) : base;
+  // 31 octobre 2026 : le cardio choisi pour ce jour, son vrai type et sa vraie duree (lib/v2/seances/cardioJour.ts)
+  const avecMarche = j.finCardio ? traduire('{0}, puis {1}', base, libelleCardio(j.finCardioType ?? 'marche_inclinee', j.finCardio.minutes)) : base;
   return j.finEtirements ? traduire('{0}, puis {1} min d’étirements', avecMarche, j.finEtirements.minutes) : avecMarche;
 }
 
