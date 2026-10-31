@@ -22,10 +22,14 @@ export const CARDIO_FIN: { nom: string; biblio: string }[] = [
   { nom: 'Course sur tapis', biblio: 'Course (Tapis Matrix)' },
   { nom: 'Vélo de Biking / Spinning', biblio: 'Vélo de Biking / Spinning' },
   { nom: 'Escaliers', biblio: 'Stairmaster / Escaliers' },
+  // 31 octobre 2026 : la corde a sauter, pour le choix du cardio de fin de seance (cardioChoix.ts)
+  { nom: 'Corde à sauter', biblio: 'Corde à sauter Speed' },
 ];
+/** 31 octobre 2026 : « Autre », un cardio que la liste ne connait pas (pas d'exercice de la bibliotheque) */
+export const NOM_AUTRE_CARDIO = 'Autre cardio';
 export const CARDIO_DEFAUT = CARDIO_FIN[0].nom;
 
-export const estCardioFin = (nom: string): boolean => CARDIO_FIN.some((c) => c.nom === nom);
+export const estCardioFin = (nom: string): boolean => nom === NOM_AUTRE_CARDIO || CARDIO_FIN.some((c) => c.nom === nom);
 export const biblioDe = (nom: string): string | undefined => CARDIO_FIN.find((c) => c.nom === nom)?.biblio;
 
 const existe = (biblio: string) => EXERCISE_LIBRARY.some((e) => e.name === biblio && e.category === 'cardio');
@@ -55,7 +59,29 @@ export type ChronoCardio = {
   manuelMin?: number;
   /** distance facultative (km) */
   distanceKm?: number;
+  /* 31 octobre 2026 (Houari : « choisir ce que je fais, noter la pente et la vitesse, tenir compte de ma zone 2 ») */
+  /** le type de cardio choisi (cardioChoix.ts) */
+  type?: TypeCardio;
+  /** la feuille de choix a deja ete vue pour cet exercice */
+  choisi?: boolean;
+  /** pente, vitesse ou niveau, par segments (un seul par defaut), `aSec` : debut du segment dans le chrono */
+  segments?: SegmentCardio[];
+  /** heure du tout premier depart et heure de fin (ms) : la fenetre ou lire la FC */
+  premierDebutMs?: number;
+  finMs?: number;
+  /** FC moyenne lue dans Sante pendant le cardio, absente si rien de fiable */
+  fcMoy?: number;
+  /** sans FC : « Tu pouvais parler ? » */
+  parler?: boolean;
+  /** la plage de zone 2 de l'utilisateur au moment du cardio (bpm) */
+  zone2?: { min: number; max: number };
+  /** ce que tu as decide pour la prochaine fois : garder, ou la suggestion */
+  suite?: 'garder' | 'suggestion';
 };
+
+export type TypeCardio = 'marche_inclinee' | 'tapis_course' | 'velo' | 'rameur' | 'elliptique' | 'escalier' | 'corde' | 'autre';
+/** Un reglage pendant le cardio : pente (%) et vitesse (km/h) sur tapis, niveau sur velo, rameur... */
+export type SegmentCardio = { aSec: number; pente?: number; vitesse?: number; niveau?: number };
 
 export const nouveauChrono = (minutes: number): ChronoCardio => ({ objectifSec: Math.max(60, Math.round(minutes) * 60), debutMs: null, cumulMs: 0 });
 
@@ -67,7 +93,7 @@ export function ecouleMs(c: ChronoCardio, maintenant: number): number {
 export const enCours = (c: ChronoCardio): boolean => c.debutMs !== null;
 
 export function demarrer(c: ChronoCardio, maintenant: number): ChronoCardio {
-  return c.debutMs !== null ? c : { ...c, debutMs: maintenant };
+  return c.debutMs !== null ? c : { ...c, debutMs: maintenant, premierDebutMs: c.premierDebutMs ?? maintenant };
 }
 
 export function pause(c: ChronoCardio, maintenant: number): ChronoCardio {
