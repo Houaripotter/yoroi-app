@@ -10,47 +10,33 @@
  * 17 octobre 2026 : section « Ton avant après », seulement avec au moins 2 photos de corps.
  * ?demo=1&planche=4 : la carte Avant apres en Story, Publication et Carre, clair et sombre, net, flou et masque,
  * avec &photo=<url>&photo2=<url> pour les photos de test.
+ * 31 octobre 2026 (bibliotheque des cartes, Houari : « je veux plein de cartes qu'ils peuvent partager ») :
+ * l'ecran devient une bibliotheque rangee par rubriques (dernieres seances, records, objectifs, ma semaine,
+ * mon mois, mon annee, compteurs, pesees et avant apres), chaque rubrique en vignettes qui sont les vraies cartes.
+ * Un sommaire en pastilles en haut ; un toucher ouvre l'atelier sur la carte. Lecture : lib/v2/cartes/bibliotheque.ts,
+ * dessin : components/yoroi/v2/cartes/Bibliotheque.tsx. ?demo=1 : la bibliotheque pleine de demonstration.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
 import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { Icon, RoundButton } from '@/components/yoroi/v2/espace/ui';
 import { Interrupteur } from '@/components/yoroi/v2/reglages/kit';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
 import { CarteApercu, HAUTEURS, MODELES, modeleDispo } from '@/components/yoroi/v2/cartes/CarteRendu';
 import { FeuilleCarte, lienEditeur } from '@/components/yoroi/v2/cartes/FeuilleCarte';
 import { useCarte } from '@/components/yoroi/v2/cartes/useCarte';
-import { chargerListe } from '@/lib/v2/cartes/charger';
+import { Bibliotheque, rubriquesDe } from '@/components/yoroi/v2/cartes/Bibliotheque';
+import { BIBLIOTHEQUE_VIDE, chargerBibliotheque, type Bibliotheque as DonneesBiblio } from '@/lib/v2/cartes/bibliotheque';
 import { chargerPhotosCarte } from '@/lib/v2/cartes/chargerAvantApres';
-import { carteAvantApres, dateAvantApres, tempsEcoule } from '@/lib/v2/cartes/avantApres';
-import type { ListeCartes } from '@/lib/v2/cartes/charger';
-import { chiffresAffiches, chiffresParDefaut } from '@/lib/v2/cartes/chiffres';
-import { DEMO_EXPLOITS, DEMO_PESEE, DEMO_SEANCE_COMBAT, DEMO_SEANCE_COURSE, DEMO_SEANCE_MUSCU, DEMO_SEMAINE, demoAvantApres } from '@/lib/v2/cartes/demo';
+import { carteAvantApres } from '@/lib/v2/cartes/avantApres';
+import { chiffresParDefaut } from '@/lib/v2/cartes/chiffres';
+import { bibliothequeDemo, DEMO_ANNEE_2025, DEMO_EXPLOITS, DEMO_MOIS_SEPT, DEMO_PESEE, DEMO_SEANCE_COMBAT, DEMO_SEANCE_COURSE, DEMO_SEANCE_MUSCU, DEMO_SEMAINE, demoAvantApres } from '@/lib/v2/cartes/demo';
 import { lireJournal, setPropositionsAuto } from '@/lib/v2/cartes/store';
 import type { CarteData, FondId, FormatId, ModeleId, OptionsCarte } from '@/lib/v2/cartes/types';
 import { traduire } from '@/lib/i18n/tr';
-
-function ligne(d: CarteData): string {
-  return chiffresAffiches(d, chiffresParDefaut(d), 'aucun')
-    .slice(0, 3)
-    .map((s) => `${s.value}${s.unit ? ` ${s.unit}` : ['rounds', 'series', 'seances'].includes(s.key) ? ` ${s.label.split(',')[0]}` : ''}`)
-    .join(', ');
-}
-
-function ligneExploit(d: CarteData): string {
-  const e = d.exploit!;
-  if (e.liste?.length) return e.liste.join(', ');
-  return `${e.hero.value}${e.hero.unit ? `${e.hero.unit === 'e' || e.hero.unit === 're' ? '' : ' '}${e.hero.unit}` : ''}, ${e.accroche}`;
-}
-
-function ligneAvantApres(d: CarteData): string {
-  const x = d.avantApres!;
-  return traduire("{0} et {1}, {2}", dateAvantApres(x.avant.date), dateAvantApres(x.apres.date), tempsEcoule(d));
-}
 
 function PlancheAvantApres({ photos }: { photos: (string | undefined)[] }) {
   const { width } = useWindowDimensions();
@@ -177,20 +163,23 @@ export default function MesCartes() {
   const insets = useSafeAreaInsets();
   const p = useLocalSearchParams<{ demo?: string; planche?: string; feuille?: string; photo?: string; photo2?: string; de?: string; a?: string; format?: string; fond?: string; clair?: string; sans?: string; personne?: string }>();
   const demo = p.demo === '1';
-  const [liste, setListe] = useState<ListeCartes | null>(null);
+  const [biblio, setBiblio] = useState<DonneesBiblio | null>(null);
   const [auto, setAuto] = useState(true);
   // ton avant apres : seulement avec au moins 2 photos de corps
   const [avantApres, setAvantApres] = useState<CarteData | null>(null);
   // controle visuel de la feuille du bas (demo seulement)
   const [feuille, setFeuille] = useState(demo && p.feuille === '1');
+  const defilement = useRef<ScrollView>(null);
+  // le style memorise (couleur, masquage du poids, modele des seances) et le personnage pour les vignettes
+  const k = useCarte(null);
 
   useEffect(() => {
     let alive = true;
     lireJournal().then((j) => alive && setAuto(j.auto)).catch(() => {});
-    if (demo) setAvantApres(demoAvantApres([p.photo, p.photo2]));
+    if (demo) setAvantApres(p.photo ? demoAvantApres([p.photo, p.photo2]) : null);
     else chargerPhotosCarte().then((l) => alive && setAvantApres(carteAvantApres(l))).catch(() => {});
-    if (demo) setListe({ seances: [DEMO_SEANCE_MUSCU, DEMO_SEANCE_COMBAT, DEMO_SEANCE_COURSE], pesees: [DEMO_PESEE], semaines: [DEMO_SEMAINE], exploits: DEMO_EXPLOITS.slice(0, 8) });
-    else chargerListe().then((l) => alive && setListe(l)).catch(() => alive && setListe({ seances: [], pesees: [], semaines: [], exploits: [] }));
+    if (demo) setBiblio(bibliothequeDemo());
+    else chargerBibliotheque().then((b) => alive && setBiblio(b)).catch(() => alive && setBiblio(BIBLIOTHEQUE_VIDE));
     return () => {
       alive = false;
     };
@@ -201,84 +190,62 @@ export default function MesCartes() {
       const q = [p.photo ? `&photo=${encodeURIComponent(p.photo)}` : '', p.photo2 ? `&photo2=${encodeURIComponent(p.photo2)}` : ''].join('');
       router.push(`/carte?demo=1&moment=avant_apres${q}` as never);
     } else if (demo) {
-      const sport = d === DEMO_SEANCE_COMBAT ? 'combat' : d === DEMO_SEANCE_COURSE ? 'course' : '';
-      router.push(`/carte?demo=1&moment=${d.moment}${sport ? `&sport=${sport}` : ''}${d.exploit ? `&type=${d.exploit.type}` : ''}` as never);
+      const sport = d === DEMO_SEANCE_COMBAT || d === DEMO_MOIS_SEPT || d === DEMO_ANNEE_2025 ? 'combat' : d === DEMO_SEANCE_COURSE ? 'course' : '';
+      router.push(`/carte?demo=1&moment=${d.moment}${sport ? `&sport=${sport}` : ''}${d.exploit ? `&type=${d.exploit.type}&cle=${encodeURIComponent(d.cle)}` : ''}` as never);
     } else router.push(lienEditeur(d) as never);
   };
 
-  const Section = ({ titre, items, videTexte }: { titre: string; items: CarteData[]; videTexte: string }) => (
-    <View style={{ gap: 8 }}>
-      <Ink size={17} weight="black" tight style={{ marginTop: 8 }}>{titre}</Ink>
-      {items.length === 0 ? (
-        <Ink size={14} color={c.textSecondary}>{videTexte}</Ink>
-      ) : (
-        <View style={{ borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
-          {items.map((d, i) => (
-            <Pressable key={d.cle} onPress={() => ouvrir(d)} accessibilityRole="button" accessibilityLabel={`Carte ${d.titre}, ${d.sousTitre}`} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderTopWidth: i ? 1 : 0, borderColor: c.divider, backgroundColor: pressed ? c.fillSoft : 'transparent' })}>
-              <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  {d.exploit?.record ? <View style={{ width: 7, height: 7, borderRadius: 1.5, backgroundColor: c.record, transform: [{ rotate: '45deg' }] }} /> : null}
-                  <Ink size={15} weight="extraBold" numberOfLines={1} style={{ flexShrink: 1 }}>{traduire(d.titre)}</Ink>
-                </View>
-                <Ink size={13} color={c.textSecondary} numberOfLines={1}>{d.avantApres ? ligneAvantApres(d) : [d.sousTitre, d.exploit ? ligneExploit(d) : ligne(d)].filter(Boolean).join(', ')}</Ink>
-              </View>
-              <Icon name="share" size={18} color={c.accent} />
-            </Pressable>
-          ))}
-        </View>
-      )}
-    </View>
-  );
+  const planche = demo && ['1', '2', '3', '4'].includes(p.planche ?? '');
+  const pad = p.planche === '1' || p.planche === '3' || p.planche === '4' ? 16 : 22;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 40, paddingHorizontal: p.planche === '1' || p.planche === '3' || p.planche === '4' ? 16 : 22, gap: 10 }} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={defilement} contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 40, paddingHorizontal: pad, gap: 10 }} showsVerticalScrollIndicator={false}>
         <EnTete
           titre={traduire("Mes cartes")}
-          sousTitre={traduire("Tes exploits, tes séances, tes pesées et tes semaines, prêts à poster.")}
+          sousTitre={traduire("Tes séances, tes records, tes objectifs, ton mois et ton année, prêts à poster.")}
           onRetour={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as never))}
-          style={{ marginHorizontal: p.planche === '1' || p.planche === '3' || p.planche === '4' ? -16 : -22, marginTop: -8 }}
+          style={{ marginHorizontal: -pad, marginTop: -8 }}
         />
 
-        {demo && p.planche === '4' ? (
+        {planche && p.planche === '4' ? (
           <PlancheAvantApres photos={[p.photo, p.photo2]} />
-        ) : demo && p.planche === '1' ? (
+        ) : planche && p.planche === '1' ? (
           <Planche />
-        ) : demo && p.planche === '3' ? (
+        ) : planche && p.planche === '3' ? (
           <PlancheTypes format={(p.format as FormatId) || 'story'} fond={(p.fond as FondId) || 'scene'} clair={p.clair === '1'} sans={p.sans === '1'} photo={p.photo} sansPersonne={p.personne === '0'} />
-        ) : demo && p.planche === '2' ? (
+        ) : planche && p.planche === '2' ? (
           <PlancheExploits photo={p.photo} de={Number(p.de ?? 0)} a={Number(p.a ?? 99)} format={(p.format as FormatId) || 'story'} />
+        ) : !biblio ? (
+          <View style={{ paddingVertical: 40, alignItems: 'center' }}><ChargementPetit /></View>
         ) : (
-          <>
-            <Pressable
-              onPress={() => {
-                const n = !auto;
-                setAuto(n);
-                setPropositionsAuto(n).catch(() => {});
-              }}
-              accessibilityRole="switch"
-              accessibilityState={{ checked: auto }}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, marginTop: 6 }}
-            >
-              <View style={{ flex: 1, gap: 2 }}>
-                <Ink size={15} weight="extraBold">{traduire("Me proposer une carte")}</Ink>
-                <Ink size={13} color={c.textSecondary}>{traduire("Après une séance, un record, un palier, une pesée qui progresse, le dimanche soir pour ta semaine et en début de mois pour ton bilan. Une seule fois par moment.")}</Ink>
-              </View>
-              <Interrupteur on={auto} />
-            </Pressable>
-
-            {!liste ? (
-              <View style={{ paddingVertical: 40, alignItems: 'center' }}><ChargementPetit /></View>
-            ) : (
-              <>
-                <Section titre={traduire("Tes exploits")} items={(liste.exploits ?? []).slice(0, 30)} videTexte={traduire("Tes records, tes paliers, tes objectifs tenus et tes bilans arrivent ici.")} />
-                {avantApres ? <Section titre={traduire("Ton avant après")} items={[avantApres]} videTexte="" /> : null}
-                <Section titre={traduire("Tes séances")} items={liste.seances} videTexte={traduire("Enregistre une séance, sa carte arrive ici.")} />
-                <Section titre={traduire("Tes pesées en progrès")} items={liste.pesees} videTexte={traduire("Quand une pesée te rapproche de ton objectif, sa carte arrive ici.")} />
-                <Section titre={traduire("Tes semaines")} items={liste.semaines} videTexte={traduire("Le bilan de chaque semaine avec au moins une séance arrive ici.")} />
-              </>
-            )}
-          </>
+          <View style={{ marginTop: 6 }}>
+            <Bibliotheque
+              rubriques={rubriquesDe(biblio, avantApres)}
+              base={k.options}
+              visuelsPour={k.visuelsPour}
+              onOuvrir={ouvrir}
+              defiler={(y) => defilement.current?.scrollTo({ y, animated: true })}
+              apres={
+                <Pressable
+                  onPress={() => {
+                    const n = !auto;
+                    setAuto(n);
+                    setPropositionsAuto(n).catch(() => {});
+                  }}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: auto }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16 }}
+                >
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Ink size={15} weight="extraBold">{traduire("Me proposer une carte")}</Ink>
+                    <Ink size={13} color={c.textSecondary}>{traduire("Après une séance, un record, un palier, une pesée qui progresse, le dimanche soir pour ta semaine et en début de mois pour ton bilan. Une seule fois par moment.")}</Ink>
+                  </View>
+                  <Interrupteur on={auto} />
+                </Pressable>
+              }
+            />
+          </View>
         )}
       </ScrollView>
       {demo && feuille ? <FeuilleCarte data={DEMO_EXPLOITS[3]} autres={[DEMO_EXPLOITS[4], DEMO_SEANCE_COMBAT, DEMO_EXPLOITS[10], DEMO_EXPLOITS[5]]} visible onClose={() => setFeuille(false)} /> : null}
