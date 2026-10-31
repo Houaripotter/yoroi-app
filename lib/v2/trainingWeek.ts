@@ -5,6 +5,7 @@ import type { Training } from '@/lib/database';
 import { devNow } from '@/lib/v2/creator/devClock';
 import { versUnitePoids, type UnitePoids } from '@/lib/v2/unitePoids';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { estCardioEnregistre } from '@/lib/v2/seances/cardioJour';
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
@@ -65,8 +66,13 @@ export function exercisesOf(t: Training | null | undefined): ExerciseLike[] {
   return Array.isArray(list) ? (list as ExerciseLike[]).filter((e) => !!e && typeof e === 'object') : [];
 }
 
-/** Series de travail d'un exercice (echauffements exclus) */
+/**
+ * Series de travail d'un exercice (echauffements exclus).
+ * 31 octobre 2026 : le cardio de fin de seance n'a pas de serie de travail (sa serie garde sa duree en secondes) :
+ * il ne compte ni dans les series, ni dans les repetitions, ni dans les kilos (lib/v2/seances/cardioJour.ts).
+ */
 export function workSetsOf(e: ExerciseLike): WorkSet[] {
+  if (estCardioEnregistre(e)) return [];
   if (Array.isArray(e.setsData) && e.setsData.length > 0) {
     return e.setsData.filter((s) => !!s && s.type !== 'warmup').map((s) => ({ weight: Math.max(0, Number(s.weight) || 0), reps: Math.max(0, Number(s.reps) || 0) }));
   }
