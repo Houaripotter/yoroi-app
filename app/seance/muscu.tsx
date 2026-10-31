@@ -93,6 +93,15 @@ import type { Reglages } from '@/lib/v2/seances/reglagesMachine';
 import { libelleHauteurPoulie } from '@/lib/v2/seances/hauteurPoulie';
 import { chargerEcartes, ecarterExercice, ecartesEnMemoire, nomsEcartes } from '@/lib/v2/seances/exercicesEcartes';
 import { alternativesPour } from '@/lib/v2/seances/alternatives';
+import { ChangerExercice } from '@/components/yoroi/v2/seance/ChangerExercice';
+import type { PorteeChangement } from '@/components/yoroi/v2/seance/ChangerExercice';
+import { changerDansSeance, musclePour } from '@/lib/v2/seances/changerExo';
+import { chargerMachinesPerso, machineDe, machinesEnMemoire } from '@/lib/v2/seances/machinesPerso';
+import { ajouterAuGroupe, apresSerie, delier, estEnGroupe, groupeDe, lierAuSuivant, nettoyerEnchaines } from '@/lib/v2/seances/superset';
+import { AjoutAuBloc, EnTeteSuperset, PastilleGroupe } from '@/components/yoroi/v2/seance/BlocSuperset';
+import { appliquerEnchainements, avecAjout, avecLien, blocDuJour, chargerEnchainements, cleJour, modifierEnchainements, sansExoDuBloc } from '@/lib/v2/programmes/enchainements';
+import type { Enchainements } from '@/lib/v2/programmes/enchainements';
+import type { ExoProgramme } from '@/lib/v2/programmes/types';
 import { remplacerExercice } from '@/lib/v2/programmes/suivi';
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { StickerOuIcone } from '@/components/yoroi/v2/profil/Rubriques';
@@ -273,6 +282,8 @@ export default function SeanceMuscu() {
           const zones = prog ? [] : lireZones(param1(raw.zones));
           const jourSource = prog && jourDuProg ? jourDuProg : zones.length ? { id: 'zones', titre: titreZones(zones, traduire), muscles: [], exos: seanceZones(zones) } : null;
           if (jourSource) {
+            // 31 octobre 2026 : les supersets gardes dans le programme (lib/v2/programmes/enchainements.ts)
+            const blocsP = chargerEnchainements().catch((): Enchainements => ({}));
             // revue du 30 octobre 2026 : tes exercices ecartes lus avant jourPourToi (app fermee, la copie en memoire est vide)
             const [trainings, h, actif, materiel, blessures, machines] = await Promise.all([trainingsP, histP, chargerProgrammeActif(), chargerMateriel(), getActiveInjuries().catch(() => []), chargerMachines(), chargerEcartes().catch(() => [])]);
             // ton materiel et tes douleurs declarees : chaque exercice impossible ou qui charge une zone douloureuse
@@ -287,7 +298,9 @@ export default function SeanceMuscu() {
             // les seances des semaines legeres passees ne comptent pas dans la progression
             const legeres = prog && actif && actif.id === prog.id ? actif.legeres ?? [] : [];
             const horsLegere = trainings.filter((t) => !legeres.some((d) => t.date.slice(0, 10) >= d && t.date.slice(0, 10) <= plusJours(d, 6)));
-            exercises = jour.exos.map((e) => {
+            // 31 octobre 2026 : les exercices ajoutes au bloc et les liens (superset) gardes pour ce jour du programme
+            const exosJour = appliquerEnchainements(jour.exos, blocDuJour(await blocsP, prog?.id, jour.id));
+            exercises = exosJour.map((e) => {
               // 30 octobre 2026 : la brique Cardio de ta semaine (lib/v2/programmes/briques.ts) : l'exercice cardio et son chrono
               if (e.minutes && estCardioFin(e.nom)) {
                 const ec = ecartesEnMemoire();
@@ -302,7 +315,7 @@ export default function SeanceMuscu() {
               });
               // 30 octobre 2026 : la case du programme (pour retenir un remplacement) et les series visees
               const k = prog ? protege.exos.findIndex((x) => x.nom === e.nom) : -1;
-              const ex: LiveExercise = { id: uid(), name: e.nom, muscle: e.muscle ?? hx?.muscle, sets, objectifSeries: seriesVisees(sets), ...(prog && k >= 0 ? { caseProg: { jourId: jour.id, index: k } } : {}) };
+              const ex: LiveExercise = { id: uid(), name: e.nom, muscle: e.muscle ?? hx?.muscle, sets, objectifSeries: seriesVisees(sets), ...(prog && k >= 0 && !e.ajoutBloc ? { caseProg: { jourId: jour.id, index: k } } : {}), ...(e.enchaine ? { enchaine: true } : {}), ...(e.ajoutBloc ? { ajoutBloc: true } : {}) };
               const zone = 'zone' in e && e.zone ? e.zone : null;
               const conseil = zone
                 ? e.impossible
@@ -459,6 +472,8 @@ export default function SeanceMuscu() {
 
   const current = draft?.exercises.find((e) => e.id === draft.currentId) ?? draft?.exercises[0] ?? null;
   const activeIndex = current ? current.sets.findIndex((s) => !s.done) : -1;
+  // 31 octobre 2026 : l'exercice en cours est il dans le bloc abdos (bouton « Ajouter un exercice » en superset)
+  const abdosEnCours = useMemo(() => (current ? musclePour(current.name, { muscle: current.muscle, perso: machinesEnMemoire() }) === 'ABDOS' : false), [current?.name, current?.muscle]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* 30 octobre 2026 (A) : au passage a l'exercice suivant, la carte du nouvel exercice se pose sous l'en-tete,
      sa premiere serie visible. Avant, rien ne gerait le defilement : la liste gardait la position de l'exercice
@@ -585,7 +600,8 @@ export default function SeanceMuscu() {
     chargerEcartes().then((l) => setEcartes(nomsEcartes(l)), () => {});
   }, []);
   const [remplacerFor, setRemplacerFor] = useState<{ id: string; raison: 'occupee' | 'salle' | 'douleur' | null; liste: string[]; i: number } | null>(null);
-  const ouvrirRemplacer = (ex: LiveExercise) => setRemplacerFor({ id: ex.id, raison: null, liste: [], i: 0 });
+  // 31 octobre 2026 : un exercice cardio garde son choix de machine de cardio ; les autres ouvrent « Changer d'exercice »
+  const ouvrirRemplacer = (ex: LiveExercise) => (ex.cardio ? setRemplacerFor({ id: ex.id, raison: null, liste: [], i: 0 }) : setChangerFor({ id: ex.id, mode: 'changer' }));
   const choisirRaison = (raison: 'occupee' | 'salle' | 'douleur') => {
     const ex = draft?.exercises.find((e) => e.id === remplacerFor?.id);
     if (!ex || !draft) return setRemplacerFor(null);
@@ -643,6 +659,84 @@ export default function SeanceMuscu() {
     }
   };
 
+  /* 31 octobre 2026 : « Changer d'exercice » et « Enchaîner un exercice » (components/yoroi/v2/seance/ChangerExercice.tsx) */
+  const [changerFor, setChangerFor] = useState<{ id: string; mode: 'changer' | 'enchainer' } | null>(null);
+  useEffect(() => {
+    chargerMachinesPerso().catch(() => {});
+  }, []);
+  /** Le cran et la hauteur de poulie suivent le nouvel exercice ; les series faites restent sur l'ancien (changerExo.ts) */
+  const changerPour = (ex: LiveExercise, nom: string, muscle: string, portee: PorteeChangement) => {
+    if (!draft) return;
+    const h = hist.map.get(normName(nom));
+    const reps = ex.cible?.repsMin ?? ex.objectifReps ?? ex.sets.find((x) => !x.done)?.reps ?? 10;
+    const seriesNeuves = (l: LiveSet[]): LiveSet[] =>
+      l.map((_, i) => {
+        const last = h?.lastSets[Math.min(i, (h?.lastSets.length ?? 1) - 1)];
+        return { id: uid(), weight: last?.weight ?? 0, reps: last?.reps ?? reps, done: false, ...(last ? { prevWeight: last.weight, prevReps: last.reps } : {}) };
+      });
+    const nouvelId = uid();
+    update((d) => {
+      const r = changerDansSeance(d.exercises, ex.id, { nom, muscle }, seriesNeuves, nouvelId);
+      return r ? { ...d, exercises: r.exercises, currentId: d.currentId === ex.id ? r.currentId : d.currentId } : d;
+    });
+    impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+    if (portee === 'jour') return;
+    // « Toujours » : l'ancien n'est plus propose, et le programme en cours garde le choix dans sa case
+    const original = sansPrise(ex.name).base;
+    void ecarterExercice(original, 'salle').then((l) => setEcartes(nomsEcartes(l)));
+    const prog = draft.programme;
+    const cas = ex.caseProg;
+    if (prog && cas) {
+      void chargerProgrammeActif()
+        .then((a) => (a && a.id === prog.id ? remplacerExercice(cas.jourId, cas.index, nom) : undefined))
+        .catch(() => {});
+    }
+  };
+  /** Ajoute un exercice a la suite, en superset : memes series visees, repos apres le dernier du groupe */
+  const enchainerApres = (ex: LiveExercise, nom: string, muscle: string, portee: PorteeChangement) => {
+    if (!draft) return;
+    const h = hist.map.get(normName(nom));
+    const n = Math.max(1, ex.objectifSeries ?? ex.sets.length);
+    const tenu = EXERCISE_LIBRARY.find((x) => x.name === nom)?.unit === 'time';
+    const repsMin = tenu ? 30 : ex.cible && !ex.cible.secondes ? ex.cible.repsMin : 10;
+    const repsMax = tenu ? 45 : ex.cible && !ex.cible.secondes ? ex.cible.repsMax : 15;
+    const reposSec = ex.cible?.reposSec ?? draft.restSec;
+    const sets = makeSets(Array.from({ length: n }, (_, i) => h?.lastSets[Math.min(i, h.lastSets.length - 1)] ?? { weight: 0, reps: repsMin }), !!h);
+    const neuf: LiveExercise = { id: uid(), name: nom, muscle, sets, objectifSeries: n, ...(ex.cible || tenu ? { cible: { repsMin, repsMax, reposSec, ...(tenu ? { secondes: true } : {}) } } : {}) };
+    const groupe = groupeDe(draft.exercises, ex.id);
+    const ancre = groupe[groupe.length - 1] ?? ex;
+    update((d) => ({ ...d, exercises: ajouterAuGroupe(d.exercises, ex.id, portee === 'toujours' && d.programme ? { ...neuf, ajoutBloc: true } : neuf) }));
+    impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+    const prog = draft.programme;
+    if (portee !== 'toujours' || !prog) return;
+    const exo: ExoProgramme = { nom, muscle, series: n, repsMin, repsMax, reposSec, ...(tenu ? { secondes: true } : {}) };
+    void modifierEnchainements((t) => avecAjout(t, cleJour(prog.id, prog.jourId), ancre.name, exo));
+  };
+  const choisirChangement = (nom: string, muscle: string, portee: PorteeChangement) => {
+    const r = changerFor;
+    setChangerFor(null);
+    const ex = draft?.exercises.find((e) => e.id === r?.id);
+    if (!r || !ex) return;
+    if (r.mode === 'enchainer') enchainerApres(ex, nom, muscle, portee);
+    else changerPour(ex, nom, muscle, portee);
+  };
+  /** Sortir du superset : pour cette seance, et retire du programme ce qui y etait garde */
+  const sortirDuGroupe = (ex: LiveExercise) => {
+    setMenuFor(null);
+    if (!draft) return;
+    const i = draft.exercises.findIndex((e) => e.id === ex.id);
+    const avant = i > 0 && draft.exercises[i - 1].enchaine ? draft.exercises[i - 1].name : null;
+    update((d) => ({ ...d, exercises: delier(d.exercises, ex.id) }));
+    const prog = draft.programme;
+    if (!prog) return;
+    const cle = cleJour(prog.id, prog.jourId);
+    void modifierEnchainements((t) => {
+      let suite = avecLien(t, cle, ex.name, false);
+      if (avant) suite = avecLien(suite, cle, avant, false);
+      return ex.ajoutBloc ? sansExoDuBloc(suite, cle, ex.name, avant) : suite;
+    });
+  };
+
   const addExercise = (name: string, muscle?: string) => {
     setPickerOpen(false);
     const ex = exerciseFrom(name, muscle, hist.map.get(normName(name)));
@@ -671,13 +765,19 @@ export default function SeanceMuscu() {
       if (i === index + 1 && !s.done && s.prevWeight === undefined) return { ...s, weight: set.weight, reps: set.reps };
       return s;
     });
-    update((d) => ({
-      ...d,
-      exercises: d.exercises.map((e) => (e.id === ex.id ? { ...e, sets } : e)),
-      // seance de programme : le repos prevu pour cet exercice ; drop set suivi d'un autre drop set : pas de repos
-      // 30 octobre 2026 : minuteur de repos coupe, pas de repos du tout (lib/v2/seances/minuteurRepos.ts)
-      ...reposApresSerie({ sansRepos: d.sansRepos, pasDeRepos: d.form || ex.sets[index + 1]?.type === 'dropset', secondes: d.reposManuel ? d.restSec : ex.cible?.reposSec ?? d.restSec, maintenant: Date.now() }),
-    }));
+    update((d) => {
+      const exercises = d.exercises.map((e) => (e.id === ex.id ? { ...e, sets } : e));
+      // 31 octobre 2026 : superset, A puis B sans repos, le repos apres le dernier puis retour au premier (superset.ts)
+      const suite = d.form ? { suivantId: null, repos: true } : apresSerie(exercises, ex.id);
+      return {
+        ...d,
+        exercises,
+        ...(suite.suivantId ? { currentId: suite.suivantId } : {}),
+        // seance de programme : le repos prevu pour cet exercice ; drop set suivi d'un autre drop set : pas de repos
+        // 30 octobre 2026 : minuteur de repos coupe, pas de repos du tout (lib/v2/seances/minuteurRepos.ts)
+        ...reposApresSerie({ sansRepos: d.sansRepos, pasDeRepos: d.form || ex.sets[index + 1]?.type === 'dropset' || !suite.repos, secondes: d.reposManuel ? d.restSec : ex.cible?.reposSec ?? d.restSec, maintenant: Date.now() }),
+      };
+    });
     if (record) {
       setFreshRecord(set.id);
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
@@ -814,7 +914,7 @@ export default function SeanceMuscu() {
       if (i < 0 || j < 0 || j >= d.exercises.length) return d;
       const list = [...d.exercises];
       [list[i], list[j]] = [list[j], list[i]];
-      return { ...d, exercises: list };
+      return { ...d, exercises: nettoyerEnchaines(list) };
     });
 
   const removeExercise = (id: string) => {
@@ -828,7 +928,8 @@ export default function SeanceMuscu() {
           // revue du 30 octobre 2026 : un cardio retire pendant que son chrono tourne ne sonne plus (cardioFin.ts)
           if (suiteFinCardio(draft?.exercises.find((e) => e.id === id)?.cardio, Date.now(), false).annuler) void annulerFinCardio();
           update((d) => {
-            const list = d.exercises.filter((e) => e.id !== id);
+            // 31 octobre 2026 : un exercice retire sort d'abord de son superset
+            const list = nettoyerEnchaines(delier(d.exercises, id).filter((e) => e.id !== id));
             return { ...d, exercises: list, currentId: d.currentId === id ? list[0]?.id ?? null : d.currentId };
           });
         },
@@ -1120,6 +1221,8 @@ export default function SeanceMuscu() {
                 </View>
               );
             })()}
+            {/* 31 octobre 2026 : superset ou circuit en cours, les exercices lies et celui ou tu en es (superset.ts) */}
+            {draft.form ? null : <EnTeteSuperset exercises={draft.exercises} currentId={current.id} onAller={(id) => update((d) => ({ ...d, currentId: id }))} />}
             <View onLayout={(e) => { carteY.current = e.nativeEvent.layout.y; }} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingHorizontal: 4, marginTop: 4 }}>
               <View style={{ flex: 1, gap: 4 }}>
                 {draft.exercises.length > 1 ? (
@@ -1146,11 +1249,12 @@ export default function SeanceMuscu() {
                         : traduire('Objectif du jour : {0} répétitions sur chaque série à {1} kilos.', libre.reps, fmtNum(saisieDepuisKg(libre.charge, unite)))}
                   </Ink>
                 ) : null}
-                {/* 30 octobre 2026 (E) : machine occupee, pas dans ta salle, ou qui te fait mal */}
-                {!draft.form && !current.sets.some((x) => x.done) ? (
-                  <Pressable onPress={() => ouvrirRemplacer(current)} accessibilityRole="button" accessibilityLabel={traduire('Remplacer l’exercice')} hitSlop={8} style={{ alignSelf: 'flex-start', minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                {/* 30 octobre 2026 (E) : machine occupee, pas dans ta salle, ou qui te fait mal ; 31 octobre 2026 : « Changer »,
+                    une autre machine ou une recherche par nom, aussi apres une serie faite (elle reste sur l'exercice d'origine) */}
+                {!draft.form && (current.cardio ? !current.sets.some((x) => x.done) : activeIndex >= 0) ? (
+                  <Pressable onPress={() => ouvrirRemplacer(current)} accessibilityRole="button" accessibilityLabel={traduire('Changer {0}', sansTiret(traduire(nomFr(current.name))))} hitSlop={8} style={{ alignSelf: 'flex-start', minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <StickerOuIcone sticker="refresh" icon="sync" size={22} />
-                    <Ink size={13} weight="extraBold" color={c.accentText}>{traduire('Remplacer')}</Ink>
+                    <Ink size={13} weight="extraBold" color={c.accentText}>{current.cardio ? traduire('Remplacer') : traduire('Changer')}</Ink>
                   </Pressable>
                 ) : null}
               </View>
@@ -1170,7 +1274,8 @@ export default function SeanceMuscu() {
             {/* 30 octobre 2026 (D) : le cran de la machine ou de la poulie, et la hauteur de la poulie quand elle est standard */}
             {(() => {
               if (draft.form || current.cardio) return null;
-              const type = typeReglage(current.name);
+              // 31 octobre 2026 : une de tes machines (machinesPerso.ts) a toujours son reglage
+              const type = machineDe(machinesEnMemoire(), sansPrise(current.name).base) ? 'ouvert' : typeReglage(current.name);
               const hauteur = libelleHauteurPoulie(current.name);
               const avant = cranDe(cransAvant, current.name);
               const valeur = current.cran !== undefined ? current.cran : avant;
@@ -1433,6 +1538,11 @@ export default function SeanceMuscu() {
               ) : null}
             </View>
 
+            {/* 31 octobre 2026 : le bloc abdos, un deuxieme exercice a la suite (crunch puis roue abdominale) */}
+            {!draft.form && abdosEnCours ? (
+              <AjoutAuBloc exercises={draft.exercises} id={current.id} onPress={() => setChangerFor({ id: current.id, mode: 'enchainer' })} />
+            ) : null}
+
             <AideBarre
               nom={sansPrise(current.name).base}
               chargeKg={(current.sets.find((x) => !x.done) ?? current.sets[current.sets.length - 1])?.weight}
@@ -1472,7 +1582,10 @@ export default function SeanceMuscu() {
                       <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: tonDuRang(i).fond, alignItems: 'center', justifyContent: 'center' }}>
                         <Ink size={17} weight="black" color={tonDuRang(i).encre}>{String(i + 1)}</Ink>
                       </View>
-                      <Ink size={15.5} weight="black" tight color={all ? c.textMuted : c.ink} style={{ flex: 1 }} numberOfLines={2}>{sansTiret(traduire(e.name))}</Ink>
+                      <View style={{ flex: 1, gap: 3 }}>
+                        <Ink size={15.5} weight="black" tight color={all ? c.textMuted : c.ink} numberOfLines={2}>{sansTiret(traduire(e.name))}</Ink>
+                        <PastilleGroupe exercises={draft.exercises} id={e.id} />
+                      </View>
                       <ExoDemo nom={sansPrise(e.name).base} taille={44} arrondi={12} />
                       <Ink size={13} weight="bold" color={all ? c.successText : c.textMuted}>{all ? (e.laisse ? traduire("{0} faites", doneCount) : traduire('fait')) : doneCount > 0 ? traduire("{0} sur {1}", doneCount, e.sets.length) : traduire("{0} séries", e.sets.length)}</Ink>
                     </Pressable>
@@ -1600,6 +1713,25 @@ export default function SeanceMuscu() {
         already={draft.exercises.map((e) => e.name)}
       />
 
+      {/* 31 octobre 2026 : changer d'exercice (autre machine, recherche, ta machine) ou en enchainer un (superset) */}
+      {(() => {
+        const ex = changerFor ? draft.exercises.find((e) => e.id === changerFor.id) : null;
+        return (
+          <ChangerExercice
+            visible={!!ex}
+            onClose={() => setChangerFor(null)}
+            mode={changerFor?.mode ?? 'changer'}
+            nom={ex?.name ?? ''}
+            muscle={ex?.muscle}
+            deja={draft.exercises.map((e) => e.name)}
+            history={hist.map}
+            portees={changerFor?.mode === 'changer' || !!draft.programme}
+            dansProgramme={!!draft.programme}
+            onChoisir={choisirChangement}
+          />
+        );
+      })()}
+
       {/* Options d'un exercice */}
       <Sheet visible={!!menuEx} onClose={() => setMenuFor(null)} title={traduire(menuEx?.name)}>
         {menuEx ? (
@@ -1607,6 +1739,13 @@ export default function SeanceMuscu() {
             <MenuRow icon="up" label={traduire("Monter dans la séance")} onPress={() => moveExercise(menuEx.id, -1)} disabled={draft.exercises[0]?.id === menuEx.id} />
             <MenuRow icon="down" label={traduire("Descendre dans la séance")} onPress={() => moveExercise(menuEx.id, 1)} disabled={draft.exercises[draft.exercises.length - 1]?.id === menuEx.id} />
             <MenuRow icon="pencil" label={menuEx.notes ? traduire('Modifier la note') : traduire('Ajouter une note')} onPress={() => { setMenuFor(null); setNoteFor(menuEx.id); }} />
+            {/* 31 octobre 2026 : superset, pour tous les exercices (l'entree visible est dans le bloc abdos) */}
+            {!draft.form && !menuEx.cardio ? <MenuRow icon="plus" label={traduire('Enchaîner un exercice')} onPress={() => { setMenuFor(null); setChangerFor({ id: menuEx.id, mode: 'enchainer' }); }} /> : null}
+            {!draft.form && estEnGroupe(draft.exercises, menuEx.id) ? (
+              <MenuRow icon="close" label={traduire('Sortir du superset')} onPress={() => sortirDuGroupe(menuEx)} />
+            ) : !draft.form && !menuEx.cardio && draft.exercises[draft.exercises.length - 1]?.id !== menuEx.id && !draft.exercises[draft.exercises.findIndex((e) => e.id === menuEx.id) + 1]?.cardio ? (
+              <MenuRow icon="lien" label={traduire('Lier à l’exercice suivant')} onPress={() => { setMenuFor(null); update((d) => ({ ...d, exercises: lierAuSuivant(d.exercises, menuEx.id) })); }} />
+            ) : null}
             <MenuRow icon="swap" label={sansPrise(menuEx.name).prise ? traduire('Prise : {0}', traduire(PRISES.find((x) => x.id === sansPrise(menuEx.name).prise)?.label ?? '')) : traduire('Prise')} onPress={() => { setMenuFor(null); setPriseFor(menuEx.id); }} />
             <MenuRow icon="trash" label={traduire("Supprimer l’exercice")} danger onPress={() => removeExercise(menuEx.id)} />
           </View>
@@ -1957,16 +2096,17 @@ function CarteCardio({ chrono, fait, dureeFaite, maintenant, onDemarrer, onPause
 }
 
 // 30 octobre 2026 : le sticker a la place de l'icone quand il y en a un (reglage Illustrations sur Stickers)
-const STICKER_MENU: Partial<Record<'up' | 'down' | 'pencil' | 'trash' | 'swap', NomSticker>> = { up: 'fleches_haut_bas', down: 'fleches_haut_bas', pencil: 'crayon', trash: 'corbeille' };
+type IconeMenu = 'up' | 'down' | 'pencil' | 'trash' | 'swap' | 'plus' | 'close' | 'lien';
+const STICKER_MENU: Partial<Record<IconeMenu, NomSticker>> = { up: 'fleches_haut_bas', down: 'fleches_haut_bas', pencil: 'crayon', trash: 'corbeille', plus: 'repeter', close: 'quitter', lien: 'chaine' };
 
-function MenuRow({ icon, label, onPress, danger, disabled }: { icon: 'up' | 'down' | 'pencil' | 'trash' | 'swap'; label: string; onPress: () => void; danger?: boolean; disabled?: boolean }) {
+function MenuRow({ icon, label, onPress, danger, disabled }: { icon: IconeMenu; label: string; onPress: () => void; danger?: boolean; disabled?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const sticker = STICKER_MENU[icon];
   const color = disabled ? c.textMuted : danger ? c.danger : c.ink;
   return (
     <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 54, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, backgroundColor: pressed ? c.fillSubtle : c.fillSoft, opacity: disabled ? 0.5 : 1 })}>
-      {sticker ? <StickerSinon nom={sticker} taille={30}><Icon name={icon} size={20} color={color} /></StickerSinon> : <Icon name={icon} size={20} color={color} />}
+      {sticker ? <StickerSinon nom={sticker} taille={30}><Icon name={icon === 'lien' ? 'route' : icon} size={20} color={color} /></StickerSinon> : <Icon name={icon === 'lien' ? 'route' : icon} size={20} color={color} />}
       <Ink size={15} weight="bold" color={color}>{label}</Ink>
     </Pressable>
   );
