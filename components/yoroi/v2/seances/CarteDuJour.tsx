@@ -8,6 +8,15 @@
  *  3. sinon, un appel clair vers le Coach (et toujours les zones et la liste des programmes).
  * Remplace la carte « Ton programme » (ProgrammeCard.tsx, gardée telle quelle, et archivée dans
  * _archive_ancien_design_2026-10-09/seances_A_2026-10-28).
+ *
+ * 31 octobre 2026 (demandes de Houari) :
+ *  - avec un programme, la carte « Ton programme » en tête (nom, contenu, progression de la semaine), puis selon
+ *    le jour : la séance à faire (nom, exercices principaux, durée estimée, « Commencer la séance ») ; la carte
+ *    « Bravo » si une séance est faite aujourd'hui (résumé, « Partager » vers l'atelier des cartes) ; la carte repos
+ *    avec la prochaine séance prévue (EnTeteSeance.tsx). Sans programme, une séance faite aujourd'hui donne aussi
+ *    la carte « Bravo ».
+ *  - plus de personnage dessiné par défaut : seulement ton personnage (usePersonnageUtilisateur), sinon rien, et
+ *    le texte reprend toute la largeur. Version d'avant : _archive_ancien_design_2026-10-09/personnage_partout_2026-10-31.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { DeviceEventEmitter, Image, Pressable, View } from 'react-native';
@@ -27,9 +36,7 @@ import type { Training } from '@/lib/database';
 import { getActiveInjuries } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
 import { formatDuration } from '@/lib/v2/trainingWeek';
-import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
-import { sportDuProgramme } from '@/lib/v2/programmes/catalogue';
 import { resumeDuJour, routeDuJour } from '@/lib/v2/programmes/lancer';
 import { demoDe, demoSlug } from '@/lib/v2/programmes/demos';
 import { machineArt } from '@/lib/v2/seance/machinesArt';
@@ -53,6 +60,32 @@ import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { chargeTexte } from '@/lib/v2/unitePoids';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { usePersonnageUtilisateur } from '@/components/yoroi/v2/perso/usePersonnageUtilisateur';
+import { CarteBravo, CarteProgramme, CarteRepos } from './EnTeteSeance';
+import { faitsCetteSemaine } from '@/lib/v2/programmes/suivi';
+import { prochainJourPrevu } from '@/lib/v2/programmes/coach';
+import { dureeEstimee } from '@/lib/v2/programmes/express';
+import type { ImageSourcePropType } from 'react-native';
+
+const NOMS_JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+
+/** « demain » ou le nom du jour de la prochaine séance prévue */
+function quandProchaine(jours: number[]): string {
+  const auj = new Date();
+  const d = prochainJourPrevu(jours, auj, false);
+  const demain = new Date(auj.getFullYear(), auj.getMonth(), auj.getDate() + 1, 12);
+  if (localISO(d) === localISO(demain)) return traduire('demain');
+  return traduire(NOMS_JOURS[(d.getDay() + 6) % 7]);
+}
+
+/** La séance faite aujourd'hui à montrer : celle reliée au programme, sinon la plus récente */
+function seanceDuJourFaite(trainings: Training[], aujourdhui: string, lieeId?: number): { t: Training; n: number } | null {
+  const du = trainings.filter((t) => String(t.date ?? '').slice(0, 10) === aujourdhui);
+  if (!du.length) return null;
+  const liee = lieeId != null ? du.find((t) => t.id === lieeId) : undefined;
+  const t = liee ?? [...du].sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0))[0];
+  return { t, n: du.length };
+}
 
 type Contexte = { materiel: Equipement[] | null; machines: string[] | null; regions: Region[] };
 
@@ -93,7 +126,7 @@ function Serie({ n }: { n: number }) {
 }
 
 /** Le titre de la carte, à gauche de l'illustration */
-function EnTete({ kicker, titre, sous, serie, art }: { kicker: string; titre: string; sous?: string; serie: number; art: ReturnType<typeof sportImage> }) {
+function EnTete({ kicker, titre, sous, serie, art }: { kicker: string; titre: string; sous?: string; serie: number; art: ImageSourcePropType | null }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const lilas = useTeinte('lilas');
@@ -221,6 +254,9 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach }: {
   const router = useRouter();
   const unite = useUnitePoids();
   const menthe = useTeinte('menthe');
+  // ton personnage, ou rien (jamais une figure par défaut)
+  const perso = usePersonnageUtilisateur();
+  const marge = perso ? 104 : 0;
   const [actif, setActif] = useState<ProgrammeActif | null>(null);
   const [pret, setPret] = useState(false);
   const [ctx, setCtx] = useState<Contexte>({ materiel: null, machines: null, regions: [] });
@@ -266,32 +302,72 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach }: {
     const hero = infosHero({ programme: p, actif, jour, jours, message, semaine });
     const muscu = jour.exos.length > 0 && !jour.rounds && !jour.cardio;
     const monte = muscu ? ligneProgression(jour.exos, trainings, { legeres: actif.legeres, legere: estSemaineLegere(actif) }) : null;
-    return { p, jour, semaine, message, hero, muscu, monte, index: suite.index };
+    const prevus = Math.max(1, jours.length || p.joursParSemaine);
+    const faits = faitsCetteSemaine(actif);
+    return { p, jour, jours, semaine, message, hero, muscu, monte, prevus, faits, index: suite.index };
   }, [actif, suite, ctx, femme, trainings]);
+  const faitAujourdhui = useMemo(
+    () => seanceDuJourFaite(trainings, aujourdhui, actif?.faits.find((f) => f.date === aujourdhui)?.trainingId),
+    [trainings, aujourdhui, actif],
+  );
+  const partager = (t: Training) => router.push(`/carte?moment=seance&id=${t.id}` as any);
+  const voir = (t: Training) => router.push({ pathname: '/workout-detail', params: { id: String(t.id) } } as any);
 
   if (!pret) return <View style={{ height: 0 }} />;
 
-  // 1. le programme en cours
+  // 1. le programme en cours : « Ton programme », puis la carte du jour
   if (vue) {
-    const { p, jour, semaine, message, hero, muscu, monte } = vue;
+    const { p, jour, jours, semaine, message, hero, muscu, monte, prevus, faits } = vue;
+    const totalSem = semainesDuProgramme(actif, p);
+    const carteProgramme = (
+      <CarteProgramme
+        titre={nomDuProgramme(traduire(p.titre))}
+        contenu={traduirePluriel(prevus, prevus > 1, '{0} séance par semaine', '{0} séances par semaine', prevus)}
+        semaine={totalSem && semaine <= totalSem ? traduire('semaine {0} sur {1}', semaine, totalSem) : traduire('semaine {0}', semaine)}
+        faits={faits}
+        prevus={prevus}
+        onOpen={() => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } })}
+      />
+    );
+    const commencerJour = () => {
+      const r = routeDuJour(p, jour, semaine);
+      router.push({ pathname: r.pathname as any, params: r.params });
+    };
+    // b. la séance du jour est faite : bravo
+    if (faitAujourdhui && !message.seanceDuJour) {
+      return (
+        <View style={{ gap: 12 }}>
+          {carteProgramme}
+          <CarteBravo t={faitAujourdhui.t} nombre={faitAujourdhui.n} ensuite={message.ensuite} onPartager={() => partager(faitAujourdhui.t)} onVoir={() => voir(faitAujourdhui.t)} />
+        </View>
+      );
+    }
+    // c. jour de repos : la prochaine séance prévue
+    if (message.etat === 'repos') {
+      return (
+        <View style={{ gap: 12 }}>
+          {carteProgramme}
+          <CarteRepos titre={traduire(jour.titre)} quand={quandProchaine(jours)} texte={message.texte} onFaire={commencerJour} onProgramme={() => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } })} />
+        </View>
+      );
+    }
     const kicker =
       message.etat === 'rattrape' ? traduire('On rattrape aujourd’hui')
         : message.seanceDuJour ? traduire('Aujourd’hui')
           : message.etat === 'fait' ? traduire('Séance faite, la suivante')
             : traduire('Jour de repos, la suivante');
-    const total = semainesDuProgramme(actif, p);
-    const sem = total && semaine <= total ? traduire('semaine {0} sur {1}', semaine, total) : traduire('semaine {0}', semaine);
-    const sous = vue.index >= 0 ? `${nomDuProgramme(traduire(p.titre))}, ${sem}, ${traduire('jour {0}', vue.index + 1)}` : `${nomDuProgramme(traduire(p.titre))}, ${sem}`;
+    // le programme est dans la carte du dessus : ici le jour et la durée estimée
+    const minutes = muscu ? dureeEstimee(jour.exos) : p.dureeMin;
+    const sous = [vue.index >= 0 ? traduire('jour {0}', vue.index + 1) : '', minutes > 0 ? traduire('environ {0}', formatDuration(minutes)) : ''].filter(Boolean).join(', ');
     const nSeries = jour.exos.reduce((n, e) => n + e.series, 0);
-    const commencer = () => {
-      const r = routeDuJour(p, jour, semaine);
-      router.push({ pathname: r.pathname as any, params: r.params });
-    };
+    const commencer = commencerJour;
     const note = message.seanceDuJour ? hero.ensuite : message.ensuite;
     return (
+      <View style={{ gap: 12 }}>
+      {carteProgramme}
       <Cadre>
-        <EnTete kicker={kicker} titre={sansTiret(traduire(jour.titre))} sous={sansTiret(sous)} serie={serie} art={sportImage(sportDuProgramme(p), femme, 1)} />
-        <View style={{ marginTop: 10, marginRight: 104, flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+        <EnTete kicker={kicker} titre={sansTiret(traduire(jour.titre))} sous={sansTiret(sous)} serie={serie} art={perso} />
+        <View style={{ marginTop: 10, marginRight: marge, flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
           {muscu ? (
             <>
               <Pastille texte={traduirePluriel(jour.exos.length, jour.exos.length > 1, '{0} exercice', '{0} exercices', jour.exos.length)} fond={c.surface} couleur={c.ink} />
@@ -302,7 +378,7 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach }: {
             <Pastille texte={resumeDuJour(jour, semaine)} fond={c.surface} couleur={c.ink} />
           )}
         </View>
-        {!message.seanceDuJour && message.texte ? <Ink size={13} weight="bold" color={c.textSecondary} style={{ marginTop: 10, marginRight: 104 }}>{message.texte}</Ink> : null}
+        {!message.seanceDuJour && message.texte ? <Ink size={13} weight="bold" color={c.textSecondary} style={{ marginTop: 10, marginRight: marge }}>{message.texte}</Ink> : null}
         {muscu ? (
           <TroisExos
             exos={jour.exos.slice(0, 3)}
@@ -323,7 +399,13 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach }: {
         <Commencer label={traduire('Commencer la séance')} onPress={commencer} />
         <Pied lien={traduire('Voir le programme')} onLien={() => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } })} note={sansTiret(note) || traduire('Ton coach a tout prévu')} />
       </Cadre>
+      </View>
     );
+  }
+
+  // sans programme, une séance faite aujourd'hui : bravo aussi
+  if (faitAujourdhui) {
+    return <CarteBravo t={faitAujourdhui.t} nombre={faitAujourdhui.n} onPartager={() => partager(faitAujourdhui.t)} onVoir={() => voir(faitAujourdhui.t)} />;
   }
 
   // 2. un créneau prévu aujourd'hui dans ton planning
@@ -347,8 +429,8 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach }: {
     };
     return (
       <Cadre>
-        <EnTete kicker={traduire('Aujourd’hui, dans ton planning')} titre={titre} sous={sousPropre} serie={serie} art={sportImage(s.sport, femme, 1)} />
-        <View style={{ height: 96 }} />
+        <EnTete kicker={traduire('Aujourd’hui, dans ton planning')} titre={titre} sous={sousPropre} serie={serie} art={perso} />
+        <View style={{ height: perso ? 96 : 14 }} />
         <Commencer label={traduire('Commencer la séance')} onPress={lancer} />
         <Pied lien={traduire('Ouvrir le planning')} onLien={() => router.push('/planning' as any)} lien2={traduire('Demander au Coach')} onLien2={() => (onCoach ? onCoach() : router.push('/coach' as any))} />
       </Cadre>
@@ -358,8 +440,8 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach }: {
   // 3. pas de programme : le Coach
   return (
     <Cadre>
-      <EnTete kicker={traduire('Ta séance du jour')} titre={traduire('Ton Coach te prépare tes séances')} sous={traduire('4 questions, et YOROI te dit quoi faire chaque jour. Programmes basés sur des études.')} serie={serie} art={sportImage('musculation', femme, 1)} />
-      <View style={{ height: 34 }} />
+      <EnTete kicker={traduire('Ta séance du jour')} titre={traduire('Ton Coach te prépare tes séances')} sous={traduire('4 questions, et YOROI te dit quoi faire chaque jour. Programmes basés sur des études.')} serie={serie} art={perso} />
+      <View style={{ height: perso ? 34 : 6 }} />
       <Commencer label={traduire('Demander au Coach')} onPress={() => (onCoach ? onCoach() : router.push('/coach' as any))} />
       <Pied lien={traduire('Je choisis mes zones')} onLien={() => router.push('/programmes/zones' as any)} lien2={traduire('Tous les programmes')} onLien2={() => router.push('/programmes' as any)} />
     </Cadre>
