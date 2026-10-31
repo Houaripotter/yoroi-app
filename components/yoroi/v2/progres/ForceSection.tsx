@@ -278,11 +278,11 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
 
       <View style={{ paddingHorizontal: GUTTER, marginTop: 30 }}>
         <SectionHead
-          title={traduire("Tonnage par semaine")}
+          title={traduire("Kilos soulevés par semaine")}
           aside={tonSel !== null ? traduire("semaine du {0}", dayShort(tonnage[tonSel].monday)) : tonAvg ? traduire("moyenne {0}", tonnageText(tonAvg, unite)) : undefined}
         />
         <Ink size={14} color={c.textSecondary} style={{ marginTop: 2 }}>
-          {tonSel !== null ? `${tonnageText(tonnage[tonSel].value, unite)} ${accordSouleve(tonnage[tonSel].value, unite)}` : traduire('Charge multipliée par les répétitions, toutes séries confondues')}
+          {tonSel !== null ? `${tonnageText(tonnage[tonSel].value, unite)} ${accordSouleve(tonnage[tonSel].value, unite)}` : traduire('Le total de tous tes poids × répétitions de la semaine')}
         </Ink>
         <View style={{ marginTop: 12 }}>
           <InkBarChart
@@ -291,7 +291,7 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
             average={tonAvg}
             format={(v: number) => tonnageText(v, unite)}
             onSelect={setTonSel}
-            label={traduire("Tonnage des dix dernières semaines, la semaine en cours en indigo")}
+            label={traduire("Kilos soulevés des dix dernières semaines, la semaine en cours en indigo")}
           />
         </View>
         <View style={{ flexDirection: 'row', gap: 14, marginTop: 8, flexWrap: 'wrap' }}>
