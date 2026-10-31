@@ -3,6 +3,10 @@
  * 16 octobre : `fine` ajoute deux petits boutons de reglage fin sous les gros (les kilos : pas de 1, et 0,5).
  * 30 octobre : `saut` (10 kg, 20 lb) pour monter vite la charge : a la 3e tape rapide, ou apres 1 s d'appui long
  * (regles dans lib/v2/seances/pasRapide.ts). Sans `saut`, rien ne change.
+ * 31 octobre 2026 : le pas de 10 restait colle en seance. Les tapes etaient datees a leur traitement par le JS
+ * (Date.now dans onPress) : JS occupe, des tapes lentes arrivaient groupees et comptaient comme rapides. Elles sont
+ * maintenant datees au doigt pose (horodatage natif, onPressIn), seuil 350 ms entre deux appuis. Les boutons fins
+ * (0,5) n'accelerent jamais, ni en tapes ni en appui long.
  * 30 octobre 2026 : `uniteForte` (« KG ») lisible d'un coup d'oeil a cote du chiffre, plus en petit dessous.
  */
 import React, { useEffect, useRef, useState } from 'react';
@@ -14,7 +18,7 @@ import { fontStyle } from '@/components/yoroi/fonts';
 import { fmtNum, parseNum } from '@/lib/v2/seance/format';
 import { Icon } from './Icon';
 import { traduire } from '@/lib/i18n/tr';
-import { compterTape, RAFALE_VIDE, REPETITION_MS, sautAppuiLong, TAPES_AVANT_SAUT, valeurSuivante, type Rafale } from '@/lib/v2/seances/pasRapide';
+import { compterTape, heureAppui, RAFALE_VIDE, REPETITION_MS, sautAppuiLong, TAPES_AVANT_SAUT, valeurSuivante, type Rafale } from '@/lib/v2/seances/pasRapide';
 
 type Props = {
   value: number;
@@ -52,6 +56,8 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
   const repeats = useRef(0);
   const rafale = useRef<Rafale>(RAFALE_VIDE);
   const appuiDebut = useRef(0);
+  // heure du doigt pose sur le bouton (horodatage natif), pour mesurer l'ecart entre deux tapes
+  const heureTape = useRef(0);
 
   useEffect(() => {
     valueRef.current = value;
@@ -72,12 +78,14 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
     return true;
   };
 
-  const tap = (bouton: string, dir: 1 | -1, amount: number = step) => {
-    if (!saut) {
+  const tap = (bouton: string, dir: 1 | -1, amount: number = step, accelere = true) => {
+    if (!saut || !accelere) {
+      // une tape sans saut casse aussi la rafale en cours
+      rafale.current = RAFALE_VIDE;
       bump(dir, amount);
       return;
     }
-    const { rafale: apres, saut: enSaut } = compterTape(rafale.current, bouton, Date.now());
+    const { rafale: apres, saut: enSaut } = compterTape(rafale.current, bouton, heureTape.current || Date.now());
     rafale.current = apres;
     bump(dir, amount, enSaut, apres.compte === TAPES_AVANT_SAUT + 1);
   };
@@ -88,8 +96,18 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
     repeats.current = 0;
   }
 
-  const startRepeat = (dir: 1 | -1, amount: number = step) => {
+  const startRepeat = (dir: 1 | -1, amount: number = step, accelere = true) => {
     stop();
+    if (saut && !accelere) {
+      // boutons fins : repetition reguliere, jamais de saut
+      rafale.current = RAFALE_VIDE;
+      const tickFin = () => {
+        if (!bump(dir, amount)) return stop();
+        timer.current = setTimeout(tickFin, REPETITION_MS);
+      };
+      tickFin();
+      return;
+    }
     if (saut) {
       rafale.current = RAFALE_VIDE;
       let enSaut = false;
@@ -124,7 +142,7 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
   const renderBtn = (dir: 1 | -1) => (
     <Pressable
       key={dir}
-      onPressIn={() => { appuiDebut.current = Date.now(); }}
+      onPressIn={(e) => { appuiDebut.current = Date.now(); heureTape.current = heureAppui(e); }}
       onPress={() => tap(`gros${dir}`, dir)}
       onLongPress={() => startRepeat(dir)}
       onPressOut={stop}
@@ -142,9 +160,9 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
   const renderFine = (dir: 1 | -1) => (
     <Pressable
       key={`fin${dir}`}
-      onPressIn={() => { appuiDebut.current = Date.now(); }}
-      onPress={() => tap(`fin${dir}`, dir, fine)}
-      onLongPress={() => startRepeat(dir, fine)}
+      onPressIn={(e) => { appuiDebut.current = Date.now(); heureTape.current = heureAppui(e); }}
+      onPress={() => tap(`fin${dir}`, dir, fine, false)}
+      onLongPress={() => startRepeat(dir, fine, false)}
       onPressOut={stop}
       delayLongPress={280}
       hitSlop={{ top: 6, bottom: 6 }}
