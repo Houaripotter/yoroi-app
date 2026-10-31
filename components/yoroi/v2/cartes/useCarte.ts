@@ -15,7 +15,7 @@ import { pickCardPhoto } from '@/lib/v2/partage/capture';
 import { chiffresParDefaut } from '@/lib/v2/cartes/chiffres';
 import { ecrireStyle, lireStyle, STYLE_DEFAUT } from '@/lib/v2/cartes/store';
 import type { StyleMemorise } from '@/lib/v2/cartes/store';
-import { enregistrerCarte, partagerCarte } from '@/lib/v2/cartes/export';
+import { copierAutocollant, enregistrerCarte, partagerCarte, partagerStory } from '@/lib/v2/cartes/export';
 import type { CarteData, OptionsCarte, StatKey } from '@/lib/v2/cartes/types';
 import type { VisuelsCarte } from './CarteRendu';
 import { traduire } from '@/lib/i18n/tr';
@@ -30,7 +30,9 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
   const [photo, setPhoto] = useState<string | null>(null);
   /** Photo choisie, reduction en cours (26 octobre 2026) : l'ecran le dit au lieu de sembler fige */
   const [photoEnCours, setPhotoEnCours] = useState(false);
-  const [busy, setBusy] = useState<'save' | 'share' | null>(null);
+  const [busy, setBusy] = useState<'save' | 'share' | 'story' | 'copie' | null>(null);
+  /** 31 octobre 2026 (cartes v2) : l'autocollant vient d'etre copie */
+  const [copie, setCopie] = useState(false);
   const [saved, setSaved] = useState(false);
   const styleLu = useRef(!!initial);
 
@@ -73,6 +75,7 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
       return next;
     });
     setSaved(false);
+    setCopie(false);
   }, []);
 
   const choisirPhoto = useCallback(async (src: 'gallery' | 'camera') => {
@@ -131,6 +134,30 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
     }
   }, [busy, data, options.format]);
 
+  /** 31 octobre 2026 (cartes v2) : « Partager en story », la feuille du systeme avec l'image en PNG */
+  const partagerEnStory = useCallback(async (onErreur?: (titre: string, texte: string) => void) => {
+    if (busy || !data) return false;
+    setBusy('story');
+    try {
+      return await partagerStory(ref, options.format, data.moment, onErreur, data.exploit?.type);
+    } finally {
+      setBusy(null);
+    }
+  }, [busy, data, options.format]);
+
+  /** 31 octobre 2026 (cartes v2) : l'autocollant transparent copie, a coller dans ta story */
+  const copier = useCallback(async (onErreur?: (titre: string, texte: string) => void) => {
+    if (busy || !data) return false;
+    setBusy('copie');
+    try {
+      const ok = await copierAutocollant(ref, options.format, data.moment, onErreur);
+      setCopie(ok);
+      return ok;
+    } finally {
+      setBusy(null);
+    }
+  }, [busy, data, options.format]);
+
   /**
    * Interrupteur de la personne sur la carte (17 octobre 2026) : ton personnage, ou ta photo si elle est en fond.
    * Eteint (memorise) : ni personnage ni photo, seulement les chiffres, le titre et la signature.
@@ -149,5 +176,5 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
     else setStyle({ sansPersonne: false, epure: false, personnage: persoVoulu });
   }, [personne.visible, persoVoulu, setStyle]);
 
-  return { ref, options, visuels, visuelsPour, style, setStyle, chiffres, setChiffres, photo, photoEnCours, choisirPhoto, enleverPhoto, enregistrer, partager, busy, saved, aPersonnage: !!personnage, personne, basculerPersonne };
+  return { ref, options, visuels, visuelsPour, style, setStyle, chiffres, setChiffres, photo, photoEnCours, choisirPhoto, enleverPhoto, enregistrer, partager, partagerEnStory, copier, copie, busy, saved, aPersonnage: !!personnage, personne, basculerPersonne };
 }
