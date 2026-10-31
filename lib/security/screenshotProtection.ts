@@ -36,9 +36,12 @@ export const SENSITIVE_SCREENS = [
 /**
  * Configuration de la protection
  */
+// 31 octobre 2026 : blocage des captures retiré à la demande de Houari. Les gens veulent
+// pouvoir capturer leurs photos (avant/après, comparaison). On ne bloque plus et on ne
+// détecte plus les captures. Seul le flou dans le sélecteur d'apps reste actif.
 export const SCREENSHOT_PROTECTION_CONFIG = {
-  enabled: true, // Activer la protection globalement
-  preventScreenshots: Platform.OS === 'ios', // iOS supporte mieux la prévention
+  enabled: false, // Blocage et détection des captures coupés
+  preventScreenshots: false, // Plus jamais de preventScreenCaptureAsync
   blurOnBackground: true, // Flouter l'app en arrière-plan
   showWarning: true, // Afficher un avertissement si screenshot détecté
 };
@@ -208,7 +211,7 @@ export function useScreenshotProtection(enabled: boolean = true) {
   const [isProtected, setIsProtected] = useState(false);
 
   useEffect(() => {
-    if (!enabled || !ScreenCapture) return;
+    if (!enabled || !ScreenCapture || !SCREENSHOT_PROTECTION_CONFIG.enabled) return;
 
     let listener: any = null;
 
