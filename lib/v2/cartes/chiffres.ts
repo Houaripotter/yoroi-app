@@ -182,6 +182,41 @@ export function chiffresDisponibles(d: CarteData, masque: Masque = 'aucun'): Sta
     return out;
   }
 
+  // 31 octobre 2026 (bibliotheque) : ton mois, ton annee ; l'ordre suit ton sport principal
+  if ((d.moment === 'mois' || d.moment === 'annee') && d.periode) {
+    const p = d.periode;
+    const oa = p.objectifAnnee;
+    const objectif: StatValue | null =
+      p.type === 'annee'
+        ? oa && oa.total > 0
+          ? { key: 'objectif_periode', label: traduire('séances de l’objectif'), value: nombre(oa.fait, 0), unit: `/${oa.total}` }
+          : null
+        : p.parSemaine > 0 && p.semainesComptees > 0
+          ? { key: 'objectif_periode', label: p.semainesTenues > 1 ? traduire('semaines à l’objectif') : traduire('semaine à l’objectif'), value: String(p.semainesTenues), unit: `/${p.semainesComptees}` }
+          : null;
+    const top = p.sports.length >= 2 ? p.sports[0] : null;
+    const all: Partial<Record<StatKey, StatValue | null>> = {
+      seances: p.seances > 0 ? { key: 'seances', label: p.seances > 1 ? traduire('séances') : traduire('séance'), value: nombre(p.seances, 0) } : null,
+      temps_total: p.minutes > 0 ? { key: 'temps_total', label: traduire('d’entraînement'), ...duree(p.minutes) } : null,
+      objectif_periode: objectif,
+      distance: p.distanceKm >= 1 ? { key: 'distance', label: traduire('parcourus'), value: nombre(p.distanceKm, p.distanceKm >= 100 ? 0 : 1), unit: 'km' } : null,
+      charge:
+        p.tonnage >= 1
+          ? p.tonnage >= 1000
+            ? { key: 'charge', label: traduire('soulevées'), value: nombre(p.tonnage / 1000, p.tonnage >= 100000 ? 0 : 1), unit: 't' }
+            : { key: 'charge', label: traduire('soulevés'), value: nombre(p.tonnage, 0), unit: 'kg' }
+          : null,
+      rounds: p.rounds > 0 ? { key: 'rounds', label: p.rounds > 1 ? 'rounds' : 'round', value: nombre(p.rounds, 0) } : null,
+      jours_actifs: p.joursActifs > 0 ? { key: 'jours_actifs', label: p.joursActifs > 1 ? traduire('jours actifs') : traduire('jour actif'), value: String(p.joursActifs) } : null,
+      sport_top: top ? { key: 'sport_top', label: traduire('en {0}', top.nom.toLowerCase()), value: String(top.n) } : null,
+      serie_semaines: serieStat,
+    };
+    const fam = d.famille ?? 'autre';
+    const sport: StatKey[] = fam === 'muscu' ? ['charge', 'distance', 'rounds'] : fam === 'combat' ? ['rounds', 'distance', 'charge'] : ['distance', 'charge', 'rounds'];
+    for (const k of ['seances', 'temps_total', 'objectif_periode', ...sport, 'jours_actifs', 'sport_top', 'serie_semaines'] as StatKey[]) push(all[k] ?? null);
+    return out;
+  }
+
   if (d.moment === 'semaine' && d.semaine) {
     const w = d.semaine;
     const all: Partial<Record<StatKey, StatValue | null>> = {
@@ -264,6 +299,9 @@ export const NOMS_CHIFFRES: Record<StatKey, string> = {
   denivele: traduire('Dénivelé'),
   repetitions: traduire('Répétitions'),
   intensite: traduire('Intensité'),
+  jours_actifs: traduire('Jours actifs'),
+  objectif_periode: traduire('Objectif'),
+  sport_top: traduire('Sport principal'),
   exploit: 'Chiffre',
 };
 
