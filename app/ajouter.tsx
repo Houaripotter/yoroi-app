@@ -39,7 +39,7 @@ import { fmtClock } from '@/lib/v2/seance/format';
 import { loadDraft } from '@/lib/v2/seance/model';
 import type { SeanceDraft } from '@/lib/v2/seance/model';
 import { draftRoute, draftTitle } from '@/lib/v2/seance/resume';
-import { DEFAULT_SPORTS, seanceRoute, sportImage, sportShortName } from '@/lib/v2/seance/sportVisuals';
+import { DEFAULT_SPORTS, seanceRoute, sportShortName } from '@/lib/v2/seance/sportVisuals';
 import { mainSport, shortcutSports } from '@/lib/v2/seances/weekSummary';
 import { firstSport, sessionTitle } from '@/lib/v2/seances/sessionData';
 import { localISO } from '@/lib/v2/accueil/hydration';
@@ -56,8 +56,7 @@ import { routeDuCreneau } from '@/lib/v2/programmes/agenda';
 import { resumeDuJour, routeDuJour } from '@/lib/v2/programmes/lancer';
 import { chargerMesSeances } from '@/lib/v2/seance/mesSeances';
 import { LETTRES_JOURS, semaineDe } from '@/lib/v2/sante/anneauxJours';
-import { personnageImage } from '@/components/yoroi/v2/espace/assets';
-import { useIdentite } from '@/lib/v2/espace/useIdentite';
+import { usePersonnageUtilisateur } from '@/components/yoroi/v2/perso/usePersonnageUtilisateur';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { ecranSousLePlus, marquerPageOuverteDepuisLePlus, memoriserRetourAuPlus, oublierRetourAuPlus, parDessusLaFeuille, prendreFermetureDuPlus } from '@/lib/v2/nav/depuisLePlus';
@@ -149,8 +148,7 @@ export default function Ajouter() {
   ).current;
   // 24 octobre 2026 : seance du programme en cours (lib/v2/programmes)
   const [prog, setProg] = useState<{ route: { pathname: string; params: Record<string, string> }; titre: string; resume: string; semaine: JourSemaine[] } | null>(null);
-  const { armure } = useIdentite();
-  const [personnage, setPersonnage] = useState<string | null>(null);
+  const persoUtilisateur = usePersonnageUtilisateur();
   const illus = useIllustrations();
   // 25 octobre 2026 : tes seances enregistrees (lib/v2/seance/mesSeances.ts)
   const [mesNoms, setMesNoms] = useState<string[]>([]);
@@ -167,7 +165,6 @@ export default function Ajouter() {
         ]);
         setDraft(d);
         setFemme(espace?.personnage?.startsWith('guerrier_f') || profile?.avatar_gender === 'femme');
-        setPersonnage(espace?.personnage ?? null);
         const list = trainings ?? [];
         // sport principal : le premier favori, sinon le plus pratique
         setMain(mainSport(espace.sportsFavoris, list));
@@ -282,9 +279,10 @@ export default function Ajouter() {
     { key: 'competition', title: traduire('Compétition'), sub: traduire('ta prochaine date'), href: '/add-competition' },
   ];
 
-  const heroImg = sportImage(main, femme, 1);
-  // 27 octobre 2026 : ton personnage (celui de ton accueil), sinon l'illustration de ton sport principal
-  const perso = personnage ? personnageImage(personnage, armure?.rank.index ?? 0, femme ? 'f' : 'h') : heroImg;
+  // 27 octobre 2026 : ton personnage (celui de ton accueil).
+  // 31 octobre 2026 (Houari : « soit le personnage de l'utilisateur, soit rien ») : plus d'illustration de sport par
+  // défaut, et « Sans personnage » ne montre aucune figure ; le texte prend alors la largeur.
+  const perso = persoUtilisateur;
   const slotTitle = slot ? slot.slot.label || getSportName(slot.slot.sport) : '';
   const slotTime = slot?.slot.time ? traduire(" à {0}", slot.slot.time.slice(0, 5).replace(':', ' h ')) : '';
   const pastilles = favs.slice(0, 3);
@@ -490,7 +488,7 @@ function CarteDuJour({ label, titre, sous, bouton, semaine, onPress, image, larg
   return (
     <LinearGradient colors={[P.programmeFond, P.programmeFond2]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 26, padding: 16, overflow: 'hidden' }}>
       {image ? <Image source={image} style={{ position: 'absolute', right: -6, bottom: -20, width: 120, height: 150 }} resizeMode="contain" accessible={false} /> : null}
-      <View style={{ maxWidth: Math.min(220, largeur - 32 - 110) }}>
+      <View style={{ maxWidth: image ? Math.min(220, largeur - 32 - 110) : largeur - 32 }}>
         <Ink size={11} weight="black" color={P.etiquettePrune} style={{ letterSpacing: 1.6 }}>{label.toLocaleUpperCase()}</Ink>
         <Ink size={19} weight="black" style={{ marginTop: 6, lineHeight: 24 }} numberOfLines={2}>{titre}</Ink>
         <Ink size={12.5} weight="bold" color={P.ink2} style={{ marginTop: 4 }} numberOfLines={2}>{sous}</Ink>
