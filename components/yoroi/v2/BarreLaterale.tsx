@@ -6,9 +6,14 @@
  * 30 octobre 2026 (valide par Houari) : avec le reglage Illustrations sur Stickers, les onglets prennent les memes
  * stickers que sur iPhone (torii, musculation, bilan, kabuto) et Reglages l'engrenage, toujours en pleine couleur ;
  * l'onglet ouvert garde sa pilule pastel avec un sticker un peu plus grand. En Encre japonaise, les icones reviennent.
+ * 31 octobre 2026 (Houari : « mets-les sur les côtés », « stickers, pas d'icônes ») : toujours les stickers. De 700 a
+ * 1023 points (iPad en portrait, Split View), la barre compacte de 84 points : le +, les stickers des onglets, Reglages
+ * et ton rond de profil ; le nom de chaque onglet apparait au survol (Mac, trackpad de l'iPad) ou a l'appui long, et
+ * le sticker liste en haut deplie la barre large par dessus la page. A partir de 1024, la barre large, comme avant.
+ * Ancienne version : _archive_ancien_design_2026-10-09/grand_ecran_v2_2026-10-31/components/yoroi/v2/BarreLaterale.tsx
  */
-import React from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Image, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -19,22 +24,18 @@ import { Ink } from './Ink';
 import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
 import { RondProfil } from '@/components/yoroi/v2/accueil/Scene';
 import { useIdentite } from '@/lib/v2/espace/useIdentite';
-import { LARGEUR_BARRE_LATERALE } from '@/lib/v2/nav/grandEcran';
+import { LARGEUR_BARRE_COMPACTE, LARGEUR_BARRE_LATERALE } from '@/lib/v2/nav/grandEcran';
+import { useModeEcran } from '@/lib/v2/nav/useGrandEcran';
 import { traduire } from '@/lib/i18n/tr';
-import { STICKERS, useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+import { STICKERS, type NomSticker } from '@/components/yoroi/v2/stickers';
 
-const ICONS: Record<string, { label: string; d: string[]; join?: boolean; sticker: NomSticker }> = {
-  index: { label: 'Accueil', d: ['M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'], join: true, sticker: 'torii' },
-  seances: { label: 'Séances', d: ['M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11'], sticker: 'musculation' },
-  progres: { label: 'Progrès', d: ['M3 17l5-5 4 3 8-8', 'M15 7h5v5'], join: true, sticker: 'bilan' },
-  dojo: { label: 'Dojo', d: ['M3 6h18M5 9.5h14M7 6v15M17 6v15'], sticker: 'kabuto' },
+const ONGLETS: Record<string, { label: string; sticker: NomSticker }> = {
+  index: { label: 'Accueil', sticker: 'torii' },
+  seances: { label: 'Séances', sticker: 'musculation' },
+  progres: { label: 'Progrès', sticker: 'bilan' },
+  dojo: { label: 'Dojo', sticker: 'kabuto' },
 };
 const ORDRE = ['index', 'seances', 'progres', 'dojo'];
-/** la roue dentee de Reglages */
-const ROUE = [
-  'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
-  'M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
-];
 
 type Props = BottomTabBarProps & { onPressAdd: () => void };
 
@@ -44,35 +45,26 @@ function StickerOnglet({ nom, ouvert }: { nom: NomSticker; ouvert?: boolean }) {
   return <Image source={STICKERS[nom]} style={{ width: t, height: t, margin: (21 - t) / 2 }} resizeMode="contain" accessibilityIgnoresInvertColors />;
 }
 
-function Icone({ d, couleur, join }: { d: string[]; couleur: string; join?: boolean }) {
-  return (
-    <Svg width={21} height={21} viewBox="0 0 24 24" fill="none">
-      {d.map((p) => (
-        <Path key={p} d={p} stroke={couleur} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin={join ? 'round' : undefined} />
-      ))}
-    </Svg>
-  );
-}
-
-export function BarreLaterale({ state, navigation, onPressAdd }: Props) {
+/** La barre large (1024 points et plus, ou depliee par dessus la page) */
+function BarreLarge({ state, navigation, onPressAdd, onChoisi }: Props & { onChoisi?: () => void }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { profile, armure } = useIdentite();
   const prenom = profile?.name?.trim().split(' ')[0] || traduire('Athlète');
-  const illus = useIllustrations();
 
   const onglet = (name: string) => {
     const index = state.routes.findIndex((r) => r.name === name);
     if (index < 0) return null;
     const route = state.routes[index];
     const focused = state.index === index;
-    const icon = ICONS[name];
+    const icon = ONGLETS[name];
     const onPress = () => {
       selectionAsync().catch(() => {});
       const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
       if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
+      onChoisi?.();
     };
     return (
       <TourAnchor key={name} id={`onglet.${name}`} rayon="rond">
@@ -83,7 +75,7 @@ export function BarreLaterale({ state, navigation, onPressAdd }: Props) {
           accessibilityState={{ selected: focused }}
           style={({ pressed }) => [styles.ligne, focused ? { backgroundColor: c.primary } : pressed ? { backgroundColor: c.accentTint } : null]}
         >
-          {illus.stickers ? <StickerOnglet nom={icon.sticker} ouvert={focused} /> : <Icone d={icon.d} join={icon.join} couleur={focused ? c.onPrimary : c.textSecondary} />}
+          <StickerOnglet nom={icon.sticker} ouvert={focused} />
           <Ink size={15.5} weight={focused ? 'black' : 'extraBold'} color={focused ? c.onPrimary : c.textSecondary} numberOfLines={1}>
             {traduire(icon.label)}
           </Ink>
@@ -104,6 +96,7 @@ export function BarreLaterale({ state, navigation, onPressAdd }: Props) {
         <Pressable
           onPress={() => {
             impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+            onChoisi?.();
             onPressAdd();
           }}
           accessibilityRole="button"
@@ -128,13 +121,14 @@ export function BarreLaterale({ state, navigation, onPressAdd }: Props) {
       <Pressable
         onPress={() => {
           selectionAsync().catch(() => {});
+          onChoisi?.();
           router.push('/settings' as any);
         }}
         accessibilityRole="button"
         accessibilityLabel={traduire('Réglages')}
         style={({ pressed }) => [styles.ligne, pressed ? { backgroundColor: c.accentTint } : null]}
       >
-        {illus.stickers ? <StickerOnglet nom="engrenage" /> : <Icone d={ROUE} join couleur={c.textSecondary} />}
+        <StickerOnglet nom="engrenage" />
         <Ink size={15.5} weight="extraBold" color={c.textSecondary} numberOfLines={1}>
           {traduire('Réglages')}
         </Ink>
@@ -155,8 +149,139 @@ export function BarreLaterale({ state, navigation, onPressAdd }: Props) {
   );
 }
 
+/** Le nom d'un onglet de la barre compacte, au survol ou a l'appui long : une bulle a droite du sticker */
+function Bulle({ texte }: { texte: string }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  return (
+    <View pointerEvents="none" style={[styles.bulle, { backgroundColor: c.ink }]}>
+      <Ink size={13.5} weight="extraBold" color={c.background} numberOfLines={1}>
+        {texte}
+      </Ink>
+    </View>
+  );
+}
+
+/** Un bouton de la barre compacte : son sticker, sa pilule pastel quand il est ouvert, son nom en bulle */
+function Case({ nom, libelle, ouvert, onPress, enfant }: { nom?: NomSticker; libelle: string; ouvert?: boolean; onPress: () => void; enfant?: React.ReactNode }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const [bulle, setBulle] = useState(false);
+  return (
+    <View style={{ zIndex: bulle ? 30 : 1 }}>
+      <Pressable
+        onPress={() => {
+          setBulle(false);
+          onPress();
+        }}
+        onLongPress={() => setBulle(true)}
+        onPressOut={() => setTimeout(() => setBulle(false), 900)}
+        onHoverIn={() => setBulle(true)}
+        onHoverOut={() => setBulle(false)}
+        accessibilityRole={ouvert === undefined ? 'button' : 'tab'}
+        accessibilityLabel={libelle}
+        accessibilityState={ouvert === undefined ? undefined : { selected: ouvert }}
+        style={({ pressed }) => [styles.case, ouvert ? { backgroundColor: c.primary } : pressed || bulle ? { backgroundColor: c.accentTint } : null]}
+      >
+        {enfant ?? (nom ? <Image source={STICKERS[nom]} style={{ width: ouvert ? 34 : 30, height: ouvert ? 34 : 30 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null)}
+      </Pressable>
+      {bulle ? <Bulle texte={libelle} /> : null}
+    </View>
+  );
+}
+
+/** La barre compacte (700 a 1023 points) : les stickers seuls */
+function BarreCompacte({ state, navigation, onPressAdd, onDeplier }: Props & { onDeplier: () => void }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { profile, armure } = useIdentite();
+  const prenom = profile?.name?.trim().split(' ')[0] || traduire('Athlète');
+  return (
+    <TourAnchor id="onglet.barre" style={[styles.compacte, { backgroundColor: c.surface, borderRightColor: c.border, paddingTop: insets.top + 18, paddingBottom: insets.bottom + 16 }]}>
+      <Case nom="liste" libelle={traduire('Ouvrir le menu')} onPress={() => { selectionAsync().catch(() => {}); onDeplier(); }} />
+      <TourAnchor id="onglet.plus" rayon="rond">
+        <Case
+          libelle={traduire('Enregistrer')}
+          onPress={() => {
+            impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+            onPressAdd();
+          }}
+          enfant={
+            <View style={[styles.plusRond, { backgroundColor: c.accent, shadowColor: c.accent }]}>
+              <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+                <Path d="M12 5v14M5 12h14" stroke={c.onAccent} strokeWidth={3} strokeLinecap="round" />
+              </Svg>
+            </View>
+          }
+        />
+      </TourAnchor>
+      <View style={{ gap: 8, marginTop: 6 }} accessibilityRole="tablist">
+        {ORDRE.map((name) => {
+          const index = state.routes.findIndex((r) => r.name === name);
+          if (index < 0) return null;
+          const route = state.routes[index];
+          const focused = state.index === index;
+          return (
+            <TourAnchor key={name} id={`onglet.${name}`} rayon={20}>
+              <Case
+                nom={ONGLETS[name].sticker}
+                libelle={traduire(ONGLETS[name].label)}
+                ouvert={focused}
+                onPress={() => {
+                  selectionAsync().catch(() => {});
+                  const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+                  if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
+                }}
+              />
+            </TourAnchor>
+          );
+        })}
+      </View>
+      <View style={[styles.separation, { backgroundColor: c.border, width: 40, alignSelf: 'center', marginHorizontal: 0 }]} />
+      <Case nom="engrenage" libelle={traduire('Réglages')} onPress={() => { selectionAsync().catch(() => {}); router.push('/settings' as any); }} />
+      <View style={{ marginTop: 'auto', alignItems: 'center' }} accessible accessibilityLabel={prenom}>
+        <RondProfil photo={null} personnage="" rankIndex={Math.max(0, Math.min(4, armure?.rank.index ?? 0))} nom={prenom} taille={44} />
+      </View>
+    </TourAnchor>
+  );
+}
+
+/**
+ * La barre laterale du grand ecran : compacte de 700 a 1023 points (depliable par dessus la page), large ensuite.
+ * La fenetre qui change (rotation de l'iPad, Split View, fenetre du Mac) la fait passer de l'une a l'autre en direct.
+ */
+export function BarreLaterale(props: Props) {
+  const mode = useModeEcran();
+  const [depliee, setDepliee] = useState(false);
+  useEffect(() => {
+    if (mode !== 'compact') setDepliee(false);
+  }, [mode]);
+  if (mode !== 'compact') return <BarreLarge {...props} />;
+  const fermer = () => setDepliee(false);
+  return (
+    <>
+      <BarreCompacte {...props} onDeplier={() => setDepliee(true)} />
+      <Modal visible={depliee} transparent animationType="fade" onRequestClose={fermer} supportedOrientations={['portrait', 'landscape']}>
+        <View style={{ flex: 1, flexDirection: 'row' }}>
+          <View style={styles.ombreDepliee}>
+            <BarreLarge {...props} onChoisi={fermer} />
+          </View>
+          <Pressable onPress={fermer} accessibilityRole="button" accessibilityLabel={traduire('Fermer le menu')} style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.32)' }} />
+        </View>
+      </Modal>
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
   barre: { width: LARGEUR_BARRE_LATERALE, height: '100%', borderRightWidth: 1, paddingHorizontal: 16, gap: 6 },
+  compacte: { width: LARGEUR_BARRE_COMPACTE, height: '100%', borderRightWidth: 1, alignItems: 'center', gap: 8, zIndex: 20, overflow: 'visible' },
+  case: { width: 58, height: 58, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  plusRond: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center', shadowOpacity: 0.28, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
+  bulle: { position: 'absolute', left: 66, top: 15, height: 30, paddingHorizontal: 12, borderRadius: 15, justifyContent: 'center', zIndex: 40, shadowColor: '#1B2A44', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
+  ombreDepliee: { height: '100%', shadowColor: '#1B2A44', shadowOpacity: 0.22, shadowRadius: 30, shadowOffset: { width: 8, height: 0 }, elevation: 12 },
   marque: { paddingHorizontal: 10, paddingTop: 4, paddingBottom: 18 },
   plus: {
     height: 52,
