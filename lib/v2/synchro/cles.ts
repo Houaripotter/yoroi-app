@@ -158,6 +158,8 @@ export const CLES_ELEMENTS: readonly SpecCle[] = [
   },
   // interrupteur du minuteur de repos (lib/v2/seances/minuteurRepos.ts) : '0' ou '1'
   { cle: 'yoroi_minuteur_repos_v1', type: 'reglages', forme: 'valeur' },
+  // 31 octobre 2026 : interrupteur Sonnerie de fin de repos (lib/v2/seances/alarmeRepos.ts) : '0' ou '1'
+  { cle: 'yoroi_sonnerie_fin_repos_v1', type: 'reglages', forme: 'valeur' },
 ];
 
 /**
