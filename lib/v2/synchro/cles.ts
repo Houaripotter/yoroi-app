@@ -144,6 +144,9 @@ export const CLES_ELEMENTS: readonly SpecCle[] = [
   // Revue du 30 octobre 2026 : les reglages de la seance en direct, jusque la gardes sur un seul appareil
   // cran de la machine ou de la poulie, par exercice (lib/v2/seances/reglagesMachine.ts) : champ par champ
   { cle: 'yoroi_reglages_machine_v1', type: 'reglages', forme: 'objet' },
+  // 31 octobre 2026 : le cardio de fin de seance choisi par jour du programme, et ta derniere pente et vitesse (lib/v2/seances/cardioChoix.ts)
+  { cle: 'yoroi_cardio_choix_v1', type: 'programmes', forme: 'objet' },
+  { cle: 'yoroi_cardio_reglages_v1', type: 'reglages', forme: 'objet' },
   // exercices ecartes (lib/v2/seances/exercicesEcartes.ts) : un par nom, « Remettre » laisse une pierre tombale
   {
     cle: 'yoroi_exercices_ecartes_v1', type: 'programmes', forme: 'liste', idChamp: 'nom',
