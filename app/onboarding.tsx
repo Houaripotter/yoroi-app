@@ -662,12 +662,20 @@ export default function OnboardingScreen() {
     await clearDraft();
   };
 
+  // 30 octobre 2026 (Houari : « le gong du paywall dure trop longtemps ») : gong.mp3 resonne 54 s et passait sous
+  // Ton plan et le paywall. Il s'arrete a 3 s avec un fondu de 400 ms ; l'ecran ferme avant, le son et le minuteur partent.
+  const arretGong = useRef<(() => void) | null>(null);
   const playGong = async () => {
     try {
       await soundManager.initialize();
-      soundManager.playGong();
+      arretGong.current?.();
+      arretGong.current = soundManager.playGongCourt();
     } catch {}
   };
+  useEffect(() => () => {
+    arretGong.current?.();
+    arretGong.current = null;
+  }, []);
 
   // ===== Fin =====
   const finish = (how: 'free' | 'premium') => {
