@@ -20,7 +20,7 @@ import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
 import { Icon as EIcon } from '@/components/yoroi/v2/espace/ui';
 import { Chip, Sheet } from '@/components/yoroi/v2/seances/ui';
 import { DoneBlock, NumberedSteps, SummaryHero } from '@/components/yoroi/v2/partage/importKit';
-import { SPORT_ILLUS } from '@/components/yoroi/v2/espace/assets';
+import { STICKERS } from '@/components/yoroi/v2/stickers';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
@@ -127,8 +127,9 @@ export default function ImportWorkoutsScreen() {
           <Enter i={0}>
             <View style={{ borderRadius: 28, overflow: 'hidden', backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, height: 170 }}>
               <View style={{ position: 'absolute', right: -6, bottom: 0, flexDirection: 'row' }}>
-                {SPORT_ILLUS.filter((s) => s.id === 'running' || s.id === 'fitness').map((s) => (
-                  <Image key={s.id} source={s.h} style={{ width: 104, height: 150, marginLeft: -24 }} resizeMode="contain" />
+                {/* 31 octobre 2026 (Houari) : des stickers d'objets, plus de personnages dessinés par défaut */}
+                {(['course', 'musculation'] as const).map((n) => (
+                  <Image key={n} source={STICKERS[n]} style={{ width: 84, height: 84, marginLeft: -14, marginBottom: 18 }} resizeMode="contain" />
                 ))}
               </View>
               <View style={{ padding: 16, gap: 10, maxWidth: '60%' }}>
