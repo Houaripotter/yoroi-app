@@ -8,6 +8,7 @@ import type { DonneesSeance } from './types';
 import { exercisesOf, workSetsOf } from '@/lib/v2/trainingWeek';
 import type { ExerciseLike } from '@/lib/v2/trainingWeek';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
+import { parseRounds } from '@/lib/v2/combat/rounds';
 
 /** Ce qu'il faut d'une seance enregistree (sous-ensemble de Training) */
 export type SeanceSource = {
@@ -15,6 +16,8 @@ export type SeanceSource = {
   exercises?: unknown;
   technical_theme?: string | null;
   intensity?: number | null;
+  /** rounds de combat saisis (tableau ou texte JSON) : soumissions placees */
+  combat_rounds?: unknown;
 };
 
 type Details = {
@@ -24,7 +27,7 @@ type Details = {
   heartRateSamples?: { bpm?: number }[];
 };
 
-export type VisuelsSeance = Pick<DonneesSeance, 'trace' | 'splits' | 'deniveleM' | 'repetitions' | 'meilleures' | 'barres' | 'courbeFc' | 'techniques' | 'intensite'>;
+export type VisuelsSeance = Pick<DonneesSeance, 'trace' | 'splits' | 'deniveleM' | 'repetitions' | 'meilleures' | 'barres' | 'courbeFc' | 'techniques' | 'intensite' | 'soumissions'>;
 
 /** Au moins 10 vrais points GPS sur plus de 30 metres : sinon pas de trace */
 export const MIN_POINTS_TRACE = 10;
@@ -131,5 +134,19 @@ export function visuelsDeSeance(t: SeanceSource): VisuelsSeance {
     courbeFc: fc.length >= 10 ? echantillonner(fc, 60) : null,
     techniques: techniquesDe(t.technical_theme),
     intensite: Number.isFinite(int) && int >= 1 && int <= 10 ? Math.round(int) : 0,
+    soumissions: soumissionsDe(t.combat_rounds),
   };
+}
+
+/**
+ * 31 octobre 2026 : les soumissions placees dans les rounds saisis (liste des finitions donnees, sinon le nombre saisi).
+ * Une victoire aux points ne compte pas : seulement ce qui est saisi comme soumission. 0 sans saisie.
+ */
+export function soumissionsDe(raw: unknown): number {
+  return parseRounds(raw).reduce((n, r) => {
+    const liste = Array.isArray(r.methodsGiven) ? r.methodsGiven.filter((x) => typeof x === 'string' && x.trim()) : [];
+    if (liste.length) return n + liste.length;
+    const k = Number(r.submissionsGiven);
+    return n + (Number.isFinite(k) && k > 0 ? Math.round(k) : 0);
+  }, 0);
 }
