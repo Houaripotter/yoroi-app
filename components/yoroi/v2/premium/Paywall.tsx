@@ -142,10 +142,14 @@ type Celebrate = { trialEnd: Date | null; restored: boolean };
 const shogun = (g: 'h' | 'f') => GUERRIER_IMAGES[g === 'f' ? 'f' : 'h'][4];
 
 /** Vague 45 : l'illustration Premium suit l'univers choisi. Classique : le Champion ; Sans personnage : aucune figure. */
+// 31 octobre 2026 (Houari : « soit le personnage de l'utilisateur, soit rien ») : un personnage d'un pack montre ce
+// personnage (avant : le Shogun) ; rien de lu, aucune figure
 const heroPremium = (personnage: string | null | undefined, g: 'h' | 'f') => {
-  const k = personnage ? parsePersonnage(personnage).kind : 'guerrier';
-  if (k === 'aucun') return null;
-  if (k === 'classique') return CLASSIQUE_IMAGES[g === 'f' ? 'f' : 'h'][4];
+  if (!personnage) return null;
+  const p = parsePersonnage(personnage);
+  if (p.kind === 'aucun') return null;
+  if (p.kind === 'classique') return CLASSIQUE_IMAGES[g === 'f' ? 'f' : 'h'][4];
+  if (p.kind === 'pack') return packImage(p.pack, p.gender, 3, p.teinte ?? null);
   return shogun(g);
 };
 
