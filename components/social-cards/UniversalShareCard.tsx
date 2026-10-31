@@ -6,6 +6,7 @@
 // ============================================
 
 import React, { useMemo } from 'react';
+import { libelleKilos } from '@/lib/v2/seances/kilosSouleves';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Training } from '@/lib/database';
@@ -187,7 +188,7 @@ export const UniversalShareCard = React.memo(
         if (ton > 0) {
           return {
             heroNum: ton >= 1000 ? `${(ton / 1000).toFixed(1)}T` : `${Math.round(ton)}kg`,
-            heroSub: 'TONNAGE', badge: null,
+            heroSub: libelleKilos().toLocaleUpperCase(), badge: null,
             stats: [
               { v: fmtDur(training.duration_minutes ?? training.duration), l: 'DURÉE' },
               exs.length > 0     ? { v: String(exs.length),          l: 'EXERCICES' } : null,
