@@ -25,6 +25,8 @@ import { SynchroMontre } from '@/lib/v2/montre/SynchroMontre';
 // 30 octobre 2026 : synchro automatique entre tes appareils appaires, app au premier plan (lib/v2/synchro/auto.ts)
 import { SynchroAuto } from '@/components/yoroi/v2/synchro/SynchroAuto';
 import { LiensWidgets } from '@/lib/v2/widgets/LiensWidgets';
+// 31 octobre 2026 : instantane des grands widgets iPad et Mac (lib/v2/widgetsGrands)
+import { SynchroGrands } from '@/lib/v2/widgetsGrands/SynchroGrands';
 import { AnnulerSuppression } from '@/components/yoroi/v2/seances/AnnulerSuppression';
 import { AvatarProvider } from '@/lib/AvatarContext';
 import { CreatorGuard } from '@/components/yoroi/v2/studio/CreatorGuard';
@@ -722,6 +724,7 @@ export default function RootLayout() {
                   <AvatarProvider>
                     <BadgeProvider>
                       <SynchroMontre />
+                      <SynchroGrands />
                       <SynchroAuto />
                       <RootLayoutContent />
                     </BadgeProvider>
