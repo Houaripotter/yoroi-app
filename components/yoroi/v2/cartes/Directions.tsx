@@ -5,6 +5,9 @@
  * en Publication et en Carre, la zone utile est resserree (le haut et le bas de la story laissent la place
  * aux barres d'Instagram) et tout est reduit d'autant, le fond restant en plein cadre.
  * Les chiffres viennent de la vraie seance : une donnee absente masque son bloc.
+ * 31 octobre 2026 (cartes ou l'on voit ta tete) : avec ta photo, le visage reste libre (du haut a 55 % de la hauteur,
+ * au centre) ; un petit titre ou sticker dans le coin du haut, les chiffres en bloc compact en bas, un leger degrade
+ * sombre en bas pour les lire. Le bloc se deplace et se redimensionne au doigt dans l'atelier (voir lib/v2/cartes/zoneVisage.ts).
  */
 import React from 'react';
 import { Image, Platform, Text, View } from 'react-native';
@@ -25,6 +28,8 @@ import { STICKERS } from '@/components/yoroi/v2/stickers';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { traduire } from '@/lib/i18n/tr';
 import { BADGES } from './fonds';
+import { blocDeCarte, centre, coinDeCarte, echelleBloc, pivotParDefaut, transformBloc, zoneVisageActive } from '@/lib/v2/cartes/zoneVisage';
+import type { Placement, Rect as Boite } from '@/lib/v2/cartes/zoneVisage';
 
 const LOGO = require('@/assets/logo d\'app/yoroi-logo2.png');
 const BLANC = '#FFFFFF';
@@ -56,6 +61,8 @@ export type CtxDirection = {
   transparent: boolean;
   personnage: ImageSourcePropType | null;
   u: UnitePoids;
+  /** le bloc des chiffres deplace au doigt dans l'atelier ; null : a sa place */
+  placement?: Placement | null;
 };
 
 type Geo = { X: (px: number) => number; Y: (px: number) => number; S: (px: number) => number; bas: (px: number) => number; r: number };
@@ -159,6 +166,48 @@ function encre(c: CtxDirection): string {
   return c.photo || c.transparent ? BLANC : c.coul.encre;
 }
 
+/** Vrai quand la carte garde le visage libre : ta photo en plein cadre derriere les chiffres */
+function visage(c: CtxDirection, id: DirectionId): boolean {
+  return zoneVisageActive(id, !!c.photo, c.transparent);
+}
+
+/** Le leger degrade sombre du bas, pour lire les chiffres : il commence sous le visage */
+function DegradeBas({ c, fort }: { c: CtxDirection; fort?: boolean }) {
+  if (!c.photo || c.transparent) return null;
+  return <LinearGradient pointerEvents="none" colors={['rgba(0,0,0,0)', `rgba(0,0,0,${fort ? 0.4 : 0.26})`, `rgba(0,0,0,${fort ? 0.78 : 0.66})`]} locations={[0.5, 0.66, 1]} style={plein} />;
+}
+
+/**
+ * Le bloc des chiffres : deplace et grossi autour de son centre (pivot) quand tu l'as bouge dans l'atelier.
+ * Une vue plein cadre porte la transformation : la capture de la carte la garde.
+ */
+function Bloc({ c, pivot, children }: { c: CtxDirection; pivot?: { x: number; y: number }; children: React.ReactNode }) {
+  const t = transformBloc(c.placement, pivot ?? pivotParDefaut(c.W, c.H), c.W, c.H);
+  if (!t) return <>{children}</>;
+  return (
+    <View pointerEvents="box-none" style={[plein, { transform: [{ translateX: t.tx }, { translateY: t.ty }, { scale: t.s }] }]}>
+      {children}
+    </View>
+  );
+}
+
+/** La boite du bloc du bas, en points de la carte : le contenu se pose en bas */
+function boiteBloc(b: Boite, extra?: ViewStyle): ViewStyle {
+  return { position: 'absolute', left: b.x, top: b.y, width: b.w, height: b.h, justifyContent: 'flex-end', ...(extra ?? {}) };
+}
+
+/** Le petit titre du coin du haut : le logo et une ligne courte, rien d'autre dans la zone du visage */
+function CoinTitre({ c, titre, logo = true }: { c: CtxDirection; titre: string; logo?: boolean }) {
+  const co = coinDeCarte(c.format, c.W, c.H);
+  const t = Math.min(11, co.h * 0.36);
+  return (
+    <View style={{ position: 'absolute', left: co.x, top: co.y, width: co.w, height: co.h, flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+      {logo ? <Image source={LOGO} style={{ width: t * 2, height: t * 2, borderRadius: t * 0.48 }} /> : null}
+      <Tx t={titre} size={t} color={BLANC} ls={t * 0.14} maj ombre lines={2} lh={1.12} style={{ flexShrink: 1, marginTop: t * 0.06 }} />
+    </View>
+  );
+}
+
 function Sticker({ src, x, y, w, rot = 0 }: { src: ImageSourcePropType; x: number; y: number; w: number; rot?: number }) {
   return <Image source={src} style={{ position: 'absolute', left: x, top: y, width: w, height: w, transform: [{ rotate: `${rot}deg` }] }} resizeMode="contain" />;
 }
@@ -204,7 +253,52 @@ function teinteSport(d: CarteData): 'course' | 'muscu' | 'combat' {
 // 01 AUTOCOLLANT NET
 // ============================================
 
+/** 01 avec ta photo : le titre au coin, le chiffre et 3 stats en bloc compact sous le visage */
+function NetPhoto(c: CtxDirection) {
+  const g = geo(c.format, c.W);
+  const b = blocDeCarte(c.format, c.W, c.H);
+  const k = echelleBloc(b);
+  const ink = BLANC;
+  const trace = c.d.seance?.trace;
+  const h = c.hero;
+  const larg = b.w - (trace ? 70 * k : 0);
+  const st = c.stats.slice(0, 3);
+  const col = (b.w - 14 * k) / Math.max(1, st.length);
+  return (
+    <>
+      <FondPhoto c={c} />
+      <DegradeBas c={c} />
+      <CoinTitre c={c} titre={c.titre} />
+      <Bloc c={c} pivot={centre(b)}>
+        <View style={boiteBloc(b)}>
+          {h ? (
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+              <View style={{ flexShrink: 1 }}>
+                <Tx t={court(h.label)} size={9 * k} f="extraBold" color={ink} ls={1.8 * k} ombre />
+                <Chiffre v={h.value} u={h.unit} size={tailleChiffre(h.value, h.unit, larg, 76 * k, 'cond', 0.26)} usize={21 * k} color={ink} ombre lh={0.94} />
+              </View>
+              {trace ? <View style={{ width: 62 * k, height: 58 * k }}><Trace pts={trace.points} couleur={ink} epais={0.035} /></View> : null}
+            </View>
+          ) : null}
+          {st.length ? (
+            <View style={{ flexDirection: 'row', marginTop: 7 * k, borderTopWidth: 1, borderColor: rgba(ink, 0.9), paddingTop: 6 * k }}>
+              {st.map((x, i) => (
+                <View key={x.key + i} style={{ flex: 1, paddingLeft: i ? 7 * k : 0, borderLeftWidth: i ? 1 : 0, borderColor: rgba(ink, 0.9) }}>
+                  <Tx t={court(x.label)} size={7.4 * k} f="extraBold" color={ink} ls={1.4 * k} ombre />
+                  <Chiffre v={x.value} u={x.unit} size={tailleChiffre(x.value, x.unit, col - 8 * k, 30 * k, 'cond', 0.31)} usize={10 * k} uf="extraBold" color={ink} ombre />
+                </View>
+              ))}
+            </View>
+          ) : null}
+        </View>
+      </Bloc>
+      <Pied g={g} ink={ink} mode="badges" />
+    </>
+  );
+}
+
 function Net(c: CtxDirection) {
+  if (visage(c, 'net')) return NetPhoto(c);
   const g = geo(c.format, c.W);
   const ink = encre(c);
   const ombre = !!c.photo || c.transparent;
@@ -215,6 +309,7 @@ function Net(c: CtxDirection) {
   return (
     <>
       <FondPhoto c={c} />
+      <Bloc c={c}>
       <View style={{ position: 'absolute', left: g.X(72), right: g.X(72), top: g.Y(1010) }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: g.S(14) }}>
           <Image source={LOGO} style={{ width: g.S(54), height: g.S(54), borderRadius: g.S(13) }} />
@@ -244,6 +339,7 @@ function Net(c: CtxDirection) {
           </View>
         ) : null}
       </View>
+      </Bloc>
       <Pied g={g} ink={ink} mode="badges" />
     </>
   );
@@ -302,7 +398,44 @@ function TexteChrome({ t, size, w, id }: { t: string; size: number; w: number; i
   );
 }
 
+/** 02 avec ta photo : le chiffre chrome plus petit en bas, les stats en verre depoli dessous */
+function ChromePhoto(c: CtxDirection) {
+  const g = geo(c.format, c.W);
+  const b = blocDeCarte(c.format, c.W, c.H);
+  const k = echelleBloc(b);
+  const h = c.hero;
+  const val = h ? `${h.value}${h.unit ? ` ${h.unit.toUpperCase()}` : ''}` : '';
+  const size = Math.min(72 * k, (b.w * 0.94) / Math.max(1, val.length * 0.45));
+  const st = c.stats.slice(0, 3);
+  return (
+    <>
+      <FondPhoto c={c} />
+      <DegradeBas c={c} />
+      <CoinTitre c={c} titre={c.titre} />
+      <Bloc c={c} pivot={centre(b)}>
+        <View style={boiteBloc(b, { alignItems: 'center' })}>
+          {h ? <TexteChrome t={val} size={size} w={b.w} id="vp" /> : null}
+          <Tx t={h?.label ? traduire(h.label) : c.titre} size={8.6 * k} f="extraBold" color={BLANC} ls={1.8 * k} maj ombre align="center" style={{ marginTop: 2 * k, maxWidth: b.w }} />
+          {st.length ? (
+            <View style={{ flexDirection: 'row', gap: 6 * k, marginTop: 8 * k }}>
+              {st.map((x, i) => (
+                <View key={x.key + i} style={{ width: (b.w - 12 * k) / 3, paddingVertical: 6 * k, paddingHorizontal: 6 * k, borderRadius: 9 * k, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.55)', alignItems: 'center' }}>
+                  <LinearGradient colors={['rgba(255,255,255,0.26)', 'rgba(255,255,255,0.08)']} style={plein} />
+                  <Tx t={court(x.label)} size={7 * k} f="extraBold" color={BLANC} ls={1.4 * k} style={{ opacity: 0.92 }} ombre />
+                  <Chiffre v={x.value} u={x.unit} size={tailleChiffre(x.value, x.unit, (b.w - 12 * k) / 3 - 14 * k, 21 * k, 'black', 0.44)} f="black" usize={9 * k} uf="extraBold" color={BLANC} ombre />
+                </View>
+              ))}
+            </View>
+          ) : null}
+        </View>
+      </Bloc>
+      <Pied g={g} ink={BLANC} mode="badges" />
+    </>
+  );
+}
+
 function Chrome(c: CtxDirection) {
+  if (visage(c, 'chrome')) return ChromePhoto(c);
   const g = geo(c.format, c.W);
   const h = c.hero;
   const ombre = true;
@@ -311,6 +444,7 @@ function Chrome(c: CtxDirection) {
   return (
     <>
       <FondPhoto c={c} />
+      <Bloc c={c} pivot={{ x: c.W / 2, y: g.Y(900) }}>
       <View style={{ position: 'absolute', left: 0, right: 0, top: g.Y(560), alignItems: 'center' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: g.S(16) }}>
           <Image source={LOGO} style={{ width: g.S(58), height: g.S(58), borderRadius: g.S(14), borderWidth: Math.max(1, g.S(3)), borderColor: '#dfe6ee' }} />
@@ -332,6 +466,7 @@ function Chrome(c: CtxDirection) {
           </View>
         ) : null}
       </View>
+      </Bloc>
       <Pied g={g} ink={BLANC} mode="badges" />
     </>
   );
@@ -350,7 +485,7 @@ const COULEURS_STICKERS = {
 const encreSur = (x: string) => (x === '#FFD60A' ? '#111111' : BLANC);
 
 /** Le titre en lettres de sticker : epais contour blanc (SVG), sur deux lignes au plus */
-function TitreSticker({ t, w, size, couleur, contour }: { t: string; w: number; size: number; couleur: string; contour: number }) {
+function TitreSticker({ t, w, size, couleur, contour, uneLigne }: { t: string; w: number; size: number; couleur: string; contour: number; uneLigne?: boolean }) {
   const mots = t.toUpperCase().split(/\s+/).filter(Boolean);
   const lignes: string[] = [];
   for (const m of mots) {
@@ -358,7 +493,7 @@ function TitreSticker({ t, w, size, couleur, contour }: { t: string; w: number; 
     if (der && (der.length + 1 + m.length) * 0.56 * size <= w && lignes.length) lignes[lignes.length - 1] = `${der} ${m}`;
     else lignes.push(m);
   }
-  const l2 = lignes.length > 2 ? [lignes[0], lignes.slice(1).join(' ')] : lignes;
+  const l2 = uneLigne ? [lignes.join(' ')] : lignes.length > 2 ? [lignes[0], lignes.slice(1).join(' ')] : lignes;
   const plusLong = Math.max(...l2.map((x) => x.length));
   const fs = Math.min(size, (w - contour) / Math.max(1, plusLong * 0.56));
   const lh = fs * 0.88;
@@ -385,7 +520,69 @@ function PastilleSticker({ s, bg, x, y, rot, size, g }: { s: { l: string; v: str
   );
 }
 
+/** Une pastille de la planche compacte (avec ta photo) : posee dans le flux, pas en absolu */
+function PastillePetite({ s, bg, rot, k, maxW }: { s: { l: string; v: string; u?: string }; bg: string; rot: number; k: number; maxW: number }) {
+  const ink = encreSur(bg);
+  return (
+    <View style={{ maxWidth: maxW, flexShrink: 1, transform: [{ rotate: `${rot}deg` }], paddingTop: 4 * k, paddingBottom: 5 * k, paddingHorizontal: 11 * k, borderRadius: 999, borderWidth: 3.2 * k, borderColor: BLANC, backgroundColor: bg, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 5 * k, shadowOffset: { width: 0, height: 3 * k }, elevation: 4 }}>
+      <Tx t={s.l} size={6.4 * k} color={ink} ls={1.3 * k} maj style={{ opacity: 0.9 }} />
+      <Chiffre v={s.v} u={s.u} f="black" size={tailleChiffre(s.v, s.u, Math.min(90 * k, maxW - 29 * k), 19 * k, 'black', 0.42)} uf="black" color={ink} lh={1.05} />
+    </View>
+  );
+}
+
+/** 03 avec ta photo : un sticker au coin du haut, la planche compacte en bas (titre, chiffre, pastilles) */
+function StickersPhoto(c: CtxDirection) {
+  const g = geo(c.format, c.W);
+  const b = blocDeCarte(c.format, c.W, c.H);
+  const co = coinDeCarte(c.format, c.W, c.H);
+  const k = echelleBloc(b);
+  const col = COULEURS_STICKERS[teinteSport(c.d)];
+  const h = c.hero;
+  const [s1, s2, s3] = c.stats;
+  const signature = c.record ? { l: traduire('Record battu'), v: c.record.court } : s3 ? { l: court(s3.label), v: valeurTexte(s3) } : null;
+  const ombre = { shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 7 * k, shadowOffset: { width: 0, height: 4 * k } } as const;
+  return (
+    <>
+      <FondPhoto c={c} />
+      <DegradeBas c={c} />
+      <Sticker src={STICKERS[stickerDeCarte(c.d)]} x={co.x} y={co.y} w={Math.min(co.h, co.w)} rot={-10} />
+      <Bloc c={c} pivot={centre(b)}>
+        <View style={boiteBloc(b)}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={[{ transform: [{ rotate: '-3deg' }] }, ombre]}>
+              <TitreSticker t={c.titre} w={b.w * 0.64} size={30 * k} couleur={col[0]} contour={7 * k} uneLigne />
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 * k, paddingVertical: 3.5 * k, paddingLeft: 3.5 * k, paddingRight: 8 * k, backgroundColor: '#111111', borderWidth: 2.8 * k, borderColor: BLANC, borderRadius: 999, transform: [{ rotate: '-6deg' }] }}>
+              <Image source={LOGO} style={{ width: 20 * k, height: 20 * k, borderRadius: 10 * k }} />
+              <Tx t="YOROI" size={11.5 * k} color={BLANC} ls={1.6 * k} />
+            </View>
+          </View>
+          {h ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 * k }}>
+              <View style={[{ transform: [{ rotate: '-3deg' }], paddingTop: 6 * k, paddingBottom: 7 * k, paddingHorizontal: 13 * k, backgroundColor: BLANC, borderRadius: 13 * k, elevation: 8 }, ombre]}>
+                <Tx t={court(h.label)} size={8 * k} color={col[0] === '#FFD60A' ? '#111111' : col[0]} ls={1.6 * k} />
+                <Chiffre v={h.value} u={h.unit} size={tailleChiffre(h.value, h.unit, b.w * 0.58, 52 * k, 'cond', 0.3)} usize={17 * k} color="#111111" lh={0.95} />
+              </View>
+              {c.record ? <Image source={STICKERS.trophee} style={{ width: 42 * k, height: 42 * k, marginLeft: 8 * k, transform: [{ rotate: '14deg' }] }} resizeMode="contain" /> : null}
+              <Image source={STICKERS.flamme} style={{ width: 36 * k, height: 36 * k, marginLeft: 4 * k, transform: [{ rotate: '12deg' }] }} resizeMode="contain" />
+            </View>
+          ) : null}
+          {/* une seule rangee de pastilles : la planche ne remonte jamais vers le visage */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 * k, marginTop: 6 * k }}>
+            {s1 ? <PastillePetite s={{ l: court(s1.label), v: s1.value, u: s1.unit }} bg={col[1]} rot={-4} k={k} maxW={(b.w - 10 * k) / 3} /> : null}
+            {s2 ? <PastillePetite s={{ l: court(s2.label), v: s2.value, u: s2.unit }} bg={col[2]} rot={3} k={k} maxW={(b.w - 10 * k) / 3} /> : null}
+            {signature ? <PastillePetite s={signature} bg="#111111" rot={-2} k={k} maxW={(b.w - 10 * k) / 3} /> : null}
+          </View>
+        </View>
+      </Bloc>
+      <Pied g={g} ink={BLANC} mode="badges" />
+    </>
+  );
+}
+
 function Stickers(c: CtxDirection) {
+  if (visage(c, 'stickers')) return StickersPhoto(c);
   const g = geo(c.format, c.W);
   const col = COULEURS_STICKERS[teinteSport(c.d)];
   const h = c.hero;
@@ -394,6 +591,7 @@ function Stickers(c: CtxDirection) {
   return (
     <>
       <FondPhoto c={c} />
+      <Bloc c={c} pivot={{ x: c.W / 2, y: g.Y(1100) }}>
       <Sticker src={STICKERS[stickerDeCarte(c.d)]} x={g.X(70)} y={g.Y(250)} w={g.S(420)} rot={-10} />
       <View style={{ position: 'absolute', left: g.X(440), top: g.Y(330), transform: [{ rotate: '6deg' }], shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: g.S(18), shadowOffset: { width: 0, height: g.S(12) } }}>
         <TitreSticker t={c.titre} w={g.S(600)} size={g.S(150)} couleur={col[0]} contour={g.S(30)} />
@@ -413,6 +611,7 @@ function Stickers(c: CtxDirection) {
         <Image source={LOGO} style={{ width: g.S(78), height: g.S(78), borderRadius: g.S(39) }} />
         <Tx t="YOROI" size={g.S(44)} color={BLANC} ls={g.S(6)} />
       </View>
+      </Bloc>
       <Pied g={g} ink={BLANC} mode="badges" />
     </>
   );
@@ -595,6 +794,8 @@ function Flash(c: CtxDirection) {
   const trous = Array.from({ length: c.format === 'story' ? 22 : c.format === 'post' ? 16 : 12 });
   const df = dateFlash(c.d.dateIso ?? c.d.exploit?.date ?? c.d.semaine?.debut);
   const h = c.hero;
+  // avec ta photo, le titre reste petit dans le coin du cadre : le visage reste libre
+  const vis = visage(c, 'flash');
   const Rail = ({ gauche }: { gauche: boolean }) => (
     <View style={{ position: 'absolute', top: 0, bottom: 0, [gauche ? 'left' : 'right']: 0, width: c.W * (86 / 1080), justifyContent: 'space-around', alignItems: 'center', paddingVertical: 6 }}>
       {trous.map((_, i) => <View key={i} style={{ width: c.W * (40 / 1080), height: c.W * (56 / 1080), borderRadius: 3, backgroundColor: 'rgba(244,239,230,0.92)' }} />)}
@@ -640,19 +841,28 @@ function Flash(c: CtxDirection) {
           <Rect width="100%" height="100%" fill="url(#fl)" />
           <Rect width="100%" height="100%" fill="url(#vg)" />
         </Svg>
-        <LinearGradient colors={['rgba(0,0,0,0.55)', 'rgba(0,0,0,0)']} locations={[0, 0.32]} style={plein} />
-        <View style={{ position: 'absolute', left: g.S(46), right: g.S(46), top: g.S(40) }}>
-          <Tx t={`${c.titre},`} f="serif" size={tailleQuiTient(`${c.titre},`, g.S(730), g.S(128), 'serif')} color={BLANC} lh={0.95} ombre ls={-g.S(2)} />
-          <Tx t={phraseFlash(c.d)} f="serif" size={g.S(52)} color={BLANC} lines={2} lh={1.05} ombre style={{ marginTop: g.S(10), opacity: 0.95 }} />
-        </View>
+        <LinearGradient colors={['rgba(0,0,0,0.55)', 'rgba(0,0,0,0)']} locations={[0, vis ? 0.18 : 0.32]} style={plein} />
+        {vis ? (
+          <View style={{ position: 'absolute', left: g.S(40), top: g.S(30), width: c.W * 0.4 }}>
+            <Tx t={`${c.titre},`} f="serif" size={tailleQuiTient(`${c.titre},`, c.W * 0.4, g.S(62), 'serif')} color={BLANC} lh={0.98} ombre />
+            <Tx t={phraseFlash(c.d)} f="serif" size={g.S(30)} color={BLANC} lh={1.05} ombre style={{ marginTop: g.S(4), opacity: 0.95 }} />
+          </View>
+        ) : (
+          <View style={{ position: 'absolute', left: g.S(46), right: g.S(46), top: g.S(40) }}>
+            <Tx t={`${c.titre},`} f="serif" size={tailleQuiTient(`${c.titre},`, g.S(730), g.S(128), 'serif')} color={BLANC} lh={0.95} ombre ls={-g.S(2)} />
+            <Tx t={phraseFlash(c.d)} f="serif" size={g.S(52)} color={BLANC} lines={2} lh={1.05} ombre style={{ marginTop: g.S(10), opacity: 0.95 }} />
+          </View>
+        )}
         {df ? <Tx t={df} f="cond" size={g.S(50)} color="#ff8a1a" ls={g.S(6)} style={{ position: 'absolute', right: g.S(40), bottom: g.S(36), textShadowColor: 'rgba(255,120,0,0.9)', textShadowRadius: 8, textShadowOffset: { width: 0, height: 0 } }} /> : null}
       </View>
+      <Bloc c={c} pivot={{ x: c.W / 2, y: g.Y(1500) }}>
       <View style={{ position: 'absolute', left: c.W * (130 / 1080), right: c.W * (130 / 1080), top: g.Y(1440), flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 8 }}>
         {h ? <Chiffre v={h.value} u={h.unit} size={tailleChiffre(h.value, h.unit, g.S(430), g.S(150), 'cond', 0.27)} usize={g.S(40)} uf="extraBold" color="#f4efe6" lh={0.9} /> : <View />}
         <View style={{ alignItems: 'flex-end', flexShrink: 1 }}>
           {c.stats.slice(0, 3).map((s, i) => <Tx key={s.key + i} t={`${court(s.label)}  ${valeurTexte(s)}`} size={g.S(28)} f="extraBold" color="#f4efe6" ls={g.S(3)} lh={1.5} />)}
         </View>
       </View>
+      </Bloc>
       <Pied g={g} ink={BLANC} gauche={130} droite={130} bas={250} petit />
     </>
   );
@@ -705,6 +915,8 @@ function Maillot(c: CtxDirection) {
         <Rect width={c.W} height={c.H} fill="url(#mw)" />
       </Svg>
       <Tx t={c.date} size={g.S(30)} color={clair ? '#111111' : BLANC} ls={g.S(9)} maj align="center" style={{ position: 'absolute', left: 0, right: 0, top: g.Y(235) - g.S(30) }} />
+      {/* le maillot et ses chiffres : un seul bloc, deplace et redimensionne au doigt dans l'atelier */}
+      <Bloc c={c} pivot={{ x: c.W / 2, y: g.Y(860) }}>
       <Svg width={jw} height={g.S(1040)} viewBox="0 0 940 1040" style={{ position: 'absolute', left: g.X(70), top: g.Y(290) }}>
         <Defs>
           <Pattern id="mesh" width="14" height="14" patternUnits="userSpaceOnUse">
@@ -753,6 +965,7 @@ function Maillot(c: CtxDirection) {
           ))}
         </View>
       ) : null}
+      </Bloc>
       <Pied g={g} ink={clair ? '#111111' : BLANC} />
     </>
   );
@@ -762,15 +975,84 @@ function Maillot(c: CtxDirection) {
 // 08 AFFICHE DE GALA
 // ============================================
 
-function Gala(c: CtxDirection) {
-  const g = geo(c.format, c.W);
+const JAUNE_GALA = '#FFD400';
+const ROUGE_GALA = '#E50914';
+const OMBRE_TOI: TextStyle = { textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 14, textShadowOffset: { width: 0, height: 4 } };
+
+/** Le face a face de la seance : les lignes avant et aujourd'hui, le verdict ; seul sans seance precedente */
+function faceAFace(c: CtxDirection) {
   const lignes = lignesGala(c.d);
   const solo = !lignes.length;
   const v = texteVerdict(verdictGala(lignes));
   // sans seance precedente : seulement aujourd'hui, tes chiffres du jour
   const rangees = solo ? [c.hero, ...c.stats].filter((x): x is StatValue => !!x).slice(0, 3).map((s) => ({ label: court(s.label) + (s.unit ? ` (${s.unit.toUpperCase()})` : ''), avant: '', apres: s.value })) : lignes.map((l) => ({ label: court(l.label) + (l.unite ? ` (${l.unite.toUpperCase()})` : ''), avant: l.avant, apres: l.apres }));
-  const JAUNE = '#FFD400';
-  const ROUGE = '#E50914';
+  return { solo, v, rangees };
+}
+
+/** 08 avec ta photo : ta photo en bichromie rouge en plein cadre, l'affiche au coin, le face a face en bas */
+function GalaPhoto(c: CtxDirection) {
+  const g = geo(c.format, c.W);
+  const b = blocDeCarte(c.format, c.W, c.H);
+  const co = coinDeCarte(c.format, c.W, c.H);
+  const k = echelleBloc(b);
+  const { solo, v, rangees } = faceAFace(c);
+  const larg = b.w * 0.27;
+  return (
+    <>
+      <View style={[plein, { backgroundColor: '#0a0a0a', overflow: 'hidden' }]}>
+        {c.photo ? <Photo src={c.photo} style={Platform.OS === 'android' ? { filter: [{ grayscale: 1 }, { contrast: 1.4 }, { brightness: 0.9 }] } : undefined} /> : null}
+        <View style={[plein, { backgroundColor: ROUGE_GALA, mixBlendMode: 'multiply' }]} />
+        <LinearGradient colors={['rgba(0,0,0,0.35)', 'rgba(0,0,0,0)', 'rgba(10,10,10,0.55)', '#0a0a0a']} locations={[0, 0.16, 0.5, 0.68]} style={plein} />
+      </View>
+      <View style={{ position: 'absolute', left: co.x, top: co.y, width: co.w, gap: 3 }}>
+        <View style={{ alignSelf: 'flex-start', backgroundColor: JAUNE_GALA, paddingVertical: 1.5, paddingHorizontal: 7, transform: [{ skewX: '-10deg' }] }}>
+          <Tx t={traduire('COMBAT PRINCIPAL')} f="anton" size={Math.min(12, co.h * 0.24)} color="#111111" ls={1.4} />
+        </View>
+        <Tx t={`${c.date}${c.titre ? ` · ${c.titre}` : ''}`} size={Math.min(8, co.h * 0.17)} color={BLANC} ls={1.1} maj ombre lines={2} lh={1.15} />
+      </View>
+      <Bloc c={c} pivot={centre(b)}>
+        <View style={boiteBloc(b)}>
+          <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 * k }}>
+            <Tx t={traduire('TOI')} f="anton" size={40 * k} color={BLANC} lh={1.0} style={OMBRE_TOI} />
+            {solo ? null : (
+              <>
+                <View style={{ width: 22 * k, height: 22 * k, borderRadius: 11 * k, backgroundColor: JAUNE_GALA, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-8deg' }] }}>
+                  <Tx t="VS" f="anton" size={11 * k} color="#111111" />
+                </View>
+                <Tx t={traduire('TOI')} f="anton" size={40 * k} color={BLANC} lh={1.0} style={OMBRE_TOI} />
+              </>
+            )}
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: solo ? 'center' : 'space-between', marginTop: 2 * k }}>
+            {solo ? null : <Tx t={traduire('Séance précédente')} size={7.2 * k} color={BLANC} ls={1.4 * k} maj />}
+            <Tx t={traduire('Aujourd’hui')} size={7.2 * k} color={JAUNE_GALA} ls={1.4 * k} maj />
+          </View>
+          {rangees.map((r, i) => (
+            <View key={i} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 25 * k, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.14)' }}>
+              <Tx t={r.avant} f="anton" size={tailleQuiTient(r.avant || '0', larg, 23 * k, 'anton')} color={rgba(BLANC, 0.55)} style={{ width: larg }} />
+              <Tx t={r.label} size={7 * k} f="extraBold" color={BLANC} ls={1.2 * k} align="center" style={{ flex: 1 }} />
+              <Tx t={r.apres} f="anton" size={tailleQuiTient(r.apres, larg, 23 * k, 'anton')} color={JAUNE_GALA} align="right" style={{ width: larg }} />
+            </View>
+          ))}
+          <View style={{ marginTop: 8 * k, marginHorizontal: -6 * k, backgroundColor: ROUGE_GALA, transform: [{ rotate: '-2.5deg' }], paddingVertical: 4 * k, alignItems: 'center' }}>
+            <Text allowFontScaling={false} numberOfLines={1} style={[police('anton'), { fontSize: tailleQuiTient(`${v.debut} ${v.fin}`, b.w, 17 * k, 'anton'), color: BLANC, letterSpacing: 1.2 * k }]}>
+              {`${v.debut} `}
+              <Text style={{ color: JAUNE_GALA }}>{v.fin}</Text>
+            </Text>
+          </View>
+        </View>
+      </Bloc>
+      <Pied g={g} ink={BLANC} bas={250} />
+    </>
+  );
+}
+
+function Gala(c: CtxDirection) {
+  if (visage(c, 'gala')) return GalaPhoto(c);
+  const g = geo(c.format, c.W);
+  const { solo, v, rangees } = faceAFace(c);
+  const JAUNE = JAUNE_GALA;
+  const ROUGE = ROUGE_GALA;
   return (
     <>
       <View style={[plein, { backgroundColor: '#0a0a0a' }]} />
@@ -792,6 +1074,7 @@ function Gala(c: CtxDirection) {
           <Tx t={traduire('COMBAT PRINCIPAL')} f="anton" size={g.S(44)} color="#111111" ls={g.S(6)} />
         </View>
       </View>
+      <Bloc c={c} pivot={{ x: c.W / 2, y: g.Y(1100) }}>
       <View style={{ position: 'absolute', left: 0, right: 0, top: g.Y(620), flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: g.S(30) }}>
         <Tx t={traduire('TOI')} f="anton" size={g.S(320)} color={BLANC} lh={0.95} style={{ textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 14, textShadowOffset: { width: 0, height: 4 } }} />
         {solo ? null : (
@@ -822,6 +1105,7 @@ function Gala(c: CtxDirection) {
           <Text style={{ color: JAUNE }}>{v.fin}</Text>
         </Text>
       </View>
+      </Bloc>
       <Pied g={g} ink={BLANC} bas={250} />
     </>
   );
@@ -833,20 +1117,91 @@ function Gala(c: CtxDirection) {
 
 const JOURS_LETTRES = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
+/** Le jour de la carte (lundi 0), dans la derniere semaine de la grille ; -1 sans date */
+function jourDeCarte(d: CarteData): number {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d.dateIso ?? '');
+  if (!m) return -1;
+  return (new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12).getDay() + 6) % 7;
+}
+
+function pillsSerie(c: CtxDirection): { l: string; v: string }[] {
+  return [c.d.moment === 'seance' ? { l: traduire('Aujourd’hui'), v: c.titre } : null, c.hero ? { l: '', v: valeurTexte(c.hero) } : null, c.stats[0] ? { l: '', v: `${valeurTexte(c.stats[0])} ${traduire(c.stats[0].label)}` } : null].filter((x): x is { l: string; v: string } => !!x);
+}
+
+/** 09 avec ta photo : ta photo nette, la flamme au coin, le nombre de semaines et la grille compacte en bas */
+function SeriePhoto(c: CtxDirection) {
+  const g = geo(c.format, c.W);
+  const b = blocDeCarte(c.format, c.W, c.H);
+  const co = coinDeCarte(c.format, c.W, c.H);
+  const k = echelleBloc(b);
+  const nb = String(serieDe(c.d) ?? '');
+  const grille = grilleDe(c.d);
+  const dow = jourDeCarte(c.d);
+  const ts = Math.min(74 * k, (b.w * 0.42) / Math.max(1, nb.length * 0.45));
+  const cw = 8.4 * k;
+  const ch = 6.4 * k;
+  const gap = 2 * k;
+  return (
+    <>
+      <View style={[plein, { backgroundColor: '#000' }]}>{c.photo ? <Photo src={c.photo} /> : null}</View>
+      <LinearGradient pointerEvents="none" colors={['rgba(0,0,0,0)', 'rgba(30,6,0,0.45)', 'rgba(120,34,0,0.82)']} locations={[0.48, 0.64, 1]} style={plein} />
+      <Sticker src={STICKERS.flamme} x={co.x} y={co.y} w={Math.min(co.h, co.w)} />
+      <Bloc c={c} pivot={centre(b)}>
+        <View style={boiteBloc(b)}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 * k }}>
+            <View style={{ flexShrink: 1 }}>
+              <Svg width={b.w * 0.46} height={ts * 1.02}>
+                <Defs>
+                  <SvgGradient id="snp" x1="0" y1="0" x2="0" y2="1">
+                    <Stop offset="0.3" stopColor="#ffffff" />
+                    <Stop offset="0.7" stopColor="#FFD24A" />
+                    <Stop offset="1" stopColor="#FF7A00" />
+                  </SvgGradient>
+                </Defs>
+                <SvgText x={0} y={ts * 0.92} fontFamily={policesCartes.condense} fontSize={ts} fill="rgba(0,0,0,0.35)" dy={2}>{nb}</SvgText>
+                <SvgText x={0} y={ts * 0.92} fontFamily={policesCartes.condense} fontSize={ts} fill="url(#snp)">{nb}</SvgText>
+              </Svg>
+              <Tx t={traduire('semaines d’affilée')} size={9.5 * k} color={BLANC} ls={1.6 * k} maj ombre />
+            </View>
+            {grille ? (
+              <View style={{ flexDirection: 'row', gap, marginBottom: 2 * k }}>
+                {grille.map((sem, w) => (
+                  <View key={w} style={{ gap }}>
+                    {sem.map((on, j) => (w === 11 && j === dow ? (
+                      <View key={j} style={{ width: cw, height: ch, borderRadius: 2 * k, backgroundColor: BLANC, borderWidth: 1, borderColor: '#FF5A00' }} />
+                    ) : (
+                      <View key={j} style={{ width: cw, height: ch, borderRadius: 2 * k, backgroundColor: on ? ((w * 7 + j) % 3 === 1 ? '#FFB020' : '#FF6A00') : 'rgba(255,255,255,0.18)' }} />
+                    )))}
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5 * k, marginTop: 8 * k }}>
+            {pillsSerie(c).map((p, i) => (
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 * k, backgroundColor: 'rgba(0,0,0,0.55)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)', borderRadius: 999, paddingVertical: 4 * k, paddingHorizontal: 9 * k, maxWidth: b.w }}>
+                {p.l ? <Tx t={p.l} size={6.6 * k} f="extraBold" color={rgba(BLANC, 0.8)} ls={1 * k} maj /> : null}
+                <Tx t={p.v} size={10.5 * k} color={BLANC} style={{ flexShrink: 1 }} />
+              </View>
+            ))}
+          </View>
+        </View>
+      </Bloc>
+      <Pied g={g} ink={BLANC} />
+    </>
+  );
+}
+
 function Serie(c: CtxDirection) {
+  if (visage(c, 'serie')) return SeriePhoto(c);
   const g = geo(c.format, c.W);
   const n = serieDe(c.d);
   const grille = grilleDe(c.d);
-  // le jour de la carte, dans la derniere semaine de la grille
-  const dow = (() => {
-    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(c.d.dateIso ?? '');
-    if (!m) return -1;
-    return (new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12).getDay() + 6) % 7;
-  })();
+  const dow = jourDeCarte(c.d);
   const nb = String(n ?? '');
   const taille = Math.min(g.S(340), (c.W * 0.8) / Math.max(1, nb.length * 0.45));
   const case_ = { w: g.S(54), h: g.S(40), gap: g.S(9) };
-  const pills = [c.d.moment === 'seance' ? { l: traduire('Aujourd’hui'), v: c.titre } : null, c.hero ? { l: '', v: valeurTexte(c.hero) } : null, c.stats[0] ? { l: '', v: `${valeurTexte(c.stats[0])} ${traduire(c.stats[0].label)}` } : null].filter((x): x is { l: string; v: string } => !!x);
+  const pills = pillsSerie(c);
   return (
     <>
       <View style={[plein, { backgroundColor: c.photo ? '#000' : c.coul.profond }]}>
@@ -862,6 +1217,7 @@ function Serie(c: CtxDirection) {
         </Defs>
         <Rect width="100%" height="100%" fill="url(#sg)" />
       </Svg>
+      <Bloc c={c} pivot={{ x: c.W / 2, y: g.Y(1000) }}>
       <Sticker src={STICKERS.flamme} x={g.X(375)} y={g.Y(215)} w={g.S(330)} />
       <Svg width={c.W} height={taille * 1.02} style={{ position: 'absolute', left: 0, top: g.Y(575) }}>
         <Defs>
@@ -904,6 +1260,7 @@ function Serie(c: CtxDirection) {
           </View>
         ))}
       </View>
+      </Bloc>
       <Pied g={g} ink={BLANC} />
     </>
   );
@@ -939,28 +1296,33 @@ function Tv(c: CtxDirection) {
   const h = c.hero;
   const bandeau = [c.record ? `${traduire('RECORD BATTU')} · ${c.record.nom.toUpperCase()} ${c.record.court.toUpperCase()}` : null, ...[h, ...c.stats].filter((x): x is StatValue => !!x).map((s) => `${court(s.label)} ${valeurTexte(s).toUpperCase()}`)].filter(Boolean).join(' · ');
   const rh = g.S(course ? 52 : 70);
+  // avec ta photo : le panneau de droite (temps au km, exercices) cacherait le visage, il laisse la place ;
+  // la barre YOROI EN DIRECT reste petite dans le coin
+  const vis = visage(c, 'tv');
+  const m = vis ? 0.68 : 1;
+  const S = (px: number) => g.S(px) * m;
   return (
     <>
       <View style={[plein, { backgroundColor: c.coul.fond }]}>
         {c.photo ? <Photo src={c.photo} /> : <LinearGradient colors={[c.coul.fond, c.coul.profond]} style={plein} />}
       </View>
       <LinearGradient colors={['rgba(0,0,0,0.35)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']} locations={[0, 0.25, 0.5, 0.85]} style={plein} />
-      <View style={{ position: 'absolute', left: g.X(60), top: g.Y(230), height: g.S(72), flexDirection: 'row' }}>
-        <View style={{ backgroundColor: BLANC, flexDirection: 'row', alignItems: 'center', gap: g.S(10), paddingLeft: g.S(10), paddingRight: g.S(20) }}>
-          <Image source={LOGO} style={{ width: g.S(54), height: g.S(54), borderRadius: g.S(12) }} />
-          <Tx t="YOROI" size={g.S(32)} color="#111111" ls={g.S(4)} />
+      <View style={{ position: 'absolute', left: vis ? coinDeCarte(c.format, c.W, c.H).x : g.X(60), top: g.Y(230), height: S(72), flexDirection: 'row' }}>
+        <View style={{ backgroundColor: BLANC, flexDirection: 'row', alignItems: 'center', gap: S(10), paddingLeft: S(10), paddingRight: S(20) }}>
+          <Image source={LOGO} style={{ width: S(54), height: S(54), borderRadius: S(12) }} />
+          <Tx t="YOROI" size={S(32)} color="#111111" ls={S(4)} />
         </View>
-        <View style={{ backgroundColor: acc, flexDirection: 'row', alignItems: 'center', gap: g.S(12), paddingHorizontal: g.S(22) }}>
-          <View style={{ width: g.S(16), height: g.S(16), borderRadius: g.S(8), backgroundColor: BLANC }} />
-          <Tx t={traduire('EN DIRECT')} size={g.S(28)} color={BLANC} ls={g.S(4)} />
+        <View style={{ backgroundColor: acc, flexDirection: 'row', alignItems: 'center', gap: S(12), paddingHorizontal: S(22) }}>
+          <View style={{ width: S(16), height: S(16), borderRadius: S(8), backgroundColor: BLANC }} />
+          <Tx t={traduire('EN DIRECT')} size={S(28)} color={BLANC} ls={S(4)} />
         </View>
         {c.d.heure ? (
-          <View style={{ backgroundColor: '#111111', justifyContent: 'center', paddingHorizontal: g.S(22) }}>
-            <Tx t={c.d.heure} size={g.S(30)} color={BLANC} />
+          <View style={{ backgroundColor: '#111111', justifyContent: 'center', paddingHorizontal: S(22) }}>
+            <Tx t={c.d.heure} size={S(30)} color={BLANC} />
           </View>
         ) : null}
       </View>
-      {pan && (c.format === 'story' || pan.lignes.length <= 6) ? (
+      {pan && !vis && (c.format === 'story' || pan.lignes.length <= 6) ? (
         <View style={{ position: 'absolute', right: g.X(60), top: g.Y(340), width: g.S(440), backgroundColor: 'rgba(10,10,14,0.82)', borderRadius: 2, overflow: 'hidden' }}>
           <View style={{ backgroundColor: acc, paddingVertical: g.S(14), paddingHorizontal: g.S(20) }}>
             <Tx t={pan.titre} size={g.S(24)} color={BLANC} ls={g.S(4)} maj />
@@ -973,6 +1335,7 @@ function Tv(c: CtxDirection) {
           ))}
         </View>
       ) : null}
+      <Bloc c={c} pivot={{ x: c.W / 2, y: g.Y(1300) }}>
       <View style={{ position: 'absolute', left: g.X(70), right: g.X(70), top: g.Y(1080) }}>
         <View style={{ alignSelf: 'flex-start', backgroundColor: BLANC, paddingVertical: g.S(10), paddingHorizontal: g.S(26), transform: [{ skewX: '-12deg' }], maxWidth: '100%' }}>
           <Tx t={`${c.titre} · ${c.date}`} size={g.S(34)} color="#111111" ls={g.S(4)} maj />
@@ -1003,6 +1366,7 @@ function Tv(c: CtxDirection) {
           <Tx t={`${bandeau} · ${bandeau}`} size={g.S(28)} color="#111111" ls={g.S(2)} style={{ flexShrink: 0 }} />
         </View>
       ) : null}
+      </Bloc>
       <Pied g={g} ink={BLANC} />
     </>
   );
