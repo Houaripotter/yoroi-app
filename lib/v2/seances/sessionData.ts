@@ -3,7 +3,8 @@
  */
 import type { CombatRound, Exercise, ExerciseSet, Training } from '@/lib/database';
 import { getSportCategory, getSportName, getSessionTypeLabel } from '@/lib/sports';
-import { accordSouleve, durationOf, formatDuration, formatTonnage, setsCount, tonnage, workSetsOf } from '@/lib/v2/trainingWeek';
+import { accordSouleve, durationOf, exercisesOf, formatDuration, formatTonnage, setsCount, tonnage, workSetsOf } from '@/lib/v2/trainingWeek';
+import { cardioFait, libelleCardio } from '@/lib/v2/seances/cardioJour';
 import type { UnitePoids } from '@/lib/v2/unitePoids';
 import { formatKg } from '@/lib/v2/weightStats';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
@@ -183,6 +184,9 @@ export function sessionMeta(t: Training, unite: UnitePoids = 'kg'): string {
   const rounds = parseRounds(t).length || t.rounds || 0;
   if (rounds) parts.push(traduirePluriel(rounds, rounds > 1, "{0} round", "{0} rounds", rounds));
   if (t.distance) parts.push(`${formatKg(t.distance)} km`);
+  // 31 octobre 2026 : le cardio de fin de seance vraiment fait, son type et sa duree (rien s'il a ete passe)
+  const cardio = cardioFait(exercisesOf(t));
+  if (cardio) parts.push(traduire('puis {0}', libelleCardio(cardio.type, cardio.minutes)));
   if (t.club_name) parts.push(t.club_name);
   if (parts.length === 0 && t.intensity) parts.push(traduire("effort {0} sur 10", t.intensity));
   return parts.join(', ');
