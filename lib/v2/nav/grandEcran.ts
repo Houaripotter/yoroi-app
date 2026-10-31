@@ -1,40 +1,119 @@
 /**
  * Mode grand ecran (30 octobre 2026, maquettes _propositions/grand_ecran_2026-10-30 validees par Houari).
- * Sur Mac (app iPhone sur Mac Apple Silicon) et sur iPad en grande fenetre, l'interface de telephone etiree sur
- * 1900 points etait « horrible ». A partir de 1024 points de large : une barre laterale a gauche a la place de la
- * barre d'onglets, le contenu centre (1300 points au plus, marges de 40) et range en 2 ou 3 colonnes.
- * En dessous de 1024 (tout iPhone, iPad en portrait), rien ne change.
+ * Sur Mac (app iPhone sur Mac Apple Silicon) et sur iPad, l'interface de telephone etiree etait « horrible ».
+ * 31 octobre 2026 (Houari : « on dirait l'iPhone élargi », « les boutons de la tab bar en bas c'est dégueu ») :
+ *  - a partir de 700 points de large (iPad en portrait, Split View, Mac en petite fenetre) : plus de barre en bas,
+ *    une barre laterale compacte de 84 points, seulement les stickers (le libelle au survol ou a l'appui long) ;
+ *  - a partir de 1024 points : la barre laterale large (Enregistrer, Accueil, Seances, Progres, Dojo, Reglages, profil) ;
+ *  - les pages en tableau de bord : une grille de 2, 3 ou 4 colonnes (selon la place), des cartes sur 1 ou 2
+ *    colonnes rangees en colonnes equilibrees (placerBento), jamais une colonne courte a cote d'une longue.
+ * En dessous de 700 (tout iPhone), rien ne change.
  * Aucun import React Native ici : tout se teste avec jest.
  */
 
-/** Largeur a partir de laquelle l'app passe en grand ecran */
-export const SEUIL_GRAND_ECRAN = 1024;
-/** Largeur de la barre laterale (Accueil, Seances, Progres, Dojo, Reglages) */
-export const LARGEUR_BARRE_LATERALE = 252;
-/** Largeur maximale d'une page, marges comprises */
-export const LARGEUR_MAX_PAGE = 1300;
-/** Marge de chaque cote de la page */
-export const MARGE_PAGE = 40;
-/** Espace entre deux colonnes */
+/** Largeur a partir de laquelle l'app passe en grand ecran : barre laterale (compacte) et pages en grille */
+export const SEUIL_GRAND_ECRAN = 700;
+/** Largeur a partir de laquelle la barre laterale est large, avec ses libelles */
+export const SEUIL_BARRE_LARGE = 1024;
+/** Largeur de la barre laterale large (Accueil, Seances, Progres, Dojo, Reglages) */
+export const LARGEUR_BARRE_LATERALE = 220;
+/** Largeur de la barre laterale compacte (les stickers seuls) */
+export const LARGEUR_BARRE_COMPACTE = 84;
+/** Largeur maximale du contenu d'une page, sans ses marges (4 colonnes de 390 points environ) */
+export const LARGEUR_MAX_PAGE = 1640;
+/** Marge de chaque cote de la page (une fenetre etroite garde plus de place pour les cartes) */
+export const MARGE_PAGE = 36;
+export const MARGE_PAGE_ETROITE = 24;
+/** Espace entre deux colonnes, et entre deux cartes d'une colonne */
 export const ESPACE_COLONNES = 20;
+
+/** La gouttiere du tableau de bord : 20 points, 16 sur une page de moins de 1000 points (iPad) */
+export function espaceGrille(largeurPage: number): number {
+  return largeurPage < 1000 ? 16 : ESPACE_COLONNES;
+}
 
 export function estGrandEcran(largeurFenetre: number): boolean {
   return largeurFenetre >= SEUIL_GRAND_ECRAN;
 }
 
+/** Vrai quand la barre laterale est large (libelles visibles) */
+export function estBarreLarge(largeurFenetre: number): boolean {
+  return largeurFenetre >= SEUIL_BARRE_LARGE;
+}
+
+/** La largeur de la barre laterale pour cette fenetre (0 sur iPhone, ou elle n'existe pas) */
+export function largeurBarre(largeurFenetre: number): number {
+  if (!estGrandEcran(largeurFenetre)) return 0;
+  return estBarreLarge(largeurFenetre) ? LARGEUR_BARRE_LATERALE : LARGEUR_BARRE_COMPACTE;
+}
+
 /** La place laissee a une page : la fenetre, moins la barre laterale quand elle est la */
 function zone(largeurFenetre: number, avecBarre: boolean): number {
-  return Math.max(0, largeurFenetre - (avecBarre ? LARGEUR_BARRE_LATERALE : 0));
+  return Math.max(0, largeurFenetre - (avecBarre ? largeurBarre(largeurFenetre) : 0));
+}
+
+function marge(z: number): number {
+  return z < 1000 ? MARGE_PAGE_ETROITE : MARGE_PAGE;
 }
 
 /** La largeur du contenu d'une page en grand ecran, sans ses marges */
 export function largeurPage(largeurFenetre: number, avecBarre = true): number {
-  return Math.floor(Math.min(zone(largeurFenetre, avecBarre), LARGEUR_MAX_PAGE) - 2 * MARGE_PAGE);
+  const z = zone(largeurFenetre, avecBarre);
+  return Math.floor(Math.min(z - 2 * marge(z), LARGEUR_MAX_PAGE));
 }
 
 /** La marge de chaque cote qui centre la page dans sa zone */
 export function margePage(largeurFenetre: number, avecBarre = true): number {
   return Math.floor((zone(largeurFenetre, avecBarre) - largeurPage(largeurFenetre, avecBarre)) / 2);
+}
+
+/**
+ * Combien de colonnes pour la grille d'une page : 2 sur une page etroite (iPad en portrait, fenetre de 1024),
+ * 3 quand chaque colonne garde au moins 270 points, 4 sur une tres grande page (Mac en plein ecran, 1920).
+ * Une colonne fait alors entre 270 et 410 points : la largeur d'un iPhone, celle pour laquelle les cartes sont dessinees.
+ */
+export function colonnesGrille(largeurPage: number): 2 | 3 | 4 {
+  if (largeurPage >= 1400) return 4;
+  if (largeurPage >= 3 * 270 + 2 * espaceGrille(largeurPage)) return 3;
+  return 2;
+}
+
+/** La largeur d'une carte qui s'etend sur `span` colonnes d'une grille de `n` colonnes */
+export function largeurCase(largeurPage: number, n: number, span = 1, espace = espaceGrille(largeurPage)): number {
+  const s = Math.max(1, Math.min(n, span));
+  const col = (largeurPage - espace * (n - 1)) / n;
+  return Math.floor(col * s + espace * (s - 1));
+}
+
+export type CaseAPlacer = { span: number; hauteur: number };
+export type CasePlacee = { x: number; y: number; largeur: number; colonne: number; span: number };
+
+/**
+ * Le placement du tableau de bord (31 octobre 2026) : chaque carte, dans l'ordre, se pose en haut de la place
+ * la plus haute libre sur `span` colonnes voisines (le classique « masonry »). Les colonnes restent equilibrees :
+ * une carte ne commence jamais sous une colonne plus longue qu'une autre place possible. Une carte de hauteur 0
+ * (rien a montrer) ne prend ni place ni espace.
+ */
+export function placerBento(cases: CaseAPlacer[], n: number, largeur: number, espace = espaceGrille(largeur)): { places: CasePlacee[]; hauteur: number } {
+  const bas = new Array(Math.max(1, n)).fill(0);
+  const places: CasePlacee[] = [];
+  for (const c of cases) {
+    const span = Math.max(1, Math.min(n, Math.round(c.span) || 1));
+    let meilleure = 0;
+    let haut = Infinity;
+    for (let i = 0; i + span <= n; i++) {
+      const h = Math.max(...bas.slice(i, i + span));
+      if (h < haut - 0.5) {
+        haut = h;
+        meilleure = i;
+      }
+    }
+    const x = meilleure === 0 ? 0 : largeurCase(largeur, n, meilleure, espace) + espace;
+    places.push({ x, y: haut, largeur: largeurCase(largeur, n, span, espace), colonne: meilleure, span });
+    if (c.hauteur > 0) for (let i = meilleure; i < meilleure + span; i++) bas[i] = haut + c.hauteur + espace;
+  }
+  const max = Math.max(...bas);
+  return { places, hauteur: max > 0 ? max - espace : 0 };
 }
 
 /** La largeur d'une colonne quand `total` est partage en `n` colonnes egales */
@@ -90,9 +169,9 @@ export function largeurCote(largeurPage: number): number {
   return Math.max(300, Math.min(420, Math.round(largeurPage * 0.32)));
 }
 
-/** Combien de colonnes pour une grille de cartes : 3 sur une page large, 2 sur une page plus etroite (iPad, 1024) */
+/** Combien de colonnes pour une grille de cartes : 3 sur une page large, 2 sur une page plus etroite (ancienne regle, gardee pour Reglages) */
 export function colonnesPour(largeurPage: number): 2 | 3 {
-  return largeurPage >= 1000 ? 3 : 2;
+  return colonnesGrille(largeurPage) >= 3 ? 3 : 2;
 }
 
 /** Les cartes Tes outils : 7 sur une rangee si elles gardent 140 points, sinon sur plusieurs rangees (au moins 3 par rangee) */
