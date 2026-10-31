@@ -49,7 +49,7 @@ import { PlusPastille } from '@/components/yoroi/v2/accueil/kit';
 import { carteBlanche, ton, tonDuRang } from '@/components/yoroi/v2/seance/pastel';
 import type { TonSeance } from '@/components/yoroi/v2/seance/pastel';
 import { intensite, niveauRpe } from '@/lib/v2/intensite';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire } from '@/lib/i18n/tr';
 import { programmeParId, libelleRepos } from '@/lib/v2/programmes/catalogue';
 import { ExoDemo } from '@/components/yoroi/v2/seance/ExoDemo';
 import { ExplicationExo } from '@/components/yoroi/v2/programmes/ExplicationExo';
@@ -74,6 +74,7 @@ import { EXPLICATION_PRISE, PRISES, avecPrise, sansPrise } from '@/lib/v2/seance
 import type { Prise } from '@/lib/v2/seance/prise';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { DUREE_PASTILLE_MS, PastilleAjout, SeriePrevue } from '@/components/yoroi/v2/seance/SeriePrevue';
 import { BoutonCoachVocal, useCoachVocal } from '@/components/yoroi/v2/seance/CoachVocal';
 import { cibleDefilement } from '@/lib/v2/seances/defilementExo';
 import { completerExercice } from '@/lib/v2/seances/exerciceEnregistre';
@@ -465,6 +466,10 @@ export default function SeanceMuscu() {
   const basMasque = useRef(0);
   const carteY = useRef(0);
   const serieBas = useRef<number | null>(null);
+  // 31 octobre 2026 : la derniere serie ajoutee, pour la pastille « Serie 5 ajoutee » et l'animation d'entree
+  const [serieAjoutee, setSerieAjoutee] = useState<string | null>(null);
+  const minuteurAjout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (minuteurAjout.current) clearTimeout(minuteurAjout.current); }, []);
   const exoVu = useRef<string | null>(null);
   useEffect(() => {
     const id = current?.id ?? null;
@@ -701,6 +706,10 @@ export default function SeanceMuscu() {
     const s: LiveSet = { id: uid(), ...nouvelleSerie(last, ex.cible?.repsMin ?? ex.objectifReps), done: false };
     updateExercise(ex.id, (e) => ({ ...e, sets: [...e.sets, s] }));
     impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+    // chaque ajout se voit, meme deux d'affilee : la pastille repart avec la nouvelle serie
+    setSerieAjoutee(s.id);
+    if (minuteurAjout.current) clearTimeout(minuteurAjout.current);
+    minuteurAjout.current = setTimeout(() => setSerieAjoutee(null), DUREE_PASTILLE_MS);
   };
 
   /**
@@ -1277,9 +1286,22 @@ export default function SeanceMuscu() {
                 );
               }
               const pending = !s.done;
-              // 26 octobre 2026 (retour utilisateur : « serie 2, serie 4, ca fait mal aux yeux ») : les series
-              // prevues apres celle en cours ne s'affichent plus en lignes ; une phrase les compte, sous la carte
-              if (pending && !draft.form) return null;
+              // 31 octobre 2026 : les series prevues apres celle en cours se voient toutes, en petit, sous la carte
+              // (avant : une phrase grise « Puis encore 3 series prevues ») ; celle qu'on vient d'ajouter arrive animee
+              if (pending && !draft.form) {
+                const detail = s.weight > 0 ? `${fmtNum(saisieDepuisKg(s.weight, unite))} ${lb ? traduire('LB') : traduire('KG')} × ${s.reps}` : s.reps > 0 ? traduire('{0} répétitions', s.reps) : undefined;
+                return (
+                  <SeriePrevue
+                    key={s.id}
+                    numero={i + 1}
+                    titre={traduire('Série {0}', i + 1)}
+                    detail={detail}
+                    nouvelle={serieAjoutee === s.id}
+                    accessibilityLabel={traduire('Série {0} prévue, {1}', i + 1, setLabel(s, unite))}
+                    onLongPress={() => askSetAction(current, i)}
+                  />
+                );
+              }
               return (
                 <Pressable
                   key={s.id}
@@ -1315,13 +1337,13 @@ export default function SeanceMuscu() {
               );
             })}
 
-            {!draft.form && activeIndex >= 0 && current.sets.length - activeIndex - 1 > 0 ? (
-              <Ink size={13} weight="bold" color={c.textMuted} style={{ textAlign: 'center' }}>
-                {traduirePluriel(current.sets.length - activeIndex - 1, current.sets.length - activeIndex - 1 > 1, 'Puis encore {0} série prévue', 'Puis encore {0} séries prévues', current.sets.length - activeIndex - 1)}
-              </Ink>
-            ) : null}
-
             <View style={{ flexDirection: 'row', gap: 8 }}>
+              {/* pastille par-dessus, sans pousser le bouton : un deuxieme appui tombe au meme endroit */}
+              {serieAjoutee && current.sets.some((x) => x.id === serieAjoutee) ? (
+                <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: -22, zIndex: 2, alignItems: 'center' }}>
+                  <PastilleAjout cle={serieAjoutee} texte={traduire('Série {0} ajoutée', current.sets.findIndex((x) => x.id === serieAjoutee) + 1)} />
+                </View>
+              ) : null}
               <Pressable onPress={() => addSet(current)} accessibilityRole="button" accessibilityLabel={traduire("Ajouter une série")} style={({ pressed }) => ({ flex: 1, minHeight: 52, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.primary : c.accentTint })}>
                 <Icon name="plus" size={18} color={c.accentText} strokeWidth={2.6} />
                 <Ink size={15} weight="extraBold" color={c.accentText}>{traduire("Ajouter une série")}</Ink>
