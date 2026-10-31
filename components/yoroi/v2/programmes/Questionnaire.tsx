@@ -20,6 +20,7 @@
  * Le changement de programme en cours est confirme ici. Au premier passage, le lieu du questionnaire devient
  * ton materiel (comme onVoir dans app/programmes/index.tsx).
  */
+import { usePersonnageUtilisateur } from '@/components/yoroi/v2/perso/usePersonnageUtilisateur';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -72,6 +73,8 @@ const LIEUX: { key: Materiel; label: string; icone: IconName }[] = [
 type Quiz = { objectifs: ObjectifChoix[]; niveau?: Niveau; jours?: Reponses['jours']; lieu?: Materiel };
 
 export function Questionnaire({ visible, onClose, onVoir, remplaces, depart = 'accueil', onCommence }: QuestionnaireProps) {
+  // 31 octobre 2026 (Houari : « soit le personnage de l'utilisateur, soit rien ») : ton personnage, ou rien
+  const persoUtilisateur = usePersonnageUtilisateur();
   const pal = usePaletteProgramme();
   // 27 octobre 2026 (refonte des écrans Coach) : la carte du résultat et les puces en pastel
   const pa = usePastel();
@@ -158,7 +161,7 @@ export function Questionnaire({ visible, onClose, onVoir, remplaces, depart = 'a
   };
 
   // l'habillage (26 octobre 2026) : le personnage, la liste du type choisi, « Conseillé pour toi » sur le conseil du questionnaire
-  const imgResultat = prog ? sportImage(sportDuProgramme(prog), femme, 1) : null;
+  const imgResultat = prog ? persoUtilisateur : null;
   const idsListe = (GROUPES_PROGRAMMES.find((g) => g.id === groupe)?.ids ?? []).filter((id) => !!programmeParId(id));
   const badgeDe = (id: string) => (quizComplet && conseil?.id === id ? traduire('Conseillé pour toi') : undefined);
 
