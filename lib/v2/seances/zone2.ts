@@ -16,6 +16,8 @@
  * Donnees pures plus lecture, testees dans __tests__/unit/cardioChoix.test.ts.
  */
 import type { HRZoneThresholds } from '@/lib/hrZones';
+import { traduire } from '@/lib/i18n/tr';
+import { fmtNum } from '@/lib/v2/seance/format';
 import { lowerBounds } from '@/lib/v2/seances/workoutMath';
 import { fcMaxPlausible, fcReposPlausible, zonesCommeApple, zonesDepuisFcMax } from '@/lib/v2/zones/zonesApple';
 import { PAS_PENTE, PENTE_MIN, NIVEAU_MIN, NIVEAU_MAX, PENTE_MAX, VITESSE_MAX, VITESSE_MIN, bornerNiveau, bornerPente, bornerVitesse } from './cardioChoix';
@@ -71,6 +73,7 @@ export function texteMethode(z: Zone2): string {
 }
 
 /** Lecture des donnees deja dans l'app (memes sources que lib/hrZones.ts) */
+/* eslint-disable @typescript-eslint/no-require-imports */
 export async function chargerZone2(): Promise<Zone2 | null> {
   const d: DonneesCoeur = {};
   try {
@@ -104,6 +107,7 @@ export async function chargerZone2(): Promise<Zone2 | null> {
   }
   return zone2Depuis(d);
 }
+/* eslint-enable @typescript-eslint/no-require-imports */
 
 /* ------------------------------------------------------------------------------------------------
  * La suggestion pour la prochaine fois
@@ -174,15 +178,14 @@ export function suggestionZone2(o: { type: TypeCardio; mesure: MesureCardio; val
   return { verdict, base, ...p };
 }
 
-const virgule = (n: number, d = 1) => (Math.round(n * 10 ** d) / 10 ** d).toFixed(d).replace(/\.0+$/, '').replace('.', ',');
 
-/** « 5,5 km/h et 10 % », « niveau 8 » : les valeurs en clair (unites communes, non traduites) */
+/** « 5,5 km/h et 10 % », « niveau 8 » : les valeurs en clair */
 export function texteValeurs(v: Valeurs): string {
   const morceaux: string[] = [];
-  if (typeof v.vitesse === 'number') morceaux.push(`${virgule(v.vitesse)} km/h`);
-  if (typeof v.pente === 'number') morceaux.push(`${virgule(v.pente)} %`);
-  if (typeof v.niveau === 'number') morceaux.push(`niveau ${v.niveau}`);
-  return morceaux.join(' et ');
+  if (typeof v.vitesse === 'number') morceaux.push(`${fmtNum(v.vitesse, 1)} km/h`);
+  if (typeof v.pente === 'number') morceaux.push(`${fmtNum(v.pente, 1)} %`);
+  if (typeof v.niveau === 'number') morceaux.push(traduire('niveau {0}', v.niveau));
+  return morceaux.reduce((a, m) => (a ? traduire('{0} et {1}', a, m) : m), '');
 }
 
 /**
