@@ -253,7 +253,7 @@ export function WeekCard({ trainings, goal, femme = false, plannedDays = [], nex
   const lastSport = last ? last.sport.split(',')[0].trim() : null;
   const lastMin = last ? durationOf(last) : 0;
   const lastTons = last ? tonnage(last) : 0;
-  const lastSub = last ? [relativeDay(last.date), lastMin > 0 ? formatDuration(lastMin) : null, lastTons > 0 ? formatTonnage(lastTons, unite) : null].filter(Boolean).join(', ') : '';
+  const lastSub = last ? [relativeDay(last.date), lastMin > 0 ? formatDuration(lastMin) : null, lastTons > 0 ? `${formatTonnage(lastTons, unite)} ${accordSouleve(lastTons, unite)}` : null].filter(Boolean).join(', ') : '';
 
   return (
     <Card style={{ padding: 0, overflow: 'hidden' }}>
