@@ -134,8 +134,15 @@ function demoDuMoment(): CarteData[] {
 
 /** 30 octobre 2026 (grand ecran) : les 7 cartes sur une rangee fixe de cette largeur, plus grandes, sans defilement */
 const ESPACE_GRILLE_OUTILS = 12;
-function tailleCartes(largeurGrille?: number) {
+function tailleCartes(largeurGrille?: number, carres?: number) {
   if (!largeurGrille) return { l: CARTE_L, h: CARTE_H, sticker: STICKER, titreL: TITRE_L, sousL: SOUS_L, titre: 10, ligne: 15 };
+  // 31 octobre 2026 (tableau de bord) : de gros carres sur `carres` colonnes, le Coach en rectangle sur deux
+  if (carres) {
+    const l = Math.floor((largeurGrille - (carres - 1) * ESPACE_GRILLE_OUTILS) / carres);
+    const h = Math.min(200, Math.max(120, Math.round(l * 0.86)));
+    const sticker = Math.min(76, Math.max(48, Math.round(l * 0.34)));
+    return { l, h, sticker, titreL: l - 16 - STICKER_DROITE - sticker - 6, sousL: l - 16 - STICKER_DROITE - sticker - 4, titre: 10.5, ligne: 18 };
+  }
   // 7 par rangee quand elles gardent 140 points, sinon sur deux rangees (iPad, fenetre de 1024)
   const n = colonnesOutils(largeurGrille, ESPACE_GRILLE_OUTILS);
   const l = Math.floor((largeurGrille - (n - 1) * ESPACE_GRILLE_OUTILS) / n);
@@ -145,9 +152,9 @@ function tailleCartes(largeurGrille?: number) {
   return { l, h: large ? 120 : 108, sticker, titreL: l - MARGE - STICKER_DROITE - sticker - 6, sousL: l - MARGE - STICKER_DROITE - sticker - 4, titre: large ? 11 : 10, ligne: large ? 16 : 15 };
 }
 
-export function RaccourcisDuJour({ record = null, largeurGrille }: { water?: number; waterGoal?: number; record?: { titre: string; valeur: string } | null; largeurGrille?: number } = {}) {
+export function RaccourcisDuJour({ record = null, largeurGrille, carres }: { water?: number; waterGoal?: number; record?: { titre: string; valeur: string } | null; largeurGrille?: number; /** grand ecran : de gros carres sur ce nombre de colonnes, le Coach sur deux */ carres?: number } = {}) {
   const router = useRouter();
-  const tc = tailleCartes(largeurGrille);
+  const tc = tailleCartes(largeurGrille, carres);
   const { theme } = useYoroiTheme();
   const demo = useGlobalSearchParams<{ demo?: string }>().demo === '1';
   const outils = outilsAccueil();
@@ -247,10 +254,13 @@ export function RaccourcisDuJour({ record = null, largeurGrille }: { water?: num
                 const encre = blanche ? P.ink : ENCRE;
                 const douce = blanche ? P.ink2 : ENCRE_DOUCE;
                 const image = illus.stickers ? illus.img(o.sticker) : o.img ?? illus.img(o.sticker);
+                // en gros carres, le Coach prend deux colonnes (sa ligne et son titre gardent la meme marge)
+                const large = !!carres && o.key === 'zones';
+                const l = large ? tc.l * 2 + ESPACE_GRILLE_OUTILS : tc.l;
                 return (
-                  <View style={[{ width: tc.l, height: tc.h, borderRadius: 20, backgroundColor: fond }, blanche ? ombreCarte : null]}>
+                  <View style={[{ width: l, height: tc.h, borderRadius: carres ? 24 : 20, backgroundColor: fond }, blanche ? ombreCarte : null]}>
                   {/* le clip des apercus est sur cette boite interieure : la pastille Beta peut deborder de la carte */}
-                  <View style={{ flex: 1, borderRadius: 20, overflow: 'hidden', paddingHorizontal: MARGE, paddingTop: MARGE, paddingBottom: MARGE }}>
+                  <View style={{ flex: 1, borderRadius: carres ? 24 : 20, overflow: 'hidden', paddingHorizontal: carres ? 16 : MARGE, paddingTop: carres ? 14 : MARGE, paddingBottom: carres ? 16 : MARGE }}>
                     {/* le sticker, meme taille et meme place sur toutes les cartes */}
                     {o.key === 'partager' && !illus.stickers ? (
                       <ApercuPartage />
@@ -258,7 +268,7 @@ export function RaccourcisDuJour({ record = null, largeurGrille }: { water?: num
                       <Image source={image} resizeMode="contain" style={{ position: 'absolute', right: STICKER_DROITE, top: STICKER_HAUT, width: tc.sticker, height: tc.sticker }} accessibilityIgnoresInvertColors />
                     )}
                     {/* le petit titre en capitales, en haut a gauche, jamais sous le sticker */}
-                    <View style={{ width: tc.titreL, minHeight: 14, flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={{ width: tc.titreL + (l - tc.l), minHeight: 14, flexDirection: 'row', alignItems: 'center' }}>
                       <Ink
                         size={tc.titre}
                         weight="black"
@@ -274,7 +284,7 @@ export function RaccourcisDuJour({ record = null, largeurGrille }: { water?: num
                     {/* la ligne principale, en bas a gauche : meme marge et meme ligne de base partout */}
                     <View style={{ marginTop: 'auto' }}>
                       {sous ? (
-                        <Ink size={11.5} weight="bold" color={douce} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ lineHeight: 15, marginBottom: 1, maxWidth: tc.sousL }}>
+                        <Ink size={11.5} weight="bold" color={douce} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ lineHeight: 15, marginBottom: 1, maxWidth: tc.sousL + (l - tc.l) }}>
                           {sous}
                         </Ink>
                       ) : null}
@@ -287,7 +297,7 @@ export function RaccourcisDuJour({ record = null, largeurGrille }: { water?: num
                         minimumFontScale={0.85}
                         textBreakStrategy="simple"
                         android_hyphenationFrequency="none"
-                        style={{ lineHeight: 18, letterSpacing: -0.2 }}
+                        style={{ lineHeight: carres ? 22 : 18, letterSpacing: -0.2 }}
                       >
                         {lierFinDeLigne(ligne)}
                       </Ink>
