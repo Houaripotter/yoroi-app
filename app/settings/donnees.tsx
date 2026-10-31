@@ -285,7 +285,7 @@ export default function MesDonnees() {
           <ValueRow sticker="corps" icon="table" label={traduire("Tableau du corps")} sub={traduire("Poids, composition et mensurations")} onPress={() => go('/companion')} />
           <ValueRow sticker="balai" icon="broom" label={traduire("Nettoyer les doublons")} sub={traduire("Séances importées en double")} onPress={handleDedupe} />
           <ValueRow sticker="corbeille" icon="trash" label={traduire("Vider le cache")} sub={traduire("Tes données restent")} onPress={handleClearCache} />
-          <ValueRow sticker="sauvegarde" icon="sync" label={Platform.OS === 'ios' ? traduire('Synchro iPhone et iPad') : traduire('Synchro entre appareils')} sub={traduire("Sans internet")} onPress={() => go('/sync-devices')} />
+          <ValueRow sticker="sauvegarde" icon="sync" label={Platform.OS === 'ios' ? traduire('Synchro entre tes appareils') : traduire('Synchro entre appareils')} sub={traduire("Sans internet")} onPress={() => go('/sync-devices')} />
         </Card>
 
         <SectionTitle title={traduire("Confidentialité")} />
