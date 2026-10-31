@@ -33,6 +33,11 @@ export type ExoProgramme = {
    * Pendant la séance il devient l'exercice cardio de lib/v2/seances/cardioFin.ts (« Remplacer » : du cardio).
    */
   minutes?: number;
+  /**
+   * 31 octobre 2026 : lié à l'exercice qui le suit (superset, circuit) : pas de repos entre les deux, le repos
+   * vient après le dernier du groupe (lib/v2/seances/superset.ts). Jamais sur le dernier exercice d'un jour.
+   */
+  enchaine?: boolean;
 };
 
 /** Seance en rounds (sac de frappe, shadow) : elle s'ouvre dans le chrono de rounds */
