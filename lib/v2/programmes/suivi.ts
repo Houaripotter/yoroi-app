@@ -14,6 +14,7 @@ import { estPlanFixe, indicesGardes, joursDuPlan, memePlan, planParDefaut, planV
 import { appliquerRemplacements, avecRemplacement, cleCase } from './perso';
 import type { Remplacements } from './perso';
 import { estJourMuscu, finActive, joursRetires, lireFinSeance, retenirFinActive } from './finSeance';
+import { hydraterChoix } from '@/lib/v2/seances/cardioJour';
 import type { FinSeance } from './finSeance';
 import { extrasDe, finDesModules, lireModules, modulesActifs, normaliserModules } from './modules';
 import type { ModuleId } from './modules';
@@ -138,6 +139,8 @@ function prevenir() {
 
 export async function chargerProgrammeActif(): Promise<ProgrammeActif | null> {
   try {
+    // 31 octobre 2026 : ton choix de cardio par jour, pour annoncer le vrai cardio du jour (lib/v2/seances/cardioJour.ts)
+    await hydraterChoix();
     const raw = await AsyncStorage.getItem(CLE);
     if (!raw) return null;
     const brut = JSON.parse(raw) as ProgrammeActif;
