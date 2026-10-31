@@ -177,7 +177,13 @@ function EyeIcon({ color, off }: { color: string; off?: boolean }) {
   );
 }
 
-export function CorpsSection({ part, pastel = false }: { part?: 'corps' | 'photos'; /** 28 octobre 2026 : l'habit de l'onglet Progres (maquette C) */ pastel?: boolean } = {}) {
+export function CorpsSection({ part, pastel = false, bloc }: {
+  part?: 'corps' | 'photos';
+  /** 28 octobre 2026 : l'habit de l'onglet Progres (maquette C) */
+  pastel?: boolean;
+  /** 31 octobre 2026 (grand ecran) : un seul bloc, pour une carte du tableau de bord ; sans bloc, tout, comme avant */
+  bloc?: 'composition' | 'courbes' | 'mensurations' | 'historique';
+} = {}) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const router = useRouter();
@@ -231,12 +237,13 @@ export function CorpsSection({ part, pastel = false }: { part?: 'corps' | 'photo
   const firstPhoto = sortedPhotos[0];
   const lastPhoto = sortedPhotos[sortedPhotos.length - 1];
   const showCorps = part !== 'photos';
-  const showPhotos = part !== 'corps';
+  const showPhotos = part !== 'corps' && !bloc;
+  const voir = (b: NonNullable<typeof bloc>) => !bloc || bloc === b;
 
   return (
-    <View style={{ paddingTop: pastel ? 4 : part ? 12 : 22, gap: pastel ? 24 : 30 }}>
+    <View style={{ paddingTop: bloc ? 0 : pastel ? 4 : part ? 12 : 22, gap: pastel ? 24 : 30 }}>
       {/* Derniere mesure : tendance, barre de composition, biomarqueurs */}
-      {showCorps && lastPoint ? (
+      {showCorps && lastPoint && voir('composition') ? (
         <View style={{ paddingHorizontal: GUTTER }}>
           {pastel ? (
             <Capitales texte={traduire('Ta composition')} couleur={creme} action={traduire('Chaque mesure')} onAction={() => router.push({ pathname: '/composition-detail', params: { mode: 'mesure' } } as any)} />
@@ -249,7 +256,7 @@ export function CorpsSection({ part, pastel = false }: { part?: 'corps' | 'photo
       ) : null}
 
       {/* Composition en grille de mini courbes (vague 26), deux par rangee */}
-      {!showCorps ? null : !compo.loading && !hasCompo ? (
+      {!showCorps || !voir('courbes') ? null : !compo.loading && !hasCompo ? (
         <View style={{ paddingHorizontal: GUTTER }}>
           <SectionHead title={traduire("Composition")} />
           <ExamplePreview
@@ -282,7 +289,7 @@ export function CorpsSection({ part, pastel = false }: { part?: 'corps' | 'photo
       ) : null}
 
       {/* Mensurations */}
-      {showCorps ? (
+      {showCorps && voir('mensurations') ? (
       <View style={{ paddingHorizontal: GUTTER }}>
         {pastel ? (
           <Capitales texte={traduire('Mensurations')} couleur={creme} action={silhouette.items.length ? traduire('L’évolution') : undefined} onAction={silhouette.items.length ? () => router.push('/measurements-detail' as any) : undefined} />
@@ -402,7 +409,7 @@ export function CorpsSection({ part, pastel = false }: { part?: 'corps' | 'photo
       ) : null}
 
       {/* Historique corporel : chaque mesure, une par une */}
-      {showCorps ? (
+      {showCorps && voir('historique') ? (
         pastel ? (
           <View style={{ paddingHorizontal: GUTTER }}>
             <Capitales texte={traduire('Ton historique')} couleur={creme} />
