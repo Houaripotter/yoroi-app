@@ -76,6 +76,7 @@ import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { DUREE_PASTILLE_MS, PastilleAjout, SeriePrevue } from '@/components/yoroi/v2/seance/SeriePrevue';
 import { correctionPossible, corrigerSerie } from '@/lib/v2/seances/correctionSerie';
+import { SonnerieFinRepos } from '@/components/yoroi/v2/seance/SonnerieFinRepos';
 import { BoutonCoachVocal, useCoachVocal } from '@/components/yoroi/v2/seance/CoachVocal';
 import { cibleDefilement } from '@/lib/v2/seances/defilementExo';
 import { completerExercice } from '@/lib/v2/seances/exerciceEnregistre';
@@ -1499,6 +1500,8 @@ export default function SeanceMuscu() {
               <Switch value={minuteurOn !== false} onValueChange={changerMinuteur} trackColor={{ true: c.primary, false: c.border }} thumbColor={c.surface} accessibilityLabel={traduire('Minuteur de repos')} />
             </View>
           ) : null}
+          {/* 31 octobre 2026 : sonnerie de fin de repos, alarme du systeme quand le telephone le permet (lib/v2/seances/alarmeRepos.ts) */}
+          {!draft.form && minuteurOn !== false ? <SonnerieFinRepos /> : null}
           {!draft.form && minuteurOn !== false ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {illus.stickers ? <Image source={illus.img('chrono')} style={{ width: 30, height: 30, marginVertical: -4 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : <Icon name="clock" size={20} color={c.textSecondary} />}
             <Ink size={15} weight="bold" style={{ flex: 1 }}>{traduire("Repos entre les séries")}</Ink>
