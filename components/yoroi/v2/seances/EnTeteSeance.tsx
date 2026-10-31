@@ -20,7 +20,8 @@ import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import type { Training } from '@/lib/database';
 import { sessionFacts } from '@/lib/v2/seances/weekSummary';
 import { sessionTitle } from '@/lib/v2/seances/sessionData';
-import { formatDuration, tonnageParts } from '@/lib/v2/trainingWeek';
+import { exercisesOf, formatDuration, tonnageParts } from '@/lib/v2/trainingWeek';
+import { cardioFait, libelleCardio } from '@/lib/v2/seances/cardioJour';
 import { aideKilos, libelleKilos } from '@/lib/v2/seances/kilosSouleves';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { traduire } from '@/lib/i18n/tr';
@@ -165,6 +166,7 @@ export function CarteBravo({ t, nombre, ensuite, onPartager, onVoir }: {
   const menthe = useTeinte('menthe');
   const illus = useIllustrations();
   const chiffres = chiffresSeance(t, unite);
+  const cardio = cardioFait(exercisesOf(t));
   const teintes: TeinteA[] = ['creme', 'bleu', 'peche'];
   const sombre = theme.isDark;
   return (
@@ -185,6 +187,10 @@ export function CarteBravo({ t, nombre, ensuite, onPartager, onVoir }: {
             </Ink>
           </View>
         </View>
+        {/* 31 octobre 2026 : le cardio vraiment fait, son type et sa duree reelle (rien s'il a ete passe) */}
+        {cardio ? (
+          <Ink size={13.5} weight="extraBold" color={menthe.texte} style={{ marginTop: 10, paddingHorizontal: 4 }}>{traduire('Puis {0}', libelleCardio(cardio.type, cardio.minutes))}</Ink>
+        ) : null}
         {chiffres.length ? (
           <View style={{ marginTop: 14, flexDirection: 'row', gap: 8 }}>
             {chiffres.map((x, i) => <TuileChiffre key={x.libelle} valeur={x.valeur} unite={x.unite} libelle={x.libelle} aide={x.aide} teinte={teintes[i % 3]} />)}
