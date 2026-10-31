@@ -13,6 +13,10 @@
  * 31 octobre 2026 (cartes en 6 modeles) : l'onglet Fond ne propose plus que « Ta photo » (galerie ou appareil photo)
  * ou « Couleur » (8 couleurs franches) ; plus de scenes, de decors ni de personnage. Clair ou Sombre seulement
  * pour le papier du Ticket. L'ancien ecran est archive dans _archive_ancien_design_2026-10-09/cartes_10_modeles_2026-10-31.
+ * 31 octobre 2026 (cartes de partage v2) : les 10 directions remplacent les 6 modeles. L'onglet Modele (ouvert a l'arrivee)
+ * est un carrousel horizontal d'apercus en direct, dans l'ordre 08, 03, 02, 01, 04, 05, 09, 06, 07, 10 ; la direction
+ * choisie revient la fois suivante. Autocollants (01, 02, 03) : sortie Story (sur ta photo ou ta couleur) ou Autocollant
+ * (PNG transparent, a copier ou enregistrer). Bouton « Partager en story » en tete de la barre du bas.
  * Parametres : moment=seance&id=, moment=pesee&date= (ou id=), moment=semaine&debut=.
  * Exploit : moment=exploit&src=seance|pesee|mois|annee&ref=...&cle=... (record, palier, compteur, bilan...).
  * ?demo=1 : donnees de demonstration (copie web), avec &sport=combat|course pour une seance, &type= pour un exploit.
@@ -31,7 +35,8 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon, RoundButton, type IconName } from '@/components/yoroi/v2/espace/ui';
 import { Interrupteur } from '@/components/yoroi/v2/reglages/kit';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
-import { aClairSombre, CarteApercu, CARTE_W, explicationModele, HAUTEURS, modeleEffectif, modelesPour } from '@/components/yoroi/v2/cartes/CarteRendu';
+import { aClairSombre, CarteApercu, CARTE_W, explicationModele, HAUTEURS, modeleEffectif, modelesPour, sortieTransparente } from '@/components/yoroi/v2/cartes/CarteRendu';
+import { estAutocollant } from '@/lib/v2/cartes/directions';
 import { COULEURS, couleurDe } from '@/lib/v2/cartes/couleurs';
 import { useCarte } from '@/components/yoroi/v2/cartes/useCarte';
 import { chargerExploit, chargerPesee, chargerSeance, chargerSemaine } from '@/lib/v2/cartes/charger';
@@ -144,7 +149,10 @@ function RangeePhotos({ c, titre, liste, choisie, flou, onChoisir }: { c: Couleu
 
 type Onglet = 'format' | 'modele' | 'fond' | 'chiffres' | 'photos' | 'plus';
 const HAUT_ONGLETS = 52;
-const BARRE_BAS = 56 + 12 + 14;
+/** 31 octobre 2026 (cartes v2) : « Partager en story » en grand, puis Enregistrer et Partager */
+const BARRE_BAS = 56 + 10 + 52 + 12 + 14;
+/** Les vignettes du carrousel des directions */
+const VIGNETTE_L = 96;
 
 /** Les onglets des options, sous l'apercu : un seul groupe d'options a la fois, la carte reste a l'ecran */
 function Onglets({ c, liste, actif, onChange }: { c: Couleurs; liste: { id: Onglet; nom: string }[]; actif: Onglet; onChange: (o: Onglet) => void }) {
@@ -179,7 +187,7 @@ export default function CarteEditeur() {
   const [data, setData] = useState<CarteData | null>(null);
   const [vide, setVide] = useState(false);
   const aa = p.moment === 'avant_apres';
-  const [onglet, setOnglet] = useState<Onglet>((['format', 'modele', 'fond', 'chiffres', 'photos', 'plus'].includes(p.onglet ?? '') ? p.onglet : aa ? 'photos' : 'fond') as Onglet);
+  const [onglet, setOnglet] = useState<Onglet>((['format', 'modele', 'fond', 'chiffres', 'photos', 'plus'].includes(p.onglet ?? '') ? p.onglet : aa ? 'photos' : 'modele') as Onglet);
   // Avant apres : toutes tes photos pour choisir la paire, et le flou (mis par defaut, comme dans ton coffre)
   const [photosAA, setPhotosAA] = useState<PhotoCarte[]>([]);
   const [flou, setFlou] = useState(p.flou !== '0');
@@ -212,6 +220,9 @@ export default function CarteEditeur() {
   }, [p.moment, p.id, p.date, p.debut, p.demo, p.sport, p.type, p.src, p.ref, p.cle, p.avant, p.apres, p.photo, p.photo2, p.photo3, p.photo4, aa]);
 
   const k = useCarte(data);
+  // mode demo : sans photo, les photos d'ambiance des planches
+  const visuels = p.demo === '1' ? { ...k.visuels, ambiance: true } : k.visuels;
+  const carrousel = useRef<ScrollView>(null);
   // Avant apres : ni personnage, ni decor ; le flou de l'onglet Photos
   const o: OptionsCarte = aa ? { ...k.options, fond: 'uni', personnage: false, sansPersonne: true, epure: false, flou } : k.options;
   const choisirAA = (cote: 'avant' | 'apres', id: string) => {
@@ -268,7 +279,7 @@ export default function CarteEditeur() {
   const voileStyle = useAnimatedStyle(() => ({ opacity: voile.value }));
 
   // 17 octobre (v4) : un fondu enchaine tres doux (180 ms) ; l'ancien apercu, pose au-dessus, s'efface sur le nouveau
-  const signe = JSON.stringify([o.modele, o.format, o.fond, o.couleur, o.papier, o.sombre, o.personnage, o.masque, o.epure, o.sansPersonne, o.flou, k.chiffres, k.photo]);
+  const signe = JSON.stringify([o.modele, o.sortie, o.format, o.fond, o.couleur, o.papier, o.sombre, o.personnage, o.masque, o.epure, o.sansPersonne, o.flou, k.chiffres, k.photo]);
   const avant = useRef<{ signe: string; depuis: number; o: OptionsCarte; largeur: number } | null>(null);
   const [ancien, setAncien] = useState<{ o: OptionsCarte; largeur: number; n: number } | null>(null);
   useLayoutEffect(() => {
@@ -286,12 +297,18 @@ export default function CarteEditeur() {
   }, [signe, data]);
 
   const pastilleCouleur = Math.min(64, Math.floor((width - 44 - (COLS_COULEURS - 1) * 12) / COLS_COULEURS));
-  // vignettes des modeles : deux par ligne, la carte miniature dans le format choisi
-  const caseModele = Math.floor((width - 44 - 10) / 2);
-  const boiteH = 150;
-  const miniL = Math.min(caseModele - 24, Math.round(((boiteH - 16) * CARTE_W) / H));
   const modeles = data ? modelesPour(data) : [];
   const modeleActif = data ? modeleEffectif(data, o.modele) : o.modele;
+  const autocollant = estAutocollant(modeleActif);
+  const transparent = !!data && sortieTransparente(data, o);
+  // le carrousel s'ouvre sur la direction choisie
+  const indexActif = Math.max(0, modeles.findIndex((m) => m.id === modeleActif));
+  useEffect(() => {
+    if (!data || actifRef.current !== 'modele') return;
+    const t = setTimeout(() => carrousel.current?.scrollTo({ x: Math.max(0, indexActif * (VIGNETTE_L + 22) - 22), animated: false }), 60);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!data]);
   const dispo = data ? chiffresDisponibles(data, o.masque) : [];
   const exploit = data?.moment === 'exploit';
   const poidsAA = data?.moment === 'avant_apres' ? lignesPoids(data, 'aucun') : null;
@@ -303,18 +320,20 @@ export default function CarteEditeur() {
     { id: 'photos', nom: 'Photos' },
     { id: 'plus', nom: 'Plus' },
   ] : [
+    { id: 'modele' as Onglet, nom: traduire('Modèle') },
     { id: 'fond' as Onglet, nom: 'Fond' },
     { id: 'format', nom: 'Format' },
-    { id: 'modele' as Onglet, nom: traduire('Modèle') },
     ...(exploit ? [] : [{ id: 'chiffres' as Onglet, nom: 'Chiffres' }]),
-    { id: 'plus', nom: 'Plus' },
+    ...(montrePoids ? [{ id: 'plus' as Onglet, nom: 'Plus' }] : []),
   ];
   const actif: Onglet = onglets.some((x) => x.id === onglet) ? onglet : onglets[0].id;
+  const actifRef = useRef(actif);
+  actifRef.current = actif;
   // 31 octobre 2026 : plus d'interrupteur personnage ; le fond se choisit entre ta photo et une couleur
   const fondPhoto = o.fond === 'photo' && !!k.photo;
-  // avec ta photo, la couleur sert encore au bandeau (Bandeau) et a la lumiere (Neon nuit)
-  const couleurUtile = !fondPhoto || modeleActif === 'bandeau' || modeleActif === 'neon';
-  const titreCouleur = !fondPhoto ? traduire('Ta couleur') : modeleActif === 'bandeau' ? traduire('Couleur du bandeau') : traduire('Couleur du néon');
+  // avec ta photo, la couleur sert encore a la carte holographique
+  const couleurUtile = !fondPhoto || modeleActif === 'holo';
+  const titreCouleur = !fondPhoto ? traduire('Ta couleur') : traduire('Couleur de ta carte');
 
   if (vide) {
     return (
@@ -376,40 +395,39 @@ export default function CarteEditeur() {
 
         {actif === 'modele' ? (
           <>
-            <Ink size={14} color={c.textSecondary}>{traduire("Chaque vignette montre ta vraie carte.")}</Ink>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 10, rowGap: 12 }} accessibilityRole="radiogroup">
+            <Ink size={14} color={c.textSecondary}>{traduire('Glisse pour voir les 10 modèles, avec ta vraie séance.')}</Ink>
+            <ScrollView ref={carrousel} horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -22 }} contentContainerStyle={{ paddingHorizontal: 22, gap: 12, paddingVertical: 4 }} accessibilityRole="radiogroup">
               {data
                 ? modeles.map((m) => {
                     const on = modeleActif === m.id;
-                    const exp = explicationModele(m, data);
                     return (
                       <Pressable
                         key={m.id}
                         onPress={() => k.setStyle({ modele: m.id })}
                         accessibilityRole="radio"
                         accessibilityState={{ checked: on }}
-                        accessibilityLabel={`${m.nom}. ${exp}`}
-                        style={({ pressed }) => ({ width: caseModele, borderRadius: 18, padding: 6, paddingBottom: 10, gap: 7, backgroundColor: on ? c.accentTint : pressed ? c.fillSubtle : c.surface, borderWidth: on ? 2 : 1, borderColor: on ? c.accent : c.border })}
+                        accessibilityLabel={`${m.nom}. ${explicationModele(m, data)}`}
+                        style={{ width: VIGNETTE_L + 10, alignItems: 'center', gap: 6 }}
                       >
-                        <View style={{ height: boiteH, borderRadius: 13, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }} pointerEvents="none">
-                          <CarteApercu largeur={miniL} data={data} options={{ ...o, modele: m.id }} visuels={k.visuels} />
+                        <View pointerEvents="none" style={{ padding: 3, borderRadius: 16, borderWidth: on ? 2.5 : 1, borderColor: on ? c.accent : c.border, backgroundColor: c.surface }}>
+                          <CarteApercu largeur={VIGNETTE_L} data={data} options={{ ...o, modele: m.id, sortie: 'story' }} visuels={{ ...visuels, ambiance: true }} />
                         </View>
-                        <View style={{ paddingHorizontal: 6, gap: 2 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            <Ink size={15} weight="extraBold" color={on ? c.accent : c.ink} style={{ flex: 1 }} numberOfLines={1}>{traduire(m.nom)}</Ink>
-                            {on ? (
-                              <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
-                                <Icon name="check" size={12} color={c.onPrimary} stroke={3} />
-                              </View>
-                            ) : null}
-                          </View>
-                          <Ink size={12.5} color={c.textSecondary} style={{ lineHeight: 16 }}>{exp}</Ink>
-                        </View>
+                        <Ink size={12} weight={on ? 'black' : 'bold'} color={on ? c.accent : c.ink} numberOfLines={2} style={{ textAlign: 'center', lineHeight: 15 }}>{m.nom}</Ink>
                       </Pressable>
                     );
                   })
                 : null}
-            </View>
+            </ScrollView>
+            {data && modeles[indexActif] ? <Ink size={13} color={c.textSecondary}>{explicationModele(modeles[indexActif], data)}</Ink> : null}
+            {autocollant ? (
+              <>
+                <Titre c={c} icon="image" sous={transparent ? traduire('Un PNG à fond transparent, à coller sur ta photo ou ta vidéo de story') : traduire('Posé sur ta photo, ou sur ta couleur')}>{traduire('Ta sortie')}</Titre>
+                <View style={{ flexDirection: 'row', gap: 8 }} accessibilityRole="radiogroup">
+                  <Pastille c={c} on={!transparent} label={traduire('Story')} onPress={() => k.setStyle({ sortie: 'story' })} />
+                  <Pastille c={c} on={transparent} label={traduire('Autocollant')} onPress={() => k.setStyle({ sortie: 'autocollant' })} />
+                </View>
+              </>
+            ) : null}
           </>
         ) : null}
 
@@ -533,10 +551,10 @@ export default function CarteEditeur() {
         <Animated.View style={[{ alignItems: 'center', justifyContent: 'flex-start', borderRadius: 26, backgroundColor: c.accentTint, paddingTop: 12, overflow: 'hidden' }, zoneStyle]}>
           {data ? (
             <Animated.View style={[{ borderRadius: 18, shadowColor: '#000', shadowOpacity: 0.22, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 8 }, carteStyle]}>
-              <CarteApercu ref={k.ref} largeur={largeur} data={data} options={o} visuels={k.visuels} />
+              <CarteApercu ref={k.ref} largeur={largeur} data={data} options={o} visuels={visuels} />
               {ancien ? (
                 <Animated.View key={ancien.n} pointerEvents="none" style={[{ position: 'absolute', top: 0, left: Math.round((largeur - ancien.largeur) / 2) }, voileStyle]}>
-                  <CarteApercu largeur={ancien.largeur} data={data} options={ancien.o} visuels={k.visuels} />
+                  <CarteApercu largeur={ancien.largeur} data={data} options={ancien.o} visuels={visuels} />
                 </Animated.View>
               ) : null}
             </Animated.View>
@@ -557,12 +575,26 @@ export default function CarteEditeur() {
         <View style={{ width: 44 }} />
       </View>
 
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 12, paddingBottom: insets.bottom + 14, paddingHorizontal: 22, backgroundColor: c.background, borderTopWidth: 1, borderTopColor: c.border, flexDirection: 'row', gap: 10 }}>
-        <Pressable onPress={() => void k.enregistrer()} disabled={!data || !!k.busy} accessibilityRole="button" accessibilityLabel={traduire("Enregistrer dans la pellicule")} style={({ pressed }) => ({ flex: 1, height: 56, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
-          <Icon name={k.saved ? 'check' : 'download'} size={19} color={k.saved ? c.successText : c.ink} />
-          <Ink size={16} weight="extraBold" color={k.saved ? c.successText : c.ink}>{k.busy === 'save' ? traduire('Un instant') : k.saved ? traduire('Enregistrée') : traduire('Enregistrer')}</Ink>
-        </Pressable>
-        <BoutonPrincipal onPress={() => void partager()} haptique="none" disabled={!data || !!k.busy} accessibilityLabel={traduire("Partager la carte")} label={k.busy === 'share' ? traduire('Un instant') : traduire('Partager')} tailleTexte={16} lignes={1} style={{ flex: 1.2 }} icone={(col) => <Icon name="share" size={19} color={col} />} />
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 12, paddingBottom: insets.bottom + 14, paddingHorizontal: 22, backgroundColor: c.background, borderTopWidth: 1, borderTopColor: c.border, gap: 10 }}>
+        {/* 31 octobre 2026 (cartes v2) : le partage en story, bien visible */}
+        <BoutonPrincipal onPress={() => void (aa ? partager() : k.partagerEnStory())} haptique="none" disabled={!data || !!k.busy} accessibilityLabel={traduire('Partager en story')} accessibilityHint={traduire('Ouvre le partage de ton téléphone : choisis Instagram, puis Story')} label={k.busy === 'story' ? traduire('Un instant') : traduire('Partager en story')} tailleTexte={16} lignes={1} hauteur={56} icone={(col) => <Icon name="share" size={19} color={col} />} />
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <Pressable onPress={() => void k.enregistrer()} disabled={!data || !!k.busy} accessibilityRole="button" accessibilityLabel={traduire("Enregistrer dans la pellicule")} style={({ pressed }) => ({ flex: 1, height: 52, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
+            <Icon name={k.saved ? 'check' : 'download'} size={19} color={k.saved ? c.successText : c.ink} />
+            <Ink size={15} weight="extraBold" color={k.saved ? c.successText : c.ink}>{k.busy === 'save' ? traduire('Un instant') : k.saved ? traduire('Enregistrée') : traduire('Enregistrer')}</Ink>
+          </Pressable>
+          {transparent ? (
+            <Pressable onPress={() => void k.copier()} disabled={!data || !!k.busy} accessibilityRole="button" accessibilityLabel={traduire("Copier l'autocollant")} accessibilityHint={traduire('Dans ta story, appuie longtemps puis Coller')} style={({ pressed }) => ({ flex: 1, height: 52, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
+              <Icon name={k.copie ? 'check' : 'image'} size={19} color={k.copie ? c.successText : c.ink} />
+              <Ink size={15} weight="extraBold" color={k.copie ? c.successText : c.ink}>{k.busy === 'copie' ? traduire('Un instant') : k.copie ? traduire('Copié') : traduire('Copier')}</Ink>
+            </Pressable>
+          ) : (
+            <Pressable onPress={() => void partager()} disabled={!data || !!k.busy} accessibilityRole="button" accessibilityLabel={traduire("Partager la carte")} style={({ pressed }) => ({ flex: 1, height: 52, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
+              <Icon name="share" size={19} color={c.ink} />
+              <Ink size={15} weight="extraBold" color={c.ink}>{k.busy === 'share' ? traduire('Un instant') : traduire('Partager')}</Ink>
+            </Pressable>
+          )}
+        </View>
       </View>
     </View>
   );
