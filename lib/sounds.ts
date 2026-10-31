@@ -8,6 +8,7 @@ import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import type { AudioPlayer } from 'expo-audio';
 import logger from '@/lib/security/logger';
 import { sonsActifs } from '@/lib/v2/sons/reglage';
+import { arreterApres, GONG_FONDU_MS, GONG_MAX_MS } from '@/lib/v2/sons/arretProgramme';
 
 type SoundType = 'gong' | 'beep' | 'tick' | 'victory' | 'levelup' | 'wizz' | 'sonicring' | 'mariowin' | 'badgefanfare' | 'clap' | 'bell' | 'recovery';
 
@@ -42,6 +43,8 @@ class SoundManager {
   private users = 0;
 
   private initPromise: Promise<void> | null = null;
+  // 30 octobre 2026 : arrets programmes en cours (gong court), annules si le meme son repart ou au nettoyage
+  private arrets: Map<string, (couper?: boolean) => void> = new Map();
 
   async initialize(): Promise<void> {
     this.users += 1;
@@ -82,6 +85,9 @@ class SoundManager {
     const key = TYPE_TO_KEY[type] || type;
     const player = this.players.get(key);
     if (!player) return;
+    // un son qui repart oublie l'arret programme de sa lecture d'avant
+    this.arrets.get(key)?.();
+    this.arrets.delete(key);
     try {
       player.volume = volume;
       player.seekTo(0);
@@ -92,6 +98,21 @@ class SoundManager {
   }
 
   playGong(): void { this.play('gong'); }
+  /**
+   * 30 octobre 2026 : le gong de fin d'onboarding, 3 secondes au plus avec un fondu de sortie (gong.mp3 dure 54 s).
+   * Rend une fonction d'arret : l'appeler quand l'ecran se ferme coupe le son et nettoie les minuteurs.
+   */
+  playGongCourt(maxMs: number = GONG_MAX_MS, fonduMs: number = GONG_FONDU_MS): () => void {
+    this.play('gong');
+    const player = this.players.get('gong');
+    if (!player || !sonsActifs()) return () => {};
+    const annuler = arreterApres(player, { maxMs, fonduMs });
+    this.arrets.set('gong', annuler);
+    return () => {
+      annuler(true);
+      if (this.arrets.get('gong') === annuler) this.arrets.delete('gong');
+    };
+  }
   playBeep(): void { this.play('beep'); }
   playTick(): void { this.play('beep', 0.3); }
   playVictory(): void { this.play('victory'); }
@@ -118,6 +139,8 @@ class SoundManager {
   async cleanup(): Promise<void> {
     this.users = Math.max(0, this.users - 1);
     if (this.users > 0) return;
+    for (const [, annuler] of this.arrets) annuler();
+    this.arrets.clear();
     for (const [, player] of this.players) {
       try { player.release(); } catch { /* ignore */ }
     }
