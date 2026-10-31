@@ -49,22 +49,29 @@ function fromFolder(folder: string, femme: boolean, variant: number): ImageSourc
   return list[i];
 }
 
-/** sport : id de lib/sports.ts (ou nom d'un dossier d'illustrations). variant : 0, 1, 2 */
-export function pickSportArt(sport: string | null | undefined, femme: boolean, variant = 0): SportArtPick {
+/**
+ * sport : id de lib/sports.ts (ou nom d'un dossier d'illustrations). variant : garde pour les appels existants.
+ * 31 octobre 2026 (Houari : « Le personnage que tu me mets partout, j'aime pas. Soit tu mets le personnage de
+ * l'utilisateur, soit tu mets rien. ») : plus jamais une personne dessinee par defaut. Le sport est montre par son
+ * sticker d'objet (gants, haltere, ballon...), le meme partout ; le personnage, lui, vient seulement de ton espace
+ * (components/yoroi/v2/perso/usePersonnageUtilisateur.ts). Ancienne version (illustrations de personnes) :
+ * _archive_ancien_design_2026-10-09/personnage_partout_2026-10-31/sportArt.ts. Les dessins restent dans
+ * assets/avatars/app/sports (SPORT_ART), plus lus ici.
+ */
+export function pickSportArt(sport: string | null | undefined, _femme: boolean, _variant = 0): SportArtPick {
   const id = cleanSportId(sport);
   if (id.startsWith('@') && SPORT_ICONS[id.slice(1)]) return { source: icone(id.slice(1))!, kind: 'icone', key: id };
-  const direct = id ? fromFolder(id, femme, variant) : null;
-  if (direct) return { source: direct, kind: 'illustration', key: id };
   for (const choice of sportArtChoices(id)) {
-    if (choice.startsWith('@')) {
-      const icon = icone(choice.slice(1));
-      if (icon) return { source: icon, kind: 'icone', key: choice };
-      continue;
-    }
-    const img = fromFolder(choice, femme, variant);
-    if (img) return { source: img, kind: 'illustration', key: choice };
+    if (!choice.startsWith('@')) continue;
+    const icon = icone(choice.slice(1));
+    if (icon) return { source: icon, kind: 'icone', key: id || choice };
   }
   return { source: icone('medaille') ?? LAST_RESORT, kind: 'icone', key: '@medaille' };
+}
+
+/** Une illustration de personne du dossier d'un sport (Studio et outils seulement, jamais dans un ecran d'usage) */
+export function illustrationDeDossier(folder: string, femme: boolean, variant = 0): ImageSourcePropType | null {
+  return fromFolder(folder, femme, variant);
 }
 
 /** Vrai si le sport a une vraie illustration de personne (pas seulement une icone) */
