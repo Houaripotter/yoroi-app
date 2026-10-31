@@ -82,8 +82,16 @@ import { BoutonCoachVocal, useCoachVocal } from '@/components/yoroi/v2/seance/Co
 import { cibleDefilement } from '@/lib/v2/seances/defilementExo';
 import { completerExercice } from '@/lib/v2/seances/exerciceEnregistre';
 import { DUREE_MESSAGE_MS, decisionFinRepos, retirerReposFini } from '@/lib/v2/seances/finRepos';
-import { alternativesCardio, annulerFinCardio, estCardioFin, demarrer as demarrerChrono, dureeFinaleSec, ecouleMs, enCours as chronoEnCours, finObjectifMs, fmtChrono, nomCardioFin, nouveauChrono, objectifAtteint, pause as pauseChrono, programmerFinCardio, suiteFinCardio } from '@/lib/v2/seances/cardioFin';
+import { alternativesCardio, annulerFinCardio, estCardioFin, demarrer as demarrerChrono, dureeFinaleSec, ecouleMs, enCours as chronoEnCours, finObjectifMs, nomCardioFin, nouveauChrono, objectifAtteint, pause as pauseChrono, programmerFinCardio, suiteFinCardio } from '@/lib/v2/seances/cardioFin';
 import type { ChronoCardio } from '@/lib/v2/seances/cardioFin';
+import { avecValeur, chargerChoix, chargerReglagesCardio, choixParDefaut, cleChoix, enregistrerChoix, enregistrerReglagesCardio, infoCardio, nouveauSegment, sansDernierSegment, segmentCourant, typeDepart } from '@/lib/v2/seances/cardioChoix';
+import type { ChoixCardio, ReglagesCardio, Valeurs } from '@/lib/v2/seances/cardioChoix';
+import { appliquerChoix, exerciceSuivant, preparerCardio } from '@/lib/v2/seances/cardioSeance';
+import { chargerZone2 } from '@/lib/v2/seances/zone2';
+import type { Zone2 } from '@/lib/v2/seances/zone2';
+import { fcMoyenneEntre } from '@/lib/v2/seances/fcCardio';
+import { FeuilleChoixCardio } from '@/components/yoroi/v2/seance/cardio/FeuilleChoixCardio';
+import { CarteCardio } from '@/components/yoroi/v2/seance/cardio/CarteCardio';
 import { playWizzSound } from '@/lib/soundManager';
 import { encouragement, etatSerie, nouvelleSerie, remettreSerie, sansSerie, seriesAFaire } from '@/lib/v2/seances/seriesSaisie';
 import { chargerMinuteurRepos, enregistrerMinuteurRepos, reposApresSerie } from '@/lib/v2/seances/minuteurRepos';
@@ -135,6 +143,23 @@ function exerciseFrom(name: string, muscle: string | undefined, h: ExerciseHisto
 function exoCardio(minutes: number, nom: string): LiveExercise {
   const cardio = nouveauChrono(minutes);
   return { id: uid(), name: nom, muscle: 'CARDIO', sets: [{ id: uid(), weight: 0, reps: cardio.objectifSec, done: false }], objectifSeries: 1, cardio };
+}
+
+/**
+ * 31 octobre 2026 : chaque cardio de la seance recoit ton dernier choix pour ce jour du programme (type, duree), et la
+ * pente et la vitesse de ta derniere fois (lib/v2/seances/cardioChoix.ts). La feuille de choix s'ouvrira quand meme.
+ */
+async function cardiosDuJour(exos: LiveExercise[], cle: string): Promise<LiveExercise[]> {
+  if (!exos.some((e) => e.cardio)) return exos;
+  const [choix, reglages] = await Promise.all([chargerChoix(), chargerReglagesCardio()]);
+  const garde = choix[cle];
+  return exos.map((e) => {
+    if (!e.cardio) return e;
+    const prep = { ...e, cardio: preparerCardio(e.cardio, e.name, reglages) };
+    if (!garde) return prep;
+    const x = appliquerChoix(prep, garde, reglages);
+    return { ...x, cardio: { ...x.cardio!, choisi: undefined } };
+  });
 }
 
 /** Exercice d'une seance enregistree, series deja validees (modification) */
@@ -330,6 +355,8 @@ export default function SeanceMuscu() {
             if (prog) programme = { id: prog.id, jourId: jour.id };
             // 30 octobre 2026 (J) : le cardio de fin de seance, un vrai exercice en dernier, apres les abdos
             if (jour.finCardio) exercises = [...exercises, exoCardio(jour.finCardio.minutes, nomCardioFin((await chargerEcartes().catch(() => [])).map((x) => x.nom)))];
+            // 31 octobre 2026 : ton dernier choix de cardio pour ce jour, ta derniere pente et ta derniere vitesse
+            exercises = await cardiosDuJour(exercises, cleChoix(prog?.id, jour.id)).catch(() => exercises);
           }
           // 25 octobre 2026 : une seance de « Mes séances » ; les charges viennent de ta derniere fois sur chaque exercice
           const maSeanceId = param1(raw.maSeance);
@@ -546,6 +573,72 @@ export default function SeanceMuscu() {
 
   /* (J) chrono du cardio : heure de depart et temps cumule, il tient en arriere plan (lib/v2/seances/cardioFin.ts) */
   const changerCardio = (id: string, fn: (c: ChronoCardio) => ChronoCardio) => updateExercise(id, (e) => (e.cardio ? { ...e, cardio: fn(e.cardio) } : e));
+
+  /* 31 octobre 2026 : choix du cardio, pente et vitesse, zone 2 (lib/v2/seances/cardioChoix.ts, zone2.ts) */
+  const [choixCardioFor, setChoixCardioFor] = useState<string | null>(null);
+  const [reglagesCardio, setReglagesCardio] = useState<ReglagesCardio>({});
+  const [zone2, setZone2] = useState<Zone2 | null>(null);
+  const [lectureFc, setLectureFc] = useState<string | null>(null);
+  useEffect(() => {
+    chargerReglagesCardio().then(setReglagesCardio, () => {});
+    chargerZone2().then(setZone2, () => setZone2(null));
+  }, []);
+  const cleCardio = cleChoix(draft?.programme?.id, draft?.programme?.jourId);
+  const exoChoixCardio = draft?.exercises.find((e) => e.id === choixCardioFor && e.cardio) ?? null;
+  const departCardio: ChoixCardio = exoChoixCardio?.cardio
+    ? { type: exoChoixCardio.cardio.type ?? typeDepart(exoChoixCardio.name), minutes: Math.round(exoChoixCardio.cardio.objectifSec / 60) }
+    : choixParDefaut({}, cleCardio);
+  // en arrivant sur le cardio (pas lance, pas encore choisi), la feuille s'ouvre une fois
+  useEffect(() => {
+    if (!draft || draft.form || !current?.cardio || current.cardio.choisi || current.cardio.premierDebutMs || current.sets.every((x) => x.done)) return;
+    setChoixCardioFor(current.id);
+    changerCardio(current.id, (x) => ({ ...x, choisi: true }));
+  }, [current?.id, current?.cardio?.choisi]); // eslint-disable-line react-hooks/exhaustive-deps
+  const validerChoixCardio = (choix: ChoixCardio) => {
+    const ex = exoChoixCardio;
+    setChoixCardioFor(null);
+    if (!ex?.cardio) return;
+    const suiteEx = appliquerChoix(ex, choix, reglagesCardio);
+    updateExercise(ex.id, () => suiteEx);
+    void enregistrerChoix(cleCardio, choix);
+    // chrono lance : la notification de fin suit le nouvel objectif et le nouveau nom
+    if (suiteEx.cardio && chronoEnCours(suiteEx.cardio)) {
+      const reste = (suiteEx.cardio.objectifSec * 1000 - ecouleMs(suiteEx.cardio, Date.now())) / 1000;
+      if (reste > 0) void programmerFinCardio(reste, traduire('Cardio terminé'), traduire('{0} : objectif de {1} min atteint', sansTiret(traduire(nomFr(suiteEx.name))), choix.minutes));
+      else void annulerFinCardio();
+    }
+    impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+  };
+  // « Passer le cardio aujourd'hui » : il sort de la seance, rien n'est garde pour la prochaine fois
+  const passerCardio = () => {
+    const id = choixCardioFor;
+    setChoixCardioFor(null);
+    if (!id) return;
+    if (suiteFinCardio(draft?.exercises.find((e) => e.id === id)?.cardio, Date.now(), false).annuler) void annulerFinCardio();
+    update((d) => {
+      const list = nettoyerEnchaines(delier(d.exercises, id).filter((e) => e.id !== id));
+      return { ...d, exercises: list, currentId: d.currentId === id ? list[list.length - 1]?.id ?? null : d.currentId };
+    });
+  };
+  const valeurCardio = (ex: LiveExercise, v: Valeurs) => changerCardio(ex.id, (x) => ({ ...x, segments: avecValeur(x.segments, infoCardio(x.type ?? typeDepart(ex.name)).mesure, v) }));
+  const segmentCardio = (ex: LiveExercise) => changerCardio(ex.id, (x) => ({ ...x, segments: nouveauSegment(x.segments, ecouleMs(x, Date.now()) / 1000) }));
+  const retirerSegmentCardio = (ex: LiveExercise) => changerCardio(ex.id, (x) => ({ ...x, segments: sansDernierSegment(x.segments) }));
+  const suiteCardio = (ex: LiveExercise, suite: 'garder' | 'suggestion', prochain: Valeurs) => {
+    changerCardio(ex.id, (x) => ({ ...x, suite }));
+    const type = ex.cardio?.type ?? typeDepart(ex.name);
+    void enregistrerReglagesCardio(type, prochain).then(setReglagesCardio, () => {});
+  };
+  // la FC moyenne du cardio, lue dans Sante ; la montre peut tarder a l'y ecrire : un second essai 20 s apres
+  const lireFcCardio = (id: string, debut: number, fin: number, essai = 0) => {
+    setLectureFc(id);
+    fcMoyenneEntre(debut, fin).then((fc) => {
+      if (fc !== null) {
+        changerCardio(id, (x) => ({ ...x, fcMoy: fc }));
+        setLectureFc(null);
+      } else if (essai === 0) setTimeout(() => lireFcCardio(id, debut, fin, 1), 20_000);
+      else setLectureFc(null);
+    }, () => setLectureFc(null));
+  };
   const demarrerCardio = (ex: LiveExercise) => {
     if (!ex.cardio) return;
     const t = Date.now();
@@ -565,8 +658,17 @@ export default function SeanceMuscu() {
     const sec = dureeFinaleSec(ex.cardio, t);
     if (sec <= 0) return;
     // pas de repos apres le cardio
-    updateExercise(ex.id, (e) => ({ ...e, cardio: e.cardio ? pauseChrono(e.cardio, t) : e.cardio, sets: e.sets.map((x, i) => (i === 0 ? { ...x, reps: sec, done: true } : x)) }));
+    // 31 octobre 2026 : l'heure de fin et ta zone 2 restent avec le cardio, pour le bilan
+    updateExercise(ex.id, (e) => ({ ...e, cardio: e.cardio ? { ...pauseChrono(e.cardio, t), finMs: t, ...(zone2 ? { zone2: { min: zone2.min, max: zone2.max } } : {}) } : e.cardio, sets: e.sets.map((x, i) => (i === 0 ? { ...x, reps: sec, done: true } : x)) }));
     void annulerFinCardio();
+    // ta pente et ta vitesse de la fin reviennent la prochaine fois (le bilan peut proposer un pas de plus ou de moins)
+    const type = ex.cardio.type ?? typeDepart(ex.name);
+    const derniere = segmentCourant(ex.cardio.segments);
+    if (derniere) {
+      const { aSec: _a, ...v } = derniere;
+      void enregistrerReglagesCardio(type, v).then(setReglagesCardio, () => {});
+    }
+    if (ex.cardio.premierDebutMs) lireFcCardio(ex.id, ex.cardio.premierDebutMs, t);
     notificationAsync(NotificationFeedbackType.Success).catch(() => {});
   };
   // objectif atteint : le son si tu as l'app sous les yeux, le petit message si tu reviens apres (memes regles que le repos)
@@ -601,7 +703,8 @@ export default function SeanceMuscu() {
   }, []);
   const [remplacerFor, setRemplacerFor] = useState<{ id: string; raison: 'occupee' | 'salle' | 'douleur' | null; liste: string[]; i: number } | null>(null);
   // 31 octobre 2026 : un exercice cardio garde son choix de machine de cardio ; les autres ouvrent « Changer d'exercice »
-  const ouvrirRemplacer = (ex: LiveExercise) => (ex.cardio ? setRemplacerFor({ id: ex.id, raison: null, liste: [], i: 0 }) : setChangerFor({ id: ex.id, mode: 'changer' }));
+  // 31 octobre 2026 : un cardio s'ouvre sur la feuille « Ton cardio » (type, duree, passer)
+  const ouvrirRemplacer = (ex: LiveExercise) => (ex.cardio ? setChoixCardioFor(ex.id) : setChangerFor({ id: ex.id, mode: 'changer' }));
   const choisirRaison = (raison: 'occupee' | 'salle' | 'douleur') => {
     const ex = draft?.exercises.find((e) => e.id === remplacerFor?.id);
     if (!ex || !draft) return setRemplacerFor(null);
@@ -1144,7 +1247,8 @@ export default function SeanceMuscu() {
   const currentDone = current ? (current.sets.length > 0 && current.sets.every((s) => s.done)) || enPlus : false;
   basMasque.current = Math.max(0, bottomSpace - 14);
   // 26 octobre 2026 : un exercice laisse (passe apres au moins une serie) n'est plus repropose
-  const nextEx = current ? draft.exercises.find((e, i) => i > draft.exercises.indexOf(current) && seriesRestantes(e) > 0) ?? draft.exercises.find((e) => e.id !== current.id && seriesRestantes(e) > 0) : undefined;
+  // 31 octobre 2026 : la regle est dans lib/v2/seances/cardioSeance.ts (testee : abdos en superset, puis le cardio)
+  const nextEx = current ? exerciceSuivant(draft.exercises, current.id) : undefined;
   const menuEx = draft.exercises.find((e) => e.id === menuFor) ?? null;
   const noteEx = draft.exercises.find((e) => e.id === noteFor) ?? null;
   const priseEx = draft.exercises.find((e) => e.id === priseFor) ?? null;
@@ -1254,7 +1358,7 @@ export default function SeanceMuscu() {
                 {!draft.form && (current.cardio ? !current.sets.some((x) => x.done) : activeIndex >= 0) ? (
                   <Pressable onPress={() => ouvrirRemplacer(current)} accessibilityRole="button" accessibilityLabel={traduire('Changer {0}', sansTiret(traduire(nomFr(current.name))))} hitSlop={8} style={{ alignSelf: 'flex-start', minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <StickerOuIcone sticker="refresh" icon="sync" size={22} />
-                    <Ink size={13} weight="extraBold" color={c.accentText}>{current.cardio ? traduire('Remplacer') : traduire('Changer')}</Ink>
+                    <Ink size={13} weight="extraBold" color={c.accentText}>{traduire('Changer')}</Ink>
                   </Pressable>
                 ) : null}
               </View>
@@ -1346,6 +1450,15 @@ export default function SeanceMuscu() {
                 onTerminer={() => terminerCardio(current)}
                 onManuel={(min) => changerCardio(current.id, (x) => ({ ...x, manuelMin: min > 0 ? min : undefined }))}
                 onDistance={(km) => changerCardio(current.id, (x) => ({ ...x, distanceKm: km > 0 ? km : undefined }))}
+                zone2={zone2}
+                lectureFc={lectureFc === current.id}
+                onChoisir={() => setChoixCardioFor(current.id)}
+                onValeur={(v) => valeurCardio(current, v)}
+                onSegment={() => segmentCardio(current)}
+                onRetirerSegment={() => retirerSegmentCardio(current)}
+                onParler={(oui) => changerCardio(current.id, (x) => ({ ...x, parler: oui }))}
+                onSuite={(suite, prochain) => suiteCardio(current, suite, prochain)}
+                nom={current.name}
               />
             ) : (<>
             <View style={{ flexDirection: 'row', paddingHorizontal: 8, marginTop: 6 }}>
@@ -1733,6 +1846,9 @@ export default function SeanceMuscu() {
       })()}
 
       {/* Options d'un exercice */}
+      {/* 31 octobre 2026 : « Ton cardio », type, duree, ou passer (components/yoroi/v2/seance/cardio/FeuilleChoixCardio.tsx) */}
+      <FeuilleChoixCardio visible={!!exoChoixCardio} depart={departCardio} onValider={validerChoixCardio} onPasser={passerCardio} onFermer={() => setChoixCardioFor(null)} />
+
       <Sheet visible={!!menuEx} onClose={() => setMenuFor(null)} title={traduire(menuEx?.name)}>
         {menuEx ? (
           <View style={{ gap: 8 }}>
@@ -2019,78 +2135,6 @@ function Stat({ label, value, ton: t }: { label: string; value: string; ton: Ton
     <View style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 20, backgroundColor: p.fond, gap: 2 }}>
       <Ink size={12.5} weight="extraBold" color={p.encre} numberOfLines={1}>{label.charAt(0).toUpperCase() + label.slice(1)}</Ink>
       <Ink size={22} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{value}</Ink>
-    </View>
-  );
-}
-
-/** 30 octobre 2026 (J) : la carte de l'exercice cardio, gros chrono, Démarrer, Pause, Terminer, durée à la main */
-function CarteCardio({ chrono, fait, dureeFaite, maintenant, onDemarrer, onPause, onTerminer, onManuel, onDistance }: {
-  chrono: ChronoCardio;
-  fait: boolean;
-  dureeFaite: number;
-  maintenant: number;
-  onDemarrer: () => void;
-  onPause: () => void;
-  onTerminer: () => void;
-  onManuel: (min: number) => void;
-  onDistance: (km: number) => void;
-}) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
-  const [manuel, setManuel] = useState(!!chrono.manuelMin);
-  const [distance, setDistance] = useState(!!chrono.distanceKm);
-  const ecoule = fait ? dureeFaite : Math.floor(ecouleMs(chrono, Math.max(maintenant, Date.now())) / 1000);
-  const marche = chronoEnCours(chrono);
-  const atteint = ecoule >= chrono.objectifSec;
-  const peutTerminer = !fait && (ecoule > 0 || (chrono.manuelMin ?? 0) > 0);
-  const bouton = (label: string, onPress: () => void, principal: boolean, actif = true) => (
-    <Pressable onPress={onPress} disabled={!actif} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => ({ flex: 1, minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', opacity: actif ? 1 : 0.45, backgroundColor: principal ? (pressed ? c.primaryPressed : c.primary) : pressed ? c.fillSubtle : c.fillSoft })}>
-      <Ink size={16} weight="black" color={principal ? c.onPrimary : c.ink}>{label}</Ink>
-    </Pressable>
-  );
-  return (
-    <View style={{ borderRadius: 24, backgroundColor: fait || atteint ? ton('menthe').fond : c.surface, borderWidth: 2, borderColor: fait ? ton('menthe').encre : c.primary, padding: 16, gap: 14 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <StickerOuIcone sticker="cardio_zone2" icon="timer" size={40} />
-        <Ink size={15} weight="extraBold" color={fait ? ton('menthe').encre : c.textSecondary} style={{ flex: 1 }}>
-          {fait ? traduire('Cardio fait') : traduire('Objectif : {0} min', Math.round(chrono.objectifSec / 60))}
-        </Ink>
-      </View>
-      <View accessibilityLiveRegion="polite" accessibilityLabel={traduire('{0} sur {1}', fmtChrono(ecoule), fmtChrono(chrono.objectifSec))} style={{ alignItems: 'center' }}>
-        <Ink size={56} weight="black" tight color={c.ink} style={{ fontVariant: ['tabular-nums'] }}>{fmtChrono(ecoule)}</Ink>
-        <Ink size={17} weight="extraBold" color={c.textSecondary} style={{ fontVariant: ['tabular-nums'] }}>{traduire('sur {0}', fmtChrono(chrono.objectifSec))}</Ink>
-      </View>
-      {fait ? null : (
-        <>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {marche ? bouton(traduire('Pause'), onPause, false) : bouton(ecoule > 0 ? traduire('Reprendre') : traduire('Démarrer'), onDemarrer, true)}
-            {bouton(traduire('Terminer'), onTerminer, marche || atteint, peutTerminer)}
-          </View>
-          {/* chrono oublie : la duree a la main */}
-          {ecoule === 0 && !marche ? (
-            manuel ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Ink size={14} weight="bold" style={{ flex: 1 }}>{traduire('Durée faite')}</Ink>
-                <Stepper value={chrono.manuelMin ?? 0} step={1} min={0} max={300} unit={traduire('minutes')} size={20} button={38} format={(v) => traduire('{0} min', v)} onChange={onManuel} />
-              </View>
-            ) : (
-              <Pressable onPress={() => setManuel(true)} accessibilityRole="button" hitSlop={6} style={{ alignSelf: 'flex-start', minHeight: 36, justifyContent: 'center' }}>
-                <Ink size={13} weight="extraBold" color={c.accentText}>{traduire('Saisir la durée à la main')}</Ink>
-              </Pressable>
-            )
-          ) : null}
-          {distance ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Ink size={14} weight="bold" style={{ flex: 1 }}>{traduire('Distance')}</Ink>
-              <Stepper value={chrono.distanceKm ?? 0} step={0.1} min={0} max={100} decimals unit={traduire('kilomètres')} size={20} button={38} format={(v) => traduire('{0} km', fmtNum(v))} onChange={onDistance} />
-            </View>
-          ) : (
-            <Pressable onPress={() => setDistance(true)} accessibilityRole="button" hitSlop={6} style={{ alignSelf: 'flex-start', minHeight: 36, justifyContent: 'center' }}>
-              <Ink size={13} weight="extraBold" color={c.textSecondary}>{traduire('Noter la distance')}</Ink>
-            </Pressable>
-          )}
-        </>
-      )}
     </View>
   );
 }
