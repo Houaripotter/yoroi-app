@@ -10,9 +10,6 @@ import { figureFor } from '@/components/yoroi/v2/partage/cardKit';
 import { aUnPersonnage } from '@/lib/v2/dojo/personnages';
 import { getEspace } from '@/lib/v2/espace';
 import type { SceneId } from '@/lib/v2/espace';
-import { usePremium } from '@/context/PremiumContext';
-import { chargerScenesGagnees } from '@/lib/v2/dojo/recompensesScenes';
-import { sceneDuFond, scenesPourCarte } from '@/lib/v2/cartes/scenesFond';
 import { useCardIdentity } from '@/lib/v2/partage/identity';
 import { pickCardPhoto } from '@/lib/v2/partage/capture';
 import { chiffresParDefaut } from '@/lib/v2/cartes/chiffres';
@@ -30,9 +27,6 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
   const [chiffres, setChiffres] = useState<StatKey[]>(initial?.chiffres ?? []);
   const [scene, setScene] = useState<ImageSourcePropType | null>(null);
   const [sceneId, setSceneId] = useState<SceneId | null>(null);
-  const { isPremium, isAnnualPremium } = usePremium();
-  // les scenes gagnees dans le Dojo (serie, essai du grand coffre) : lues une fois, puis la liste se recalcule
-  const [gagneesLues, setGagneesLues] = useState(0);
   const [photo, setPhoto] = useState<string | null>(null);
   /** Photo choisie, reduction en cours (26 octobre 2026) : l'ecran le dit au lieu de sembler fige */
   const [photoEnCours, setPhotoEnCours] = useState(false);
@@ -54,9 +48,6 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
         setSceneId(e.scene);
       })
       .catch(() => alive && setScene(sceneForNow('dojo', devNow())));
-    chargerScenesGagnees()
-      .then(() => alive && setGagneesLues((n) => n + 1))
-      .catch(() => {});
     return () => {
       alive = false;
     };
@@ -64,7 +55,8 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
 
   // chiffres par defaut selon le sport, des que les donnees sont la
   useEffect(() => {
-    if (data && chiffres.length === 0) setChiffres(chiffresParDefaut(data, style.masque));
+    // 31 octobre 2026 : le chiffre enorme et 3 stats (4 chiffres) quand la seance les a
+    if (data && chiffres.length === 0) setChiffres(chiffresParDefaut(data, style.masque, 4));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
@@ -93,24 +85,17 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
   }, [setStyle]);
 
   /**
-   * 24 octobre 2026 : toutes tes scenes en fond (onglet Fond, « Tes scènes »), les memes que le choix de scene
-   * de l'accueil te laisse prendre. Une scene memorisee qui n'est plus a toi (fin de Premium) retombe sur Ma scène.
+   * 31 octobre 2026 : deux fonds seulement, ta photo ou une couleur franche. Les scenes ne sont plus proposees
+   * (fichiers gardes dans lib/v2/cartes/scenesFond.ts) ; un ancien fond de scene retombe sur la couleur.
    */
-  const tesScenes = useMemo(
-    () => scenesPourCarte(id.rankIndex, isPremium, isAnnualPremium),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [id.rankIndex, isPremium, isAnnualPremium, gagneesLues],
-  );
-  const sceneChoisie = sceneDuFond(style.fond);
-  const sceneOk = !sceneChoisie || tesScenes.some((g) => g.scenes.includes(sceneChoisie));
-  const fondEffectif = (style.fond === 'photo' && !photo) || !sceneOk ? 'scene' : style.fond;
+  const fondEffectif = style.fond === 'photo' && photo ? 'photo' : 'couleur';
   const options: OptionsCarte = { ...style, fond: fondEffectif, chiffres };
   const visuels: VisuelsCarte = { scene, sceneId, photo, personnage };
 
-  /** Enleve ta photo de fond : la carte revient sur ta scene */
+  /** Enleve ta photo de fond : la carte revient sur ta couleur */
   const enleverPhoto = useCallback(() => {
     setPhoto(null);
-    setStyle({ fond: 'scene' });
+    setStyle({ fond: 'couleur' });
   }, [setStyle]);
 
   /**
@@ -164,5 +149,5 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
     else setStyle({ sansPersonne: false, epure: false, personnage: persoVoulu });
   }, [personne.visible, persoVoulu, setStyle]);
 
-  return { ref, options, visuels, visuelsPour, style, setStyle, chiffres, setChiffres, photo, photoEnCours, choisirPhoto, enleverPhoto, tesScenes, enregistrer, partager, busy, saved, aPersonnage: !!personnage, personne, basculerPersonne };
+  return { ref, options, visuels, visuelsPour, style, setStyle, chiffres, setChiffres, photo, photoEnCours, choisirPhoto, enleverPhoto, enregistrer, partager, busy, saved, aPersonnage: !!personnage, personne, basculerPersonne };
 }
