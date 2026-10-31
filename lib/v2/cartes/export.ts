@@ -7,6 +7,7 @@ import type { RefObject } from 'react';
 import { PixelRatio, Platform } from 'react-native';
 import type { View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
+import { setImageAsync } from 'expo-clipboard';
 import { isAvailableAsync, shareAsync } from 'expo-sharing';
 import { requestPermissionsAsync, saveToLibraryAsync } from 'expo-media-library';
 import { impactAsync, ImpactFeedbackStyle, notificationAsync, NotificationFeedbackType } from 'expo-haptics';
@@ -35,11 +36,40 @@ export function sourceDe(m: Moment, type?: TypeExploit): SourcePartage {
   return m === 'seance' ? 'derniere_seance' : m === 'semaine' ? 'recap_semaine' : 'carte_pesee';
 }
 
+/**
+ * 31 octobre 2026 (cartes v2) : toujours en PNG. react-native-view-shot garde la transparence en PNG
+ * (iPhone : contexte de dessin non opaque ; Android : bitmap ARGB, le fond n'est rempli qu'en JPEG) :
+ * l'autocollant seul, dessine sans fond, sort a fond transparent.
+ */
 export async function capturerHD(ref: RefObject<View | null>, format: FormatId): Promise<string | null> {
   if (!ref.current) return null;
   const px = PX[format];
   const k = Platform.OS === 'ios' ? PixelRatio.get() : 1;
   return captureRef(ref.current, { format: 'png', quality: 1, result: 'tmpfile', width: px.w / k, height: px.h / k });
+}
+
+/**
+ * 31 octobre 2026 (cartes v2) : « Partager en story ». L'app n'a pas de partage direct vers la story Instagram
+ * (ni react-native-share, ni le scheme instagram-stories dans Info.plist, et Instagram demande un identifiant
+ * d'app Facebook) : on ouvre la feuille du systeme avec l'image en PNG, ou Instagram propose Story.
+ */
+export async function partagerStory(ref: RefObject<View | null>, format: FormatId, moment: Moment, onErreur?: Erreur, type?: TypeExploit): Promise<boolean> {
+  impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+  noterPartage(sourceDe(moment, type));
+  try {
+    const uri = await capturerHD(ref, format);
+    if (!uri) {
+      dire(onErreur, traduire('Un instant'), traduire('La carte n’est pas encore prête, réessaie dans une seconde.'));
+      return false;
+    }
+    if (!(await isAvailableAsync())) return enregistrerCarte(ref, format, onErreur);
+    await shareAsync(uri, { mimeType: 'image/png', dialogTitle: traduire('Choisis Instagram, puis Story'), UTI: 'public.png' });
+    return true;
+  } catch (e) {
+    logger.error('[cartes] partage story', e);
+    dire(onErreur, traduire('Oups'), traduire('Impossible de partager la carte.'));
+    return false;
+  }
 }
 
 /** Enregistre la carte dans la pellicule. Vrai si c'est fait. */
@@ -92,6 +122,28 @@ export async function partagerCarte(ref: RefObject<View | null>, format: FormatI
   } catch (e) {
     logger.error('[cartes] partage', e);
     dire(onErreur, traduire('Oups'), traduire('Impossible de partager la carte.'));
+    return false;
+  }
+}
+
+/**
+ * 31 octobre 2026 (cartes v2) : l'autocollant seul copie dans le presse-papiers, en PNG transparent.
+ * Dans la story Instagram, un appui long puis Coller le pose comme un sticker sur ta photo ou ta video.
+ */
+export async function copierAutocollant(ref: RefObject<View | null>, format: FormatId, moment: Moment, onErreur?: Erreur): Promise<boolean> {
+  impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+  noterPartage(sourceDe(moment));
+  try {
+    if (!ref.current) return false;
+    const px = PX[format];
+    const k = Platform.OS === 'ios' ? PixelRatio.get() : 1;
+    const b64 = await captureRef(ref.current, { format: 'png', quality: 1, result: 'base64', width: px.w / k, height: px.h / k });
+    await setImageAsync(b64);
+    notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+    return true;
+  } catch (e) {
+    logger.error('[cartes] copie autocollant', e);
+    dire(onErreur, traduire('Oups'), traduire('Impossible de copier l’autocollant.'));
     return false;
   }
 }
