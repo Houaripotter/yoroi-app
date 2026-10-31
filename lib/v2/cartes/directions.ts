@@ -38,6 +38,13 @@ export const ORDRE_CARROUSEL: DirectionId[] = ['gala', 'stickers', 'chrome', 'ne
 export const AUTOCOLLANTS: DirectionId[] = ['net', 'chrome', 'stickers'];
 /** Un exploit (record, palier, bilan) : le chrome, le maillot du record, la carte holographique */
 export const DIRECTIONS_EXPLOIT: DirectionId[] = ['chrome', 'maillot', 'holo'];
+/**
+ * 31 octobre 2026 (bibliotheque) : un objectif ou un compteur du moment (une fraction, un pourcentage, un total)
+ * tient aussi en autocollant ; la serie s'y ajoute quand elle existe.
+ */
+export const DIRECTIONS_DU_MOMENT: DirectionId[] = ['net', 'chrome', 'stickers', 'holo', 'maillot'];
+/** Ton mois, ton annee : tout sauf le face a face (Gala) et la retransmission (TV), faits pour une seance */
+export const DIRECTIONS_PERIODE: DirectionId[] = ['net', 'chrome', 'stickers', 'holo', 'retro', 'serie', 'flash', 'maillot'];
 /** La direction par defaut, la premiere fois */
 export const DIRECTION_DEFAUT: DirectionId = 'gala';
 
@@ -116,6 +123,13 @@ export function nombreComparaison(n: number): string {
  * null s'il n'y a rien de vrai a comparer : la Retrospective est alors masquee.
  */
 export function conversionPour(d: CarteData): Conversion | null {
+  // 31 octobre 2026 (bibliotheque) : ton mois ou ton annee, tes kilos souleves ou tes kilometres parcourus
+  const p = (d.moment === 'mois' || d.moment === 'annee') && d.periode ? d.periode : null;
+  if (p) {
+    const kilos = (): Conversion | null => conversionKilos(p.tonnage);
+    const kms = (): Conversion | null => (p.distanceKm >= 0.5 ? conversionKm(p.distanceKm, traduire('Tu as parcouru')) : null);
+    return d.famille === 'muscu' ? kilos() ?? kms() : kms() ?? kilos();
+  }
   const s = d.moment === 'seance' ? d.seance : null;
   if (!s) return null;
   const lien = traduire('soit');
@@ -136,6 +150,26 @@ export function conversionPour(d: CarteData): Conversion | null {
     return { valeur: nombre(s.distanceKm, s.distanceKm >= 100 ? 0 : 2), unite: 'km', cle: 'distance', intro: traduire('Tu as couru'), lien, nombre: nombreComparaison(n), libelle: n >= 2 ? traduire('terrains de foot') : traduire('terrain de foot'), detail: traduire('mis bout à bout'), source: CONVERSIONS.terrain.source };
   }
   return null;
+}
+
+/** Des kilos souleves en elephants (ou en bisons sous 3 tonnes) ; null sous la moitie d'un bison */
+function conversionKilos(kg: number): Conversion | null {
+  const lien = traduire('soit');
+  if (kg >= CONVERSIONS.elephant.kg / 2) {
+    const n = kg / CONVERSIONS.elephant.kg;
+    return { valeur: kg >= 100000 ? nombre(kg / 1000, 0) : nombre(kg, 0), unite: kg >= 100000 ? 't' : 'kg', cle: 'charge', intro: traduire('Tu as soulevé'), lien, nombre: nombreComparaison(n), libelle: n >= 2 ? traduire('éléphants') : traduire('éléphant'), detail: traduire('d’Afrique, en fonte'), source: CONVERSIONS.elephant.source };
+  }
+  if (kg >= CONVERSIONS.bison.kg / 2) {
+    const n = kg / CONVERSIONS.bison.kg;
+    return { valeur: nombre(kg, 0), unite: 'kg', cle: 'charge', intro: traduire('Tu as soulevé'), lien, nombre: nombreComparaison(n), libelle: n >= 2 ? traduire('bisons') : traduire('bison'), detail: traduire('adultes, en fonte'), source: CONVERSIONS.bison.source };
+  }
+  return null;
+}
+
+/** Des kilometres en terrains de foot mis bout a bout */
+function conversionKm(km: number, intro: string): Conversion {
+  const n = (km * 1000) / CONVERSIONS.terrain.m;
+  return { valeur: nombre(km, km >= 100 ? 0 : km >= 10 ? 1 : 2), unite: 'km', cle: 'distance', intro, lien: traduire('soit'), nombre: nombreComparaison(n), libelle: n >= 2 ? traduire('terrains de foot') : traduire('terrain de foot'), detail: traduire('mis bout à bout'), source: CONVERSIONS.terrain.source };
 }
 
 // ============================================
@@ -208,6 +242,7 @@ export function texteVerdict(v: Verdict): { debut: string; fin: string } {
  */
 export function ecussonHolo(d: CarteData): { valeur: string; label: string } | null {
   if (d.moment === 'seance' && (d.rangAnnee ?? 0) > 0) return { valeur: String(d.rangAnnee), label: traduirePluriel(d.rangAnnee!, d.rangAnnee! > 1, 'SÉANCE', 'SÉANCES') };
+  if ((d.moment === 'mois' || d.moment === 'annee') && (d.periode?.seances ?? 0) > 0) return { valeur: String(d.periode!.seances), label: traduirePluriel(d.periode!.seances, d.periode!.seances > 1, 'SÉANCE', 'SÉANCES') };
   if (d.moment === 'semaine' && (d.semaine?.seances ?? 0) > 0) return { valeur: String(d.semaine!.seances), label: traduirePluriel(d.semaine!.seances, d.semaine!.seances > 1, 'SÉANCE', 'SÉANCES') };
   return null;
 }
@@ -224,7 +259,16 @@ export function anneeDe(d: CarteData): string | null {
 
 export function directionDispo(d: CarteData, id: DirectionId): boolean {
   if (d.moment === 'avant_apres') return false;
-  if (d.moment === 'exploit') return DIRECTIONS_EXPLOIT.includes(id);
+  if (d.moment === 'exploit') {
+    if (d.source?.type === 'objectif' || d.source?.type === 'compteur') return DIRECTIONS_DU_MOMENT.includes(id) || (id === 'serie' && serieDe(d) !== null);
+    return DIRECTIONS_EXPLOIT.includes(id);
+  }
+  if (d.moment === 'mois' || d.moment === 'annee') {
+    if (!d.periode || !DIRECTIONS_PERIODE.includes(id)) return false;
+    if (id === 'retro') return conversionPour(d) !== null;
+    if (id === 'serie') return serieDe(d) !== null;
+    return true;
+  }
   switch (id) {
     case 'gala':
       // sans seance precedente, la carte montre seulement aujourd'hui
