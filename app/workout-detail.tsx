@@ -4,6 +4,7 @@
  * notes, et actions modifier, partager, supprimer.
  * Parametres : id (seance), demo=1 (exemple de course pour les captures).
  */
+import { usePersonnageUtilisateur } from '@/components/yoroi/v2/perso/usePersonnageUtilisateur';
 import { couleurNote, noteSeance } from '@/lib/v2/seance/note';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
@@ -152,6 +153,7 @@ function effortLabel(v: number): string {
 
 
 export default function WorkoutDetailScreen() {
+  const persoUtilisateur = usePersonnageUtilisateur();
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const router = useRouter();
@@ -461,7 +463,12 @@ export default function WorkoutDetailScreen() {
           ) : (
             <>
               <Glyph kind="sakura" size={210} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: -30, top: insets.top + 50 }} />
-              <Image source={sportArt(t.sport, gender, 2)} style={{ position: 'absolute', right: -16, bottom: -36, width: 240, height: 320 }} resizeMode="contain" />
+              {/* 31 octobre 2026 (Houari) : ton personnage, sinon le sticker du sport (plus de personnage par défaut) */}
+              {persoUtilisateur ? (
+                <Image source={persoUtilisateur} style={{ position: 'absolute', right: -16, bottom: -36, width: 240, height: 320 }} resizeMode="contain" />
+              ) : (
+                <Image source={sportArt(t.sport, gender, 2)} style={{ position: 'absolute', right: 26, bottom: 36, width: 130, height: 130 }} resizeMode="contain" />
+              )}
             </>
           )}
           <View pointerEvents="box-none" style={{ paddingTop: insets.top + 10, paddingHorizontal: 16, flexDirection: 'row', justifyContent: 'space-between' }}>
