@@ -11,6 +11,7 @@ import { PLAN_DAYS_SHORT, addDaysISO, isoOf } from '@/lib/v2/seances/sessionData
 import { mondayOf } from '@/lib/v2/trainingWeek';
 import Svg, { Path } from 'react-native-svg';
 import type { PlateState } from './ui';
+import { TamponValide } from './TamponValide';
 import { P } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -45,6 +46,7 @@ export function computeWeekPlates(trainings: Training[], plan: WeeklyPlan[], occ
 
 /**
  * Pastille d'un jour : pleine si seance faite, pointillee si prevue.
+ * 31 octobre 2026 (Houari) : un jour fait porte le tampon « validé » (TamponValide.tsx).
  * 27 octobre 2026 (maquette Pastel-Seances) : carre, en carre arrondi de 36 (rayon 13), la seance faite en pastel
  * (primary) avec son nombre en bleu nuit.
  */
@@ -56,6 +58,7 @@ export function DayDot({ state, count, size, carre = false }: { state: PlateStat
     return (
       <View style={{ width: size, height: size, borderRadius: r, alignItems: 'center', justifyContent: 'center', backgroundColor: c.primary }}>
         <Ink size={14} weight="black" color={c.onPrimary}>{String(Math.max(1, count))}</Ink>
+        <TamponValide taille={Math.round(size * 0.6)} />
       </View>
     );
   }
@@ -63,6 +66,7 @@ export function DayDot({ state, count, size, carre = false }: { state: PlateStat
   if (state === 'done') {
     return (
       <View style={[base, { backgroundColor: c.ink }]}>
+        <TamponValide taille={Math.round(size * 0.6)} />
         {count > 1 ? (
           <Ink size={12} weight="black" color={c.background}>{String(count)}</Ink>
         ) : (
@@ -74,7 +78,8 @@ export function DayDot({ state, count, size, carre = false }: { state: PlateStat
     );
   }
   if (state === 'planned') return <View style={[base, { borderWidth: 2, borderStyle: 'dashed', borderColor: carre ? c.accentText : c.ink, backgroundColor: P.carte }]} />;
-  if (state === 'missed') return <View style={[base, { borderWidth: 2, borderColor: c.border, backgroundColor: c.fillSubtle }]} />;
+  // 31 octobre 2026 : jour prévu passé sans séance, discret
+  if (state === 'missed') return <View style={[base, { backgroundColor: c.fillSubtle, opacity: 0.55 }]} />;
   if (state === 'rest') {
     return (
       <View style={[base, { backgroundColor: c.fillSoft }]}>
