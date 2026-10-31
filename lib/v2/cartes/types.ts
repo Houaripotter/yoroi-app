@@ -37,6 +37,10 @@ export type StatKey =
   | 'jours_actifs'
   | 'objectif_periode'
   | 'sport_top'
+  /** 31 octobre 2026 (cartes ou l'on voit ta tete) : ta meilleure serie ou ton record (muscu), techniques et soumissions (combat) */
+  | 'meilleur'
+  | 'techniques'
+  | 'soumissions'
   | 'exploit';
 
 export type StatValue = {
@@ -93,6 +97,8 @@ export type DonneesSeance = {
   techniques?: string[] | null;
   /** intensite ressentie, de 1 a 10 */
   intensite?: number;
+  /** 31 octobre 2026 : soumissions placees, lues dans les rounds saisis (absentes ou 0 sinon) */
+  soumissions?: number;
 };
 
 /**
