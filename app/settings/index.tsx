@@ -58,6 +58,7 @@ import { ecrireSonsActifs, lireSonsActifs } from '@/lib/v2/sons/reglage';
 import { niveauSuivant, useNiveauCoach } from '@/lib/v2/coachVocal/reglages';
 import { detailNiveauCoach, libelleNiveauCoach, remarqueCoach } from '@/components/yoroi/v2/seance/CoachVocal';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { aDesAppareilsAppaires, isPeerSyncAvailable, onSyncStatusChange } from '@/lib/peerSyncService';
 import { FeuilleLangue, langueEnCours } from '@/components/yoroi/v2/langue/ChoixLangue';
 import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
 import { largeurColonne } from '@/lib/v2/nav/grandEcran';
@@ -130,8 +131,19 @@ export default function Reglages() {
       chargerEcartes().then((l) => setNbEcartes(l.length), () => {});
       loadValues();
       reloadStatus();
+      // 31 octobre 2026 : y a t il un appareil appaire ? lu dans le coffre, sans demarrer la synchro
+      if (isPeerSyncAvailable()) aDesAppareilsAppaires().then(setSynchroAppaire, () => setSynchroAppaire(null));
     }, [loadValues, reloadStatus]),
   );
+
+  // Synchro entre tes appareils : « Relié » si un appareil est connecte en ce moment (statut deja en memoire,
+  // la synchro n'est jamais demarree d'ici), « Non appairé » si aucun appareil appaire, sinon rien
+  const [synchroAppaire, setSynchroAppaire] = useState<boolean | null>(null);
+  const [synchroRelie, setSynchroRelie] = useState(false);
+  useEffect(() => {
+    if (!isPeerSyncAvailable()) return;
+    return onSyncStatusChange((s) => setSynchroRelie(s.connectedPeers.length > 0));
+  }, []);
 
   const backupNow = async () => {
     if (backingUp) return;
@@ -197,6 +209,9 @@ export default function Reglages() {
   const sante = status.sante;
   const santeValue = sante ? (sante.mode === 'live' ? traduire('Relié') : traduire('Non relié')) : undefined;
 
+  // Synchro entre tes appareils
+  const synchroValue = synchroRelie ? traduire('Relié') : synchroAppaire === false ? traduire('Non appairé') : undefined;
+
   // Abonnement
   const subValue = simulateFreeUser ? traduire('Gratuit (simulé)') : isPremium ? (creatorUnlocked && !hasActiveSubscription ? traduire('Premium, Studio') : traduire('Premium')) : traduire('Gratuit');
 
@@ -244,6 +259,8 @@ export default function Reglages() {
         <Groupe title={traduire("Tes réglages")} />
         <Card>
           <ValueRow first tint={TUILE.mousse} icon="heart" sticker="sante_appareils" label={traduire("Santé et appareils")} sub={Platform.OS === 'android' ? 'Health Connect, montre, balance' : traduire('Apple Santé, montre, balance')} value={santeValue} valueColor={sante?.mode === 'live' ? c.successText : undefined} onPress={() => go('/settings/appareils')} />
+          {/* 31 octobre 2026 : la synchro, avant cachee dans Donnees (Houari ne la trouvait pas) */}
+          <ValueRow tint={TUILE.bleu} icon="sync" sticker="sauvegarde" label={traduire('Synchro entre tes appareils')} sub={Platform.OS === 'ios' ? traduire('iPhone, iPad et Mac, sans internet') : traduire('Sans internet')} value={synchroValue} valueColor={synchroRelie ? c.successText : undefined} onPress={() => go('/sync-devices')} />
           <ValueRow tint={TUILE.ardoise} icon="save" sticker="donnees" label={traduire("Données et sauvegardes")} sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/settings/sauvegardes')} action={<MiniAction label={traduire("Sauvegarder")} onPress={backupNow} busy={backingUp} />} />
           <ValueRow tint={TUILE.bleu} icon="globe" sticker="langue" label={traduire('Langue')} value={langueEnCours()} onPress={() => setLangueOpen(true)} />
           <ValueRow tint={TUILE.or} icon="bell" sticker="gong" label={traduire("Sons de l’app")} sub={traduire("Badges, rangs, records et chronos")} value={sonsOn ? traduire('Activés') : traduire('Coupés')} valueColor={sonsOn ? c.successText : undefined} onPress={() => { const n = !sonsOn; setSonsOn(n); ecrireSonsActifs(n).catch(() => {}); }} />
