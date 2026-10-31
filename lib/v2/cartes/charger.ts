@@ -105,6 +105,14 @@ export async function chargerSeance(id: number): Promise<CarteData | null> {
       // l'ancien record reste inconnu : la carte ne le montre pas
     }
   }
+  // 31 octobre 2026 (cartes v2) : la seance precedente du meme sport, la grille des 12 semaines, le rang dans l'annee
+  let histo: Training[] = [];
+  try {
+    histo = await toutesSeances();
+  } catch {
+    histo = [];
+  }
+  const prec = seancePrecedente(histo, t);
   return {
     moment: 'seance',
     titre: nomSport(t.sport) || traduire('Ma séance'),
@@ -112,23 +120,85 @@ export async function chargerSeance(id: number): Promise<CarteData | null> {
     sport: first,
     famille: familleDe(getSportCategory(first), first),
     club: clubDe(t),
-    seance: {
-      dureeMin: durationOf(t),
-      rounds: t.rounds ?? (Array.isArray(t.combat_rounds) ? t.combat_rounds.length : 0),
-      series: setsCount(t),
-      tonnage: tonnage(t),
-      distanceKm: t.distance ?? 0,
-      fcMoy: t.heart_rate ?? 0,
-      fcMax: t.max_heart_rate ?? 0,
-      calories: t.calories ?? 0,
-      zones: zonesDe(t),
-      records,
-      // 31 octobre 2026 : trace GPS, splits, denivele, series, techniques, lus dans la seance (absents sinon)
-      ...visuelsDeSeance(t),
-    },
+    seance: donneesDeSeance(t, records),
     serieSemaines: await serieSemaines(),
+    precedente: prec ? { date: prec.date.slice(0, 10), seance: donneesDeSeance(prec, []) } : null,
+    grille: histo.length ? grilleSemaines(histo.map((x) => x.date), t.date) : null,
+    rangAnnee: rangDansAnnee(histo, t),
+    dateIso: t.date.slice(0, 10),
+    heure: heureDe(t),
     cle: cleMoment('seance', id),
   };
+}
+
+/** Les chiffres d'une seance enregistree (la carte, ou la seance precedente de l'Affiche de gala) */
+function donneesDeSeance(t: Training, records: RecordCarte[]): NonNullable<CarteData['seance']> {
+  return {
+    dureeMin: durationOf(t),
+    rounds: t.rounds ?? (Array.isArray(t.combat_rounds) ? t.combat_rounds.length : 0),
+    series: setsCount(t),
+    tonnage: tonnage(t),
+    distanceKm: t.distance ?? 0,
+    fcMoy: t.heart_rate ?? 0,
+    fcMax: t.max_heart_rate ?? 0,
+    calories: t.calories ?? 0,
+    zones: zonesDe(t),
+    records,
+    // 31 octobre 2026 : trace GPS, splits, denivele, series, techniques, lus dans la seance (absents sinon)
+    ...visuelsDeSeance(t),
+  };
+}
+
+/** « 18:40 », lu dans l'heure de debut enregistree ; null si elle n'est pas connue */
+function heureDe(t: Training): string | null {
+  const x = t as Training & { start_time?: string | null };
+  const m = /(\d{1,2}):(\d{2})/.exec(x.start_time ?? '') ?? /T(\d{2}):(\d{2})/.exec(t.date ?? '');
+  return m ? `${m[1].padStart(2, '0')}:${m[2]}` : null;
+}
+
+/** Vrai si a est avant b (date, puis id) */
+function avant(a: Training, b: Training): boolean {
+  const da = a.date.slice(0, 10);
+  const db = b.date.slice(0, 10);
+  return da < db || (da === db && (a.id ?? 0) < (b.id ?? 0));
+}
+
+/**
+ * La seance precedente du meme type : meme premier sport, et meme type de seance (Push, Pull) s'il est saisi.
+ * null s'il n'y en a pas. Logique pure, testee dans __tests__/unit/cartesDirections.test.tsx.
+ */
+export function seancePrecedente(liste: Training[], t: Training): Training | null {
+  const sport = String(t.sport).split(',')[0].trim();
+  const type = String((t as Training & { session_type?: string | null }).session_type ?? '').trim().toLowerCase();
+  const memes = liste.filter((x) => x.id !== t.id && String(x.sport).split(',')[0].trim() === sport && avant(x, t));
+  const typees = type ? memes.filter((x) => String((x as Training & { session_type?: string | null }).session_type ?? '').trim().toLowerCase() === type) : [];
+  const pool = typees.length ? typees : memes;
+  let best: Training | null = null;
+  for (const x of pool) if (!best || avant(best, x)) best = x;
+  return best;
+}
+
+/**
+ * Les 12 semaines qui finissent par celle du jour donne : lundi a dimanche, vrai si au moins une seance.
+ * Logique pure, testee dans __tests__/unit/cartesDirections.test.tsx.
+ */
+export function grilleSemaines(dates: string[], jour: string): boolean[][] {
+  const fin = dateDe(lundiDe(dateDe(jour.slice(0, 10))));
+  const jours = new Set(dates.map((d) => d.slice(0, 10)));
+  const out: boolean[][] = [];
+  for (let w = 11; w >= 0; w--) {
+    const sem: boolean[] = [];
+    for (let j = 0; j < 7; j++) sem.push(jours.has(isoJour(new Date(fin.getFullYear(), fin.getMonth(), fin.getDate() - w * 7 + j, 12))));
+    out.push(sem);
+  }
+  return out;
+}
+
+/** Le rang de la seance dans son annee (1 pour la premiere), 0 si elle n'est pas dans la liste */
+export function rangDansAnnee(liste: Training[], t: Training): number {
+  const an = t.date.slice(0, 4);
+  if (!liste.some((x) => x.id === t.id)) return 0;
+  return liste.filter((x) => x.date.slice(0, 4) === an && (x.id === t.id || avant(x, t))).length;
 }
 
 type Contexte = { depart: number | null; objectif: number | null; sens: 'perte' | 'prise' | null; pesees: Weight[] };
@@ -221,6 +291,8 @@ export async function chargerSemaine(lundi: string, deja?: { trainings?: Trainin
       parJour,
     },
     serieSemaines: deja?.serie ?? (await serieSemaines()),
+    // 31 octobre 2026 (cartes v2, Serie en feu) : les 12 semaines qui finissent par celle-ci
+    grille: grilleSemaines(all.map((t) => t.date), lundi),
     cle: cleMoment('semaine', lundi),
   };
 }
