@@ -8,9 +8,13 @@ import { JOURNAL_VIDE, noterProposition } from './moments';
 import type { JournalCartes } from './moments';
 import type { ModeleId, OptionsCarte, RaisonPesee } from './types';
 import { COULEURS } from './couleurs';
+import { DIRECTION_DEFAUT, estDirection, ORDRE_CARROUSEL } from './directions';
 
-/** Les six modeles proposes depuis le 31 octobre 2026 (meme liste que CarteRendu.MODELES) */
-export const MODELES_SIX: ModeleId[] = ['affiche', 'bandeau', 'neon', 'ticket', 'medaille', 'score'];
+/**
+ * 31 octobre 2026 (cartes v2) : les 10 directions remplacent les six modeles. Le nom MODELES_SIX reste pour les appels
+ * existants ; c'est l'ordre du carrousel de l'atelier.
+ */
+export const MODELES_SIX: ModeleId[] = [...ORDRE_CARROUSEL];
 
 const KEY = 'yoroi_cartes_partage_v1';
 const PREFS_KEY = 'yoroi_cartes_partage_style_v1';
@@ -19,7 +23,8 @@ export const CARTES_REGLAGE_EVENT = 'YOROI_CARTES_REGLAGE';
 export type StyleMemorise = Omit<OptionsCarte, 'chiffres'>;
 
 export const STYLE_DEFAUT: StyleMemorise = {
-  modele: 'affiche',
+  // 31 octobre 2026 (cartes v2) : l'Affiche de gala d'abord ; ensuite la direction choisie la derniere fois
+  modele: DIRECTION_DEFAUT,
   format: 'story',
   // 31 octobre 2026 : plus de scenes, une couleur franche par defaut (ou ta photo, jamais memorisee)
   fond: 'couleur',
@@ -72,13 +77,15 @@ export async function lireStyle(): Promise<StyleMemorise> {
 
 /**
  * 31 octobre 2026 : un reglage d'avant la refonte (une scene, un decor, un ancien modele) retombe sur
- * une couleur franche et l'Affiche. La photo n'est jamais memorisee.
+ * une couleur franche et la direction par defaut. La photo n'est jamais memorisee.
  */
 export function migrerStyle(s: StyleMemorise): StyleMemorise {
   const fond = s.fond === 'photo' || s.fond === 'couleur' ? s.fond : 'couleur';
-  const modele = MODELES_SIX.includes(s.modele) ? s.modele : 'affiche';
+  // un ancien modele (Affiche, Bandeau, Ticket...) retombe sur la direction par defaut
+  const modele = estDirection(s.modele) ? s.modele : DIRECTION_DEFAUT;
   const couleur = COULEURS.some((c) => c.id === s.couleur) ? s.couleur : STYLE_DEFAUT.couleur;
-  return { ...s, fond, modele, couleur };
+  const sortie = s.sortie === 'autocollant' ? 'autocollant' : 'story';
+  return { ...s, fond, modele, couleur, sortie };
 }
 
 export async function ecrireStyle(s: StyleMemorise): Promise<void> {
