@@ -20,6 +20,7 @@ import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { donneesEnUnite, exploitEnUnite, statsEnUnite } from '@/lib/v2/cartes/unite';
 import { couleurDe } from '@/lib/v2/cartes/couleurs';
 import type { CouleurCarte } from '@/lib/v2/cartes/couleurs';
+import type { Placement } from '@/lib/v2/cartes/zoneVisage';
 import { DIRECTIONS, directionDispo, directionEffective, directionsPour, estAutocollant, estDirection, ORDRE_CARROUSEL } from '@/lib/v2/cartes/directions';
 import { chargeTexte } from '@/lib/v2/unitePoids';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
@@ -65,7 +66,13 @@ export type VisuelsCarte = {
   ambiance?: boolean;
 };
 
-type Props = { data: CarteData; options: OptionsCarte; visuels: VisuelsCarte };
+type Props = {
+  data: CarteData;
+  options: OptionsCarte;
+  visuels: VisuelsCarte;
+  /** 31 octobre 2026 : le bloc des chiffres deplace et redimensionne au doigt dans l'atelier (session d'edition seulement) */
+  placement?: Placement | null;
+};
 
 /** Taille de police pour que le texte tienne sur une ligne dans la largeur donnee */
 export function fit(text: string, largeur: number, max: number, k = 0.6): number {
@@ -166,7 +173,7 @@ export function chiffresDeCarte(brut: CarteData, data: CarteData, o: OptionsCart
 /**
  * La carte. Rendue a 360 de large ; l'apercu la reduit avec une echelle, la capture la prend a sa taille.
  */
-export const CarteRendu = forwardRef<View, Props>(({ data: brut, options, visuels }, ref) => {
+export const CarteRendu = forwardRef<View, Props>(({ data: brut, options, visuels, placement }, ref) => {
   // 18 octobre 2026 : charges calculees en kilos, dessinees dans l'unite du reglage (kg ou lb)
   const u = useUnitePoids();
   const data = donneesEnUnite(brut, u);
@@ -202,6 +209,7 @@ export const CarteRendu = forwardRef<View, Props>(({ data: brut, options, visuel
     transparent,
     personnage: visuels.personnage ?? null,
     u,
+    placement: placement ?? null,
   };
   return (
     <View ref={ref} collapsable={false} style={{ width: W, height: H, overflow: 'hidden', backgroundColor: fondDe(id, c) }}>
