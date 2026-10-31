@@ -8,7 +8,7 @@
 import type { ImageSourcePropType } from 'react-native';
 import { traduire } from '@/lib/i18n/tr';
 
-export const VIE_SCENE_IDS = ['vie_pompier', 'vie_militaire', 'vie_soignant', 'vie_policier', 'vie_cuisinier', 'vie_batiment', 'vie_motard', 'vie_surf', 'vie_skate', 'vie_basket', 'vie_foot', 'vie_rugby', 'vie_velo', 'vie_montagne', 'vie_natation', 'vie_danse', 'vie_escalade', 'vie_tennis', 'vie_halterophilie', 'vie_street', 'vie_chevalier', 'vie_viking', 'vie_gladiateur', 'vie_spartiate', 'vie_astronaute', 'vie_futuriste', 'vie_ninja_moderne', 'vie_sauveteur', 'vie_mecanicien', 'vie_agriculteur', 'vie_pilote', 'vie_ski', 'vie_golf', 'vie_equitation', 'vie_kayak', 'vie_pirate', 'vie_cowboy', 'vie_explorateur'] as const;
+export const VIE_SCENE_IDS = ['vie_pompier', 'vie_militaire', 'vie_soignant', 'vie_soignant_nuit', 'vie_policier', 'vie_cuisinier', 'vie_batiment', 'vie_motard', 'vie_surf', 'vie_skate', 'vie_basket', 'vie_foot', 'vie_rugby', 'vie_velo', 'vie_montagne', 'vie_natation', 'vie_danse', 'vie_escalade', 'vie_tennis', 'vie_halterophilie', 'vie_street', 'vie_chevalier', 'vie_viking', 'vie_gladiateur', 'vie_spartiate', 'vie_astronaute', 'vie_futuriste', 'vie_ninja_moderne', 'vie_sauveteur', 'vie_mecanicien', 'vie_agriculteur', 'vie_pilote', 'vie_ski', 'vie_golf', 'vie_equitation', 'vie_kayak', 'vie_pirate', 'vie_cowboy', 'vie_explorateur'] as const;
 export type VieSceneId = (typeof VIE_SCENE_IDS)[number];
 
 export type SceneVie = {
@@ -27,6 +27,8 @@ export const SCENES_VIE: SceneVie[] = [
   { id: 'vie_pompier', pack: 'pompier', nom: 'Caserne', description: traduire('Le camion rouge et la grande porte ouverte'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/packs_vie/scenes/pompier.webp') },
   { id: 'vie_militaire', pack: 'militaire', nom: traduire('Camp d’entraînement'), description: traduire('Le parcours d’obstacles sous les pins'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/packs_vie/scenes/militaire.webp') },
   { id: 'vie_soignant', pack: 'soignant', nom: 'Urgences', description: traduire('Le couloir lumineux et le brancard'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/packs_vie/scenes/soignant.webp') },
+  // 31 octobre 2026 : reprise d'INRO (sa seule scene que YOROI n'avait pas), la version de nuit des Urgences. Image : assets/scenes/inro/
+  { id: 'vie_soignant_nuit', pack: 'soignant', nom: traduire('Urgences, la nuit'), description: traduire('Le brancard sous la lampe, la lune derrière la vitre'), focus: 0.4, sombre: true, image: require('@/assets/scenes/inro/soignant_nuit.webp') },
   { id: 'vie_policier', pack: 'policier', nom: traduire('Rue du commissariat'), description: traduire('La voiture de patrouille devant le poste'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/packs_vie/scenes/policier.webp') },
   { id: 'vie_cuisinier', pack: 'cuisinier', nom: traduire('Cuisine du restaurant'), description: traduire('Les fourneaux, le cuivre et l’inox'), focus: 0.4, sombre: true, image: require('@/assets/avatars/app/packs_vie/scenes/cuisinier.webp') },
   { id: 'vie_batiment', pack: 'batiment', nom: 'Chantier', description: traduire('La grue et l’immeuble au lever du jour'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/packs_vie/scenes/batiment.webp') },
@@ -76,6 +78,7 @@ export const SOL_VIE: Record<string, { sol: number; echelle: number }> = {
   vie_pompier: { sol: 0.8, echelle: 0.95 },
   vie_militaire: { sol: 0.82, echelle: 0.95 },
   vie_soignant: { sol: 0.8, echelle: 0.95 },
+  vie_soignant_nuit: { sol: 0.8, echelle: 0.95 },
   vie_policier: { sol: 0.8, echelle: 0.95 },
   vie_cuisinier: { sol: 0.8, echelle: 0.95 },
   vie_batiment: { sol: 0.8, echelle: 0.95 },
@@ -163,6 +166,8 @@ export const LISIBILITE_VIE: Record<string, { lum: number; voile: number }> = {
   vie_pompier: { lum: 0.172, voile: 0.4 },
   vie_militaire: { lum: 0.209, voile: 0.37 },
   vie_soignant: { lum: 0.57, voile: 0.64 },
+  // 31 octobre 2026 : estimee par la droite des autres scenes Vie reelle (meme zone du bandeau), pas mesuree avec packs/lis.py
+  vie_soignant_nuit: { lum: 0.11, voile: 0.35 },
   vie_policier: { lum: 0.279, voile: 0.45 },
   vie_cuisinier: { lum: 0.215, voile: 0.38 },
   vie_batiment: { lum: 0.185, voile: 0.42 },
