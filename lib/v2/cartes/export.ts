@@ -28,11 +28,13 @@ export function sourceDe(m: Moment, type?: TypeExploit): SourcePartage {
   if (m === 'exploit') {
     if (type?.startsWith('record_')) return 'record';
     if (type === 'bilan_mois') return 'recap_mois';
-    if (type === 'poids_perdu' || type === 'plus_bas' || type === 'palier_poids' || type === 'objectif_poids') return 'carte_pesee';
+    if (type === 'poids_perdu' || type === 'plus_bas' || type === 'palier_poids' || type === 'objectif_poids' || type === 'chemin_poids') return 'carte_pesee';
     if (type === 'compteur' || type === 'techniques') return 'derniere_seance';
     return 'compteur_annee';
   }
   if (m === 'avant_apres') return 'avant_apres';
+  if (m === 'mois') return 'recap_mois';
+  if (m === 'annee') return 'compteur_annee';
   return m === 'seance' ? 'derniere_seance' : m === 'semaine' ? 'recap_semaine' : 'carte_pesee';
 }
 
