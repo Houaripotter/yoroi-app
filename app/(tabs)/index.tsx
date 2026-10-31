@@ -109,11 +109,30 @@ import { useSaison } from '@/lib/v2/saisons/useSaison';
 import { traduire } from '@/lib/i18n/tr';
 import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
-import { colonnesPour, largeurCote } from '@/lib/v2/nav/grandEcran';
-import { Colonne, LargeurPage } from '@/components/yoroi/v2/PageLarge';
+import { Bento, LargeurPage, type CaseBento } from '@/components/yoroi/v2/PageLarge';
 
-/** 30 octobre 2026 : hauteur de la scene en grand ecran (maquette validee par Houari) */
-const HAUTEUR_SCENE_GRAND = 320;
+/** 31 octobre 2026 : en grand ecran, la scene fait la moitie de sa largeur, entre 260 et 400 points de haut */
+const hauteurSceneGrand = (largeur: number) => Math.round(Math.min(400, Math.max(260, largeur * 0.5)));
+
+/**
+ * Grand ecran (31 octobre 2026) : les tuiles de la grille, par paquets d'une carte du tableau de bord. Une tuile
+ * pleine fait une carte, deux demi tuiles qui se suivent se partagent une carte (cote a cote, comme sur iPhone).
+ */
+function paquetsDeTuiles<T>(tuiles: TuileGrille<T>[]): TuileGrille<T>[][] {
+  const out: TuileGrille<T>[][] = [];
+  let demi: TuileGrille<T>[] = [];
+  for (const t of tuiles) {
+    if (t.taille === 'demi') {
+      demi.push(t);
+      if (demi.length === 2) {
+        out.push(demi);
+        demi = [];
+      }
+    } else out.push([t]);
+  }
+  if (demi.length) out.push(demi);
+  return out;
+}
 
 export default function Accueil() {
   const insets = useSafeAreaInsets();
@@ -156,13 +175,12 @@ export default function Accueil() {
   const { espace, armure } = data;
   // 30 octobre 2026 : en grand ecran (Mac, iPad en grande fenetre), la page centree en 3 colonnes : la scene sur 2,
   // Ton poids sur la troisieme (maquette _propositions/grand_ecran_2026-10-30/accueil.png). Sur iPhone, comme avant.
+  // 31 octobre 2026 : tableau de bord des 700 points, la scene sur deux colonnes de la grille (lib/v2/nav/grandEcran.ts)
   const page = usePageLarge();
   const grand = page.grand;
-  const colonne = largeurCote(page.largeur);
-  const grille3 = grand && colonnesPour(page.largeur) === 3;
   // 27 octobre 2026 : la scene en carte, a 16 points des bords
-  const largeurCarte = grand ? page.largeur - colonne - 20 : largeurEcran - 32;
-  const hauteurScene = grand ? HAUTEUR_SCENE_GRAND : hauteurSceneCarte(largeurCarte);
+  const largeurCarte = grand ? page.caseDe(2) : largeurEcran - 32;
+  const hauteurScene = grand ? hauteurSceneGrand(largeurCarte) : hauteurSceneCarte(largeurCarte);
   const rankIndex = Math.max(0, Math.min(4, armure?.rank.index ?? 0));
   // 0 tant que l'utilisateur n'a pas choisi son objectif : on montre alors le nombre de seances seul
   const goal = objectifVise(espace);
@@ -274,7 +292,7 @@ export default function Accueil() {
             return (
               <View key={k} style={{ gap: 10 }}>
                 {k !== 'mois' ? <TitreSection titre={TITRES_SECTIONS[k]} /> : null}
-                <GrilleAccueil tuiles={tuiles} largeur={grille3 ? page.largeur : undefined} />
+                <GrilleAccueil tuiles={tuiles} />
               </View>
             );
           })}
@@ -317,13 +335,112 @@ export default function Accueil() {
         </View>
       );
     }
-    return <GrilleAccueil tuiles={blocs.flatMap(tuilesDuBloc)} largeur={grille3 ? page.largeur : undefined} />;
+    return <GrilleAccueil tuiles={blocs.flatMap(tuilesDuBloc)} />;
   };
 
   const bottomSpace = insets.bottom + INK_TAB_BAR_SPACE;
 
   // 30 octobre 2026 : le grand ecran. Memes blocs, memes donnees, memes reglages ; seule la mise en page change.
+  // 31 octobre 2026 (Houari : « on dirait l'iPhone élargi ») : un tableau de bord de 2, 3 ou 4 colonnes (Bento). La
+  // scene sur deux colonnes a cote de Ton poids ; tes outils en gros carres ; Ta semaine et Aujourd'hui a la largeur
+  // d'une colonne (les anneaux groupes avec leurs chiffres) ; puis les tuiles, en colonnes equilibrees.
   if (grand) {
+    const n = page.colonnes;
+    const toutes = blocs.flatMap(tuilesDuBloc);
+    const montrerTableau = proposition === 'C' && (blocs.includes('activite') || blocs.includes('forme'));
+    // en proposition C, Aujourd'hui reunit sante, recuperation, sommeil et eau : leurs tuiles n'y sont pas en double
+    const tuiles = montrerTableau ? toutes.filter((t) => !['recup', 'sommeil', 'eau', 'sante-jour'].includes(t.cle)) : toutes;
+    const caseScene: CaseBento = {
+      cle: 'scene',
+      span: 2,
+      contenu: (
+        <TourAnchor id="accueil.scene" rayon={SCENE_CARTE.rayon}>
+          <SceneHero
+            carte
+            largeur={largeurCarte}
+            hauteur={hauteurScene}
+            top={insets.top}
+            scene={espace.scene}
+            name={data.name}
+            personnage={espace.personnage}
+            rankIndex={rankIndex}
+            photo={espace.identite === 'photo' ? data.photo : null}
+            decor={saison ? <DecorScene saison={saison} largeur={largeurCarte} hauteur={hauteurScene} haut={HAUT_VOL_CARTE} scrollY={scrollY} dansCarte /> : null}
+          />
+        </TourAnchor>
+      ),
+    };
+    const casePoids: CaseBento = {
+      cle: 'poids',
+      contenu: (
+        <Enter i={0}>
+          <TourAnchor id="accueil.poids" rayon={28}>
+            <CartePoids series={series} targetWeight={data.targetWeight} startWeight={data.startWeight} rankIndex={rankIndex} onPage={setPagePoids} />
+            {saison && series.length && pagePoids === 0 ? <DecorCarte saison={saison} largeur={page.caseDe(1)} scrollY={scrollY} seuil={hautSceneCarte(insets.top) + hauteurScene + 480} /> : null}
+          </TourAnchor>
+        </Enter>
+      ),
+    };
+    const caseOutils: CaseBento = {
+      cle: 'outils',
+      span: 2,
+      contenu: (
+        <Enter i={0}>
+          <View style={{ gap: 4 }}>
+            <TitreSection titre={traduire('Tes outils')} />
+            <TourAnchor id="accueil.outils" rayon={22}>
+              <RaccourcisDuJour record={record} largeurGrille={page.caseDe(2)} carres={4} />
+            </TourAnchor>
+          </View>
+        </Enter>
+      ),
+    };
+    const caseSemaine: CaseBento | null = semaineVisible
+      ? {
+          cle: 'semaine',
+          contenu: (
+            <Enter i={1}>
+              <TourAnchor id="accueil.semaine" rayon={22}>
+                <CarteSemaine trainings={data.trainings} goal={goal} series={sante.series} objectifs={objectifsSante} jour={jour} />
+              </TourAnchor>
+            </Enter>
+          ),
+        }
+      : null;
+    const caseTableau: CaseBento | null = montrerTableau
+      ? {
+          cle: 'tableau',
+          contenu: (
+            <TourAnchor id="accueil.jour">
+              <TableauDuJour
+                mesures={blocs.includes('activite') ? santeJour : []}
+                objectifs={objectifsSante}
+                forme={blocs.includes('forme') ? data.forme : null}
+                sleep={blocs.includes('forme') ? data.sleep.entries : []}
+                sleepGoal={data.sleep.goal}
+                water={data.hydration.amount}
+                waterGoal={data.hydration.goal}
+                onEau={() => setEauOuverte(true)}
+                series={blocs.includes('activite') ? sante.series : null}
+                trainings={data.trainings}
+                eauHistorique={data.hydration.history}
+              />
+            </TourAnchor>
+          ),
+        }
+      : null;
+    const casesTuiles: CaseBento[] = paquetsDeTuiles(tuiles).map((p) => ({ cle: `t-${p.map((t) => t.cle).join('+')}`, contenu: <GrilleAccueil tuiles={p} /> }));
+    const caseSante: CaseBento = { cle: 'sante', contenu: importSante.visible ? <CarteImportSante controle={importSante} onImporte={sante.reload} /> : <CarteSante sante={sante} /> };
+    // sur 2 colonnes, Ton poids et Ta semaine se partagent la rangee avant tes outils (jamais de trou a cote de Ton poids)
+    const tete: (CaseBento | null)[] = n === 2 ? [caseScene, casePoids, caseSemaine, caseSante, caseOutils] : [caseScene, casePoids, caseOutils, caseSemaine, caseSante];
+    const cases: (CaseBento | null)[] = [
+      ...tete,
+      caseTableau,
+      { cle: 'sauvegarde', contenu: <BackupNotice /> },
+      { cle: 'coach', contenu: <PropositionCoach /> },
+      ...casesTuiles,
+      { cle: 'personnaliser', contenu: <PersonnaliserAccueil /> },
+    ];
     return (
       <View style={{ flex: 1, backgroundColor: P.paper }}>
         <LargeurPage actif largeur={page.largeur}>
@@ -331,66 +448,8 @@ export default function Accueil() {
             <View style={{ zIndex: 2 }}>
               <EnTeteAccueil name={data.name} photo={espace.identite === 'photo' ? data.photo : null} personnage={espace.personnage} rankIndex={rankIndex} />
             </View>
-
-            <View style={{ gap: 20, marginTop: 20 }}>
-              {/* la scene sur deux colonnes, Ton poids sur la troisieme */}
-              <View style={{ flexDirection: 'row', gap: 20, alignItems: 'flex-start' }}>
-                <TourAnchor id="accueil.scene" rayon={SCENE_CARTE.rayon} style={{ width: largeurCarte }}>
-                  <SceneHero
-                    carte
-                    largeur={largeurCarte}
-                    hauteur={hauteurScene}
-                    top={insets.top}
-                    scene={espace.scene}
-                    name={data.name}
-                    personnage={espace.personnage}
-                    rankIndex={rankIndex}
-                    photo={espace.identite === 'photo' ? data.photo : null}
-                    decor={saison ? <DecorScene saison={saison} largeur={largeurCarte} hauteur={hauteurScene} haut={HAUT_VOL_CARTE} scrollY={scrollY} dansCarte /> : null}
-                  />
-                </TourAnchor>
-                <Colonne actif largeur={colonne}>
-                  <Enter i={0}>
-                    <TourAnchor id="accueil.poids" rayon={28}>
-                      <CartePoids series={series} targetWeight={data.targetWeight} startWeight={data.startWeight} rankIndex={rankIndex} onPage={setPagePoids} />
-                      {saison && series.length && pagePoids === 0 ? <DecorCarte saison={saison} largeur={colonne} scrollY={scrollY} seuil={hautSceneCarte(insets.top) + hauteurScene + 480} /> : null}
-                    </TourAnchor>
-                  </Enter>
-                  {/* sous Ton poids, la carte Sante et la copie de tes donnees : la colonne ne reste pas vide */}
-                  {importSante.visible ? <CarteImportSante controle={importSante} onImporte={sante.reload} /> : <CarteSante sante={sante} />}
-                  <BackupNotice />
-                </Colonne>
-              </View>
-
-              {/* tes outils, les 7 sur une rangee */}
-              <Enter i={0}>
-                <View style={{ gap: 4 }}>
-                  <TitreSection titre={traduire('Tes outils')} />
-                  <TourAnchor id="accueil.outils" rayon={22}>
-                    <RaccourcisDuJour record={record} largeurGrille={page.largeur} />
-                  </TourAnchor>
-                </View>
-              </Enter>
-
-              {/* Ta semaine en vraie rangee */}
-              {semaineVisible ? (
-                <Enter i={1}>
-                  <TourAnchor id="accueil.semaine" rayon={26}>
-                    <CarteSemaine trainings={data.trainings} goal={goal} series={sante.series} objectifs={objectifsSante} jour={jour} grand />
-                  </TourAnchor>
-                </Enter>
-              ) : null}
-
-              <PropositionCoach />
-
-              {/* les blocs reglables, en 3 colonnes (2 sur une page plus etroite) */}
-              <Enter i={1}>{rendreProposition()}</Enter>
-              <FeuilleEau visible={eauOuverte} onClose={() => setEauOuverte(false)} water={data.hydration.amount} waterGoal={data.hydration.goal} />
-
-              <Enter i={2}>
-                <PersonnaliserAccueil />
-              </Enter>
-            </View>
+            <Bento largeur={page.largeur} colonnes={n} cases={cases} style={{ marginTop: 20 }} />
+            <FeuilleEau visible={eauOuverte} onClose={() => setEauOuverte(false)} water={data.hydration.amount} waterGoal={data.hydration.goal} />
           </Animated.ScrollView>
         </LargeurPage>
       </View>
