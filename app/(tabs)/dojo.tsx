@@ -59,7 +59,7 @@ import { carteBlanche, ton } from '@/components/yoroi/v2/seance/pastel';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
-import { Colonne, LargeurPage, Rangee } from '@/components/yoroi/v2/PageLarge';
+import { BentoEnfants, Case, LargeurPage } from '@/components/yoroi/v2/PageLarge';
 
 const NB = ' ';
 const SHORT_MONTHS = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
@@ -311,11 +311,11 @@ export default function Dojo() {
   // 30 octobre 2026 : en grand ecran, ton personnage et ta journee a gauche, le reste du Dojo a droite ; sur iPhone, comme avant
   const page = usePageLarge();
   const grand = page.grand;
-  const colGauche = 460;
-  const colDroite = page.largeur - colGauche - 20;
-  const W = grand ? colDroite : width - 32;
+  // 31 octobre 2026 : un tableau de bord (Bento) de 2, 3 ou 4 colonnes ; la scene et ton rang sur deux colonnes,
+  // ta serie, ton coffre et ta recompense a cote, puis tes semaines, tes sceaux et tes niveaux, en colonnes equilibrees
+  const W = grand ? page.caseDe(1) : width - 32;
   // vague 47 : scene un peu plus basse pour que ta serie et ton coffre se voient sans defiler
-  const heroH = grand ? 460 : Math.round(Math.min(370, Math.max(320, W * 1.0)));
+  const heroH = grand ? Math.round(Math.min(520, Math.max(380, page.caseDe(2) * 0.6))) : Math.round(Math.min(370, Math.max(320, W * 1.0)));
   const figH = heroH - 112;
   const figW = Math.round((figH * 3) / 4);
   const plateT = 58;
@@ -370,9 +370,9 @@ export default function Dojo() {
           </Pressable>
         </View>
 
-        <Rangee actif={grand}>
-        <Colonne actif={grand} largeur={colGauche} espace={14}>
+        <BentoEnfants actif={grand} largeur={page.largeur} colonnes={page.colonnes} sinon={{ gap: 14 }}>
         {/* Scene : ton personnage et ton rang */}
+        <Case span={2}>
         <Section i={0} ancre="hero">
           <TourAnchor id="dojo.rang" rayon={30}>
           <Pressable
@@ -408,9 +408,11 @@ export default function Dojo() {
           </Pressable>
           </TourAnchor>
         </Section>
+        </Case>
 
         {/* Vague 47 : aujourd'hui, ta serie de jours et ton coffre du jour (la raison de revenir chaque jour) */}
         {st?.serie && st.coffre ? (
+          <Case>
           <Section i={1} ancre="aujourdhui">
             <TourAnchor id="dojo.aujourdhui" rayon={24}>
               <Aujourdhui serie={st.serie} coffre={st.coffre} onOuvrir={ouvrirCoffre} onVerre={noterVerre} onCadeau={(id) => void mettreScene(id, true)} palier={isPremium ? undefined : textePalier} suite={cons.resteXp > 0 ? traduire("Encore {0}{1}XP pour {2}", formatXp(cons.resteXp), NB, cons.palier) : undefined} />
@@ -418,11 +420,12 @@ export default function Dojo() {
             {/* 18 octobre : ton rang, ton XP et ta serie a l'abri, copie automatique dans ton cloud */}
             <AbriDojo rang={title} xp={xp} serie={st.serie.jours} />
           </Section>
+          </Case>
         ) : null}
 
-        </Colonne>
-        <Colonne actif={grand} largeur={colDroite} espace={14}>
+
         {/* Vague 45 : « Ta prochaine recompense », la piece qui se construit et la barre vers le prochain rang, toujours visibles */}
+        <Case>
         <Section i={1} ancre="recompense">
           <TourAnchor id="dojo.recompense" rayon={22}>
           <Pressable
@@ -459,8 +462,10 @@ export default function Dojo() {
           </Pressable>
           </TourAnchor>
         </Section>
+        </Case>
 
         {/* Vague 47 : tes semaines reussies, avec des jokers et une pause faciles a comprendre */}
+        <Case>
         <Section i={4} ancre="semaines">
           <View style={{ ...carteBlanche(c.surface, c.border), padding: 16, gap: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
@@ -501,8 +506,10 @@ export default function Dojo() {
             <BoutonPause pause={st?.pauseThisWeek ?? null} onPause={() => setPauseOuverte(true)} onReprendre={reprendreSemaine} />
           </View>
         </Section>
+        </Case>
 
         {/* Sceaux */}
+        <Case>
         <Section i={5} ancre="sceaux">
           <SectionHead title={traduire("Tes sceaux")} action="Collection" onAction={() => go('/dojo/sceaux')} />
           <Pressable
@@ -541,8 +548,10 @@ export default function Dojo() {
             </View>
           </Pressable>
         </Section>
+        </Case>
 
         {/* Niveaux de pratique par sport */}
+        <Case span={2}>
         <Section i={4}>
           <SectionHead title={traduire("Tes niveaux par sport")} action={traduire("Tout voir")} onAction={() => go('/dojo/ceintures')} />
           {belts.length ? (
@@ -571,8 +580,10 @@ export default function Dojo() {
             </Pressable>
           )}
         </Section>
+        </Case>
 
         {/* Portes du Dojo */}
+        <Case>
         <Section i={6}>
           <SectionHead title={traduire("Explorer le Dojo")} />
           <Gates
@@ -598,13 +609,17 @@ export default function Dojo() {
             ]}
           />
         </Section>
+        </Case>
 
         {/* Vague 45 : la vitrine de la boutique remplace la porte « Personnages et scènes » */}
+        <Case>
         <Section i={6}>
           <SectionHead title={avecPerso ? traduire('Personnages et scènes') : traduire('Scènes')} action="Boutique" onAction={() => go('/dojo/boutique')} />
           <VitrineBoutique vignettes={vignettes} total={traduire("{0} personnages, {1} scènes", PACKS.length + 1, THEMES.length)} onOuvrir={() => go('/dojo/boutique')} />
         </Section>
+        </Case>
 
+        <Case>
         <Section i={7}>
           <FeatureList
             title={traduire("Combat et partage")}
@@ -617,8 +632,8 @@ export default function Dojo() {
             ]}
           />
         </Section>
-        </Colonne>
-        </Rangee>
+        </Case>
+        </BentoEnfants>
       </ScrollView>
       </LargeurPage>
 
