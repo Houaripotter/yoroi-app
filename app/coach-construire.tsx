@@ -58,6 +58,10 @@ import {
 } from '@/lib/v2/programmes/monProgramme';
 import type { ProgrammePerso, RappelPerso, SeancePerso } from '@/lib/v2/programmes/monProgramme';
 import { appliquerRappelProgramme, lireRappelSeance } from '@/lib/v2/programmes/rappelProgramme';
+import { TamponValide } from '@/components/yoroi/v2/seances/TamponValide';
+import { addDaysISO } from '@/lib/v2/seances/sessionData';
+import { mondayOf } from '@/lib/v2/trainingWeek';
+import { localISO } from '@/lib/v2/accueil/hydration';
 import { HEURES_RAPPEL, estAutreHeure, libelleHeureRappel } from '@/lib/v2/programmes/rappel';
 import { chargerProgrammeActif, enFileProgramme, suivreProgrammePerso, supprimerProgrammePerso } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
@@ -129,6 +133,11 @@ export default function CoachConstruire() {
   // la fête quand ton programme est prêt : son de badge, vibration de réussite
   const [fete, setFete] = useState<{ id: string; n: number; premier: string } | null>(null);
   const historique = useMemo(() => buildExerciseHistory(trainings), [trainings]);
+  // 31 octobre 2026 : les jours faits cette semaine, montrés seulement sur ton programme en cours
+  const aujourdhuiIso = localISO();
+  const lundiCourant = mondayOf(aujourdhuiIso);
+  const suiviIci = !!actif && actif.id === pp.id;
+  const joursFaits = useMemo(() => new Set(trainings.map((t) => String(t.date ?? '').slice(0, 10)).filter((x) => x >= lundiCourant && x <= aujourdhuiIso)), [trainings, lundiCourant, aujourdhuiIso]);
 
   useEffect(() => {
     let vivant = true;
@@ -463,6 +472,11 @@ export default function CoachConstruire() {
         <View style={{ gap: 7, marginTop: 10 }}>
           {JOURS.map((nomJour, d) => {
             const s = pp.semaine[d];
+            // 31 octobre 2026 (Houari) : sur ton programme en cours, le jour fait cette semaine reçoit le tampon
+            // « validé » (même sans séance prévue ce jour-là) ; un jour prévu passé sans séance s'efface
+            const isoJour = addDaysISO(lundiCourant, d);
+            const valide = suiviIci && joursFaits.has(isoJour);
+            const manque = suiviIci && !!s && !valide && isoJour < aujourdhuiIso;
             const cle = s?.brique;
             const h = cle ? habitDe(cle, Math.max(0, aToi.findIndex((x) => x.cle === cle))) : null;
             const titre = s ? traduire(titreDeSeance(s)) : '';
@@ -471,9 +485,10 @@ export default function CoachConstruire() {
                 key={d}
                 onPress={() => { tap(); setFeuille(d); }}
                 accessibilityRole="button"
-                accessibilityLabel={s ? `${traduire(nomJour)}, ${titre}, ${sousBrique(s)}` : `${traduire(nomJour)}, ${traduire('Repos')}, ${traduire('Poser une séance')}`}
-                style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, paddingLeft: 14, paddingRight: 6, paddingVertical: 6, borderRadius: 18, backgroundColor: pa.carte, transform: [{ scale: pressed ? 0.98 : 1 }] }, ombrePastel(pa.ombre)]}
+                accessibilityLabel={`${s ? `${traduire(nomJour)}, ${titre}, ${sousBrique(s)}` : `${traduire(nomJour)}, ${traduire('Repos')}, ${traduire('Poser une séance')}`}${valide ? `, ${traduire('Validé')}` : ''}`}
+                style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, paddingLeft: 14, paddingRight: 6, paddingVertical: 6, borderRadius: 18, backgroundColor: pa.carte, opacity: manque ? 0.55 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }, ombrePastel(pa.ombre)]}
               >
+                {valide ? <TamponValide taille={30} delai={d * 70} style={{ right: -6, top: -9 }} /> : null}
                 <Ink size={15} weight="black" color={pa.texte} style={{ width: 42 }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{traduire(JOURS_COURTS[d])}</Ink>
                 {s && h ? (
                   <View style={{ flex: 1, minHeight: 44, borderRadius: 14, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 6, paddingRight: 12, backgroundColor: h.f.titre }}>
