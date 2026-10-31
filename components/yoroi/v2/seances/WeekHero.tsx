@@ -8,7 +8,7 @@
  * 28 octobre 2026 (maquette A « Aujourd'hui d'abord ») : l'onglet Seances affiche la carte de la semaine (SemaineAnneau)
  * et les quatre chiffres (WeekTiles) separement ; WeekHero les garde ensemble pour qui l'utiliserait encore.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -27,6 +27,7 @@ import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
 import { P, paletteSombre } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { aideKilos, libelleKilos } from '@/lib/v2/seances/kilosSouleves';
 
 const NB = ' ';
 
@@ -44,11 +45,12 @@ function fmtKg(kg: number, unite: UnitePoids = 'kg'): string {
   return `${p.value}${NB}${p.unit}`;
 }
 
-type Volume = { label: string; value: string; delta: number; fmt: (n: number) => string };
+type Volume = { label: string; value: string; delta: number; fmt: (n: number) => string; aide?: string };
 
 /** Volume adapte a ta pratique : tonnage en musculation, sinon rounds, sinon distance, sinon series */
 function volumeOf(cur: PeriodStats, prev: PeriodStats, unite: UnitePoids = 'kg'): Volume {
-  if (cur.tonnageKg > 0 || prev.tonnageKg > 0) return { label: 'tonnage', value: fmtKg(cur.tonnageKg, unite), delta: cur.tonnageKg - prev.tonnageKg, fmt: (n) => fmtKg(n, unite) };
+  // 31 octobre 2026 : « Kilos soulevés » au lieu de « tonnage » (Houari ne comprenait pas le mot), avec son aide au toucher
+  if (cur.tonnageKg > 0 || prev.tonnageKg > 0) return { label: libelleKilos(), value: fmtKg(cur.tonnageKg, unite), delta: cur.tonnageKg - prev.tonnageKg, fmt: (n) => fmtKg(n, unite), aide: aideKilos('semaine') };
   if (cur.rounds > 0 || prev.rounds > 0) return { label: 'rounds', value: String(cur.rounds), delta: cur.rounds - prev.rounds, fmt: (n) => String(Math.abs(Math.round(n))) };
   if (cur.distanceKm > 0 || prev.distanceKm > 0) return { label: 'distance', value: `${fr1(cur.distanceKm)}${NB}km`, delta: cur.distanceKm - prev.distanceKm, fmt: (n) => `${fr1(Math.abs(n))}${NB}km` };
   return { label: traduire('séries'), value: String(cur.sets), delta: cur.sets - prev.sets, fmt: (n) => String(Math.abs(Math.round(n))) };
@@ -84,7 +86,8 @@ export function couleursTuile(t: TeinteTuile): { fond: string; texte: string } {
   return { fond, texte };
 }
 
-function Tile({ label, value, children, onPress, a11y, teinte, sticker }: { label: string; value: string; children: React.ReactNode; onPress?: () => void; a11y?: string; teinte: TeinteTuile; sticker?: NomSticker }) {
+function Tile({ label, value, children, onPress, a11y, teinte, sticker, aide }: { label: string; value: string; children: React.ReactNode; onPress?: () => void; a11y?: string; teinte: TeinteTuile; sticker?: NomSticker; aide?: string }) {
+  const [aideOuverte, setAideOuverte] = useState(false);
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const t = couleursTuile(teinte);
@@ -93,7 +96,10 @@ function Tile({ label, value, children, onPress, a11y, teinte, sticker }: { labe
   const body = (
     <>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6, minHeight: 26 }}>
-        <Ink size={10.5} weight="extraBold" color={t.texte} numberOfLines={2} style={{ flexShrink: 1, letterSpacing: 1.1 }}>{label.toLocaleUpperCase()}</Ink>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 }}>
+          <Ink size={10.5} weight="extraBold" color={t.texte} numberOfLines={2} style={{ flexShrink: 1, letterSpacing: 1.1 }}>{label.toLocaleUpperCase()}</Ink>
+          {aide ? <Image source={illus.img('info')} style={{ width: 14, height: 14 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
+        </View>
         {sticker ? <Image source={illus.img(sticker)} style={{ width: 26, height: 26 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}>
@@ -101,9 +107,18 @@ function Tile({ label, value, children, onPress, a11y, teinte, sticker }: { labe
         {onPress ? <Icon name="chevron" size={15} color={t.texte} strokeWidth={2.6} /> : null}
       </View>
       {children}
+      {aide && aideOuverte ? <Ink size={11} weight="bold" color={c.textSecondary} style={{ marginTop: 4, lineHeight: 14 }}>{aide}</Ink> : null}
     </>
   );
   const style = { flexBasis: '47%' as const, flexGrow: 1, paddingVertical: 12, paddingHorizontal: 12, borderRadius: 22, backgroundColor: t.fond, gap: 2, minHeight: 104 };
+  // une aide au toucher (kilos soulevés) : le toucher l'ouvre et la referme
+  if (!onPress && aide) {
+    return (
+      <Pressable onPress={() => { tap(); setAideOuverte((o) => !o); }} accessibilityRole="button" accessibilityLabel={`${label}, ${value}`} accessibilityHint={aide} style={style}>
+        {body}
+      </Pressable>
+    );
+  }
   if (!onPress) return <View style={style}>{body}</View>;
   return (
     <Pressable onPress={() => { tap(); onPress(); }} accessibilityRole="button" accessibilityLabel={a11y ?? label} style={({ pressed }) => [style, pressed ? { opacity: 0.85 } : null]}>
@@ -132,7 +147,7 @@ export function WeekTiles({ week, onOpenCharge }: { week: WeekCompare; onOpenCha
         <Tile teinte="creme" sticker="sablier" label={traduire("durée")} value={cur.minutes ? fmtMin(cur.minutes) : `0${NB}min`}>
           <Trend couleur={couleursTuile('creme').texte} delta={cur.minutes - prev.minutes} text={fmtMin(cur.minutes - prev.minutes)} hasPrev={hasPrev} />
         </Tile>
-        <Tile teinte="bleu" sticker="musculation" label={traduire(vol.label)} value={vol.value}>
+        <Tile teinte="bleu" sticker="musculation" label={traduire(vol.label)} value={vol.value} aide={vol.aide}>
           <Trend couleur={couleursTuile('bleu').texte} delta={vol.delta} text={vol.fmt(vol.delta)} hasPrev={hasPrev} />
         </Tile>
         <Tile teinte="peche" sticker="force_eclair" label="charge" value={`${formatPoints(cur.load)}${NB}pts`} onPress={onOpenCharge} a11y={traduire("Ta charge d’entraînement, voir le détail")}>
@@ -218,7 +233,7 @@ export function WeekHero({
         <Tile teinte="creme" label={traduire("durée")} value={cur.minutes ? fmtMin(cur.minutes) : `0${NB}min`}>
           <Trend couleur={couleursTuile('creme').texte} delta={cur.minutes - prev.minutes} text={fmtMin(cur.minutes - prev.minutes)} hasPrev={hasPrev} />
         </Tile>
-        <Tile teinte="bleu" label={traduire(vol.label)} value={vol.value}>
+        <Tile teinte="bleu" label={traduire(vol.label)} value={vol.value} aide={vol.aide}>
           <Trend couleur={couleursTuile('bleu').texte} delta={vol.delta} text={vol.fmt(vol.delta)} hasPrev={hasPrev} />
         </Tile>
         <Tile teinte="peche" label="charge" value={`${formatPoints(cur.load)}${NB}pts`} onPress={onOpenCharge} a11y={traduire("Ta charge d’entraînement, voir le détail")}>
