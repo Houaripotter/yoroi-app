@@ -119,15 +119,7 @@ function Contenu({ data, onClose, choix, nombre }: { data: CarteData; onClose: (
           </View>
         </View>
 
-        {data.moment === 'exploit' ? (
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {[{ id: 'perso', nom: 'Avec personnage', on: k.personne.visible && k.aPersonnage && k.options.personnage, f: () => k.setStyle({ epure: false, personnage: true, sansPersonne: false }), cache: !k.aPersonnage }, { id: 'sans', nom: 'Sans', on: !k.options.epure && !(k.personne.visible && k.aPersonnage && k.options.personnage), f: () => k.setStyle({ epure: false, sansPersonne: true }) }, { id: 'epure', nom: 'Que mes données', on: !!k.options.epure, f: () => k.setStyle({ epure: true }) }].filter((x) => !x.cache).map((x) => (
-              <Pressable key={x.id} onPress={x.f} accessibilityRole="button" accessibilityState={{ selected: x.on }} style={{ minHeight: 40, paddingHorizontal: 13, borderRadius: 20, justifyContent: 'center', backgroundColor: x.on ? c.ink : c.surface, borderWidth: 1, borderColor: x.on ? c.ink : c.border }}>
-                <Ink size={13} weight="extraBold" color={x.on ? c.background : c.ink}>{traduire(x.nom)}</Ink>
-              </Pressable>
-            ))}
-          </View>
-        ) : (
+        {/* 31 octobre 2026 : plus de personnage sur les cartes ; les exploits ont aussi leur choix (Affiche, Medaille) */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
           {modelesPour(data).map((m) => {
             const on = m.id === modeleEffectif(data, k.options.modele);
@@ -145,7 +137,6 @@ function Contenu({ data, onClose, choix, nombre }: { data: CarteData; onClose: (
             );
           })}
         </ScrollView>
-        )}
 
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <Pressable
