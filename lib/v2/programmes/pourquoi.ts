@@ -85,7 +85,7 @@ export const POURQUOI_MODULE: Record<ModuleId, Explication> = {
   },
   cardio: {
     titre: 'Cardio zone 2',
-    ligne: 'De la marche inclinée, à la fin de ta séance.',
+    ligne: 'Du cardio en zone 2 à la fin de ta séance : marche inclinée par défaut, ou celui que tu choisis.',
     icone: 'steps',
     points: [
       { icone: 'heart', texte: 'Zone 2 : un effort où tu peux encore parler en phrases complètes. C’est un repère simple, sans montre.' },
