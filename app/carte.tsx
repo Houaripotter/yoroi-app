@@ -25,6 +25,10 @@
  * 17 octobre 2026 : carte Avant apres, moment=avant_apres&avant=<id>&apres=<id> (&flou=0 pour ne pas flouter) ;
  * onglets Format, Photos (avant, apres, flou) et Plus ; une phrase de prudence avant le premier partage.
  * En demo : &photo=<url>&photo2=<url>... pour les photos de test.
+ * 31 octobre 2026 (cartes ou l'on voit ta tete) : sur l'apercu, tu glisses le bloc des chiffres au doigt et tu le
+ * pinces pour l'agrandir ou le reduire, comme dans une story. « Replacer » le remet a sa place. Le placement est
+ * garde par modele et par format le temps de l'edition seulement ; la capture (enregistrer, partager) le garde.
+ * Pas pour la carte holographique ni la Retrospective (voir lib/v2/cartes/zoneVisage.ts).
  */
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
@@ -32,13 +36,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { Easing, Extrapolation, interpolate, runOnJS, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon, RoundButton, type IconName } from '@/components/yoroi/v2/espace/ui';
 import { Interrupteur } from '@/components/yoroi/v2/reglages/kit';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
 import { aClairSombre, CarteApercu, CARTE_W, explicationModele, HAUTEURS, modeleEffectif, modelesPour, sortieTransparente } from '@/components/yoroi/v2/cartes/CarteRendu';
-import { estAutocollant } from '@/lib/v2/cartes/directions';
+import { estAutocollant, estDirection } from '@/lib/v2/cartes/directions';
+import { blocMobile, bornerPlacement, estDeplace, PLACEMENT_DEFAUT } from '@/lib/v2/cartes/zoneVisage';
+import type { Placement } from '@/lib/v2/cartes/zoneVisage';
 import { COULEURS, couleurDe } from '@/lib/v2/cartes/couleurs';
 import { useCarte } from '@/components/yoroi/v2/cartes/useCarte';
 import { chargerExploit, chargerPesee, chargerSeance, chargerSemaine } from '@/lib/v2/cartes/charger';
@@ -341,6 +348,43 @@ export default function CarteEditeur() {
   const couleurUtile = !fondPhoto || modeleActif === 'holo';
   const titreCouleur = !fondPhoto ? traduire('Ta couleur') : traduire('Couleur de ta carte');
 
+  // 31 octobre 2026 : le bloc des chiffres se glisse et se pince sur l'apercu ; garde par modele et format, pour cette edition
+  const mobile = !!data && !aa && estDirection(modeleActif) && blocMobile(modeleActif);
+  const clePlacement = `${modeleActif}:${o.format}`;
+  const [placements, setPlacements] = useState<Record<string, Placement>>({});
+  const placement = mobile ? placements[clePlacement] ?? null : null;
+  const courant = useRef<Placement>(PLACEMENT_DEFAUT);
+  courant.current = placement ?? PLACEMENT_DEFAUT;
+  const depart = useRef<Placement>(PLACEMENT_DEFAUT);
+  const echelleApercu = largeur / CARTE_W;
+  const poser = (p: Placement) => {
+    const b = bornerPlacement(p, { x: CARTE_W / 2, y: H / 2 }, CARTE_W, H);
+    courant.current = b;
+    setPlacements((x) => ({ ...x, [clePlacement]: b }));
+  };
+  const glisser = Gesture.Pan()
+    .runOnJS(true)
+    .enabled(mobile)
+    .minDistance(4)
+    .onStart(() => {
+      depart.current = courant.current;
+    })
+    .onUpdate((e) => poser({ x: depart.current.x + e.translationX / echelleApercu, y: depart.current.y + e.translationY / echelleApercu, s: courant.current.s }));
+  const departPince = useRef(1);
+  const pincer = Gesture.Pinch()
+    .runOnJS(true)
+    .enabled(mobile)
+    .onStart(() => {
+      departPince.current = courant.current.s;
+    })
+    .onUpdate((e) => poser({ ...courant.current, s: departPince.current * e.scale }));
+  const gesteBloc = Gesture.Simultaneous(glisser, pincer);
+  const replacer = () => setPlacements((x) => {
+    const n = { ...x };
+    delete n[clePlacement];
+    return n;
+  });
+
   if (vide) {
     return (
       <View style={{ flex: 1, backgroundColor: c.background, paddingTop: insets.top + 12, paddingHorizontal: 22, gap: 14 }}>
@@ -425,6 +469,7 @@ export default function CarteEditeur() {
                 : null}
             </ScrollView>
             {data && modeles[indexActif] ? <Ink size={13} color={c.textSecondary}>{explicationModele(modeles[indexActif], data)}</Ink> : null}
+            {mobile ? <Ink size={13} color={c.textSecondary}>{traduire('Sur l’aperçu, glisse tes chiffres pour les placer et pince pour les agrandir.')}</Ink> : null}
             {autocollant ? (
               <>
                 <Titre c={c} icon="image" sous={transparent ? traduire('Un PNG à fond transparent, à coller sur ta photo ou ta vidéo de story') : traduire('Posé sur ta photo, ou sur ta couleur')}>{traduire('Ta sortie')}</Titre>
@@ -556,19 +601,27 @@ export default function CarteEditeur() {
       <View style={{ position: 'absolute', left: 0, right: 0, top: haut, backgroundColor: c.background, paddingHorizontal: 16 }}>
         <Animated.View style={[{ alignItems: 'center', justifyContent: 'flex-start', borderRadius: 26, backgroundColor: c.accentTint, paddingTop: 12, overflow: 'hidden' }, zoneStyle]}>
           {data ? (
-            <Animated.View style={[{ borderRadius: 18, shadowColor: '#000', shadowOpacity: 0.22, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 8 }, carteStyle]}>
-              <CarteApercu ref={k.ref} largeur={largeur} data={data} options={o} visuels={visuels} />
+            <GestureDetector gesture={gesteBloc}>
+            <Animated.View style={[{ borderRadius: 18, shadowColor: '#000', shadowOpacity: 0.22, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 8 }, carteStyle]} accessibilityHint={mobile ? traduire('Glisse pour déplacer tes chiffres, pince pour changer leur taille') : undefined}>
+              <CarteApercu ref={k.ref} largeur={largeur} data={data} options={o} visuels={visuels} placement={placement} />
               {ancien ? (
                 <Animated.View key={ancien.n} pointerEvents="none" style={[{ position: 'absolute', top: 0, left: Math.round((largeur - ancien.largeur) / 2) }, voileStyle]}>
                   <CarteApercu largeur={ancien.largeur} data={data} options={ancien.o} visuels={visuels} />
                 </Animated.View>
               ) : null}
             </Animated.View>
+            </GestureDetector>
           ) : (
             <View style={{ flex: 1, justifyContent: 'center' }}>
               <ChargementPetit />
             </View>
           )}
+          {mobile && estDeplace(placement) ? (
+            <Pressable onPress={replacer} accessibilityRole="button" accessibilityLabel={traduire('Replacer')} accessibilityHint={traduire('Remet tes chiffres à leur place')} hitSlop={8} style={({ pressed }) => ({ position: 'absolute', right: 10, top: 10, minHeight: 36, paddingHorizontal: 14, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
+              <Icon name="back" size={14} color={c.ink} />
+              <Ink size={13} weight="extraBold">{traduire('Replacer')}</Ink>
+            </Pressable>
+          ) : null}
         </Animated.View>
         <View style={{ paddingTop: 8, paddingBottom: 4, paddingHorizontal: 6 }}>
           <Onglets c={c} liste={onglets} actif={actif} onChange={setOnglet} />
