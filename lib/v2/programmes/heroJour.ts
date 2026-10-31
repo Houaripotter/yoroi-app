@@ -14,7 +14,7 @@ import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { guideCharge, niveauCharge } from './charge';
 import { indexJour, prochainJourPrevu } from './coach';
 import type { MessageCoach } from './coach';
-import { estJourMuscu } from './finSeance';
+import { caseCochee, choixDuJour, estJourMuscu } from './finSeance';
 import { modulesActifs, moduleParId } from './modules';
 import { faitsCetteSemaine, seancesAVenir } from './suivi';
 import type { ProgrammeActif } from './suivi';
@@ -59,7 +59,12 @@ export function pourquoiDuJour(jour: JourProgramme, semaine = 1): string {
 /** Les ajouts de fin de séance d'un jour de musculation (rien un jour de cardio ou de rounds) */
 export function ajoutsDuJour(jour: JourProgramme, actif: ProgrammeActif | null): string[] {
   if (!actif || !estJourMuscu(jour)) return [];
-  return modulesActifs(actif).map((m) =>
+  // 31 octobre 2026 : la carte dit ce que la seance ajoutera vraiment (finSeance.ts, avecFinSeance) : le choix de
+  // cette seance s'il y en a un, pas d'abdos si le jour en a deja, pas de cardio si c'est deja un jour de cardio
+  const choix = choixDuJour(actif.fin, jour.id);
+  const garder = (m: string) =>
+    m === 'abdos' ? caseCochee(choix, 'abdos') && !jour.exos.some((e) => e.muscle === 'ABDOS') : m === 'cardio' ? caseCochee(choix, 'cardio') && !jour.cardio : true;
+  return modulesActifs(actif).filter(garder).map((m) =>
     m === 'cardio'
       ? traduire('+ {0} min de marche', actif.fin?.minutes ?? 30)
       : traduire('+ {0}', traduire(moduleParId(m)?.label ?? m)),
