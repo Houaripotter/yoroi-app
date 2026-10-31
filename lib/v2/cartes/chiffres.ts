@@ -54,9 +54,9 @@ export function familleDe(categorie: string | null | undefined, sportId?: string
 
 /** Ordre de preference des chiffres d'une seance, par famille */
 export const PRIORITE_SEANCE: Record<Famille, StatKey[]> = {
-  muscu: ['charge', 'series', 'duree', 'calories', 'fc_moy', 'fc_max', 'zones', 'serie_semaines'],
-  combat: ['rounds', 'duree', 'fc_moy', 'calories', 'fc_max', 'zones', 'serie_semaines'],
-  course: ['distance', 'allure', 'duree', 'fc_moy', 'calories', 'fc_max', 'zones', 'serie_semaines'],
+  muscu: ['charge', 'series', 'duree', 'repetitions', 'calories', 'fc_moy', 'fc_max', 'zones', 'serie_semaines'],
+  combat: ['rounds', 'duree', 'fc_moy', 'intensite', 'calories', 'fc_max', 'zones', 'serie_semaines'],
+  course: ['distance', 'allure', 'duree', 'denivele', 'fc_moy', 'calories', 'fc_max', 'zones', 'serie_semaines'],
   collectif: ['duree', 'distance', 'calories', 'fc_moy', 'fc_max', 'zones', 'serie_semaines'],
   autre: ['duree', 'calories', 'fc_moy', 'distance', 'fc_max', 'zones', 'rounds', 'series', 'charge', 'serie_semaines'],
 };
@@ -124,6 +124,10 @@ export function chiffresDisponibles(d: CarteData, masque: Masque = 'aucun'): Sta
         const i = z.indexOf(Math.max(...z));
         return { key: 'zones', label: traduire('zone dominante'), value: ZONES_NOMS[i], zones: z.map((x) => (x > 0 ? x : 0)) };
       })(),
+      // 31 octobre 2026 : denivele, repetitions et intensite, seulement s'ils sont dans la seance
+      denivele: (s.deniveleM ?? 0) >= 1 ? { key: 'denivele', label: traduire('dénivelé'), value: `+${nombre(s.deniveleM!, 0)}`, unit: 'm' } : null,
+      repetitions: (s.repetitions ?? 0) > 0 ? { key: 'repetitions', label: traduire('répétitions'), value: nombre(s.repetitions!, 0) } : null,
+      intensite: (s.intensite ?? 0) >= 1 && (s.intensite ?? 0) <= 10 ? { key: 'intensite', label: traduire('intensité'), value: String(Math.round(s.intensite!)), unit: '/10' } : null,
       serie_semaines: serieStat,
     };
     for (const k of PRIORITE_SEANCE[fam]) push(all[k] ?? null);
@@ -201,9 +205,12 @@ export function chiffresDisponibles(d: CarteData, masque: Masque = 'aucun'): Sta
   return out;
 }
 
-/** Les trois premiers chiffres disponibles (deux s'il n'y en a que deux) */
-export function chiffresParDefaut(d: CarteData, masque: Masque = 'aucun'): StatKey[] {
-  return chiffresDisponibles(d, masque).slice(0, 3).map((s) => s.key);
+/**
+ * Les premiers chiffres disponibles : trois par defaut (deux s'il n'y en a que deux).
+ * 31 octobre 2026 : l'atelier en demande quatre (le chiffre enorme et 3 stats, comme les maquettes).
+ */
+export function chiffresParDefaut(d: CarteData, masque: Masque = 'aucun', n = 3): StatKey[] {
+  return chiffresDisponibles(d, masque).slice(0, Math.max(MIN_CHIFFRES, Math.min(MAX_CHIFFRES, n))).map((s) => s.key);
 }
 
 /**
@@ -254,6 +261,9 @@ export const NOMS_CHIFFRES: Record<StatKey, string> = {
   temps_total: traduire('Temps total'),
   poids_semaine: traduire('Poids de la semaine'),
   serie_semaines: traduire('Série de semaines'),
+  denivele: traduire('Dénivelé'),
+  repetitions: traduire('Répétitions'),
+  intensite: traduire('Intensité'),
   exploit: 'Chiffre',
 };
 
