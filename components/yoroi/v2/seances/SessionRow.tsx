@@ -16,15 +16,16 @@ import { Icon } from './Icon';
 import { P } from '@/components/yoroi/livePalette';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 
-/** Vignette du sport : illustration cadree dans une tuile teintee */
+/** Vignette du sport : son sticker dans une tuile teintee */
 export function SportThumb({ sport, femme, size = 48 }: { sport: string | undefined; femme?: boolean; size?: number }) {
   const { theme } = useYoroiTheme();
   const id = firstSport(sport);
   const img = sportImage(id, !!femme, 0);
   return (
-    <View style={{ width: size, height: size, borderRadius: size * 0.3, backgroundColor: sportTint(id), overflow: 'hidden', alignItems: 'center' }}>
+    <View style={{ width: size, height: size, borderRadius: size * 0.3, backgroundColor: sportTint(id), overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+      {/* 31 octobre 2026 : le sticker du sport, centré (plus de personnage dessiné par défaut, lib/v2/seance/sportArt.ts) */}
       {img ? (
-        <Image source={img} style={{ position: 'absolute', top: -size * 0.04, width: size * 1.25, height: size * 1.66 }} resizeMode="contain" />
+        <Image source={img} style={{ width: size * 0.74, height: size * 0.74 }} resizeMode="contain" />
       ) : (
         <View style={{ flex: 1, justifyContent: 'center' }}><Icon name="dumbbell" size={size * 0.46} color={theme.colors.textSecondary} /></View>
       )}
