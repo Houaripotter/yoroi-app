@@ -15,6 +15,7 @@ import { logger } from '@/lib/security/logger';
 import { carteBilan } from '@/lib/v2/bilan/charger';
 import { familleDe, nombre } from './chiffres';
 import { cleMoment, isoJour, lundiDe, raisonPesee } from './moments';
+import { visuelsDeSeance } from './visuelsSeance';
 import { bilanAnnee, bilanMois, cleExploit, exploitsPesee, exploitsSeance } from './exploits';
 import type { CarteData, Exploit, RecordCarte } from './types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
@@ -122,6 +123,8 @@ export async function chargerSeance(id: number): Promise<CarteData | null> {
       calories: t.calories ?? 0,
       zones: zonesDe(t),
       records,
+      // 31 octobre 2026 : trace GPS, splits, denivele, series, techniques, lus dans la seance (absents sinon)
+      ...visuelsDeSeance(t),
     },
     serieSemaines: await serieSemaines(),
     cle: cleMoment('seance', id),
