@@ -50,7 +50,8 @@ export function CarteFinDeSeance({ fin, femme, onPress }: { fin: FinSeance | nul
       accessibilityLabel={traduire('Fin de séance : abdos et cardio')}
       style={({ pressed }) => ({ borderRadius: 24, backgroundColor: ton('menthe').fond, overflow: 'hidden', padding: 18, minHeight: 120, justifyContent: 'center', opacity: pressed ? 0.9 : 1 })}
     >
-      {img ? <Image source={img} style={{ position: 'absolute', right: -6, bottom: -56, width: 120, height: 170 }} resizeMode="contain" /> : null}
+      {/* 31 octobre 2026 : le sticker de la marche (plus de personnage dessiné par défaut) */}
+      {img ? <Image source={img} style={{ position: 'absolute', right: 14, top: 22, width: 76, height: 76 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
       <View style={{ maxWidth: '66%', gap: 4 }}>
         <Ink size={12} weight="black" color={ton('menthe').encre} style={{ letterSpacing: 0.6 }}>{traduire('FIN DE SÉANCE')}</Ink>
         <Ink size={18} weight="black" tight color={c.ink}>{traduire('Abdos et cardio')}</Ink>
