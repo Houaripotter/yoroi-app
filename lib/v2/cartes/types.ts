@@ -4,7 +4,8 @@
  * Tout vient des vraies donnees : un champ absent (null ou 0) fait disparaitre son bloc.
  */
 
-export type Moment = 'seance' | 'pesee' | 'semaine' | 'exploit' | 'avant_apres';
+/** 31 octobre 2026 (bibliotheque des cartes) : 'mois' et 'annee', ton mois et ton annee d'entrainement */
+export type Moment = 'seance' | 'pesee' | 'semaine' | 'exploit' | 'avant_apres' | 'mois' | 'annee';
 
 /** Famille de sport, pour choisir les chiffres par defaut */
 export type Famille = 'muscu' | 'combat' | 'course' | 'collectif' | 'autre';
@@ -32,6 +33,10 @@ export type StatKey =
   | 'denivele'
   | 'repetitions'
   | 'intensite'
+  /** 31 octobre 2026 (bibliotheque) : jours avec au moins une seance, objectif de la periode, sport le plus pratique */
+  | 'jours_actifs'
+  | 'objectif_periode'
+  | 'sport_top'
   | 'exploit';
 
 export type StatValue = {
@@ -131,6 +136,38 @@ export type DonneesSemaine = {
   parJour?: { sports: string[]; club?: { nom: string; logo?: string | null } | null }[];
 };
 
+/**
+ * 31 octobre 2026 (bibliotheque des cartes) : ton mois ou ton annee, lus dans tes seances.
+ * Rien n'est estime : un total a 0 fait disparaitre son chiffre.
+ */
+export type DonneesPeriode = {
+  type: 'mois' | 'annee';
+  /** AAAA-MM pour un mois, AAAA pour une annee */
+  ref: string;
+  /** premier et dernier jour comptes (AAAA-MM-JJ) ; le dernier est aujourd'hui si la periode est en cours */
+  debut: string;
+  fin: string;
+  enCours: boolean;
+  seances: number;
+  minutes: number;
+  joursActifs: number;
+  /** seances par sport, les plus pratiques d'abord */
+  sports: { nom: string; n: number }[];
+  /** kilometres parcourus (hors sports de combat), kilos souleves, rounds */
+  distanceKm: number;
+  tonnage: number;
+  rounds: number;
+  /** seances par semaine visees, 0 sans objectif */
+  parSemaine: number;
+  /** mois : semaines (lundi dans le mois, finies ou deja tenues) a l'objectif, sur les semaines comptees */
+  semainesTenues: number;
+  semainesComptees: number;
+  /** annee : seances faites sur les seances visees (rythme x semaines), null sans objectif */
+  objectifAnnee?: { fait: number; total: number; attendu?: number } | null;
+  /** seances de la periode d'avant (mois d'avant, annee d'avant) */
+  precedent: number;
+};
+
 /** Une photo de corps pour la carte Avant apres (17 octobre 2026) */
 export type PhotoCarte = {
   id: string;
@@ -163,6 +200,8 @@ export type CarteData = {
   semaine?: DonneesSemaine;
   /** carte Avant apres : tes deux photos de corps (17 octobre 2026) */
   avantApres?: DonneesAvantApres;
+  /** 31 octobre 2026 (bibliotheque) : ton mois ou ton annee */
+  periode?: DonneesPeriode;
   /** semaines d'affilee avec l'objectif tenu (moteur de l'armure) */
   serieSemaines?: number;
   /** 31 octobre 2026 (cartes v2) : ta seance precedente du meme sport (Affiche de gala) */
@@ -181,7 +220,7 @@ export type CarteData = {
   /** exploit (record, palier, compteur, objectif de l'annee, bilan...) : voir lib/v2/cartes/exploits.ts */
   exploit?: Exploit;
   /** d'ou vient l'exploit, pour le retrouver dans l'atelier : seance (id), pesee (date), mois (AAAA-MM), annee (AAAA) */
-  source?: { type: 'seance' | 'pesee' | 'mois' | 'annee' | 'bilan'; ref: string };
+  source?: { type: 'seance' | 'pesee' | 'mois' | 'annee' | 'bilan' | 'objectif' | 'compteur'; ref: string };
   /** cle du moment (une seule proposition automatique par moment) */
   cle: string;
 };
@@ -216,7 +255,10 @@ export type TypeExploit =
   | 'objectif_poids'
   /** page de bilan (16 octobre 2026) : ce qui a bouge apres une mesure, le compteur apres une seance */
   | 'bilan_corps'
-  | 'bilan_seance';
+  | 'bilan_seance'
+  /** bibliotheque (31 octobre 2026) : le chemin vers ton objectif de poids, et tes seances depuis le debut */
+  | 'chemin_poids'
+  | 'cumul_seances';
 
 /** Un grand chiffre : valeur et unite separees (« 100 » « kg », « 4 » « e ») */
 export type Grand = { value: string; unit?: string };
