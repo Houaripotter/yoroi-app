@@ -576,6 +576,8 @@ function Retro(c: CtxDirection) {
 function phraseFlash(d: CarteData): string {
   if (d.moment === 'pesee') return traduire('la balance a parlé.');
   if (d.moment === 'semaine') return traduire('une semaine bien remplie.');
+  if (d.moment === 'mois') return traduire('un mois bien rempli.');
+  if (d.moment === 'annee') return traduire('une année au compteur.');
   if (d.famille === 'muscu') return traduire('les muscles ont dit merci.');
   if (d.famille === 'course') return traduire('un pas après l’autre.');
   if (d.famille === 'combat') return traduire('zéro excuse sur le tatami.');
