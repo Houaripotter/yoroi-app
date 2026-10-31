@@ -145,7 +145,15 @@ export const CLES_ELEMENTS: readonly SpecCle[] = [
   // cran de la machine ou de la poulie, par exercice (lib/v2/seances/reglagesMachine.ts) : champ par champ
   { cle: 'yoroi_reglages_machine_v1', type: 'reglages', forme: 'objet' },
   // 31 octobre 2026 : le cardio de fin de seance choisi par jour du programme, et ta derniere pente et vitesse (lib/v2/seances/cardioChoix.ts)
-  { cle: 'yoroi_cardio_choix_v1', type: 'programmes', forme: 'objet' },
+  {
+    cle: 'yoroi_cardio_choix_v1', type: 'programmes', forme: 'objet',
+    evenements: ['YOROI_PROGRAMME_CHANGED'],
+    apres: async () => {
+      try {
+        await (require('@/lib/v2/seances/cardioJour') as typeof import('@/lib/v2/seances/cardioJour')).hydraterChoix();
+      } catch { /* relu a la prochaine ouverture */ }
+    },
+  },
   { cle: 'yoroi_cardio_reglages_v1', type: 'reglages', forme: 'objet' },
   // exercices ecartes (lib/v2/seances/exercicesEcartes.ts) : un par nom, « Remettre » laisse une pierre tombale
   {
