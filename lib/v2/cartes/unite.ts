@@ -22,6 +22,11 @@ function grandEnUnite<G extends { value: string; unit?: string }>(g: G, u: Unite
 export function statsEnUnite(stats: StatValue[], u: UnitePoids): StatValue[] {
   if (u === 'kg') return stats;
   return stats.map((s) => {
+    // 31 octobre 2026 : la meilleure serie, « 100 » « kg × 5 » devient « 220 » « lb × 5 »
+    if (s.key === 'meilleur' && s.unit?.startsWith('kg')) {
+      const kg = Number(s.value.replace(/[\s\u00A0\u202F]/g, '').replace(',', '.'));
+      return Number.isFinite(kg) ? { ...s, value: nombre(Math.round(versUnitePoids(kg, 'lb')), 0), unit: `lb${s.unit.slice(2)}` } : s;
+    }
     if (s.key !== 'charge') return s;
     const n = Number(s.value.replace(/[\s\u00A0\u202F]/g, '').replace(',', '.'));
     const kg = s.unit === 't' ? n * 1000 : s.unit === 'kg' ? n : NaN;
