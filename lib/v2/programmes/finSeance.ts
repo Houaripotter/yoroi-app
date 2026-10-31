@@ -25,6 +25,9 @@
 import { programmeParId } from './catalogue';
 import type { CardioProgramme, ExoProgramme, JourProgramme, Materiel, Programme } from './types';
 import type { ModuleId } from './modules';
+import { cardioPrevu } from '@/lib/v2/seances/cardioJour';
+import type { ChoixCardio } from '@/lib/v2/seances/cardioJour';
+import type { TypeCardio } from '@/lib/v2/seances/cardioFin';
 
 export type ChoixFin = 'rien' | 'abdos' | 'cardio' | 'les_deux';
 
@@ -52,7 +55,8 @@ export type CaseFin = 'rien' | 'abdos' | 'cardio';
 export const CHOIX_FIN: { key: CaseFin; label: string; sous: string }[] = [
   { key: 'rien', label: 'Rien', sous: 'Le programme tel quel' },
   { key: 'abdos', label: 'Abdos', sous: 'Un exercice à la fin' },
-  { key: 'cardio', label: 'Cardio', sous: 'Marche inclinée en zone 2' },
+  // 31 octobre 2026 : le type et la duree se choisissent en seance (lib/v2/seances/cardioJour.ts)
+  { key: 'cardio', label: 'Cardio', sous: 'Au choix, en zone 2' },
 ];
 
 /** Le choix enregistré, à partir des deux cases */
@@ -186,11 +190,24 @@ export function cardioFin(minutes: number): CardioProgramme {
   return { sport: 'marche', minutes: m, consigne: CONSIGNE_FIN[m] };
 }
 
+/** Consigne d'un cardio choisi qui n'est pas une marche inclinee de 15, 20 ou 30 min */
+const CONSIGNE_MARCHE = 'Marche inclinée juste après la musculation. Sur tapis, pente de 8 à 12 %, entre 4,5 et 5,5 km/h. Zone 2 : tu peux encore parler en phrases complètes. Lâche les barres.';
+const CONSIGNE_AUTRE = 'Juste après la musculation, en zone 2 : tu peux encore parler en phrases complètes.';
+
+/**
+ * 31 octobre 2026 (Houari : « si j'ai fait du vélo, je veux qu'elle annonce le vélo ») : le cardio de ce jour tel que
+ * tu l'as choisi (type et duree), sinon la marche inclinee du programme.
+ */
+export function cardioFinChoisi(c: ChoixCardio): CardioProgramme {
+  if (c.type === 'marche_inclinee') return CONSIGNE_FIN[c.minutes] ? cardioFin(c.minutes) : { sport: 'marche', minutes: c.minutes, consigne: CONSIGNE_MARCHE };
+  return { sport: 'cardio', minutes: c.minutes, consigne: CONSIGNE_AUTRE };
+}
+
 /** Marque d'un exercice ajoute par la fin de seance */
 export type ExoFin = { fin?: true };
 
 /** Le jour avec sa fin de seance : `finCardio` (bloc apres la musculation), `finFaite` (deja calcule) */
-export type AvecFin = { finCardio?: CardioProgramme; finFaite?: true };
+export type AvecFin = { finCardio?: CardioProgramme; finCardioType?: TypeCardio; finFaite?: true };
 
 /**
  * `modules` et `programme` : 26 octobre 2026, lib/v2/programmes/modules.ts (force, grip, cou, mobilite).
@@ -216,7 +233,12 @@ export function avecFinSeance<J extends JourProgramme>(jour: J, ctx: ContexteFin
     exos = [...exos, ...exosAbdosFin(ctx!.materiel).filter((e) => !deja.has(e.nom))];
   }
   const ajout: AvecFin = { finFaite: true };
-  if (avecCardio(f) && !jour.cardio) ajout.finCardio = cardioFin(f.minutes);
+  if (avecCardio(f) && !jour.cardio) {
+    // le cardio choisi pour ce jour du programme (cle « programme|jour », comme la seance en direct)
+    const choix = cardioPrevu(ctx?.programme?.id, jour.id, minutesValides(f.minutes));
+    ajout.finCardio = cardioFinChoisi(choix);
+    ajout.finCardioType = choix.type;
+  }
   return { ...jour, exos, ...ajout } as J & AvecFin;
 }
 
@@ -263,10 +285,11 @@ export function completerContexte(jour: JourProgramme, ctx: ContexteFin | null):
   return { ...ctx, modules: actif.modules, programme: ctx.programme ?? p };
 }
 
-/** « abdos, puis 30 min de marche inclinée » : ce que tu as choisi, en clair (texte francais a traduire) */
+/** « Abdos, puis 30 min de cardio » : ce que tu as choisi, en clair (texte francais a traduire) */
 export function resumeFin(f: FinSeance | null | undefined): { cle: string; minutes?: number } {
   if (!f || f.choix === 'rien') return { cle: 'Rien d’ajouté' };
   if (f.choix === 'abdos') return { cle: 'Un exercice d’abdos à la fin' };
-  if (f.choix === 'cardio') return { cle: '{0} min de marche inclinée à la fin', minutes: f.minutes };
-  return { cle: 'Abdos, puis {0} min de marche inclinée', minutes: f.minutes };
+  // 31 octobre 2026 : le type se choisit en seance, ce resume ne dit donc pas « marche »
+  if (f.choix === 'cardio') return { cle: '{0} min de cardio à la fin', minutes: f.minutes };
+  return { cle: 'Abdos, puis {0} min de cardio', minutes: f.minutes };
 }
