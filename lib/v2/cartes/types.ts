@@ -90,6 +90,16 @@ export type DonneesSeance = {
   intensite?: number;
 };
 
+/**
+ * 31 octobre 2026 (cartes v2, Affiche de gala) : ta seance precedente du meme sport, lue dans ton historique.
+ * Absente s'il n'y en a pas : la carte Gala ne montre alors que la seance du jour.
+ */
+export type SeancePrecedente = {
+  /** AAAA-MM-JJ */
+  date: string;
+  seance: DonneesSeance;
+};
+
 export type RaisonPesee = {
   type: 'objectif' | 'palier' | 'plus_bas' | 'plus_haut' | 'progres';
   /** phrase courte ecrite sur la carte */
@@ -155,6 +165,19 @@ export type CarteData = {
   avantApres?: DonneesAvantApres;
   /** semaines d'affilee avec l'objectif tenu (moteur de l'armure) */
   serieSemaines?: number;
+  /** 31 octobre 2026 (cartes v2) : ta seance precedente du meme sport (Affiche de gala) */
+  precedente?: SeancePrecedente | null;
+  /**
+   * 31 octobre 2026 (cartes v2, Serie en feu) : les 12 dernieres semaines, de la plus ancienne a celle de la carte,
+   * lundi a dimanche, vrai si au moins une seance ce jour-la. Absent si l'historique n'a pas ete lu.
+   */
+  grille?: boolean[][] | null;
+  /** 31 octobre 2026 (cartes v2, Carte holographique) : rang de cette seance dans l'annee (la 47e de 2026), 0 si inconnu */
+  rangAnnee?: number;
+  /** AAAA-MM-JJ de la seance, quand il est connu (date orange du Flash) */
+  dateIso?: string;
+  /** heure de la seance, « 18:40 », quand elle est connue (Diffusion TV) */
+  heure?: string | null;
   /** exploit (record, palier, compteur, objectif de l'annee, bilan...) : voir lib/v2/cartes/exploits.ts */
   exploit?: Exploit;
   /** d'ou vient l'exploit, pour le retrouver dans l'atelier : seance (id), pesee (date), mois (AAAA-MM), annee (AAAA) */
@@ -239,7 +262,12 @@ export type Masque = 'aucun' | 'ecart' | 'pourcentage';
  * 31 octobre 2026 : six modeles proposes, Affiche, Bandeau, Neon nuit, Ticket, Medaille, Tableau de score.
  * Les anciens ids restent dans le type pour les reglages deja memorises : ils retombent sur l'Affiche.
  */
-export type ModeleId = 'affiche' | 'bandeau' | 'neon' | 'ticket' | 'medaille' | 'score' | 'colonne' | 'cadre' | 'geant' | 'anneau' | 'minimal' | 'record' | 'semaine';
+/**
+ * 31 octobre 2026 (cartes v2) : les 10 directions remplacent les 6 modeles. 01 net, 02 chrome, 03 stickers,
+ * 04 holo, 05 retro, 06 flash, 07 maillot, 08 gala, 09 serie, 10 tv. Les anciens ids retombent sur une direction.
+ */
+export type DirectionId = 'net' | 'chrome' | 'stickers' | 'holo' | 'retro' | 'flash' | 'maillot' | 'gala' | 'serie' | 'tv';
+export type ModeleId = DirectionId | 'affiche' | 'bandeau' | 'neon' | 'ticket' | 'medaille' | 'score' | 'colonne' | 'cadre' | 'geant' | 'anneau' | 'minimal' | 'record' | 'semaine';
 /** 31 octobre 2026 : la palette des fonds unis, huit couleurs franches */
 export type CouleurId = 'rouge' | 'bleu' | 'jaune' | 'vert' | 'orange' | 'violet' | 'rose' | 'noir';
 export type FormatId = 'story' | 'post' | 'carre';
@@ -286,4 +314,9 @@ export type OptionsCarte = {
   sansPersonne?: boolean;
   /** carte Avant apres : les deux photos floutees, comme dans ton coffre */
   flou?: boolean;
+  /**
+   * 31 octobre 2026 (cartes v2) : sortie des autocollants (net, chrome, stickers). 'story' : pose sur ta photo
+   * ou ta couleur ; 'autocollant' : PNG a fond transparent, a coller toi-meme sur ta story.
+   */
+  sortie?: 'story' | 'autocollant';
 };
