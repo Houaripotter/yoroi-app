@@ -28,6 +28,8 @@ import { estJourMuscu } from './finSeance';
 import { estExoCardio } from './briques';
 import { proposer, proposerLegere, seancesDeLExo } from './progression';
 import { indexJour } from './coach';
+import { relierSeances } from './seancesFaites';
+import type { SeanceEnregistree } from './seancesFaites';
 import { joursDuProgramme, seanceDuPlanLe, seancesAVenir, semaineEffective } from './suivi';
 import type { ProgrammeActif } from './suivi';
 import { jourDuProgramme } from './semaineLibre';
@@ -45,6 +47,10 @@ export type JourPrevu = {
   /** la séance prévue (ou faite) ce jour-là ; null : repos */
   jour: JourProgramme | null;
   statut: StatutJour;
+  /** faite : la séance enregistrée, pour son détail */
+  trainingId?: number;
+  /** faite un autre jour de la semaine (rattrapée) : cette date */
+  le?: string;
 };
 
 const p2 = (n: number) => String(n).padStart(2, '0');
@@ -55,27 +61,43 @@ export const lundiDe = (d: Date): Date => plus(d, -indexJour(d));
 /**
  * Les jours de cette semaine (depuis lundi) et des `nbSemaines - 1` suivantes, avec leur séance. Au moins deux
  * semaines entières à venir : nbSemaines vaut 3 par défaut (cette semaine, puis deux).
+ * 1er novembre 2026 (page du programme jour par jour) : `trainings`, tes séances enregistrées, reliées aux jours du
+ * programme (seancesFaites.ts) : une séance faite sans passer par le programme compte aussi. `decalage` : la
+ * semaine de départ, 0 cette semaine, -1 la précédente.
  */
-export function joursPrevus(a: ProgrammeActif, p: Programme, nbSemaines = 3, aujourdhui = new Date()): JourPrevu[] {
-  const lundi = lundiDe(aujourdhui);
+export function joursPrevus(a: ProgrammeActif, p: Programme, nbSemaines = 3, aujourdhui = new Date(), trainings: readonly SeanceEnregistree[] = [], decalage = 0): JourPrevu[] {
+  const lundi = plus(lundiDe(aujourdhui), 7 * Math.round(decalage));
   const auj = isoDe(aujourdhui);
   const total = Math.max(1, nbSemaines) * 7;
   const dates = Array.from({ length: total }, (_, k) => plus(lundi, k));
-  const faitLe = new Map(a.faits.map((f) => [f.date, f]));
   const avecSemaine = !!semaineEffective(a, p);
   // un programme en boucle : ses prochaines séances, posées sur tes jours d'entraînement à partir d'aujourd'hui
   const boucle = new Map<string, JourProgramme>();
   if (!avecSemaine) {
     const jours = new Set(joursDuProgramme(a, p));
-    const futures = dates.filter((d) => isoDe(d) >= auj && jours.has(indexJour(d)) && !(isoDe(d) === auj && faitLe.has(auj)));
+    const faitAuj = a.faits.some((f) => f.date === auj);
+    const futures = dates.filter((d) => isoDe(d) >= auj && jours.has(indexJour(d)) && !(isoDe(d) === auj && faitAuj));
     const suite = seancesAVenir(a, futures.length, aujourdhui);
     futures.forEach((d, k) => { if (suite[k]) boucle.set(isoDe(d), suite[k].jour); });
   }
+  const prevuLe = (d: Date): JourProgramme | null => (avecSemaine ? seanceDuPlanLe(a, p, d) : boucle.get(isoDe(d)) ?? null);
+  const prevus = new Map(dates.map((d) => [isoDe(d), prevuLe(d)] as const));
+  // un programme en boucle ne sait pas quelle séance était prévue un jour passé : seuls ses faits comptent alors
+  const relies = relierSeances({
+    dates: dates.map(isoDe),
+    prevuLe: (iso) => prevus.get(iso) ?? null,
+    faits: a.faits,
+    trainings,
+    aujourdhui: auj,
+  });
   return dates.map((d, k) => {
     const iso = isoDe(d);
-    const prevu = avecSemaine ? seanceDuPlanLe(a, p, d) : boucle.get(iso) ?? null;
-    const f = faitLe.get(iso);
-    if (f) return { date: iso, d: indexJour(d), semaine: Math.floor(k / 7), jour: jourDuProgramme(p, f.jourId) ?? prevu, statut: 'faite' };
+    const prevu = prevus.get(iso) ?? null;
+    const r = relies.get(iso);
+    if (r) {
+      const jour = (r.jourId ? jourDuProgramme(p, r.jourId) : null) ?? prevu;
+      return { date: iso, d: indexJour(d), semaine: Math.floor(k / 7), jour, statut: 'faite', ...(r.trainingId !== undefined ? { trainingId: r.trainingId } : {}), ...(r.le ? { le: r.le } : {}) };
+    }
     const statut: StatutJour = !prevu ? 'repos' : iso < auj ? 'ratee' : iso === auj ? 'aujourdhui' : 'avenir';
     return { date: iso, d: indexJour(d), semaine: Math.floor(k / 7), jour: prevu, statut };
   });
