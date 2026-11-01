@@ -20,7 +20,7 @@ import { dureeEstimee } from './express';
 import { EVENEMENT_PROGRAMME, PREFIXE_PERSO, remplirRegistrePerso } from './registrePerso';
 import type { ExoProgramme, JourProgramme, Programme } from './types';
 import type { SemaineLibre } from './semaineLibre';
-import { lireAlternance, planAlternance } from './alternance';
+import { lireAlternance, planAlternance, unifierAB } from './alternance';
 import type { Alternance, SourceJour } from './alternance';
 import type { FinSeance } from './finSeance';
 
@@ -473,7 +473,9 @@ export function nettoyerPerso(x: unknown): ProgrammePerso | null {
   const alternance = lireAlternance(p.alternance);
   const depuis = typeof p.depuis === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.depuis) ? p.depuis : undefined;
   const rappel = p.rappel && typeof p.rappel === 'object' && typeof p.rappel.heure === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(p.rappel.heure) ? { actif: !!p.rappel.actif, heure: p.rappel.heure } : undefined;
-  return {
+  // 1er novembre 2026, soir : un seul réglage A et B (alternance.ts, unifierAB) : ta semaine B copie de ta semaine A
+  // devient « Alterner A et B » ; ta semaine B est gardée, rien n'est effacé
+  return unifierAB<ProgrammePerso>({
     id: p.id,
     nom: typeof p.nom === 'string' ? p.nom.trim().slice(0, 40) : '',
     semaine,
@@ -490,7 +492,7 @@ export function nettoyerPerso(x: unknown): ProgrammePerso | null {
     ...(alternance ? { alternance } : {}),
     ...(variantesB.length ? { variantesB } : {}),
     ...(p.fin && typeof p.fin === 'object' && !Array.isArray(p.fin) && typeof (p.fin as { choix?: unknown }).choix === 'string' ? { fin: p.fin } : {}),
-  };
+  });
 }
 
 /** Une entrée abîmée est écartée, jamais toute la liste */
