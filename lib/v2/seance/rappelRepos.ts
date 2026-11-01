@@ -11,6 +11,7 @@
  */
 import { useEffect, useRef } from 'react';
 import { AppState, Platform } from 'react-native';
+import { contenuNotificationSur } from '@/lib/v2/notifications/contenuSur';
 import { annulerAlarmeRepos, delaiRetraitPremierPlan, estIdAlarme, programmerAlarmeRepos, chargerSonnerieRepos, retirerAlarmeRepos, retirerToutesAlarmesRepos } from '@/lib/v2/seances/alarmeRepos';
 
 export const TYPE_FIN_REPOS = 'rest_finished';
@@ -175,6 +176,28 @@ function sonFinRepos(): string {
   }
 }
 
+/**
+ * La requete exacte passee a expo-notifications pour la fin du repos (testee, __tests__/unit/contenuNotificationSur.test.ts).
+ * Identifiant fixe : un nouveau repos remplace l'ancien, et la fin de seance le retire.
+ */
+export function requeteFinRepos(o: { titre: unknown; corps: unknown; secondes: number; sonnerie: boolean; son: unknown; os: string; typeIntervalle?: unknown }) {
+  const secondes = Math.max(1, Math.round(Number(o.secondes) || 1));
+  return {
+    identifier: ID_RAPPEL_REPOS,
+    content: contenuNotificationSur(
+      {
+        title: o.titre,
+        body: o.corps,
+        sound: o.sonnerie ? o.son : 'default',
+        data: { type: TYPE_FIN_REPOS },
+        ...(o.sonnerie ? { interruptionLevel: 'timeSensitive' } : {}),
+      },
+      o.os,
+    ),
+    trigger: { type: typeof o.typeIntervalle === 'string' ? o.typeIntervalle : 'timeInterval', seconds: secondes },
+  };
+}
+
 function depsApp(titre: () => string, corps: () => string = () => ''): DepsRappelRepos {
   return {
     maintenant: () => Date.now(),
@@ -191,18 +214,8 @@ function depsApp(titre: () => string, corps: () => string = () => ''): DepsRappe
       const Notif = require('expo-notifications');
       // Sonnerie de fin de repos allumee, sans alarme possible : son du minuteur et niveau urgent (time sensitive)
       const sonnerie = await chargerSonnerieRepos();
-      return Notif.scheduleNotificationAsync({
-        // identifiant fixe : un nouveau repos remplace l'ancien, et la fin de seance le retire
-        identifier: ID_RAPPEL_REPOS,
-        content: {
-          title: titre(),
-          body: corps(),
-          sound: sonnerie ? sonFinRepos() : 'default',
-          data: { type: TYPE_FIN_REPOS },
-          ...(sonnerie && Platform.OS === 'ios' ? { interruptionLevel: 'timeSensitive' as const } : {}),
-        },
-        trigger: { type: Notif.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: secondes },
-      });
+      // 1er novembre 2026 : types stricts pour le systeme (plantage _CFAssertMismatchedTypeID en Debug)
+      return Notif.scheduleNotificationAsync(requeteFinRepos({ titre: titre(), corps: corps(), secondes, sonnerie, son: sonnerie ? sonFinRepos() : 'default', os: Platform.OS, typeIntervalle: Notif.SchedulableTriggerInputTypes?.TIME_INTERVAL }));
     },
     annuler: async (id) => {
       if (estIdAlarme(id)) {
