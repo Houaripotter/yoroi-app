@@ -36,7 +36,9 @@ export const yoroiFonts = {
   [fontFamilies.bold]: require('../../assets/fonts/Archivo_700Bold.ttf'),
   [fontFamilies.extraBold]: require('../../assets/fonts/Archivo_800ExtraBold.ttf'),
   [fontFamilies.black]: require('../../assets/fonts/Archivo_900Black.ttf'),
-  [fontFamilies.kanji]: require('../../assets/fonts/ShipporiMincho_800ExtraBold.ttf'),
+  // 1er novembre 2026 : la version reduite aux lettres latines et aux caracteres des citations (133 Ko au lieu de
+  // 8,5 Mo, memes dessins et memes largeurs), chargee avant le premier ecran : l'app demarre plus vite et pese moins
+  [fontFamilies.kanji]: require('../../assets/fonts/ShipporiMincho_800ExtraBold_latin.ttf'),
 };
 
 const systemWeights: Record<FontWeightKey | 'kanji', TextStyle['fontWeight']> = {
