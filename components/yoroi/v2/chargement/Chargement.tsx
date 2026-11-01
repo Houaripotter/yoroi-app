@@ -14,17 +14,20 @@
  *
  * Fonctionne hors des fournisseurs de theme (ecran de lancement) : couleurs de repli fixes.
  *
- * Images : assets/scenes/chargement/, recadrees en portrait (1500 x 2500) depuis les scenes Marseille
- * (sc15 depuis la source brute 2752 x 1536, sc19 depuis la scene 1200 x 670, agrandies x2 et x4 par EDSR).
- * Avant le 31 octobre : l'allee des cerisiers (FondEpoque sakura) et les petales, archives dans
- * _archive_ancien_design_2026-10-09/chargement_2026-10-31/.
+ * Images (1er novembre 2026) : assets/scenes/chargement/. La scene est ENTIERE, en paysage 1290 x 720
+ * (sc15 depuis la source brute 2752 x 1536, sc19 depuis la scene 1200 x 670), posee en largeur pleine au
+ * tiers bas, bords haut et bas fondus dans l'alpha du webp. Le fond *_fond.webp (590 x 1278) la prolonge :
+ * la meme scene etiree et tres floutee, fondue vers la couleur du ciel en haut et du sol en bas. Le flou est
+ * calcule a l'avance (sharp/PIL), il rend donc pareil sur iOS et Android sans aucun calcul au lancement.
+ * Un lent zoom (1 a 1,04) anime la scene pendant l'attente. Script : _propositions/chargement_v2_2026-11-01/.
+ * Avant : un recadrage portrait 1500 x 2500 trop zoome, archive dans _archive_ancien_design_2026-10-09/
+ * chargement_2026-11-01/ ; avant le 31 octobre, l'allee des cerisiers (chargement_2026-10-31/).
  */
-import React, { useEffect, useMemo } from 'react';
-import { Image, StatusBar, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Image, StatusBar, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
-import Svg, { Circle, Path } from 'react-native-svg';
-import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Circle, Defs, Ellipse, Path, RadialGradient, Stop } from 'react-native-svg';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -36,6 +39,15 @@ export const SPLASH_IMAGE_WIDTH = 200;
 /** 31 octobre 2026 : la Corniche le jour, la Corniche a l'heure bleue la nuit */
 const SCENE_JOUR = require('@/assets/scenes/chargement/corniche_monument.webp');
 const SCENE_NUIT = require('@/assets/scenes/chargement/corniche_heure_bleue.webp');
+const FOND_JOUR = require('@/assets/scenes/chargement/corniche_monument_fond.webp');
+const FOND_NUIT = require('@/assets/scenes/chargement/corniche_heure_bleue_fond.webp');
+/** Hauteur / largeur de la scene (1290 x 720) */
+const SCENE_RATIO = 720 / 1290;
+/** Haut de la scene en fraction de la hauteur d'ecran : la meme valeur a servi a calculer le fond flou */
+const SCENE_HAUT = 0.68;
+/** Le nom, le trait et la phrase finissent a environ 150 points sous le centre de l'ecran */
+const SOUS_LE_NOM = 150;
+const KEN_BURNS_MS = 8000;
 const HEURE_JOUR = 7;
 const HEURE_NUIT = 19;
 
@@ -85,7 +97,10 @@ export function EcranChargement({ message }: { message?: string }) {
 
   const fond = useSharedValue(skip ? 1 : 0);
   const word = useSharedValue(skip ? 1 : 0);
+  const kb = useSharedValue(0);
   useEffect(() => {
+    // un zoom tres lent et a peine visible, rejoue a chaque affichage
+    kb.value = withTiming(1, { duration: KEN_BURNS_MS, easing: Easing.out(Easing.quad) });
     if (!skip) {
       fond.value = withDelay(120, withTiming(1, { duration: 900, easing: Easing.out(Easing.quad) }));
       word.value = withDelay(380, withTiming(1, { duration: 650, easing: Easing.out(Easing.cubic) }));
@@ -93,9 +108,19 @@ export function EcranChargement({ message }: { message?: string }) {
     return () => {
       cancelAnimation(fond);
       cancelAnimation(word);
+      cancelAnimation(kb);
     };
-  }, [fond, word, skip]);
-  const fondStyle = useAnimatedStyle(() => ({ opacity: fond.value }));
+  }, [fond, word, kb, skip]);
+  const fondStyle = useAnimatedStyle(() => ({ opacity: fond.value, transform: [{ scale: 1 + 0.04 * kb.value }] }));
+
+  // taille reelle de l'ecran d'attente (plein ecran, ou boite d'apercu du studio)
+  const win = useWindowDimensions();
+  const [box, setBox] = useState<{ w: number; h: number } | null>(null);
+  const W = box?.w ?? win.width;
+  const H = box?.h ?? win.height;
+  const sceneH = W * SCENE_RATIO;
+  // tiers bas, sous le nom ; sur un petit ecran on garde au moins 12 points de sol dessous
+  const sceneTop = Math.max(0, Math.min(Math.max(H * SCENE_HAUT, H / 2 + SOUS_LE_NOM), H - sceneH - 12));
   // fige au montage : l'image ne change pas pendant l'attente
   const nuit = useMemo(() => estNuitChargement(), []);
   const wordStyle = useAnimatedStyle(() => ({ opacity: word.value, transform: [{ translateY: (1 - word.value) * 8 }] }));
@@ -103,16 +128,32 @@ export function EcranChargement({ message }: { message?: string }) {
   const msg = (message ?? '').replace(/\s*(\.\.\.|…)\s*$/, '');
 
   return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: SPLASH_BG }]} accessibilityLabel={traduire("YOROI se charge")} accessibilityRole="progressbar">
+    <View
+      style={[StyleSheet.absoluteFill, { backgroundColor: SPLASH_BG }]}
+      onLayout={(e) => {
+        const { width, height } = e.nativeEvent.layout;
+        if (width > 0 && height > 0 && (width !== box?.w || height !== box?.h)) setBox({ w: width, h: height });
+      }}
+      accessibilityLabel={traduire("YOROI se charge")} accessibilityRole="progressbar">
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, fondStyle]}>
-        <Image source={nuit ? SCENE_NUIT : SCENE_JOUR} style={StyleSheet.absoluteFill} resizeMode="cover" fadeDuration={0} accessibilityIgnoresInvertColors />
-        {/* un voile tres leger au centre : le nom YOROI reste lisible sur la scene */}
-        <LinearGradient
-          colors={['rgba(12,14,24,0)', 'rgba(12,14,24,0.30)', 'rgba(12,14,24,0.30)', 'rgba(12,14,24,0)']}
-          locations={[0.34, 0.47, 0.66, 0.8]}
-          style={StyleSheet.absoluteFill}
-        />
+        {/* le prolongement flou de la scene, etire sur tout l'ecran (le flou cache l'etirement) */}
+        <Image source={nuit ? FOND_NUIT : FOND_JOUR} style={StyleSheet.absoluteFill} resizeMode="stretch" fadeDuration={0} accessibilityIgnoresInvertColors />
+        {/* la scene entiere, en largeur pleine, bords fondus dans le fond */}
+        <Image source={nuit ? SCENE_NUIT : SCENE_JOUR} style={{ position: 'absolute', left: 0, top: sceneTop, width: W, height: sceneH }} resizeMode="stretch" fadeDuration={0} accessibilityIgnoresInvertColors />
+      </Animated.View>
+      {/* une ombre ronde et douce sous le nom YOROI : lisible sur le ciel, sans bande sur l'ecran */}
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, fondStyle]}>
+        <Svg width={W} height={H}>
+          <Defs>
+            <RadialGradient id="haloNom" cx="50%" cy="50%" rx="50%" ry="50%">
+              <Stop offset="0" stopColor="#0C0E18" stopOpacity={0.26} />
+              <Stop offset="0.6" stopColor="#0C0E18" stopOpacity={0.1} />
+              <Stop offset="1" stopColor="#0C0E18" stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Ellipse cx={W / 2} cy={H / 2 + 84} rx={190} ry={72} fill="url(#haloNom)" />
+        </Svg>
       </Animated.View>
 
       {/* embleme : meme taille et meme place que le splash natif (centre exact de l'ecran) */}
