@@ -2,8 +2,9 @@
  * La fiche d'un exercice (1er novembre 2026, Houari : « c'est possible de voir les exercices, c'est quoi, avec une
  * animation ? »). Elle s'ouvre d'un toucher sur un exercice de la séance du programme, de « Tes prochaines séances »
  * et de l'aperçu d'une séance :
- *  - en grand, le meilleur visuel autorisé (lib/v2/programmes/visuelExo.ts) : l'animation seulement en mode créateur
- *    (licence Gym visual non achetée), sinon l'illustration de la machine, sinon le sticker du muscle ;
+ *  - en grand, le meilleur visuel autorisé (lib/v2/programmes/visuelExo.ts) : Gym visual seulement en mode créateur
+ *    (licence non achetée), sinon notre animation maison, sinon Everkinetic avec son crédit dessous, sinon
+ *    l'illustration de la machine, sinon le sticker du muscle ;
  *  - les muscles ciblés sur la petite carte rouge, face et dos ;
  *  - séries, répétitions, repos et charge proposée ;
  *  - Position, Mouvement et À éviter (ExplicationExo) ;
@@ -56,12 +57,22 @@ function Repere({ valeur, libelle }: { valeur: string; libelle: string }) {
 
 /** Le grand visuel en haut de la fiche */
 function GrandVisuel({ e, largeur }: { e: ExoFiche; largeur: number }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
   const test = useAnimationsTest();
   const cardio = typeof e.minutes === 'number' && e.minutes > 0;
   const v = React.useMemo(() => visuelExo(e.nom, e.muscle, cardio, test), [e.nom, e.muscle, cardio, test]);
   const hauteur = Math.round(Math.min(260, largeur * 0.7));
   if (v.type === 'animation') {
-    return <DemoPaire images={v.images} label={traduire('Animation de l’exercice {0}', traduire(e.nom))} largeur={largeur} hauteur={hauteur} arrondi={24} bordure={false} contenir />;
+    const demo = <DemoPaire images={v.images} label={traduire('Animation de l’exercice {0}', traduire(e.nom))} largeur={largeur} hauteur={hauteur} arrondi={24} bordure={false} contenir />;
+    if (v.source !== 'everkinetic') return demo;
+    // licence CC BY-SA 4.0 : le crédit est visible sous l'illustration (lib/v2/programmes/everkinetic.ts)
+    return (
+      <View style={{ gap: 6 }}>
+        {demo}
+        <Ink size={11} weight="bold" color={c.textMuted} style={{ textAlign: 'center' }}>{traduire('Illustration : Everkinetic, CC BY-SA 4.0, adaptée')}</Ink>
+      </View>
+    );
   }
   if (v.type === 'machine') {
     return (
