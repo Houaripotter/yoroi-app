@@ -4,12 +4,13 @@
  * Depuis le 13 octobre 2026, les nouveautes sont la visite guidee sur les vrais ecrans
  * (components/yoroi/v2/tour/VisiteGuidee.tsx, montee par TourGate). Ce fichier garde les cles historiques :
  * - WHATS_NEW_KEY : la version dont l'utilisateur a deja vu les nouveautes ;
- * - markWhatsNewSeen : appele par l'onboarding ;
+ * - markWhatsNewSeen : appele par l'onboarding (pose aussi « Quoi de neuf 3.0.2 » vu, 1er novembre 2026) ;
  * - isPresentationSeen / markPresentationSeen : l'ancienne presentation en diapositives.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isTourSeen, markTourSeen } from '@/components/yoroi/v2/tour/keys';
+import { marquerQuoiDeNeufVu } from '@/lib/v2/nouveautes/quoiDeNeuf';
 
 export const CURRENT_VERSION = '3.0.0';
 export const WHATS_NEW_KEY = 'WHATS_NEW_LAST_SEEN_VERSION';
@@ -21,6 +22,8 @@ export async function markWhatsNewSeen(): Promise<void> {
   } catch {
     // sans importance
   }
+  // 1er novembre 2026 : un nouvel utilisateur ne voit pas « Quoi de neuf dans YOROI 3.0.2 » (lib/v2/nouveautes/quoiDeNeuf.ts)
+  await marquerQuoiDeNeufVu({ getItem: (k) => AsyncStorage.getItem(k), setItem: (k, v) => AsyncStorage.setItem(k, v) });
 }
 
 /**
