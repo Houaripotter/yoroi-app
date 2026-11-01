@@ -43,7 +43,7 @@ import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { libelleUnite, versUnitePoids } from '@/lib/v2/unitePoids';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { HrChart } from '@/components/yoroi/v2/seances/HrChart';
-import { RouteHero } from '@/components/yoroi/v2/seances/RouteHero';
+import { RouteCarteGrand, RouteHero } from '@/components/yoroi/v2/seances/RouteHero';
 import { appleDuration, applePace, hrStats, lowerBounds } from '@/lib/v2/seances/workoutMath';
 import { appleTemperature, appleHumidity, clockOf, zoneClock, zoneRangeLabel } from '@/lib/v2/seances/appleExtras';
 import { BackButton, BigButton, EmptyState, Glass, Hanko, RoundIcon, SectionTitle, Stat, tap } from '@/components/yoroi/v2/seances/ui';
@@ -461,7 +461,8 @@ export default function WorkoutDetailScreen() {
         <View style={{ height: 300 + insets.top, backgroundColor: hasRoute ? '#1E2433' : tileColor(t.sport), overflow: 'hidden' }}>
           {hasRoute ? (
             <View style={{ position: 'absolute', left: 0, top: 0 }}>
-              <RouteHero points={route!} width={width} height={300 + insets.top} clearTop={insets.top + 64} clearBottom={140} onPress={() => { tap(); setMapFull(true); }} />
+              {/* 1er novembre 2026 : la carte s'arrete ou commence la carte blanche, pour laisser lisibles « Plans » et « Mentions légales » d'Apple */}
+              <RouteHero points={route!} width={width} height={300 + insets.top - 130} clearTop={insets.top + 64} clearBottom={10} onPress={() => { tap(); setMapFull(true); }} />
             </View>
           ) : (
             <>
@@ -913,18 +914,15 @@ export default function WorkoutDetailScreen() {
 
           {/* Trace ou lieu : la carte du parcours est en haut de page, un appui l'ouvre en grand */}
           {hasRoute ? (
-            <Modal visible={mapFull} animationType="fade" onRequestClose={() => setMapFull(false)}>
-              <View style={{ flex: 1, backgroundColor: '#1E2433' }}>
-                <RouteHero points={route!} width={width} height={screenH} interactive clearTop={insets.top + 70} clearBottom={insets.bottom + 110} />
-                <View style={{ position: 'absolute', top: insets.top + 10, left: 16 }}>
-                  <BackButton onPress={() => setMapFull(false)} />
-                </View>
-                <View style={{ position: 'absolute', left: 16, right: 16, bottom: insets.bottom + 16, padding: 12, borderRadius: 16, backgroundColor: 'rgba(20,24,34,0.82)' }}>
-                  <Ink size={13} weight="bold" color="#FFFFFF">{[city, details?.distanceKm ? `${formatKg(details.distanceKm, 2)} km` : '', details?.elevationAscended ? traduire("{0} m de montée", Math.floor(details.elevationAscended)) : ''].filter(Boolean).join(', ')}</Ink>
-                  <Ink size={11} color="rgba(255,255,255,0.75)">{traduire("Départ en vert, arrivée en rouge. Jaune quand tu vas moins vite, vert quand tu accélères.")}</Ink>
-                </View>
-              </View>
-            </Modal>
+            <RouteCarteGrand
+              points={route!}
+              visible={mapFull}
+              onClose={() => setMapFull(false)}
+              width={width}
+              height={screenH}
+              info={[city, details?.distanceKm ? `${formatKg(details.distanceKm, 2)} km` : '', details?.elevationAscended ? traduire("{0} m de montée", Math.floor(details.elevationAscended)) : ''].filter(Boolean).join(', ')}
+              legende={traduire("Départ en vert, arrivée en rouge. Jaune quand tu vas moins vite, vert quand tu accélères.")}
+            />
           ) : hasPin ? (
             <>
               <SectionTitle title={traduire("Lieu")} sub={sansTiret(t.location_name) || undefined} />
