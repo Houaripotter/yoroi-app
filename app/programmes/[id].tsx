@@ -50,7 +50,7 @@ import { ExplicationExo } from '@/components/yoroi/v2/programmes/ExplicationExo'
 import { ficheDe } from '@/lib/v2/programmes/fiches';
 import { DUREES_EXPRESS, dureeEstimee, seanceExpress } from '@/lib/v2/programmes/express';
 import { demoDe } from '@/lib/v2/programmes/demos';
-import { PROGRAMME_CHANGED_EVENT, arreterProgramme, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerFin, faitsCetteSemaine, prochainJour, remplacerExercice, joursConseilles, joursDuProgramme, planEffectif, semaineDuProgramme, semainesDuProgramme, enregistrerDuree, estTemporaire, garderTemporaire } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, arreterProgramme, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerFin, faitsCetteSemaine, prochainJour, remplacerExercice, joursConseilles, joursDuProgramme, planEffectif, semaineDeLaFin, semaineDuProgramme, semainesDuProgramme, enregistrerDuree, estTemporaire, garderTemporaire } from '@/lib/v2/programmes/suivi';
 import { DUREES, jourDuProgramme, joursDeLaLigne, planDepuisSemaine, seancesDeLaLigne, semaineUtile } from '@/lib/v2/programmes/semaineLibre';
 import type { SemaineLibre } from '@/lib/v2/programmes/semaineLibre';
 import { ChoixDuree, GarderMonProgramme, PointRegularite } from '@/components/yoroi/v2/programmes/GarderProgramme';
@@ -66,6 +66,7 @@ import { BandeauMixte, BoutonSemaineMixte } from '@/components/yoroi/v2/programm
 import { ChoisirCharge } from '@/components/yoroi/v2/programmes/ChoisirCharge';
 import { CartePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
 import { CarteFinDeSeance, FeuilleFinDeSeance } from '@/components/yoroi/v2/programmes/FinDeSeance';
+import { SuggestionHabitude } from '@/components/yoroi/v2/programmes/SuggestionHabitude';
 import { aDesJoursMarche, aDesJoursMuscu, estJourMuscu, joursRetires } from '@/lib/v2/programmes/finSeance';
 import type { FinSeance } from '@/lib/v2/programmes/finSeance';
 import type { ExoModule } from '@/lib/v2/programmes/modules';
@@ -212,7 +213,8 @@ export default function ProgrammeDetail() {
   // semaine du plan (course) : celle du programme en cours, sinon la premiere
   const semaine = enCours && actif ? semaineDuProgramme(actif) : 1;
   // fin de seance du programme en cours : abdo et cardio ajoutes, seances de marche retirees
-  const ctxFin = enCours && actif ? { fin: actif.fin, materiel: p.materiel } : null;
+  // 1er novembre 2026 : avec le programme, pour lire le cardio choisi pour ce jour (« programme|jour ») et son type
+  const ctxFin = enCours && actif ? { fin: actif.fin, materiel: p.materiel, programme: p } : null;
   const retires = enCours && actif ? joursRetires(p, actif.fin) : [];
   const finPossible = aDesJoursMuscu(p) || aDesJoursMarche(p);
   // 30 octobre 2026 : les séances de musculation de ta semaine (semaine mixte et semaine B comprises), pour choisir la fin jour par jour
@@ -576,6 +578,8 @@ export default function ProgrammeDetail() {
           </View>
         ) : null}
 
+        {/* 1er novembre 2026 : ce que tu fais vraiment après ta séance, proposé sans rien forcer (habitudesFin.ts) */}
+        {enCours && actif && finPossible ? <SuggestionHabitude programme={p} actif={actif} trainings={trainings} /> : null}
         {enCours && actif && finPossible ? <CarteFinDeSeance fin={actif.fin} femme={femme} onPress={() => setFinOuverte('page')} /> : null}
 
         {enCours && actif ? <RappelSeance programme={p} actif={actif} jours={jours} /> : null}
@@ -677,6 +681,7 @@ export default function ProgrammeDetail() {
         visible={finOuverte !== null}
         programme={p}
         seances={seancesFin}
+        semaine={enCours && actif ? semaineDeLaFin(actif, p) : null}
         valeur={finOuverte === 'page' && enCours ? actif?.fin : null}
         bouton={finOuverte === 'depart' ? traduire('Commencer le programme') : traduire('Valider')}
         onClose={() => setFinOuverte(null)}
