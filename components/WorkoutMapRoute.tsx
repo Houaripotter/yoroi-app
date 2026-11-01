@@ -5,6 +5,8 @@
 // Fond de carte Apple Maps + Polyline du parcours
 // Style Strava / Apple Forme
 // Toggle satellite/standard + fullscreen + distance markers
+// 1er novembre 2026 : rien n'est pose sur le bas de la carte, pour laisser lisibles « Plans » et
+// « Mentions legales » d'Apple (badges en haut a gauche, legende plein ecran sous la carte) ; rotation coupee.
 
 import React, { useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform } from 'react-native';
@@ -180,8 +182,8 @@ export const WorkoutMapRoute: React.FC<WorkoutMapRouteProps> = ({
       {...(Platform.OS === 'ios' ? { userInterfaceStyle: isDark ? 'dark' : 'light' } : {})}
       scrollEnabled={true}
       zoomEnabled={true}
-      rotateEnabled={fullscreen}
-      pitchEnabled={fullscreen}
+      rotateEnabled={false}
+      pitchEnabled={false}
       showsUserLocation={false}
       showsCompass={fullscreen}
       showsScale={fullscreen}
@@ -267,8 +269,8 @@ export const WorkoutMapRoute: React.FC<WorkoutMapRouteProps> = ({
 
       {/* Modal plein ecran */}
       <Modal visible={isFullscreen} animationType="slide" presentationStyle="fullScreen">
-        <View style={{ flex: 1 }}>
-          {renderMap(true)}
+        <View style={{ flex: 1, backgroundColor: '#000000' }}>
+          <View style={{ flex: 1 }}>{renderMap(true)}</View>
 
           {/* Toolbar plein ecran */}
           <View style={[styles.fullscreenToolbar, { top: insets.top + 10 }]}>
@@ -299,7 +301,7 @@ export const WorkoutMapRoute: React.FC<WorkoutMapRouteProps> = ({
           </View>
 
           {/* Legende en bas */}
-          <View style={[styles.fullscreenLegend, { bottom: insets.bottom + 16 }]}>
+          <View style={[styles.fullscreenLegend, { marginBottom: insets.bottom + 12 }]}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#22C55E' }]} />
               <Text style={styles.legendText}>Depart</Text>
@@ -350,7 +352,7 @@ const styles = StyleSheet.create({
   // Badge distance
   distanceBadge: {
     position: 'absolute',
-    bottom: 10,
+    top: 10,
     left: 10,
     backgroundColor: 'rgba(0,0,0,0.65)',
     paddingHorizontal: 10,
@@ -412,9 +414,8 @@ const styles = StyleSheet.create({
   },
   // Fullscreen legende
   fullscreenLegend: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
+    marginTop: 12,
+    marginHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -450,8 +451,8 @@ const styles = StyleSheet.create({
   // Legende vitesse inline
   speedLegend: {
     position: 'absolute',
-    bottom: 10,
-    right: 10,
+    top: 44,
+    left: 10,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
