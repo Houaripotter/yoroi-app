@@ -11,6 +11,8 @@
  *  - toucher une séance l'ouvre en aperçu : la commencer aujourd'hui, l'échanger (cette semaine), changer un
  *    exercice à l'avance (« Changer d'exercice », juste ce jour-là ou pour toujours) ;
  *  - chaque muscle 2 fois : la carte rouge de la semaine prévue, « 2 fois sur 2 » par groupe, et les suggestions.
+ * 1er novembre 2026 : tes séances enregistrées sont reliées aux jours du programme (seancesFaites.ts) ; la page du
+ * programme montre désormais la semaine jour par jour, cet écran reste ouvert par « Voir les 2 prochaines semaines ».
  * Tout le calcul est dans lib/v2/programmes/prochainesSeances.ts (données pures) ; les écritures dans
  * prochainesActions.ts et suivi.ts.
  */
@@ -32,6 +34,7 @@ import type { ExoVu, PaireAB, VueJour } from '@/components/yoroi/v2/programmes/P
 import { getActiveInjuries, getTrainings } from '@/lib/database';
 import type { Training } from '@/lib/database';
 import { DATE_FNS_LOCALE } from '@/lib/i18n/dateLocale';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { traduire } from '@/lib/i18n/tr';
 import { programmeParId } from '@/lib/v2/programmes/catalogue';
 import { regionsDesBlessures, unirRegions } from '@/lib/v2/programmes/blessures';
@@ -123,7 +126,9 @@ export function useProchaines(): { d: Donnees | null; pret: boolean } {
     // 1er novembre 2026, soir : une séance qui alterne sans sa version B encore (programme d'avant migré) la reçoit
     void completerVersionsB().catch(() => false);
     const sub = DeviceEventEmitter.addListener(PROGRAMME_CHANGED_EVENT, () => void charger());
-    return () => { vivant = false; sub.remove(); };
+    // 1er novembre 2026 : une séance enregistrée compte tout de suite pour son jour du programme (seancesFaites.ts)
+    const subSeances = DeviceEventEmitter.addListener(DATA_CHANGED_EVENT, () => void charger());
+    return () => { vivant = false; sub.remove(); subSeances.remove(); };
   }, []);
   return { d, pret };
 }
@@ -218,7 +223,7 @@ export default function ProchainesSeances() {
   const [semaineMuscles, setSemaineMuscles] = useState<number | null>(null);
   const [ajoutes, setAjoutes] = useState<string[]>([]);
 
-  const vues = useMemo(() => (d ? joursPrevus(d.actif, d.p, 3).map((jp) => vueDuJour(d, jp)) : []), [d]);
+  const vues = useMemo(() => (d ? joursPrevus(d.actif, d.p, 3, new Date(), d.trainings).map((jp) => vueDuJour(d, jp)) : []), [d]);
   const paires = useMemo(() => (d && vues.length ? pairesAB(d, vues) : []), [d, vues]);
   const aVenirCetteSemaine = vues.some((v) => v.jp.semaine === 0 && v.jp.jour && (v.jp.statut === 'avenir' || v.jp.statut === 'aujourdhui'));
   const semM = semaineMuscles ?? (aVenirCetteSemaine ? 0 : 1);
