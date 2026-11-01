@@ -71,6 +71,7 @@ import { estProgrammePerso } from '@/lib/v2/programmes/registrePerso';
 import { chargerProgrammesPerso } from '@/lib/v2/programmes/monProgramme';
 import { dateDuJour, jourPourToi, remplacementsLe } from '@/lib/v2/programmes/perso';
 import { besoinDesPerso, jourDuProgramme } from '@/lib/v2/programmes/semaineLibre';
+import { avecVersion } from '@/lib/v2/programmes/alternance';
 import { EXPLICATION_PRISE, PRISES, avecPrise, sansPrise } from '@/lib/v2/seance/prise';
 import type { Prise } from '@/lib/v2/seance/prise';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
@@ -357,7 +358,9 @@ export default function SeanceMuscu() {
                   : e.conseil ?? (PRECISION_EXO[e.nom] ? traduire(PRECISION_EXO[e.nom]) : undefined);
               return { ...ex, cible: { repsMin: e.repsMin, repsMax: e.repsMax, reposSec: e.reposSec, conseil, raison: prop.raison, nouvelleCharge: prop.nouvelleCharge, ...(e.secondes ? { secondes: true } : {}) } };
             });
-            if (!label) label = !prog ? jour.titre : express > 0 ? traduire('{0}, express {1} min', traduire(jour.titre), express) : legere ? traduire('{0}, semaine légère', traduire(jour.titre)) : `${traduire(prog.titre)}, ${traduire(jour.titre)}`;
+            // 1er novembre 2026, soir : la vraie version de la seance, « Push B », quand tes seances alternent (alternance.ts)
+            const titreJour = avecVersion(traduire(jour.titre), jourDuProg);
+            if (!label) label = !prog ? jour.titre : express > 0 ? traduire('{0}, express {1} min', titreJour, express) : legere ? traduire('{0}, semaine légère', titreJour) : `${traduire(prog.titre)}, ${titreJour}`;
             if (prog) programme = { id: prog.id, jourId: jour.id };
             // 30 octobre 2026 (J) : le cardio de fin de seance, un vrai exercice en dernier, apres les abdos
             if (jour.finCardio) exercises = [...exercises, exoCardio(jour.finCardio.minutes, nomCardioFin((await chargerEcartes().catch(() => [])).map((x) => x.nom)))];
