@@ -153,6 +153,22 @@ export function couverturePrevue(seances: readonly { date: string; exos: readonl
   });
 }
 
+/* ---------------------------------- Tes jours : ta semaine type ---------------------------------- */
+
+/** Ta semaine type (Tes jours, du lundi au dimanche) vue comme des jours à venir, pour les mêmes calculs */
+export function joursDeGrille(seances: readonly (JourProgramme | null)[], lundi: Date): JourPrevu[] {
+  return seances.slice(0, 7).map((jour, d) => ({ date: isoDe(plus(lundi, d)), d, semaine: 0, jour, statut: jour ? 'avenir' : 'repos' }));
+}
+
+/**
+ * « Ce que ta semaine travaille » (Tes jours, 1er novembre 2026, soir) : les mêmes règles que Tes prochaines séances,
+ * muscles principaux de musclesExercices.ts et un jour compté avec au moins 2 séries directes. Les abdos à part.
+ */
+export function couvertureGrille(seances: readonly (JourProgramme | null)[], perso?: readonly MachinePerso[]): CouvertureMuscle[] {
+  const avec = joursDeGrille(seances, new Date(2026, 0, 5, 12)).filter((j) => !!j.jour && estJourMuscu(j.jour));
+  return couverturePrevue(avec.map((j) => ({ date: j.date, exos: j.jour!.exos })), perso).filter((c) => c.muscle !== 'Abdos');
+}
+
 /** « 2 fois sur 2 », « 1 fois sur 2 », « 3 fois » (gabarit français à traduire, et sa valeur) */
 export function libellePrevu(x: Pick<CouvertureMuscle, 'jours'>): { gabarit: string; valeur: number } {
   if (x.jours > OBJECTIF_JOURS) return { gabarit: '{0} fois', valeur: x.jours };
