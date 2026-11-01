@@ -26,6 +26,13 @@ let source: SourceDemos = 'gymvisual';
 /** La source vraiment utilisee : toujours « aucune » hors mode createur */
 export const sourceDemosActive = (): SourceDemos => (createur ? source : 'aucune');
 
+/**
+ * 1er novembre 2026 : le choix du Studio seul, sans le drapeau createur de ce fichier. Les vignettes et la fiche
+ * d'exercice (lib/v2/programmes/visuelExo.ts) lisent le mode createur avec useCreatorMode, comme le reste de l'app,
+ * et ce choix en plus. Ne jamais l'utiliser sans verifier le mode createur : licence Gym visual non achetee.
+ */
+export const sourceDemosChoisie = (): SourceDemos => source;
+
 const prevenir = () => DeviceEventEmitter.emit(DEMOS_CHANGEES, sourceDemosActive());
 
 /** Appele par CreatorModeProvider a chaque ouverture ou fermeture du mode createur */
