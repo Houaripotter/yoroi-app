@@ -80,6 +80,7 @@ import { DUREE_PASTILLE_MS, PastilleAjout, SeriePrevue } from '@/components/yoro
 import { correctionPossible, corrigerSerie } from '@/lib/v2/seances/correctionSerie';
 import { SonnerieFinRepos } from '@/components/yoroi/v2/seance/SonnerieFinRepos';
 import { BoutonCoachVocal, useCoachVocal } from '@/components/yoroi/v2/seance/CoachVocal';
+import { PeseeSeanceRapide } from '@/components/yoroi/v2/corps/PeseeSeance';
 import { cibleDefilement } from '@/lib/v2/seances/defilementExo';
 import { completerExercice } from '@/lib/v2/seances/exerciceEnregistre';
 import { DUREE_MESSAGE_MS, decisionFinRepos, retirerReposFini } from '@/lib/v2/seances/finRepos';
@@ -1725,6 +1726,8 @@ export default function SeanceMuscu() {
 
         {/* Reglages de la seance */}
         <View style={[carteBlanche(c.surface, c.divider), { marginTop: 10, padding: 16, gap: 12 }]}>
+          {/* 1er novembre 2026 (AT) : pesee avant et apres seance, perte d'eau (components/yoroi/v2/corps/PeseeSeance.tsx) */}
+          {!draft.form ? <PeseeSeanceRapide debut={hhmm(new Date(draft.startedAt))} /> : null}
           {/* 30 octobre 2026 (B) : coupe, aucun repos ne se lance apres une serie, donc ni son ni notification */}
           {!draft.form ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
