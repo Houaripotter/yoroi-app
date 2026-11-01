@@ -41,6 +41,7 @@ import type { ExoPerso } from '@/lib/v2/programmes/perso';
 import { ChangerExercice } from '@/components/yoroi/v2/seance/ChangerExercice';
 import { MaSalle } from '@/components/yoroi/v2/programmes/MaSalle';
 import { BoutonRond, CarteConseil, EnTeteRond, HeroJour, LigneEtudes, Pastille, SemaineRonds, TitreSection, TuilesStats, musclesDuJour, nomCourt, rondsDeLaSemaine, salutation, tuileCharge, usePaletteProgramme, type Tuile } from '@/components/yoroi/v2/programmes/Habillage';
+import { avecVersion } from '@/lib/v2/programmes/alternance';
 import { buildExerciseHistory } from '@/lib/v2/seance/history';
 import type { ExoProtege, Region } from '@/lib/v2/programmes/blessures';
 import type { Equipement } from '@/lib/v2/programmes/materiel';
@@ -233,7 +234,8 @@ export default function ProgrammeDetail() {
   const iProchain = suiteProchaine && suiteProchaine.index >= 0 ? suiteProchaine.index : 0;
   const jBrutProchain = suiteProchaine?.jour ?? p.jours[iProchain];
   const jProchain = jourPourToi(jBrutProchain, materiel, regionsVues, machines, enCours ? actif?.remplacements : null, ctxFin);
-  const titreProchain = traduire(jProchain.titre);
+  // 1er novembre 2026, soir : la vraie version du jour quand tes séances alternent (« Push B »)
+  const titreProchain = avecVersion(traduire(jProchain.titre), jProchain);
   // la séance des pastilles : celle que tu as touchée, sinon la prochaine
   const iVuBrut = jourVu ? p.jours.findIndex((x) => x.id === jourVu) : -1;
   const iVu = iVuBrut >= 0 ? iVuBrut : iProchain;
@@ -498,7 +500,7 @@ export default function ProgrammeDetail() {
                 style={({ pressed }) => ({ minHeight: 46, paddingHorizontal: 16, borderRadius: 23, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: on ? c.primary : pressed ? c.fillSubtle : pal.carte, opacity: retire ? 0.55 : 1, ...(on ? {} : OMBRE_CARTE) })}
               >
                 {prochaine && enCours ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: on ? '#FFFFFF' : pal.orange }} /> : null}
-                <Ink size={14} weight={on ? 'black' : 'extraBold'} color={on ? c.onPrimary : pal.texte} numberOfLines={1}>{nomCourt(traduire(jx.titre))}</Ink>
+                <Ink size={14} weight={on ? 'black' : 'extraBold'} color={on ? c.onPrimary : pal.texte} numberOfLines={1}>{avecVersion(nomCourt(traduire(jx.titre)), jx)}</Ink>
               </Pressable>
             );
           })}
