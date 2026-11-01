@@ -16,8 +16,8 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
-import { ExoDemo } from '@/components/yoroi/v2/seance/ExoDemo';
-import { demoDe } from '@/lib/v2/programmes/demos';
+import { VignetteExo } from '@/components/yoroi/v2/programmes/VignetteExo';
+import { FicheExercice } from '@/components/yoroi/v2/programmes/FicheExercice';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { MusclesSemaine } from '@/components/yoroi/v2/seances/MusclesSemaine';
 import { TamponValide } from '@/components/yoroi/v2/seances/TamponValide';
@@ -99,21 +99,31 @@ function chargeVue(e: ExoVu, unite: UnitePoids): string | null {
   return traduire('à choisir');
 }
 
-/** Une ligne d'exercice : image (ou sticker), nom, séries et charge proposée */
-export function LigneExo({ e, unite, compact = false, onChanger, accent }: { e: ExoVu; unite: UnitePoids; compact?: boolean; onChanger?: () => void; accent?: boolean }) {
+/**
+ * Une ligne d'exercice : vignette (machine ou sticker du muscle), nom, séries et charge proposée.
+ * 1er novembre 2026 : un toucher sur la ligne ouvre la fiche de l'exercice (FicheExercice) ; `fiche` false : non.
+ */
+export function LigneExo({ e, unite, compact = false, onChanger, accent, fiche = true }: { e: ExoVu; unite: UnitePoids; compact?: boolean; onChanger?: () => void; accent?: boolean; fiche?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const illus = useIllustrations();
   const menthe = useTeinte('menthe');
   const peche = useTeinte('peche');
-  const taille = compact ? 34 : 46;
+  const [ouverte, setOuverte] = useState(false);
+  const taille = compact ? 40 : 52;
   const charge = chargeVue(e, unite);
-  const sticker: NomSticker = e.minutes ? 'cardio_zone2' : e.muscle === 'ABDOS' ? 'abdos' : 'muscle';
+  const nom = sansTiret(traduire(nomFr(e.nom)));
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: taille + 6 }}>
-      <View style={{ width: taille, height: taille, borderRadius: 12, overflow: 'hidden', backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
-        {demoDe(e.nom) ? <ExoDemo nom={e.nom} taille={taille} arrondi={12} bordure={false} /> : <Image source={illus.img(sticker)} style={{ width: taille * 0.66, height: taille * 0.66 }} resizeMode="contain" accessibilityIgnoresInvertColors />}
-      </View>
+      <Pressable
+        onPress={fiche ? () => { tap(); setOuverte(true); } : undefined}
+        disabled={!fiche}
+        accessibilityRole={fiche ? 'button' : undefined}
+        accessibilityLabel={`${nom}, ${seriesTexte(e)}${charge ? `, ${charge}` : ''}`}
+        accessibilityHint={fiche ? traduire('Ouvrir la fiche de {0}', nom) : undefined}
+        style={({ pressed }) => ({ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: Math.max(44, taille + 6), opacity: pressed ? 0.7 : 1 })}
+      >
+      <VignetteExo nom={e.nom} muscle={e.muscle} cardio={!!e.minutes} taille={taille} arrondi={compact ? 12 : 15} />
       <View style={{ flex: 1, minWidth: 0 }}>
         <Ink size={compact ? 13 : 14} weight={accent ? 'black' : 'extraBold'} color={accent ? peche.texte : c.ink} numberOfLines={3}>{sansTiret(traduire(nomFr(e.nom)))}</Ink>
         <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: 8 }}>
@@ -122,6 +132,8 @@ export function LigneExo({ e, unite, compact = false, onChanger, accent }: { e: 
           {e.change ? <Ink size={11.5} weight="extraBold" color={peche.texte}>{traduire('changé')}</Ink> : null}
         </View>
       </View>
+      </Pressable>
+      {fiche ? <FicheExercice exo={ouverte ? e : null} charge={charge} onClose={() => setOuverte(false)} onChanger={onChanger} /> : null}
       {onChanger ? (
         <Pressable onPress={() => { tap(); onChanger(); }} accessibilityRole="button" accessibilityLabel={traduire('Changer {0}', traduire(nomFr(e.nom)))} hitSlop={6} style={({ pressed }) => ({ minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.6 : 1 })}>
           <Image source={illus.img('reglage_machine')} style={{ width: 26, height: 26 }} resizeMode="contain" accessibilityIgnoresInvertColors />
@@ -539,9 +551,7 @@ export function MusclesPrevus({ couverture, loads, zones, largeur, suggestions, 
               <View style={{ gap: 6 }}>
                 {s.exos.map((e) => (
                   <Pressable key={e.nom} onPress={() => { tap(); onAjouter(s, e.nom, e.muscle); }} accessibilityRole="button" accessibilityLabel={traduire('Ajouter {0}', traduire(nomFr(e.nom)))} style={({ pressed }) => ({ minHeight: 52, borderRadius: 14, backgroundColor: c.surface, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, opacity: pressed ? 0.8 : 1 })}>
-                    <View style={{ width: 40, height: 40, borderRadius: 10, overflow: 'hidden', backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
-                      {demoDe(e.nom) ? <ExoDemo nom={e.nom} taille={40} arrondi={10} bordure={false} /> : <Image source={illus.img('muscle')} style={{ width: 26, height: 26 }} resizeMode="contain" />}
-                    </View>
+                    <VignetteExo nom={e.nom} muscle={e.muscle} taille={40} arrondi={10} />
                     <Ink size={13.5} weight="extraBold" style={{ flex: 1 }} numberOfLines={2}>{sansTiret(traduire(nomFr(e.nom)))}</Ink>
                     <Ink size={20} weight="black" color={c.accentText}>+</Ink>
                   </Pressable>
