@@ -74,7 +74,7 @@ export type VueJour = {
 
 const TEINTE_LETTRE: Record<'A' | 'B', TeinteA> = { A: 'bleu', B: 'peche' };
 
-function BadgeLettre({ lettre, taille = 26 }: { lettre: 'A' | 'B'; taille?: number }) {
+export function BadgeLettre({ lettre, taille = 26 }: { lettre: 'A' | 'B'; taille?: number }) {
   const t = useTeinte(TEINTE_LETTRE[lettre]);
   const { theme } = useYoroiTheme();
   return (
@@ -103,7 +103,7 @@ function chargeVue(e: ExoVu, unite: UnitePoids): string | null {
  * Une ligne d'exercice : vignette (machine ou sticker du muscle), nom, séries et charge proposée.
  * 1er novembre 2026 : un toucher sur la ligne ouvre la fiche de l'exercice (FicheExercice) ; `fiche` false : non.
  */
-export function LigneExo({ e, unite, compact = false, onChanger, accent, fiche = true }: { e: ExoVu; unite: UnitePoids; compact?: boolean; onChanger?: () => void; accent?: boolean; fiche?: boolean }) {
+export function LigneExo({ e, unite, compact = false, onChanger, accent, fiche = true, repos }: { e: ExoVu; unite: UnitePoids; compact?: boolean; onChanger?: () => void; accent?: boolean; fiche?: boolean; /** 1er novembre 2026 : le repos entre les séries (« 2 min »), page du programme */ repos?: string }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const illus = useIllustrations();
@@ -129,6 +129,7 @@ export function LigneExo({ e, unite, compact = false, onChanger, accent, fiche =
         <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: 8 }}>
           <Ink size={12.5} weight="bold" color={c.textSecondary}>{seriesTexte(e)}</Ink>
           {charge ? <Ink size={12.5} weight="extraBold" color={e.kg ? menthe.texte : c.textSecondary}>{charge}</Ink> : null}
+          {repos ? <Ink size={12} weight="bold" color={c.textMuted}>{traduire('{0} de repos', repos)}</Ink> : null}
           {e.change ? <Ink size={11.5} weight="extraBold" color={peche.texte}>{traduire('changé')}</Ink> : null}
         </View>
       </View>
