@@ -74,7 +74,9 @@ import { etapesConnues, lireProfilCoach } from '@/lib/v2/programmes/profilCoach'
 import type { ProfilCoach } from '@/lib/v2/programmes/profilCoach';
 import { joursTexte } from '@/components/yoroi/v2/espace/JoursPicker';
 import type { AutreSport, Proposition, TempsSeance } from '@/lib/v2/programmes/depart';
-import { aDesJoursMarche, MINUTES_FIN } from '@/lib/v2/programmes/finSeance';
+import { aDesJoursMarche } from '@/lib/v2/programmes/finSeance';
+import { ReglagesFin } from '@/components/yoroi/v2/programmes/ReglagesFin';
+import type { DetailsFin } from '@/components/yoroi/v2/programmes/ReglagesFin';
 import { GROUPES_PROGRAMMES, moduleParId, modulesPossibles, moduleUtile, normaliserModules } from '@/lib/v2/programmes/modules';
 import type { ModuleId } from '@/lib/v2/programmes/modules';
 import { chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerMateriel, joursConseilles, materielDuLieu } from '@/lib/v2/programmes/suivi';
@@ -165,6 +167,8 @@ export default function CoachDepart() {
   const [semainePerso, setSemainePerso] = useState<{ id: string; semaine: SemaineLibre } | null>(null);
   const [dureeRes, setDureeRes] = useState<number | undefined>(undefined);
   const [minutes, setMinutes] = useState<number>(30);
+  // 1er novembre 2026 : abdos 2 ou 3 fois par semaine, le type de cardio et sa fréquence (ReglagesFin.tsx)
+  const [details, setDetails] = useState<Omit<DetailsFin, 'minutes'>>({});
   const [sansMarche, setSansMarche] = useState(false);
   const [guide, setGuide] = useState(false);
   const [femme, setFemme] = useState(false);
@@ -423,7 +427,7 @@ export default function CoachDepart() {
     if (!prog) return;
     const go = async () => {
       await garderMateriel();
-      const a = await demarrerProgramme(prog.id, joursEff, { choix: 'rien', minutes, ...(sansMarche ? { sansMarche: true } : {}) }, modules.filter((m) => possibles.some((x) => x.id === m)), planRes, { ...(chemin === 'quiz' ? { douleurs: regionsGuide } : {}), semaine: semaineRes, duree: dureeRes });
+      const a = await demarrerProgramme(prog.id, joursEff, { choix: 'rien', minutes, ...details, ...(sansMarche ? { sansMarche: true } : {}) }, modules.filter((m) => possibles.some((x) => x.id === m)), planRes, { ...(chemin === 'quiz' ? { douleurs: regionsGuide } : {}), semaine: semaineRes, duree: dureeRes });
       if (!a) return;
       await ecrireDepart('fait');
       sortir('coach');
@@ -964,12 +968,15 @@ export default function CoachDepart() {
           </View>
         ) : null}
 
-        {modules.includes('cardio') ? (
-          <View style={{ gap: 10 }}>
-            {titreSection(traduire('Durée du cardio'))}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {MINUTES_FIN.map((m) => <Puce key={m} label={traduire('{0} min', m)} on={minutes === m} onPress={() => { tap(); setMinutes(m); }} />)}
-            </View>
+        {/* 1er novembre 2026 : les abdos et le cardio cochés, en détail (combien de fois, quel cardio, combien de temps) */}
+        {modules.includes('abdos') || modules.includes('cardio') ? (
+          <View style={{ backgroundColor: pa.carte, borderRadius: 24, padding: 18 }}>
+            <ReglagesFin
+              abdos={modules.includes('abdos')}
+              cardio={modules.includes('cardio')}
+              valeur={{ minutes, ...details }}
+              onChange={({ minutes: m, ...d }) => { setMinutes(m); setDetails(d); }}
+            />
           </View>
         ) : null}
 
