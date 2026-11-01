@@ -22,6 +22,7 @@ import { FeuilleEau } from './EauFeuille';
 import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
 import { DECIMAL, traduire } from '@/lib/i18n/tr';
 import { useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
+import { InvitationForme } from '@/components/yoroi/v2/corps/InvitationForme';
 
 type IconKey = 'bolt' | 'moon' | 'drop' | 'body';
 
@@ -110,6 +111,8 @@ export function FormeDuJour({ forme, sleep, sleepGoal, water, waterGoal }: { for
 
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 }}>
+      {/* 1er novembre 2026 (AU) : la forme du matin, proposee sans jamais etre imposee */}
+      <InvitationForme />
       {hasForme && forme && forme.level ? (
         <Tuile
           width={w}
