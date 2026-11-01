@@ -110,6 +110,9 @@ import { traduire } from '@/lib/i18n/tr';
 import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
 import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
 import { Bento, LargeurPage, type CaseBento } from '@/components/yoroi/v2/PageLarge';
+import { BlocCartes, BlocFormeMatin, BlocMuscles, BlocPoids7, BlocProgramme, BlocRecords, FournisseurProgramme } from '@/components/yoroi/v2/accueil/BlocsGrandEcran';
+import { useBlocsGrandEcran } from '@/lib/v2/accueil/blocsGrandEcran';
+import type { BlocGrandEcran } from '@/lib/v2/accueil/blocsGrandEcran';
 
 /** 31 octobre 2026 : en grand ecran, la scene fait la moitie de sa largeur, entre 260 et 400 points de haut */
 const hauteurSceneGrand = (largeur: number) => Math.round(Math.min(400, Math.max(260, largeur * 0.5)));
@@ -141,7 +144,9 @@ export default function Accueil() {
   const { width: largeurEcran } = useWindowDimensions();
   // vague 35 : l'accueil se redessine quand tu passes en clair, sombre ou auto
   useYoroiTheme();
-  const { series } = useWeightData();
+  const { series, raw: pesees } = useWeightData();
+  // 1er novembre 2026 : les blocs en plus du grand ecran, caches dans Tes blocs (jamais sur iPhone)
+  const { caches: cachesGrand } = useBlocsGrandEcran();
   const { data, reload: relireAccueil } = useAccueil();
   const sante = useSante();
   const { disposition } = useDisposition();
@@ -429,18 +434,62 @@ export default function Accueil() {
           ),
         }
       : null;
-    const casesTuiles: CaseBento[] = paquetsDeTuiles(tuiles).map((p) => ({ cle: `t-${p.map((t) => t.cle).join('+')}`, contenu: <GrilleAccueil tuiles={p} /> }));
+    // 1er novembre 2026 (Houari sur MacBook : « sur le côté on peut augmenter des choses ou rajouter des choses ») :
+    // sur 3 et 4 colonnes, Ta prochaine seance monte a cote de Ton poids (plus de trou en haut a droite), puis les
+    // blocs en plus du grand ecran ; les invitations (Importe tes donnees, copie iCloud) deviennent des bandes fines
+    // en bas, avec leur « Plus tard ».
+    const large = n >= 3;
+    const tuileProchaine = large ? tuiles.find((t) => t.cle === 'prochaine') ?? null : null;
+    const casesTuiles: CaseBento[] = paquetsDeTuiles(tuileProchaine ? tuiles.filter((t) => t !== tuileProchaine) : tuiles).map((p) => ({ cle: `t-${p.map((t) => t.cle).join('+')}`, contenu: <GrilleAccueil tuiles={p} /> }));
+    const caseProchaine: CaseBento | null = tuileProchaine ? { cle: 'prochaine', contenu: <GrilleAccueil tuiles={[tuileProchaine]} /> } : null;
     const caseSante: CaseBento = { cle: 'sante', contenu: importSante.visible ? <CarteImportSante controle={importSante} onImporte={sante.reload} /> : <CarteSante sante={sante} /> };
-    // sur 2 colonnes, Ton poids et Ta semaine se partagent la rangee avant tes outils (jamais de trou a cote de Ton poids)
-    const tete: (CaseBento | null)[] = n === 2 ? [caseScene, casePoids, caseSemaine, caseSante, caseOutils] : [caseScene, casePoids, caseOutils, caseSemaine, caseSante];
-    const cases: (CaseBento | null)[] = [
-      ...tete,
-      caseTableau,
-      { cle: 'sauvegarde', contenu: <BackupNotice /> },
-      { cle: 'coach', contenu: <PropositionCoach /> },
-      ...casesTuiles,
-      { cle: 'personnaliser', contenu: <PersonnaliserAccueil /> },
+    const caseInvitations: CaseBento = {
+      cle: 'invitations',
+      contenu: (
+        <View style={{ gap: 8 }}>
+          {importSante.visible ? <CarteImportSante controle={importSante} onImporte={sante.reload} fine /> : <CarteSante sante={sante} />}
+          <BackupNotice fine />
+        </View>
+      ),
+    };
+    const bloc = (id: BlocGrandEcran, contenu: React.ReactNode): CaseBento | null => (cachesGrand.includes(id) ? null : { cle: `g-${id}`, contenu });
+    const blocsGrand: (CaseBento | null)[] = [
+      bloc('programme', <BlocProgramme />),
+      bloc('muscles', <BlocMuscles trainings={data.trainings} />),
+      bloc('records', <BlocRecords trainings={data.trainings} unite={unitePoids} />),
+      bloc('forme_matin', <BlocFormeMatin />),
+      bloc('poids7', <BlocPoids7 series={series} brutes={pesees} unite={unitePoids} />),
+      bloc('cartes', <BlocCartes />),
     ];
+    // sur 2 colonnes, Ton poids et Ta semaine se partagent la rangee avant tes outils (jamais de trou a cote de Ton poids)
+    const cases: (CaseBento | null)[] = large
+      ? [
+          caseScene,
+          casePoids,
+          caseProchaine,
+          caseOutils,
+          caseSemaine,
+          caseTableau,
+          ...blocsGrand.slice(0, 3),
+          { cle: 'coach', contenu: <PropositionCoach /> },
+          ...casesTuiles,
+          ...blocsGrand.slice(3),
+          caseInvitations,
+          { cle: 'personnaliser', contenu: <PersonnaliserAccueil /> },
+        ]
+      : [
+          caseScene,
+          casePoids,
+          caseSemaine,
+          caseSante,
+          caseOutils,
+          caseTableau,
+          { cle: 'sauvegarde', contenu: <BackupNotice /> },
+          { cle: 'coach', contenu: <PropositionCoach /> },
+          ...blocsGrand,
+          ...casesTuiles,
+          { cle: 'personnaliser', contenu: <PersonnaliserAccueil /> },
+        ];
     return (
       <View style={{ flex: 1, backgroundColor: P.paper }}>
         <LargeurPage actif largeur={page.largeur}>
@@ -448,7 +497,9 @@ export default function Accueil() {
             <View style={{ zIndex: 2 }}>
               <EnTeteAccueil name={data.name} photo={espace.identite === 'photo' ? data.photo : null} personnage={espace.personnage} rankIndex={rankIndex} />
             </View>
-            <Bento largeur={page.largeur} colonnes={n} cases={cases} style={{ marginTop: 20 }} />
+            <FournisseurProgramme>
+              <Bento largeur={page.largeur} colonnes={n} cases={cases} style={{ marginTop: 20 }} />
+            </FournisseurProgramme>
             <FeuilleEau visible={eauOuverte} onClose={() => setEauOuverte(false)} water={data.hydration.amount} waterGoal={data.hydration.goal} />
           </Animated.ScrollView>
         </LargeurPage>
