@@ -14,6 +14,9 @@
  * 16 octobre (Houari : « c'est grave caché ») : l'entree « Personnaliser » passe tout en haut, sous le titre, en
  * grande carte visuelle (EntreePersonnaliser) ; la ligne « Apparence et style » de Tes reglages, qui ouvrait le
  * meme ecran, est retiree pour ne pas l'avoir deux fois.
+ * 1er novembre 2026 (Houari : « la synchro en premiere ligne, seule, pour donner envie ») : la grande carte
+ * EntreeSynchro passe tout en haut, avant Personnaliser, avec le carrousel Mac, iPad, iPhone. La ligne « Synchro
+ * entre tes appareils » de Tes reglages est retiree (celle de Donnees et sauvegardes reste).
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { DeviceEventEmitter, Image, Platform, Pressable, ScrollView, View } from 'react-native';
@@ -41,6 +44,7 @@ import { Embleme } from '@/components/yoroi/v2/accueil/Ornements';
 import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import { Groupe, TUILE } from '@/components/yoroi/v2/reglages/kit';
 import { EntreePersonnaliser } from '@/components/yoroi/v2/reglages/EntreePersonnaliser';
+import { EntreeSynchro } from '@/components/yoroi/v2/reglages/EntreeSynchro';
 import { resumePersonnaliser, ROUTES_PERSONNALISER } from '@/lib/v2/personnaliser/acces';
 import { usePrefsCourbes } from '@/lib/v2/courbes/prefs';
 import { useEspace } from '@/lib/v2/espace/useEspace';
@@ -146,9 +150,14 @@ export default function Reglages() {
   // la synchro n'est jamais demarree d'ici), « Non appairé » si aucun appareil appaire, sinon rien
   const [synchroAppaire, setSynchroAppaire] = useState<boolean | null>(null);
   const [synchroRelie, setSynchroRelie] = useState(false);
+  // 1er novembre 2026 : combien d'appareils appaires, pour « Relié à 2 appareils » sur la carte du haut
+  const [synchroNb, setSynchroNb] = useState(0);
   useEffect(() => {
     if (!isPeerSyncAvailable()) return;
-    return onSyncStatusChange((s) => setSynchroRelie(s.connectedPeers.length > 0));
+    return onSyncStatusChange((s) => {
+      setSynchroRelie(s.connectedPeers.length > 0);
+      setSynchroNb(Math.max(s.paires?.length ?? 0, s.connectedPeers.length));
+    });
   }, []);
 
   const backupNow = async () => {
@@ -216,9 +225,6 @@ export default function Reglages() {
   const sante = status.sante;
   const santeValue = sante ? (sante.mode === 'live' ? traduire('Relié') : traduire('Non relié')) : undefined;
 
-  // Synchro entre tes appareils
-  const synchroValue = synchroRelie ? traduire('Relié') : synchroAppaire === false ? traduire('Non appairé') : undefined;
-
   // Abonnement
   const subValue = simulateFreeUser ? traduire('Gratuit (simulé)') : isPremium ? (creatorUnlocked && !hasActiveSubscription ? traduire('Premium, Studio') : traduire('Premium')) : traduire('Gratuit');
 
@@ -231,6 +237,9 @@ export default function Reglages() {
       <LargeurPage actif={page.grand} largeur={page.largeur}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: page.grand ? page.marge : 22, paddingBottom: insets.bottom + 40, gap: 10 }} showsVerticalScrollIndicator={false}>
         <EspaceHeader title={traduire("Réglages")} />
+
+        {/* 1er novembre 2026 : la synchro entre tes appareils, en premiere ligne et seule */}
+        <EntreeSynchro grand={page.grand} nbAppareils={synchroNb} appaire={synchroAppaire === true} relie={synchroRelie} onPress={() => go('/sync-devices')} />
 
         {/* 16 octobre : Personnaliser, tout en haut et bien visible */}
         <EntreePersonnaliser
@@ -268,8 +277,6 @@ export default function Reglages() {
         <Groupe title={traduire("Tes réglages")} />
         <Card>
           <ValueRow first tint={TUILE.mousse} icon="heart" sticker="sante_appareils" label={traduire("Santé et appareils")} sub={Platform.OS === 'android' ? 'Health Connect, montre, balance' : traduire('Apple Santé, montre, balance')} value={santeValue} valueColor={sante?.mode === 'live' ? c.successText : undefined} onPress={() => go('/settings/appareils')} />
-          {/* 31 octobre 2026 : la synchro, avant cachee dans Donnees (Houari ne la trouvait pas) */}
-          <ValueRow tint={TUILE.bleu} icon="sync" sticker="sauvegarde" label={traduire('Synchro entre tes appareils')} sub={Platform.OS === 'ios' ? traduire('iPhone, iPad et Mac, sans internet') : traduire('Sans internet')} value={synchroValue} valueColor={synchroRelie ? c.successText : undefined} onPress={() => go('/sync-devices')} />
           <ValueRow tint={TUILE.ardoise} icon="save" sticker="donnees" label={traduire("Données et sauvegardes")} sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/settings/sauvegardes')} action={<MiniAction label={traduire("Sauvegarder")} onPress={backupNow} busy={backingUp} />} />
           <ValueRow tint={TUILE.bleu} icon="globe" sticker="langue" label={traduire('Langue')} value={langueEnCours()} onPress={() => setLangueOpen(true)} />
           <ValueRow tint={TUILE.or} icon="bell" sticker="gong" label={traduire("Sons de l’app")} sub={traduire("Badges, rangs, records et chronos")} value={sonsOn ? traduire('Activés') : traduire('Coupés')} valueColor={sonsOn ? c.successText : undefined} onPress={() => { const n = !sonsOn; setSonsOn(n); ecrireSonsActifs(n).catch(() => {}); }} />
