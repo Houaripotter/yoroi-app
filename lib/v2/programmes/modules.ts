@@ -142,6 +142,11 @@ export function finDesModules(liste: readonly ModuleId[] | null | undefined, bas
   const choix: ChoixFin = a && c ? 'les_deux' : a ? 'abdos' : c ? 'cardio' : 'rien';
   const fin: FinSeance = { choix, minutes: minutesValides(base?.minutes ?? FIN_PAR_DEFAUT.minutes) };
   if (base?.sansMarche) fin.sansMarche = true;
+  // 1er novembre 2026 : tes fréquences et ton type de cardio, choisis au départ, suivent les modules cochés
+  if (a && base?.abdosParSemaine) fin.abdosParSemaine = base.abdosParSemaine;
+  if (c && base?.cardioParSemaine) fin.cardioParSemaine = base.cardioParSemaine;
+  if (c && base?.cardioType) fin.cardioType = base.cardioType;
+  if (base?.parJour && Object.keys(base.parJour).length) fin.parJour = { ...base.parJour };
   return fin;
 }
 
