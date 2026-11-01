@@ -11,8 +11,8 @@ import type { Equipement } from './materiel';
 import type { JourProgramme, Programme } from './types';
 import { indexJour, joursValides } from './coach';
 import { estPlanFixe, indicesGardes, joursDuPlan, memePlan, planParDefaut, planValide, REPOS } from './planJours';
-import { appliquerRemplacements, avecRemplacement, cleCase } from './perso';
-import type { Remplacements } from './perso';
+import { appliquerRemplacements, avecChangementDate, avecRemplacement, cleCase, lireChangementsDates } from './perso';
+import type { ChangementsDates, Remplacements } from './perso';
 import { estJourMuscu, finActive, joursRetires, lireFinSeance, retenirFinActive } from './finSeance';
 import { hydraterChoix } from '@/lib/v2/seances/cardioJour';
 import type { FinSeance } from './finSeance';
@@ -89,6 +89,11 @@ export type ProgrammeActif = {
    * locale, inclus), il n'y a plus de programme en cours. Rien n'est effacé.
    */
   jusquau?: string;
+  /**
+   * 1er novembre 2026 (Tes prochaines séances) : un exercice changé pour une seule séance à venir, à sa date
+   * (« date|jourId|index » -> nom, perso.ts). Les dates passées tombent à la lecture.
+   */
+  changementsDates?: ChangementsDates;
 };
 
 /** Les zones du Guide, lues sans faire confiance au stockage */
@@ -159,7 +164,9 @@ export async function chargerProgrammeActif(): Promise<ProgrammeActif | null> {
       return null;
     }
     // fin de seance : absente dans les anciennes versions, illisible = ignoree
-    const { fin: _f, modules: _m, plan: _p, douleurs: _d, semaine: _s, duree: _du, points: _pt, ponctuel: _pc, jusquau: _ju, ...reste } = brut;
+    const { fin: _f, modules: _m, plan: _p, douleurs: _d, semaine: _s, duree: _du, points: _pt, ponctuel: _pc, jusquau: _ju, changementsDates: _cd, ...reste } = brut;
+    // 1er novembre 2026 : tes exercices changés pour une seule séance à venir, lus strictement (dates passées : tombées)
+    const changementsDates = lireChangementsDates(brut.changementsDates, auj);
     const fin = lireFinSeance(brut.fin);
     // 28 octobre 2026 : ta semaine libre, lue strictement ; ton programme construit garde la semaine de sa page
     const semaine = estProgrammePerso(brut.id) ? null : lireSemaine(brut.semaine);
@@ -175,7 +182,7 @@ export async function chargerProgrammeActif(): Promise<ProgrammeActif | null> {
     // plan illisible ou d'une autre version du programme : ignoré, tes jours prennent le relais.
     // Ton programme construit : toujours la semaine que tu as construite (modifiée ou non depuis)
     const plan = planDuProgrammePerso(p) ?? planValide(p, brut.plan, fin);
-    const a: ProgrammeActif = { ...reste, ...(fin ? { fin } : {}), ...(modules ? { modules } : {}), ...(douleurs ? { douleurs } : {}), ...(plan ? { plan, jours: joursDuPlan(plan) } : {}), ...(semaineUtile(semaine) ? { semaine } : {}), ...(duree !== undefined ? { duree } : {}), ...(points.length ? { points } : {}), ...(ponctuel ? { ponctuel } : {}), ...(jusquau ? { jusquau } : {}), faits: Array.isArray(brut.faits) ? brut.faits : [], prochain: 0 };
+    const a: ProgrammeActif = { ...reste, ...(fin ? { fin } : {}), ...(modules ? { modules } : {}), ...(douleurs ? { douleurs } : {}), ...(plan ? { plan, jours: joursDuPlan(plan) } : {}), ...(semaineUtile(semaine) ? { semaine } : {}), ...(duree !== undefined ? { duree } : {}), ...(points.length ? { points } : {}), ...(ponctuel ? { ponctuel } : {}), ...(jusquau ? { jusquau } : {}), ...(changementsDates ? { changementsDates } : {}), faits: Array.isArray(brut.faits) ? brut.faits : [], prochain: 0 };
     if (a.semaine) {
       const j = joursDeLaSemaine(a, p, new Date(), false);
       if (j.length) a.jours = j;
@@ -858,6 +865,21 @@ async function remplacerExercice_(jourId: string, index: number, nom: string | n
   await ecrire(Object.keys(remplacements).length ? { ...reste, remplacements } : reste);
 }
 
+/**
+ * 1er novembre 2026 (Tes prochaines séances) : « Changer d'exercice » pour une seule séance à venir, à sa date
+ * (« Juste aujourd'hui » de la feuille). null, ou le nom d'origine : la séance reprend son exercice.
+ */
+async function changerExerciceLe_(date: string, jourId: string, index: number, nom: string | null, original?: string): Promise<void> {
+  const a = await chargerProgrammeActif();
+  const p = a && programmeParId(a.id);
+  if (!a || !p || !estIso(date) || date < jourLocal()) return;
+  const jour = jourDuProgramme(p, jourId);
+  if (!jour || index < 0 || index >= jour.exos.length) return;
+  const c = lireChangementsDates(avecChangementDate(a.changementsDates, date, jourId, index, nom, original ?? jour.exos[index].nom), jourLocal());
+  const { changementsDates: _c, ...reste } = a;
+  await ecrire(c ? { ...reste, changementsDates: c } : reste);
+}
+
 async function arreterProgramme_(): Promise<void> {
   await ecrire(null);
 }
@@ -1229,6 +1251,9 @@ export function garderTemporaire(...a: Parameters<typeof garderTemporaire_>): Re
 }
 export function remplacerExercice(...a: Parameters<typeof remplacerExercice_>): ReturnType<typeof remplacerExercice_> {
   return enFileProgramme(CLE, () => remplacerExercice_(...a)) as ReturnType<typeof remplacerExercice_>;
+}
+export function changerExerciceLe(...a: Parameters<typeof changerExerciceLe_>): ReturnType<typeof changerExerciceLe_> {
+  return enFileProgramme(CLE, () => changerExerciceLe_(...a)) as ReturnType<typeof changerExerciceLe_>;
 }
 export function arreterProgramme(...a: Parameters<typeof arreterProgramme_>): ReturnType<typeof arreterProgramme_> {
   return enFileProgramme(CLE, () => arreterProgramme_(...a)) as ReturnType<typeof arreterProgramme_>;
