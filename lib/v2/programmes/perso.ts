@@ -60,6 +60,56 @@ export function appliquerRemplacements<E extends ExoProgramme, J extends Omit<Jo
   return change ? { ...jour, exos } : jour;
 }
 
+/* ------------------------------------------------------------------------------------------------
+ * 1er novembre 2026 (Tes prochaines séances, Houari : « changer un exercice à l'avance, pour aujourd'hui ou pour
+ * toujours ») : un exercice changé pour UNE séance à venir, à sa date seulement. Gardé à part des remplacements de
+ * toujours (ProgrammeActif.changementsDates, clé « date|jourId|index ») : les anciennes versions l'ignorent, et il
+ * tombe tout seul une fois sa date passée. Le jour J, il passe par dessus tes remplacements de toujours.
+ * ---------------------------------------------------------------------------------------------- */
+export type ChangementsDates = Record<string, string>;
+export const MAX_CHANGEMENTS_DATES = 60;
+const CLE_DATEE = /^(\d{4}-\d{2}-\d{2})\|(.{1,200})\|(\d{1,2})$/;
+
+export const cleDatee = (date: string, jourId: string, index: number): string => `${date}|${jourId}|${index}`;
+
+/** La date locale du jour, « 2026-11-01 » */
+export function dateDuJour(d = new Date()): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/** Lecture stricte : clés valides, noms non vides, dates d'aujourd'hui ou à venir seulement */
+export function lireChangementsDates(v: unknown, aujourdhui: string): ChangementsDates | undefined {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined;
+  const out: ChangementsDates = {};
+  for (const [k, nom] of Object.entries(v as Record<string, unknown>)) {
+    const m = CLE_DATEE.exec(k);
+    if (!m || m[1] < aujourdhui || typeof nom !== 'string' || !nom.trim() || nom.length > 120) continue;
+    out[k] = nom.trim();
+  }
+  const cles = Object.keys(out).sort().slice(0, MAX_CHANGEMENTS_DATES);
+  return cles.length ? Object.fromEntries(cles.map((k) => [k, out[k]])) : undefined;
+}
+
+/** Ajoute, change ou retire (nom vide ou identique a l'original) le changement d'une seance datee */
+export function avecChangementDate(c: ChangementsDates | undefined, date: string, jourId: string, index: number, nom: string | null, original?: string): ChangementsDates {
+  const suite: ChangementsDates = { ...(c ?? {}) };
+  const k = cleDatee(date, jourId, index);
+  const n = (nom ?? '').trim();
+  if (!n || (original && n === original)) delete suite[k];
+  else suite[k] = n;
+  return suite;
+}
+
+/** Tes remplacements de toujours, plus les changements de cette date (ils gagnent) : a passer a jourPourToi */
+export function remplacementsLe(r: Remplacements | undefined | null, c: ChangementsDates | undefined | null, date: string): Remplacements | undefined {
+  const du = c ? Object.entries(c).filter(([k]) => k.startsWith(`${date}|`)) : [];
+  if (!du.length) return r ?? undefined;
+  const suite: Remplacements = { ...(r ?? {}) };
+  for (const [k, nom] of du) suite[k.slice(date.length + 1)] = nom;
+  return suite;
+}
+
 /** Combien de cases tu as changees dans ce programme */
 export function nombreRemplacements(remplacements: Remplacements | undefined | null, jourIds: string[]): number {
   if (!remplacements) return 0;
