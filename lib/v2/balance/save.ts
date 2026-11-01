@@ -5,7 +5,7 @@
  * toutes les autres mesures de la balance dans la colonne JSON scale_extras.
  * Rien n'est envoye nulle part : tout reste sur le telephone.
  */
-import { getWeights, openDatabase, updateWeightScaleExtras, updateWeightScaleJson } from '@/lib/database';
+import { getProfile, getWeights, openDatabase, updateWeightScaleExtras, updateWeightScaleJson } from '@/lib/database';
 import type { Weight } from '@/lib/database';
 import { logger } from '@/lib/security/logger';
 import { mergeScaleJson, parseScaleJson, PHOTO_SOURCE, toColumns } from './format';
@@ -18,6 +18,9 @@ import { ajouterMesuresBrutes } from '@/lib/v2/mesures/stockage';
 import { enregistrerContextes } from '@/lib/v2/mesures/contextePesee';
 import type { NouveauContexte } from '@/lib/v2/mesures/contextePesee';
 import { depuisAutres, enregistrerMensurationsPlus } from '@/lib/v2/mesures/mensurationsPlus';
+import { enregistrerBiomarqueurs } from '@/lib/v2/mesures/biomarqueurs';
+import { ageA, enregistrerPlis } from '@/lib/v2/mesures/plis';
+import { biomarqueursDepuisAutres, mesurePlisDepuisAutres, separerAutres } from './rangement';
 
 export type PhotoSaveResult =
   | { ok: true; weight: number; updated: boolean; date: string; replaced?: { weight: number; source?: string } }
@@ -132,8 +135,25 @@ export async function saveScalePhoto(date: string, values: Record<string, number
 
 // ---------- IMPORT MULTI : une date de l'apercu, fusionnee sans rien ecraser ----------
 
+/** AV : ce qui a vraiment ete enregistre, pour le dire a l'ecran (« 3 mensurations, 2 biomarqueurs ») */
+export type Ranges = {
+  /** mensurations de la table measurements */
+  mensurations: number;
+  /** poignet, cheville, genou, fessiers, taille la plus etroite, biceps contracte */
+  mensurationsPlus: number;
+  biomarqueurs: number;
+  /** une mesure de plis complete (7 plis, ou 3) */
+  plis: number;
+  /** plis lus mais methode incomplete : gardes dans le sac seulement */
+  plisIncomplets: number;
+  /** heure, appareil, moment ou a jeun gardes avec la pesee */
+  contexte: boolean;
+  /** mesures ajoutees au sac */
+  sac: number;
+};
+
 export type BlockSaveResult =
-  | { ok: true; written: number; same: number; kept: number; weight?: number; measures: boolean; nothingNew: boolean; date: string; replaced?: { weight: number; source?: string } }
+  | { ok: true; written: number; same: number; kept: number; weight?: number; measures: boolean; nothingNew: boolean; date: string; replaced?: { weight: number; source?: string }; ranges: Ranges }
   | { ok: false; reason: 'no_weight' };
 
 /**
@@ -168,7 +188,10 @@ export async function saveImportBlock(
   }
   const row = pickSameDayRow(rows, day, values.poids_kg);
   const existing = existingValues(row, measureOfDay(measures, day));
-  const plan = planBlock(values, autres, existing, existingAutres(row), replace);
+  // AV : mensurations en plus, biomarqueurs et plis vont dans leurs propres listes, jamais dans la pesee
+  const parRang = separerAutres(autres);
+  const rangees = [...parRang.mensuration_plus, ...parRang.biomarqueur, ...parRang.pli];
+  const plan = planBlock(values, parRang.pesee, existing, existingAutres(row), replace);
   const forWeight = weightPart(plan.write);
   // la masse grasse en % gardee ne doit pas etre recalculee depuis les kilos
   if (forWeight.graisse_kg && !forWeight.graisse_pct && existing.graisse_pct) forWeight.graisse_pct = existing.graisse_pct;
@@ -192,30 +215,66 @@ export async function saveImportBlock(
     saved = res.weight;
     replaced = res.replaced;
   }
+  const ranges: Ranges = { mensurations: Object.keys(forMeasures).length, mensurationsPlus: 0, biomarqueurs: 0, plis: 0, plisIncomplets: 0, contexte: false, sac: 0 };
+  let changeAilleurs = false;
   // AQ : le sac des mesures, jamais bloquant
   try {
     const sac = bloc
-      ? brutesDuBloc(bloc, { date: day, gardees: autres, enregistrees: Object.keys(values), dansPesee: enPesee })
+      ? brutesDuBloc(bloc, { date: day, gardees: autres, enregistrees: Object.keys(values), dansPesee: enPesee, rangees: rangees.map((a) => a.nom) })
       : !enPesee && plan.autres.length
         ? brutesDesAutres(plan.autres, day)
         : [];
-    await ajouterMesuresBrutes(sac);
+    ranges.sac = await ajouterMesuresBrutes(sac);
   } catch (err) {
     logger.warn('[Import multi] sac des mesures non complete', err);
   }
-  // AT (1er novembre 2026) : heure et appareil de la pesee, deuxieme pesee du jour, mensurations en plus. Jamais bloquant.
+  // AT (1er novembre 2026) : heure et appareil de la pesee, deuxieme pesee du jour. Jamais bloquant.
+  // AV : avec le moment et a jeun lus sur la photo.
   if (bloc) {
     try {
       const ctx: NouveauContexte[] = [];
-      if (saved && (bloc.heure || bloc.appareil)) ctx.push({ date: day, poids: saved, heure: bloc.heure ?? null, appareil: bloc.appareil ?? null, origine: 'ia_balance' });
+      // seulement une pesee de ce bloc : l'heure d'un bilan sanguin n'est pas celle de la pesee du jour
+      const poidsCtx = saved;
+      const aContexte = !!(bloc.heure || bloc.appareil || bloc.moment || bloc.aJeun !== undefined);
+      if (poidsCtx && aContexte) ctx.push({ date: day, poids: poidsCtx, heure: bloc.heure ?? null, appareil: bloc.appareil ?? null, moment: bloc.moment ?? null, aJeun: bloc.aJeun ?? null, origine: 'ia_balance' });
       for (const d of bloc.doublons ?? []) {
         if (d.key === 'poids_kg' && d.heure) ctx.push({ date: day, poids: d.value, heure: d.heure, appareil: bloc.appareil ?? null, moment: 'autre', seule: true, origine: 'ia_balance' });
       }
-      if (ctx.length) await enregistrerContextes(ctx);
-      const plus = depuisAutres(bloc.autres, day);
-      if (plus.length) await enregistrerMensurationsPlus(plus);
+      if (ctx.length && (await enregistrerContextes(ctx))) {
+        ranges.contexte = true;
+        changeAilleurs = true;
+      }
     } catch (err) {
-      logger.warn('[Import multi] contexte ou mensurations en plus non enregistres', err);
+      logger.warn('[Import multi] contexte non enregistre', err);
+    }
+  }
+  // AV : les valeurs cochees et corrigees (pas celles lues), chacune dans sa liste. Jamais bloquant.
+  try {
+    const plus = depuisAutres(parRang.mensuration_plus, day);
+    ranges.mensurationsPlus = plus.length;
+    if (plus.length && (await enregistrerMensurationsPlus(plus))) changeAilleurs = true;
+  } catch (err) {
+    logger.warn('[Import multi] mensurations en plus non enregistrees', err);
+  }
+  try {
+    const bio = biomarqueursDepuisAutres(parRang.biomarqueur, day, bloc?.heure ?? null);
+    ranges.biomarqueurs = bio.length;
+    if (bio.length && (await enregistrerBiomarqueurs(bio))) changeAilleurs = true;
+  } catch (err) {
+    logger.warn('[Import multi] biomarqueurs non enregistres', err);
+  }
+  if (parRang.pli.length) {
+    try {
+      const p = await getProfile().catch(() => null);
+      const sexe = p?.avatar_gender === 'femme' ? 'femme' : p?.avatar_gender === 'homme' ? 'homme' : null;
+      const age = ageA(p?.birth_date, day) ?? (p?.age && p.age > 10 ? p.age : null);
+      const m = mesurePlisDepuisAutres(parRang.pli, day, sexe, age);
+      if (m) {
+        ranges.plis = 1;
+        if (await enregistrerPlis(m)) changeAilleurs = true;
+      } else ranges.plisIncomplets = parRang.pli.length;
+    } catch (err) {
+      logger.warn('[Import multi] plis non enregistres', err);
     }
   }
   const written = Object.keys(plan.write).length + plan.autres.length;
@@ -226,8 +285,9 @@ export async function saveImportBlock(
     kept: plan.kept.length + plan.autresKept,
     weight: saved,
     measures: Object.keys(forMeasures).length > 0,
-    nothingNew: written === 0,
+    nothingNew: written === 0 && !changeAilleurs,
     date: day,
     ...(replaced ? { replaced } : {}),
+    ranges,
   };
 }
