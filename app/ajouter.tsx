@@ -6,7 +6,8 @@
  *    et le direct avec chrono en second. (24 octobre 2026) La seance du programme en cours en tete, sinon
  *    l'entree Programmes en bas de la carte.
  * 2. Corps : Pesee (poids) et Pesee par photo lue par ton IA (BALANCE 3, cote a cote), Balance connectee (composition, importee d'Apple Sante si relie),
- *    Mensurations, Photo de forme.
+ *    Mensurations, Photo de forme. (1er novembre 2026, AV) Lus par ton IA aussi : capture de ton app, bilan par photo,
+ *    mensurations par photo (app/balance-photo.tsx, parametre source).
  * Le reste a sa vraie place (Sommeil et Eau dans « Ta forme du jour » de l'Accueil, Videos dans le
  * Carnet, Combat et Competition dans l'outil Combat et competition) et reste joignable ici dans
  * « Autre chose », replie.
@@ -444,7 +445,10 @@ export default function Ajouter() {
           choix={[
             { t: traduire('Poids'), s: traduire('ton poids du jour'), st: illus.img('balance'), on: () => open('/pesee') },
             { t: traduire('Par photo'), s: traduire('ton IA lit ta balance'), st: illus.img('appareil_photo'), on: () => open('/balance-photo') },
+            // 1er novembre 2026 (AV) : les autres imports lus par ton IA, le meme ecran avec son en-tete
+            { t: traduire('Capture de ton app'), s: traduire('ton historique de pesées, Apple Santé'), st: illus.img('telephone'), on: () => open('/balance-photo', { source: 'capture' }) },
             { t: traduire('Composition'), s: traduire('Masse grasse, muscle, eau'), st: illus.img('corps'), on: () => open('/body-composition') },
+            { t: traduire('Bilan par photo'), s: traduire('glycémie, tension, prise de sang'), st: illus.img('croix_soin'), on: () => open('/balance-photo', { source: 'bilan' }) },
           ]}
         />
       ) : null}
@@ -459,6 +463,7 @@ export default function Ajouter() {
           onFermer={() => setOnglet('seance')}
           choix={[
             { t: traduire('Mesurer'), s: traduire('une fois par mois, le matin'), st: illus.img('metre_ruban'), on: () => open('/add-measurement') },
+            { t: traduire('Par photo'), s: traduire('ton IA lit tes mesures notées'), st: illus.img('appareil_photo'), on: () => open('/balance-photo', { source: 'mensurations' }) },
             { t: traduire('Évolution'), s: traduire('Tes courbes'), st: illus.img('bilan'), on: () => open('/measurements-detail') },
             { t: traduire('Photo'), s: traduire('Photo de forme'), st: illus.img('appareil_photo'), on: () => open('/photos') },
           ]}
@@ -583,17 +588,17 @@ function FenetreChoix({ titre, sous, sticker, fond, texte, largeur, choix, onFer
               </Svg>
             </Pressable>
           </View>
-          <View style={{ gap: 10, marginTop: 16 }}>
+          <View style={{ gap: choix.length > 4 ? 8 : 10, marginTop: 16 }}>
             {choix.map((c) => (
               <Pressable
                 key={c.t}
                 onPress={() => choisir(c.on)}
                 accessibilityRole="button"
                 accessibilityLabel={`${c.t}, ${c.s}`}
-                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 84, borderRadius: 24, paddingHorizontal: 14, paddingVertical: 12, backgroundColor: fond, borderWidth: 2, borderColor: pressed ? texte : 'transparent', transform: [{ scale: pressed ? 0.98 : 1 }] })}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: choix.length > 4 ? 70 : 84, borderRadius: 24, paddingHorizontal: 14, paddingVertical: choix.length > 4 ? 10 : 12, backgroundColor: fond, borderWidth: 2, borderColor: pressed ? texte : 'transparent', transform: [{ scale: pressed ? 0.98 : 1 }] })}
               >
-                <View style={{ width: 60, height: 60, borderRadius: 20, backgroundColor: P.white, alignItems: 'center', justifyContent: 'center' }}>
-                  <Image source={c.st} style={{ width: 46, height: 46 }} resizeMode="contain" />
+                <View style={{ width: choix.length > 4 ? 50 : 60, height: choix.length > 4 ? 50 : 60, borderRadius: choix.length > 4 ? 17 : 20, backgroundColor: P.white, alignItems: 'center', justifyContent: 'center' }}>
+                  <Image source={c.st} style={{ width: choix.length > 4 ? 38 : 46, height: choix.length > 4 ? 38 : 46 }} resizeMode="contain" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Ink size={17} weight="black" color={texte} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{c.t}</Ink>
