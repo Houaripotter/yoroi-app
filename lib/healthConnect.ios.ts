@@ -6305,23 +6305,24 @@ class HealthConnectService {
 
   /**
    * Demarrer le polling fallback pour detecter les nouveaux workouts
-   * Toutes les 2 min pour une detection rapide (Garmin, Fitbit, Polar, etc.)
+   * Toutes les 10 min (Garmin, Fitbit, Polar, etc.). Le retour au premier plan lit tout de suite
+   * (checkNewWorkoutsNow, app/_layout.tsx). 1er novembre 2026 : 2 min -> 10 min, moins de lectures Sante.
    */
   private startWorkoutPolling(): void {
     if (this.pollingInterval) return; // Deja en cours
 
-    // Poll toutes les 2 minutes pour detection rapide
+    // Poll toutes les 10 minutes
     this.pollingInterval = setInterval(async () => {
       try {
         await this.checkAndProcessNewWorkouts();
       } catch (e) {
         logger.warn('[WorkoutObserver/Polling] Erreur:', e);
       }
-    }, 2 * 60 * 1000);
+    }, 10 * 60 * 1000);
 
     // Premier check immediat
     this.checkAndProcessNewWorkouts().catch(() => {});
-    logger.info('[WorkoutObserver] Polling fallback actif (toutes les 2 min)');
+    logger.info('[WorkoutObserver] Polling fallback actif (toutes les 10 min)');
   }
 
   /**
