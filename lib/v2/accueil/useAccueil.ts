@@ -5,7 +5,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DeviceEventEmitter } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { getProfile, getTrainings } from '@/lib/database';
+import { getProfile } from '@/lib/database';
+import { lireSeances } from '@/lib/v2/perf/lireSeances';
 import type { Training } from '@/lib/database';
 import { getSleepEntries, getSleepGoal } from '@/lib/sleepService';
 import type { SleepEntry } from '@/lib/sleepService';
@@ -114,7 +115,7 @@ export function useAccueil() {
         safe(getEspace(), DEFAULT_ESPACE),
         safe(getArmureState(), null as ArmureState | null),
         safe(getProfile(), null),
-        safe(getTrainings().then((l) => dedupeTrainings(l ?? [])), [] as Training[]),
+        safe(lireSeances().then((l) => dedupeTrainings(l ?? [])), [] as Training[]),
         safe(safeComputeForme(), null as FormeResult | null),
         safe(getSleepEntries(), [] as SleepEntry[]),
         safe(getSleepGoal(), 480),
