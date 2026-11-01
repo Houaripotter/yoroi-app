@@ -65,10 +65,24 @@ function slugBibliotheque(cle: string): string | null {
   return nomBiblioParSlug.get(cle) ?? null;
 }
 
-function gifDeCle(cle: string): ImageSourcePropType[] | null {
-  return demoEnLigne(cle)
-    ?? (MEME_MOUVEMENT[cle] ? demoEnLigne(MEME_MOUVEMENT[cle]) : null)
-    ?? (MEME_INVERSE[cle] ? demoEnLigne(MEME_INVERSE[cle]) : null);
+function viaMemeMouvement<T>(cle: string, f: (cle: string) => T | null): T | null {
+  return f(cle)
+    ?? (MEME_MOUVEMENT[cle] ? f(MEME_MOUVEMENT[cle]) : null)
+    ?? (MEME_INVERSE[cle] ? f(MEME_INVERSE[cle]) : null);
+}
+
+const gifDeCle = (cle: string): ImageSourcePropType[] | null => viaMemeMouvement(cle, demoEnLigne);
+
+/**
+ * 31 octobre 2026 : le meme chemin que demoDe (prise enlevee, meme mouvement, nom de la bibliotheque) pour une autre
+ * recherche, par exemple la correspondance ExerciseDB affichee dans le Studio.
+ */
+export function resoudreDemo<T>(nom: string, f: (cle: string) => T | null): T | null {
+  const cle = demoSlug(sansPrise(nom).base);
+  const r = viaMemeMouvement(cle, f);
+  if (r) return r;
+  const biblio = slugBibliotheque(cle);
+  return biblio ? viaMemeMouvement(biblio, f) : null;
 }
 
 /** Une ou deux images : deux s'enchainent en fondu, une seule est deja animee */
@@ -78,9 +92,5 @@ export function demoDe(nom: string | undefined | null): ImageSourcePropType[] | 
   // public : aucune animation (26 octobre 2026)
   if (sourceDemosActive() === 'aucune') return null;
   // la prise ajoutee au nom (« (prise large) », lib/v2/seance/prise.ts) ne change pas le mouvement
-  const cle = demoSlug(sansPrise(nom).base);
-  const gif = gifDeCle(cle);
-  if (gif) return gif;
-  const biblio = slugBibliotheque(cle);
-  return biblio ? gifDeCle(biblio) : null;
+  return resoudreDemo(nom, gifDeCle);
 }
