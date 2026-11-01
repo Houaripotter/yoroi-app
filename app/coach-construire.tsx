@@ -38,6 +38,7 @@ import { ombrePastel, usePastel } from '@/components/yoroi/v2/programmes/Habilla
 import type { FamillePastel, PastelCoach } from '@/components/yoroi/v2/programmes/Habillage';
 import { ChoixParMuscle, seriesTexte } from '@/components/yoroi/v2/programmes/ChoixParMuscle';
 import { ExercisePicker } from '@/components/yoroi/v2/seance/ExercisePicker';
+import { ChoixFinCompact } from '@/components/yoroi/v2/programmes/ReglagesFin';
 import { TimeField } from '@/components/yoroi/v2/notifications/parts';
 import { getTrainings } from '@/lib/database';
 import type { Training } from '@/lib/database';
@@ -80,7 +81,7 @@ const REPOS = [60, 90, 120, 180];
 const majuscule = (s: string) => s.charAt(0).toLocaleUpperCase() + s.slice(1);
 /** Ce qui compte pour savoir si tu as changé quelque chose (les séances vides ne comptent pas) */
 const plein = (l: readonly (SeancePerso | null)[] | undefined) => (l ?? []).map((s) => (s && s.exos.length ? s : null));
-const empreinte = (x: ProgrammePerso, r: RappelPerso) => JSON.stringify([x.nom.trim(), plein(x.semaine), r.actif, r.heure, ...(x.semaineB ? [plein(x.semaineB)] : []), (x.briques ?? []).filter((s) => s.exos.length)]);
+const empreinte = (x: ProgrammePerso, r: RappelPerso) => JSON.stringify([x.nom.trim(), plein(x.semaine), r.actif, r.heure, ...(x.semaineB ? [plein(x.semaineB)] : []), (x.briques ?? []).filter((s) => s.exos.length), ...(x.fin ? [x.fin] : [])]);
 /** 30 octobre 2026 : la semaine B s'affiche à la place de A (et inversement) ; tout ce qui est enregistré repasse par A */
 const echanger = (x: ProgrammePerso): ProgrammePerso => ({ ...x, semaine: x.semaineB ?? semaineVide(), semaineB: x.semaine });
 const nouveauVide: ProgrammePerso = { id: '', nom: '', semaine: [null, null, null, null, null, null, null], creeLe: '', modifieLe: '' };
@@ -132,11 +133,15 @@ export default function CoachConstruire() {
   const [depart, setDepart] = useState('');
   // la fête quand ton programme est prêt : son de badge, vibration de réussite
   const [fete, setFete] = useState<{ id: string; n: number; premier: string } | null>(null);
+  // 1er novembre 2026 : abdos et cardio en fin de séance, touchés ici (sinon ceux du programme en cours restent)
+  const [finTouchee, setFinTouchee] = useState(false);
   const historique = useMemo(() => buildExerciseHistory(trainings), [trainings]);
   // 31 octobre 2026 : les jours faits cette semaine, montrés seulement sur ton programme en cours
   const aujourdhuiIso = localISO();
   const lundiCourant = mondayOf(aujourdhuiIso);
   const suiviIci = !!actif && actif.id === pp.id;
+  // ton programme en cours garde sa fin de séance (réglée aussi depuis sa page) tant que tu ne la changes pas ici
+  const finVue = suiviIci && actif?.fin && !finTouchee ? actif.fin : pp.fin;
   const joursFaits = useMemo(() => new Set(trainings.map((t) => String(t.date ?? '').slice(0, 10)).filter((x) => x >= lundiCourant && x <= aujourdhuiIso)), [trainings, lundiCourant, aujourdhuiIso]);
 
   useEffect(() => {
@@ -235,7 +240,8 @@ export default function CoachConstruire() {
       try {
         // 30 octobre 2026 : dans la file de tes programmes (suivi.ts), jamais en même temps qu'un autre enregistrement
         const sauve = await enFileProgramme(CLE_PROGRAMMES_PERSO, () => enregistrerProgrammePerso({ ...normal, rappel }));
-        await suivreProgrammePerso(sauve);
+        // 1er novembre 2026 : ta fin de séance (abdos, cardio) suit seulement si tu l'as changée ici
+        await suivreProgrammePerso(finTouchee ? sauve : { ...sauve, fin: undefined });
         // 30 octobre 2026 : les jours de ta semaine B aussi ; chaque date suit ensuite ta semaine (joursPourRappels)
         const r = await appliquerRappelProgramme(rappel, joursDeSeancePerso(sauve));
         if (r === 'refuse') {
@@ -538,6 +544,14 @@ export default function CoachConstruire() {
               <Ink size={14.5} weight="black" color={pa.coche}>{tousModeles ? traduire('Moins de modèles') : traduire('Voir tous les modèles ({0})', modeles.length)}</Ink>
             </Pressable>
           ) : null}
+        </View>
+
+        {/* E2. FIN DE SÉANCE (1er novembre 2026, Houari : « vérifie que l'app me demande ce que j'aime faire ») :
+            abdos et cardio après tes séances de musculation, combien de fois, quel cardio, combien de temps */}
+        <View style={{ marginTop: 18, gap: 10 }}>
+          <Titre sticker="cardio_zone2" titre={traduire('Fin de séance')} />
+          <Ink size={13} weight="bold" color={pa.texte2} style={{ marginHorizontal: 2 }}>{traduire('Abdos et cardio après tes séances de musculation')}</Ink>
+          <ChoixFinCompact fin={finVue} onChange={(f) => { setFinTouchee(true); setPp((x) => ({ ...x, fin: f })); }} />
         </View>
 
         {/* F. LE RAPPEL : les jours de séance, à ton heure ; discret */}
