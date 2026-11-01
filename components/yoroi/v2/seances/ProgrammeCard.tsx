@@ -22,6 +22,7 @@ import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { traduire } from '@/lib/i18n/tr';
 import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
+import { avecVersion } from '@/lib/v2/programmes/alternance';
 
 export function ProgrammeCard({ onOpen, femme = false }: { onOpen: () => void; femme?: boolean }) {
   const { theme } = useYoroiTheme();
@@ -92,7 +93,7 @@ export function ProgrammeCard({ onOpen, femme = false }: { onOpen: () => void; f
         <View style={{ padding: 16, gap: 14 }}>
           {/* 25 octobre 2026 : le mot du coach du jour (lib/v2/programmes/coach.ts) ; le bouton Commencer est plus bas */}
           <CoachProgramme
-            message={{ ...messageCoach({ programme: p, actif, jours: joursDuProgramme(actif, p), prochaineSeance: traduire(j.titre), femme, fixe: !!planEffectif(actif, p) }), seanceDuJour: false }}
+            message={{ ...messageCoach({ programme: p, actif, jours: joursDuProgramme(actif, p), prochaineSeance: avecVersion(traduire(j.titre), j), femme, fixe: !!planEffectif(actif, p) }), seanceDuJour: false }}
             onCommencer={commencer}
           />
           <View style={{ gap: 6 }}>
@@ -108,7 +109,7 @@ export function ProgrammeCard({ onOpen, femme = false }: { onOpen: () => void; f
           <View style={{ borderRadius: 16, backgroundColor: c.fillSoft, padding: 12, gap: 10 }}>
             <View style={{ gap: 1 }}>
               <Ink size={12} weight="bold" color={c.textMuted}>{traduire('Ta prochaine séance')}</Ink>
-              <Ink size={17} weight="black" tight>{traduire('Jour {0}, {1}', suite.index + 1, traduire(j.titre))}</Ink>
+              <Ink size={17} weight="black" tight>{traduire('Jour {0}, {1}', suite.index + 1, avecVersion(traduire(j.titre), j))}</Ink>
               <Ink size={13} color={c.textSecondary}>{resumeDuJour(j, semaine)}</Ink>
             </View>
             {apercu.length ? (
