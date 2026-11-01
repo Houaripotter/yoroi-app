@@ -47,6 +47,8 @@ import type { Equipement } from '@/lib/v2/programmes/materiel';
 import { ExoDemo } from '@/components/yoroi/v2/seance/ExoDemo';
 import { FicheTechnique } from '@/components/yoroi/v2/programmes/FicheTechnique';
 import { ExplicationExo } from '@/components/yoroi/v2/programmes/ExplicationExo';
+import { VignetteExo } from '@/components/yoroi/v2/programmes/VignetteExo';
+import { FicheExercice } from '@/components/yoroi/v2/programmes/FicheExercice';
 import { ficheDe } from '@/lib/v2/programmes/fiches';
 import { DUREES_EXPRESS, dureeEstimee, seanceExpress } from '@/lib/v2/programmes/express';
 import { demoDe } from '@/lib/v2/programmes/demos';
@@ -707,6 +709,8 @@ function LigneExo({ e, premier, raison, onChanger, onRevenir, carte, k = 0 }: { 
   const pal = usePaletteProgramme();
   const [deplie, setDeplie] = useState(false);
   const [technique, setTechnique] = useState(false);
+  // 1er novembre 2026 : en carte, un toucher ouvre la fiche de l'exercice (components/yoroi/v2/programmes/FicheExercice.tsx)
+  const [fiche, setFiche] = useState(false);
   const aFiche = !!ficheDe(e.nom);
   const reps = e.repsMin === e.repsMax ? `${e.repsMin}` : traduire('{0} à {1}', e.repsMin, e.repsMax);
   const volume = e.secondes ? `${e.series} × ${reps} s` : `${e.series} × ${reps}`;
@@ -762,21 +766,18 @@ function LigneExo({ e, premier, raison, onChanger, onRevenir, carte, k = 0 }: { 
 
   // 26 octobre 2026, maquette D : « Au programme », une carte par exercice, carré d'icône coloré, séries en grand
   if (carte) {
-    const t = tonDuRang(k);
     const muscle = mu?.principaux[0] ? traduire(mu.principaux[0]) : traduire(e.muscle.charAt(0) + e.muscle.slice(1).toLocaleLowerCase());
     return (
       <View style={[carteBlanche(pal.carte, c.divider), { paddingVertical: 12, paddingHorizontal: 12, gap: 10 }]}>
         <Pressable
-          onPress={() => { tap(); setDeplie((o) => !o); }}
+          onPress={() => { tap(); setFiche(true); }}
           accessibilityRole="button"
-          accessibilityState={{ expanded: deplie }}
           accessibilityLabel={`${sansTiret(traduire(nomFr(e.nom)))}. ${phrase}`}
-          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52, opacity: pressed ? 0.75 : 1 })}
+          accessibilityHint={traduire('Ouvrir la fiche de {0}', sansTiret(traduire(nomFr(e.nom))))}
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, opacity: pressed ? 0.75 : 1 })}
         >
-          {/* 27 octobre 2026 (refonte Pastel) : le numero de l'exercice sur sa pastille pastel */}
-          <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: t.fond, alignItems: 'center', justifyContent: 'center' }}>
-            <Ink size={17} weight="black" color={t.encre}>{String(k + 1)}</Ink>
-          </View>
+          {/* 1er novembre 2026 : la vignette de l'exercice (machine ou sticker du muscle), son numero sur le coin */}
+          <VignetteExo nom={e.nom} muscle={e.muscle} cardio={!!e.minutes} taille={56} numero={k + 1} />
           <View style={{ flex: 1, gap: 3 }}>
             <Ink size={15} weight="extraBold" color={pal.texte} numberOfLines={2}>{sansTiret(traduire(nomFr(e.nom)))}</Ink>
             <Ink size={12} weight="bold" color={pal.texte2} numberOfLines={1}>{`${muscle} · ${traduire('{0} de repos', libelleRepos(e.reposSec))}`}</Ink>
@@ -784,7 +785,24 @@ function LigneExo({ e, premier, raison, onChanger, onRevenir, carte, k = 0 }: { 
           </View>
           <Ink size={17} weight="black" color={c.accentText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ maxWidth: '34%' }}>{volume}</Ink>
         </Pressable>
-        {details}
+        <FicheExercice
+          exo={fiche ? e : null}
+          charge={g.niveau === 'tenu' || !g.libelle ? null : g.libelle}
+          onClose={() => setFiche(false)}
+          onChanger={onChanger}
+        >
+          {g.niveau === 'tenu' ? null : <Ink size={13} weight="bold" style={{ lineHeight: 19, paddingHorizontal: 4 }}>{traduire('Garde {0} répétitions en réserve.', traduire(g.reserve))}</Ink>}
+          {precision ? <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19, paddingHorizontal: 4 }}>{traduire(precision)}</Ink> : null}
+          {e.conseil && !e.remplace ? <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19, paddingHorizontal: 4 }}>{traduire(e.conseil)}</Ink> : null}
+          <NoteMateriel e={e} raison={raison} />
+          {(onRevenir && e.perso) || aFiche ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {aFiche ? <ActionExo label={traduire(technique ? 'Masquer la technique' : 'Voir la technique')} onPress={() => { tap(); setTechnique((o) => !o); }} etat={technique} /> : null}
+              {onRevenir && e.perso ? <ActionExo label={traduire('Revenir à {0}', sansTiret(traduire(nomFr(e.perso))))} onPress={() => { setFiche(false); onRevenir(); }} /> : null}
+            </View>
+          ) : null}
+          {technique && aFiche ? <FicheTechnique nom={e.nom} /> : null}
+        </FicheExercice>
       </View>
     );
   }
