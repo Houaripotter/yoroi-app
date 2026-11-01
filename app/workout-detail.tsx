@@ -58,6 +58,7 @@ import { StickerSinon } from '@/components/yoroi/v2/ui/StickerSinon';
 import { resumeCardioDe } from '@/lib/v2/seances/exerciceEnregistre';
 import { infoCardio } from '@/lib/v2/seances/cardioChoix';
 import { fmtNum } from '@/lib/v2/seance/format';
+import { seanceFaiteDe } from '@/lib/v2/programmes/prochainesActions';
 
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1500;
@@ -176,6 +177,13 @@ export default function WorkoutDetailScreen() {
   const [userZones, setUserZones] = useState<HRZoneThresholds | null>(null);
   const [allTrainings, setAllTrainings] = useState<Training[]>([]);
   const [mapFull, setMapFull] = useState(false);
+  // 1er novembre 2026, soir : la séance du programme vraiment faite, avec sa version (« Push B »)
+  const [seanceProg, setSeanceProg] = useState<{ nom: string; programme: string } | null>(null);
+  useEffect(() => {
+    let vivant = true;
+    seanceFaiteDe(training?.id).then((x) => { if (vivant) setSeanceProg(x); }).catch(() => {});
+    return () => { vivant = false; };
+  }, [training?.id]);
   // 14 octobre 2026 (ios27) : « Tes zones viennent d'Apple Santé », une seule fois
   const [appleNotice, setAppleNotice] = useState(false);
   useEffect(() => {
@@ -490,6 +498,7 @@ export default function WorkoutDetailScreen() {
           <View style={{ borderRadius: 26, backgroundColor: blancA(0.92), borderWidth: 1, borderColor: P.white, padding: 18, gap: 14, shadowColor: c.ink, shadowOpacity: 0.1, shadowRadius: 22, shadowOffset: { width: 0, height: 10 }, elevation: 4 }}>
             <View style={{ gap: 3 }}>
               <Ink size={26} weight="black" tight>{sessionTitle(t)}</Ink>
+              {seanceProg ? <Ink size={15} weight="extraBold" color={c.accentText}>{sansTiret(`${seanceProg.nom}, ${seanceProg.programme}`)}</Ink> : null}
               <Ink size={14} weight="bold" color={c.textSecondary}>
                 {[longDate(t.date), timeRange, t.club_name].filter(Boolean).join(', ')}
               </Ink>
