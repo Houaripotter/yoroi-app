@@ -15,6 +15,9 @@ import type { MeasureDay } from './multi';
 import { loadMeasures, saveMeasures } from '@/lib/v2/progres/measures';
 import { brutesDesAutres, brutesDuBloc } from '@/lib/v2/mesures/sac';
 import { ajouterMesuresBrutes } from '@/lib/v2/mesures/stockage';
+import { enregistrerContextes } from '@/lib/v2/mesures/contextePesee';
+import type { NouveauContexte } from '@/lib/v2/mesures/contextePesee';
+import { depuisAutres, enregistrerMensurationsPlus } from '@/lib/v2/mesures/mensurationsPlus';
 
 export type PhotoSaveResult =
   | { ok: true; weight: number; updated: boolean; date: string; replaced?: { weight: number; source?: string } }
@@ -140,6 +143,8 @@ export type BlockSaveResult =
  * AQ (1er novembre 2026) : `bloc`, le bloc lu, garde dans le sac des mesures (lib/v2/mesures/) tout ce que les
  * colonnes ne gardent pas : heure, appareil, cote et segment, textes, valeurs hors plage, deuxieme pesee du jour.
  * Des mesures en plus sans aucun poids ce jour-la ne bloquent plus l'enregistrement : elles vont dans le sac.
+ * AT : l'heure et l'appareil vont aussi dans le contexte des pesees (lib/v2/mesures/contextePesee.ts), et les
+ * mensurations en plus (poignet, cheville, genou...) dans lib/v2/mesures/mensurationsPlus.ts.
  */
 export async function saveImportBlock(
   date: string,
@@ -197,6 +202,21 @@ export async function saveImportBlock(
     await ajouterMesuresBrutes(sac);
   } catch (err) {
     logger.warn('[Import multi] sac des mesures non complete', err);
+  }
+  // AT (1er novembre 2026) : heure et appareil de la pesee, deuxieme pesee du jour, mensurations en plus. Jamais bloquant.
+  if (bloc) {
+    try {
+      const ctx: NouveauContexte[] = [];
+      if (saved && (bloc.heure || bloc.appareil)) ctx.push({ date: day, poids: saved, heure: bloc.heure ?? null, appareil: bloc.appareil ?? null, origine: 'ia_balance' });
+      for (const d of bloc.doublons ?? []) {
+        if (d.key === 'poids_kg' && d.heure) ctx.push({ date: day, poids: d.value, heure: d.heure, appareil: bloc.appareil ?? null, moment: 'autre', seule: true, origine: 'ia_balance' });
+      }
+      if (ctx.length) await enregistrerContextes(ctx);
+      const plus = depuisAutres(bloc.autres, day);
+      if (plus.length) await enregistrerMensurationsPlus(plus);
+    } catch (err) {
+      logger.warn('[Import multi] contexte ou mensurations en plus non enregistres', err);
+    }
   }
   const written = Object.keys(plan.write).length + plan.autres.length;
   return {
