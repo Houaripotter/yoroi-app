@@ -20,6 +20,7 @@ import { modulesActifs, moduleParId } from './modules';
 import { faitsCetteSemaine, seancesAVenir } from './suivi';
 import type { ProgrammeActif } from './suivi';
 import type { JourProgramme, Programme } from './types';
+import { avecVersion } from './alternance';
 
 const NOMS_JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 
@@ -103,7 +104,7 @@ export function infosHero(opts: { programme: Programme; actif: ProgrammeActif; j
     const suite = seancesAVenir(actif, 2, auj)[1];
     if (suite && suite.jour.id !== jour.id && jours.length) {
       const d = prochainJourPrevu(jours, auj, false);
-      ensuite = traduire('Puis ensuite : {0}, {1}', nomDuProgramme(traduire(suite.jour.titre).split(/\s?:\s/)[0]), nomJour(d, auj));
+      ensuite = traduire('Puis ensuite : {0}, {1}', avecVersion(nomDuProgramme(traduire(suite.jour.titre).split(/\s?:\s/)[0]), suite.jour), nomJour(d, auj));
     }
   }
   return { ligne, pourquoi, ensuite, ajouts: ajoutsDuJour(jour, actif) };
