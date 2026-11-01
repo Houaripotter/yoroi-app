@@ -4,7 +4,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { DeviceEventEmitter } from 'react-native';
-import { getTrainings } from '@/lib/database';
+import { lireSeances } from '@/lib/v2/perf/lireSeances';
 import { logger } from '@/lib/security/logger';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { dedupeTrainings } from './dedupe';
@@ -16,7 +16,7 @@ export function useSessionRecords(refreshKey?: number): { records: RecordsResult
   const [loaded, setLoaded] = useState(false);
   const load = useCallback(async () => {
     try {
-      const t = await getTrainings();
+      const t = await lireSeances();
       setRecords(computeRecords(dedupeTrainings(t ?? [])));
     } catch (err) {
       logger.warn('Records des séances indisponibles', err);
