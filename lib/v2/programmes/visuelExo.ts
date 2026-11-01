@@ -5,6 +5,9 @@
  *     (lib/v2/programmes/demosTest.ts). Le mode créateur est passé par l'appelant, lu avec useCreatorMode comme dans
  *     le reste de l'app (components/yoroi/v2/programmes/VignetteExo.tsx, useAnimationsTest) ;
  *  2. notre animation maison, deux poses en fondu (lib/v2/programmes/demosMaison.ts), pour tout le monde ;
+ *  2 bis. sinon l'illustration Everkinetic en deux poses, même fondu, pendant la transition avant Gym visual
+ *     (lib/v2/programmes/everkinetic.ts, un seul interrupteur EVERKINETIC_ACTIF) : `source` le signale, la fiche
+ *     affiche alors le crédit CC BY-SA 4.0 ;
  *  3. l'illustration maison de sa machine (assets/exercices/machines, lib/v2/seance/machinesArt.ts), retrouvée par
  *     le nom de l'exercice ou par la liste d'exercices de la machine (lib/v2/seance/machines.ts) ;
  *  4. sinon le sticker de son groupe musculaire : jamais de case vide.
@@ -15,6 +18,7 @@ import { MACHINES } from '@/lib/v2/seance/machines';
 import { machineArt } from '@/lib/v2/seance/machinesArt';
 import { demoSlug, resoudreDemo } from './demos';
 import { demoMaisonDe } from './demosMaison';
+import { demoEverkineticDe } from './everkinetic';
 import { demoEnLigne } from './demosTest';
 
 /** Les stickers des groupes musculaires (components/yoroi/v2/stickers.ts) */
@@ -22,7 +26,7 @@ export type StickerMuscle = 'pecs' | 'abdos' | 'fessiers' | 'bras' | 'muscle' | 
 export type TeinteMuscle = 'creme' | 'bleu' | 'lilas' | 'menthe' | 'peche';
 
 export type VisuelExo =
-  | { type: 'animation'; images: ImageSourcePropType[] }
+  | { type: 'animation'; images: ImageSourcePropType[]; source?: 'everkinetic' }
   | { type: 'machine'; image: ImageSourcePropType }
   | { type: 'sticker'; sticker: StickerMuscle; teinte: TeinteMuscle };
 
@@ -74,6 +78,8 @@ export function visuelExo(nom: string, muscle?: string | null, cardio = false, a
   if (gif && gif.length) return { type: 'animation', images: gif };
   const maison = cardio ? null : demoMaisonDe(nom);
   if (maison && maison.length) return { type: 'animation', images: maison };
+  const ek = cardio ? null : demoEverkineticDe(nom);
+  if (ek && ek.length) return { type: 'animation', images: ek, source: 'everkinetic' };
   const image = cardio ? null : imageMachineDe(nom);
   if (image) return { type: 'machine', image };
   return { type: 'sticker', ...stickerMuscle(muscle, nom, cardio) };
