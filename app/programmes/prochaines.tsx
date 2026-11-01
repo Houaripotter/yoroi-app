@@ -69,7 +69,7 @@ import { chargerMachinesPerso } from '@/lib/v2/seances/machinesPerso';
 import type { MachinePerso } from '@/lib/v2/seances/machinesPerso';
 import { musclesDesExercices } from '@/lib/v2/seances/musclesExercices';
 
-type Donnees = {
+export type Donnees = {
   actif: ProgrammeActif;
   p: Programme;
   pp: ProgrammePerso | null;
@@ -84,8 +84,13 @@ type Donnees = {
 const le = (iso: string) => new Date(`${iso}T12:00:00`);
 const TITRES_SEMAINES = ['Cette semaine', 'Semaine prochaine', 'Dans 2 semaines'];
 
-/** Charge tout ce que l'écran montre ; relu à chaque changement du programme */
-export function useProchaines(): { d: Donnees | null; pret: boolean } {
+/**
+ * Charge tout ce que l'écran montre ; relu à chaque changement du programme.
+ * 1er novembre 2026 : l'accueil le lit aussi (Ta prochaine séance, Ton programme en grand écran) avec
+ * completer faux : il ne prépare jamais les versions B, il lit seulement.
+ */
+export function useProchaines(o: { completer?: boolean } = {}): { d: Donnees | null; pret: boolean } {
+  const completer = o.completer !== false;
   const [d, setD] = useState<Donnees | null>(null);
   const [pret, setPret] = useState(false);
   useEffect(() => {
@@ -124,12 +129,12 @@ export function useProchaines(): { d: Donnees | null; pret: boolean } {
     };
     void charger();
     // 1er novembre 2026, soir : une séance qui alterne sans sa version B encore (programme d'avant migré) la reçoit
-    void completerVersionsB().catch(() => false);
+    if (completer) void completerVersionsB().catch(() => false);
     const sub = DeviceEventEmitter.addListener(PROGRAMME_CHANGED_EVENT, () => void charger());
     // 1er novembre 2026 : une séance enregistrée compte tout de suite pour son jour du programme (seancesFaites.ts)
     const subSeances = DeviceEventEmitter.addListener(DATA_CHANGED_EVENT, () => void charger());
     return () => { vivant = false; sub.remove(); subSeances.remove(); };
-  }, []);
+  }, [completer]);
   return { d, pret };
 }
 
