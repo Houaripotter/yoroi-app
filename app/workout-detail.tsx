@@ -965,6 +965,7 @@ export default function WorkoutDetailScreen() {
             <MuscleWorked
               sport={t.sport}
               customMuscles={t.muscles || undefined}
+              exercises={t.exercises}
               trainingId={t.id}
               onMusclesUpdated={(muscles) => setTraining((prev) => (prev ? { ...prev, muscles } : prev))}
             />
