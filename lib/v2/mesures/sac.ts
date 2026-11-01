@@ -27,9 +27,11 @@ export type Segment = 'bras' | 'avant_bras' | 'jambe' | 'cuisse' | 'mollet' | 't
  * - hors_plage : cle connue, valeur en dehors des valeurs possibles (decochee par defaut) ;
  * - doublon : deuxieme valeur pour la meme mesure le meme jour (deux pesees, deux lignes) ;
  * - sans_cote : mensuration sans cote, rangee a gauche dans la table des mensurations ;
- * - contexte : heure et appareil de la pesee (la table des pesees n'a pas de colonne pour eux).
+ * - contexte : heure et appareil de la pesee (la table des pesees n'a pas de colonne pour eux) ;
+ * - rangee : AV, mesure rangee dans son propre ecran (mensurations en plus, biomarqueurs, plis cutanes),
+ *   gardee ici aussi telle que l'IA l'a lue.
  */
-export type StatutBrut = 'autre' | 'decochee' | 'texte' | 'illisible' | 'hors_plage' | 'doublon' | 'sans_cote' | 'contexte';
+export type StatutBrut = 'autre' | 'decochee' | 'texte' | 'illisible' | 'hors_plage' | 'doublon' | 'sans_cote' | 'contexte' | 'rangee';
 
 export type OrigineBrute = 'ia_balance';
 
@@ -165,6 +167,8 @@ export type OptionsBloc = {
   enregistrees?: Iterable<string>;
   origine?: OrigineBrute;
   maintenant?: Date;
+  /** AV : noms des mesures en plus cochees et rangees dans leur propre ecran (jamais dans la pesee) */
+  rangees?: Iterable<string>;
 };
 
 /**
@@ -182,6 +186,7 @@ export function brutesDuBloc(bloc: ParseResult, o: OptionsBloc): MesureBrute[] {
   const out: MesureBrute[] = [];
   const gardees = new Map((o.gardees ?? []).map((a) => [normKey(a.nom), a]));
   const enregistrees = o.enregistrees ? new Set(o.enregistrees) : undefined;
+  const rangees = new Set(Array.from(o.rangees ?? []).map((n) => normKey(n)));
 
   // contexte de la pesee : heure et appareil
   if (base.heure || base.appareil) {
@@ -196,7 +201,8 @@ export function brutesDuBloc(bloc: ParseResult, o: OptionsBloc): MesureBrute[] {
   for (const a of bloc.autres) {
     const g = gardees.get(normKey(a.name));
     const valeur = g ? g.valeur : a.value;
-    out.push(mesure(base, g || !o.gardees ? 'autre' : 'decochee', a.name, valeur, a.unit, `${a.name} = ${a.raw}`, { dansPesee: !!g && o.dansPesee !== false }));
+    const rangee = !!g && rangees.has(normKey(a.name));
+    out.push(mesure(base, rangee ? 'rangee' : g || !o.gardees ? 'autre' : 'decochee', a.name, valeur, a.unit, `${a.name} = ${a.raw}`, { dansPesee: !!g && !rangee && o.dansPesee !== false }));
   }
   // cles connues : hors plage, sans cote, ou non enregistrees
   for (const v of bloc.values) {
