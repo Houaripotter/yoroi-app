@@ -22,6 +22,7 @@ import { BodyZones } from '@/components/yoroi/v2/accueil/BodyZones';
 import { intensite } from '@/lib/v2/intensite';
 import { RECUP_METHOD, messageScoreIncomplet, scoreRecupFiable } from '@/lib/v2/recuperation';
 import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
+import { InvitationForme } from '@/components/yoroi/v2/corps/InvitationForme';
 
 const FACTOR_ICON: Record<FactorKey, 'moon' | 'bolt' | 'drop' | 'body' | 'heart'> = {
   sommeil: 'moon',
@@ -79,6 +80,8 @@ export default function TaForme() {
 
   return (
     <DetailScreen title={traduire("Ta récupération")} subtitle={reliable && level ? level.label : traduire('Ton score du jour, sur 100')}>
+      {/* 1er novembre 2026 (AU) : ta forme du matin (questionnaire facon Hooper), a cote de ta recuperation */}
+      <InvitationForme style={{ marginBottom: 12 }} />
       {/* Score */}
       <Enter i={0}>
         {score !== null && level && !reliable ? (
