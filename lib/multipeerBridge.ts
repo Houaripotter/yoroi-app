@@ -2,7 +2,7 @@
 // YOROI - MULTIPEER BRIDGE (TypeScript)
 // ============================================
 // Wrapper TypeScript du module natif iOS MultipeerConnectivity
-// Sync iPhone <-> iPad local, zero serveur
+// Sync iPhone, iPad et Mac en local, zero serveur
 // ============================================
 
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
@@ -22,6 +22,18 @@ export interface PeerChangedEvent {
 export interface DataReceivedEvent {
   peer: string;
   data: string;   // JSON stringifié
+}
+
+/** 31 octobre 2026 : un appareil YOROI proche est vu, ou n'est plus vu (avant toute connexion) */
+export interface PeerSeenEvent {
+  peer: string;
+}
+
+/** 31 octobre 2026 : l'annonce ou la recherche n'a pas pu demarrer (reseau local refuse, Bonjour) */
+export interface MultipeerErrorEvent {
+  source: 'annonce' | 'recherche';
+  code: number;
+  domaine: string;
 }
 
 // ============================================
@@ -100,6 +112,24 @@ export const MultipeerBridge = {
   onDataReceived: (cb: (e: DataReceivedEvent) => void) => {
     if (!emitter) return { remove: () => {} };
     return emitter.addListener('multipeer_data_received', cb);
+  },
+
+  /** Un appareil YOROI est vu a proximite (module natif du 31 octobre 2026 ; rien avec un build plus ancien) */
+  onPeerFound: (cb: (e: PeerSeenEvent) => void) => {
+    if (!emitter) return { remove: () => {} };
+    return emitter.addListener('multipeer_peer_found', cb);
+  },
+
+  /** Un appareil YOROI n'est plus vu (la session, elle, peut tenir) */
+  onPeerLost: (cb: (e: PeerSeenEvent) => void) => {
+    if (!emitter) return { remove: () => {} };
+    return emitter.addListener('multipeer_peer_lost', cb);
+  },
+
+  /** L'annonce ou la recherche n'a pas demarre */
+  onError: (cb: (e: MultipeerErrorEvent) => void) => {
+    if (!emitter) return { remove: () => {} };
+    return emitter.addListener('multipeer_error', cb);
   },
 };
 
