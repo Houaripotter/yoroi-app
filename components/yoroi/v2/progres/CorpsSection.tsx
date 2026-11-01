@@ -36,6 +36,7 @@ import { dayLong, dayShort, num, sinceText, todayIso } from '@/lib/v2/progres/fo
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { CarteB, Capitales, CORPS_PASTEL, couleurPastelCorps, LigneDetail, SelecteurPeriode, teinte } from './ThemesProgres';
 import { carteBlanche } from '../seance/pastel';
+import { SuiviCorpsBas, SuiviCorpsHaut, useSuiviCorps } from '../corps/SuiviCorps';
 
 export const SERIES_COLORS = [...SERIES_ORDER];
 
@@ -188,6 +189,8 @@ export function CorpsSection({ part, pastel = false, bloc }: {
   const c = theme.colors;
   const router = useRouter();
   const bio = useBiomarkers();
+  // 1er novembre 2026 (AT, AU) : moyenne 7 jours, reperes, composition detaillee, perte d'eau, niveau d'affichage
+  const suivi = useSuiviCorps();
   const compo = { points: bio.points, loading: bio.loading };
   const lastIdx = bio.points.length - 1;
   const lastPoint = lastIdx >= 0 ? bio.points[lastIdx] : null;
@@ -242,6 +245,11 @@ export function CorpsSection({ part, pastel = false, bloc }: {
 
   return (
     <View style={{ paddingTop: bloc ? 0 : pastel ? 4 : part ? 12 : 22, gap: pastel ? 24 : 30 }}>
+      {showCorps && !bloc ? (
+        <View style={{ paddingHorizontal: GUTTER }}>
+          <SuiviCorpsHaut s={suivi} />
+        </View>
+      ) : null}
       {/* Derniere mesure : tendance, barre de composition, biomarqueurs */}
       {showCorps && lastPoint && voir('composition') ? (
         <View style={{ paddingHorizontal: GUTTER }}>
@@ -285,6 +293,12 @@ export function CorpsSection({ part, pastel = false, bloc }: {
             {pastel ? <SelecteurPeriode value={period} onChange={setPeriod} options={SHORT_PERIODS} style={{ marginTop: 6 }} /> : <PeriodSwitch value={period} onChange={setPeriod} options={SHORT_PERIODS} style={{ marginTop: 6 }} />}
           </View>
           <MiniCurveGrid groups={compoGroups} period={period} today={today} style={{ marginTop: 16 }} />
+        </View>
+      ) : null}
+
+      {showCorps && !bloc ? (
+        <View style={{ paddingHorizontal: GUTTER }}>
+          <SuiviCorpsBas s={suivi} />
         </View>
       ) : null}
 
