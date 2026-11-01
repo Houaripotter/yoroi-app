@@ -18,6 +18,7 @@ import { durationOf, exercisesOf, mondayOf, tonnage, workSetsOf } from '@/lib/v2
 import { familyOf, firstSport, parseRounds } from '@/lib/v2/seances/sessionData';
 import { muscleOf, MUSCLE_ORDER } from '@/lib/v2/progres/strength';
 import type { MuscleName } from '@/lib/v2/progres/strength';
+import { musclesExercice } from '@/lib/v2/seances/musclesExercices';
 import { computeRecords, recordShortTitle } from '@/lib/v2/seances/records';
 import type { RecordKind } from '@/lib/v2/seances/records';
 import { infoCardio, libelleCardio } from '@/lib/v2/seances/cardioJour';
@@ -521,7 +522,7 @@ function moisDe(src: SourcesGrands): InstantaneGrands['mois'] {
   };
 }
 
-/** Series de travail de la semaine par groupe, exercice par exercice (muscleOf, workSetsOf : le cardio ne compte pas) */
+/** Series de travail de la semaine par groupe, exercice par exercice (musclesExercice, workSetsOf : le cardio ne compte pas) */
 function musclesDe(src: SourcesGrands): InstantaneGrands['muscles'] {
   const today = src.aujourdhui;
   const lundi = mondayOf(today);
@@ -532,9 +533,10 @@ function musclesDe(src: SourcesGrands): InstantaneGrands['muscles'] {
     for (const e of exercisesOf(t)) {
       const s = workSetsOf(e).length;
       if (s === 0) continue;
-      const m = muscleOf({ name: String(e.name ?? ''), muscle_group: e.muscle_group });
+      // 31 octobre 2026 : la regle commune de l'app (lib/v2/seances/musclesExercices.ts), ses muscles principaux
+      const m = musclesExercice({ name: String(e.name ?? ''), muscle_group: e.muscle_group });
       if (!m) continue;
-      sets[m] = (sets[m] ?? 0) + s;
+      for (const g of new Set(m.principaux.map((x) => x.groupe))) sets[g] = (sets[g] ?? 0) + s;
       n += s;
     }
     if (n > 0) parSeance.push({ nom: nomSeance(t, src.plan), date: dateDe(t), series: n });
