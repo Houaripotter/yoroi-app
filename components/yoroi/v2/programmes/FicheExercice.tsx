@@ -2,9 +2,9 @@
  * La fiche d'un exercice (1er novembre 2026, Houari : « c'est possible de voir les exercices, c'est quoi, avec une
  * animation ? »). Elle s'ouvre d'un toucher sur un exercice de la séance du programme, de « Tes prochaines séances »
  * et de l'aperçu d'une séance :
- *  - en grand, le meilleur visuel autorisé (lib/v2/programmes/visuelExo.ts) : Gym visual seulement en mode créateur
- *    (licence non achetée), sinon notre animation maison, sinon Everkinetic avec son crédit dessous, sinon
- *    l'illustration de la machine, sinon le sticker du muscle ;
+ *  - en grand, le meilleur visuel autorisé (lib/v2/programmes/visuelExo.ts, ordreVisuels) : Gym visual seulement en
+ *    mode créateur (licence non achetée), sinon notre animation maison, sinon Everkinetic avec son crédit dessous
+ *    (mode créateur compris), sinon l'illustration de la machine, sinon le sticker du muscle ;
  *  - les muscles ciblés sur la petite carte rouge, face et dos ;
  *  - séries, répétitions, repos et charge proposée ;
  *  - Position, Mouvement et À éviter (ExplicationExo) ;
