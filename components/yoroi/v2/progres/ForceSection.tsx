@@ -6,7 +6,7 @@
  * La carte des muscles travailles (venue de Seances) accompagne les series par muscle.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useYoroiTheme } from '../../YoroiThemeProvider';
 import { Ink } from '../Ink';
@@ -16,14 +16,15 @@ import { InkBarChart } from './InkBarChart';
 import { DetailCue, GlassCard, GUTTER, Hanko, LegendMark, Pills, SectionHead, tapLight } from './ui';
 import { ExamplePreview } from './ExamplePreview';
 import { AnalysesRow, TrainingCharts } from './TrainingCharts';
-import { MuscleMap, MuscleScale } from '../seances/MuscleMap';
-import { weekMuscles } from '@/lib/v2/seances/weekSummary';
+import { MusclesSemaine } from '../seances/MusclesSemaine';
+import { musclesSemaine } from '@/lib/v2/seances/weekSummary';
+import { seriesParMuscle } from '@/lib/v2/seances/musclesExercices';
 import { sampleLift } from '@/lib/v2/progres/samples';
 import { PeriodSwitch } from '../charts/PeriodSwitch';
 import { BadgeRecord, CHART_COLORS, RECORD_RED, tint } from '../charts/core';
 import { couleurTraitDomaine } from '../charts/couleurDomaine';
 import { useTrainingsData } from '@/lib/v2/progres/useProgresData';
-import { computeLifts, essaiPourStagnation, hasStrengthData, MUSCLE_ORDER, setsByMuscle, stagnations, weeklyTonnage } from '@/lib/v2/progres/strength';
+import { computeLifts, essaiPourStagnation, hasStrengthData, MUSCLE_ORDER, stagnations, weeklyTonnage } from '@/lib/v2/progres/strength';
 import type { Essai, LiftPoint } from '@/lib/v2/progres/strength';
 import { accordSouleve, formatTonnage, mondayOf } from '@/lib/v2/trainingWeek';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
@@ -83,10 +84,13 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
   }, [lift, period, today]);
 
   const weekStart = shiftDays(mondayOf(today), -7 * weekOffset);
-  const muscles = useMemo(() => setsByMuscle(trainings, weekStart, shiftDays(weekStart, 6)), [trainings, weekStart]);
+  // 31 octobre 2026 : series par muscle exercice par exercice, la regle commune (lib/v2/seances/musclesExercices.ts)
+  const muscles = useMemo(() => seriesParMuscle(trainings, weekStart, shiftDays(weekStart, 6)), [trainings, weekStart]);
   const maxSets = Math.max(20, ...MUSCLE_ORDER.map((m) => muscles[m]));
   const tonnage = useMemo(() => weeklyTonnage(trainings, today, 10), [trainings, today]);
-  const muscleLoads = useMemo(() => weekMuscles(trainings, today), [trainings, today]);
+  const bilanMuscles = useMemo(() => musclesSemaine(trainings, today), [trainings, today]);
+  const muscleLoads = bilanMuscles.loads;
+  const { width: largeurEcran } = useWindowDimensions();
   const showCardio = part !== 'force';
   const tonAvg = useMemo(() => {
     const done = tonnage.slice(0, -1).filter((b) => b.value > 0);
@@ -248,8 +252,8 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
         />
         {weekOffset === 0 && muscleLoads.some((m) => m.level > 0) ? (
           <View style={{ gap: 10, marginBottom: 16 }}>
-            <MuscleMap loads={muscleLoads} height={150} />
-            <MuscleScale />
+            {/* la carte rouge de la semaine (onglet Seances), la liste etant juste dessous */}
+            <MusclesSemaine loads={muscleLoads} zones={bilanMuscles.zones} largeur={Math.min(largeurEcran, 640) - GUTTER * 2} liste={false} />
           </View>
         ) : null}
         <View style={{ gap: 10 }}>
