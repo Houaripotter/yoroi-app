@@ -9,10 +9,12 @@ import { getWeights, openDatabase, updateWeightScaleExtras, updateWeightScaleJso
 import type { Weight } from '@/lib/database';
 import { logger } from '@/lib/security/logger';
 import { mergeScaleJson, parseScaleJson, PHOTO_SOURCE, toColumns } from './format';
-import type { ScaleAutre } from './format';
+import type { ParseResult, ScaleAutre } from './format';
 import { existingAutres, existingValues, measureOfDay, measurePart, pickSameDayRow, planBlock, weightPart } from './multi';
 import type { MeasureDay } from './multi';
 import { loadMeasures, saveMeasures } from '@/lib/v2/progres/measures';
+import { brutesDesAutres, brutesDuBloc } from '@/lib/v2/mesures/sac';
+import { ajouterMesuresBrutes } from '@/lib/v2/mesures/stockage';
 
 export type PhotoSaveResult =
   | { ok: true; weight: number; updated: boolean; date: string; replaced?: { weight: number; source?: string } }
@@ -135,12 +137,16 @@ export type BlockSaveResult =
  * Enregistre une date : le poids et la composition dans la pesee du jour (completee, jamais en double),
  * les mensurations dans la table measurements a la meme date. Une valeur deja saisie n'est remplacee que
  * si sa cle est dans replace. Coller deux fois le meme texte n'ecrit rien de plus.
+ * AQ (1er novembre 2026) : `bloc`, le bloc lu, garde dans le sac des mesures (lib/v2/mesures/) tout ce que les
+ * colonnes ne gardent pas : heure, appareil, cote et segment, textes, valeurs hors plage, deuxieme pesee du jour.
+ * Des mesures en plus sans aucun poids ce jour-la ne bloquent plus l'enregistrement : elles vont dans le sac.
  */
 export async function saveImportBlock(
   date: string,
   values: Record<string, number | undefined>,
   autres: ScaleAutre[],
   replace: Set<string>,
+  bloc?: ParseResult,
 ): Promise<BlockSaveResult> {
   const day = String(date).slice(0, 10);
   let rows: Weight[] = [];
@@ -164,19 +170,33 @@ export async function saveImportBlock(
   const forMeasures = measurePart(plan.write);
   const needsWeight = Object.keys(forWeight).length > 0 || plan.autres.length > 0;
   const weight = forWeight.poids_kg ?? values.poids_kg ?? sameDayWeight(rows, day);
-  // rien n'est ecrit si le poids manque : pas de pesee a moitie enregistree
-  if (needsWeight && !weight) return { ok: false, reason: 'no_weight' };
+  // rien n'est ecrit si le poids manque : pas de pesee a moitie enregistree.
+  // AQ : seulement des mesures en plus (tour de poignet, tension...) sans poids ce jour-la : pas de pesee, elles vont dans le sac
+  const autresSeules = Object.keys(forWeight).length === 0 && plan.autres.length > 0;
+  if (needsWeight && !weight && !autresSeules) return { ok: false, reason: 'no_weight' };
+  const enPesee = needsWeight && !!weight;
 
   if (Object.keys(forMeasures).length) {
     await saveMeasures(day, forMeasures);
   }
   let saved: number | undefined;
   let replaced: { weight: number; source?: string } | undefined;
-  if (needsWeight) {
+  if (enPesee) {
     const res = await saveScalePhoto(day, forWeight, plan.autres);
     if (!res.ok) return res;
     saved = res.weight;
     replaced = res.replaced;
+  }
+  // AQ : le sac des mesures, jamais bloquant
+  try {
+    const sac = bloc
+      ? brutesDuBloc(bloc, { date: day, gardees: autres, enregistrees: Object.keys(values), dansPesee: enPesee })
+      : !enPesee && plan.autres.length
+        ? brutesDesAutres(plan.autres, day)
+        : [];
+    await ajouterMesuresBrutes(sac);
+  } catch (err) {
+    logger.warn('[Import multi] sac des mesures non complete', err);
   }
   const written = Object.keys(plan.write).length + plan.autres.length;
   return {
