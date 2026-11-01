@@ -526,45 +526,72 @@ export function MusclesPrevus({ couverture, loads, zones, largeur, suggestions, 
       </View>
       {suggestions.map((s) => {
         const cle = `${s.muscle}|${s.cible.date}`;
-        const ouvert = ouverte === cle;
-        const fait = s.exos.some((e) => ajoutes.includes(`${s.cible.jourId}|${e.nom}`));
-        const titreCible = sansTiret(s.cible.variante ? `${traduire(s.cible.titre)} ${s.cible.variante}` : traduire(s.cible.titre));
         return (
-          <View key={cle} style={{ borderRadius: 18, backgroundColor: fait ? menthe.fond : creme.fond, padding: 12, gap: 10 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Image source={illus.img(fait ? 'objectif_semaine' : 'etincelles')} style={{ width: 32, height: 32 }} resizeMode="contain" />
-              <Ink size={14} weight="extraBold" color={fait ? menthe.texte : creme.texte} style={{ flex: 1 }}>
-                {fait
-                  ? traduire('Ajouté à {0}', titreCible)
-                  : traduire('Ajoute un exercice {0} à {1}', traduire(DE_MUSCLE[s.muscle]), titreCible)}
-              </Ink>
-            </View>
-            {!fait ? (
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                <BoutonPrincipal label={traduire('Ajouter')} compact hauteur={44} style={{ flex: 1 }} onPress={() => onAjouter(s, s.exos[0].nom, s.exos[0].muscle)} accessibilityHint={traduire('Ajoute {0}', traduire(nomFr(s.exos[0].nom)))} />
-                <Pressable onPress={() => { tap(); setOuverte(ouvert ? null : cle); }} accessibilityRole="button" accessibilityState={{ expanded: ouvert }} style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 14, borderWidth: 2, borderColor: creme.texte, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
-                  <Ink size={13.5} weight="extraBold" color={creme.texte}>{traduire('Voir 3 exercices')}</Ink>
-                </Pressable>
-              </View>
-            ) : null}
-            {ouvert && !fait ? (
-              <View style={{ gap: 6 }}>
-                {s.exos.map((e) => (
-                  <Pressable key={e.nom} onPress={() => { tap(); onAjouter(s, e.nom, e.muscle); }} accessibilityRole="button" accessibilityLabel={traduire('Ajouter {0}', traduire(nomFr(e.nom)))} style={({ pressed }) => ({ minHeight: 52, borderRadius: 14, backgroundColor: c.surface, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, opacity: pressed ? 0.8 : 1 })}>
-                    <VignetteExo nom={e.nom} muscle={e.muscle} taille={40} arrondi={10} />
-                    <Ink size={13.5} weight="extraBold" style={{ flex: 1 }} numberOfLines={2}>{sansTiret(traduire(nomFr(e.nom)))}</Ink>
-                    <Ink size={20} weight="black" color={c.accentText}>+</Ink>
-                  </Pressable>
-                ))}
-              </View>
-            ) : null}
-          </View>
+          <CarteSuggestion
+            key={cle}
+            s={s}
+            fait={s.exos.some((e) => ajoutes.includes(`${s.cible.jourId}|${e.nom}`))}
+            ouvert={ouverte === cle}
+            onOuvrir={() => setOuverte(ouverte === cle ? null : cle)}
+            onAjouter={(nom, muscle) => onAjouter(s, nom, muscle)}
+          />
         );
       })}
       {!suggestions.length && atteints < couverture.length ? (
         <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('Rien n’est forcé : les abdos et les muscles sans séance à venir cette semaine restent tels quels.')}</Ink>
       ) : null}
       <FeuillePourquoi explication={pourquoi ? POURQUOI_DEUX_FOIS : null} onClose={() => setPourquoi(false)} />
+    </View>
+  );
+}
+
+/**
+ * Une suggestion douce : « Ajoute un exercice de jambes à Push A », « Ajouter » (le premier des 3 exercices) ou
+ * « Voir 3 exercices ». Partagée par Tes prochaines séances et Tes jours (Ce que ta semaine travaille).
+ */
+export function CarteSuggestion({ s, fait, ouvert, onOuvrir, onAjouter }: {
+  s: Suggestion;
+  /** un des exercices proposés vient d'être ajouté */
+  fait: boolean;
+  ouvert: boolean;
+  onOuvrir: () => void;
+  onAjouter: (nom: string, muscle: string) => void;
+}) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const menthe = useTeinte('menthe');
+  const creme = useTeinte('creme');
+  const illus = useIllustrations();
+  const titreCible = sansTiret(s.cible.variante ? `${traduire(s.cible.titre)} ${s.cible.variante}` : traduire(s.cible.titre));
+  return (
+    <View style={{ borderRadius: 18, backgroundColor: fait ? menthe.fond : creme.fond, padding: 12, gap: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Image source={illus.img(fait ? 'objectif_semaine' : 'etincelles')} style={{ width: 32, height: 32 }} resizeMode="contain" />
+        <Ink size={14} weight="extraBold" color={fait ? menthe.texte : creme.texte} style={{ flex: 1 }}>
+          {fait
+            ? traduire('Ajouté à {0}', titreCible)
+            : traduire('Ajoute un exercice {0} à {1}', traduire(DE_MUSCLE[s.muscle]), titreCible)}
+        </Ink>
+      </View>
+      {!fait ? (
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <BoutonPrincipal label={traduire('Ajouter')} compact hauteur={44} style={{ flex: 1 }} onPress={() => onAjouter(s.exos[0].nom, s.exos[0].muscle)} accessibilityHint={traduire('Ajoute {0}', traduire(nomFr(s.exos[0].nom)))} />
+          <Pressable onPress={() => { tap(); onOuvrir(); }} accessibilityRole="button" accessibilityState={{ expanded: ouvert }} style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 14, borderWidth: 2, borderColor: creme.texte, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+            <Ink size={13.5} weight="extraBold" color={creme.texte}>{traduire('Voir 3 exercices')}</Ink>
+          </Pressable>
+        </View>
+      ) : null}
+      {ouvert && !fait ? (
+        <View style={{ gap: 6 }}>
+          {s.exos.map((e) => (
+            <Pressable key={e.nom} onPress={() => { tap(); onAjouter(e.nom, e.muscle); }} accessibilityRole="button" accessibilityLabel={traduire('Ajouter {0}', traduire(nomFr(e.nom)))} style={({ pressed }) => ({ minHeight: 52, borderRadius: 14, backgroundColor: c.surface, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, opacity: pressed ? 0.8 : 1 })}>
+              <VignetteExo nom={e.nom} muscle={e.muscle} taille={40} arrondi={10} />
+              <Ink size={13.5} weight="extraBold" style={{ flex: 1 }} numberOfLines={2}>{sansTiret(traduire(nomFr(e.nom)))}</Ink>
+              <Ink size={20} weight="black" color={c.accentText}>+</Ink>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
