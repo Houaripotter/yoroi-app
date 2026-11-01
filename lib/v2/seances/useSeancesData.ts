@@ -5,7 +5,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { DeviceEventEmitter } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { getCompetitions, getProfile, getTrainings, getWeeklyPlan, getSlotOccurrences, ensureCurrentWeekOccurrences, nettoyerClubsOrphelins } from '@/lib/database';
+import { getCompetitions, getProfile, getWeeklyPlan, getSlotOccurrences, ensureCurrentWeekOccurrences, nettoyerClubsOrphelins } from '@/lib/database';
 import type { Competition, SlotOccurrence, Training, WeeklyPlan } from '@/lib/database';
 import { logger } from '@/lib/security/logger';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
@@ -14,6 +14,7 @@ import { computeRecords } from './records';
 import { dedupeTrainings } from './dedupe';
 import { slotWeekStart } from './sessionData';
 import { garderSiIdentique } from '@/lib/v2/perf/garderSiIdentique';
+import { lireSeances } from '@/lib/v2/perf/lireSeances';
 
 export type Gender = 'homme' | 'femme';
 
@@ -43,7 +44,7 @@ export function useSeancesData() {
       }
     }
     try {
-      const [t, p, esp] = await Promise.all([getTrainings(), getProfile().catch(() => null), getEspace().catch(() => null)]);
+      const [t, p, esp] = await Promise.all([lireSeances(), getProfile().catch(() => null), getEspace().catch(() => null)]);
       // Une seance YOROI relue depuis Sante n'apparait qu'une fois
       // 1er novembre 2026 : rien de change, meme tableau, les records et les calculs de la semaine ne sont pas refaits
       const relues = dedupeTrainings(t ?? []);
