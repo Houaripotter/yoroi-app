@@ -89,7 +89,7 @@ export function TitrePartie({ titre, sticker, teinte = 'bleu' }: { titre: string
 /* ------------------------------------------------------------------------------------------------
  * La bande des 7 jours
  * ---------------------------------------------------------------------------------------------- */
-export function BandeJours({ vues, rangs, choisi, onChoisir, decalage, lettre, aujourdhui, peutAvant, peutApres, onAvant, onApres }: {
+export function BandeJours({ vues, rangs, choisi, onChoisir, decalage, lettre, aujourdhui, peutAvant, peutApres, onAvant, onApres, compact }: {
   vues: VueJour[];
   /** le rang de la séance de chaque jour (sa couleur), -1 : repos */
   rangs: number[];
@@ -102,6 +102,8 @@ export function BandeJours({ vues, rangs, choisi, onChoisir, decalage, lettre, a
   peutApres: boolean;
   onAvant: () => void;
   onApres: () => void;
+  /** 1er novembre 2026 (accueil en grand écran) : sans les flèches de semaine, cette semaine seulement */
+  compact?: boolean;
 }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
@@ -129,7 +131,7 @@ export function BandeJours({ vues, rangs, choisi, onChoisir, decalage, lettre, a
   return (
     <View style={[carte, { padding: 12, gap: 12 }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        {fleche('avant', peutAvant, onAvant)}
+        {compact ? null : fleche('avant', peutAvant, onAvant)}
         <View style={{ flex: 1, alignItems: 'center', gap: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Ink size={17} weight="black" tight accessibilityRole="header">{titreDecalage(decalage)}</Ink>
@@ -143,7 +145,7 @@ export function BandeJours({ vues, rangs, choisi, onChoisir, decalage, lettre, a
             {`${traduire('{0} au {1}', debut, fin)} · ${traduire('{0} sur {1} faites', faites, seances.length)}`}
           </Ink>
         </View>
-        {fleche('apres', peutApres, onApres)}
+        {compact ? null : fleche('apres', peutApres, onApres)}
       </View>
       <View style={{ flexDirection: 'row', gap: 5 }}>
         {vues.map((v, k) => {
