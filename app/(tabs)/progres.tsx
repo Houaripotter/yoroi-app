@@ -233,7 +233,9 @@ export default function Progres() {
   const victoire = useMemo(() => (semaine ? victoireDuJour(faits, semaine.cles) : null), [faits, semaine]);
 
   const phrases: Record<ThemeProgres, Phrase | null> = useMemo(() => {
-    const lift = computeLifts(trainings)[0];
+    // 1er novembre 2026 : les charges de tout l'historique calculees une seule fois (elles servaient deux fois)
+    const lifts = computeLifts(trainings);
+    const lift = lifts[0];
     const lp = lift?.points[lift.points.length - 1];
     const mois = today.slice(0, 7);
     const du = trainings.filter((t) => (t.date || '').slice(0, 7) === mois);
@@ -242,7 +244,7 @@ export default function Progres() {
     const v = lp ? versUnitePoids(lp.value, unite) : 0;
     return {
       Corps: phraseCorps(faits),
-      Force: lift && lp ? phraseForce({ exercice: lift.name, max: `${num(v, v >= 100 ? 0 : 1)} ${unite === 'lb' ? 'lb' : 'kg'}`, stagnent: stagnations(computeLifts(trainings), today).length }) : null,
+      Force: lift && lp ? phraseForce({ exercice: lift.name, max: `${num(v, v >= 100 ? 0 : 1)} ${unite === 'lb' ? 'lb' : 'kg'}`, stagnent: stagnations(lifts, today).length }) : null,
       Cardio: phraseCardio({ duree: formatDuration(minutes), seances: du.length, mois: monthLong(today), km: du.reduce((s, t) => s + (t.distance || 0), 0) }),
       Santé: forme && forme.level ? phraseSante({ score: forme.score, niveau: forme.level.label }) : null,
       Photos: phrasePhotos({ nombre: ph.length, texteDepuis: ph[0] ? sinceText(ph[0].date.slice(0, 10)) : null }),
