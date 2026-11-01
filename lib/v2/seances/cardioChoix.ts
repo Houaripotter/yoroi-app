@@ -16,7 +16,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { signalerASynchroniser } from '@/lib/v2/synchro/cles';
 import { CARDIO_DEFAUT } from './cardioFin';
-import { CLE_CHOIX_CARDIO, TYPE_DEFAUT, choixEnMemoire, estType, infoCardio, lireChoix, nettoyerChoix, retenirChoix, typeDeNom } from './cardioJour';
+import { CLE_CHOIX_CARDIO, TYPE_DEFAUT, choixEnMemoire, estType, habitudeCardio, infoCardio, lireChoix, nettoyerChoix, retenirChoix, typeDeNom } from './cardioJour';
 import type { ChoixCardio, ChoixGardes, MesureCardio } from './cardioJour';
 import type { SegmentCardio, TypeCardio } from './cardioFin';
 
@@ -73,6 +73,29 @@ export function enregistrerChoix(cle: string, choix: ChoixCardio): Promise<Choix
       }
     } catch {
       // le choix reste pour cette seance
+    }
+    return n;
+  });
+  fileChoix = suite.catch(() => {});
+  return suite;
+}
+
+/**
+ * 1er novembre 2026 : ton programme prévoit un autre cardio (type ou durée changés dans la fin de séance) : tes choix
+ * gardés pour ses séances (« programme|jour ») tombent, la séance suivante annonce le cardio prévu.
+ */
+export function oublierChoixDuProgramme(programme: string): Promise<ChoixGardes> {
+  const suite = fileChoix.then(async () => {
+    const g = await chargerChoix();
+    const n: ChoixGardes = {};
+    for (const [k, v] of Object.entries(g)) if (!k.startsWith(`${programme}|`)) n[k] = v;
+    if (Object.keys(n).length === Object.keys(g).length) return g;
+    retenirChoix(n);
+    try {
+      await AsyncStorage.setItem(CLE_CHOIX_CARDIO, JSON.stringify(n));
+      signalerASynchroniser();
+    } catch {
+      // les choix d'avant restent sur le téléphone
     }
     return n;
   });
@@ -219,7 +242,15 @@ export function nettoyerReglagesCardio(x: unknown): ReglagesCardio {
 }
 
 /** Les valeurs proposees au depart : celles de la derniere fois pour ce type, sinon rien (tu les notes) */
-export const prerempli = (r: ReglagesCardio, type: TypeCardio): Valeurs => ({ ...(r[type] ?? {}) });
+export const prerempli = (r: ReglagesCardio, type: TypeCardio): Valeurs => {
+  // 1er novembre 2026 : ta pente et ta vitesse habituelles (au moins 3 fois sur 4 semaines) passent avant la dernière
+  const h = habitudeCardio();
+  if (h && h.type === type) {
+    const v = valeursPour(infoCardio(type).mesure, h);
+    if (Object.keys(v).length) return { ...(r[type] ?? {}), ...v };
+  }
+  return { ...(r[type] ?? {}) };
+};
 
 export async function chargerReglagesCardio(): Promise<ReglagesCardio> {
   try {
