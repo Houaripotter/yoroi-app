@@ -19,12 +19,12 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import { DemoPaire, FOND_DEMO } from '@/components/yoroi/v2/seance/ExoDemo';
 import { CarreSticker } from '@/components/yoroi/v2/seances/kitA';
+import { useAnimationsTest } from '@/components/yoroi/v2/programmes/VignetteExo';
 import { tap } from '@/components/yoroi/v2/seances/ui';
 import { CarteMuscles } from '@/components/yoroi/v2/programmes/CarteMuscles';
 import { ExplicationExo } from '@/components/yoroi/v2/programmes/ExplicationExo';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { useFeuilleCentree } from '@/lib/v2/nav/useGrandEcran';
-import { useSourceDemos } from '@/lib/v2/programmes/demosTest';
 import { visuelExo } from '@/lib/v2/programmes/visuelExo';
 import { musclesDeExo } from '@/lib/v2/programmes/musclesExos';
 import { libelleRepos } from '@/lib/v2/programmes/catalogue';
@@ -56,9 +56,9 @@ function Repere({ valeur, libelle }: { valeur: string; libelle: string }) {
 
 /** Le grand visuel en haut de la fiche */
 function GrandVisuel({ e, largeur }: { e: ExoFiche; largeur: number }) {
-  const source = useSourceDemos();
+  const test = useAnimationsTest();
   const cardio = typeof e.minutes === 'number' && e.minutes > 0;
-  const v = React.useMemo(() => visuelExo(e.nom, e.muscle, cardio), [e.nom, e.muscle, cardio, source]);
+  const v = React.useMemo(() => visuelExo(e.nom, e.muscle, cardio, test), [e.nom, e.muscle, cardio, test]);
   const hauteur = Math.round(Math.min(260, largeur * 0.7));
   if (v.type === 'animation') {
     return <DemoPaire images={v.images} label={traduire('Animation de l’exercice {0}', traduire(e.nom))} largeur={largeur} hauteur={hauteur} arrondi={24} bordure={false} contenir />;
