@@ -205,6 +205,22 @@ export function seanceQuiCouvre<T>(retard: readonly MuscleName[], prevues: reado
   return best;
 }
 
+/**
+ * 1er novembre 2026 (Houari : « Aucune séance de ta semaine ne les travaille. C'est faux et anxiogène : toutes mes
+ * séances les travaillent »). Quand aucune séance d'ici dimanche ne couvre les muscles en retard, la phrase dépend de
+ * TOUTE ta semaine prévue (du lundi au dimanche), pas seulement des jours qui restent :
+ *  - 'plus_cette_semaine' : ta semaine les travaille, il ne reste simplement plus de séance prévue d'ici dimanche ;
+ *  - 'aucune_semaine' : vraiment aucune séance de ta semaine ne travaille ces muscles ;
+ *  - 'bibliotheque' : pas de programme en cours.
+ * Sans programme, ou quand ta semaine ne travaille aucun de ces muscles, la bibliothèque est proposée ; sinon la carte
+ * ne dit jamais qu'aucune séance ne les travaille.
+ */
+export type RaisonSansSeance = 'plus_cette_semaine' | 'aucune_semaine' | 'bibliotheque';
+export function raisonSansSeance(retard: readonly MuscleName[], musclesDeLaSemaine: readonly MuscleName[] | null): RaisonSansSeance {
+  if (!musclesDeLaSemaine) return 'bibliotheque';
+  return retard.some((m) => musclesDeLaSemaine.includes(m)) ? 'plus_cette_semaine' : 'aucune_semaine';
+}
+
 /** Les zones de la bibliothèque (lib/v2/programmes/zones.ts) pour chaque muscle */
 const ZONE_DU_MUSCLE: Record<Exclude<MuscleName, 'Jambes'>, string> = {
   Pectoraux: 'pectoraux',
