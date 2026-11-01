@@ -18,8 +18,10 @@ import { DeviceEventEmitter } from 'react-native';
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { dureeEstimee } from './express';
 import { EVENEMENT_PROGRAMME, PREFIXE_PERSO, remplirRegistrePerso } from './registrePerso';
-import type { ExoProgramme, Programme } from './types';
+import type { ExoProgramme, JourProgramme, Programme } from './types';
 import type { SemaineLibre } from './semaineLibre';
+import { lireAlternance, planAlternance } from './alternance';
+import type { Alternance, SourceJour } from './alternance';
 
 export const CLE_PROGRAMMES_PERSO = 'yoroi_programmes_perso_v1';
 export const MAX_EXOS_SEANCE = 15;
@@ -68,6 +70,13 @@ export type ProgrammePerso = {
   origine?: string;
   /** 30 octobre 2026 : tes briques posées sur aucun jour (briques.ts), gardées pour les reposer */
   briques?: SeancePerso[];
+  /**
+   * 1er novembre 2026 (alternance.ts) : « Tes séances », alterner A et B ('ab') ou toujours la même ('meme').
+   * Absent (programmes d'avant) : rien ne change, ta semaine se lit comme avant.
+   */
+  alternance?: Alternance;
+  /** 1er novembre 2026 : les versions B préparées (varianteB.ts), une par brique (sa brique : celle de la séance A) */
+  variantesB?: SeancePerso[];
 };
 
 function jourLocal(d = new Date()): string {
@@ -230,6 +239,16 @@ export const idJourPerso = (id: string, jour: number) => `${id}-d${jour}`;
 
 export const idJourPersoB = (id: string, jour: number) => `${id}-b${jour}`;
 
+/** 1er novembre 2026 : l'id de la version B d'une séance (alternance.ts), stable : celui de sa brique */
+export const idVariantePerso = (id: string, brique: string) => `${id}-v${brique}`;
+
+/** Le lundi (date locale) de la semaine d'une date « 2026-11-01 » ; undefined si illisible */
+function lundiLocal(iso: string): string | undefined {
+  const d = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return undefined;
+  return jourLocal(new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7), 12));
+}
+
 /** 30 octobre 2026 : l'id d'une séance de ton programme, stable (sid) ; les séances d'avant gardent « d3 », « b3 » */
 export const idSeancePerso = (id: string, sid: string) => `${id}-${sid}`;
 const SID = /^[a-z0-9]{1,24}$/;
@@ -299,7 +318,7 @@ export function avecSidsNeufs(pp: ProgrammePerso, maintenant = Date.now()): Prog
 
 export function versProgramme(pp: ProgrammePerso): Programme {
   // 30 octobre 2026 : chaque séance a son id stable (sid), son jour est dit à part (jourPerso)
-  const jours = joursDuPerso(pp).map((d) => {
+  const jours: JourProgramme[] = joursDuPerso(pp).map((d) => {
     const s = pp.semaine[d]!;
     return { id: idDuJourPerso(pp, d)!, titre: titreDeSeance(s), muscles: musclesDeSeance(s.exos), exos: s.exos.map((e) => ({ ...e })), jourPerso: { d } };
   });
@@ -313,6 +332,34 @@ export function versProgramme(pp: ProgrammePerso): Programme {
         ...(pp.depuis ? { depuis: pp.depuis } : {}),
       }
     : undefined;
+  // 1er novembre 2026 : A et B au choix (alternance.ts) : la version B de tes séances, et deux semaines qui alternent
+  const alt = planAlternance(pp);
+  let joursV: JourProgramme[] = [];
+  let semaineAlt: SemaineLibre | undefined;
+  if (alt) {
+    const variantes = new Map((pp.variantesB ?? []).map((v) => [v.brique, v]));
+    joursV = alt.variantes.map((k) => {
+      const v = variantes.get(k)!;
+      const d = pp.semaine.findIndex((s) => !!s && s.brique === k);
+      const a = pp.semaine[d]!;
+      return { id: idVariantePerso(pp.id, k), titre: titreDeSeance({ ...v, titre: a.titre }), muscles: musclesDeSeance(v.exos), exos: v.exos.map((e) => ({ ...e })), jourPerso: { d, b: true }, variante: 'B' as const };
+    });
+    const avecB = new Set(alt.variantes);
+    for (const j of jours) {
+      const s = j.jourPerso ? pp.semaine[j.jourPerso.d] : null;
+      if (s && s.brique && avecB.has(s.brique)) Object.assign(j, { variante: 'A' as const });
+    }
+    const ref = (x: SourceJour | null) => {
+      if (!x) return null;
+      const id = 'jour' in x ? idDuJourPerso(pp, x.jour) : idVariantePerso(pp.id, x.variante);
+      return id ? { p: pp.id, s: id } : null;
+    };
+    const a = alt.a.map(ref);
+    const b = alt.b.map(ref);
+    const differe = a.some((x, d) => x?.s !== b[d]?.s);
+    const depuis = pp.depuis ?? lundiLocal(pp.creeLe);
+    semaineAlt = differe && depuis ? { a, b, ab: true, depuis } : { a };
+  }
   const duree = jours.length ? Math.max(...jours.map((j) => dureeEstimee(j.exos))) : 0;
   return {
     id: pp.id,
@@ -329,8 +376,8 @@ export function versProgramme(pp: ProgrammePerso): Programme {
     dureeMin: Math.max(15, Math.round(duree / 5) * 5),
     semaines: pp.duree && pp.duree > 0 ? pp.duree : 8,
     ...(pp.duree === 0 ? { sansFin: true } : {}),
-    jours: [...jours, ...joursB],
-    ...(semaineLibre ? { semaineLibre } : {}),
+    jours: [...jours, ...joursB, ...joursV],
+    ...(semaineAlt ? { semaineLibre: semaineAlt } : semaineLibre ? { semaineLibre } : {}),
     principes: [],
     sources: [],
   };
@@ -403,6 +450,19 @@ export function nettoyerPerso(x: unknown): ProgrammePerso | null {
     })
     .filter((s): s is SeancePerso => !!s)
     .slice(0, MAX_BRIQUES_GARDEES);
+  // 1er novembre 2026 (alternance.ts) : tes versions B, une par brique, lues comme tes briques
+  const vuesB = new Set<string>();
+  const variantesB = (Array.isArray(p.variantesB) ? p.variantesB : [])
+    .map((s) => {
+      if (!s || typeof s !== 'object' || !Array.isArray(s.exos) || !briqueValide(s.brique) || vuesB.has(s.brique)) return null;
+      vuesB.add(s.brique);
+      const exos = exosLiesPropres(s.exos.map(nettoyerExo).filter((e): e is ExoProgramme => !!e).slice(0, MAX_EXOS_SEANCE));
+      if (!exos.length) return null;
+      return { ...(typeof s.titre === 'string' && s.titre.trim() ? { titre: s.titre.trim().slice(0, 40) } : {}), exos, brique: s.brique } as SeancePerso;
+    })
+    .filter((s): s is SeancePerso => !!s)
+    .slice(0, MAX_BRIQUES_GARDEES);
+  const alternance = lireAlternance(p.alternance);
   const depuis = typeof p.depuis === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.depuis) ? p.depuis : undefined;
   const rappel = p.rappel && typeof p.rappel === 'object' && typeof p.rappel.heure === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(p.rappel.heure) ? { actif: !!p.rappel.actif, heure: p.rappel.heure } : undefined;
   return {
@@ -419,6 +479,8 @@ export function nettoyerPerso(x: unknown): ProgrammePerso | null {
     ...(p.duree === 0 || p.duree === 8 || p.duree === 12 ? { duree: p.duree } : {}),
     ...(typeof p.origine === 'string' && p.origine.length <= 120 ? { origine: p.origine } : {}),
     ...(briques.length ? { briques } : {}),
+    ...(alternance ? { alternance } : {}),
+    ...(variantesB.length ? { variantesB } : {}),
   };
 }
 
