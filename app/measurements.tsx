@@ -2,6 +2,8 @@
  * Mensurations v2 : saisie rapide sur la silhouette.
  * Chaque zone est pre-remplie avec ta derniere mesure, + et - par demi-centimetre,
  * « pareil » pour confirmer sans changer. Seules les zones touchees sont enregistrees.
+ * 1er novembre 2026 (AT) : sous la silhouette, « Autres mensurations » (components/yoroi/v2/corps/MensurationsPlus.tsx),
+ * rangees a part ; les 14 tours de la silhouette ne changent pas.
  */
 import { track } from '@/utils/telemetry';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -28,6 +30,7 @@ import { logger } from '@/lib/security/logger';
 import Svg, { Path } from 'react-native-svg';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { MensurationsPlus } from '@/components/yoroi/v2/corps/MensurationsPlus';
 
 
 /** Champs de saisie derriere chaque zone de la silhouette */
@@ -287,6 +290,10 @@ export default function MeasurementsScreen() {
           })}
         </View>
 
+        {/* 1er novembre 2026 (AT) : poignet, cheville, genou, fessiers, taille la plus etroite, biceps contracte */}
+        <View style={{ paddingHorizontal: GUTTER, marginTop: 22 }}>
+          <MensurationsPlus date={date} />
+        </View>
       </ScrollView>
 
       <View style={{ position: 'absolute', left: GUTTER, right: GUTTER, bottom: insets.bottom + 18 }}>
