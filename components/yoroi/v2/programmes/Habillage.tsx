@@ -28,6 +28,7 @@ import { stickerDeLIcone } from '@/components/yoroi/v2/programmes/stickersIcones
 import { musclesDeExo } from '@/lib/v2/programmes/musclesExos';
 import { indexGarde, seanceDuPlanLe, seancesAVenir, semaineEffective } from '@/lib/v2/programmes/suivi';
 import { jourDuProgramme, seanceLe, semaineDepuisPlan } from '@/lib/v2/programmes/semaineLibre';
+import { avecVersion } from '@/lib/v2/programmes/alternance';
 import type { SemaineLibre } from '@/lib/v2/programmes/semaineLibre';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Programme } from '@/lib/v2/programmes/types';
@@ -811,7 +812,7 @@ export function tuileCharge(gain: number | null, couleurs: { vert: string }, onP
   return { label: traduire('Charge'), valeur: '0', unite: '%', onPress };
 }
 
-export type RondJour = { lettre: string; nomJour: string; etat: 'fait' | 'prochain' | 'prevu' | 'passe' | 'rate' | 'repos'; libelle: string };
+export type RondJour = { lettre: string; nomJour: string; etat: 'fait' | 'prochain' | 'prevu' | 'passe' | 'rate' | 'repos'; libelle: string; /** 1er novembre 2026, soir : la version du jour quand tes séances alternent */ version?: 'A' | 'B' };
 
 const NOMS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 const isoLocal = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -852,7 +853,7 @@ export function rondsDeLaSemaine(p: Programme, actif: ProgrammeActif | null, jou
     const fait = enCours ? actif!.faits.find((f) => f.date === di && f.date >= actif!.debut) : undefined;
     if (fait) {
       const j = jourDuProgramme(p, fait.jourId);
-      return { ...base, etat: 'fait', libelle: j ? nomCourt(traduire(j.titre)) : traduire('Faite') };
+      return { ...base, etat: 'fait', libelle: j ? nomCourt(traduire(j.titre)) : traduire('Faite'), ...(j?.variante ? { version: j.variante } : {}) };
     }
     if (!(sem ? !!seanceDu(d) : jours.includes(k))) return { ...base, etat: 'repos', libelle: traduire('Repos') };
     const aVenir = di > aujIso || (di === aujIso && !faitAuj);
@@ -860,7 +861,8 @@ export function rondsDeLaSemaine(p: Programme, actif: ProgrammeActif | null, jou
     const j = sem ? seanceDu(d) : suite[n++];
     const etat = prochainVu ? 'prevu' : 'prochain';
     prochainVu = true;
-    return { ...base, etat, libelle: j ? nomCourt(traduire(j.titre)) : '' };
+    const version = (j as { variante?: 'A' | 'B' } | undefined)?.variante;
+    return { ...base, etat, libelle: j ? nomCourt(traduire(j.titre)) : '', ...(version ? { version } : {}) };
   });
 }
 
@@ -889,12 +891,18 @@ export function SemaineRonds({ ronds, titre }: { ronds: RondJour[]; titre?: stri
             <View
               key={k}
               accessible
-              accessibilityLabel={[r.nomJour, r.etat === 'repos' ? '' : r.libelle, etatLu[r.etat]].filter(Boolean).join(', ')}
+              accessibilityLabel={[r.nomJour, r.etat === 'repos' ? '' : avecVersion(r.libelle, r.version ? { variante: r.version } : null), etatLu[r.etat]].filter(Boolean).join(', ')}
               style={{ flex: 1, alignItems: 'center', gap: 6 }}
             >
               <Ink size={11} weight="extraBold" color={pal.texte2}>{r.lettre}</Ink>
               <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: fond, borderWidth: bord === 'transparent' ? 0 : 2, borderColor: bord, alignItems: 'center', justifyContent: 'center' }}>
-                {plein ? <Icon name="check" size={16} color={c.onPrimary} strokeWidth={3} /> : null}
+                {plein ? <Icon name="check" size={16} color={c.onPrimary} strokeWidth={3} /> : r.version ? <Ink size={14} weight="black" color={r.version === 'B' ? pal.orange : pal.accent}>{r.version}</Ink> : null}
+                {/* la version d'une séance faite, en petit badge sur le rond */}
+                {plein && r.version ? (
+                  <View style={{ position: 'absolute', right: -4, top: -4, minWidth: 17, height: 17, borderRadius: 9, backgroundColor: pal.carte, borderWidth: 1.5, borderColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+                    <Ink size={10} weight="black" color={pal.texte}>{r.version}</Ink>
+                  </View>
+                ) : null}
               </View>
               <Ink size={11} weight={r.etat === 'repos' || r.etat === 'rate' ? 'bold' : 'extraBold'} color={r.etat === 'repos' || r.etat === 'rate' ? pal.texte3 : pal.texte} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
                 {r.libelle || ' '}
