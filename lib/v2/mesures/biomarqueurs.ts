@@ -121,7 +121,8 @@ export function depuisSac(brutes: MesureBrute[]): Biomarqueur[] {
   const out: Biomarqueur[] = [];
   const tension = new Map<string, { sys?: number; dia?: number; heure?: string | null }>();
   for (const m of brutes) {
-    if (!m || m.valeur === null || !m.date) continue;
+    // AV : une mesure que tu as decochee a l'import n'est pas proposee
+    if (!m || m.valeur === null || !m.date || m.statut === 'decochee') continue;
     const k = m.cle;
     const u = m.unite || '';
     let type: TypeBio | undefined;
