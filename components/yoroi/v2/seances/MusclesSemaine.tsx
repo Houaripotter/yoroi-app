@@ -6,6 +6,10 @@
  * 30 octobre 2026 (Houari : « savoir si chaque muscle a été travaillé 2 fois cette semaine ») : sous chaque muscle,
  * deux petits points (0, 1 ou 2 jours) et « 1 fois sur 2 » ou « 2 fois », le résumé « 4 muscles sur 6 travaillés
  * 2 fois » et « Pourquoi 2 fois ? » qui ouvre la feuille des études. La règle : lib/v2/frequence/deuxFois.ts.
+ * 31 octobre 2026 (Houari : « corrige le partout dans l'app ») : la même carte sert au détail d'une séance et à
+ * Progrès Force, à la place de l'ancienne silhouette grise. zones : les zones précises des exercices
+ * (lib/v2/seances/musclesExercices.ts : des mollets allument les mollets, pas toute la jambe) ; liste false : la
+ * carte et la légende seules, quand l'écran a déjà sa liste.
  */
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
@@ -44,13 +48,21 @@ function Points({ n, plein, vide }: { n: number; plein: string; vide: string }) 
   );
 }
 
-export function MusclesSemaine({ loads, largeur, frequence }: { loads: MuscleLoad[]; largeur: number; frequence?: FrequenceMuscle[] }) {
+export function MusclesSemaine({ loads, largeur, frequence, zones, liste: avecListe = true }: {
+  loads: MuscleLoad[];
+  largeur: number;
+  frequence?: FrequenceMuscle[];
+  /** zones allumées, précises ; absent : tout le groupe */
+  zones?: readonly ZoneId[];
+  /** false : la carte et la légende, sans la liste des groupes */
+  liste?: boolean;
+}) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const ch = CHALEUR[theme.isDark ? 'sombre' : 'clair'];
   const [pourquoi, setPourquoi] = useState(false);
-  const choisies = loads.filter((m) => m.level > 0).flatMap((m) => ZONES[m.name] ?? []);
-  const corps = Math.max(58, Math.min(78, Math.floor(largeur * 0.22)));
+  const choisies = zones ?? loads.filter((m) => m.level > 0).flatMap((m) => ZONES[m.name] ?? []);
+  const corps = avecListe ? Math.max(58, Math.min(78, Math.floor(largeur * 0.22))) : Math.max(70, Math.min(110, Math.floor(largeur * 0.3)));
   // avec de la musculation cette semaine, les 6 muscles sont listés (le résumé « 4 sur 6 » se lit dans la liste)
   const avecFrequence = !!frequence && frequence.some((f) => f.jours > 0);
   const liste = loads.filter((m) => m.level > 0 || avecFrequence);
@@ -58,12 +70,12 @@ export function MusclesSemaine({ loads, largeur, frequence }: { loads: MuscleLoa
   const resume = frequence ? resumeFrequence(frequence) : null;
   return (
     <View style={{ gap: 10 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: avecListe ? 'flex-start' : 'center', gap: 12 }}>
         <View style={{ flexDirection: 'row', gap: 4 }} accessible accessibilityLabel={traduire('Muscles travaillés cette semaine : {0}', liste.map((m) => traduire(m.name)).join(', '))}>
           <CarteMuscles vue="face" largeur={corps} choisies={choisies} accent={ch[3]} libelle />
           <CarteMuscles vue="dos" largeur={corps} choisies={choisies} accent={ch[3]} libelle />
         </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
+        {avecListe ? <View style={{ flex: 1, minWidth: 0 }}>
           {liste.map((m) => (
             <View key={m.name} style={{ minHeight: 30, justifyContent: 'center', paddingVertical: 2 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -90,7 +102,7 @@ export function MusclesSemaine({ loads, largeur, frequence }: { loads: MuscleLoa
               })()}
             </View>
           ))}
-        </View>
+        </View> : null}
       </View>
       {avecFrequence && resume ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
