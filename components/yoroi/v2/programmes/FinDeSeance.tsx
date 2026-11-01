@@ -14,7 +14,9 @@ import type { IconName } from '@/components/yoroi/v2/seances/Icon';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { sourceParId } from '@/lib/v2/programmes/sources';
 import { safeOpenURL } from '@/lib/security/validators';
-import { CHOIX_FIN, FIN_PAR_DEFAUT, MINUTES_FIN, NOTE_FIN, SOURCES_FIN, aDesJoursMarche, avecCardio, avecChoixDuJour, basculerCaseFin, caseCochee, choixDuJour, resumeFin } from '@/lib/v2/programmes/finSeance';
+import { CHOIX_FIN, FIN_PAR_DEFAUT, NOTE_FIN, SOURCES_FIN, aDesJoursMarche, avecAbdos, avecCardio, avecChoixDuJour, avecFrequences, basculerCaseFin, caseCochee, choixDuJour } from '@/lib/v2/programmes/finSeance';
+import { choixParDefaut, libelleCardio } from '@/lib/v2/seances/cardioJour';
+import { ReglagesFin } from './ReglagesFin';
 import type { CaseFin, FinSeance } from '@/lib/v2/programmes/finSeance';
 import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
@@ -31,10 +33,22 @@ const STICKER: Record<CaseFin, NomSticker> = { rien: 'carnet', abdos: 'abdos', c
 /** La couleur vive de chaque case, prise dans les tons pastel de l'app (seance/pastel.ts) */
 const TEINTE: Record<CaseFin, TonSeance> = { rien: 'ciel', abdos: 'peche', cardio: 'menthe' };
 
-/** « Abdos, puis 30 min de marche inclinée », traduit */
+/**
+ * « Abdos 2 fois par semaine. 30 min de marche inclinée, à chaque séance », traduit.
+ * 1er novembre 2026 : la fréquence et le vrai cardio prévu (type du programme, sinon ton habitude), jamais écrit en dur.
+ */
 export function texteFin(f: FinSeance | null | undefined): string {
-  const r = resumeFin(f);
-  return r.minutes !== undefined ? traduire(r.cle, r.minutes) : traduire(r.cle);
+  const abdos = avecAbdos(f);
+  const cardio = avecCardio(f);
+  if (!f || (!abdos && !cardio)) return traduire('Rien d’ajouté');
+  const parts: string[] = [];
+  if (abdos) parts.push(f.abdosParSemaine ? traduire('Abdos {0} fois par semaine', f.abdosParSemaine) : traduire('Abdos à chaque séance'));
+  if (cardio) {
+    const c = choixParDefaut({}, '', f.minutes, f.cardioType);
+    const l = libelleCardio(c.type, c.minutes);
+    parts.push(f.cardioParSemaine ? traduire('{0}, {1} fois par semaine', l, f.cardioParSemaine) : traduire('{0}, à chaque séance', l));
+  }
+  return parts.join('. ');
 }
 
 /** La carte de la page du programme en cours */
@@ -65,11 +79,13 @@ export function CarteFinDeSeance({ fin, femme, onPress }: { fin: FinSeance | nul
 }
 
 /** La feuille de choix. `bouton` : « Valider » sur la page, « Commencer le programme » au demarrage */
-export function FeuilleFinDeSeance({ visible, programme, seances, valeur, bouton, onValider, onClose }: {
+export function FeuilleFinDeSeance({ visible, programme, seances, semaine, valeur, bouton, onValider, onClose }: {
   visible: boolean;
   programme: Programme;
   /** 30 octobre 2026 : les séances de musculation de ta semaine, chacune avec ses cases Abdos et Cardio */
   seances?: readonly JourProgramme[];
+  /** 1er novembre 2026 : ta semaine type (suivi.ts, semaineDeLaFin), pour montrer les séances choisies par fréquence */
+  semaine?: { semaine: string[]; soeurs: Record<string, string> } | null;
   valeur: FinSeance | null | undefined;
   bouton: string;
   onValider: (f: FinSeance) => void;
@@ -83,6 +99,10 @@ export function FeuilleFinDeSeance({ visible, programme, seances, valeur, bouton
     if (visible) setF(valeur ?? FIN_PAR_DEFAUT);
   }, [visible, valeur]);
   const marche = aDesJoursMarche(programme);
+  // la fréquence répartie sur ta semaine, recalculée à chaque changement (le choix séance par séance passe avant)
+  const sem = semaine ?? { semaine: (seances ?? []).map((j) => j.id), soeurs: {} };
+  const vue = (x: FinSeance) => avecFrequences(x, sem.semaine, sem.soeurs);
+  const fVue = vue(f);
 
   return (
     <Sheet visible={visible} onClose={onClose} title={traduire('Fin de séance')}>
@@ -128,14 +148,14 @@ export function FeuilleFinDeSeance({ visible, programme, seances, valeur, bouton
         <View style={{ gap: 8, paddingHorizontal: 4 }}>
           <Ink size={15} weight="extraBold">{traduire('Séance par séance')}</Ink>
           {seances.map((j) => {
-            const ch = choixDuJour(f, j.id);
+            const ch = choixDuJour(fVue, j.id);
             const caseJour = (k: 'abdos' | 'cardio') => {
               const on = caseCochee(ch, k);
               const encre = ton(TEINTE[k]).encre;
               return (
                 <Pressable
                   key={k}
-                  onPress={() => { tap(); setF((x) => avecChoixDuJour(x, j.id, basculerCaseFin(choixDuJour(x, j.id), k))); }}
+                  onPress={() => { tap(); setF((x) => avecChoixDuJour(x, j.id, basculerCaseFin(choixDuJour(vue(x), j.id), k))); }}
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked: on }}
                   accessibilityLabel={`${traduire(j.titre)}, ${k === 'abdos' ? traduire('Abdos en fin de séance') : traduire('Cardio en fin de séance')}`}
@@ -157,14 +177,18 @@ export function FeuilleFinDeSeance({ visible, programme, seances, valeur, bouton
         </View>
       ) : null}
 
-      {avecCardio(f) || Object.values(f.parJour ?? {}).some((x) => x === 'cardio' || x === 'les_deux') ? (
-        <View style={{ gap: 8, paddingHorizontal: 4 }}>
-          <Ink size={15} weight="extraBold">{traduire('Durée du cardio')}</Ink>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-            {MINUTES_FIN.map((m) => <Chip key={m} label={traduire('{0} min', m)} on={f.minutes === m} onPress={() => setF((x) => ({ ...x, minutes: m }))} />)}
-          </View>
-        </View>
-      ) : null}
+      {/* 1er novembre 2026 : combien de fois les abdos, quel cardio, combien de temps, combien de fois (ReglagesFin.tsx) */}
+      <View style={{ paddingHorizontal: 4 }}>
+        <ReglagesFin
+          abdos={avecAbdos(f)}
+          cardio={avecCardio(f) || Object.values(f.parJour ?? {}).some((x) => x === 'cardio' || x === 'les_deux')}
+          valeur={f}
+          onChange={(v) => setF((x) => {
+            const { abdosParSemaine: _a, cardioParSemaine: _c, ...reste } = x;
+            return { ...reste, ...v };
+          })}
+        />
+      </View>
 
       {marche ? (
         <View style={{ gap: 8, paddingHorizontal: 4 }}>
@@ -190,7 +214,7 @@ export function FeuilleFinDeSeance({ visible, programme, seances, valeur, bouton
         })}
       </View>
 
-      <BigButton label={bouton} icon="check" onPress={() => onValider(f)} />
+      <BigButton label={bouton} icon="check" onPress={() => { const { parFrequence: _pf, ...sansCalcul } = f; onValider(sansCalcul); }} />
     </Sheet>
   );
 }
