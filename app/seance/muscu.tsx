@@ -87,6 +87,8 @@ import type { ChronoCardio } from '@/lib/v2/seances/cardioFin';
 import { avecValeur, chargerChoix, chargerReglagesCardio, choixParDefaut, cleChoix, enregistrerChoix, enregistrerReglagesCardio, infoCardio, nouveauSegment, sansDernierSegment, segmentCourant, typeDepart } from '@/lib/v2/seances/cardioChoix';
 import type { ChoixCardio, ReglagesCardio, Valeurs } from '@/lib/v2/seances/cardioChoix';
 import { appliquerChoix, exerciceSuivant, preparerCardio } from '@/lib/v2/seances/cardioSeance';
+import { liensGardes, retenirHabitudes } from '@/lib/v2/seances/habitudesFin';
+import type { SeanceLue } from '@/lib/v2/seances/habitudesFin';
 import { chargerZone2 } from '@/lib/v2/seances/zone2';
 import type { Zone2 } from '@/lib/v2/seances/zone2';
 import { fcMoyenneEntre } from '@/lib/v2/seances/fcCardio';
@@ -149,10 +151,11 @@ function exoCardio(minutes: number, nom: string): LiveExercise {
  * 31 octobre 2026 : chaque cardio de la seance recoit ton dernier choix pour ce jour du programme (type, duree), et la
  * pente et la vitesse de ta derniere fois (lib/v2/seances/cardioChoix.ts). La feuille de choix s'ouvrira quand meme.
  */
-async function cardiosDuJour(exos: LiveExercise[], cle: string): Promise<LiveExercise[]> {
+async function cardiosDuJour(exos: LiveExercise[], cle: string, prevu?: ChoixCardio | null): Promise<LiveExercise[]> {
   if (!exos.some((e) => e.cardio)) return exos;
   const [choix, reglages] = await Promise.all([chargerChoix(), chargerReglagesCardio()]);
-  const garde = choix[cle];
+  // 1er novembre 2026 : sans choix gardé pour ce jour, le cardio prévu par ton programme (type et durée), sinon ton habitude
+  const garde = choix[cle] ?? prevu ?? null;
   return exos.map((e) => {
     if (!e.cardio) return e;
     const prep = { ...e, cardio: preparerCardio(e.cardio, e.name, reglages) };
@@ -311,6 +314,8 @@ export default function SeanceMuscu() {
             const blocsP = chargerEnchainements().catch((): Enchainements => ({}));
             // revue du 30 octobre 2026 : tes exercices ecartes lus avant jourPourToi (app fermee, la copie en memoire est vide)
             const [trainings, h, actif, materiel, blessures, machines] = await Promise.all([trainingsP, histP, chargerProgrammeActif(), chargerMateriel(), getActiveInjuries().catch(() => []), chargerMachines(), chargerEcartes().catch(() => [])]);
+            // 1er novembre 2026 : tes abdos (supersets compris) et ton cardio habituels, avant de préparer la séance
+            retenirHabitudes(trainings as SeanceLue[], new Date(), liensGardes(await blocsP));
             // ton materiel et tes douleurs declarees : chaque exercice impossible ou qui charge une zone douloureuse
             // est remplace par le plus proche (lib/v2/programmes/materiel.ts, blessures.ts)
             // puis tes exercices changes a la main sur la page du programme en cours (lib/v2/programmes/perso.ts)
@@ -357,7 +362,9 @@ export default function SeanceMuscu() {
             // 30 octobre 2026 (J) : le cardio de fin de seance, un vrai exercice en dernier, apres les abdos
             if (jour.finCardio) exercises = [...exercises, exoCardio(jour.finCardio.minutes, nomCardioFin((await chargerEcartes().catch(() => [])).map((x) => x.nom)))];
             // 31 octobre 2026 : ton dernier choix de cardio pour ce jour, ta derniere pente et ta derniere vitesse
-            exercises = await cardiosDuJour(exercises, cleChoix(prog?.id, jour.id)).catch(() => exercises);
+            // 1er novembre 2026 : le cardio annoncé partout (type et durée prévus) est celui que la séance lance
+            const finJour = jour as typeof jour & { finCardioType?: ChoixCardio['type'] };
+            exercises = await cardiosDuJour(exercises, cleChoix(prog?.id, jour.id), jour.finCardio && finJour.finCardioType ? { type: finJour.finCardioType, minutes: jour.finCardio.minutes } : null).catch(() => exercises);
           }
           // 25 octobre 2026 : une seance de « Mes séances » ; les charges viennent de ta derniere fois sur chaque exercice
           const maSeanceId = param1(raw.maSeance);
@@ -1175,6 +1182,9 @@ export default function SeanceMuscu() {
             records.push({ name: e.name, weight: top.weight, reps: top.reps, kind: h && top.weight > h.bestWeight ? 'charge' : 'max' });
           }
           const out: Exercise = { ...(e.orig ?? {}), name: e.name, muscle_group: e.muscle, weight: best.weight, reps: best.reps, sets: setsData.length, setsData };
+          // 1er novembre 2026 : lié au suivant (superset, crunch puis roue), gardé pour que l'app apprenne tes habitudes
+          if (e.enchaine) (out as Exercise & { enchaine?: true }).enchaine = true;
+          else delete (out as Exercise & { enchaine?: true }).enchaine;
           // la note, et pour le cardio la duree reelle (minutes) et la distance (lib/v2/seances/exerciceEnregistre.ts)
           return completerExercice(out, e, done[0]?.reps ?? 0);
         })
