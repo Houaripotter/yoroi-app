@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DeviceEventEmitter } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { getTrainings } from '@/lib/database';
+import { lireSeances } from '@/lib/v2/perf/lireSeances';
 import type { Training } from '@/lib/database';
 import { getPhotosFromStorage } from '@/lib/storage';
 import type { Photo } from '@/lib/storage';
@@ -53,7 +53,7 @@ function useReloading<T>(loader: () => Promise<T>, initial: T) {
 }
 
 export function useTrainingsData() {
-  const r = useReloading<Training[]>(async () => dedupeTrainings((await getTrainings()) ?? []), []);
+  const r = useReloading<Training[]>(async () => dedupeTrainings((await lireSeances()) ?? []), []);
   return { trainings: r.data, loading: r.loading, reload: r.reload };
 }
 
