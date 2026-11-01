@@ -14,13 +14,15 @@ import { estProgrammePerso } from './registrePerso';
 import { CLE_PROGRAMMES_PERSO, avecExo, chargerProgrammesPerso, exoDepuisNom, idDuJourPerso, idVariantePerso, modifierProgrammePerso } from './monProgramme';
 import type { ProgrammePerso, SeancePerso } from './monProgramme';
 import { modifierBrique } from './briques';
-import { seancesSansVersionB } from './alternance';
+import { aSaSemaineB, avecVersion, seancesSansVersionB, unifierAB } from './alternance';
 import type { Alternance } from './alternance';
 import { genererVarianteB } from './varianteB';
 import { enFileProgramme, garderCommeMonProgramme, chargerProgrammeActif, lancerMixtePonctuel, peutGarder, seanceDuPlanLe } from './suivi';
-import { lundiIso, refDuJour } from './semaineLibre';
+import { jourDuProgramme, lundiIso, refDuJour } from './semaineLibre';
 import type { CaseSemaine } from './semaineLibre';
 import type { MachinePerso } from '@/lib/v2/seances/machinesPerso';
+import { chargerMachinesPerso } from '@/lib/v2/seances/machinesPerso';
+import { chargerEcartes, nomsEcartes } from '@/lib/v2/seances/exercicesEcartes';
 import { indexJour } from './coach';
 
 export type Contexte = { ecartes?: Iterable<string>; perso?: readonly MachinePerso[] };
@@ -43,8 +45,10 @@ export function avecAlternance(pp: ProgrammePerso, choix: Alternance, ctx: Conte
     const { ab: _ab, ...reste } = pp;
     return { ...reste, alternance: 'meme' };
   }
-  // ta semaine B à toi qui alterne déjà : elle reste la tienne
-  if (pp.ab && pp.semaineB) return { ...pp, alternance: 'ab' };
+  // ta semaine B à toi qui alterne déjà (vraiment différente de ta semaine A) : elle reste la tienne
+  if (aSaSemaineB(pp)) return { ...pp, alternance: 'ab' };
+  // 1er novembre 2026, soir : une semaine B copie de la A laisse la place aux versions B (alternance.ts, unifierAB)
+  pp = unifierAB(pp);
   const ecartes = Array.from(ctx.ecartes ?? []);
   const nouvelles = seancesSansVersionB(pp).map((s) => genererVarianteB(s, { ecartes, perso: ctx.perso }));
   return {
@@ -61,6 +65,36 @@ export async function choisirAlternance(choix: Alternance, ctx: Contexte = {}): 
   if (!pp) return null;
   const r = await enFileProgramme(CLE_PROGRAMMES_PERSO, () => modifierProgrammePerso(pp.id, (x) => avecAlternance(x, choix, ctx)));
   return r ? r.id : null;
+}
+
+/** Tes exercices écartés et tes machines, lus pour préparer une version B (jamais un exercice écarté) */
+export async function contexteVersionsB(): Promise<Contexte> {
+  const [ecartes, perso] = await Promise.all([chargerEcartes().catch(() => []), chargerMachinesPerso().catch(() => [])]);
+  return { ecartes: Array.from(nomsEcartes(ecartes)), perso };
+}
+
+/**
+ * 1er novembre 2026, soir : « Alterner A et B », le seul réglage A et B (Tes jours, Tes prochaines séances).
+ * Allumé : chaque séance alterne avec sa version B ; éteint : toujours la même. Renvoie l'id de ton programme.
+ */
+export async function basculerAlternance(on: boolean): Promise<string | null> {
+  return choisirAlternance(on ? 'ab' : 'meme', await contexteVersionsB());
+}
+
+/**
+ * Ton programme alterne mais une séance n'a pas encore sa version B (programme d'avant migré, séance posée depuis) :
+ * YOROI la prépare et l'enregistre, une fois. Rien à faire : rien n'est écrit. Vrai : quelque chose a été préparé.
+ */
+export async function completerVersionsB(): Promise<boolean> {
+  const a = await chargerProgrammeActif();
+  if (!a || !estProgrammePerso(a.id)) return false;
+  const pp = (await chargerProgrammesPerso()).find((x) => x.id === a.id);
+  if (!pp || pp.alternance !== 'ab' || aSaSemaineB(pp) || !seancesSansVersionB(pp).length) return false;
+  const ctx = await contexteVersionsB();
+  const r = await enFileProgramme(CLE_PROGRAMMES_PERSO, () =>
+    modifierProgrammePerso(pp.id, (x) => (x.alternance === 'ab' && seancesSansVersionB(x).length ? avecAlternance(x, 'ab', ctx) : null)),
+  );
+  return !!r;
 }
 
 /** La séance de ton programme qui porte cet id : un jour de ta semaine (A ou B), ou une version B */
@@ -132,4 +166,21 @@ export async function echangerCetteSemaine(date1: string, date2: string, aujourd
   if (!s) return false;
   const r = await lancerMixtePonctuel(traduire('Séances échangées'), { a: s }, iso(dates[6]), aujourdhui);
   return !!r;
+}
+
+/**
+ * 1er novembre 2026, soir : la séance du programme réellement faite pour cette séance enregistrée, avec sa version
+ * (« Push B ») et son programme. null : une séance hors de ton programme en cours.
+ */
+export async function seanceFaiteDe(trainingId: number | null | undefined): Promise<{ nom: string; programme: string } | null> {
+  if (typeof trainingId !== 'number') return null;
+  const a = await chargerProgrammeActif();
+  const f = a?.faits.find((x) => x.trainingId === trainingId);
+  if (!a || !f) return null;
+  if (estProgrammePerso(a.id)) await chargerProgrammesPerso().catch(() => []);
+  const p = programmeParId(a.id);
+  const j = p ? jourDuProgramme(p, f.jourId) : null;
+  if (!p || !j) return null;
+  const court = traduire(j.titre).split(/\s?:\s/)[0].split(',')[0].trim() || traduire(j.titre);
+  return { nom: avecVersion(court, j), programme: nomDuProgramme(traduire(p.titre)) };
 }
