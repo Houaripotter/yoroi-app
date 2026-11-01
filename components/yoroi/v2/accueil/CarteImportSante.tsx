@@ -106,7 +106,8 @@ export function useCarteImportSante(sante: { loading: boolean; source: { mode: s
 
 type Controle = ReturnType<typeof useCarteImportSante>;
 
-export function CarteImportSante({ controle, onImporte }: { controle: Controle; onImporte: () => void }) {
+/** fine : la bande fine de l'accueil en grand écran (1er novembre 2026) ; sur iPhone, la carte comme avant */
+export function CarteImportSante({ controle, onImporte, fine }: { controle: Controle; onImporte: () => void; fine?: boolean }) {
   const { enCours, setEnCours, masquer, marquerFaite } = controle;
   const verrou = useRef(false);
   const l = libellesImport(Platform.OS);
@@ -183,7 +184,8 @@ export function CarteImportSante({ controle, onImporte }: { controle: Controle; 
 
   return (
     <CarteMessage
-      illustration={<IllusSante size={64} disque />}
+      illustration={<IllusSante size={fine ? 40 : 64} disque />}
+      fine={fine}
       titre={l.titre}
       texte={l.texte}
       principal={{ label: l.bouton, onPress: () => void importer(), busy: enCours, busyLabel: l.enCours }}
