@@ -3,8 +3,10 @@
  * appui pour modifier ou supprimer. Une nouvelle pesee passe par le bouton + (vague 13).
  * Filtre par source (Apple Sante, balance, import, a la main) et suppression de toutes
  * les pesees d'une source : reprend l'ancien ecran /weight-manager (vague 14).
+ * 1er novembre 2026 (AT) : chaque pesee dit son heure et son appareil (lib/v2/mesures/contextePesee.ts, sinon
+ * l'heure d'enregistrement), son moment s'il est note, et « Détail » ouvre app/pesee-detail.tsx.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
 import { DeviceEventEmitter, Pressable, ScrollView, SectionList, View } from 'react-native';
 import { lienBilan } from '@/lib/v2/bilan/reglage';
@@ -24,6 +26,11 @@ import { sourceOf } from '@/lib/v2/seance/corps';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { contexteDePesee, lireContextesPesees } from '@/lib/v2/mesures/contextePesee';
+import type { ContextePesee } from '@/lib/v2/mesures/contextePesee';
+import { EVENEMENT_CORPS } from '@/lib/v2/mesures/listeStockee';
+import { LABEL_MOMENT } from '@/components/yoroi/v2/corps/libelles';
+import { heurePesee } from '@/lib/v2/pesee/poidsDuJour';
 
 type Row = { w: Weight; delta: number | null };
 
@@ -34,6 +41,17 @@ export default function Pesees() {
   const insets = useSafeAreaInsets();
   const { raw, series } = useWeightData();
   const [filter, setFilter] = useState('all');
+  const [contextes, setContextes] = useState<ContextePesee[]>([]);
+  useEffect(() => {
+    let vivant = true;
+    const lire = () => lireContextesPesees().then((l) => vivant && setContextes(l)).catch(() => {});
+    lire();
+    const sub = DeviceEventEmitter.addListener(EVENEMENT_CORPS, lire);
+    return () => {
+      vivant = false;
+      sub.remove();
+    };
+  }, []);
 
   // Nombre de pesees par source, la plus fournie d'abord
   const counts = useMemo(() => {
@@ -84,6 +102,7 @@ export default function Pesees() {
 
   const onRow = (w: Weight) => {
     appAlert(formatLongDate(w.date.slice(0, 10)), traduire("{0} kilos", formatKg(w.weight)), [
+      { text: traduire('Détail'), onPress: () => router.push({ pathname: '/pesee-detail', params: { id: String(w.id) } } as never) },
       { text: traduire('Voir le bilan'), onPress: () => router.push(lienBilan({ type: 'corps', date: w.date.slice(0, 10), origine: 'detail' }) as never) },
       { text: traduire('Modifier'), onPress: () => router.push({ pathname: '/pesee', params: { id: String(w.id), date: w.date.slice(0, 10), value: String(w.weight) } } as any) },
       {
@@ -153,8 +172,11 @@ export default function Pesees() {
           const src = w0.source && w0.source !== 'manual' && w0.source !== 'csv' ? describeSource(w0.source, '').label ?? traduire('importée') : '';
           const compo = w0.fat_percent || w0.muscle_percent || w0.water_percent || w0.bone_mass || w0.visceral_fat || w0.bmr || w0.metabolic_age ? traduire('avec composition') : '';
           const base = [src, compo].filter(Boolean).join(', ');
-          const when = several.has(item.w.date.slice(0, 10)) ? sameDayTag(item.w, raw) : '';
-          const extra = [when, base].filter(Boolean).join(', ');
+          const ctx = contexteDePesee(w0, contextes);
+          const h = ctx?.heure ?? heurePesee(w0)?.texte ?? null;
+          const when = h ? traduire("à {0}", h.replace(':', ' h ')) : several.has(item.w.date.slice(0, 10)) ? sameDayTag(item.w, raw) : '';
+          const moment = ctx?.moment ? traduire(LABEL_MOMENT[ctx.moment].label).toLowerCase() : '';
+          const extra = [when, moment, ...(ctx?.appareil ? [ctx.appareil, compo] : [base])].filter(Boolean).join(', ');
           return (
             <Pressable onPress={() => onRow(item.w)} accessibilityRole="button" accessibilityLabel={traduire("{0}, {1} kilos, modifier ou supprimer", formatLongDate(item.w.date.slice(0, 10)), formatKg(item.w.weight))} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', minHeight: 58, borderBottomWidth: 1, borderColor: c.divider, opacity: pressed ? 0.6 : 1 })}>
               <View style={{ flex: 1, gap: 2 }}>
