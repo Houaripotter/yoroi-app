@@ -16,6 +16,7 @@ import type { CompoPoint } from './composition';
 import { loadMeasures } from './measures';
 import type { MeasurePoint } from './measures';
 import { dedupeTrainings } from '@/lib/v2/seances/dedupe';
+import { garderSiIdentique } from '@/lib/v2/perf/garderSiIdentique';
 
 function useReloading<T>(loader: () => Promise<T>, initial: T) {
   const [data, setData] = useState<T>(initial);
@@ -24,7 +25,8 @@ function useReloading<T>(loader: () => Promise<T>, initial: T) {
   const load = useCallback(async () => {
     try {
       const v = await loader();
-      if (alive.current) setData(v);
+      // 1er novembre 2026 : rien de change au retour sur l'ecran, meme donnee, pas de calcul ni de rendu en plus
+      if (alive.current) setData((avant) => garderSiIdentique(avant, v));
     } catch (err) {
       logger.error('Chargement des donnees de progres impossible', err);
     } finally {
