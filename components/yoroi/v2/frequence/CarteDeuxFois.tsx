@@ -6,6 +6,9 @@
  * tu as fait de la musculation ces 14 derniers jours (règle : lib/v2/frequence/deuxFois.ts, rappelCoach).
  * La séance proposée : celle de ta semaine (semaine libre) qui travaille ces muscles, sinon une séance de la
  * bibliothèque (app/programmes/zones.tsx). « Pourquoi ? » ouvre les études.
+ * 1er novembre 2026 : sans séance d'ici dimanche, la phrase lit toute ta semaine prévue (deuxFois.ts, raisonSansSeance) :
+ * elle ne dit plus jamais « aucune séance de ta semaine ne les travaille » quand ta semaine les travaille.
+ * Retirée de la page du programme, où « Ta semaine travaille » la remplace.
  * Tout est calculé sur le téléphone. Données lues au montage, relues quand une séance ou le programme change.
  */
 import React, { useEffect, useMemo, useState } from 'react';
@@ -36,6 +39,7 @@ import {
   isoLocal,
   musclesDesGroupes,
   plusJoursIso,
+  raisonSansSeance,
   rappelCoach,
   seanceBibliotheque,
   seanceQuiCouvre,
@@ -76,6 +80,8 @@ export function CarteDeuxFois({ style }: { style?: StyleProp<ViewStyle> } = {}) 
     if (!retard.length || !trainings) return null;
     let prevue: (SeancePrevue<Prevue> & { couverts: MuscleName[] }) | null = null;
     let datee = false;
+    // 1er novembre 2026 : les muscles de TOUTE ta semaine prévue, du lundi au dimanche (raisonSansSeance)
+    let musclesSemaine: MuscleName[] | null = null;
     if (actif) {
       // aujourd'hui compte seulement si tu n'as pas déjà fait ta musculation du jour
       const dejaAuj = trainings.some((t) => String(t?.date ?? '').slice(0, 10) === auj && estSeanceMuscu(t));
@@ -92,16 +98,23 @@ export function CarteDeuxFois({ style }: { style?: StyleProp<ViewStyle> } = {}) 
         seances.forEach((s, k) => {
           if (s && isos[k]) liste_.push({ date: isos[k], muscles: musclesDesGroupes(groupesDeSeance(s.jour)), donnee: s });
         });
+        if (datee) {
+          const lundi = plusJoursIso(auj, -indexJourIso(auj));
+          const semaine = seancesAuxDates(actif, Array.from({ length: 7 }, (_, k) => new Date(`${plusJoursIso(lundi, k)}T12:00:00`)));
+          musclesSemaine = Array.from(new Set(semaine.flatMap((s) => (s ? musclesDesGroupes(groupesDeSeance(s.jour)) : []))));
+        } else {
+          musclesSemaine = Array.from(new Set(liste_.flatMap((x) => x.muscles)));
+        }
       } catch {
         // programme illisible : la bibliothèque prend le relais
       }
       prevue = seanceQuiCouvre(retard, liste_, auj);
     }
-    return { prevue, datee, bibliotheque: prevue ? null : seanceBibliotheque(retard) };
+    return { prevue, datee, bibliotheque: prevue ? null : seanceBibliotheque(retard), raison: raisonSansSeance(retard, actif ? musclesSemaine ?? [] : null) };
   }, [retard, trainings, actif, auj]);
 
   if (!retard.length || !proposition) return null;
-  const { prevue, datee, bibliotheque } = proposition;
+  const { prevue, datee, bibliotheque, raison } = proposition;
   const titre = traduire('Tu n’as pas travaillé {0} 2 fois cette semaine.', liste(retard));
   const nom = prevue ? sansTiret(avecVersion(nomCourt(traduire(prevue.donnee.jour.titre)), prevue.donnee.jour)) : '';
   const ligne = prevue
@@ -110,9 +123,11 @@ export function CarteDeuxFois({ style }: { style?: StyleProp<ViewStyle> } = {}) 
       : prevue.date === auj
         ? traduire('Ta séance {0} d’aujourd’hui travaille {1}.', nom, liste(prevue.couverts))
         : traduire('Ta séance {0} de {1} travaille {2}.', nom, PLAN_DAYS[indexJourIso(prevue.date)], liste(prevue.couverts))
-    : actif
-      ? traduire('Aucune séance de ta semaine ne les travaille. Une séance de la bibliothèque peut le faire.')
-      : traduire('Une séance de la bibliothèque les travaille.');
+    : raison === 'plus_cette_semaine'
+      ? traduire('Ta semaine les travaille, mais il ne reste plus de séance prévue d’ici dimanche. Une séance de la bibliothèque peut le faire.')
+      : raison === 'aucune_semaine'
+        ? traduire('Aucune séance de ta semaine ne les travaille. Une séance de la bibliothèque peut le faire.')
+        : traduire('Une séance de la bibliothèque les travaille.');
 
   const ouvrir = () => {
     tap();
