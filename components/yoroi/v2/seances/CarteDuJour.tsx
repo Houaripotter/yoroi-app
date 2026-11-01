@@ -42,7 +42,7 @@ import { demoDe, demoSlug } from '@/lib/v2/programmes/demos';
 import { machineArt } from '@/lib/v2/seance/machinesArt';
 import type { ExoProgramme } from '@/lib/v2/programmes/types';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
-import { jourPourToi } from '@/lib/v2/programmes/perso';
+import { jourPourToi, remplacementsLe } from '@/lib/v2/programmes/perso';
 import { regionsDesBlessures, unirRegions } from '@/lib/v2/programmes/blessures';
 import type { Region } from '@/lib/v2/programmes/blessures';
 import type { Equipement } from '@/lib/v2/programmes/materiel';
@@ -302,7 +302,7 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach, dispo
     if (!actif || !suite) return null;
     const p = suite.programme;
     // 28 octobre 2026 : la séance du jour peut venir d'un autre programme (ta semaine libre) : on prend la séance, pas son rang
-    const jour = jourPourToi(suite.jour, ctx.materiel, unirRegions(ctx.regions, actif.douleurs), ctx.machines, actif.remplacements, { fin: actif.fin, materiel: p.materiel });
+    const jour = jourPourToi(suite.jour, ctx.materiel, unirRegions(ctx.regions, actif.douleurs), ctx.machines, remplacementsLe(actif.remplacements, actif.changementsDates, localISO()), { fin: actif.fin, materiel: p.materiel });
     const semaine = semaineDuProgramme(actif);
     const jours = joursDuProgramme(actif, p);
     const message = messageCoach({ programme: p, actif, jours, prochaineSeance: traduire(jour.titre), femme, fixe: !!planEffectif(actif, p) });
@@ -334,6 +334,7 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach, dispo
         faits={faits}
         prevus={prevus}
         onOpen={() => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } })}
+        onProchaines={() => router.push('/programmes/prochaines' as any)}
       />
     );
     const commencerJour = () => {
