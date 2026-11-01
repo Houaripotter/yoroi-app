@@ -58,6 +58,8 @@ import { ecrireSonsActifs, lireSonsActifs } from '@/lib/v2/sons/reglage';
 import { niveauSuivant, useNiveauCoach } from '@/lib/v2/coachVocal/reglages';
 import { detailNiveauCoach, libelleNiveauCoach, remarqueCoach } from '@/components/yoroi/v2/seance/CoachVocal';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { useNiveauSuivi } from '@/lib/v2/mesures/useNiveauSuivi';
+import { libelleNiveau } from '@/components/yoroi/v2/corps/libelles';
 import { aDesAppareilsAppaires, isPeerSyncAvailable, onSyncStatusChange } from '@/lib/peerSyncService';
 import { FeuilleLangue, langueEnCours } from '@/components/yoroi/v2/langue/ChoixLangue';
 import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
@@ -185,6 +187,7 @@ export default function Reglages() {
   // ============================================
 
   const go = (href: string) => router.push(href as any);
+  const niveauSuivi = useNiveauSuivi();
   // 30 octobre 2026 : en grand ecran (Mac, iPad en grande fenetre), la page centree, sans barre laterale ici
   const page = usePageLarge(false);
   const demi = largeurColonne(page.largeur, 2);
@@ -250,6 +253,8 @@ export default function Reglages() {
           {/* 30 octobre 2026 : exercices écartés en séance (lib/v2/seances/exercicesEcartes.ts) */}
           <ValueRow tint={TUILE.ardoise} icon="dumbbell" sticker="refresh" label={traduire('Exercices écartés')} value={nbEcartes ? String(nbEcartes) : traduire('Aucun')} onPress={() => go('/settings/exercices-ecartes')} />
           <ValueRow tint={TUILE.bleu} icon="pulse" sticker="bilan" label={traduire("Bilan après chaque mesure")} sub={traduire("Pesée, composition, mensurations et séances")} value={bilanAuto ? traduire('Activé') : traduire('Coupé')} valueColor={bilanAuto ? c.successText : undefined} onPress={() => { const n = !bilanAuto; setBilanAuto(n); ecrireBilanAuto(n).catch(() => {}); }} />
+          {/* 1er novembre 2026 (AU) : niveau d'affichage du corps */}
+          <ValueRow tint={TUILE.mousse} icon="target" sticker="objectifs" label={traduire('Ce que tu suis')} sub={traduire('Essentiel, Sportif ou Athlète')} value={libelleNiveau(niveauSuivi.niveau)} onPress={() => go('/niveau-suivi')} />
         </Card>
 
         </Colonne>
