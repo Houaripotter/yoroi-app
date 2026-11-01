@@ -37,7 +37,9 @@ export async function modifierListe<T>(cle: string, changer: (avant: T[]) => T[]
     const ecrit = await avecVerrou(cle, async () => {
       const avant = await lireListePourEcriture<T>(cle);
       const apres = changer(avant);
-      if (apres === avant) return false;
+      // AV : une liste filtree puis rendue sans changement est une nouvelle liste identique : rien a ecrire
+      // (sinon chaque import relu disait « nouveau » et relancait la synchro pour rien)
+      if (apres === avant || JSON.stringify(apres) === JSON.stringify(avant)) return false;
       await AsyncStorage.setItem(cle, JSON.stringify(apres));
       return true;
     });
