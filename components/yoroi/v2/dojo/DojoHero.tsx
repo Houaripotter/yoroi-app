@@ -6,22 +6,31 @@
 import React, { useEffect, useState } from 'react';
 import { Image, View } from 'react-native';
 import type { ImageSourcePropType, StyleProp, ViewStyle } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { ENTREE } from '@/components/yoroi/v2/accueil/kit';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
 import { P } from '@/components/yoroi/livePalette';
 import { SceneAnimee } from '@/components/yoroi/v2/scenes/SceneAnimee';
+import { useEcranVisible } from '@/components/yoroi/v2/accueil/SceneAnimee';
 
 /** Personnage qui respire : tres leger mouvement de haut en bas, en boucle. */
 export function BreathingFigure({ source, width, height, label }: { source: ImageSourcePropType; width: number; height: number; label?: string }) {
   const t = useSharedValue(0);
+  // 1er novembre 2026 : la respiration s'arrete quand l'ecran n'est pas affiche (autre onglet, app en arriere-plan)
+  // et reprend au retour : l'onglet Dojo reste monte, l'animation tournait pour rien
+  const { visible } = useEcranVisible();
   useEffect(() => {
+    if (!visible) {
+      cancelAnimation(t);
+      return undefined;
+    }
     t.value = withRepeat(
       withSequence(withTiming(1, { duration: 2200, easing: Easing.inOut(Easing.quad) }), withTiming(0, { duration: 2200, easing: Easing.inOut(Easing.quad) })),
       -1,
     );
-  }, [t]);
+    return () => cancelAnimation(t);
+  }, [t, visible]);
   const style = useAnimatedStyle(() => ({
     transform: [{ translateY: -3 * t.value }, { scale: 1 + 0.012 * t.value }],
   }));
