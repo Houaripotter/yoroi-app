@@ -155,6 +155,8 @@ export const CLES_ELEMENTS: readonly SpecCle[] = [
     },
   },
   { cle: 'yoroi_cardio_reglages_v1', type: 'reglages', forme: 'objet' },
+  // 1er novembre 2026 : les « Non merci » aux suggestions d'habitude de fin de séance (lib/v2/seances/habitudesFin.ts)
+  { cle: 'yoroi_habitudes_fin_v1', type: 'reglages', forme: 'objet' },
   // exercices ecartes (lib/v2/seances/exercicesEcartes.ts) : un par nom, « Remettre » laisse une pierre tombale
   {
     cle: 'yoroi_exercices_ecartes_v1', type: 'programmes', forme: 'liste', idChamp: 'nom',
