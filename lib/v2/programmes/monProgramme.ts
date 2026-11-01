@@ -22,6 +22,7 @@ import type { ExoProgramme, JourProgramme, Programme } from './types';
 import type { SemaineLibre } from './semaineLibre';
 import { lireAlternance, planAlternance } from './alternance';
 import type { Alternance, SourceJour } from './alternance';
+import type { FinSeance } from './finSeance';
 
 export const CLE_PROGRAMMES_PERSO = 'yoroi_programmes_perso_v1';
 export const MAX_EXOS_SEANCE = 15;
@@ -77,6 +78,13 @@ export type ProgrammePerso = {
   alternance?: Alternance;
   /** 1er novembre 2026 : les versions B préparées (varianteB.ts), une par brique (sa brique : celle de la séance A) */
   variantesB?: SeancePerso[];
+  /**
+   * 1er novembre 2026 (Houari : « vérifie que l'app me les demande quand je crée mon programme ») : abdos et cardio en
+   * fin de séance, choisis dans « Je construis le mien » (fréquence, type et durée du cardio). Champ facultatif :
+   * absent dans les programmes d'avant, rien ne change. Lu strictement par finSeance.ts (lireFinSeance) quand ton
+   * programme devient le programme en cours (suivi.ts, suivreProgrammePerso).
+   */
+  fin?: FinSeance;
 };
 
 function jourLocal(d = new Date()): string {
@@ -481,6 +489,7 @@ export function nettoyerPerso(x: unknown): ProgrammePerso | null {
     ...(briques.length ? { briques } : {}),
     ...(alternance ? { alternance } : {}),
     ...(variantesB.length ? { variantesB } : {}),
+    ...(p.fin && typeof p.fin === 'object' && !Array.isArray(p.fin) && typeof (p.fin as { choix?: unknown }).choix === 'string' ? { fin: p.fin } : {}),
   };
 }
 
