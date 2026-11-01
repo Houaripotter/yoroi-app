@@ -57,7 +57,8 @@ export function texteRappelCopie(days: number | null, os: string = Platform.OS):
   return { titre: traduire("Ta dernière copie a {0} jours", days), texte: traduire("Une copie fraîche dans {0} garde tes dernières séances à l’abri.", cloud) };
 }
 
-export function BackupNotice() {
+/** fine : la bande fine de l'accueil en grand écran (1er novembre 2026) ; sur iPhone, la carte comme avant */
+export function BackupNotice({ fine }: { fine?: boolean } = {}) {
   const router = useRouter();
   const [state, setState] = useState<{ show: boolean; days: number | null; etat: EtatProtection; dossier: string | null }>({ show: false, days: null, etat: 'non_dispo', dossier: null });
   const [busy, setBusy] = useState(false);
@@ -152,7 +153,8 @@ export function BackupNotice() {
 
   return (
     <CarteMessage
-      illustration={<IllusSauvegarde size={64} disque />}
+      illustration={<IllusSauvegarde size={fine ? 40 : 64} disque />}
+      fine={fine}
       titre={titre}
       texte={texte}
       principal={{ label: t.bouton, onPress: auto ? activer : copier, busy, busyLabel: traduire('Un instant…') }}
