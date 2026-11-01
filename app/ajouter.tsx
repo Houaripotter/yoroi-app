@@ -466,7 +466,7 @@ export default function Ajouter() {
             { t: traduire('Mesurer'), s: traduire('une fois par mois, le matin'), st: illus.img('metre_ruban'), on: () => open('/add-measurement') },
             { t: traduire('Par photo'), s: traduire('ton IA lit tes mesures notées'), st: illus.img('scan_mesures'), on: () => open('/balance-photo', { source: 'mensurations' }) },
             { t: traduire('Évolution'), s: traduire('Tes courbes'), st: illus.img('bilan'), on: () => open('/measurements-detail') },
-            { t: traduire('Photo'), s: traduire('Photo de forme'), st: illus.img('selfie_miroir'), on: () => open('/photos') },
+            { t: traduire('Photo'), s: traduire('Photo de forme'), st: illus.img('selfie_miroir_c'), on: () => open('/photos') },
           ]}
         />
       ) : null}
