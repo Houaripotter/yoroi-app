@@ -19,7 +19,7 @@ import { track } from '@/utils/telemetry';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, DeviceEventEmitter, Image, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { lienBilan, lireBilanAuto } from '@/lib/v2/bilan/reglage';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Rect } from 'react-native-svg';
 import * as Clipboard from 'expo-clipboard';
@@ -37,6 +37,10 @@ import type { BalanceFieldSpec, BalanceGroup, ParseResult, ScaleAutre } from '@/
 import { autreReplaceId, existingAutres, existingValues, measureOfDay, pickSameDayRow, valueStatus } from '@/lib/v2/balance/multi';
 import type { MeasureDay } from '@/lib/v2/balance/multi';
 import { saveImportBlock, sameDayWeight } from '@/lib/v2/balance/save';
+import type { Ranges } from '@/lib/v2/balance/save';
+import { rangementDe } from '@/lib/v2/balance/rangement';
+import type { Rangement } from '@/lib/v2/balance/rangement';
+import { LABEL_MOMENT } from '@/components/yoroi/v2/corps/libelles';
 import { buildPhotoPrompt, dateProposal, frenchDateTime, frenchTime, groupSessions, isoDay, proposalLabel, readStoredDates } from '@/lib/v2/balance/photos';
 import type { DatedPhoto, DateProposal } from '@/lib/v2/balance/photos';
 import { checkCoherence } from '@/lib/v2/balance/coherence';
@@ -82,6 +86,36 @@ function savedText(weight: number, date: string, old?: number): string {
   return old !== undefined ? traduire("{0}, à la place de {1} kg (gardé dans tes pesées)", base, fmtBalance(old, 0.1)) : base;
 }
 
+/**
+ * AV : ce qui a vraiment ete enregistre, en clair. Avant, « Pesée enregistrée. » s'affichait meme sans aucun poids
+ * (une capture de mensurations, un bilan sanguin).
+ */
+function rangesText(r: Ranges): string {
+  const parts = [
+    r.mensurations ? traduirePluriel(r.mensurations, r.mensurations > 1, "{0} mensuration", "{0} mensurations", r.mensurations) : '',
+    r.mensurationsPlus ? traduirePluriel(r.mensurationsPlus, r.mensurationsPlus > 1, "{0} mensuration en plus", "{0} mensurations en plus", r.mensurationsPlus) : '',
+    r.biomarqueurs ? traduirePluriel(r.biomarqueurs, r.biomarqueurs > 1, "{0} biomarqueur", "{0} biomarqueurs", r.biomarqueurs) : '',
+    r.plis ? traduire('tes plis cutanés') : '',
+  ].filter(Boolean);
+  return parts.join(', ');
+}
+
+/** AV : les groupes des mesures en plus dans l'apercu, chacun range dans son ecran */
+const GROUPES_AUTRES: { id: Rangement; titre: string; sous: string }[] = [
+  { id: 'mensuration_plus', titre: traduire('Mensurations en plus'), sous: traduire('Rangées avec tes mensurations : poignet, cheville, genou, fessiers, taille, biceps.') },
+  { id: 'biomarqueur', titre: traduire('Biomarqueurs'), sous: traduire('Rangés dans Biomarqueurs, sur ce téléphone. Aucune interprétation.') },
+  { id: 'pli', titre: traduire('Plis cutanés'), sous: traduire('Rangés dans Plis cutanés quand la méthode est complète, 7 plis ou 3.') },
+  { id: 'pesee', titre: traduire('Mesures en plus de ta balance'), sous: traduire('Gardées telles quelles, avec le nom affiché.') },
+];
+
+/** AV : l'en-tete selon l'entree du + (pesee, capture d'une app, mensurations, bilan) ; la consigne est la meme */
+const ENTETES: Record<string, { titre: string; sous: string }> = {
+  pesee: { titre: traduire('Pesée par photo'), sous: traduire('Ton IA lit les photos de ta balance, tu colles sa réponse ici. Trois étapes.') },
+  capture: { titre: traduire('Capture de ton app'), sous: traduire('Ton IA lit l’historique de ton app de balance ou d’Apple Santé : chaque ligne devient une pesée.') },
+  mensurations: { titre: traduire('Mensurations par photo'), sous: traduire('Ton IA lit tes mesures notées au mètre ruban, tu colles sa réponse ici.') },
+  bilan: { titre: traduire('Bilan par photo'), sous: traduire('Ton IA lit ta glycémie, ta tension ou ta prise de sang. Seulement les valeurs, aucune interprétation.') },
+};
+
 const FROM: Record<string, string> = { lb: traduire('converti depuis les livres'), st: traduire('converti depuis les stones'), kj: traduire('converti depuis les kJ'), in: traduire('converti depuis les pouces') };
 /** au-dela, une copie de securite locale est faite avant l'import */
 const SNAPSHOT_OVER = 3;
@@ -104,13 +138,28 @@ type BlockState = {
   open: boolean;
   error?: string;
   done?: string;
+  /** AV : garder l'heure, l'appareil, le moment et a jeun lus sur la photo */
+  ctx: boolean;
 };
 const autreId = (i: number) => `autre:${i}`;
 /** Un mot trop long pour la colonne (« intracellulaire ») peut se couper : trait d'union conditionnel */
 const breakable = (t: string) => t.replace(/[A-Za-zÀ-ÿ]{12,}/g, (w) => `${w.slice(0, 8)}\u00AD${w.slice(8)}`);
 
-/** Ce bloc a-t-il des valeurs de pesee (sinon seulement des mensurations a colonne) */
-const needsWeightLine = (b: ParseResult) => b.autres.length > 0 || b.values.some((v) => !BALANCE_FIELD[v.key]?.measure && v.key !== 'poids_kg');
+/**
+ * Ce bloc a-t-il des valeurs de pesee (sinon seulement des mensurations a colonne).
+ * AV : les mensurations en plus, biomarqueurs et plis n'ont pas besoin d'un poids.
+ */
+const needsWeightLine = (b: ParseResult) => b.autres.some((a) => rangementDe(a.name, a.unit) === 'pesee') || b.values.some((v) => !BALANCE_FIELD[v.key]?.measure && v.key !== 'poids_kg');
+
+/** AV : le contexte lu sur la photo, en clair (« 07:12, Tanita RD-545, au réveil, à jeun ») */
+function contexteTexte(b: ParseResult): string {
+  return [
+    b.heure ?? '',
+    b.appareil ?? '',
+    b.moment ? traduire(LABEL_MOMENT[b.moment]?.label ?? '').toLowerCase() : '',
+    b.aJeun === true ? traduire('à jeun') : b.aJeun === false ? traduire('pas à jeun') : '',
+  ].filter(Boolean).join(', ');
+}
 
 function initBlock(b: ParseResult, rows: Weight[], single: boolean, dates: { at?: number }[], fromThisVisit: boolean, undatedCount: number): BlockState {
   const edits: Record<string, string> = {};
@@ -132,7 +181,7 @@ function initBlock(b: ParseResult, rows: Weight[], single: boolean, dates: { at?
     checked.poids_kg = true;
   }
   const attention = !date || !!proposal.conflict || b.values.some((v) => v.outOfRange);
-  return { edits, checked, replace: {}, date, proposal, confirmed: false, include: true, open: single || attention };
+  return { edits, checked, replace: {}, date, proposal, confirmed: false, include: true, open: single || attention, ctx: true };
 }
 
 export default function BalancePhotoScreen() {
@@ -140,6 +189,8 @@ export default function BalancePhotoScreen() {
   const c = theme.colors;
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ source?: string }>();
+  const entete = ENTETES[String(params.source ?? 'pesee')] ?? ENTETES.pesee;
   const [copied, setCopied] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const [text, setText] = useState('');
@@ -414,19 +465,26 @@ export default function BalancePhotoScreen() {
     }
     const had = existingOf(st).has;
     // AQ : le bloc lu part avec, pour que rien ne se perde (heure, appareil, cote, textes : lib/v2/mesures/)
-    const res = await saveImportBlock(st.date, values, list, replace, b);
+    // AV : contexte decoche : ni heure, ni appareil, ni moment, ni a jeun
+    const bloc: ParseResult = st.ctx ? b : { ...b, heure: undefined, appareil: undefined, moment: undefined, aJeun: undefined };
+    const res = await saveImportBlock(st.date, values, list, replace, bloc);
     if (!res.ok) {
       update(i, (s) => ({ ...s, open: true, error: traduire('Il manque ton poids : il n’est pas sur les photos et aucune pesée n’est notée ce jour. Écris ton poids dans la ligne Poids, ou décoche les valeurs de la balance.') }));
       return null;
     }
     const kept = res.kept ? `, ${res.kept} ${res.kept > 1 ? traduire('valeurs gardées') : traduire('valeur gardée')}` : '';
+    // AV : ce qui a vraiment ete enregistre ; « Pesée » seulement s'il y a une pesee
+    const autresTxt = rangesText(res.ranges);
+    const peseeSans = res.written > res.ranges.mensurations;
     const done = res.nothingNew
       ? traduire('Déjà à jour, rien de nouveau.')
       : res.weight
-        ? `${savedText(res.weight, res.date, res.replaced?.weight)}${kept}.`
-        : had
-          ? traduire("Pesée complétée{0}.", kept)
-          : traduire('Pesée enregistrée.');
+        ? `${savedText(res.weight, res.date, res.replaced?.weight)}${kept}${autresTxt ? `, ${autresTxt}` : ''}.`
+        : autresTxt
+          ? traduire("Enregistré le {0} : {1}{2}.", shortDate(res.date), autresTxt, kept)
+          : had && peseeSans
+            ? traduire("Pesée complétée{0}.", kept)
+            : traduire("Gardé dans tes mesures le {0}{1}.", shortDate(res.date), kept);
     update(i, (s) => ({ ...s, error: undefined, done, open: false, include: false }));
     if (res.weight && !res.nothingNew) lastSaved.current = savedText(res.weight, res.date, res.replaced?.weight) + '.';
     return res.nothingNew ? 'same' : had && !res.replaced ? 'merged' : 'new';
@@ -808,17 +866,39 @@ export default function BalancePhotoScreen() {
                 </View>
               );
             })}
-            {b.autres.length ? (
-              <View style={{ borderRadius: 14, backgroundColor: c.fillSubtle, paddingHorizontal: 12, paddingVertical: 4 }}>
-                <Ink size={13} weight="extraBold" color={c.textSecondary} style={{ paddingTop: 8 }}>{traduire("Mesures en plus de ta balance")}</Ink>
-                <Ink size={12} color={c.textSecondary} style={{ paddingBottom: 2 }}>{traduire("Gardées telles quelles, avec le nom affiché.")}</Ink>
-                {b.autres.map((a, i) => {
-                  const old = ex.autres.get(autreReplaceId(a.name).slice(6));
-                  const edited = readNumber(st.edits[autreId(i)] ?? '')?.value;
-                  const status = old && edited !== undefined ? (Math.abs(old.valeur - edited) < 1e-6 ? 'same' : 'conflict') : undefined;
-                  return row(bi, st, { id: autreId(i), label: a.name, unit: a.unit, color: c.textMuted, off: false, placeholder: '0', first: i === 0, old: old ? `${fmtAutre(old.valeur)}${old.unite ? ` ${old.unite}` : ''}` : undefined, status });
-                })}
-              </View>
+            {GROUPES_AUTRES.map((g) => {
+              const liste = b.autres.map((a, i) => ({ a, i })).filter(({ a }) => rangementDe(a.name, a.unit) === g.id);
+              if (!liste.length) return null;
+              return (
+                <View key={g.id} style={{ borderRadius: 14, backgroundColor: c.fillSubtle, paddingHorizontal: 12, paddingVertical: 4 }}>
+                  <Ink size={13} weight="extraBold" color={c.textSecondary} style={{ paddingTop: 8 }}>{g.titre}</Ink>
+                  <Ink size={12} color={c.textSecondary} style={{ paddingBottom: 2 }}>{g.sous}</Ink>
+                  {liste.map(({ a, i }, k) => {
+                    const old = g.id === 'pesee' ? ex.autres.get(autreReplaceId(a.name).slice(6)) : undefined;
+                    const edited = readNumber(st.edits[autreId(i)] ?? '')?.value;
+                    const status = old && edited !== undefined ? (Math.abs(old.valeur - edited) < 1e-6 ? 'same' : 'conflict') : undefined;
+                    return row(bi, st, { id: autreId(i), label: a.name, unit: a.unit, color: g.id === 'biomarqueur' ? c.danger : g.id === 'mensuration_plus' ? c.accent : c.textMuted, off: false, placeholder: '0', first: k === 0, old: old ? `${fmtAutre(old.valeur)}${old.unite ? ` ${old.unite}` : ''}` : undefined, status });
+                  })}
+                </View>
+              );
+            })}
+            {contexteTexte(b) && (hasWeight || needsWeightLine(b)) ? (
+              <Pressable
+                onPress={() => {
+                  selectionAsync().catch(() => {});
+                  update(bi, (s) => ({ ...s, ctx: !s.ctx }));
+                }}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: st.ctx }}
+                accessibilityLabel={traduire('Garder le contexte de la pesée : {0}', contexteTexte(b))}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, borderRadius: 14, backgroundColor: c.fillSubtle, paddingHorizontal: 12, paddingVertical: 8, opacity: st.ctx ? 1 : 0.55 }}
+              >
+                <Check on={st.ctx} />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Ink size={13} weight="extraBold" color={c.textSecondary}>{traduire('Contexte de la pesée')}</Ink>
+                  <Ink size={14} weight="bold" numberOfLines={2}>{contexteTexte(b)}</Ink>
+                </View>
+              </Pressable>
             ) : null}
             {st.error ? (
               <View style={{ padding: 12, borderRadius: 14, backgroundColor: c.dangerTint }}>
@@ -852,7 +932,7 @@ export default function BalancePhotoScreen() {
     // defile jusqu'au champ ; plus de KeyboardAvoidingView en padding qui laissait le champ sous le clavier
     <KeyboardAvoidingView behavior={undefined} style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'} automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'} showsVerticalScrollIndicator={false}>
-        <DetailHeader title={traduire("Pesée par photo")} sub={traduire("Ton IA lit les photos de ta balance, tu colles sa réponse ici. Trois étapes.")} />
+        <DetailHeader title={entete.titre} sub={entete.sous} />
 
         {/* BALANCE 3 : les trois etapes, visibles d'un coup d'oeil */}
         <View style={{ flexDirection: 'row', gap: 6, marginHorizontal: GUTTER, marginTop: 12 }}>
