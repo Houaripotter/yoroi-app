@@ -69,7 +69,7 @@ import type { TextesIle } from '@/lib/v2/seance/actionsIle';
 import { LIBELLE_REGION, regionsDesBlessures, unirRegions } from '@/lib/v2/programmes/blessures';
 import { estProgrammePerso } from '@/lib/v2/programmes/registrePerso';
 import { chargerProgrammesPerso } from '@/lib/v2/programmes/monProgramme';
-import { jourPourToi } from '@/lib/v2/programmes/perso';
+import { dateDuJour, jourPourToi, remplacementsLe } from '@/lib/v2/programmes/perso';
 import { besoinDesPerso, jourDuProgramme } from '@/lib/v2/programmes/semaineLibre';
 import { EXPLICATION_PRISE, PRISES, avecPrise, sansPrise } from '@/lib/v2/seance/prise';
 import type { Prise } from '@/lib/v2/seance/prise';
@@ -314,7 +314,8 @@ export default function SeanceMuscu() {
             // ton materiel et tes douleurs declarees : chaque exercice impossible ou qui charge une zone douloureuse
             // est remplace par le plus proche (lib/v2/programmes/materiel.ts, blessures.ts)
             // puis tes exercices changes a la main sur la page du programme en cours (lib/v2/programmes/perso.ts)
-            const protege = jourPourToi(jourSource, materiel, unirRegions(regionsDesBlessures(blessures ?? []), prog && actif && actif.id === prog.id ? actif.douleurs : null), machines, prog && actif && actif.id === prog.id ? actif.remplacements : null);
+            // 1er novembre 2026 : et ceux changes pour la seance d'aujourd'hui seulement (Tes prochaines seances)
+            const protege = jourPourToi(jourSource, materiel, unirRegions(regionsDesBlessures(blessures ?? []), prog && actif && actif.id === prog.id ? actif.douleurs : null), machines, prog && actif && actif.id === prog.id ? remplacementsLe(actif.remplacements, actif.changementsDates, dateDuJour()) : null);
             // seance express (15, 20 ou 30 min) : la seance du jour raccourcie (lib/v2/programmes/express.ts)
             const express = Number(param1(raw.express)) || 0;
             const jour = express > 0 ? { ...protege, exos: seanceExpress(protege.exos, express).exos } : protege;
