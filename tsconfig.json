@@ -15,7 +15,11 @@
   },
   "exclude": [
     "node_modules",
-    "_archive_ancien_design_2026-10-09"
+    "_archive*",
+    "_propositions",
+    "_verif",
+    "_to_delete",
+    "_a_supprimer*"
   ],
   "include": [
     "**/*.ts",
