@@ -33,6 +33,8 @@ import { TokenSheet } from '@/components/yoroi/v2/studio/TokenSheet';
 import { useCreatorMode } from '@/lib/v2/creator/CreatorModeContext';
 import { backupAgeDays, backupWhen, useEspaceStatus } from '@/components/yoroi/v2/espace/reglages/useEspaceStatus';
 import { WhatsNewSheet } from '@/components/yoroi/v2/espace/reglages/WhatsNew';
+import { QuoiDeNeuf } from '@/components/yoroi/v2/nouveautes/QuoiDeNeuf';
+import { TEXTES_QUOI_DE_NEUF, VERSION_NOUVEAUTES } from '@/lib/v2/nouveautes/quoiDeNeuf';
 import { APP_VERSION } from '@/components/yoroi/v2/espace/reglages/version';
 import { syncIdentite } from '@/components/yoroi/v2/espace/identite';
 import { Embleme } from '@/components/yoroi/v2/accueil/Ornements';
@@ -97,6 +99,8 @@ export default function Reglages() {
     if (params.objectif === '1') setObjectifOpen(true);
   }, [params.objectif]);
   const [whatsNew, setWhatsNew] = useState(false);
+  // 1er novembre 2026 : revoir « Quoi de neuf dans YOROI 3.0.2 »
+  const [quoiDeNeuf, setQuoiDeNeuf] = useState(false);
 
   const { isCreator: creatorUnlocked } = useCreatorMode();
   const [codeVisible, setCodeVisible] = useState(false);
@@ -279,6 +283,7 @@ export default function Reglages() {
         <Card>
           <ValueRow first tint={TUILE.or} icon="crown" sticker="abonnement" label={traduire("Abonnement")} value={subValue} valueColor={isPremium && !simulateFreeUser ? c.goldDeep : undefined} onPress={isPremium && hasActiveSubscription ? manageSub : () => ouvrirPaywall('reglages')} />
           <ValueRow tint={TUILE.bleu} icon="info" sticker="aide" label={traduire("Aide et questions")} onPress={() => go('/settings/aide')} />
+          <ValueRow tint={TUILE.or} icon="spark" sticker="etincelles" label={traduire(TEXTES_QUOI_DE_NEUF.reglage)} sub={traduire(TEXTES_QUOI_DE_NEUF.reglageSous, VERSION_NOUVEAUTES)} onPress={() => setQuoiDeNeuf(true)} />
           <ValueRow tint={TUILE.indigo} icon="spark" sticker="presentation" label={traduire("Revoir la présentation")} sub={traduire("Personnage, Santé, scène et visite guidée")} onPress={() => go('/nouveautes?revoir=1')} />
           <ValueRow tint={TUILE.or} icon="star" sticker="noter" label={traduire("Noter l’app")} onPress={rate} />
           <ValueRow tint={TUILE.ardoise} icon="doc" sticker="conditions" label={traduire("Conditions et confidentialité")} onPress={() => go('/settings/legal')} />
@@ -324,6 +329,7 @@ export default function Reglages() {
       <ObjectifSheet visible={objectifOpen} onClose={() => setObjectifOpen(false)} espace={espace} onSave={(p) => { update(p).catch(() => {}); }} />
 
       <WhatsNewSheet visible={whatsNew} onClose={() => setWhatsNew(false)} />
+      <QuoiDeNeuf visible={quoiDeNeuf} onClose={() => setQuoiDeNeuf(false)} />
       <TokenSheet visible={codeVisible} onClose={() => setCodeVisible(false)} onUnlocked={onCreatorUnlocked} />
       <PopupComponent />
     </View>
