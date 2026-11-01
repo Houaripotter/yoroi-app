@@ -65,6 +65,8 @@ import { CarteBravo, CarteProgramme, CarteRepos } from './EnTeteSeance';
 import { faitsCetteSemaine } from '@/lib/v2/programmes/suivi';
 import { prochainJourPrevu } from '@/lib/v2/programmes/coach';
 import { dureeEstimee } from '@/lib/v2/programmes/express';
+// 1er novembre 2026, soir : la vraie version du jour, « Push B », quand tes séances alternent
+import { avecVersion } from '@/lib/v2/programmes/alternance';
 import type { ImageSourcePropType } from 'react-native';
 
 const NOMS_JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
@@ -305,7 +307,7 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach, dispo
     const jour = jourPourToi(suite.jour, ctx.materiel, unirRegions(ctx.regions, actif.douleurs), ctx.machines, remplacementsLe(actif.remplacements, actif.changementsDates, localISO()), { fin: actif.fin, materiel: p.materiel, programme: p });
     const semaine = semaineDuProgramme(actif);
     const jours = joursDuProgramme(actif, p);
-    const message = messageCoach({ programme: p, actif, jours, prochaineSeance: traduire(jour.titre), femme, fixe: !!planEffectif(actif, p) });
+    const message = messageCoach({ programme: p, actif, jours, prochaineSeance: avecVersion(traduire(jour.titre), jour), femme, fixe: !!planEffectif(actif, p) });
     const hero = infosHero({ programme: p, actif, jour, jours, message, semaine });
     const muscu = jour.exos.length > 0 && !jour.rounds && !jour.cardio;
     const monte = muscu ? ligneProgression(jour.exos, trainings, { legeres: actif.legeres, legere: estSemaineLegere(actif) }) : null;
@@ -347,7 +349,7 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach, dispo
     }
     // c. jour de repos : la prochaine séance prévue
     if (message.etat === 'repos') {
-      return poser(carteProgramme, <CarteRepos titre={traduire(jour.titre)} quand={quandProchaine(jours)} texte={message.texte} onFaire={commencerJour} onProgramme={() => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } })} />);
+      return poser(carteProgramme, <CarteRepos titre={avecVersion(traduire(jour.titre), jour)} quand={quandProchaine(jours)} texte={message.texte} onFaire={commencerJour} onProgramme={() => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } })} />);
     }
     const kicker =
       message.etat === 'rattrape' ? traduire('On rattrape aujourd’hui')
@@ -363,7 +365,7 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach, dispo
     return poser(
       carteProgramme,
       <Cadre>
-        <EnTete kicker={kicker} titre={sansTiret(traduire(jour.titre))} sous={sansTiret(sous)} serie={serie} art={perso} />
+        <EnTete kicker={kicker} titre={sansTiret(avecVersion(traduire(jour.titre), jour))} sous={sansTiret(sous)} serie={serie} art={perso} />
         <View style={{ marginTop: 10, marginRight: marge, flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
           {muscu ? (
             <>
