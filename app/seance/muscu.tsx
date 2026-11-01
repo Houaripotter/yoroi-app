@@ -238,7 +238,8 @@ export default function SeanceMuscu() {
   // fin de seance : lieu, muscles et note d'execution replies sous « Plus de détails » (24 octobre 2026)
   const [plusOpen, setPlusOpen] = useState(false);
   const finished = useRef(false);
-  const now = useNow(1000, !!draft);
+  // 1er novembre 2026 (perf) : plus d'horloge ici, l'ecran entier ne se redessine plus chaque seconde.
+  // Le chrono, le coach, la duree et la carte cardio ont chacun la leur (composants en bas du fichier).
 
   // Chargement : brouillon, historique, preferences
   useEffect(() => {
@@ -689,7 +690,9 @@ export default function SeanceMuscu() {
     const t = setTimeout(() => setCardioFiniVu(false), DUREE_MESSAGE_MS);
     return () => clearTimeout(t);
   }, [cardioFiniVu]);
-  useEffect(() => {
+  // verifie chaque seconde avec le dernier brouillon, sans redessiner l'ecran (1er novembre 2026)
+  const verifierCardio = useRef<() => void>(() => undefined);
+  verifierCardio.current = () => {
     if (!draft) return;
     for (const e of draft.exercises) {
       const ch = e.cardio;
@@ -705,7 +708,14 @@ export default function SeanceMuscu() {
       }
       changerCardio(e.id, (c) => ({ ...c, signale: true }));
     }
-  }, [now]); // eslint-disable-line react-hooks/exhaustive-deps
+  };
+  const enSeance = !!draft;
+  useEffect(() => {
+    if (!enSeance) return;
+    verifierCardio.current();
+    const id = setInterval(() => verifierCardio.current(), 1000);
+    return () => clearInterval(id);
+  }, [enSeance]);
 
   /* (E) remplacer un exercice : la raison, puis une alternative a la fois (lib/v2/seances/alternatives.ts) */
   const [ecartes, setEcartes] = useState<Set<string>>(new Set());
@@ -1082,8 +1092,6 @@ export default function SeanceMuscu() {
     };
   }, [draft]);
 
-  const elapsedSec = draft ? Math.floor((now - draft.startedAt) / 1000) : 0;
-
   // 24 octobre 2026 : la seance en direct sur l'ecran verrouille et dans la Dynamic Island (lib/v2/widgets/activiteSeance.ts)
   const etatLive = useMemo((): EtatSeance | null => {
     if (!draft || draft.form || draft.editId) return null;
@@ -1203,7 +1211,7 @@ export default function SeanceMuscu() {
           sport: draft.sport,
           date: draft.form && det ? det.date : isoDay(start),
           start_time: draft.form && det ? timeOf(det.startMin) : hhmm(start),
-          duration_minutes: draft.form && det ? det.duration : Math.max(1, Math.round(elapsedSec / 60)),
+          duration_minutes: draft.form && det ? det.duration : Math.max(1, Math.round(Math.floor((Date.now() - draft.startedAt) / 1000) / 60)),
           exercises: exercises.length ? exercises : undefined,
           muscles: muscles.length ? muscles.join(',') : undefined,
           notes: draft.notes.trim() || undefined,
@@ -1290,7 +1298,7 @@ export default function SeanceMuscu() {
         ) : (
           <View style={{ flex: 1 }}>
             <Ink size={14} weight="bold" color={c.textSecondary} numberOfLines={1}>{traduire(title)}</Ink>
-            <Ink size={26} weight="black" style={{ fontVariant: ['tabular-nums'] }}>{fmtClock(elapsedSec)}</Ink>
+            <ChronoSeance debut={draft.startedAt} />
           </View>
         )}
         {!draft.form ? <BoutonCoachVocal /> : null}
@@ -1323,22 +1331,7 @@ export default function SeanceMuscu() {
         ) : (
           <>
             {/* 25 octobre 2026 : le coach en direct, une phrase qui change à chaque moment (lib/v2/seance/coachSeance.ts) */}
-            {(() => {
-              const mot = draft.form ? null : coachSeance(draft, {
-                femme,
-                maintenant: now,
-                charge: (kg) => (lb ? traduire('{0} lb', fmtNum(saisieDepuisKg(kg, unite))) : traduire('{0} kg', fmtNum(kg))),
-                nom: (n) => sansTiret(traduire(nomFr(n))),
-              });
-              if (!mot) return null;
-              const fort = mot.moment === 'derniere' || mot.moment === 'fin' || mot.moment === 'moitie';
-              return (
-                <View accessibilityLiveRegion="polite" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 20, paddingVertical: 12, paddingHorizontal: 14, backgroundColor: fort ? ton('lilas').fond : c.accentTint }}>
-                  <Ink size={11} weight="black" color={fort ? ton('lilas').encre : c.accentText} style={{ letterSpacing: 0.6, textTransform: 'uppercase' }}>{traduire('Coach')}</Ink>
-                  <Ink size={14} weight="extraBold" color={c.ink} style={{ flex: 1, lineHeight: 19 }}>{mot.texte}</Ink>
-                </View>
-              );
-            })()}
+            <CoachDirect draft={draft} femme={femme} unite={unite} />
             {/* 31 octobre 2026 : superset ou circuit en cours, les exercices lies et celui ou tu en es (superset.ts) */}
             {draft.form ? null : <EnTeteSuperset exercises={draft.exercises} currentId={current.id} onAller={(id) => update((d) => ({ ...d, currentId: id }))} />}
             <View onLayout={(e) => { carteY.current = e.nativeEvent.layout.y; }} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingHorizontal: 4, marginTop: 4 }}>
@@ -1454,11 +1447,10 @@ export default function SeanceMuscu() {
             ) : null}
 
             {current.cardio ? (
-              <CarteCardio
+              <CarteCardioEnDirect
                 chrono={current.cardio}
                 fait={current.sets.every((x) => x.done)}
                 dureeFaite={current.sets[0]?.reps ?? 0}
-                maintenant={now}
                 onDemarrer={() => demarrerCardio(current)}
                 onPause={() => pauseCardio(current)}
                 onTerminer={() => terminerCardio(current)}
@@ -2011,7 +2003,7 @@ export default function SeanceMuscu() {
           </View>
         ) : null}
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Stat ton="creme" label={traduire("durée")} value={fmtMinutes(draft.form && draft.details ? draft.details.duration : elapsedSec / 60)} />
+          <StatDuree debut={draft.startedAt} minutes={draft.form && draft.details ? draft.details.duration : null} />
           <Stat ton="ciel" label={traduire("séries")} value={String(summary.sets)} />
           {/* pas de « 0 kg soulevés » : le tonnage n'apparait que s'il y en a un (poids du corps exclu) */}
           {summary.tonnage > 0 ? <Stat ton="peche" label={accordSouleve(summary.tonnage, unite)} value={formatTonnage(summary.tonnage, unite)} /> : null}
@@ -2141,6 +2133,49 @@ function BarreAction({ bottom, etape, aSuivre, onValider, onSuivant, onTerminer,
       )}
     </View>
   );
+}
+
+/*
+ * 1er novembre 2026 (audit de performance) : ce qui bouge chaque seconde a sa propre horloge.
+ * Avant, useNow(1000) en haut de l'ecran redessinait toutes les cartes et toutes les series chaque seconde.
+ */
+const ChronoSeance = React.memo(function ChronoSeance({ debut }: { debut: number }) {
+  const now = useNow(1000);
+  return <Ink size={26} weight="black" style={{ fontVariant: ['tabular-nums'] }}>{fmtClock(Math.floor((now - debut) / 1000))}</Ink>;
+});
+
+/** duree de la feuille de fin : fixe pour une seance saisie, en direct sinon */
+const StatDuree = React.memo(function StatDuree({ debut, minutes }: { debut: number; minutes: number | null }) {
+  const now = useNow(1000, minutes === null);
+  return <Stat ton="creme" label={traduire("durée")} value={fmtMinutes(minutes !== null ? minutes : Math.floor((now - debut) / 1000) / 60)} />;
+});
+
+/** 25 octobre 2026 : le coach en direct, une phrase qui change a chaque moment (lib/v2/seance/coachSeance.ts) */
+const CoachDirect = React.memo(function CoachDirect({ draft, femme, unite }: { draft: MuscuDraft; femme: boolean; unite: ReturnType<typeof useUnitePoids> }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const now = useNow(1000, !draft.form);
+  const lb = unite === 'lb';
+  const mot = draft.form ? null : coachSeance(draft, {
+    femme,
+    maintenant: now,
+    charge: (kg) => (lb ? traduire('{0} lb', fmtNum(saisieDepuisKg(kg, unite))) : traduire('{0} kg', fmtNum(kg))),
+    nom: (n) => sansTiret(traduire(nomFr(n))),
+  });
+  if (!mot) return null;
+  const fort = mot.moment === 'derniere' || mot.moment === 'fin' || mot.moment === 'moitie';
+  return (
+    <View accessibilityLiveRegion="polite" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 20, paddingVertical: 12, paddingHorizontal: 14, backgroundColor: fort ? ton('lilas').fond : c.accentTint }}>
+      <Ink size={11} weight="black" color={fort ? ton('lilas').encre : c.accentText} style={{ letterSpacing: 0.6, textTransform: 'uppercase' }}>{traduire('Coach')}</Ink>
+      <Ink size={14} weight="extraBold" color={c.ink} style={{ flex: 1, lineHeight: 19 }}>{mot.texte}</Ink>
+    </View>
+  );
+});
+
+/** la carte cardio garde son horloge a la seconde, seule */
+function CarteCardioEnDirect(p: Omit<React.ComponentProps<typeof CarteCardio>, 'maintenant'>) {
+  const maintenant = useNow(1000);
+  return <CarteCardio {...p} maintenant={maintenant} />;
 }
 
 function Stat({ label, value, ton: t }: { label: string; value: string; ton: TonSeance }) {
