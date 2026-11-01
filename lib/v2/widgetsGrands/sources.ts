@@ -27,6 +27,7 @@ import { getRingGoals, getSanteSource, loadAllSeries, loadRings } from '@/lib/v2
 import { readinessFromForme } from '@/lib/v2/sante/score';
 import { demoActive } from '@/lib/v2/demo/garde';
 import { traduire } from '@/lib/i18n/tr';
+import { avecVersion } from '@/lib/v2/programmes/alternance';
 import type { DojoSource, PlanSource, SanteSource, SourcesGrands } from './instantane';
 
 async function sur<T>(p: () => Promise<T>, repli: T): Promise<T> {
@@ -58,7 +59,8 @@ async function lirePlan(today: string, femme: boolean): Promise<PlanSource | nul
   const suite = prochainJour(actif);
   if (!suite) return null;
   const { programme: p, jour } = suite;
-  const titre = traduire(jour.titre);
+  // 1er novembre 2026, soir : la vraie version du jour, « Push B », quand tes séances alternent
+  const titre = avecVersion(traduire(jour.titre), jour);
   const m = messageCoach({ programme: p, actif, jours: joursDuProgramme(actif, p), prochaineSeance: titre, femme, fixe: !!planEffectif(actif, p) });
   const genre: PlanSource['genre'] = jour.cardio ? 'cardio' : jour.rounds ? 'rounds' : 'muscu';
   let minutes = p.dureeMin;
@@ -74,14 +76,14 @@ async function lirePlan(today: string, femme: boolean): Promise<PlanSource | nul
   const dates = joursDeLaSemaine(today);
   let semaine: (string | null)[] = dates.map(() => null);
   if (semaineEffective(actif, p)) {
-    semaine = seancesAuxDates(actif, dates).map((x) => (x ? traduire(x.jour.titre) : null));
+    semaine = seancesAuxDates(actif, dates).map((x) => (x ? avecVersion(traduire(x.jour.titre), x.jour) : null));
   } else if (m.seanceDuJour) {
     semaine = dates.map((d) => (isoDe(d) === today ? titre : null));
   }
   const faits: Record<string, string> = {};
   for (const f of actif.faits ?? []) {
     const j = p.jours.find((x) => x.id === f.jourId);
-    if (j && f.date) faits[String(f.date).slice(0, 10)] = traduire(j.titre);
+    if (j && f.date) faits[String(f.date).slice(0, 10)] = avecVersion(traduire(j.titre), j);
   }
   const derniers = (actif.faits ?? []).filter((f) => f.jourId === jour.id && typeof f.trainingId === 'number').sort((a, b) => (a.date < b.date ? 1 : -1));
   return {
