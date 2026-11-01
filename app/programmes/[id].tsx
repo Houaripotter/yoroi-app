@@ -59,6 +59,7 @@ import { lireProfilCoach } from '@/lib/v2/programmes/profilCoach';
 import { messageCoach } from '@/lib/v2/programmes/coach';
 import { infosHero } from '@/lib/v2/programmes/heroJour';
 import { CarteDeuxFois } from '@/components/yoroi/v2/frequence/CarteDeuxFois';
+import { EntreeProchaines } from '@/components/yoroi/v2/programmes/ProchainesSeances';
 import { TesJours, TesJoursEnCours, semaineAffichee } from '@/components/yoroi/v2/programmes/TesJours';
 import { RappelSeance } from '@/components/yoroi/v2/programmes/RappelSeance';
 import { BandeauMixte, BoutonSemaineMixte } from '@/components/yoroi/v2/programmes/Mixte';
@@ -362,6 +363,9 @@ export default function ProgrammeDetail() {
 
         {/* 3. TA SEMAINE : fait, prochaine séance, repos */}
         <SemaineRonds ronds={rondsDeLaSemaine(p, enCours ? actif : null, planAvant && !enCours ? joursDuPlan(planAvant) : jours, undefined, enCours ? undefined : planAvant, enCours ? undefined : semaineAvant)} />
+
+        {/* 1er novembre 2026 : tes prochaines séances, jour par jour, A et B au choix (app/programmes/prochaines.tsx) */}
+        {enCours ? <EntreeProchaines onPress={() => router.push('/programmes/prochaines' as any)} /> : null}
 
         {/* 30 octobre 2026 : chaque muscle 2 fois par semaine, le coach le rappelle à partir du jeudi (CarteDeuxFois.tsx) */}
         {enCours ? <CarteDeuxFois /> : null}
