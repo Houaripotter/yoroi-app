@@ -12,7 +12,7 @@
  * Ancienne version : _archive_ancien_design_2026-10-09/maquettes_choisies_2026-10-27/.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, View } from 'react-native';
+import { Image, Modal, Pressable, View } from 'react-native';
 import { PisteInterrupteur } from '@/components/yoroi/Interrupteur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
@@ -33,6 +33,11 @@ import { carteNeutre } from './domaines';
 import { ApercuAccueil } from './ApercuAccueil';
 import { traduire } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
+import { useGrandEcran } from '@/lib/v2/nav/useGrandEcran';
+import { BLOCS_GRAND_ECRAN, useBlocsGrandEcran } from '@/lib/v2/accueil/blocsGrandEcran';
+import type { BlocGrandEcran } from '@/lib/v2/accueil/blocsGrandEcran';
 
 /** Hauteur d'une ligne de la liste (maquette : 52) */
 const H = 52;
@@ -256,6 +261,8 @@ export function DispositionEditor({ onGlisse }: { onGlisse?: (actif: boolean) =>
   };
 
   const affiches = ordre.filter((id) => !caches.includes(id)).length;
+  // 1er novembre 2026 : en grand écran, les blocs en plus (Ton programme, Tes records récents...)
+  const grand = useGrandEcran();
 
   return (
     <View style={{ gap: 0 }}>
@@ -317,12 +324,67 @@ export function DispositionEditor({ onGlisse }: { onGlisse?: (actif: boolean) =>
         </View>
       </View>
 
+      {grand ? <BlocsGrandEcranReglage /> : null}
+
       <Press onPress={() => changer(DISPOSITION_DEFAUT)} haptic="light" accessibilityRole="button" accessibilityLabel={traduire("Revenir à l’accueil de départ")}>
         <View style={{ alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, marginTop: 8 }}>
           <Ink size={14} weight="extraBold" color={accent}>
             {traduire("Revenir à l’accueil de départ")}</Ink>
         </View>
       </Press>
+    </View>
+  );
+}
+
+const STICKER_GRAND: Record<BlocGrandEcran, NomSticker> = {
+  programme: 'calendrier',
+  muscles: 'muscle',
+  forme_matin: 'lune_soleil',
+  records: 'trophee',
+  poids7: 'balance',
+  cartes: 'partager',
+};
+
+/**
+ * 1er novembre 2026 : les blocs en plus de l'accueil en grand écran (Mac, iPad), à montrer ou cacher. Seulement en
+ * grand écran : sur iPhone, Tes blocs ne change pas.
+ */
+function BlocsGrandEcranReglage() {
+  const { caches, basculer } = useBlocsGrandEcran();
+  const illus = useIllustrations();
+  const affiches = BLOCS_GRAND_ECRAN.filter((b) => !caches.includes(b.id)).length;
+  return (
+    <View>
+      <View style={{ marginTop: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: 2 }}>
+        <Ink size={13} weight="black" color={P.ink2}>
+          {traduire('En grand écran')}
+        </Ink>
+        <Ink size={12.5} weight="extraBold" color={P.accentText}>
+          {traduire('{0} affichés sur {1}', affiches, BLOCS_GRAND_ECRAN.length)}
+        </Ink>
+      </View>
+      <View style={{ marginTop: 8, backgroundColor: P.white, borderRadius: 22, overflow: 'hidden', shadowColor: '#1D2033', shadowOpacity: 0.05, shadowRadius: 14, shadowOffset: { width: 0, height: 4 }, elevation: 1 }}>
+        {BLOCS_GRAND_ECRAN.map((b, k) => {
+          const on = !caches.includes(b.id);
+          return (
+            <Pressable
+              key={b.id}
+              onPress={() => basculer(b.id)}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: on }}
+              accessibilityLabel={`${traduire(b.titre)}, ${b.aide}`}
+              style={({ pressed }) => ({ minHeight: H, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 6, borderTopWidth: k ? 1 : 0, borderColor: P.line2, backgroundColor: pressed ? P.paper : 'transparent' })}
+            >
+              <Image source={illus.img(STICKER_GRAND[b.id])} style={{ width: 30, height: 30 }} resizeMode="contain" />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Ink size={14.5} weight="extraBold" numberOfLines={1}>{traduire(b.titre)}</Ink>
+                <Ink size={12} color={P.ink2} numberOfLines={1}>{b.aide}</Ink>
+              </View>
+              <Interrupteur on={on} />
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
