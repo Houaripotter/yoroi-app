@@ -18,6 +18,7 @@ export function CarteMessage({
   principal,
   liens = [],
   children,
+  fine,
 }: {
   illustration: React.ReactNode;
   titre: string;
@@ -25,7 +26,45 @@ export function CarteMessage({
   principal: ActionMessage;
   liens?: ActionMessage[];
   children?: React.ReactNode;
+  /**
+   * 1er novembre 2026 (accueil en grand écran, Houari : deux grosses cartes d'invitation en haut) : une bande fine,
+   * l'illustration en petit, le titre et sa phrase sur une ligne, le bouton et les liens à droite. Mêmes actions.
+   */
+  fine?: boolean;
 }) {
+  if (fine) {
+    return (
+      <View style={{ borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingLeft: 10, paddingRight: 8, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ width: 40, height: 40 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          {illustration}
+        </View>
+        <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
+          <Ink size={13.5} weight="extraBold" tight numberOfLines={1} accessibilityRole="header">
+            {titre}
+          </Ink>
+          <Ink size={11.5} color={P.ink2} numberOfLines={2} style={{ lineHeight: 15 }}>
+            {texte}
+          </Ink>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Press onPress={principal.onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire(principal.label)} disabled={principal.busy}>
+            <View style={{ minHeight: 36, borderRadius: 12, paddingHorizontal: 12, backgroundColor: P.indigo, justifyContent: 'center', opacity: principal.busy ? 0.6 : 1 }}>
+              <Ink size={12.5} weight="extraBold" color={P.white} numberOfLines={1}>
+                {principal.busy ? principal.busyLabel ?? traduire('Un instant…') : principal.label}
+              </Ink>
+            </View>
+          </Press>
+          {liens.map((l) => (
+            <Pressable key={l.label} onPress={l.onPress} accessibilityRole="button" accessibilityLabel={traduire(l.label)} hitSlop={6} style={{ minHeight: 30, justifyContent: 'center', paddingHorizontal: 6 }}>
+              <Ink size={12} weight="bold" color={P.ink2}>
+                {traduire(l.label)}
+              </Ink>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    );
+  }
   return (
     <View style={{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12, gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
