@@ -208,17 +208,17 @@ function segFields(): BalanceFieldSpec[] {
 
 export const BALANCE_FIELDS: BalanceFieldSpec[] = [
   { key: 'poids_kg', label: 'Poids', unit: 'kg', min: 20, max: 300, step: 0.1, group: 'principal', kind: null, mass: true, ai: traduire('poids en kg'), aliases: ['poids', 'weight', 'masse', 'body_weight', 'poids_corporel'] },
-  { key: 'graisse_pct', label: 'Masse grasse', unit: '%', min: 2, max: 75, step: 0.1, group: 'principal', kind: 'graisse', ai: traduire('masse grasse du corps entier en %'), aliases: ['graisse', 'masse_grasse', 'masse_grasse_pct', 'body_fat', 'fat', 'bf', 'pbf', 'percent_body_fat', 'taux_de_graisse', 'graisse_corporelle'] },
+  { key: 'graisse_pct', label: 'Masse grasse', unit: '%', min: 2, max: 75, step: 0.1, group: 'principal', kind: 'graisse', ai: traduire('masse grasse du corps entier en %'), aliases: ['graisse', 'masse_grasse', 'masse_grasse_pct', 'body_fat', 'fat', 'bf', 'pbf', 'percent_body_fat', 'taux_de_graisse', 'graisse_corporelle', 'fat_rate', 'body_fat_rate', 'body_fat_percentage'] },
   { key: 'muscle_kg', label: traduire('Masse musculaire'), unit: 'kg', min: 5, max: 150, step: 0.1, group: 'principal', kind: 'muscle', mass: true, ai: traduire('masse musculaire du corps entier en kg'), aliases: ['muscle', 'masse_musculaire', 'muscle_mass', 'muscles'] },
-  { key: 'eau_pct', label: 'Eau', unit: '%', min: 20, max: 80, step: 0.1, group: 'principal', kind: 'eau', ai: traduire('eau corporelle totale en %'), aliases: ['eau', 'eau_corporelle', 'eau_totale', 'water', 'body_water', 'tbw', 'hydratation', 'hydration'] },
+  { key: 'eau_pct', label: 'Eau', unit: '%', min: 20, max: 80, step: 0.1, group: 'principal', kind: 'eau', ai: traduire('eau corporelle totale en %'), aliases: ['eau', 'eau_corporelle', 'eau_totale', 'water', 'body_water', 'tbw', 'hydratation', 'hydration', 'body_water_rate', 'water_rate', 'body_water_percentage'] },
   { key: 'os_kg', label: 'Masse osseuse', unit: 'kg', min: 0.5, max: 10, step: 0.1, group: 'avance', kind: 'os', mass: true, ai: 'masse osseuse en kg', aliases: ['os', 'masse_osseuse', 'bone', 'bone_mass', 'ossature'] },
-  { key: 'graisse_viscerale', label: 'Graisse viscérale', unit: 'niveau', min: 1, max: 59, step: 0.5, group: 'avance', kind: 'graisse', ai: traduire('indice de graisse viscérale, de 1 à 59'), aliases: ['viscerale', 'visceral', 'visceral_fat', 'graisse_viscerale_niveau', 'gras_visceral', 'visceral_fat_rating', 'visceral_fat_level'] },
-  { key: 'metabolisme_kcal', label: traduire('Métabolisme de base'), unit: 'kcal', min: 600, max: 5000, step: 1, group: 'avance', kind: null, ai: traduire('métabolisme de base en kcal'), aliases: ['metabolisme', 'metabolisme_de_base', 'mb', 'bmr', 'basal_metabolic_rate', 'dee', 'metabolisme_au_repos', 'resting_metabolism'] },
+  { key: 'graisse_viscerale', label: 'Graisse viscérale', unit: 'niveau', min: 1, max: 59, step: 0.5, group: 'avance', kind: 'graisse', ai: traduire('indice de graisse viscérale, de 1 à 59'), aliases: ['viscerale', 'visceral', 'visceral_fat', 'graisse_viscerale_niveau', 'gras_visceral', 'visceral_fat_rating', 'visceral_fat_level', 'visc_fat', 'visceral_fat_index'] },
+  { key: 'metabolisme_kcal', label: traduire('Métabolisme de base'), unit: 'kcal', min: 600, max: 5000, step: 1, group: 'avance', kind: null, ai: traduire('métabolisme de base en kcal'), aliases: ['metabolisme', 'metabolisme_de_base', 'mb', 'bmr', 'basal_metabolic_rate', 'dee', 'metabolisme_au_repos', 'resting_metabolism', 'metabolism'] },
   { key: 'metabolisme_kj', label: traduire('Métabolisme de base'), unit: 'kJ', min: 2500, max: 21000, step: 1, group: 'avance', kind: null, convert: { to: 'metabolisme_kcal', factor: 1 / 4.184 }, ai: traduire('métabolisme de base en kJ, seulement si la balance ne donne pas les kcal'), aliases: ['metabolisme_de_base_kj', 'bmr_kj', 'kj'] },
-  { key: 'age_metabolique', label: traduire('Âge métabolique'), unit: 'ans', min: 10, max: 100, step: 1, group: 'avance', kind: null, ai: traduire('âge métabolique en années'), aliases: ['age_metabolique_ans', 'metabolic_age', 'age_meta'] },
+  { key: 'age_metabolique', label: traduire('Âge métabolique'), unit: 'ans', min: 10, max: 100, step: 1, group: 'avance', kind: null, ai: traduire('âge métabolique en années'), aliases: ['age_metabolique_ans', 'metabolic_age', 'age_meta', 'metab_age'] },
   { key: 'imc', label: traduire('IMC'), unit: '', min: 10, max: 70, step: 0.1, group: 'avance', kind: null, ai: traduire('IMC affiché par la balance'), aliases: ['bmi', 'indice_de_masse_corporelle'] },
   { key: 'physique', label: traduire('Morphologie'), unit: 'sur 9', min: 1, max: 9, step: 1, group: 'avance', kind: null, ai: traduire('physique rating, chiffre de 1 à 9'), aliases: ['physique_rating', 'morphologie', 'type_physique'] },
-  { key: 'graisse_kg', label: traduire('Masse grasse en kilos'), unit: 'kg', min: 1, max: 200, step: 0.1, group: 'avance', kind: 'graisse', mass: true, ai: 'masse grasse en kg', aliases: ['masse_grasse_kg', 'fat_mass', 'fat_kg', 'body_fat_mass'] },
+  { key: 'graisse_kg', label: traduire('Masse grasse en kilos'), unit: 'kg', min: 1, max: 200, step: 0.1, group: 'avance', kind: 'graisse', mass: true, ai: 'masse grasse en kg', aliases: ['masse_grasse_kg', 'fat_mass', 'fat_kg', 'body_fat_mass', 'bfm'] },
   { key: 'muscle_pct', label: traduire('Muscle en pourcentage'), unit: '%', min: 10, max: 90, step: 0.1, group: 'avance', kind: 'muscle', ai: traduire('muscle en %, seulement si la balance le donne en %'), aliases: ['masse_musculaire_pct', 'muscle_percent', 'taux_de_muscle'] },
   // BALANCE 2 : ce que donnent souvent les autres balances et les feuilles InBody (colonne JSON scale_extras)
   { key: 'masse_maigre_kg', label: traduire('Masse maigre'), unit: 'kg', min: 10, max: 200, step: 0.1, group: 'avance', kind: 'muscle', mass: true, json: true, ai: traduire('masse maigre ou masse non grasse en kg'), aliases: ['masse_maigre', 'masse_non_grasse', 'lean_mass', 'lean_body_mass', 'lbm', 'fat_free_mass', 'ffm', 'fat_free_body_weight', 'poids_sans_graisse'] },
@@ -230,8 +230,8 @@ export const BALANCE_FIELDS: BalanceFieldSpec[] = [
   { key: 'mineraux_kg', label: traduire('Minéraux'), unit: 'kg', min: 0.5, max: 10, step: 0.01, group: 'avance', kind: 'os', mass: true, json: true, ai: traduire('minéraux en kg'), aliases: ['mineraux', 'minerals', 'mineral', 'masse_minerale', 'mineral_mass'] },
   { key: 'graisse_sous_cutanee_pct', label: traduire('Graisse sous cutanée'), unit: '%', min: 1, max: 70, step: 0.1, group: 'avance', kind: 'graisse', json: true, ai: traduire('graisse sous cutanée en %'), aliases: ['graisse_sous_cutanee', 'sous_cutanee', 'subcutaneous_fat', 'subcutaneous_fat_percent', 'gras_sous_cutane'] },
   { key: 'ratio_eau_extracellulaire', label: traduire('Ratio eau extracellulaire'), unit: 'ECW/TBW', min: 0.3, max: 0.5, step: 0.001, group: 'avance', kind: 'eau', json: true, ai: traduire('ratio ECW/TBW, par exemple 0.380'), aliases: ['ecw_tbw', 'ecw_tbw_ratio', 'ratio_ecw_tbw', 'ecw_ratio', 'extracellular_water_ratio', 'ratio_eau_extracellulaire_eau_totale'] },
-  { key: 'angle_de_phase', label: traduire('Angle de phase'), unit: '°', min: 1, max: 15, step: 0.1, group: 'avance', kind: null, json: true, ai: traduire('angle de phase en degrés'), aliases: ['phase_angle', 'angle_phase', 'whole_body_phase_angle', 'angle_de_phase_50khz'] },
-  { key: 'score_corporel', label: traduire('Score corporel'), unit: 'points', min: 1, max: 100, step: 1, group: 'avance', kind: null, json: true, ai: traduire('score InBody ou score corporel sur 100'), aliases: ['score', 'inbody_score', 'score_inbody', 'body_score', 'health_score', 'score_sante', 'score_corps'] },
+  { key: 'angle_de_phase', label: traduire('Angle de phase'), unit: '°', min: 1, max: 15, step: 0.1, group: 'avance', kind: null, json: true, ai: traduire('angle de phase en degrés'), aliases: ['phase_angle', 'angle_phase', 'whole_body_phase_angle', 'angle_de_phase_50khz', 'phase_angle_50kHz', 'whole_body_phase_angle_50kHz'] },
+  { key: 'score_corporel', label: traduire('Score corporel'), unit: 'points', min: 1, max: 100, step: 1, group: 'avance', kind: null, json: true, ai: traduire('score InBody ou score corporel sur 100'), aliases: ['score', 'inbody_score', 'InBody Score', 'score_inbody', 'body_score', 'health_score', 'score_sante', 'score_corps'] },
   { key: 'fc_repos', label: traduire('Fréquence cardiaque'), unit: 'bpm', min: 30, max: 200, step: 1, group: 'avance', kind: null, json: true, ai: traduire('fréquence cardiaque mesurée par la balance, en bpm'), aliases: ['frequence_cardiaque', 'fc', 'pouls', 'heart_rate', 'hr', 'bpm', 'standing_heart_rate', 'resting_heart_rate', 'rythme_cardiaque'] },
   { key: 'age_corporel', label: traduire('Âge corporel'), unit: 'ans', min: 10, max: 100, step: 1, group: 'avance', kind: null, json: true, ai: traduire('âge corporel en années, s’il est distinct de l’âge métabolique'), aliases: ['body_age', 'age_du_corps', 'age_biologique'] },
   { key: 'poids_ideal_kg', label: traduire('Poids idéal ou cible'), unit: 'kg', min: 20, max: 300, step: 0.1, group: 'avance', kind: null, mass: true, json: true, ai: traduire('poids idéal ou poids cible affiché, en kg'), aliases: ['poids_ideal', 'poids_cible', 'ideal_weight', 'target_weight', 'poids_de_reference', 'standard_weight'] },
@@ -280,7 +280,14 @@ function measureLines(): string {
     .join('\n');
 }
 
-export const BALANCE_PROMPT = traduire("Je t'envoie des photos pour mon application YOROI, parfois tout un dossier pris à des dates différentes : écrans de balance (toute marque), captures d'une application de balance connectée (Withings, Zepp Life ou Mi Fit, Renpho, Eufy, Garmin Connect, Apple Santé, Samsung Health, Google Fit...) avec leurs historiques et graphiques chiffrés, tickets ou feuilles imprimées (InBody, Tanita...), et mensurations en centimètres (note, carnet, capture). Lis les valeurs et recopie ces valeurs.\n\nRègles :\n1. Recopie seulement les chiffres que tu vois clairement. Ne devine rien, ne calcule rien, ne convertis rien.\n2. Si une valeur n'apparaît nulle part, ou si tu as un doute, n'écris pas sa ligne.\n3. Réponds UNIQUEMENT avec les blocs plus bas : aucun texte avant, après ou entre, aucune explication.\n4. Une ligne par valeur, au format cle: nombre, avec un point pour les décimales. Garde exactement les noms des clés. Pas d'unité, sauf pour une masse en livres ou en stones (écris lb ou st après le nombre, exemple : poids_kg: 12 st 4 lb) et pour une longueur en pouces (écris in après le nombre).\n5. Un bloc par date, de YOROI BALANCE v1 à FIN. Tout ce qui a été mesuré le même jour va dans un seul bloc, même si cela vient de plusieurs photos (la balance le matin, le mètre ruban le soir). Les photos arrivent dans n'importe quel ordre et peuvent se répéter : une valeur vue sur deux photos ne s'écrit qu'une fois.\n6. La date de chaque bloc : cherche cette date dans cet ordre. La date affichée sur l'écran de la balance ou dans la capture de l'application (date_source: ecran). La date imprimée sur un ticket ou une feuille (date_source: ticket). Sinon la date de prise de vue de la photo, si tu y as accès ou si elle est dans la liste « Dates de prise des photos » à la fin de ce message (date_source: photo). Écris cette date au format date: AAAA-MM-JJ, et sur la ligne suivante d'où elle vient : date_source: ecran, ticket ou photo. Si le jour et le mois sont visibles mais pas l'année, écris date: JJ/MM, l'app ajoutera l'année. Si tu ne trouves aucune date, écris date: inconnue et date_source: inconnue, l'app demandera le jour. Une date visible sur la photo prime toujours sur la date de prise de vue. N'invente jamais une date, n'utilise pas la date du fichier ni celle de l'envoi, jamais la date d'aujourd'hui.\n7. Historique ou graphique d'une application : chaque ligne qui montre une date et un chiffre écrits devient un bloc à sa date. Ne lis pas une valeur sur la hauteur d'une courbe, seulement les chiffres écrits. Une moyenne de la semaine ou du mois n'est pas une pesée : ne l'écris pas.\n8. Beaucoup de balances (Tanita comprise) n'écrivent pas le nom de la mesure : reconnais la mesure par son unité, son petit symbole et sa plage de valeurs.\n   kg avec la silhouette debout, valeur la plus grande : poids_kg.\n   kg avec la silhouette musclée (haltère), environ 30 à 90 : muscle_kg.\n   kg petit, environ 1 à 6, avec le symbole os : os_kg.\n   % avec la silhouette et le symbole %, environ 3 à 50 : graisse_pct.\n   % avec la goutte d'eau, environ 35 à 75 : eau_pct.\n   Level : graisse_viscerale. Age : age_metabolique.\n   kcal : metabolisme_kcal. kJ : metabolisme_kj, seulement si aucun écran ne donne les kcal (ne convertis pas).\n   Chiffre seul sans unité de 1 à 9 avec le symbole silhouette : physique. Nombre à virgule sans unité, environ 15 à 45, avec BMI : imc.\n   bpm ou un cœur : fc_repos. Degrés (°) : angle_de_phase. Nombre comme 0.380 avec ECW/TBW : ratio_eau_extracellulaire.\n   Si deux valeurs peuvent correspondre à la même clé et que tu ne peux pas trancher, n'écris aucune des deux.\n9. Bras, jambes, tronc d'une balance (sur une Tanita : les écrans des deux boutons orange, graisse en % et muscle en kg) : le côté droit ou gauche est celui indiqué par la balance ou la feuille. Si tu ne sais pas de quel segment il s'agit, n'écris pas la ligne. Un pourcentage « de la norme » (InBody) n'est pas un pourcentage du segment : mets cette valeur en ligne autre.\n10. Mensurations au mètre ruban, en cm : prends la clé avec le côté s'il est écrit, sinon la clé sans côté. Un tour de bras en cm n'est pas le muscle du bras en kg.\n11. Toute autre mesure affichée avec son nom, une ligne chacune, au format :\n   autre: Nom exact affiché = valeur unité\n   N'écris pas en autre une mesure qui a déjà sa clé.\n12. Si tu sais de quelles photos viennent les valeurs d'un bloc, ajoute la ligne photos: avec leurs numéros, dans l'ordre de la liste ou de l'envoi (exemple : photos: 1, 2, 3). Sinon n'écris pas cette ligne.\n\nClés possibles (écris seulement celles que tu vois) :\ndate: (AAAA-MM-JJ, JJ/MM sans l'année, ou inconnue)\ndate_source: (ecran, ticket, photo ou inconnue : d'où vient la date)\nphotos: (numéros des photos lues pour ce bloc, facultatif)\n{0}\n\nMensurations, en cm :\n{1}\n\nBras, jambes, tronc d'une balance, avec SEGMENT = bras_droit, bras_gauche, tronc, jambe_droite ou jambe_gauche :\ngraisse_SEGMENT_pct: (graisse du segment en %)\ngraisse_SEGMENT_kg: (graisse du segment en kg)\nmuscle_SEGMENT_kg: (muscle du segment en kg)\nmuscle_SEGMENT_pct: (muscle du segment en %)\neau_SEGMENT_kg: (eau du segment en kg ou en litres)\n\nExemple de réponse attendue pour un dossier de photos :\nYOROI BALANCE v1\ndate: 2026-10-13\ndate_source: ecran\nphotos: 1, 2, 3\npoids_kg: 82.4\ngraisse_pct: 18.2\nmuscle_kg: 63.5\ngraisse_bras_droit_pct: 15.3\ntour_de_taille_cm: 84.5\nautre: Eau intracellulaire = 28.1 L\nFIN\n\nYOROI BALANCE v1\ndate: 2026-10-06\ndate_source: ticket\npoids_kg: 83.1\ngraisse_pct: 18.6\nFIN\n\nYOROI BALANCE v1\ndate: inconnue\ndate_source: inconnue\ntour_de_hanches_cm: 98\ntour_bras_droit_cm: 36.5\nFIN", promptLines(), measureLines());
+/**
+ * 1er novembre 2026 (AQ, « ne rien perdre ») : complements de la consigne, ajoutes a la fin pour que la consigne
+ * deja traduite reste la meme. L'heure, l'appareil, le cote et le segment, les valeurs en texte et les signes moins
+ * sont relus par parseBalanceBlocks et gardes dans le sac des mesures (lib/v2/mesures/).
+ */
+export const BALANCE_PROMPT_COMPLEMENT = traduire("Compléments, à respecter aussi :\n13. Si l'heure de la mesure est visible, ajoute dans le bloc la ligne heure: HH:MM. Deux pesées le même jour à des heures différentes : un bloc chacune, avec sa date et son heure.\n14. Si la marque ou le modèle de l'appareil est visible (balance, application, feuille imprimée), ajoute la ligne appareil: Marque Modèle (exemple : appareil: Tanita RD-545).\n15. Dans une ligne autre, garde dans le nom le côté (droit ou gauche) et la partie du corps (bras, jambe, tronc), et écris l'unité affichée telle quelle (L, cm², kHz, ohm, mmHg, mmol/L, mg/dL...). Exemples : autre: Eau intracellulaire bras gauche = 2.1 L, autre: Tour de poignet droit = 17 cm.\n16. Une valeur affichée en texte et non en chiffre (type de corps, résultat d'ECG, niveau « standard ») : autre: Nom = texte affiché.\n17. Une valeur négative (contrôle du poids, de la graisse ou du muscle : kilos à perdre ou à gagner) : garde le signe moins.\n18. Les autres mesures visibles sur les mêmes captures (tension, glycémie, oxygène, variabilité cardiaque, température, impédance) : une ligne autre chacune, avec son unité.");
+
+export const BALANCE_PROMPT = traduire("Je t'envoie des photos pour mon application YOROI, parfois tout un dossier pris à des dates différentes : écrans de balance (toute marque), captures d'une application de balance connectée (Withings, Zepp Life ou Mi Fit, Renpho, Eufy, Garmin Connect, Apple Santé, Samsung Health, Google Fit...) avec leurs historiques et graphiques chiffrés, tickets ou feuilles imprimées (InBody, Tanita...), et mensurations en centimètres (note, carnet, capture). Lis les valeurs et recopie ces valeurs.\n\nRègles :\n1. Recopie seulement les chiffres que tu vois clairement. Ne devine rien, ne calcule rien, ne convertis rien.\n2. Si une valeur n'apparaît nulle part, ou si tu as un doute, n'écris pas sa ligne.\n3. Réponds UNIQUEMENT avec les blocs plus bas : aucun texte avant, après ou entre, aucune explication.\n4. Une ligne par valeur, au format cle: nombre, avec un point pour les décimales. Garde exactement les noms des clés. Pas d'unité, sauf pour une masse en livres ou en stones (écris lb ou st après le nombre, exemple : poids_kg: 12 st 4 lb) et pour une longueur en pouces (écris in après le nombre).\n5. Un bloc par date, de YOROI BALANCE v1 à FIN. Tout ce qui a été mesuré le même jour va dans un seul bloc, même si cela vient de plusieurs photos (la balance le matin, le mètre ruban le soir). Les photos arrivent dans n'importe quel ordre et peuvent se répéter : une valeur vue sur deux photos ne s'écrit qu'une fois.\n6. La date de chaque bloc : cherche cette date dans cet ordre. La date affichée sur l'écran de la balance ou dans la capture de l'application (date_source: ecran). La date imprimée sur un ticket ou une feuille (date_source: ticket). Sinon la date de prise de vue de la photo, si tu y as accès ou si elle est dans la liste « Dates de prise des photos » à la fin de ce message (date_source: photo). Écris cette date au format date: AAAA-MM-JJ, et sur la ligne suivante d'où elle vient : date_source: ecran, ticket ou photo. Si le jour et le mois sont visibles mais pas l'année, écris date: JJ/MM, l'app ajoutera l'année. Si tu ne trouves aucune date, écris date: inconnue et date_source: inconnue, l'app demandera le jour. Une date visible sur la photo prime toujours sur la date de prise de vue. N'invente jamais une date, n'utilise pas la date du fichier ni celle de l'envoi, jamais la date d'aujourd'hui.\n7. Historique ou graphique d'une application : chaque ligne qui montre une date et un chiffre écrits devient un bloc à sa date. Ne lis pas une valeur sur la hauteur d'une courbe, seulement les chiffres écrits. Une moyenne de la semaine ou du mois n'est pas une pesée : ne l'écris pas.\n8. Beaucoup de balances (Tanita comprise) n'écrivent pas le nom de la mesure : reconnais la mesure par son unité, son petit symbole et sa plage de valeurs.\n   kg avec la silhouette debout, valeur la plus grande : poids_kg.\n   kg avec la silhouette musclée (haltère), environ 30 à 90 : muscle_kg.\n   kg petit, environ 1 à 6, avec le symbole os : os_kg.\n   % avec la silhouette et le symbole %, environ 3 à 50 : graisse_pct.\n   % avec la goutte d'eau, environ 35 à 75 : eau_pct.\n   Level : graisse_viscerale. Age : age_metabolique.\n   kcal : metabolisme_kcal. kJ : metabolisme_kj, seulement si aucun écran ne donne les kcal (ne convertis pas).\n   Chiffre seul sans unité de 1 à 9 avec le symbole silhouette : physique. Nombre à virgule sans unité, environ 15 à 45, avec BMI : imc.\n   bpm ou un cœur : fc_repos. Degrés (°) : angle_de_phase. Nombre comme 0.380 avec ECW/TBW : ratio_eau_extracellulaire.\n   Si deux valeurs peuvent correspondre à la même clé et que tu ne peux pas trancher, n'écris aucune des deux.\n9. Bras, jambes, tronc d'une balance (sur une Tanita : les écrans des deux boutons orange, graisse en % et muscle en kg) : le côté droit ou gauche est celui indiqué par la balance ou la feuille. Si tu ne sais pas de quel segment il s'agit, n'écris pas la ligne. Un pourcentage « de la norme » (InBody) n'est pas un pourcentage du segment : mets cette valeur en ligne autre.\n10. Mensurations au mètre ruban, en cm : prends la clé avec le côté s'il est écrit, sinon la clé sans côté. Un tour de bras en cm n'est pas le muscle du bras en kg.\n11. Toute autre mesure affichée avec son nom, une ligne chacune, au format :\n   autre: Nom exact affiché = valeur unité\n   N'écris pas en autre une mesure qui a déjà sa clé.\n12. Si tu sais de quelles photos viennent les valeurs d'un bloc, ajoute la ligne photos: avec leurs numéros, dans l'ordre de la liste ou de l'envoi (exemple : photos: 1, 2, 3). Sinon n'écris pas cette ligne.\n\nClés possibles (écris seulement celles que tu vois) :\ndate: (AAAA-MM-JJ, JJ/MM sans l'année, ou inconnue)\ndate_source: (ecran, ticket, photo ou inconnue : d'où vient la date)\nphotos: (numéros des photos lues pour ce bloc, facultatif)\n{0}\n\nMensurations, en cm :\n{1}\n\nBras, jambes, tronc d'une balance, avec SEGMENT = bras_droit, bras_gauche, tronc, jambe_droite ou jambe_gauche :\ngraisse_SEGMENT_pct: (graisse du segment en %)\ngraisse_SEGMENT_kg: (graisse du segment en kg)\nmuscle_SEGMENT_kg: (muscle du segment en kg)\nmuscle_SEGMENT_pct: (muscle du segment en %)\neau_SEGMENT_kg: (eau du segment en kg ou en litres)\n\nExemple de réponse attendue pour un dossier de photos :\nYOROI BALANCE v1\ndate: 2026-10-13\ndate_source: ecran\nphotos: 1, 2, 3\npoids_kg: 82.4\ngraisse_pct: 18.2\nmuscle_kg: 63.5\ngraisse_bras_droit_pct: 15.3\ntour_de_taille_cm: 84.5\nautre: Eau intracellulaire = 28.1 L\nFIN\n\nYOROI BALANCE v1\ndate: 2026-10-06\ndate_source: ticket\npoids_kg: 83.1\ngraisse_pct: 18.6\nFIN\n\nYOROI BALANCE v1\ndate: inconnue\ndate_source: inconnue\ntour_de_hanches_cm: 98\ntour_bras_droit_cm: 36.5\nFIN", promptLines(), measureLines()) + '\n\n' + BALANCE_PROMPT_COMPLEMENT;
 
 // ---------- l'analyse du texte colle ----------
 
@@ -343,10 +350,20 @@ export type ParseResult = {
   unknown: string[];
   /** cles reconnues dont la valeur est illisible (texte, vide) */
   unreadable: string[];
+  /** AQ : heure de la mesure (HH:MM), ligne heure: ou heure ecrite apres la date */
+  heure?: string;
+  /** AQ : marque et modele de l'appareil (ligne appareil:, ou source: qui n'est pas la source de la date) */
+  appareil?: string;
+  /** AQ : valeurs en texte ou illisibles, gardees avec leur nom (rien ne se perd, lib/v2/mesures/) */
+  textes?: { name: string; raw: string }[];
+  /** AQ : deuxieme valeur d'une cle deja lue (deux pesees le meme jour, deux lignes) : gardee a part */
+  doublons?: { key?: string; name: string; value: number; unit: string; raw: string; heure?: string }[];
 };
 
 export function normKey(k: string): string {
   return k
+    // AQ : exports en camelCase (Garmin bodyFat, Zepp fatRate) : un mot par majuscule
+    .replace(/([a-z])([A-Z][a-z])/g, '$1_$2')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
@@ -467,7 +484,8 @@ export function readDate(raw: string): string | undefined {
   let m = s.match(/(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
   if (m) return isoOf(+m[1], +m[2], +m[3]);
   m = s.match(/(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/);
-  if (m) return isoOf(+m[3], +m[2], +m[1]);
+  // AQ : 10/13/26 (Fitbit, applications americaines) : mois/jour seulement si jour/mois est impossible
+  if (m) return isoOf(+m[3], +m[2], +m[1]) ?? (+m[2] > 12 ? isoOf(+m[3], +m[1], +m[2]) : undefined);
   m = s.match(/(\d{1,2})(?:er)?\s+([a-z]+)\.?\s+(\d{4})/);
   if (m && MONTHS[m[2]]) return isoOf(+m[3], MONTHS[m[2]], +m[1]);
   // « Oct 3, 2026 » (applications en anglais)
@@ -577,15 +595,47 @@ function readAutre(rest: string): { name: string; valRaw: string; value: number;
 
 type Acc = { res: ParseResult; seen: Set<string>; autreSeen: Set<string> };
 
+/** AQ : les unites reconnues juste apres le nombre (le reste, « (eleve) », n'est pas une unite) */
+const UNITE_LUE = /^(kg|kgs|kilos?|g|lbs?|livres?|pounds?|st|stones?|%|l|litres?|ml|cm²|cm2|cm|mm|in|inch|inches|pouces?|kcal|kj|ans?|years?|yrs?|bpm|°|deg|degres?|degrees?|ohms?|Ω|khz|hz|mmhg|mmol\/l|mg\/dl|points?|pts|level|niveau)$/i;
+
+/** AQ : l'unite ecrite apres le nombre d'une valeur (« 36.2 L » : L), '' si aucune unite connue */
+export function uniteEcrite(valRaw: string): string {
+  const after = valRaw.replace(/(\d)[\s  ](?=\d{3}\b)/g, '$1').replace(/^[^\d-]*-?\d+(?:[.,]\d+)?/, '').replace(/[*_`"']/g, '').trim();
+  const tok = after.split(/\s+/)[0]?.replace(/[.;,)]$/, '') ?? '';
+  return UNITE_LUE.test(tok) ? tok : '';
+}
+
+/** AQ : HH:MM d'un texte (« 07:12 », « 7h12 », « 07:12:05 »), ou undefined */
+export function readHeure(raw: string): string | undefined {
+  const m = raw.match(/\b(\d{1,2})\s*[:h]\s*(\d{2})(?::\d{2})?\b/i);
+  if (!m) return undefined;
+  const h = +m[1];
+  const mi = +m[2];
+  if (h > 23 || mi > 59) return undefined;
+  return `${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')}`;
+}
+
+function pushTexte(acc: Acc, name: string, raw: string) {
+  const n = cleanName(name.replace(/_/g, ' '));
+  const r = raw.trim();
+  if (!n || !r) return;
+  (acc.res.textes ??= []).push({ name: n, raw: r.slice(0, 120) });
+}
+
 function pushKnown(acc: Acc, key: string, valRaw: string): boolean {
   const { res, seen } = acc;
   let spec = BALANCE_FIELD[key];
   const n = readNumber(valRaw, spec);
   if (!n) {
-    if (valRaw && !EMPTY.test(valRaw.replace(/[*_`"']/g, '').trim())) res.unreadable.push(key);
+    if (valRaw && !EMPTY.test(valRaw.replace(/[*_`"']/g, '').trim())) {
+      res.unreadable.push(key);
+      pushTexte(acc, spec.label, valRaw);
+    }
     return false;
   }
   let value = n.value;
+  // AQ : Apple Sante (export.xml) ecrit la masse grasse en fraction : 0.182 pour 18,2 %
+  if (spec.unit === '%' && spec.min >= 1 && value > 0 && value < 1) value *= 100;
   let from: ParsedValue['from'];
   if (spec.mass && n.unit === 'lb') {
     value *= 0.45359237;
@@ -615,7 +665,11 @@ function pushKnown(acc: Acc, key: string, valRaw: string): boolean {
     // les kcal lues sur l'ecran l'emportent sur la conversion des kJ
     const i = res.values.findIndex((v) => v.key === key);
     if (i >= 0 && res.values[i].from === 'kj' && from !== 'kj') res.values.splice(i, 1);
-    else return true;
+    else {
+      // AQ : une deuxieme valeur differente pour la meme cle n'est plus perdue
+      if (i >= 0 && Math.abs(res.values[i].value - value) > 1e-9) (res.doublons ??= []).push({ key, name: spec.label, value, unit: spec.unit, raw: valRaw, heure: res.heure });
+      return true;
+    }
   }
   seen.add(key);
   res.values.push({ key, value, raw: valRaw, outOfRange: value < spec.min || value > spec.max, fromLb: from === 'lb' ? true : undefined, from });
@@ -624,7 +678,12 @@ function pushKnown(acc: Acc, key: string, valRaw: string): boolean {
 
 function pushAutre(acc: Acc, name: string, value: number, unit: string, raw: string) {
   const id = normKey(name);
-  if (!id || acc.autreSeen.has(id)) return;
+  if (!id) return;
+  if (acc.autreSeen.has(id)) {
+    const old = acc.res.autres.find((a) => normKey(a.name) === id);
+    if (old && Math.abs(old.value - value) > 1e-9) (acc.res.doublons ??= []).push({ name, value, unit, raw, heure: acc.res.heure });
+    return;
+  }
   acc.autreSeen.add(id);
   acc.res.autres.push({ name, value, unit, raw });
 }
@@ -646,6 +705,21 @@ function parseRun(lines: string[], header: boolean, today: string): ParseResult 
     if (nk === 'date_source' || nk === 'source_date' || nk === 'source_de_la_date' || nk === 'source') {
       const src = readDateSource(valRaw);
       if (src) res.dateSource = src;
+      // AQ : « source: Aria » (Fitbit) n'est pas la source de la date : c'est l'appareil
+      else if (nk === 'source' && valRaw.trim() && !res.appareil) res.appareil = valRaw.replace(/[*_`"]/g, '').trim().slice(0, 60);
+      continue;
+    }
+    // AQ : heure de la mesure
+    if (nk === 'heure' || nk === 'time' || nk === 'heure_de_mesure' || nk === 'heure_mesure' || nk === 'time_of_measurement') {
+      const h = readHeure(valRaw);
+      if (h) res.heure = h;
+      else if (valRaw.trim()) pushTexte(acc, keyRaw, valRaw);
+      continue;
+    }
+    // AQ : marque et modele de l'appareil
+    if (nk === 'appareil' || nk === 'device' || nk === 'modele' || nk === 'model' || nk === 'balance' || nk === 'scale' || nk === 'source_name' || nk === 'source_appareil') {
+      const t = valRaw.replace(/[*_`"]/g, '').trim();
+      if (t) res.appareil = t.slice(0, 60);
       continue;
     }
     if (nk === 'date' || nk === 'jour') {
@@ -658,6 +732,11 @@ function parseRun(lines: string[], header: boolean, today: string): ParseResult 
         vd = vd.slice(0, par.index).trim();
       }
       if (!vd) continue;
+      // AQ : « 2026-10-13 07:12:05 » : l'heure ecrite apres la date est gardee
+      if (!res.heure) {
+        const h = readHeure(vd.replace(/^\s*\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}/, ''));
+        if (h) res.heure = h;
+      }
       // IMPORT MULTI : « date: inconnue » (aucune date sur la photo) : l'app demandera le jour
       if (EMPTY.test(vd) || /^(?:date\s+)?(?:inconnue|non visible|pas de date|aucune date|absente)\b/i.test(vd)) {
         if (!res.date) res.dateUnknown = true;
@@ -687,7 +766,13 @@ function parseRun(lines: string[], header: boolean, today: string): ParseResult 
     if (AUTRE_KEYS.has(nk)) {
       const a = readAutre(valRaw);
       if (!a) {
-        if (valRaw) res.unknown.push(valRaw.slice(0, 40));
+        if (valRaw) {
+          res.unknown.push(valRaw.slice(0, 40));
+          // AQ : « autre: Type de corps = Standard » : le texte est garde avec son nom
+          const t = valRaw.match(/^(.+?)\s*[=:]\s*(.+)$/);
+          if (t) pushTexte(acc, t[1], t[2]);
+          else pushTexte(acc, 'Autre', valRaw);
+        }
         continue;
       }
       // une ligne autre qui a en fait sa cle connue : on la range a sa place
@@ -699,14 +784,43 @@ function parseRun(lines: string[], header: boolean, today: string): ParseResult 
     }
     const key = canonicalKey(keyRaw);
     if (!key) {
-      if (!header || nk.length > 48) continue;
+      if (!header) continue;
+      if (nk.length > 48) {
+        pushTexte(acc, keyRaw.slice(0, 48), valRaw);
+        continue;
+      }
       // cle inconnue avec un nombre : gardee comme une mesure en plus, rien ne se perd
       const n = readNumber(valRaw);
       if (n) {
         const a = readAutre(`${keyRaw.replace(/_/g, ' ')} = ${valRaw}`);
         if (a) pushAutre(acc, a.name, a.value, a.unit, a.valRaw);
-      } else res.unknown.push(keyRaw);
+      } else {
+        res.unknown.push(keyRaw);
+        pushTexte(acc, keyRaw, valRaw);
+      }
       continue;
+    }
+    // AQ : une unite ecrite qui n'est pas celle de la cle (« TBW: 36.2 L » n'est pas l'eau en %,
+    // « visceral fat: 85 cm² » n'est pas le niveau) : la cle soeur de cette unite, sinon une mesure en plus
+    const u = uniteEcrite(valRaw);
+    const ul = u.toLowerCase();
+    if (u && ul === 'g' && BALANCE_FIELD[key].mass) {
+      // grammes (export Garmin) : en kilos
+      const n = readNumber(valRaw);
+      if (n) {
+        pushKnown(acc, key, String(n.value / 1000));
+        continue;
+      }
+    }
+    if (u && !unitFits(BALANCE_FIELD[key], u) && !(key === 'metabolisme_kcal' && ul === 'kj')) {
+      const tag = unitTag(u) || (/^(l|litres?)$/.test(ul) ? 'kg' : '');
+      const sister = tag ? canonicalKey(`${keyRaw} ${tag}`) : undefined;
+      if (sister && sister !== key && unitFits(BALANCE_FIELD[sister], u) && pushKnown(acc, sister, valRaw)) continue;
+      const a = readAutre(`${keyRaw.replace(/_/g, ' ')} = ${valRaw}`);
+      if (a) {
+        pushAutre(acc, a.name, a.value, a.unit, a.valRaw);
+        continue;
+      }
     }
     pushKnown(acc, key, valRaw);
   }
@@ -715,9 +829,26 @@ function parseRun(lines: string[], header: boolean, today: string): ParseResult 
 
 function mergeInto(a: ParseResult, b: ParseResult) {
   const seen = new Set(a.values.map((v) => v.key));
-  for (const v of b.values) if (!seen.has(v.key)) a.values.push(v);
+  for (const v of b.values) {
+    if (!seen.has(v.key)) a.values.push(v);
+    else {
+      // AQ : deux pesees le meme jour (matin et soir) : la deuxieme valeur est gardee a part, avec son heure
+      const old = a.values.find((x) => x.key === v.key);
+      if (old && Math.abs(old.value - v.value) > 1e-9) (a.doublons ??= []).push({ key: v.key, name: BALANCE_FIELD[v.key]?.label ?? v.key, value: v.value, unit: BALANCE_FIELD[v.key]?.unit ?? '', raw: v.raw, heure: b.heure });
+    }
+  }
   const seenA = new Set(a.autres.map((x) => normKey(x.name)));
-  for (const x of b.autres) if (!seenA.has(normKey(x.name))) a.autres.push(x);
+  for (const x of b.autres) {
+    if (!seenA.has(normKey(x.name))) a.autres.push(x);
+    else {
+      const old = a.autres.find((y) => normKey(y.name) === normKey(x.name));
+      if (old && Math.abs(old.value - x.value) > 1e-9) (a.doublons ??= []).push({ name: x.name, value: x.value, unit: x.unit, raw: x.raw, heure: b.heure });
+    }
+  }
+  if (b.textes?.length) (a.textes ??= []).push(...b.textes);
+  if (b.doublons?.length) (a.doublons ??= []).push(...b.doublons);
+  if (!a.heure && b.heure) a.heure = b.heure;
+  if (!a.appareil && b.appareil) a.appareil = b.appareil;
   a.unknown.push(...b.unknown);
   a.unreadable.push(...b.unreadable);
   if (!a.badDate && b.badDate) a.badDate = b.badDate;
@@ -780,7 +911,7 @@ export function parseBalanceBlocks(text: string, today: string = localIso(new Da
     : [parseRun(lines, false, today)];
   const out: ParseResult[] = [];
   for (const r of runs) {
-    if (!r.values.length && !r.autres.length && runs.length > 1) continue;
+    if (!r.values.length && !r.autres.length && !r.textes?.length && runs.length > 1) continue;
     // IMPORT MULTI : deux blocs de la meme date n'en font qu'un ; deux blocs sans date seulement s'ils sont identiques
     // (le meme texte colle deux fois), sinon ce sont deux pesees dont il faudra choisir le jour
     const same = r.date ? out.find((o) => o.date === r.date) : out.find((o) => !o.date && blockSignature(o) === blockSignature(r));
