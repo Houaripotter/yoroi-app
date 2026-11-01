@@ -4,6 +4,18 @@
  * 26 octobre 2026 (Houari : « on se perd, il y a deux façons d'afficher les séances ») : une seule façon de parcourir
  * les séances, des pastilles Upper A, Lower A... au dessus des mêmes cartes d'exercices ; la prochaine séance est
  * choisie au départ. Les guides (charge, poids de départ) sont regroupés sous le conseil du coach.
+ * 1er novembre 2026 (Houari : « J'aimerais me projeter : je clique sur mardi, je vois tout ce que j'ai à faire mardi.
+ * Des fonctionnalités sont cachées en bas, il faut les mettre en avant ») : ton programme en cours se lit jour par
+ * jour (components/yoroi/v2/programmes/JourParJour.tsx), du haut vers le bas :
+ *  1. la bande des 7 jours (séance, lettre A ou B, tampon validé, aujourd'hui), semaine suivante ou précédente ;
+ *  2. le jour choisi en grand : exercices, charges, abdos et cardio, Commencer, Séance express, Échanger, Changer ;
+ *  3. ta semaine travaille : la carte rouge des muscles, 2 fois sur 2, et la suggestion douce ;
+ *  4. tes progrès du programme : séances faites (reliées à tes vraies séances, seancesFaites.ts), charges, taille ;
+ *  5. les réglages en lignes : A et B, tes jours, abdos et cardio, durée, rappel, ma salle, semaine mixte, garder ;
+ *  6. comprendre : conseil du coach, guides, questions, études, PAR Q+ ;
+ *  7. « Arrêter ce programme », discret.
+ * Avant de commencer, la page reste celle du 26 octobre. L'ancienne page en cours :
+ * _archive_ancien_design_2026-10-09/programme_page_2026-11-01/.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DeviceEventEmitter, Image, Pressable, ScrollView, View } from 'react-native';
@@ -76,6 +88,27 @@ import type { ExoModule } from '@/lib/v2/programmes/modules';
 import { guideCharge } from '@/lib/v2/programmes/charge';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+// 1er novembre 2026 : la page jour par jour
+import { useProchaines, vueDuJour } from '@/app/programmes/prochaines';
+import { BandeJours, FeuilleReglage, JourChoisi, LienDeuxSemaines, ProgresProgramme, ReglagesProgramme, TitrePartie } from '@/components/yoroi/v2/programmes/JourParJour';
+import type { LigneProgres, ReglageLigne } from '@/components/yoroi/v2/programmes/JourParJour';
+import { MusclesPrevus } from '@/components/yoroi/v2/programmes/ProchainesSeances';
+import type { ExoVu, VueJour } from '@/components/yoroi/v2/programmes/ProchainesSeances';
+import type { PorteeChangement } from '@/components/yoroi/v2/seance/ChangerExercice';
+import { texteFin } from '@/components/yoroi/v2/programmes/FinDeSeance';
+import { Colonne, LargeurPage, Rangee } from '@/components/yoroi/v2/PageLarge';
+import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
+import { bilanSeances, bornesDecalage, jourParDefaut, lettreDeLaSemaine, semaineBCopieCatalogue, semaineVue } from '@/lib/v2/programmes/pageProgramme';
+import { ajouterExerciceSuggere, basculerAlternance, echangerCetteSemaine, unifierSemaineBCopie } from '@/lib/v2/programmes/prochainesActions';
+import { couverturePrevue, suggestionsSemaine } from '@/lib/v2/programmes/prochainesSeances';
+import type { JourPrevu } from '@/lib/v2/programmes/prochainesSeances';
+import { alternanceAffichee, seanceDeBase } from '@/lib/v2/programmes/alternance';
+import { avecAB } from '@/lib/v2/programmes/semaineLibre';
+import { changerExerciceLe, enregistrerSemaine, peutGarder, semaineEffective } from '@/lib/v2/programmes/suivi';
+import type { ProgrammePerso } from '@/lib/v2/programmes/monProgramme';
+import { musclesDesExercices } from '@/lib/v2/seances/musclesExercices';
+import { estExoCardio } from '@/lib/v2/programmes/briques';
+import type { JourProgramme } from '@/lib/v2/programmes/types';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 export default function ProgrammeDetail() {
@@ -188,6 +221,34 @@ export default function ProgrammeDetail() {
     };
   }, []);
 
+  // 1er novembre 2026 : la page jour par jour (programme en cours)
+  const page = usePageLarge(false);
+  const { d: donnees, pret: donneesPretes } = useProchaines();
+  const [decalage, setDecalage] = useState(0);
+  const [choisi, setChoisi] = useState<number | null>(null);
+  const [feuille, setFeuille] = useState<null | 'jours' | 'duree' | 'rappel' | 'garder'>(null);
+  const [aChangerJour, setAChangerJour] = useState<{ v: VueJour; e: ExoVu } | null>(null);
+  const [occupeAB, setOccupeAB] = useState(false);
+  const [ajoutes, setAjoutes] = useState<string[]>([]);
+  const [pps, setPps] = useState<ProgrammePerso[]>([]);
+  useEffect(() => {
+    let vivant = true;
+    const lire = () => { void chargerProgrammesPerso().then((l) => { if (vivant) setPps(l); }).catch(() => {}); };
+    lire();
+    const sub = DeviceEventEmitter.addListener(PROGRAMME_CHANGED_EVENT, lire);
+    return () => { vivant = false; sub.remove(); };
+  }, []);
+  // « Semaines A et B » d'avant avec une semaine B copie de la A, sur un programme du catalogue : il devient
+  // « Alterner A et B », comme l'unification l'a prévu (pageProgramme.ts, prochainesActions.ts), une seule fois
+  const unifie = useRef(false);
+  useEffect(() => {
+    if (unifie.current || !p || !actif || actif.id !== p.id || !semaineBCopieCatalogue(actif, p)) return;
+    unifie.current = true;
+    void unifierSemaineBCopie()
+      .then((nid) => { if (nid && nid !== p.id) router.replace({ pathname: '/programmes/[id]' as any, params: { id: nid } }); })
+      .catch(() => {});
+  }, [p, actif, router]);
+
   if (!p) {
     // ton programme construit pas encore lu : page vide un instant, pas « introuvable »
     if (perso && persoLu === 0) return <View style={{ flex: 1, backgroundColor: c.background }} />;
@@ -281,8 +342,7 @@ export default function ProgrammeDetail() {
   };
 
   // pas le temps : la seance raccourcie, avec ce qui est garde et ce qui est reporte, avant de commencer
-  const proposerExpress = (index: number, minutes: number) => {
-    const j = p.jours[index];
+  const proposerExpress = (j: JourProgramme, minutes: number) => {
     // le meme calcul que la seance lancee (app/seance/muscu.tsx) : ton materiel et tes douleurs d'abord, puis l'express
     const protege = jourPourToi(j, materiel, regionsVues, machines, enCours ? actif?.remplacements : null, ctxFin);
     const x = seanceExpress(protege.exos, minutes);
@@ -325,6 +385,308 @@ export default function ProgrammeDetail() {
 
   // la seance choisie s'ouvre ; le programme n'avance que si tu l'enregistres
   const faireCeJour = (index: number) => lancerJour(p.jours[index].id);
+
+  /* ------------------------------------------------------------------------------------------------
+   * 1er novembre 2026 : ton programme en cours, jour par jour (JourParJour.tsx)
+   * ---------------------------------------------------------------------------------------------- */
+  const dd = enCours && actif && donnees && donnees.p.id === p.id ? donnees : null;
+  // le temps de lire tes séances : la page vide un instant, jamais l'ancienne présentation
+  if (enCours && actif && !dd && !donneesPretes) return <View style={{ flex: 1, backgroundColor: c.background }} />;
+  if (enCours && actif && dd) {
+    const maintenant = new Date();
+    const auj = `${maintenant.getFullYear()}-${String(maintenant.getMonth() + 1).padStart(2, '0')}-${String(maintenant.getDate()).padStart(2, '0')}`;
+    const bornes = bornesDecalage(actif, maintenant);
+    const jps: JourPrevu[] = semaineVue(dd.actif, dd.p, decalage, dd.trainings, maintenant);
+    const vues = jps.map((jp) => vueDuJour(dd, jp));
+    const k = Math.min(6, Math.max(0, choisi ?? jourParDefaut(jps, auj)));
+    const v = vues[k];
+    // la couleur de chaque séance : son rang dans le programme (sa version B garde celle de sa séance A)
+    const autresTitres: string[] = [];
+    const rangs = vues.map((x) => {
+      const j = x.jp.jour;
+      if (!j) return -1;
+      const r = p.jours.findIndex((y) => y.id === seanceDeBase(p.jours, j).id);
+      if (r >= 0) return r;
+      if (!autresTitres.includes(j.titre)) autresTitres.push(j.titre);
+      return p.jours.length + autresTitres.indexOf(j.titre);
+    });
+    const ouvrable = (x: VueJour) => !!x.jp.jour && x.jp.statut !== 'faite' && x.jp.statut !== 'repos';
+    // un jour de repos : la prochaine séance (cette semaine, sinon la suivante)
+    const prochaine = !v.jp.jour
+      ? vues.slice(k + 1).find((x) => ouvrable(x) && x.jp.statut !== 'ratee')
+        ?? (decalage < bornes.max + 1 ? semaineVue(dd.actif, dd.p, decalage + 1, dd.trainings, maintenant).map((jp) => vueDuJour(dd, jp)).find((x) => ouvrable(x) && x.jp.statut !== 'ratee') : undefined)
+        ?? null
+      : null;
+    const autres = decalage === 0 && ouvrable(v) && v.jp.statut !== 'ratee'
+      ? vues.filter((x) => x.jp.date !== v.jp.date && ouvrable(x) && x.jp.statut !== 'ratee')
+      : [];
+    const training = v.jp.trainingId !== undefined ? dd.trainings.find((t) => t.id === v.jp.trainingId) ?? null : null;
+    // ta semaine travaille : les séances de musculation de la semaine affichée
+    const avecMuscu = vues.filter((x) => x.jp.jour && x.muscu);
+    const couverture = couverturePrevue(avecMuscu.map((x) => ({ date: x.jp.date, exos: x.exos })), dd.perso);
+    const bilanMuscles = musclesDesExercices(avecMuscu.flatMap((x) => x.exos.filter((e) => !estExoCardio(e)).map((e) => ({ name: e.nom, muscle_group: e.muscle, sets: e.series, reps: e.repsMin }))), dd.perso);
+    const suggestions = suggestionsSemaine(jps, (jp) => vues.find((x) => x.jp.date === jp.date)?.exos ?? [], { ecartes: dd.ecartes, perso: dd.perso });
+    // tes progrès
+    const bilan = bilanSeances(dd.actif, dd.p, dd.trainings, maintenant);
+    const corps = corpsDepuis(actif.debut, pesees, mesures);
+    const kg = (x: number) => (unite === 'lb' ? traduire('{0} lb', fmtNum(saisieDepuisKg(x, unite))) : traduire('{0} kg', fmtNum(x)));
+    const lignesProgres: LigneProgres[] = [
+      ...progresDesCharges(p, trainings, actif.debut, actif).map((x) => ({ cle: `c${x.nom}`, titre: sansTiret(traduire(nomFr(x.nom))), detail: `${kg(x.debutKg)} → ${kg(x.actuelKg)}`, valeur: x.gainPct > 0 ? `+${x.gainPct} %` : `${x.gainPct} %`, bon: x.gainPct > 0 })),
+      ...(corps.tailleDebut !== null && corps.tailleActuelle !== null
+        ? [{ cle: 'taille', titre: traduire('Tour de taille'), detail: traduire('{0} cm → {1} cm', fmtNum(corps.tailleDebut), fmtNum(corps.tailleActuelle)), valeur: `${corps.tailleActuelle - corps.tailleDebut > 0 ? '+' : ''}${fmtNum(Math.round((corps.tailleActuelle - corps.tailleDebut) * 10) / 10)} cm`, bon: corps.tailleActuelle < corps.tailleDebut }]
+        : []),
+      ...(corps.poidsDebut !== null && corps.poidsActuel !== null
+        ? [{ cle: 'poids', titre: traduire('Poids, moyenne de la semaine'), detail: `${kg(corps.poidsDebut)} → ${kg(corps.poidsActuel)}`, valeur: `${corps.poidsActuel - corps.poidsDebut > 0 ? '+' : ''}${fmtNum(Math.round((saisieDepuisKg(corps.poidsActuel, unite) - saisieDepuisKg(corps.poidsDebut, unite)) * 10) / 10)}` }]
+        : []),
+    ];
+    // A et B
+    const pp = perso ? pps.find((x) => x.id === p.id) ?? null : null;
+    const semLibre = semaineEffective(actif, p, false);
+    const abOn = pp ? alternanceAffichee(pp) === 'ab' : !!semLibre?.ab && !!semLibre?.b;
+    const garder = !perso && peutGarder(actif, p);
+    const allerA = (nid: string | null) => { if (nid && nid !== p.id) router.replace({ pathname: '/programmes/[id]' as any, params: { id: nid } }); };
+    const basculerAB = () => {
+      const fin = () => setOccupeAB(false);
+      if (pp) {
+        setOccupeAB(true);
+        void basculerAlternance(!abOn).then(allerA).catch(() => {}).finally(fin);
+        return;
+      }
+      if (abOn && semLibre) {
+        void enregistrerSemaine(avecAB(semLibre, false));
+        return;
+      }
+      if (garder) {
+        appAlert(traduire('Alterner A et B'), traduire('Ton choix fait de ce programme le tien : tes séances faites et tes charges suivent.'), [
+          { text: traduire('Annuler'), style: 'cancel' },
+          { text: traduire('Alterner'), onPress: () => { setOccupeAB(true); void basculerAlternance(true).then(allerA).catch(() => {}).finally(fin); } },
+        ]);
+        return;
+      }
+      if (semLibre) void enregistrerSemaine(avecAB(semLibre, true));
+    };
+    const NOMS_COURTS = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
+    const dureeVue = actif.duree ?? (DUREES.includes(p.semaines as 8) ? p.semaines : undefined);
+    const lignesReglages: ReglageLigne[] = [
+      ...(!temporaire ? [{ cle: 'ab', sticker: 'repeter' as const, teinte: 'bleu' as const, titre: traduire('Alterner A et B'), interrupteur: abOn, occupe: occupeAB, onPress: basculerAB }] : []),
+      {
+        cle: 'jours', sticker: 'calendrier', teinte: 'lilas', titre: temporaire ? traduire('Modifier cette semaine') : traduire('Tes jours'),
+        valeur: [...jours].sort((a, b) => a - b).map((x) => traduire(NOMS_COURTS[x] ?? '')).join(' '),
+        onPress: () => (temporaire ? router.push({ pathname: '/programme-mixte' as any, params: { mode: 'temporaire' } }) : setFeuille('jours')),
+      },
+      ...(perso && !temporaire && !archive ? [{ cle: 'modifier', sticker: 'crayon' as const, teinte: 'lilas' as const, titre: traduire('Modifier mon programme'), onPress: () => router.push({ pathname: '/coach-construire' as any, params: { id: p.id } }) }] : []),
+      ...(finPossible ? [{ cle: 'fin', sticker: 'abdos' as const, teinte: 'creme' as const, titre: traduire('Abdos et cardio en fin de séance'), sous: texteFin(actif.fin), onPress: () => setFinOuverte('page') }] : []),
+      ...(!temporaire ? [{ cle: 'duree', sticker: 'sablier' as const, teinte: 'peche' as const, titre: traduire('Durée du programme'), valeur: dureeVue === 0 ? traduire('Sans fin') : dureeVue ? traduirePluriel(dureeVue, dureeVue > 1, '{0} semaine', '{0} semaines', dureeVue) : '', onPress: () => setFeuille('duree') }] : []),
+      { cle: 'rappel', sticker: 'rappels', teinte: 'bleu', titre: traduire('Rappel de séance'), onPress: () => setFeuille('rappel') },
+      { cle: 'salle', sticker: 'reglage_machine', teinte: 'menthe', titre: traduire('Ma salle'), valeur: traduire('Machines, exercices écartés'), onPress: () => setSalleOpen(true) },
+      ...(!temporaire ? [{ cle: 'mixte', sticker: 'grille' as const, teinte: 'peche' as const, titre: traduire('Semaine mixte'), valeur: traduire('Pour quelques jours'), onPress: () => router.push({ pathname: '/programme-mixte' as any, params: { mode: 'ponctuel' } }) }] : []),
+      ...(garder ? [{ cle: 'garder', sticker: 'marque_page' as const, teinte: 'menthe' as const, titre: traduire('Garder comme mon programme'), onPress: () => setFeuille('garder') }] : []),
+      ...(temporaire
+        ? [{
+            cle: 'garderTemp', sticker: 'marque_page' as const, teinte: 'menthe' as const, titre: traduire('Garder comme mon programme'), valeur: traduire('Il rejoint Mes programmes, sans fin'),
+            onPress: () => appAlert(traduire('Garder comme mon programme ?'), traduire('Ta semaine mixte devient ton programme, sans fin, dans Mes programmes. Tes séances faites et tes charges restent.'), [
+              { text: traduire('Annuler'), style: 'cancel' },
+              { text: traduire('Garder'), onPress: () => { void garderTemporaire().then((a) => { if (!a) appAlert(traduire('Oups'), traduire('Réessaie dans un instant.')); }).catch(() => appAlert(traduire('Oups'), traduire('Réessaie dans un instant.'))); } },
+            ]),
+          }]
+        : []),
+    ];
+
+    const jourChoisi = (
+      <JourChoisi
+        v={v}
+        unite={unite}
+        largeur={page.grand ? Math.round((page.largeur - 24) * 0.6) : Math.min(720, page.largeur)}
+        colonnes={page.grand ? 2 : 1}
+        perso={dd.perso}
+        training={training}
+        prochaine={prochaine}
+        onDetail={(tid) => router.push({ pathname: '/workout-detail', params: { id: String(tid) } } as any)}
+        onFaireProchaine={prochaine?.jp.jour ? () => lancerJour(prochaine.jp.jour!.id) : undefined}
+        actions={{
+          onCommencer: ouvrable(v) ? () => lancerJour(v.jp.jour!.id) : undefined,
+          onExpress: ouvrable(v) ? (m) => proposerExpress(v.jp.jour!, m) : undefined,
+          autres,
+          onEchanger: autres.length ? (o) => void echangerCetteSemaine(v.jp.date, o.jp.date) : undefined,
+          onChanger: ouvrable(v) ? (e) => setAChangerJour({ v, e }) : undefined,
+        }}
+      />
+    );
+    const semaineTravaille = avecMuscu.length ? (
+      <View style={{ gap: 12 }}>
+        <TitrePartie titre={traduire('Ta semaine travaille')} sticker="muscle" teinte="peche" />
+        <MusclesPrevus
+          couverture={couverture}
+          loads={bilanMuscles.loads}
+          zones={bilanMuscles.zones}
+          largeur={(page.grand ? Math.round((page.largeur - 24) * 0.4) : Math.min(720, page.largeur)) - 32}
+          suggestions={decalage >= 0 ? suggestions : []}
+          semaines={[]}
+          semaine={0}
+          onSemaine={() => {}}
+          ajoutes={ajoutes}
+          onAjouter={(sg, nom, muscle) => {
+            setAjoutes((l) => [...l, `${sg.cible.jourId}|${nom}`]);
+            void ajouterExerciceSuggere(sg.cible.jourId, sg.cible.date, nom, muscle)
+              .then(() => chargerProgrammeActif())
+              .then((a) => allerA(a?.id ?? null))
+              .catch(() => {});
+          }}
+        />
+      </View>
+    ) : null;
+    const progres = (
+      <View style={{ gap: 12 }} onLayout={(ev) => { progresY.current = ev.nativeEvent.layout.y; }}>
+        <TitrePartie titre={traduire('Tes progrès du programme')} sticker="courbe_hausse" teinte="menthe" />
+        <PointRegularite programme={p} actif={actif} gain={gainMoyen(progresDesCharges(p, trainings, actif.debut, actif))} onChanger={() => setFeuille('jours')} />
+        <ProgresProgramme
+          faites={bilan.faites}
+          prevues={bilan.prevues}
+          depuisDebut={bilan.depuisDebut}
+          regularite={bilan.regularite}
+          lignes={lignesProgres}
+          mesurer={corps.tailleDebut === null || corps.tailleActuelle === null}
+          onMesurer={() => router.push('/measurements' as any)}
+        />
+      </View>
+    );
+    const reglages = (
+      <View style={{ gap: 12 }}>
+        <TitrePartie titre={traduire('Réglages du programme')} sticker="engrenage" teinte="lilas" />
+        {finPossible ? <SuggestionHabitude programme={p} actif={actif} trainings={trainings} /> : null}
+        <ReglagesProgramme lignes={lignesReglages} />
+      </View>
+    );
+    const comprendre = (
+      <View style={{ gap: 12 }}>
+        <TitrePartie titre={traduire('Comprendre')} sticker="aide" teinte="creme" />
+        <CarteConseil principes={p.principes} />
+        {p.jours.some((x) => x.exos.length) ? (
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <ChoisirCharge tuile />
+            <CartePoidsDeDepart tuile />
+          </View>
+        ) : null}
+        {p.jours.some((x) => x.exos.length) ? <QuestionsCoach /> : null}
+        <LigneEtudes sources={p.sources} />
+        <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>
+          {traduire('Si tu as un problème de santé, une douleur ou une blessure, demande l’avis d’un médecin avant de commencer. Le questionnaire PAR Q+ t’aide à savoir si c’est nécessaire.')}
+        </Ink>
+      </View>
+    );
+    const largeurGauche = Math.round((page.largeur - 24) * 0.6);
+    const largeurDroite = page.largeur - 24 - largeurGauche;
+
+    return (
+      <View style={{ flex: 1, backgroundColor: c.background }}>
+        <LargeurPage actif={page.grand} largeur={page.largeur}>
+          <ScrollView ref={defilement} style={{ flex: 1 }} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: page.grand ? page.marge : 16, paddingBottom: insets.bottom + 56, gap: 16, width: '100%', ...(page.grand ? {} : { maxWidth: 720, alignSelf: 'center' as const }) }} showsVerticalScrollIndicator={false}>
+            <EnTeteRond salut={salutation(nom)} titre={traduire('Ton programme')} droite={perso ? undefined : etoile} repli="/programmes" />
+            <Ink size={14} weight="extraBold" color={c.textSecondary} style={{ marginTop: -8, paddingHorizontal: 4 }} numberOfLines={1}>{`${traduire(p.titre)} · ${traduire('Semaine {0}', semaine)}${semainesDuProgramme(actif, p) ? ` ${traduire('sur {0}', semainesDuProgramme(actif, p)!)}` : ''}`}</Ink>
+            <BandeauMixte />
+
+            {/* 1. la bande des 7 jours */}
+            <BandeJours
+              vues={vues}
+              rangs={rangs}
+              choisi={k}
+              onChoisir={setChoisi}
+              decalage={decalage}
+              lettre={lettreDeLaSemaine(jps)}
+              aujourdhui={auj}
+              peutAvant={decalage > bornes.min}
+              peutApres={decalage < bornes.max}
+              onAvant={() => { setDecalage((x) => Math.max(bornes.min, x - 1)); setChoisi(null); }}
+              onApres={() => { setDecalage((x) => Math.min(bornes.max, x + 1)); setChoisi(null); }}
+            />
+
+            {/* 2. le jour choisi ; 3. ta semaine travaille ; 4. tes progrès */}
+            {page.grand ? (
+              <Rangee actif espace={24}>
+                <Colonne actif largeur={largeurGauche} espace={16}>{jourChoisi}</Colonne>
+                <Colonne actif largeur={largeurDroite} espace={16}>
+                  {semaineTravaille}
+                  {progres}
+                </Colonne>
+              </Rangee>
+            ) : (
+              <>
+                {jourChoisi}
+                <LienDeuxSemaines onPress={() => router.push('/programmes/prochaines' as any)} />
+                {semaineTravaille}
+                {progres}
+              </>
+            )}
+            {page.grand ? <LienDeuxSemaines onPress={() => router.push('/programmes/prochaines' as any)} /> : null}
+
+            {/* 5. réglages ; 6. comprendre */}
+            {page.grand ? (
+              <Rangee actif espace={24}>
+                <Colonne actif largeur={largeurGauche} espace={16}>{reglages}</Colonne>
+                <Colonne actif largeur={largeurDroite} espace={16}>{comprendre}</Colonne>
+              </Rangee>
+            ) : (
+              <>
+                {reglages}
+                {comprendre}
+              </>
+            )}
+
+            {/* 7. arrêter, discret */}
+            <Pressable onPress={arreter} accessibilityRole="button" style={{ minHeight: 48, alignItems: 'center', justifyContent: 'center', marginTop: 8 }}>
+              <Ink size={13.5} weight="bold" color={c.textMuted}>{traduire('Arrêter ce programme')}</Ink>
+            </Pressable>
+          </ScrollView>
+        </LargeurPage>
+
+        <FeuilleReglage visible={feuille === 'jours'} titre={traduire('Tes jours')} onClose={() => setFeuille(null)}>
+          <TesJoursEnCours programme={p} />
+        </FeuilleReglage>
+        <FeuilleReglage visible={feuille === 'duree'} titre={traduire('Durée du programme')} onClose={() => setFeuille(null)}>
+          <View style={{ backgroundColor: pal.carte, borderRadius: 24, padding: 18 }}>
+            <ChoixDuree valeur={dureeVue} onChange={(dx) => void enregistrerDuree(dx)} />
+          </View>
+        </FeuilleReglage>
+        <FeuilleReglage visible={feuille === 'rappel'} titre={traduire('Rappel de séance')} onClose={() => setFeuille(null)}>
+          <RappelSeance programme={p} actif={actif} jours={jours} />
+        </FeuilleReglage>
+        <FeuilleReglage visible={feuille === 'garder'} titre={traduire('Garder comme mon programme')} onClose={() => setFeuille(null)}>
+          <GarderMonProgramme programme={p} actif={actif} onGarde={(nouveau) => { setFeuille(null); router.replace({ pathname: '/programmes/[id]' as any, params: { id: nouveau } }); }} />
+        </FeuilleReglage>
+        {aChangerJour ? (
+          <ChangerExercice
+            visible
+            onClose={() => setAChangerJour(null)}
+            mode="changer"
+            nom={aChangerJour.e.nom}
+            muscle={aChangerJour.e.muscle}
+            deja={aChangerJour.v.exos.map((e) => e.nom)}
+            dansProgramme
+            onChoisir={(nomChoisi: string, _m: string, portee: PorteeChangement) => {
+              const x = aChangerJour;
+              setAChangerJour(null);
+              const j = x.v.jp.jour;
+              if (!j || x.e.index === undefined) return;
+              const original = j.exos[x.e.index]?.nom;
+              if (portee === 'toujours') void remplacerExercice(j.id, x.e.index, nomChoisi, original);
+              else void changerExerciceLe(x.v.jp.date, j.id, x.e.index, nomChoisi, original);
+            }}
+          />
+        ) : null}
+        <MaSalle visible={salleOpen} onClose={() => setSalleOpen(false)} />
+        <FeuilleFinDeSeance
+          visible={finOuverte !== null}
+          programme={p}
+          seances={seancesFin}
+          semaine={semaineDeLaFin(actif, p)}
+          valeur={actif.fin}
+          bouton={traduire('Valider')}
+          onClose={() => setFinOuverte(null)}
+          onValider={(f) => { setFinOuverte(null); void enregistrerFin(f); }}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
@@ -560,7 +922,7 @@ export default function ProgrammeDetail() {
                 <Ink size={12} weight="extraBold" color={pal.texte2}>{traduire('Pas le temps ? Séance express :')}</Ink>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                   {DUREES_EXPRESS.filter((m) => m < dureeEstimee(jVu.exos)).map((m) => (
-                    <Chip key={m} label={traduire('{0} min', m)} on={false} onPress={() => proposerExpress(iVu, m)} />
+                    <Chip key={m} label={traduire('{0} min', m)} on={false} onPress={() => proposerExpress(p.jours[iVu], m)} />
                   ))}
                 </View>
               </View>
