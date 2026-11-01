@@ -66,6 +66,15 @@ import type { Domaine } from './domaines';
 import { traduire, traduirePluriel, DECIMAL, LOCALE } from '@/lib/i18n/tr';
 import { LargeurEcranContext, useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
 import { largeurEcranPourColonne, rangeesTrois } from '@/lib/v2/nav/grandEcran';
+import { useProgrammeAccueil } from './useProgrammeAccueil';
+import type { ProgrammeAccueil } from './useProgrammeAccueil';
+import { BadgeLettre } from '@/components/yoroi/v2/programmes/ProchainesSeances';
+import { quandRelatif } from '@/lib/v2/accueil/prochaineProgramme';
+import { routeDuJour } from '@/lib/v2/programmes/lancer';
+import { semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { estExoCardio } from '@/lib/v2/programmes/briques';
+import { nomFr } from '@/lib/v2/seance/rechercheExo';
+import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 type IconName = React.ComponentProps<typeof Icon>['name'];
 
@@ -256,6 +265,18 @@ export function TuileProchaine({ next, trainings, plan: planFixe }: { next: Next
   const sombre = paletteSombre();
   const avenir = useMemo(() => seancesAVenir(plan, trainings, 3), [plan, trainings]);
   const ouvrir = () => router.push('/planning' as any);
+  // 1er novembre 2026 (bug vu sur Mac : « Rien de prévu » avec un programme en cours) : la tuile lisait seulement
+  // ton planning (getNextSession). Ton programme passe d'abord ; ton planning ensuite ; « Rien de prévu » sinon.
+  const programme = useProgrammeAccueil();
+  if (!planFixe && programme.prochaine && programme.d) return <ProchaineDuProgramme v={programme.prochaine} d={programme.d} />;
+  // le temps de lire ton programme : le cadre seul, jamais un « Rien de prévu » qui clignote
+  if (!planFixe && !programme.pret && (!next || !next.sportId)) {
+    return (
+      <Cadre domaine="seances" a11y={traduire("Ta prochaine séance")} style={{ minHeight: HAUTEUR_DEMI }}>
+        <Entete domaine="seances" icone="calendar" titre={traduire("Ta prochaine séance")} />
+      </Cadre>
+    );
+  }
 
   if (!next || !next.sportId) {
     return (
@@ -313,6 +334,85 @@ export function TuileProchaine({ next, trainings, plan: planFixe }: { next: Next
 }
 
 /** Texte secondaire pose sur la tuile pleine (5,9:1 en clair, 5,4:1 en sombre) */
+/** « Push B » sans sa lettre, quand le badge la montre à côté */
+const sansLettre = (nom: string, lettre: 'A' | 'B' | null) => (lettre ? nom.replace(new RegExp(`\\s${lettre}(?=$|\\s*[:,])`), '') : nom);
+
+/**
+ * Ta prochaine séance, celle de ton programme (1er novembre 2026) : quand (aujourd'hui, demain ou la date), son nom
+ * avec sa lettre A ou B, sa durée estimée, ses 3 premiers exercices, et « Commencer la séance ».
+ * Même lancement que la carte du jour de l'onglet Séances (routeDuJour) ; le cadre lui-même n'est pas un bouton.
+ */
+function ProchaineDuProgramme({ v, d }: { v: NonNullable<ProgrammeAccueil['prochaine']>; d: NonNullable<ProgrammeAccueil['d']> }) {
+  const router = useRouter();
+  const illus = useIllustrations();
+  const t = teinte('seances');
+  const sombre = paletteSombre();
+  const doux = paletteDouce(sombre);
+  const rel = quandRelatif(v.jp.date, localISO());
+  const quand = rel === 'aujourdhui' ? traduire('Aujourd’hui') : rel === 'demain' ? traduire('Demain') : v.quand;
+  const nom = sansTiret(sansLettre(v.nom, v.lettre));
+  const exos = v.exos.filter((e) => !(e as { fin?: true }).fin && !estExoCardio(e));
+  const trois = exos.slice(0, 3);
+  const detail = [v.minutes > 0 ? traduire('environ {0}', formatDuration(v.minutes)) : '', exos.length ? traduirePluriel(exos.length, exos.length > 1, '{0} exercice', '{0} exercices', exos.length) : v.resume ?? ''].filter(Boolean).join(', ');
+  const voir = () => router.push({ pathname: '/programmes/[id]' as any, params: { id: d.p.id } });
+  const commencer = () => {
+    const r = routeDuJour(d.p, v.jp.jour!, semaineDuProgramme(d.actif, new Date(`${v.jp.date}T12:00:00`)));
+    router.push({ pathname: r.pathname as any, params: r.params });
+  };
+  const ligne = sombre ? 'rgba(26,30,41,0.18)' : 'rgba(255,255,255,0.22)';
+  return (
+    <Cadre domaine="seances" plein a11y={traduire("Ta prochaine séance : {0}, {1}{2}", quand, nom, v.lettre ? ` ${v.lettre}` : '')} style={{ padding: 16, gap: 6 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 24 }}>
+        <Image source={illus.img('calendrier')} style={{ width: 24, height: 24 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+        <Ink size={13} weight="extraBold" color={t.surPlein} numberOfLines={1} style={{ flex: 1 }}>
+          {traduire("Ta prochaine séance")}
+        </Ink>
+      </View>
+      <Ink size={30} weight="black" tight color={t.surPlein} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+        {quand}
+      </Ink>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Ink size={18} weight="extraBold" tight color={t.surPlein} numberOfLines={1} style={{ flexShrink: 1 }}>
+          {nom}
+        </Ink>
+        {v.lettre ? <BadgeLettre lettre={v.lettre} taille={22} /> : null}
+      </View>
+      {detail ? (
+        <Ink size={13} weight="bold" color={doux} numberOfLines={1}>
+          {sansTiret(detail)}
+        </Ink>
+      ) : null}
+      {trois.length ? (
+        <View style={{ marginTop: 6, paddingTop: 8, borderTopWidth: 1, borderColor: ligne, gap: 5 }}>
+          {trois.map((e, k) => (
+            <View key={`${e.nom}${k}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: t.surPlein, opacity: 0.7 }} />
+              <Ink size={13.5} weight="extraBold" color={t.surPlein} numberOfLines={1} style={{ flex: 1 }}>
+                {sansTiret(traduire(nomFr(e.nom)))}
+              </Ink>
+              <Ink size={12} weight="bold" color={doux}>{traduirePluriel(e.series, e.series > 1, '{0} série', '{0} séries', e.series)}</Ink>
+            </View>
+          ))}
+        </View>
+      ) : null}
+      <View style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+        <Press onPress={commencer} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire('Commencer la séance')}>
+          <View style={{ minHeight: 44, borderRadius: 22, paddingHorizontal: 18, backgroundColor: sombre ? P.ink : P.white, justifyContent: 'center' }}>
+            <Ink size={14} weight="extraBold" color={sombre ? P.paper : P.ink}>
+              {traduire('Commencer la séance')}
+            </Ink>
+          </View>
+        </Press>
+        <Pressable onPress={voir} accessibilityRole="button" hitSlop={6} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 }}>
+          <Ink size={13.5} weight="extraBold" color={t.surPlein}>
+            {traduire('Voir le programme')}
+          </Ink>
+        </Pressable>
+      </View>
+    </Cadre>
+  );
+}
+
 function paletteDouce(sombre: boolean): string {
   return sombre ? '#24324F' : '#C9D6F2';
 }
