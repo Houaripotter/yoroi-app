@@ -3,13 +3,15 @@
  * muscles travailles, derniere seance et sport principal de l'utilisateur.
  */
 import type { Training } from '@/lib/database';
-import { muscleOf, sessionTonnage, MUSCLE_ORDER } from '@/lib/v2/progres/strength';
+import { sessionTonnage, MUSCLE_ORDER } from '@/lib/v2/progres/strength';
 import type { MuscleName } from '@/lib/v2/progres/strength';
 import { durationOf, mondayOf, setsCount, tonnageParts } from '@/lib/v2/trainingWeek';
 import { libelleUnite, versUnitePoids, type UnitePoids } from '@/lib/v2/unitePoids';
 import { familyOf, firstSport, parseExercises, parseRounds, workSets } from './sessionData';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
 import { cardioFait, libelleCardio } from './cardioJour';
+import { CompteurMuscles } from './musclesExercices';
+import type { BilanMuscles, MuscleLoad } from './musclesExercices';
 
 export { MUSCLE_ORDER };
 export type { MuscleName };
@@ -52,15 +54,7 @@ export function formatHours(min: number): { value: string; unit: string } {
   return { value: m ? `${h} h ${String(m).padStart(2, '0')}` : String(h), unit: m ? '' : 'h' };
 }
 
-export type MuscleLoad = {
-  name: MuscleName;
-  /** series de musculation reelles */
-  sets: number;
-  /** sollicite par un autre sport (combat, cardio), sans series comptees */
-  engaged: boolean;
-  /** 0 a 3, pour la couleur de la silhouette */
-  level: 0 | 1 | 2 | 3;
-};
+export type { MuscleLoad, BilanMuscles } from './musclesExercices';
 
 /** Groupes sollicites par les sports sans series (repere visuel, jamais affiche en chiffres) */
 const ENGAGED_BY_FAMILY: Record<string, MuscleName[]> = {
@@ -69,31 +63,23 @@ const ENGAGED_BY_FAMILY: Record<string, MuscleName[]> = {
   cardio: ['Jambes'],
 };
 
-export function weekMuscles(trainings: Training[], today: string): MuscleLoad[] {
+/**
+ * Muscles de la semaine : exercice par exercice, la regle commune de ./musclesExercices.ts (muscles principaux et
+ * secondaires, tes machines, recherche par le nom, le cardio exclu). Une seance sans series d'un autre sport
+ * (combat, course) sollicite ses groupes, sans series ni zone allumee.
+ */
+export function musclesSemaine(trainings: Training[], today: string): BilanMuscles {
   const monday = mondayOf(today);
-  const sets: Record<string, number> = {};
-  const engaged = new Set<string>();
+  const c = new CompteurMuscles();
   for (const t of trainings) {
     if (!inWeek(t, monday, today)) continue;
-    const exs = parseExercises(t);
-    let counted = false;
-    for (const e of exs) {
-      const m = muscleOf(e as any);
-      if (!m) continue;
-      const n = workSets(e).length;
-      if (n > 0) {
-        sets[m] = (sets[m] ?? 0) + n;
-        counted = true;
-      }
-    }
-    if (!counted) for (const m of ENGAGED_BY_FAMILY[familyOf(t.sport)] ?? []) engaged.add(m);
+    if (!c.exercices(parseExercises(t))) c.engager(ENGAGED_BY_FAMILY[familyOf(t.sport)] ?? []);
   }
-  return MUSCLE_ORDER.map((name) => {
-    const s = sets[name] ?? 0;
-    const e = engaged.has(name);
-    const level: 0 | 1 | 2 | 3 = s >= 10 ? 3 : s >= 4 ? 2 : s > 0 || e ? 1 : 0;
-    return { name, sets: s, engaged: e && s === 0, level };
-  });
+  return c.bilan();
+}
+
+export function weekMuscles(trainings: Training[], today: string): MuscleLoad[] {
+  return musclesSemaine(trainings, today).loads;
 }
 
 /** Sport principal : le premier favori, sinon le plus pratique, sinon la musculation */
