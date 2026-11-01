@@ -4082,7 +4082,7 @@ class HealthConnectService {
     return [];
   }
 
-  async getWeightHistory(days: number = 0): Promise<Array<{ date: string; value: number; source?: string }>> {
+  async getWeightHistory(days: number = 0): Promise<Array<{ date: string; value: number; source?: string; instant?: string; appareil?: string }>> {
     // Demo mode disabled
 
     // VÉRIFIER QUE HealthKit EST CHARGÉ
@@ -4111,6 +4111,9 @@ class HealthConnectService {
           date: localDateKey(new Date(s.startDate)),
           value: Math.round(s.quantity * 10) / 10,
           source: s.sourceRevision?.source?.name || s.device?.name || 'Unknown',
+          // AT (1er novembre 2026) : l'heure de l'echantillon et l'appareil, pour le contexte de la pesee
+          instant: s.startDate ? new Date(s.startDate).toISOString() : undefined,
+          appareil: [s.device?.manufacturer, s.device?.model || s.device?.name].filter(Boolean).join(' ') || s.sourceRevision?.source?.name || undefined,
         }));
 
         logger.info('[HealthKit] getWeightHistory: Poids trouvés:', result.length);
@@ -4701,8 +4704,18 @@ class HealthConnectService {
     value: number,
     source: string,
     known?: Array<{ date: string; weight: number }>,
+    contexte?: { instant?: string; appareil?: string },
   ): Promise<boolean> {
     if (!date || !(value > 20 && value < 400)) return false;
+    // AT (1er novembre 2026) : heure et appareil de l'echantillon, gardes a cote de la pesee (lib/v2/mesures/contextePesee.ts),
+    // aussi pour une pesee deja importee (le contexte ne fait que completer ce qui manque). Jamais bloquant.
+    if (contexte && (contexte.instant || contexte.appareil)) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const cp = require('@/lib/v2/mesures/contextePesee') as typeof import('@/lib/v2/mesures/contextePesee');
+        cp.contexteEnFile({ date, poids: value, heure: cp.heureDepuisInstant(contexte.instant), appareil: contexte.appareil ?? source, origine: 'healthkit' });
+      } catch { /* sans contexte */ }
+    }
     const rows: Array<{ date: string; weight: number }> = known ?? (await getWeights(400).catch(() => []));
     if (rows.some((w) => String(w.date).slice(0, 10) === date && Math.abs(Number(w.weight) - value) < 0.05)) return false;
     await addWeight({ weight: value, source, date });
@@ -5453,6 +5466,8 @@ class HealthConnectService {
             sampleDay(data.weight.date, today),
             data.weight.value,
             data.weight.source || 'apple_health',
+            undefined,
+            { instant: data.weight.date, appareil: data.weight.source },
           );
           if (added) savedCount++;
           logger.info(`[syncAll] Poids ${added ? 'sauvegardé' : 'déjà présent'}: ${data.weight.value} kg (source: ${data.weight.source})`);
@@ -5981,7 +5996,7 @@ class HealthConnectService {
         const known = await getWeights().catch(() => []);
         for (const w of weights) {
           try {
-            const added = await this.saveImportedWeight(w.date, w.value, normalizeSourceName(w.source || 'apple_health'), known);
+            const added = await this.saveImportedWeight(w.date, w.value, normalizeSourceName(w.source || 'apple_health'), known, { instant: w.instant, appareil: w.appareil });
             if (added) result.weights++;
           } catch { /* doublon ou contrainte, on ignore */ }
         }
