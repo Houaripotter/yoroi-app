@@ -239,12 +239,20 @@ export interface SyncStatus {
   paires: AppareilAppaire[];
   appairage: AppairageEnCours | null;
   /** Message du dernier appairage : reussi, expire, refuse */
-  appairageResultat?: 'reussi' | 'expire' | 'annule' | null;
+  appairageResultat?: 'reussi' | 'expire' | 'annule' | 'mauvais_code' | null;
   isSyncing: boolean;
   lastSyncTs: string | null;
   lastSyncDevice: string | null;
   /** Nom d'un appareil connecté qui utilise une ancienne version de Yoroi */
   outdatedPeer?: string | null;
+  /** 31 octobre 2026 : appareils YOROI vus ou relies a proximite (noms), appaires ou non */
+  aProximite: string[];
+  /** Heure de debut de la recherche en cours (null si arretee) : l'ecran dit « Probleme » apres un moment sans rien */
+  rechercheDepuis: number | null;
+  /** Un appareil proche vient de toucher « Relier » et affiche un code : on propose de le taper */
+  invitation: { from: string; device: string; expireA: number } | null;
+  /** L'annonce ou la recherche n'a pas demarre (souvent : Reseau local refuse) */
+  erreurReseau: boolean;
 }
 
 let myDeviceName = traduire('Mon appareil');
@@ -263,6 +271,18 @@ let status: SyncStatus = {
   lastSyncTs: null,
   lastSyncDevice: null,
   outdatedPeer: null,
+  aProximite: [],
+  rechercheDepuis: null,
+  invitation: null,
+  erreurReseau: false,
+};
+
+// 31 octobre 2026 : appareils YOROI proches, d'apres le module natif (vus par la recherche, ou relies)
+const vusMC = new Set<string>();
+const reliesMC = new Set<string>();
+const sansAbonnement = { remove: () => undefined };
+const publierProximite = () => {
+  setStatus({ aProximite: Array.from(new Set([...reliesMC, ...vusMC])) });
 };
 
 const setStatus = (patch: Partial<SyncStatus>) => {
@@ -336,6 +356,7 @@ let appairage: (AppairageEnCours & {
   attentes: Map<string, EnAttenteAffiche>;
 }) | null = null;
 let appairageTimer: ReturnType<typeof setInterval> | null = null;
+let mauvaisCodeTimer: ReturnType<typeof setTimeout> | null = null;
 
 const publierPaires = () => {
   setStatus({
@@ -364,10 +385,43 @@ const enregistrerPaires = async () => {
   publierPaires();
 };
 
-const finirAppairage = (resultat: 'reussi' | 'expire' | 'annule') => {
+const finirAppairage = (resultat: 'reussi' | 'expire' | 'annule' | 'mauvais_code') => {
   if (appairageTimer) { clearInterval(appairageTimer); appairageTimer = null; }
+  if (mauvaisCodeTimer) { clearTimeout(mauvaisCodeTimer); mauvaisCodeTimer = null; }
   appairage = null;
-  setStatus({ appairage: null, appairageResultat: resultat });
+  setStatus({ appairage: null, appairageResultat: resultat, invitation: null });
+};
+
+/**
+ * 31 octobre 2026 : l'appareil qui affiche le code previent les appareils proches (message en clair, sans secret :
+ * juste son nom). Leur ecran propose aussitot de taper le code. Le code, lui, ne circule jamais (SPAKE2).
+ */
+const annoncerCode = async () => {
+  if (!appairage || appairage.role !== 'affiche') return;
+  await MultipeerBridge.sendData({ type: 'PAIR_HELLO', from: myDeviceId, device: myDeviceName });
+};
+
+/**
+ * Un appareil proche affiche un code : on le propose, sauf s'il est deja appaire ou si un appairage est en cours.
+ * 1er novembre 2026 : si les deux ont touche « Relier » en meme temps, un seul garde son code (le plus petit
+ * identifiant, meme regle des deux cotes) ; l'autre range le sien et propose de taper celui d'en face.
+ */
+const recevoirAnnonce = (h: any) => {
+  if (!h || typeof h.from !== 'string' || h.from === myDeviceId) return;
+  if (paires[h.from]) return;
+  if (appairage) {
+    const croise = appairage.role === 'affiche' && appairage.attentes.size === 0 && h.from < myDeviceId;
+    if (!croise) return;
+    finirAppairage('annule');
+  }
+  const device = String(h.device || traduire('Appareil')).slice(0, 60);
+  if (status.invitation?.from === h.from) return;
+  setStatus({ invitation: { from: h.from, device, expireA: Date.now() + DUREE_CODE_MS } });
+};
+
+/** L'utilisateur ne veut pas taper le code propose */
+export const ignorerInvitation = () => {
+  if (status.invitation) setStatus({ invitation: null });
 };
 
 const publierAppairage = () => {
@@ -380,6 +434,22 @@ const envoyerA = async (to: string, msg: SyncMessage): Promise<boolean> => {
   if (!p) return false;
   const env = sceller(p.cle, myDeviceId, to, JSON.stringify(msg), aleatoire);
   return MultipeerBridge.sendData(env);
+};
+
+/**
+ * 1er novembre 2026 : code tape faux. L'appareil qui affiche le code repond, mais sa preuve ne colle pas : on
+ * attend un instant (un autre appareil qui afficherait aussi un code peut encore repondre juste), puis on dit
+ * « Ce n'est pas le bon code » au lieu de laisser tourner jusqu'a l'expiration. Rien n'est reessaye tout seul :
+ * chaque nouvel essai est un code retape, compte par l'appareil qui affiche (5 au plus).
+ */
+export const DELAI_MAUVAIS_CODE_MS = 2500;
+const signalerMauvaisCode = () => {
+  if (mauvaisCodeTimer || !appairage || appairage.role !== 'saisit') return;
+  const secret = appairage.secret;
+  mauvaisCodeTimer = setTimeout(() => {
+    mauvaisCodeTimer = null;
+    if (appairage && appairage.role === 'saisit' && appairage.secret === secret) finirAppairage('mauvais_code');
+  }, DELAI_MAUVAIS_CODE_MS);
 };
 
 const renvoyerDemande = async () => {
@@ -429,7 +499,7 @@ const recevoirAcceptation = async (a: any) => {
   if (!a || a.to !== myDeviceId) return;
   if (Date.now() > appairage.expireA) { finirAppairage('expire'); return; }
   const r = lireAcceptationSpake(appairage.secret, a);
-  if (!r) { compterEssai(`reponse|${String(a.from)}|${String(a.Y)}`); return; }
+  if (!r) { if (!compterEssai(`reponse|${String(a.from)}|${String(a.Y)}`)) signalerMauvaisCode(); return; }
   // la confirmation part deux fois : si la premiere se perd, l'autre appareil la recoit quand meme
   await MultipeerBridge.sendData(r.confirmation);
   if (renvoiConfirmation) clearTimeout(renvoiConfirmation);
@@ -467,8 +537,10 @@ export const commencerAppairageAffiche = async (): Promise<string> => {
   appairage = { role: 'affiche', code, expireA: Date.now() + DUREE_CODE_MS, essais: 0, vus: new Set(), attentes: new Map() };
   appairageTimer = setInterval(() => {
     if (appairage && Date.now() > appairage.expireA) finirAppairage('expire');
+    else void annoncerCode();
   }, 2000);
   publierAppairage();
+  void annoncerCode();
   return code;
 };
 
@@ -478,6 +550,7 @@ export const commencerAppairageSaisi = async (code: string): Promise<boolean> =>
   if (!codeValide(propre)) return false;
   await initPeerSync();
   if (appairageTimer) clearInterval(appairageTimer);
+  if (status.invitation) setStatus({ invitation: null });
   appairage = {
     role: 'saisit',
     code: propre,
@@ -555,6 +628,11 @@ const demarrer = async (): Promise<void> => {
     subscriptions.push(
       MultipeerBridge.onPeerChanged(onPeerChanged),
       MultipeerBridge.onDataReceived(onDataReceived),
+      // 31 octobre 2026 : appareils YOROI vus a proximite, avant tout appairage (ecran « Relie tes appareils »)
+      // (appels gardes : un module simule sans ces evenements ne doit pas empecher le demarrage)
+      MultipeerBridge.onPeerFound?.(({ peer }) => { vusMC.add(peer); publierProximite(); }) ?? sansAbonnement,
+      MultipeerBridge.onPeerLost?.(({ peer }) => { vusMC.delete(peer); publierProximite(); }) ?? sansAbonnement,
+      MultipeerBridge.onError?.(() => setStatus({ erreurReseau: true })) ?? sansAbonnement,
       // Détecter les modifications peu après qu'elles ont lieu : l'heure retenue pour
       // départager deux modifications concurrentes est ainsi proche de l'heure réelle
       DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', scheduleBackgroundScan),
@@ -567,6 +645,7 @@ const demarrer = async (): Promise<void> => {
 
     await MultipeerBridge.startDiscovery();
     isRunning = true;
+    setStatus({ rechercheDepuis: Date.now(), erreurReseau: false });
     logger.info('[PeerSync] Démarré (v3) sur', myDeviceName);
   } catch (err) {
     logger.error('[PeerSync] Erreur init:', err);
@@ -584,7 +663,9 @@ export const stopPeerSync = async (): Promise<void> => {
   pendingIncoming.clear();
   if (appairage) finirAppairage('annule');
   relies.clear();
-  setStatus({ connectedPeers: [] });
+  vusMC.clear();
+  reliesMC.clear();
+  setStatus({ connectedPeers: [], aProximite: [], rechercheDepuis: null, invitation: null });
   await MultipeerBridge.stopDiscovery();
   isRunning = false;
 };
@@ -647,6 +728,10 @@ const onPeerChanged = async (event: PeerChangedEvent) => {
   logger.info(`[PeerSync] ${peer} -> ${state}`);
 
   const peers = await MultipeerBridge.getConnectedPeers();
+  reliesMC.clear();
+  peers.forEach((p) => reliesMC.add(p));
+  if (state === 'connected') reliesMC.add(peer);
+  publierProximite();
 
   if (state === 'connected') {
     await sendHandshake();
@@ -701,6 +786,7 @@ const onDataReceived = async (event: DataReceivedEvent) => {
     if (brut?.type === 'PAIR_REQUEST') { await recevoirDemande(brut); return; }
     if (brut?.type === 'PAIR_ACCEPT') { await recevoirAcceptation(brut); return; }
     if (brut?.type === 'PAIR_CONFIRM') { await recevoirConfirmation(brut); return; }
+    if (brut?.type === 'PAIR_HELLO') { recevoirAnnonce(brut); return; }
 
     // Tout le reste doit etre une enveloppe chiffree, pour nous, d'un appareil appaire
     if (brut?.type !== 'SEALED') return; // ancienne version ou inconnu : rien n'est lu, rien n'est renvoye
