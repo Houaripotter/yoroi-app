@@ -1,7 +1,8 @@
 /**
- * La vignette d'un exercice dans une liste (1er novembre 2026) : l'animation de test en mode créateur, sinon notre
- * animation maison (deux poses en fondu), sinon l'illustration de sa machine, sinon le sticker de son groupe
- * musculaire (lib/v2/programmes/visuelExo.ts).
+ * La vignette d'un exercice dans une liste (1er novembre 2026). L'ordre vient de lib/v2/programmes/visuelExo.ts
+ * (ordreVisuels) : en mode créateur le GIF Gym visual, sinon notre animation maison, sinon Everkinetic en fondu,
+ * sinon l'illustration de sa machine, sinon le sticker de son groupe musculaire ; hors mode créateur, la même suite
+ * sans Gym visual. Aucune logique d'ordre ici.
  * Jamais de case vide. `numero` : le rang de l'exercice, posé en petite pastille sur le coin.
  */
 import React from 'react';
