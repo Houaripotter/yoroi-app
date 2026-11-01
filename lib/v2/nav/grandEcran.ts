@@ -19,8 +19,13 @@ export const SEUIL_BARRE_LARGE = 1024;
 export const LARGEUR_BARRE_LATERALE = 220;
 /** Largeur de la barre laterale compacte (les stickers seuls) */
 export const LARGEUR_BARRE_COMPACTE = 84;
-/** Largeur maximale du contenu d'une page, sans ses marges (4 colonnes de 390 points environ) */
-export const LARGEUR_MAX_PAGE = 1640;
+/**
+ * Largeur maximale du contenu d'une page, sans ses marges : 4 colonnes de 465 points au plus.
+ * 1er novembre 2026 (Houari sur MacBook, fenetre de 2000 points : « sur le côté on peut augmenter des choses ») :
+ * 1640 laissait une bande vide a droite des 1932 points de fenetre ; a 1920, une fenetre de 2000 est remplie
+ * (barre laterale, puis 1708 points de page) et un ecran de 2560 garde des colonnes lisibles.
+ */
+export const LARGEUR_MAX_PAGE = 1920;
 /** Marge de chaque cote de la page (une fenetre etroite garde plus de place pour les cartes) */
 export const MARGE_PAGE = 36;
 export const MARGE_PAGE_ETROITE = 24;
