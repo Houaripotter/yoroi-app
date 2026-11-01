@@ -1,17 +1,22 @@
 /**
  * Le visuel d'un exercice dans une liste ou une fiche (1er novembre 2026, Houari : « c'est possible de voir les
- * exercices, c'est quoi, avec une animation ? »). Ordre de recherche :
- *  1. l'animation de test (GIF Gym visual), seulement en mode créateur : jamais en public, licence non achetée
- *     (lib/v2/programmes/demosTest.ts). Le mode créateur est passé par l'appelant, lu avec useCreatorMode comme dans
- *     le reste de l'app (components/yoroi/v2/programmes/VignetteExo.tsx, useAnimationsTest) ;
- *  2. notre animation maison, deux poses en fondu (lib/v2/programmes/demosMaison.ts), pour tout le monde ;
- *  2 bis. sinon l'illustration Everkinetic en deux poses, même fondu, pendant la transition avant Gym visual
- *     (lib/v2/programmes/everkinetic.ts, un seul interrupteur EVERKINETIC_ACTIF) : `source` le signale, la fiche
- *     affiche alors le crédit CC BY-SA 4.0 ;
- *  3. l'illustration maison de sa machine (assets/exercices/machines, lib/v2/seance/machinesArt.ts), retrouvée par
- *     le nom de l'exercice ou par la liste d'exercices de la machine (lib/v2/seance/machines.ts) ;
- *  4. sinon le sticker de son groupe musculaire : jamais de case vide.
- * Données pures, aucun composant.
+ * exercices, c'est quoi, avec une animation ? »). Jamais de case vide : on prend la première source qui a quelque
+ * chose, dans l'ordre de ordreVisuels (une seule liste, lue par visuelExo, la vignette et la fiche).
+ *
+ * EN MODE CRÉATEUR (Houari, 1er novembre 2026 : « quand Gym visual n'a pas l'exercice, montre l'animation suivante
+ * plutôt que le sticker ») :
+ *  1. le GIF Gym visual (lib/v2/programmes/demosTest.ts), jamais en public : licence non achetée. Le mode créateur
+ *     est passé par l'appelant, lu avec useCreatorMode (components/yoroi/v2/programmes/VignetteExo.tsx,
+ *     useAnimationsTest) ;
+ *  2. sinon notre animation maison validée, deux poses en fondu (lib/v2/programmes/demosMaison.ts) ;
+ *  3. sinon l'illustration Everkinetic en deux poses, même fondu, si EVERKINETIC_ACTIF
+ *     (lib/v2/programmes/everkinetic.ts) : `source` le signale, la fiche affiche alors le crédit CC BY-SA 4.0,
+ *     mode créateur compris ;
+ *  4. sinon l'illustration maison de sa machine (assets/exercices/machines, lib/v2/seance/machinesArt.ts), retrouvée
+ *     par le nom de l'exercice ou par la liste d'exercices de la machine (lib/v2/seance/machines.ts) ;
+ *  5. sinon le sticker de son groupe musculaire.
+ * HORS MODE CRÉATEUR : la même liste sans Gym visual (maison, Everkinetic, machine, sticker).
+ * Le cardio n'a que le sticker course. Données pures, aucun composant.
  */
 import type { ImageSourcePropType } from 'react-native';
 import { MACHINES } from '@/lib/v2/seance/machines';
@@ -69,18 +74,46 @@ export function stickerMuscle(muscle: string | null | undefined, nom = '', cardi
   return { sticker: 'musculation', teinte: 'bleu' };
 }
 
+/** Les sources de visuel, de la préférée à la dernière */
+export type SourceVisuel = 'gymvisual' | 'maison' | 'everkinetic' | 'machine' | 'sticker';
+
+/** L'ordre de recherche : Gym visual en tête seulement en mode créateur, le sticker toujours en dernier */
+export function ordreVisuels(modeCreateur: boolean): SourceVisuel[] {
+  const suite: SourceVisuel[] = ['maison', 'everkinetic', 'machine', 'sticker'];
+  return modeCreateur ? ['gymvisual', ...suite] : suite;
+}
+
+function depuis(src: SourceVisuel, nom: string): VisuelExo | null {
+  if (src === 'gymvisual') {
+    const gif = resoudreDemo(nom, demoEnLigne);
+    return gif && gif.length ? { type: 'animation', images: gif } : null;
+  }
+  if (src === 'maison') {
+    const maison = demoMaisonDe(nom);
+    return maison && maison.length ? { type: 'animation', images: maison } : null;
+  }
+  if (src === 'everkinetic') {
+    const ek = demoEverkineticDe(nom);
+    return ek && ek.length ? { type: 'animation', images: ek, source: 'everkinetic' } : null;
+  }
+  if (src === 'machine') {
+    const image = imageMachineDe(nom);
+    return image ? { type: 'machine', image } : null;
+  }
+  return null;
+}
+
 /**
  * Le meilleur visuel autorisé de l'exercice, jamais rien. `animationsTest` : vrai seulement en mode créateur avec
  * Gym visual allumé dans le Studio (useAnimationsTest) ; faux par défaut, donc jamais de GIF Gym visual en public.
+ * Quand Gym visual n'a pas l'exercice, la source suivante de ordreVisuels prend le relais, pas le sticker.
  */
 export function visuelExo(nom: string, muscle?: string | null, cardio = false, animationsTest = false): VisuelExo {
-  const gif = cardio || !animationsTest ? null : resoudreDemo(nom, demoEnLigne);
-  if (gif && gif.length) return { type: 'animation', images: gif };
-  const maison = cardio ? null : demoMaisonDe(nom);
-  if (maison && maison.length) return { type: 'animation', images: maison };
-  const ek = cardio ? null : demoEverkineticDe(nom);
-  if (ek && ek.length) return { type: 'animation', images: ek, source: 'everkinetic' };
-  const image = cardio ? null : imageMachineDe(nom);
-  if (image) return { type: 'machine', image };
+  if (!cardio) {
+    for (const src of ordreVisuels(animationsTest)) {
+      const v = depuis(src, nom);
+      if (v) return v;
+    }
+  }
   return { type: 'sticker', ...stickerMuscle(muscle, nom, cardio) };
 }
