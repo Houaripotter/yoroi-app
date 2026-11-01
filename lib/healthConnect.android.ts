@@ -3524,7 +3524,7 @@ class HealthConnectService {
   /**
    * Observer les nouveaux workouts via polling
    * Health Connect (Android) ne supporte pas de push observer natif,
-   * on poll donc toutes les 2 minutes pour detecter les séances
+   * on poll donc toutes les 10 minutes pour detecter les séances (le retour au premier plan lit tout de suite)
    * en provenance de Garmin, Fitbit, Samsung, Polar, Suunto, COROS, Withings, etc.
    */
   /**
@@ -3553,16 +3553,16 @@ class HealthConnectService {
     if (this.workoutPollingInterval) return; // Deja en cours
     if (await demoActive()) return;
 
-    logger.info('[HealthConnect Android] Demarrage workout observer (polling 2 min)');
+    logger.info('[HealthConnect Android] Demarrage workout observer (polling 10 min)');
 
-    // Poll toutes les 2 minutes
+    // Poll toutes les 10 minutes (1er novembre 2026, avant 2 min). La fenetre lue reste la derniere heure.
     this.workoutPollingInterval = setInterval(async () => {
       try {
         await this.checkRecentWorkouts();
       } catch (e) {
         logger.warn('[HealthConnect Android/Polling] Erreur:', e);
       }
-    }, 2 * 60 * 1000);
+    }, 10 * 60 * 1000);
 
     // Premier check immediat
     this.checkRecentWorkouts().catch(() => {});
