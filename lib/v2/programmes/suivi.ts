@@ -13,7 +13,7 @@ import { indexJour, joursValides } from './coach';
 import { estPlanFixe, indicesGardes, joursDuPlan, memePlan, planParDefaut, planValide, REPOS } from './planJours';
 import { appliquerRemplacements, avecChangementDate, avecRemplacement, cleCase, lireChangementsDates } from './perso';
 import type { ChangementsDates, Remplacements } from './perso';
-import { estJourMuscu, finActive, joursRetires, lireFinSeance, retenirFinActive } from './finSeance';
+import { avecFrequences, estJourMuscu, finActive, joursRetires, lireFinSeance, retenirFinActive } from './finSeance';
 import { hydraterChoix } from '@/lib/v2/seances/cardioJour';
 import type { FinSeance } from './finSeance';
 import { extrasDe, finDesModules, lireModules, modulesActifs, normaliserModules } from './modules';
@@ -188,6 +188,8 @@ export async function chargerProgrammeActif(): Promise<ProgrammeActif | null> {
       if (j.length) a.jours = j;
     }
     a.prochain = indexGarde(p, a, Math.min(Math.max(0, brut.prochain | 0), p.jours.length - 1));
+    // 1er novembre 2026 : abdos et cardio 2 ou 3 fois par semaine, répartis dans ta semaine (finSeance.ts)
+    if (a.fin) a.fin = finRepartie(a, p);
     retenirFinActive(a.id, a.fin, a.modules);
     return a;
   } catch {
@@ -195,7 +197,50 @@ export async function chargerProgrammeActif(): Promise<ProgrammeActif | null> {
   }
 }
 
+/**
+ * 1er novembre 2026 : les séances de musculation d'une semaine type de ton programme, dans l'ordre des jours
+ * (ta semaine ou ton plan ; sans plan, les séances qui s'enchaînent sur tes jours), et les séances B vers leur A.
+ */
+export function semaineDeLaFin(a: ProgrammeActif, p: Programme, ref = new Date()): { semaine: string[]; soeurs: Record<string, string> } {
+  const semaine: string[] = [];
+  const lundi = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate() - ((ref.getDay() + 6) % 7), 12);
+  try {
+    const sansPonctuel = { ...a, ponctuel: undefined };
+    for (let d = 0; d < 7; d++) {
+      const j = seanceDuPlanLe(sansPonctuel, p, new Date(lundi.getFullYear(), lundi.getMonth(), lundi.getDate() + d, 12));
+      if (j && estJourMuscu(j)) semaine.push(j.id);
+    }
+  } catch {
+    // semaine illisible : la rotation prend le relais
+  }
+  if (!semaine.length) {
+    const retires = joursRetires(p, a.fin);
+    const jours = p.jours.filter((j) => estJourMuscu(j) && !retires.includes(j.id) && !j.jourPerso?.b && j.variante !== 'B');
+    const k = Math.max(1, Math.min(7, joursValides(a.jours)?.length ?? p.joursParSemaine ?? jours.length));
+    for (let i = 0; jours.length && i < k; i++) semaine.push(jours[i % jours.length].id);
+  }
+  const soeurs: Record<string, string> = {};
+  for (const j of p.jours) {
+    if (!j.jourPerso?.b) continue;
+    const sa = p.jours.find((x) => x.jourPerso && !x.jourPerso.b && x.jourPerso.d === j.jourPerso!.d);
+    if (sa) soeurs[j.id] = sa.id;
+  }
+  return { semaine, soeurs };
+}
+
+/** La fin de séance avec ses séances choisies par fréquence, recalculée sur ta semaine */
+export function finRepartie(a: ProgrammeActif, p: Programme): FinSeance | undefined {
+  if (!a.fin) return a.fin;
+  if (!a.fin.abdosParSemaine && !a.fin.cardioParSemaine) return avecFrequences(a.fin, []);
+  const { semaine, soeurs } = semaineDeLaFin(a, p);
+  return avecFrequences(a.fin, semaine, soeurs);
+}
+
 async function ecrire(a: ProgrammeActif | null): Promise<void> {
+  if (a?.fin) {
+    const p = programmeParId(a.id);
+    if (p) a = { ...a, fin: finRepartie(a, p) };
+  }
   retenirFinActive(a ? a.id : null, a?.fin, a?.modules);
   try {
     if (a) await AsyncStorage.setItem(CLE, JSON.stringify(a));
@@ -253,6 +298,16 @@ async function enregistrerFin_(fin: FinSeance): Promise<void> {
   const suite: ProgrammeActif = planSuitLaFin(p, a.fin, { ...a, fin: f });
   suite.prochain = indexGarde(p, suite, a.prochain);
   await ecrire(suite);
+  // 1er novembre 2026 : un autre cardio prévu (type ou durée) : ton ancien choix séance par séance ne le cache plus
+  if (a.fin?.cardioType !== f.cardioType || a.fin?.minutes !== f.minutes) await oublierCardioDuProgramme(a.id);
+}
+
+async function oublierCardioDuProgramme(id: string): Promise<void> {
+  try {
+    await (require('@/lib/v2/seances/cardioChoix') as typeof import('@/lib/v2/seances/cardioChoix')).oublierChoixDuProgramme(id); // eslint-disable-line @typescript-eslint/no-require-imports
+  } catch {
+    // le choix d'avant reste, tu le changes en séance
+  }
 }
 
 /**
@@ -264,7 +319,8 @@ async function enregistrerModules_(modules: readonly ModuleId[], options?: { min
   const p = a && programmeParId(a.id);
   if (!a || !p) return;
   const liste = normaliserModules(modules);
-  const base = { minutes: options?.minutes ?? a.fin?.minutes, sansMarche: options?.sansMarche ?? a.fin?.sansMarche };
+  // 1er novembre 2026 : tes fréquences, ton type de cardio et tes choix séance par séance restent
+  const base = { ...(a.fin ?? {}), minutes: options?.minutes ?? a.fin?.minutes, sansMarche: options?.sansMarche ?? a.fin?.sansMarche };
   const fin = finDesModules(liste, base);
   const extras = extrasDe(liste);
   const { modules: _m, fin: _f, ...reste } = a;
@@ -889,7 +945,7 @@ async function arreterProgramme_(): Promise<void> {
  * ton programme en cours. Déjà en cours : il est mis à jour sans perdre ton début, tes séances faites ni ta
  * progression ; seuls les jours suivent ta nouvelle semaine.
  * ---------------------------------------------------------------------------------------------- */
-async function suivreProgrammePerso_(pp: Pick<ProgrammePerso, 'id' | 'semaine'>): Promise<ProgrammeActif | null> {
+async function suivreProgrammePerso_(pp: Pick<ProgrammePerso, 'id' | 'semaine' | 'fin'>): Promise<ProgrammeActif | null> {
   await chargerProgrammesPerso();
   const p = programmeParId(pp.id);
   if (!p) return null;
@@ -900,11 +956,19 @@ async function suivreProgrammePerso_(pp: Pick<ProgrammePerso, 'id' | 'semaine'>)
     // tes exercices, tu les as changés toi même dans ta semaine : plus de remplacement à garder
     const { remplacements: _r, plan: _p, ...reste } = a;
     const suite: ProgrammeActif = { ...reste, plan, jours: joursDuPlan(plan) };
+    // 1er novembre 2026 : abdos et cardio choisis dans « Je construis le mien » (ProgrammePerso.fin)
+    const f = pp.fin !== undefined ? lireFinSeance(pp.fin) : undefined;
+    if (f) {
+      if (finActive(f)) suite.fin = f;
+      else delete suite.fin;
+    }
     suite.prochain = indexGarde(p, suite, Math.min(a.prochain, p.jours.length - 1));
     await ecrire(suite);
+    if (f && (a.fin?.cardioType !== f.cardioType || a.fin?.minutes !== f.minutes)) await oublierCardioDuProgramme(a.id);
     return suite;
   }
-  return demarrerProgramme_(pp.id, joursDuPerso(pp), null, null, plan);
+  const f = lireFinSeance(pp.fin);
+  return demarrerProgramme_(pp.id, joursDuPerso(pp), f && finActive(f) ? f : null, null, plan);
 }
 
 /**
