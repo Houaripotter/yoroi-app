@@ -57,7 +57,10 @@ import {
 } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { JourProgramme, Programme } from '@/lib/v2/programmes/types';
-import { cardioPrevu, libelleCardio } from '@/lib/v2/seances/cardioJour';
+import { cardioPrevu, libelleCardio, typeDeNom } from '@/lib/v2/seances/cardioJour';
+import { liensGardes, retenirHabitudes } from '@/lib/v2/seances/habitudesFin';
+import { chargerEnchainements } from '@/lib/v2/programmes/enchainements';
+import { SuggestionHabitude } from '@/components/yoroi/v2/programmes/SuggestionHabitude';
 import { chargerEcartes, nomsEcartes } from '@/lib/v2/seances/exercicesEcartes';
 import { chargerMachinesPerso } from '@/lib/v2/seances/machinesPerso';
 import type { MachinePerso } from '@/lib/v2/seances/machinesPerso';
@@ -102,6 +105,9 @@ export function useProchaines(): { d: Donnees | null; pret: boolean } {
           chargerMachinesPerso().catch(() => []),
         ]);
         if (!vivant) return;
+        // 1er novembre 2026 : tes abdos et ton cardio habituels, lus avant de préparer tes séances (habitudesFin.ts)
+        retenirHabitudes(trainings ?? [], new Date(), liensGardes(await chargerEnchainements().catch(() => ({}))));
+        if (!vivant) return;
         setD({
           actif, p, pp: liste.find((x) => x.id === actif.id) ?? null, trainings: trainings ?? [], materiel, machines,
           regions: unirRegions(regionsDesBlessures((blessures ?? []) as { zone_id: string; status?: string }[]), actif.douleurs),
@@ -126,7 +132,7 @@ export function vueDuJour(d: Donnees, jp: JourPrevu): VueJour {
   const brut = jp.jour;
   if (!brut) return { jp, nom: '', lettre: null, exos: [], minutes: 0, cardio: null, abdos: 0, muscu: false, quand };
   const { actif, p } = d;
-  const pt = jourPourToi(brut, d.materiel, d.regions, d.machines, remplacementsLe(actif.remplacements, actif.changementsDates, jp.date), { fin: actif.fin, materiel: p.materiel });
+  const pt = jourPourToi(brut, d.materiel, d.regions, d.machines, remplacementsLe(actif.remplacements, actif.changementsDates, jp.date), { fin: actif.fin, materiel: p.materiel, programme: p });
   const fin = pt as unknown as AvecFin;
   const legere = estSemaineLegere(actif, le(jp.date));
   const exos: ExoVu[] = pt.exos.map((e, i) => {
@@ -135,7 +141,7 @@ export function vueDuJour(d: Donnees, jp: JourPrevu): VueJour {
   });
   const cardioExo = exos.find(estExoCardio);
   const cardio = cardioExo
-    ? (() => { const c = cardioPrevu(p.id, brut.id, cardioExo.minutes); return libelleCardio(c.type, c.minutes); })()
+    ? (() => { const c = cardioPrevu(p.id, brut.id, cardioExo.minutes, typeDeNom(cardioExo.nom)); return libelleCardio(c.type, c.minutes); })()
     : fin.finCardio ? libelleCardio(fin.finCardioType ?? 'marche_inclinee', fin.finCardio.minutes) : null;
   const muscu = estJourMuscu(brut);
   const minutesCardio = (cardioExo?.minutes ?? 0) + (fin.finCardio?.minutes ?? 0);
@@ -319,6 +325,8 @@ export default function ProchainesSeances() {
       <LargeurPage actif={page.grand} largeur={page.largeur}>
         <ScrollView contentContainerStyle={{ paddingHorizontal: page.grand ? page.marge : 16, paddingBottom: insets.bottom + 40, gap: 12 }} showsVerticalScrollIndicator={false}>
           {enTete}
+          {/* 1er novembre 2026 : ce que tu fais vraiment après ta séance, proposé sans rien forcer */}
+          {d ? <SuggestionHabitude programme={d.p} actif={d.actif} trainings={d.trainings} /> : null}
           {page.grand ? (
             <Rangee actif espace={24}>
               <Colonne actif largeur={largeurGauche}>
