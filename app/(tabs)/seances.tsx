@@ -49,7 +49,7 @@ import { formatRecordValue, recordShortTitle } from '@/lib/v2/seances/records';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import type { UnitePoids } from '@/lib/v2/unitePoids';
 import type { RecordLine } from '@/lib/v2/seances/records';
-import { formatHours, formatTonnage, sessionFacts, topExercises, weekMuscles } from '@/lib/v2/seances/weekSummary';
+import { formatHours, formatTonnage, musclesSemaine, sessionFacts, topExercises } from '@/lib/v2/seances/weekSummary';
 import { fr1, groupHistory, isImported, sportsByCount, weekCompare } from '@/lib/v2/seances/weekCompare';
 import type { HistoryGroup } from '@/lib/v2/seances/weekCompare';
 import { sportImage, sportTint } from '@/lib/v2/seance/sportVisuals';
@@ -173,7 +173,9 @@ export default function Seances() {
   const doneToday = plates.find((p) => p.isToday)?.count ?? 0;
   const next = useMemo(() => findNextSlot(plan, doneToday > 0), [plan, doneToday]);
   const week = useMemo(() => weekCompare(trainings, today), [trainings, today]);
-  const muscles = useMemo(() => weekMuscles(trainings, today), [trainings, today]);
+  // 31 octobre 2026 : exercice par exercice, la regle commune (lib/v2/seances/musclesExercices.ts)
+  const bilanMuscles = useMemo(() => musclesSemaine(trainings, today), [trainings, today]);
+  const muscles = bilanMuscles.loads;
   // 30 octobre 2026 : chaque muscle 2 fois par semaine (lib/v2/frequence/deuxFois.ts)
   const frequence = useMemo(() => frequenceSemaine(trainings, today), [trainings, today]);
   const hasMuscles = muscles.some((m) => m.level > 0);
@@ -448,7 +450,7 @@ export default function Seances() {
               ouvert={sections.ouvert.muscles}
               onBasculer={() => sections.basculer('muscles')}
             >
-              <MusclesSemaine loads={muscles} frequence={frequence} largeur={grand ? page.caseDe(1) - 28 : width - 32 - 28} />
+              <MusclesSemaine loads={muscles} zones={bilanMuscles.zones} frequence={frequence} largeur={grand ? page.caseDe(1) - 28 : width - 32 - 28} />
             </SectionRepliable>
             </Case>
           ) : null}
