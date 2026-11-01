@@ -38,7 +38,9 @@ import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { programmeParId, sportDuProgramme } from '@/lib/v2/programmes/catalogue';
 import { OBJECTIFS_CHOIX, conseillerProgramme } from '@/lib/v2/programmes/choix';
 import type { ConseilMulti, ObjectifChoix, Reponses } from '@/lib/v2/programmes/choix';
-import { aDesJoursMarche, MINUTES_FIN } from '@/lib/v2/programmes/finSeance';
+import { aDesJoursMarche } from '@/lib/v2/programmes/finSeance';
+import { ReglagesFin } from '@/components/yoroi/v2/programmes/ReglagesFin';
+import type { DetailsFin } from '@/components/yoroi/v2/programmes/ReglagesFin';
 import { GROUPES_PROGRAMMES, modulesPossibles, normaliserModules } from '@/lib/v2/programmes/modules';
 import type { ModuleId } from '@/lib/v2/programmes/modules';
 import { routeDuJour } from '@/lib/v2/programmes/lancer';
@@ -86,6 +88,8 @@ export function Questionnaire({ visible, onClose, onVoir, remplaces, depart = 'a
   const [choisi, setChoisi] = useState<string | null>(null);
   const [modules, setModules] = useState<ModuleId[]>([]);
   const [minutes, setMinutes] = useState<number>(30);
+  // 1er novembre 2026 : abdos 2 ou 3 fois par semaine, le type de cardio et sa fréquence (ReglagesFin.tsx)
+  const [details, setDetails] = useState<Omit<DetailsFin, 'minutes'>>({});
   const [sansMarche, setSansMarche] = useState(false);
   const [guide, setGuide] = useState(false);
   const [actif, setActif] = useState<ProgrammeActif | null>(null);
@@ -140,7 +144,7 @@ export function Questionnaire({ visible, onClose, onVoir, remplaces, depart = 'a
         const m = await chargerMateriel().catch(() => null);
         if (m === null) await enregistrerMateriel(materielDuLieu(q.lieu));
       }
-      const a = await demarrerProgramme(prog.id, undefined, { choix: 'rien', minutes, ...(sansMarche ? { sansMarche: true } : {}) }, modules.filter((m) => possibles.some((x) => x.id === m)));
+      const a = await demarrerProgramme(prog.id, undefined, { choix: 'rien', minutes, ...details, ...(sansMarche ? { sansMarche: true } : {}) }, modules.filter((m) => possibles.some((x) => x.id === m)));
       if (!a) return;
       const r = routeDuJour(prog, prog.jours[a.prochain ?? 0], 1);
       if (onCommence) onCommence(a, r);
@@ -294,11 +298,13 @@ export function Questionnaire({ visible, onClose, onVoir, remplaces, depart = 'a
             </View>
           ) : null}
 
-          {modules.includes('cardio') ? (
-            <Bloc titre={traduire('Durée du cardio')} ligne>
-              {MINUTES_FIN.map((m) => <Puce key={m} label={traduire('{0} min', m)} on={minutes === m} onPress={() => { tap(); setMinutes(m); }} />)}
-            </Bloc>
-          ) : null}
+          {/* 1er novembre 2026 : les abdos et le cardio cochés, en détail (combien de fois, quel cardio, combien de temps) */}
+          <ReglagesFin
+            abdos={modules.includes('abdos')}
+            cardio={modules.includes('cardio')}
+            valeur={{ minutes, ...details }}
+            onChange={({ minutes: m, ...d }) => { setMinutes(m); setDetails(d); }}
+          />
 
           {aDesJoursMarche(prog) ? (
             <Bloc titre={traduire('Les séances de marche du programme')} ligne>
