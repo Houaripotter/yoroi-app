@@ -114,14 +114,43 @@ export async function hydraterChoix(): Promise<ChoixGardes> {
   return enMemoire;
 }
 
-/** Le choix de ce jour : ton dernier choix, sinon marche inclinee et la duree du programme (30 min sinon) */
-export function choixParDefaut(gardes: ChoixGardes, cle: string, minutesProgramme?: number | null): ChoixCardio {
-  return gardes[cle] ?? { type: TYPE_DEFAUT, minutes: minutesOk(minutesProgramme) ?? MINUTES_DEFAUT };
+/**
+ * 1er novembre 2026 (Houari : « l'application regarde ce que j'ai l'habitude de faire ») : ton cardio habituel, retenu
+ * par lib/v2/seances/habitudesFin.ts quand tu as fait le meme au moins 3 fois sur les 4 dernieres semaines : type,
+ * duree, et pente, vitesse ou niveau les plus frequents. Il sert de depart quand ni ton choix du jour ni ton
+ * programme ne disent quel cardio faire. Rien n'est change dans ton programme.
+ */
+export type HabitudeCardio = ChoixCardio & { pente?: number; vitesse?: number; niveau?: number };
+let habitude: HabitudeCardio | null = null;
+export const habitudeCardio = (): HabitudeCardio | null => habitude;
+export function retenirHabitudeCardio(h: HabitudeCardio | null): void {
+  habitude = h && estType(h.type) && minutesOk(h.minutes) !== null ? { ...h } : null;
 }
 
-/** Le cardio annonce pour ce jour du programme, d'apres le choix en memoire */
-export const cardioPrevu = (programme: string | null | undefined, jour: string | null | undefined, minutesProgramme?: number | null): ChoixCardio =>
-  choixParDefaut(enMemoire, cleChoix(programme, jour), minutesProgramme);
+/**
+ * Le choix de ce jour : ton dernier choix ; sinon le type prevu par ton programme (`typeProgramme`) avec sa duree ;
+ * sinon ton habitude ; sinon marche inclinee et la duree du programme (30 min sinon).
+ */
+export function choixParDefaut(gardes: ChoixGardes, cle: string, minutesProgramme?: number | null, typeProgramme?: TypeCardio | null): ChoixCardio {
+  if (gardes[cle]) return gardes[cle];
+  const m = minutesOk(minutesProgramme);
+  if (typeProgramme && estType(typeProgramme)) return { type: typeProgramme, minutes: m ?? (habitude?.type === typeProgramme ? habitude.minutes : MINUTES_DEFAUT) };
+  if (habitude) return { type: habitude.type, minutes: m ?? habitude.minutes };
+  return { type: TYPE_DEFAUT, minutes: m ?? MINUTES_DEFAUT };
+}
+
+/**
+ * Le type prevu par le programme en cours (sa fin de seance), retenu par finSeance.ts (retenirFinActive) : les ecrans
+ * qui annoncent la seance sans passer par la fin de seance (carte du jour, grands widgets) disent le meme cardio.
+ */
+let typeActif: { programme: string; type: TypeCardio } | null = null;
+export function retenirTypeProgramme(programme: string | null | undefined, type: TypeCardio | null | undefined): void {
+  typeActif = programme && type && estType(type) ? { programme, type } : null;
+}
+
+/** Le cardio annonce pour ce jour du programme, d'apres le choix en memoire (`type` : celui de la seance ou du programme) */
+export const cardioPrevu = (programme: string | null | undefined, jour: string | null | undefined, minutesProgramme?: number | null, type?: TypeCardio | null): ChoixCardio =>
+  choixParDefaut(enMemoire, cleChoix(programme, jour), minutesProgramme, type ?? (typeActif && programme === typeActif.programme ? typeActif.type : null));
 
 /* ------------------------------------------------------------------------------------------------
  * Le cardio reellement fait, dans une seance enregistree
