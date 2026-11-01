@@ -413,7 +413,8 @@ export default function BalancePhotoScreen() {
       return null;
     }
     const had = existingOf(st).has;
-    const res = await saveImportBlock(st.date, values, list, replace);
+    // AQ : le bloc lu part avec, pour que rien ne se perde (heure, appareil, cote, textes : lib/v2/mesures/)
+    const res = await saveImportBlock(st.date, values, list, replace, b);
     if (!res.ok) {
       update(i, (s) => ({ ...s, open: true, error: traduire('Il manque ton poids : il n’est pas sur les photos et aucune pesée n’est notée ce jour. Écris ton poids dans la ligne Poids, ou décoche les valeurs de la balance.') }));
       return null;
