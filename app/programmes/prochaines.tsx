@@ -46,12 +46,12 @@ import { resumeDuJour, routeDuJour } from '@/lib/v2/programmes/lancer';
 import { estProgrammePerso } from '@/lib/v2/programmes/registrePerso';
 import { chargerProgrammesPerso, idDuJourPerso, idVariantePerso } from '@/lib/v2/programmes/monProgramme';
 import type { ProgrammePerso } from '@/lib/v2/programmes/monProgramme';
-import { PHRASE_ALTERNANCE, PHRASE_SEMAINES_AB, alternanceAffichee, lettreDe } from '@/lib/v2/programmes/alternance';
+import { PHRASE_ALTERNANCE, PHRASE_SEMAINES_AB, aSaSemaineB, alternanceAffichee, lettreDe } from '@/lib/v2/programmes/alternance';
 import type { Alternance } from '@/lib/v2/programmes/alternance';
 import { genererVarianteB } from '@/lib/v2/programmes/varianteB';
 import { chargeProposee, couverturePrevue, joursPrevus, lettreSeance, nomSeance, suggestionsSemaine } from '@/lib/v2/programmes/prochainesSeances';
 import type { JourPrevu, Suggestion } from '@/lib/v2/programmes/prochainesSeances';
-import { ajouterExerciceSuggere, choisirAlternance, echangerCetteSemaine } from '@/lib/v2/programmes/prochainesActions';
+import { ajouterExerciceSuggere, choisirAlternance, completerVersionsB, echangerCetteSemaine } from '@/lib/v2/programmes/prochainesActions';
 import {
   PROGRAMME_CHANGED_EVENT, changerExerciceLe, chargerMachines, chargerMateriel, chargerProgrammeActif, estSemaineLegere, peutGarder, remplacerExercice, semaineDuProgramme,
 } from '@/lib/v2/programmes/suivi';
@@ -120,6 +120,8 @@ export function useProchaines(): { d: Donnees | null; pret: boolean } {
       }
     };
     void charger();
+    // 1er novembre 2026, soir : une séance qui alterne sans sa version B encore (programme d'avant migré) la reçoit
+    void completerVersionsB().catch(() => false);
     const sub = DeviceEventEmitter.addListener(PROGRAMME_CHANGED_EVENT, () => void charger());
     return () => { vivant = false; sub.remove(); };
   }, []);
@@ -232,7 +234,7 @@ export default function ProchainesSeances() {
   }, [d, vues, semM]);
 
   const choix: Alternance = d ? (d.pp ? alternanceAffichee(d.pp) : paires.some((x) => x.cle.startsWith('t:')) ? 'ab' : 'meme') : 'meme';
-  const phrase = traduire(d?.pp?.ab && d.pp.semaineB ? PHRASE_SEMAINES_AB : PHRASE_ALTERNANCE[choix]);
+  const phrase = traduire(d?.pp && aSaSemaineB(d.pp) ? PHRASE_SEMAINES_AB : PHRASE_ALTERNANCE[choix]);
   const reglable = !!d && (!!d.pp || peutGarder(d.actif, d.p));
 
   const choisir = useCallback(async (x: Alternance) => {
