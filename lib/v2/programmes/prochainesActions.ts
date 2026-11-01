@@ -24,6 +24,7 @@ import type { MachinePerso } from '@/lib/v2/seances/machinesPerso';
 import { chargerMachinesPerso } from '@/lib/v2/seances/machinesPerso';
 import { chargerEcartes, nomsEcartes } from '@/lib/v2/seances/exercicesEcartes';
 import { indexJour } from './coach';
+import { semaineBCopieCatalogue } from './pageProgramme';
 
 export type Contexte = { ecartes?: Iterable<string>; perso?: readonly MachinePerso[] };
 
@@ -79,6 +80,19 @@ export async function contexteVersionsB(): Promise<Contexte> {
  */
 export async function basculerAlternance(on: boolean): Promise<string | null> {
   return choisirAlternance(on ? 'ab' : 'meme', await contexteVersionsB());
+}
+
+/**
+ * 1er novembre 2026 : ton programme du catalogue avec « Semaines A et B » d'avant allumé et une semaine B copie de la
+ * A (pageProgramme.ts, semaineBCopieCatalogue) devient « Alterner A et B », comme l'unification l'a prévu pour tes
+ * programmes à toi (alternance.ts, unifierAB) : il devient ton programme (séances faites et charges suivent), chaque
+ * séance reçoit sa version B. Rend l'id de ton programme, ou null : rien à faire.
+ */
+export async function unifierSemaineBCopie(): Promise<string | null> {
+  const a = await chargerProgrammeActif();
+  const p = a ? programmeParId(a.id) : undefined;
+  if (!a || !p || !semaineBCopieCatalogue(a, p) || !peutGarder(a, p)) return null;
+  return basculerAlternance(true);
 }
 
 /**
