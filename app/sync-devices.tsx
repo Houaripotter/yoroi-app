@@ -1,71 +1,48 @@
 /**
- * Synchronisation locale entre tes appareils, iPhone, iPad et Mac (refonte v2) : appareils appaires, appairage par code,
- * cet appareil, derniere synchro (ouvre le journal de synchro), forcer l'envoi, aide. 100 % en local.
+ * Synchronisation locale entre tes appareils, iPhone, iPad et Mac. 100 % en local.
  *
  * 13 octobre 2026 : seulement avec un appareil appaire par un code a 6 chiffres. Voir lib/peerSyncService.ts.
  * 30 octobre 2026 : la synchro est automatique (lib/v2/synchro/auto.ts) quand l'app est ouverte et un appareil
  * appaire proche ; cet ecran la garde en marche pour appairer, il ne l'arrete plus en se fermant.
+ * 31 octobre 2026 (Houari : « fais-moi un truc hyper simple pour les raccorder entre eux ») : un seul ecran
+ * « Relie tes appareils ». Ouvert sur les deux appareils, ils se voient tout seuls ; « Relier » sur l'un affiche
+ * le code, l'autre propose aussitot de le taper. Etapes dans lib/v2/synchro/ecranRelier.ts, rendu dans
+ * components/yoroi/v2/synchro/Relier.tsx.
  */
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, TextInput, View } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import Svg, { Path } from 'react-native-svg';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { format, parseISO } from 'date-fns';
 import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
-import { Ink } from '@/components/yoroi/v2/Ink';
-import { SanteIcon } from '@/components/yoroi/v2/sante/SanteIcon';
-import { ActionRow, CardBox, GlassBox, Label, Notice, S, SmallButton } from '@/components/yoroi/v2/sante/ui';
+import { Label } from '@/components/yoroi/v2/sante/ui';
 import {
   annulerAppairage,
   commencerAppairageAffiche,
   commencerAppairageSaisi,
   forceSync,
-  getMyDeviceName,
   getSyncStatus,
+  ignorerInvitation,
   isPeerSyncAvailable,
   onSyncStatusChange,
   oublierAppareil,
 } from '@/lib/peerSyncService';
 import { garderSynchro } from '@/lib/v2/synchro/auto';
+import { etapeRelier, appareilsAProposer, secondesRestantes } from '@/lib/v2/synchro/ecranRelier';
 import type { SyncStatus } from '@/lib/peerSyncService';
 import EtatSynchro from '@/components/yoroi/v2/synchro/EtatSynchro';
+import { RelierVue } from '@/components/yoroi/v2/synchro/Relier';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
-
-function DevicesScene({ connected, peers }: { connected: boolean; peers: number }) {
-  const color = connected ? S.moss : S.muted;
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 6 }}>
-      <View style={{ width: 64, height: 64, borderRadius: 22, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-        <SanteIcon name="phone" size={32} color={S.accent} />
-      </View>
-      <Svg width={110} height={30} viewBox="0 0 110 30">
-        <Path d="M4 15 C30 4 50 26 76 12 S100 14 106 15" stroke={color} strokeWidth={4} fill="none" strokeLinecap="round" strokeDasharray={connected ? undefined : '3 9'} />
-      </Svg>
-      <View style={{ width: 64, height: 64, borderRadius: 22, backgroundColor: connected ? S.mossSoft : S.line2, alignItems: 'center', justifyContent: 'center' }}>
-        <SanteIcon name="tablet" size={32} color={connected ? S.mossText : S.muted} />
-        {peers > 1 ? (
-          <View style={{ position: 'absolute', top: -6, right: -6, minWidth: 22, height: 22, borderRadius: 11, backgroundColor: S.ink, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
-            <Ink size={11} weight="black" color={S.paper}>
-              {String(peers)}
-            </Ink>
-          </View>
-        ) : null}
-      </View>
-    </View>
-  );
-}
 
 export default function SyncDevicesScreen() {
   const router = useRouter();
   const [status, setStatus] = useState<SyncStatus>(getSyncStatus());
-  const [myName, setMyName] = useState<string>(getMyDeviceName());
   const [syncing, setSyncing] = useState(false);
   const [msg, setMsg] = useState<{ text: string; tone: 'neutral' | 'good' | 'bad' } | null>(null);
   const [isAvailable] = useState<boolean>(isPeerSyncAvailable());
-
-  const [saisie, setSaisie] = useState<string | null>(null);
+  const [saisieOuverte, setSaisieOuverte] = useState(false);
+  const [saisie, setSaisie] = useState('');
   const [maintenant, setMaintenant] = useState(Date.now());
 
   useEffect(() => {
@@ -73,65 +50,88 @@ export default function SyncDevicesScreen() {
     // automatique continue si un appareil est appaire, sinon elle s'arrete.
     const relacher = isAvailable ? garderSynchro('ecran') : () => undefined;
     const unsub = onSyncStatusChange(setStatus);
-    const tn = setTimeout(() => setMyName(getMyDeviceName()), 500);
+    const t = setInterval(() => setMaintenant(Date.now()), 1000);
     return () => {
       unsub();
-      clearTimeout(tn);
+      clearInterval(t);
       relacher();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // compte a rebours du code d'appairage
-  useEffect(() => {
-    if (!status.appairage) return;
-    const t = setInterval(() => setMaintenant(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [status.appairage]);
-
   useEffect(() => {
     if (status.appairageResultat === 'reussi') {
-      setSaisie(null);
-      setMsg({ tone: 'good', text: traduire('Appareil appairé. La synchronisation est automatique quand tes appareils sont proches et YOROI ouvert.') });
+      setSaisieOuverte(false);
+      setSaisie('');
+      setMsg({ tone: 'good', text: traduire('Reliés. La synchro se fait toute seule quand tes appareils sont proches et YOROI ouvert.') });
     } else if (status.appairageResultat === 'expire') {
-      setMsg({ tone: 'bad', text: traduire('Le code a expiré. Recommence l’appairage.') });
+      setMsg({ tone: 'bad', text: traduire('Le code a expiré. Touche « Relier » de nouveau.') });
+    } else if (status.appairageResultat === 'mauvais_code') {
+      // 1er novembre 2026 : code faux, la saisie se rouvre tout de suite
+      setSaisie('');
+      setSaisieOuverte(true);
+      setMsg({ tone: 'bad', text: traduire('Ce n’est pas le bon code. Regarde ton autre appareil et retape-le.') });
     } else if (status.appairageResultat === 'annule') {
-      setSaisie(null);
+      setSaisieOuverte(false);
+      setSaisie('');
     }
   }, [status.appairageResultat]);
 
-  const afficherCode = useCallback(async () => {
+  const nomsPaires = status.paires.map((p) => p.nom);
+  const entree = {
+    disponible: isAvailable,
+    rechercheDepuis: status.rechercheDepuis,
+    maintenant,
+    aProximite: status.aProximite,
+    connectes: status.connectedPeers,
+    nomsPaires,
+    appairage: status.appairage,
+    invitation: status.invitation,
+    saisieOuverte,
+    erreurReseau: status.erreurReseau,
+  };
+  const etape = etapeRelier(entree);
+  const proposes = appareilsAProposer(entree);
+
+  const relier = useCallback(async () => {
+    if (Platform.OS !== 'web') impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
     setMsg(null);
-    setSaisie(null);
+    setSaisieOuverte(false);
+    setSaisie('');
     await commencerAppairageAffiche();
   }, []);
 
   const validerCode = useCallback(async () => {
-    if (saisie == null) return;
     setMsg(null);
     const ok = await commencerAppairageSaisi(saisie);
     if (!ok) setMsg({ tone: 'bad', text: traduire('Le code fait 6 chiffres.') });
+    else setSaisieOuverte(false);
   }, [saisie]);
 
-  const handleForceSync = useCallback(async () => {
+  const annuler = useCallback(() => {
+    setSaisieOuverte(false);
+    setSaisie('');
+    ignorerInvitation();
+    annulerAppairage();
+  }, []);
+
+  const synchroniser = useCallback(async () => {
     if (syncing) return;
     if (Platform.OS !== 'web') impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
     setSyncing(true);
     setMsg(null);
     try {
       const count = await forceSync();
-      if (count === 0) setMsg({ tone: 'bad', text: traduire("Aucun appareil appairé à proximité. Ouvre YOROI sur ton autre appareil, à côté de toi, avec le wifi et le réseau local autorisés.") });
+      if (count === 0) setMsg({ tone: 'bad', text: traduire('Problème : vérifie que le Wi-Fi ou le Bluetooth est activé et que YOROI est ouvert sur les deux.') });
       else setMsg({ tone: 'good', text: traduirePluriel(count, count > 1, "Synchronisation envoyée à {0} appareil. Les données se mettent à jour dans quelques secondes.", "Synchronisation envoyée à {0} appareils. Les données se mettent à jour dans quelques secondes.", count) });
     } catch (e: any) {
-      setMsg({ tone: 'bad', text: traduire("Erreur : {0}", e?.message || traduire('inconnue')) });
+      setMsg({ tone: 'bad', text: traduire("Erreur : {0}", e?.message || traduire('inconnue')) });
     } finally {
       setSyncing(false);
     }
   }, [syncing]);
 
-  const n = status.connectedPeers.length;
-  const isConnected = n > 0;
-  const lastSyncStr = status.lastSyncTs
+  const derniereSynchro = status.lastSyncTs
     ? (() => {
         try {
           return format(parseISO(status.lastSyncTs), traduire("d MMM yyyy 'à' HH:mm"), { locale: fr });
@@ -142,126 +142,36 @@ export default function SyncDevicesScreen() {
     : null;
 
   return (
-    <DetailScreen title={traduire('Tes appareils')} subtitle={traduire("Synchronisation locale")}>
-      <GlassBox style={{ gap: 12, alignItems: 'center' }}>
-        <DevicesScene connected={isConnected} peers={n} />
-        <Ink size={22} weight="black" tight style={{ textAlign: 'center' }}>
-          {!isAvailable ? (__DEV__ ? traduire('Disponible dans l’app installée') : traduire('Pas disponible ici')) : isConnected ? traduirePluriel(n, n > 1, "{0} appareil relié", "{0} appareils reliés", n) : status.paires.length ? traduire('À la recherche de tes appareils') : traduire('Aucun appareil appairé')}
-        </Ink>
-        <Ink size={14} weight="medium" color={S.ink2} style={{ textAlign: 'center' }}>
-          {!isAvailable
-            ? __DEV__
-              ? traduire("Mode test\u00A0: le module de synchronisation locale n'est pas présent dans Expo Go. Il fonctionne dans l'app installée.")
-              : traduire("La synchronisation entre tes appareils n'est pas disponible sur cet appareil.")
-            : isConnected
-              ? traduire('Tes données se synchronisent')
-              : status.paires.length
-                ? traduire('Ouvre YOROI sur ton autre appareil, à côté de toi')
-                : traduire('Appaire d’abord ton autre appareil avec un code')}
-        </Ink>
-        {isAvailable && !isConnected && status.paires.length > 0 ? <ActivityIndicator size="small" color={S.accent} /> : null}
-      </GlassBox>
-      {isAvailable ? <Notice text={traduire('La synchronisation est automatique quand tes appareils sont proches et YOROI ouvert.')} tone="neutral" /> : null}
-
-      <CardBox>
-        <ActionRow first icon="phone" title={myName} sub={traduire("Cet appareil")} color={S.accent} tint={S.accentSoft} />
-        <ActionRow icon="history" title={lastSyncStr || traduire('Aucune pour le moment')} sub={status.lastSyncDevice ? traduire("Dernière synchro, avec {0}, voir le journal", status.lastSyncDevice) : traduire('Dernière synchro, voir le journal')} onPress={() => router.push('/sync-history' as any)} color={S.indigo} tint={S.indigoSoft} />
-      </CardBox>
-
-      {/* 28 octobre 2026 : etat du dernier echange, type par type, et la synchro a la demande */}
-      <Label>{traduire("Dernier échange")}</Label>
-      <EtatSynchro />
-      <SmallButton label={syncing ? traduire('Synchronisation') : traduire('Synchroniser maintenant')} tone="red" icon="sync" busy={syncing} disabled={!isAvailable || status.paires.length === 0} onPress={handleForceSync} />
-      {msg ? <Notice text={traduire(msg.text)} tone={msg.tone} /> : null}
-
-      <Label aside={status.paires.length ? `${n} en ligne` : undefined}>{traduire("Tes appareils")}</Label>
-      {status.paires.length ? (
-        <CardBox>
-          {status.paires.map((p, i) => {
-            const enLigne = status.connectedPeers.includes(p.nom);
-            return (
-              <ActionRow
-                key={p.id}
-                first={i === 0}
-                icon="tablet"
-                title={traduire(p.nom)}
-                sub={enLigne ? traduire('Relié, synchronisation active') : traduire('Appairé, pas à proximité')}
-                color={enLigne ? S.mossText : S.muted}
-                tint={enLigne ? S.mossSoft : S.line2}
-                right={
-                  <SmallButton label={traduire("Oublier")} tone="light" icon="trash" onPress={() => { void oublierAppareil(p.id); }} />
-                }
-              />
-            );
-          })}
-        </CardBox>
-      ) : (
-        <Notice text={Platform.OS === 'ios' ? traduire("Aucun appareil appairé. Pour synchroniser, appaire ton autre iPhone ou iPad avec un code : YOROI n’échange rien avec un appareil que tu n’as pas appairé.") : traduire("Aucun appareil appairé. Pour synchroniser, appaire ton autre téléphone ou ta tablette avec un code : YOROI n’échange rien avec un appareil que tu n’as pas appairé.")} />
-      )}
-
-      <Label>{traduire("Appairer un appareil")}</Label>
-      {status.appairage?.role === 'affiche' ? (
-        <GlassBox style={{ gap: 10, alignItems: 'center' }}>
-          <Ink size={14} weight="bold" color={S.ink2} style={{ textAlign: 'center' }}>
-            {traduire("Sur ton autre appareil, ouvre cet écran, touche « Entrer un code » et tape :")}</Ink>
-          <Ink size={40} weight="black" tight style={{ letterSpacing: 6 }}>
-            {status.appairage.code}
-          </Ink>
-          <Ink size={12} weight="bold" color={S.muted}>
-            {traduire("Valable encore {0} s", Math.max(0, Math.ceil((status.appairage.expireA - maintenant) / 1000)))}
-          </Ink>
-          <SmallButton label={traduire("Annuler")} tone="light" icon="close" onPress={annulerAppairage} />
-        </GlassBox>
-      ) : status.appairage?.role === 'saisit' ? (
-        <GlassBox style={{ gap: 10, alignItems: 'center' }}>
-          <ActivityIndicator size="small" color={S.accent} />
-          <Ink size={14} weight="bold" color={S.ink2} style={{ textAlign: 'center' }}>
-            {traduire("Recherche de l’appareil qui affiche ce code. Garde YOROI ouvert sur les deux.")}</Ink>
-          <SmallButton label={traduire("Annuler")} tone="light" icon="close" onPress={annulerAppairage} />
-        </GlassBox>
-      ) : saisie != null ? (
-        <GlassBox style={{ gap: 10 }}>
-          <Ink size={14} weight="bold" color={S.ink2}>
-            {traduire("Tape le code à 6 chiffres affiché sur ton autre appareil.")}</Ink>
-          <TextInput
-            value={saisie}
-            onChangeText={(t) => setSaisie(t.replace(/\D/g, '').slice(0, 6))}
-            keyboardType="number-pad"
-            maxLength={6}
-            autoFocus
-            accessibilityLabel={traduire("Code d’appairage")}
-            style={{ fontSize: 32, fontWeight: '800', letterSpacing: 6, textAlign: 'center', color: S.ink, borderRadius: 16, borderWidth: 1, borderColor: S.line2, paddingVertical: 12 }}
-          />
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <View style={{ flex: 1 }}>
-              <SmallButton label={traduire("Annuler")} tone="light" onPress={() => setSaisie(null)} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <SmallButton label={traduire("Appairer")} tone="red" icon="link" disabled={saisie.length !== 6} onPress={() => { void validerCode(); }} />
-            </View>
-          </View>
-        </GlassBox>
-      ) : (
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={{ flex: 1 }}>
-            <SmallButton label={traduire("Afficher un code")} tone="ink" icon="lock" sticker="cadenas" disabled={!isAvailable} onPress={() => { void afficherCode(); }} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <SmallButton label={traduire("Entrer un code")} tone="light" icon="link" disabled={!isAvailable} onPress={() => setSaisie('')} />
-          </View>
-        </View>
-      )}
-
-
-      <Label>{traduire("Comment ça marche")}</Label>
-      <CardBox>
-        <ActionRow first icon="shield" title={traduire("100 % en local")} sub={traduire("Sans internet ni serveur, par Bluetooth et wifi direct. Tes données sont chiffrées de bout en bout.")} color={S.indigo} tint={S.indigoSoft} />
-        <ActionRow icon="lock" sticker="cadenas" title={traduire("Seulement tes appareils")} sub={traduire("Un appareil n'est synchronisé qu'après un appairage par code. Un téléphone inconnu à côté de toi ne reçoit rien et ne peut pas s'appairer sans le code affiché sur ton écran.")} color={S.mossText} tint={S.mossSoft} />
-        <ActionRow icon="wifi" title={traduire("Toute seule")} sub={traduire("Dès que YOROI est ouvert sur deux appareils appairés proches, ils échangent tout seuls. Rien ne tourne en arrière plan, pour ta batterie.")} color={S.accent} tint={S.accentSoft} />
-        <ActionRow icon="watch" title={traduire("Ta montre")} sub={traduire("Elle passe par ton iPhone : ce qu'elle enregistre repart ensuite vers tes autres appareils appairés.")} color={S.indigo} tint={S.indigoSoft} />
-        <ActionRow icon="tablet" title={traduire("Plus de deux appareils")} sub={traduire("Appaire chaque appareil avec les autres, une fois : iPhone, iPad et Mac finissent avec les mêmes données.")} color={S.mossText} tint={S.mossSoft} />
-        <ActionRow icon="info" title={traduire("Si rien ne démarre")} sub={traduire("Réglages, Confidentialité, Réseau local : vérifie que YOROI est activé.")} color={S.gold} tint={S.goldSoft} />
-      </CardBox>
+    <DetailScreen title={traduire('Relie tes appareils')} subtitle={traduire('iPhone, iPad et Mac, sans internet')}>
+      <RelierVue
+        etape={etape}
+        proposes={proposes}
+        connectes={status.connectedPeers}
+        paires={status.paires}
+        code={status.appairage?.role === 'affiche' ? status.appairage.code : null}
+        secondes={status.appairage ? secondesRestantes(status.appairage.expireA, maintenant) : 0}
+        invitationDe={status.invitation?.device ?? null}
+        saisie={saisie}
+        onSaisie={setSaisie}
+        onRelier={() => { void relier(); }}
+        onValiderCode={() => { void validerCode(); }}
+        onAnnuler={annuler}
+        onAfficherCode={() => { void relier(); }}
+        onJaiUnCode={() => { setMsg(null); setSaisie(''); setSaisieOuverte(true); }}
+        onSynchroniser={() => { void synchroniser(); }}
+        synchroEnCours={syncing}
+        message={msg}
+        onOuvrirReglages={() => { void Linking.openSettings().catch(() => undefined); }}
+        onOublier={(id) => { void oublierAppareil(id); }}
+        derniereSynchro={derniereSynchro}
+        onJournal={() => router.push('/sync-history' as any)}
+        apresRelies={
+          <>
+            <Label>{traduire('Dernier échange')}</Label>
+            <EtatSynchro />
+          </>
+        }
+      />
     </DetailScreen>
   );
 }
