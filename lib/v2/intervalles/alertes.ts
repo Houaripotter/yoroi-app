@@ -14,6 +14,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { timerNotifications, timerSound } from '@/lib/timerNotifications';
+import { contenuNotificationSur } from '@/lib/v2/notifications/contenuSur';
 
 export const MAX_ALERTES = 40;
 
@@ -41,16 +42,20 @@ export async function planifierAlertesSprints(alertes: readonly { atMs: number; 
       // l'app est revenue entre temps : on n'en planifie pas plus
       if (g !== generation) return;
       const id = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: a.titre,
-          body: a.texte,
-          sound: timerSound(),
-          priority: Notifications.AndroidNotificationPriority.MAX,
-          vibrate: [0, 400, 200, 400],
-          data: { type: 'timer_finished' },
-          ...(Platform.OS === 'ios' ? { interruptionLevel: 'timeSensitive' as never } : {}),
-          ...(Platform.OS === 'android' ? { channelId: 'timer_alarm' } : {}),
-        },
+        // 1er novembre 2026 : types stricts pour le systeme (lib/v2/notifications/contenuSur.ts)
+        content: contenuNotificationSur(
+          {
+            title: a.titre,
+            body: a.texte,
+            sound: timerSound(),
+            priority: Notifications.AndroidNotificationPriority?.MAX,
+            vibrate: [0, 400, 200, 400],
+            data: { type: 'timer_finished' },
+            interruptionLevel: 'timeSensitive',
+            channelId: 'timer_alarm',
+          },
+          Platform.OS,
+        ) as Notifications.NotificationContentInput,
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
           seconds: Math.max(1, Math.round((a.atMs - Date.now()) / 1000)),
