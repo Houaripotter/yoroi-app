@@ -61,14 +61,15 @@ export function nomVignette(d: CarteData): string {
   return d.titre;
 }
 
-function Vignette({ d, options, visuels, onPress }: { d: CarteData; options: OptionsCarte; visuels: VisuelsCarte; onPress: () => void }) {
+/** 1er novembre 2026 : exportee pour l'accueil en grand ecran (Tes cartes a partager), largeur au choix */
+export function Vignette({ d, options, visuels, onPress, largeur = VIGNETTE_L }: { d: CarteData; options: OptionsCarte; visuels: VisuelsCarte; onPress: () => void; largeur?: number }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const sous = d.moment === 'seance' ? d.sousTitre : resumeCarte(d, options.masque);
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={traduire('Carte {0}, {1}', nomVignette(d), sous)} style={({ pressed }) => ({ width: VIGNETTE_L, gap: 7, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={traduire('Carte {0}, {1}', nomVignette(d), sous)} style={({ pressed }) => ({ width: largeur, gap: 7, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
       <View pointerEvents="none" style={{ borderRadius: 18, shadowColor: '#000', shadowOpacity: 0.16, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 4 }}>
-        <CarteApercu largeur={VIGNETTE_L} data={d} options={options} visuels={visuels} />
+        <CarteApercu largeur={largeur} data={d} options={options} visuels={visuels} />
       </View>
       <View style={{ gap: 1, paddingHorizontal: 2 }}>
         <Ink size={13.5} weight="extraBold" numberOfLines={1}>{traduire(nomVignette(d))}</Ink>
