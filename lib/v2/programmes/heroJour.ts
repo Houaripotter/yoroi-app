@@ -69,7 +69,7 @@ export function ajoutsDuJour(jour: JourProgramme, actif: ProgrammeActif | null):
     m === 'cardio'
       ? (() => {
           // 31 octobre 2026 : le cardio choisi pour ce jour, pas « marche » ecrit en dur (lib/v2/seances/cardioJour.ts)
-          const c = cardioPrevu(actif.id, jour.id, actif.fin?.minutes ?? 30);
+          const c = cardioPrevu(actif.id, jour.id, actif.fin?.minutes ?? 30, actif.fin?.cardioType);
           return traduire('+ {0}', libelleCardio(c.type, c.minutes));
         })()
       : traduire('+ {0}', traduire(moduleParId(m)?.label ?? m)),
