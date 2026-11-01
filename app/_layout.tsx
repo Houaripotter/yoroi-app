@@ -329,6 +329,8 @@ function RootLayoutContent() {
     }).catch(() => {});
 
     let previousAppState = AppState.currentState;
+    let clocheTimer: ReturnType<typeof setTimeout> | null = null;
+    let clocheEnCours = false;
     const appStateSubscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'background' || nextAppState === 'inactive') {
         try {
@@ -350,8 +352,17 @@ function RootLayoutContent() {
         // Sync cloche: récupère toutes les notifs présentées (reçues en background, non lues)
         // pour garantir qu'elles apparaissent dans la cloche in-app.
         // Déduplication: on ne re-save que les notifs dont l'identifier n'est pas déjà dans l'historique.
+        // 1er novembre 2026 : plantage _CFAssertMismatchedTypeID en Debug juste apres la creation du module
+        // ExpoNotificationPresenter, au retour au premier plan. La lecture attend 2 s que la transition soit finie,
+        // une seule a la fois, et seulement si l'app est toujours ouverte. Si ca replante, la pile dira si c'est ici.
+        if (clocheTimer) clearTimeout(clocheTimer);
+        clocheTimer = setTimeout(() => {
+          clocheTimer = null;
+          if (clocheEnCours || AppState.currentState !== 'active') return;
+          clocheEnCours = true;
+          logger.info('[Cloche] lecture des notifications presentees');
         Notifications.getPresentedNotificationsAsync().then(async (presented) => {
-          if (presented.length === 0) return;
+          if (!Array.isArray(presented) || presented.length === 0) return;
           try {
             const { getNotifications } = await import('@/lib/notificationHistoryService');
             const existing = await getNotifications();
@@ -368,7 +379,10 @@ function RootLayoutContent() {
               saveNotification(title, body ?? '', type, enrichedData).catch(() => {});
             }
           } catch {}
-        }).catch(() => {});
+        }).catch(() => {}).finally(() => {
+          clocheEnCours = false;
+        });
+        }, 2000);
       }
       previousAppState = nextAppState;
     });
@@ -378,6 +392,7 @@ function RootLayoutContent() {
       foregroundNotifSubscription?.remove?.();
       workoutNotifSubscription?.remove?.();
       appStateSubscription?.remove?.();
+      if (clocheTimer) clearTimeout(clocheTimer);
       stopPeerSync().catch(() => {});
     };
   }, []);
