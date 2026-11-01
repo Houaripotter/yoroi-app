@@ -299,11 +299,11 @@ export default function Ajouter() {
     ...(prog && slot ? [{ key: 'slot', titre: traduire('Prévu aujourd’hui'), sous: `${slotTitle}${slotTime}`, sticker: 'calendrier' as NomSticker, onPress: startSlot }] : []),
     ...(last ? [{ key: 'refaire', titre: traduire('Refaire ta dernière'), sous: sessionTitle(last), sticker: 'repeter' as NomSticker, onPress: repeatLast }] : []),
     { key: 'mes', titre: traduire('Mes séances'), sous: mesNoms.length === 0 ? traduire('à refaire en un appui') : mesNoms.slice(0, 2).join(', '), sticker: 'carnet', onPress: () => open('/mes-seances') },
-    { key: 'passee', titre: traduire('Séance passée'), sous: traduire('un autre jour'), sticker: 'calendrier', onPress: () => open('/seance/deja-faite') },
+    { key: 'passee', titre: traduire('Séance passée'), sous: traduire('un autre jour'), sticker: 'sablier', onPress: () => open('/seance/deja-faite') },
     { key: 'importer', titre: traduire('Importer'), sous: traduire('tes notes, une autre app'), sticker: 'donnees', onPress: () => open('/importer-carnet') },
     { key: 'quoi', titre: traduire('Quoi faire ?'), sous: traduire('YOROI fait ta séance'), sticker: 'zones_corps', onPress: () => open('/programmes/zones') },
     // 28 octobre 2026 : sprints guidés, échauffement, sprints et récupération avec le coach vocal (app/seance/sprints.tsx)
-    { key: 'sprints', titre: traduire('Sprints guidés'), sous: traduire('échauffement, sprints, récupération'), sticker: 'course', onPress: () => open('/seance/sprints') },
+    { key: 'sprints', titre: traduire('Sprints guidés'), sous: traduire('échauffement, sprints, récupération'), sticker: 'sport_vitesse', onPress: () => open('/seance/sprints') },
     ...(provider
       ? [{ key: 'montre', titre: traduire('Ta montre'), sous: sync === 'idle' ? traduire('récupérer tes séances') : sync === 'busy' ? traduire('synchro en cours') : sync, sticker: 'sante_appareils' as NomSticker, onPress: syncWatch }]
       : []),
@@ -461,11 +461,12 @@ export default function Ajouter() {
           texte={P.tuileSableTexte}
           largeur={Math.min(width - 32, LARGEUR_FENETRE)}
           onFermer={() => setOnglet('seance')}
+          // 1er novembre 2026 (AW) : un sticker par ligne, Par photo en scan par ton IA, Photo de forme en selfie miroir
           choix={[
             { t: traduire('Mesurer'), s: traduire('une fois par mois, le matin'), st: illus.img('metre_ruban'), on: () => open('/add-measurement') },
-            { t: traduire('Par photo'), s: traduire('ton IA lit tes mesures notées'), st: illus.img('appareil_photo'), on: () => open('/balance-photo', { source: 'mensurations' }) },
+            { t: traduire('Par photo'), s: traduire('ton IA lit tes mesures notées'), st: illus.img('scan_mesures'), on: () => open('/balance-photo', { source: 'mensurations' }) },
             { t: traduire('Évolution'), s: traduire('Tes courbes'), st: illus.img('bilan'), on: () => open('/measurements-detail') },
-            { t: traduire('Photo'), s: traduire('Photo de forme'), st: illus.img('appareil_photo'), on: () => open('/photos') },
+            { t: traduire('Photo'), s: traduire('Photo de forme'), st: illus.img('selfie_miroir'), on: () => open('/photos') },
           ]}
         />
       ) : null}
