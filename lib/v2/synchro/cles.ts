@@ -183,6 +183,8 @@ export const CLES_ELEMENTS: readonly SpecCle[] = [
       } catch { /* relues a la prochaine ouverture */ }
     },
   },
+  // 1er novembre 2026 (AQ) : les mesures importees que les colonnes de YOROI ne gardent pas (lib/v2/mesures/), une par id
+  { cle: 'yoroi_mesures_brutes_v1', type: 'donnees', forme: 'liste', idChamp: 'id', evenements: ['YOROI_DATA_CHANGED'] },
   // 31 octobre 2026 : supersets gardes dans le programme (lib/v2/programmes/enchainements.ts), un jour a la fois
   {
     cle: 'yoroi_enchainements_v1', type: 'programmes', forme: 'objet',
