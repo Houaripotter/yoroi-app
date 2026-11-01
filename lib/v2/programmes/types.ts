@@ -79,6 +79,11 @@ export type JourProgramme = {
    * (0 = lundi), `b` dans ta semaine B. Son id ne dépend plus du jour : déplacée, elle garde son id (séances faites).
    */
   jourPerso?: { d: number; b?: boolean };
+  /**
+   * 1er novembre 2026 (A et B au choix, alternance.ts) : la version de cette séance quand ton programme alterne A et
+   * B avec une version B préparée par YOROI. Absent : une séance sans version, ou dont le titre dit déjà A ou B.
+   */
+  variante?: 'A' | 'B';
 };
 
 export type Programme = {
