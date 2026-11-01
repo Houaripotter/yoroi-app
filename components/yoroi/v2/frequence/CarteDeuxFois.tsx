@@ -16,6 +16,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { tap } from '@/components/yoroi/v2/seances/ui';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { Capitales, nomCourt, ombrePastel, usePastel } from '@/components/yoroi/v2/programmes/Habillage';
+import { avecVersion } from '@/lib/v2/programmes/alternance';
 import { BoutonPourquoi, FeuillePourquoi } from '@/components/yoroi/v2/programmes/Pourquoi';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { getTrainings } from '@/lib/database';
@@ -102,7 +103,7 @@ export function CarteDeuxFois({ style }: { style?: StyleProp<ViewStyle> } = {}) 
   if (!retard.length || !proposition) return null;
   const { prevue, datee, bibliotheque } = proposition;
   const titre = traduire('Tu n’as pas travaillé {0} 2 fois cette semaine.', liste(retard));
-  const nom = prevue ? sansTiret(nomCourt(traduire(prevue.donnee.jour.titre))) : '';
+  const nom = prevue ? sansTiret(avecVersion(nomCourt(traduire(prevue.donnee.jour.titre)), prevue.donnee.jour)) : '';
   const ligne = prevue
     ? !datee
       ? traduire('Ta séance {0} travaille {1}.', nom, liste(prevue.couverts))
