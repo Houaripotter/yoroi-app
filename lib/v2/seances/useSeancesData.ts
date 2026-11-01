@@ -13,6 +13,7 @@ import { getEspace, objectifVise } from '@/lib/v2/espace';
 import { computeRecords } from './records';
 import { dedupeTrainings } from './dedupe';
 import { slotWeekStart } from './sessionData';
+import { garderSiIdentique } from '@/lib/v2/perf/garderSiIdentique';
 
 export type Gender = 'homme' | 'femme';
 
@@ -44,21 +45,23 @@ export function useSeancesData() {
     try {
       const [t, p, esp] = await Promise.all([getTrainings(), getProfile().catch(() => null), getEspace().catch(() => null)]);
       // Une seance YOROI relue depuis Sante n'apparait qu'une fois
-      setTrainings(dedupeTrainings(t ?? []));
+      // 1er novembre 2026 : rien de change, meme tableau, les records et les calculs de la semaine ne sont pas refaits
+      const relues = dedupeTrainings(t ?? []);
+      setTrainings((avant) => garderSiIdentique(avant, relues));
       const g = esp?.personnage?.startsWith('guerrier_f') ? 'femme' : p?.avatar_gender === 'femme' ? 'femme' : 'homme';
       setGender(g);
       setWeeklyGoal(objectifVise(esp));
-      setFavoris(esp?.sportsFavoris ?? []);
-      setTypeDays(esp?.joursSemaine ?? []);
+      setFavoris((avant) => garderSiIdentique(avant, esp?.sportsFavoris ?? []));
+      setTypeDays((avant) => garderSiIdentique(avant, esp?.joursSemaine ?? []));
     } catch (err) {
       logger.error('Chargement des séances impossible', err);
     }
     try {
       await ensureCurrentWeekOccurrences().catch(() => {});
       const [wp, occ, comps] = await Promise.all([getWeeklyPlan(), getSlotOccurrences(slotWeekStart()), getCompetitions().catch(() => [] as Competition[])]);
-      setPlan(wp ?? []);
-      setOccurrences(occ ?? []);
-      setCompetitions(comps ?? []);
+      setPlan((avant) => garderSiIdentique(avant, wp ?? []));
+      setOccurrences((avant) => garderSiIdentique(avant, occ ?? []));
+      setCompetitions((avant) => garderSiIdentique(avant, comps ?? []));
     } catch (err) {
       logger.error('Chargement du planning impossible', err);
     }
