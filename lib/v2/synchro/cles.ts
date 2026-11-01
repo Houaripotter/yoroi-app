@@ -185,6 +185,16 @@ export const CLES_ELEMENTS: readonly SpecCle[] = [
   },
   // 1er novembre 2026 (AQ) : les mesures importees que les colonnes de YOROI ne gardent pas (lib/v2/mesures/), une par id
   { cle: 'yoroi_mesures_brutes_v1', type: 'donnees', forme: 'liste', idChamp: 'id', evenements: ['YOROI_DATA_CHANGED'] },
+  // 1er novembre 2026 (AT) : contexte de chaque pesee (heure, appareil, moment, a jeun) et pesees de seance (lib/v2/mesures/contextePesee.ts)
+  { cle: 'yoroi_contexte_pesees_v1', type: 'donnees', forme: 'liste', idChamp: 'id', evenements: ['YOROI_DATA_CHANGED'] },
+  // 1er novembre 2026 (AT) : poignet, cheville, genou, fessiers, taille la plus etroite, biceps contracte (lib/v2/mesures/mensurationsPlus.ts)
+  { cle: 'yoroi_mensurations_plus_v1', type: 'donnees', forme: 'liste', idChamp: 'id', evenements: ['YOROI_DATA_CHANGED'] },
+  // 1er novembre 2026 (AU) : forme du matin, biomarqueurs, plis cutanes (lib/v2/mesures/), une entree par id
+  { cle: 'yoroi_forme_matin_v1', type: 'donnees', forme: 'liste', idChamp: 'id', evenements: ['YOROI_DATA_CHANGED'] },
+  { cle: 'yoroi_biomarqueurs_v1', type: 'donnees', forme: 'liste', idChamp: 'id', evenements: ['YOROI_DATA_CHANGED'] },
+  { cle: 'yoroi_plis_v1', type: 'donnees', forme: 'liste', idChamp: 'id', evenements: ['YOROI_DATA_CHANGED'] },
+  // 1er novembre 2026 (AU) : « Ce que tu suis », niveau d'affichage du corps (lib/v2/mesures/niveauSuivi.ts)
+  { cle: 'yoroi_niveau_suivi_v1', type: 'reglages', forme: 'objet', evenements: ['YOROI_NIVEAU_SUIVI'] },
   // 31 octobre 2026 : supersets gardes dans le programme (lib/v2/programmes/enchainements.ts), un jour a la fois
   {
     cle: 'yoroi_enchainements_v1', type: 'programmes', forme: 'objet',
