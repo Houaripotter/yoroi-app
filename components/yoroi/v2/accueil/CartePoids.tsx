@@ -55,6 +55,7 @@ import { useEspace } from '@/lib/v2/espace/useEspace';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import type { DayWeight } from '@/lib/v2/weightStats';
 import { formatKg } from '@/lib/v2/weightStats';
+import { moyenne7Jours } from '@/lib/v2/mesures/indices';
 import { cadrerPeriode, texteDePeriode } from '@/lib/v2/pesee/cadrageCourbe';
 import { ROUTES_PERSONNALISER } from '@/lib/v2/personnaliser/acces';
 import { localISO } from '@/lib/v2/accueil/hydration';
@@ -432,6 +433,8 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
 
   // le grand chiffre : la pesee touchee (style 1), sinon aujourd'hui
   const follow = prefs.style === 1 && scrub !== null && !scrub.last;
+  // pas de hook ici (un retour anticipe le precede) : un calcul simple sur 14 jours au plus
+  const moy7 = series.length >= 2 ? moyenne7Jours(series, today) : undefined;
   const bigValue = follow && scrub ? scrub.point.value : last.value;
   const statutDuJour = capOn && plan.ligne ? statutLigne(plan.ligne, last.date, last.value, plan.torii) : null;
   // vague 42 : une phrase de tous les jours a la place de la pastille ; au doigt, elle parle de la pesee touchee
@@ -551,6 +554,13 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
           {eauTxt && !follow ? (
             <Ink size={12.5} weight="bold" color={P.muted} numberOfLines={3} style={{ marginTop: 6, lineHeight: 17, textAlign: centre ? 'center' : 'left' }}>
               {eauTxt}
+            </Ink>
+          ) : null}
+          {/* 1er novembre 2026 (AT) : la moyenne de tes 7 derniers jours, bien visible (lib/v2/mesures/indices.ts) */}
+          {moy7 && !follow ? (
+            <Ink size={13} weight="bold" color={P.ink2} numberOfLines={1} style={{ marginTop: 6, textAlign: centre ? 'center' : 'left' }}>
+              {traduire('Moyenne sur 7 jours : ')}
+              <Ink size={13} weight="black" color={P.ink}>{`${formatKg(moy7.valeur)} kg`}</Ink>
             </Ink>
           ) : null}
         </View>
