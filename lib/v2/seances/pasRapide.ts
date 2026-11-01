@@ -1,41 +1,29 @@
 /**
- * Pas rapide des boutons de charge pendant une seance (+ et -).
- * Tapes rapides : moins de 350 ms apres la precedente, sur le meme bouton. Les 2 premieres gardent le pas normal,
- * a partir de la 3e chaque tape fait le saut (10 kg, 20 lb). Une pause plus longue remet le pas normal.
- * 31 octobre 2026 : l'ecart se mesure entre deux appuis successifs, a l'heure du doigt pose (horodatage natif de
- * l'evenement), plus a l'heure ou le JS traite la tape : en seance le JS est charge (minuteur, sauvegarde), les
- * tapes lentes arrivaient en paquet et semblaient rapides, d'ou le pas de 10 qui restait colle.
- * Appui long : repetition toutes les 150 ms au pas normal, puis au saut apres 1 s d'appui.
- * Au saut, la valeur se cale sur le multiple du saut dans le sens de l'appui (63 + 10 donne 70, 63 - 10 donne 60).
+ * Pas des boutons de charge pendant une seance (+ et -).
+ * 1er novembre 2026, decision de Houari : un appui simple donne TOUJOURS le pas normal, quelle que soit la vitesse
+ * des appuis. Plus aucune acceleration par tapes repetees (l'ancienne logique, seuil de 350 ms entre deux tapes,
+ * est archivee dans _archive_ancien_design_2026-10-09/pas_rapide_2026-10-31/ : un rythme de tape normal, 3 par
+ * seconde, restait sous le seuil et la charge montait de 10 en 10 jusqu'a 230 kg).
+ * L'acceleration ne vient que d'un appui maintenu : repetition au pas normal, puis apres 1 s un pas moyen (la moitie
+ * du saut), puis apres 2 s le saut (10 kg, 20 lb). On relache, tout redevient normal.
+ * Au saut, la valeur se cale sur le multiple du pas dans le sens de l'appui (63 + 10 donne 70, 63 - 10 donne 60).
  */
 
-export const DELAI_TAPE_RAPIDE_MS = 350;
-export const TAPES_AVANT_SAUT = 2;
 export const REPETITION_MS = 150;
-export const APPUI_LONG_SAUT_MS = 1000;
+/** cadence des gros pas, plus lente pour pouvoir lacher a temps */
+export const REPETITION_GROS_MS = 250;
+export const APPUI_LONG_MOYEN_MS = 1000;
+export const APPUI_LONG_SAUT_MS = 2000;
 
-export type Rafale = { bouton: string | null; derniere: number; compte: number };
-
-export const RAFALE_VIDE: Rafale = { bouton: null, derniere: 0, compte: 0 };
-
-/** Compte une tape. `saut` vaut vrai a partir de la 3e tape rapide d'affilee sur le meme bouton. */
-export function compterTape(r: Rafale, bouton: string, maintenant: number): { rafale: Rafale; saut: boolean } {
-  const ecart = maintenant - r.derniere;
-  // ecart negatif ou illisible (horloges differentes) : on repart du pas normal
-  const suite = r.bouton === bouton && r.compte > 0 && Number.isFinite(ecart) && ecart >= 0 && ecart < DELAI_TAPE_RAPIDE_MS;
-  const compte = suite ? r.compte + 1 : 1;
-  return { rafale: { bouton, derniere: maintenant, compte }, saut: compte > TAPES_AVANT_SAUT };
-}
-
-/** Heure du doigt pose : horodatage natif de l'evenement s'il existe, sinon l'heure du JS */
-export function heureAppui(e?: { nativeEvent?: { timestamp?: number } } | null): number {
-  const t = e?.nativeEvent?.timestamp;
-  return typeof t === 'number' && Number.isFinite(t) && t > 0 ? t : Date.now();
-}
-
-/** Appui long : vrai quand l'appui dure depuis assez longtemps pour passer au saut */
-export function sautAppuiLong(dureeMs: number): boolean {
-  return dureeMs >= APPUI_LONG_SAUT_MS;
+/**
+ * Pas a appliquer pendant un appui maintenu, selon sa duree.
+ * `null` : pas normal. Sinon le gros pas (moitie du saut, puis le saut).
+ */
+export function pasAppuiMaintenu(dureeMs: number, saut: number | undefined | null): number | null {
+  if (!saut || saut <= 0 || !Number.isFinite(dureeMs)) return null;
+  if (dureeMs >= APPUI_LONG_SAUT_MS) return saut;
+  if (dureeMs >= APPUI_LONG_MOYEN_MS) return saut / 2;
+  return null;
 }
 
 const net = (v: number) => Math.round(v * 100) / 100;
@@ -55,3 +43,4 @@ export function valeurSuivante(valeur: number, dir: 1 | -1, pas: number, saut: n
   }
   return Math.min(max, Math.max(min, net(next)));
 }
+
