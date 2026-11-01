@@ -1,12 +1,16 @@
 /**
  * Reglage d'une valeur : boutons - et + (appui long pour defiler vite) et saisie directe en touchant le chiffre.
  * 16 octobre : `fine` ajoute deux petits boutons de reglage fin sous les gros (les kilos : pas de 1, et 0,5).
- * 30 octobre : `saut` (10 kg, 20 lb) pour monter vite la charge : a la 3e tape rapide, ou apres 1 s d'appui long
+ * 30 octobre : `saut` (10 kg, 20 lb) pour monter vite la charge : uniquement en appui maintenu depuis le 1er novembre
  * (regles dans lib/v2/seances/pasRapide.ts). Sans `saut`, rien ne change.
  * 31 octobre 2026 : le pas de 10 restait colle en seance. Les tapes etaient datees a leur traitement par le JS
  * (Date.now dans onPress) : JS occupe, des tapes lentes arrivaient groupees et comptaient comme rapides. Elles sont
  * maintenant datees au doigt pose (horodatage natif, onPressIn), seuil 350 ms entre deux appuis. Les boutons fins
  * (0,5) n'accelerent jamais, ni en tapes ni en appui long.
+ * 1er novembre 2026 : malgre le seuil de 350 ms, un rythme de tape normal (3 par seconde) restait sous le seuil et
+ * la charge montait de 10 en 10 (230 kg au lieu de 81). Decision : un appui simple donne TOUJOURS le pas normal ;
+ * seul l'appui maintenu accelere (pas normal, puis moitie du saut apres 1 s, puis le saut apres 2 s). On relache,
+ * tout redevient normal. Ancienne logique archivee dans _archive_ancien_design_2026-10-09/pas_rapide_2026-10-31/.
  * 30 octobre 2026 : `uniteForte` (« KG ») lisible d'un coup d'oeil a cote du chiffre, plus en petit dessous.
  */
 import React, { useEffect, useRef, useState } from 'react';
@@ -18,7 +22,7 @@ import { fontStyle } from '@/components/yoroi/fonts';
 import { fmtNum, parseNum } from '@/lib/v2/seance/format';
 import { Icon } from './Icon';
 import { traduire } from '@/lib/i18n/tr';
-import { compterTape, heureAppui, RAFALE_VIDE, REPETITION_MS, sautAppuiLong, TAPES_AVANT_SAUT, valeurSuivante, type Rafale } from '@/lib/v2/seances/pasRapide';
+import { pasAppuiMaintenu, REPETITION_GROS_MS, REPETITION_MS, valeurSuivante } from '@/lib/v2/seances/pasRapide';
 
 type Props = {
   value: number;
@@ -54,10 +58,7 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
   const valueRef = useRef(value);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const repeats = useRef(0);
-  const rafale = useRef<Rafale>(RAFALE_VIDE);
   const appuiDebut = useRef(0);
-  // heure du doigt pose sur le bouton (horodatage natif), pour mesurer l'ecart entre deux tapes
-  const heureTape = useRef(0);
 
   useEffect(() => {
     valueRef.current = value;
@@ -67,9 +68,9 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
 
   const clamp = (v: number) => Math.min(max, Math.max(min, Math.round(v * 100) / 100));
 
-  // `enSaut` : pas de `saut` cale sur son multiple ; `annonce` : petit choc au passage en pas de saut
-  const bump = (dir: 1 | -1, amount: number = step, enSaut = false, annonce = false) => {
-    const next = valeurSuivante(valueRef.current, dir, amount, enSaut && saut ? saut : null, min, max);
+  // `gros` : gros pas de l'appui maintenu, cale sur son multiple ; `annonce` : petit choc au changement de pas
+  const bump = (dir: 1 | -1, amount: number = step, gros: number | null = null, annonce = false) => {
+    const next = valeurSuivante(valueRef.current, dir, amount, gros, min, max);
     if (next === valueRef.current) return false;
     valueRef.current = next;
     onChange(next);
@@ -78,16 +79,9 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
     return true;
   };
 
-  const tap = (bouton: string, dir: 1 | -1, amount: number = step, accelere = true) => {
-    if (!saut || !accelere) {
-      // une tape sans saut casse aussi la rafale en cours
-      rafale.current = RAFALE_VIDE;
-      bump(dir, amount);
-      return;
-    }
-    const { rafale: apres, saut: enSaut } = compterTape(rafale.current, bouton, heureTape.current || Date.now());
-    rafale.current = apres;
-    bump(dir, amount, enSaut, apres.compte === TAPES_AVANT_SAUT + 1);
+  // un appui simple : toujours le pas normal, quelle que soit la vitesse des appuis
+  const tap = (dir: 1 | -1, amount: number = step) => {
+    bump(dir, amount);
   };
 
   function stop() {
@@ -100,7 +94,6 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
     stop();
     if (saut && !accelere) {
       // boutons fins : repetition reguliere, jamais de saut
-      rafale.current = RAFALE_VIDE;
       const tickFin = () => {
         if (!bump(dir, amount)) return stop();
         timer.current = setTimeout(tickFin, REPETITION_MS);
@@ -109,13 +102,14 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
       return;
     }
     if (saut) {
-      rafale.current = RAFALE_VIDE;
-      let enSaut = false;
+      // appui maintenu : pas normal, puis moitie du saut apres 1 s, puis le saut apres 2 s
+      let avant: number | null = null;
       const tickSaut = () => {
-        const passe = !enSaut && sautAppuiLong(Date.now() - appuiDebut.current);
-        if (passe) enSaut = true;
-        if (!bump(dir, amount, enSaut, passe)) return stop();
-        timer.current = setTimeout(tickSaut, REPETITION_MS);
+        const gros = pasAppuiMaintenu(Date.now() - appuiDebut.current, saut);
+        const change = gros !== avant;
+        avant = gros;
+        if (!bump(dir, amount, gros, change)) return stop();
+        timer.current = setTimeout(tickSaut, gros ? REPETITION_GROS_MS : REPETITION_MS);
       };
       tickSaut();
       return;
@@ -142,8 +136,8 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
   const renderBtn = (dir: 1 | -1) => (
     <Pressable
       key={dir}
-      onPressIn={(e) => { appuiDebut.current = Date.now(); heureTape.current = heureAppui(e); }}
-      onPress={() => tap(`gros${dir}`, dir)}
+      onPressIn={() => { appuiDebut.current = Date.now(); }}
+      onPress={() => tap(dir)}
       onLongPress={() => startRepeat(dir)}
       onPressOut={stop}
       delayLongPress={280}
@@ -160,8 +154,8 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
   const renderFine = (dir: 1 | -1) => (
     <Pressable
       key={`fin${dir}`}
-      onPressIn={(e) => { appuiDebut.current = Date.now(); heureTape.current = heureAppui(e); }}
-      onPress={() => tap(`fin${dir}`, dir, fine, false)}
+      onPressIn={() => { appuiDebut.current = Date.now(); }}
+      onPress={() => tap(dir, fine)}
       onLongPress={() => startRepeat(dir, fine, false)}
       onPressOut={stop}
       delayLongPress={280}
