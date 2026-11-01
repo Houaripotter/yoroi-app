@@ -190,8 +190,6 @@ export const STICKERS = {
   scan_mesures: require('@/assets/avatars/app/stickers/scan_mesures.webp'),
   seance_rapide: require('@/assets/avatars/app/stickers/seance_rapide.webp'),
   seche: require('@/assets/avatars/app/stickers/seche.webp'),
-  selfie_bras: require('@/assets/avatars/app/stickers/selfie_bras.webp'),
-  selfie_miroir: require('@/assets/avatars/app/stickers/selfie_miroir.webp'),
   selfie_miroir_b: require('@/assets/avatars/app/stickers/selfie_miroir_b.webp'),
   selfie_miroir_c: require('@/assets/avatars/app/stickers/selfie_miroir_c.webp'),
   sentier: require('@/assets/avatars/app/stickers/sentier.webp'),
