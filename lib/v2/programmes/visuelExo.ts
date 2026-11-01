@@ -2,16 +2,20 @@
  * Le visuel d'un exercice dans une liste ou une fiche (1er novembre 2026, Houari : « c'est possible de voir les
  * exercices, c'est quoi, avec une animation ? »). Ordre de recherche :
  *  1. l'animation de test (GIF Gym visual), seulement en mode créateur : jamais en public, licence non achetée
- *     (lib/v2/programmes/demosTest.ts) ;
- *  2. l'illustration maison de sa machine (assets/exercices/machines, lib/v2/seance/machinesArt.ts), retrouvée par
+ *     (lib/v2/programmes/demosTest.ts). Le mode créateur est passé par l'appelant, lu avec useCreatorMode comme dans
+ *     le reste de l'app (components/yoroi/v2/programmes/VignetteExo.tsx, useAnimationsTest) ;
+ *  2. notre animation maison, deux poses en fondu (lib/v2/programmes/demosMaison.ts), pour tout le monde ;
+ *  3. l'illustration maison de sa machine (assets/exercices/machines, lib/v2/seance/machinesArt.ts), retrouvée par
  *     le nom de l'exercice ou par la liste d'exercices de la machine (lib/v2/seance/machines.ts) ;
- *  3. sinon le sticker de son groupe musculaire : jamais de case vide.
+ *  4. sinon le sticker de son groupe musculaire : jamais de case vide.
  * Données pures, aucun composant.
  */
 import type { ImageSourcePropType } from 'react-native';
 import { MACHINES } from '@/lib/v2/seance/machines';
 import { machineArt } from '@/lib/v2/seance/machinesArt';
-import { demoDe, demoSlug, resoudreDemo } from './demos';
+import { demoSlug, resoudreDemo } from './demos';
+import { demoMaisonDe } from './demosMaison';
+import { demoEnLigne } from './demosTest';
 
 /** Les stickers des groupes musculaires (components/yoroi/v2/stickers.ts) */
 export type StickerMuscle = 'pecs' | 'abdos' | 'fessiers' | 'bras' | 'muscle' | 'force' | 'zones_corps' | 'course' | 'musculation';
@@ -61,10 +65,15 @@ export function stickerMuscle(muscle: string | null | undefined, nom = '', cardi
   return { sticker: 'musculation', teinte: 'bleu' };
 }
 
-/** Le meilleur visuel autorisé de l'exercice, jamais rien */
-export function visuelExo(nom: string, muscle?: string | null, cardio = false): VisuelExo {
-  const images = cardio ? null : demoDe(nom);
-  if (images && images.length) return { type: 'animation', images };
+/**
+ * Le meilleur visuel autorisé de l'exercice, jamais rien. `animationsTest` : vrai seulement en mode créateur avec
+ * Gym visual allumé dans le Studio (useAnimationsTest) ; faux par défaut, donc jamais de GIF Gym visual en public.
+ */
+export function visuelExo(nom: string, muscle?: string | null, cardio = false, animationsTest = false): VisuelExo {
+  const gif = cardio || !animationsTest ? null : resoudreDemo(nom, demoEnLigne);
+  if (gif && gif.length) return { type: 'animation', images: gif };
+  const maison = cardio ? null : demoMaisonDe(nom);
+  if (maison && maison.length) return { type: 'animation', images: maison };
   const image = cardio ? null : imageMachineDe(nom);
   if (image) return { type: 'machine', image };
   return { type: 'sticker', ...stickerMuscle(muscle, nom, cardio) };
