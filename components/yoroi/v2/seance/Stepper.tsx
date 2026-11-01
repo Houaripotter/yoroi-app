@@ -1,16 +1,17 @@
 /**
  * Reglage d'une valeur : boutons - et + (appui long pour defiler vite) et saisie directe en touchant le chiffre.
  * 16 octobre : `fine` ajoute deux petits boutons de reglage fin sous les gros (les kilos : pas de 1, et 0,5).
- * 30 octobre : `saut` (10 kg, 20 lb) pour monter vite la charge : uniquement en appui maintenu depuis le 1er novembre
+ * 30 octobre : `saut` (10 kg, 20 lb) pour monter vite la charge : en appuis tres rapides ou en appui maintenu
  * (regles dans lib/v2/seances/pasRapide.ts). Sans `saut`, rien ne change.
  * 31 octobre 2026 : le pas de 10 restait colle en seance. Les tapes etaient datees a leur traitement par le JS
  * (Date.now dans onPress) : JS occupe, des tapes lentes arrivaient groupees et comptaient comme rapides. Elles sont
  * maintenant datees au doigt pose (horodatage natif, onPressIn), seuil 350 ms entre deux appuis. Les boutons fins
  * (0,5) n'accelerent jamais, ni en tapes ni en appui long.
- * 1er novembre 2026 : malgre le seuil de 350 ms, un rythme de tape normal (3 par seconde) restait sous le seuil et
- * la charge montait de 10 en 10 (230 kg au lieu de 81). Decision : un appui simple donne TOUJOURS le pas normal ;
- * seul l'appui maintenu accelere (pas normal, puis moitie du saut apres 1 s, puis le saut apres 2 s). On relache,
- * tout redevient normal. Ancienne logique archivee dans _archive_ancien_design_2026-10-09/pas_rapide_2026-10-31/.
+ * 1er novembre 2026 : le seuil de 350 ms laissait un rythme normal (3 tapes par seconde) en pas de 10 (230 kg au
+ * lieu de 81). Le saut par appuis demande maintenant de vrais appuis tres rapides (3 d'affilee, moins de 220 ms entre
+ * chaque) et s'arrete des qu'un ecart depasse le seuil. Appui maintenu en plus : pas normal, puis moitie du saut
+ * apres 1 s, puis le saut apres 2 s ; on relache, tout redevient normal. Ancienne logique archivee dans
+ * _archive_ancien_design_2026-10-09/pas_rapide_2026-10-31/.
  * 30 octobre 2026 : `uniteForte` (« KG ») lisible d'un coup d'oeil a cote du chiffre, plus en petit dessous.
  */
 import React, { useEffect, useRef, useState } from 'react';
@@ -22,7 +23,7 @@ import { fontStyle } from '@/components/yoroi/fonts';
 import { fmtNum, parseNum } from '@/lib/v2/seance/format';
 import { Icon } from './Icon';
 import { traduire } from '@/lib/i18n/tr';
-import { pasAppuiMaintenu, REPETITION_GROS_MS, REPETITION_MS, valeurSuivante } from '@/lib/v2/seances/pasRapide';
+import { compterTape, heureAppui, pasAppuiMaintenu, RAFALE_VIDE, REPETITION_GROS_MS, REPETITION_MS, TAPES_RAPIDES_POUR_SAUT, valeurSuivante, type Rafale } from '@/lib/v2/seances/pasRapide';
 
 type Props = {
   value: number;
@@ -59,6 +60,9 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const repeats = useRef(0);
   const appuiDebut = useRef(0);
+  const rafale = useRef<Rafale>(RAFALE_VIDE);
+  // heure du doigt pose (horodatage natif), pour mesurer l'ecart entre deux appuis
+  const heureTape = useRef(0);
 
   useEffect(() => {
     valueRef.current = value;
@@ -79,9 +83,16 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
     return true;
   };
 
-  // un appui simple : toujours le pas normal, quelle que soit la vitesse des appuis
-  const tap = (dir: 1 | -1, amount: number = step) => {
-    bump(dir, amount);
+  // appuis tres rapides : saut a partir du 3e ; boutons fins : jamais de saut
+  const tap = (bouton: string, dir: 1 | -1, amount: number = step, accelere = true) => {
+    if (!saut || !accelere) {
+      rafale.current = RAFALE_VIDE;
+      bump(dir, amount);
+      return;
+    }
+    const { rafale: apres, saut: enSaut } = compterTape(rafale.current, bouton, heureTape.current || Date.now());
+    rafale.current = apres;
+    bump(dir, amount, enSaut ? saut : null, apres.compte === TAPES_RAPIDES_POUR_SAUT);
   };
 
   function stop() {
@@ -94,6 +105,7 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
     stop();
     if (saut && !accelere) {
       // boutons fins : repetition reguliere, jamais de saut
+      rafale.current = RAFALE_VIDE;
       const tickFin = () => {
         if (!bump(dir, amount)) return stop();
         timer.current = setTimeout(tickFin, REPETITION_MS);
@@ -103,6 +115,7 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
     }
     if (saut) {
       // appui maintenu : pas normal, puis moitie du saut apres 1 s, puis le saut apres 2 s
+      rafale.current = RAFALE_VIDE;
       let avant: number | null = null;
       const tickSaut = () => {
         const gros = pasAppuiMaintenu(Date.now() - appuiDebut.current, saut);
@@ -136,8 +149,8 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
   const renderBtn = (dir: 1 | -1) => (
     <Pressable
       key={dir}
-      onPressIn={() => { appuiDebut.current = Date.now(); }}
-      onPress={() => tap(dir)}
+      onPressIn={(e) => { appuiDebut.current = Date.now(); heureTape.current = heureAppui(e); }}
+      onPress={() => tap(`gros${dir}`, dir)}
       onLongPress={() => startRepeat(dir)}
       onPressOut={stop}
       delayLongPress={280}
@@ -154,8 +167,8 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
   const renderFine = (dir: 1 | -1) => (
     <Pressable
       key={`fin${dir}`}
-      onPressIn={() => { appuiDebut.current = Date.now(); }}
-      onPress={() => tap(dir, fine)}
+      onPressIn={(e) => { appuiDebut.current = Date.now(); heureTape.current = heureAppui(e); }}
+      onPress={() => tap(`fin${dir}`, dir, fine, false)}
       onLongPress={() => startRepeat(dir, fine, false)}
       onPressOut={stop}
       delayLongPress={280}
