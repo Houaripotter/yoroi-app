@@ -45,7 +45,7 @@ function StickerFete({ nom, taille, angle = 0, delai = 0 }: { nom: NomSticker; t
 // Ton programme
 // ============================================================
 
-export function CarteProgramme({ titre, contenu, semaine, faits, prevus, onOpen }: {
+export function CarteProgramme({ titre, contenu, semaine, faits, prevus, onOpen, onProchaines }: {
   /** « PPL » */
   titre: string;
   /** « 4 séances par semaine » */
@@ -55,6 +55,8 @@ export function CarteProgramme({ titre, contenu, semaine, faits, prevus, onOpen 
   faits: number;
   prevus: number;
   onOpen: () => void;
+  /** 1er novembre 2026 : « Tes prochaines séances » (app/programmes/prochaines.tsx) */
+  onProchaines?: () => void;
 }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
@@ -93,6 +95,18 @@ export function CarteProgramme({ titre, contenu, semaine, faits, prevus, onOpen 
         </View>
         <Ink size={12.5} weight="extraBold" color={fini ? menthe.texte : c.textSecondary}>{progression}</Ink>
       </View>
+      {onProchaines ? (
+        <Pressable
+          onPress={() => { tap(); onProchaines(); }}
+          accessibilityRole="button"
+          accessibilityLabel={traduire('Tes prochaines séances')}
+          style={({ pressed }) => ({ marginTop: 12, minHeight: 44, borderRadius: 14, backgroundColor: bleu.fond, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, opacity: pressed ? 0.8 : 1 })}
+        >
+          <Image source={illus.img('calendrier')} style={{ width: 26, height: 26 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+          <Ink size={13.5} weight="extraBold" color={bleu.texte} style={{ flex: 1 }}>{traduire('Tes prochaines séances')}</Ink>
+          <Ink size={13} weight="extraBold" color={bleu.texte}>{traduire('Voir')}</Ink>
+        </Pressable>
+      ) : null}
     </Pressable>
   );
 }
