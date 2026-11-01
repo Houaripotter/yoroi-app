@@ -25,7 +25,7 @@
 import { programmeParId } from './catalogue';
 import type { CardioProgramme, ExoProgramme, JourProgramme, Materiel, Programme } from './types';
 import type { ModuleId } from './modules';
-import { cardioPrevu } from '@/lib/v2/seances/cardioJour';
+import { cardioPrevu, estType, retenirTypeProgramme } from '@/lib/v2/seances/cardioJour';
 import type { ChoixCardio } from '@/lib/v2/seances/cardioJour';
 import type { TypeCardio } from '@/lib/v2/seances/cardioFin';
 
@@ -42,6 +42,19 @@ export type FinSeance = {
    * les seances de la semaine B), a la place du choix pour toutes les seances.
    */
   parJour?: Record<string, ChoixFin>;
+  /**
+   * 1er novembre 2026 (Houari : « vérifie que l'app me demande ce que j'aime faire ») : combien de fois par semaine.
+   * Absent : à chaque séance de musculation (les programmes d'avant se lisent à l'identique).
+   */
+  abdosParSemaine?: number;
+  cardioParSemaine?: number;
+  /** le cardio prévu par ton programme (marche inclinée, vélo...) ; absent : ton choix en séance, sinon ton habitude */
+  cardioType?: TypeCardio;
+  /**
+   * Calculé à chaque lecture par suivi.ts (avecFrequences) : les séances de ta semaine qui reçoivent les abdos ou le
+   * cardio quand tu ne les veux pas à chaque séance. Ton choix séance par séance (parJour) passe toujours avant.
+   */
+  parFrequence?: Record<string, ChoixFin>;
 };
 
 /** Une case de la feuille : Rien, Abdos, Cardio */
@@ -82,15 +95,22 @@ export function basculerCaseFin(choix: ChoixFin, k: CaseFin): ChoixFin {
   return k === 'abdos' ? choixDepuisCases(!abdos, cardio) : choixDepuisCases(abdos, !cardio);
 }
 
-export const MINUTES_FIN = [15, 20, 30] as const;
+/** 1er novembre 2026 : 10 et 45 min en plus, comme la feuille Ton cardio (les durées d'avant restent) */
+export const MINUTES_FIN = [10, 15, 20, 30, 45] as const;
+
+/** Combien de fois par semaine : 0 = à chaque séance */
+export const FREQUENCES_ABDOS = [0, 2, 3] as const;
+export const FREQUENCES_CARDIO = [0, 1, 2, 3] as const;
 
 export const FIN_PAR_DEFAUT: FinSeance = { choix: 'rien', minutes: 30 };
 
 /** Une consigne par duree : meme deroule que les jours de marche inclinee du catalogue */
 const CONSIGNE_FIN: Record<number, string> = {
+  10: '10 minutes de marche inclinée juste après la musculation. Sur tapis, pente de 8 à 12 %, entre 4,5 et 5,5 km/h. Zone 2 : tu peux encore parler en phrases complètes. Lâche les barres.',
   15: '15 minutes de marche inclinée juste après la musculation. Sur tapis, pente de 8 à 12 %, entre 4,5 et 5,5 km/h. Zone 2 : tu peux encore parler en phrases complètes. Lâche les barres.',
   20: '20 minutes de marche inclinée juste après la musculation. Sur tapis, pente de 8 à 12 %, entre 4,5 et 5,5 km/h. Zone 2 : tu peux encore parler en phrases complètes. Lâche les barres.',
   30: '30 minutes de marche inclinée juste après la musculation. Sur tapis, pente de 8 à 12 %, entre 4,5 et 5,5 km/h. Zone 2 : tu peux encore parler en phrases complètes. Lâche les barres.',
+  45: '45 minutes de marche inclinée juste après la musculation. Sur tapis, pente de 8 à 12 %, entre 4,5 et 5,5 km/h. Zone 2 : tu peux encore parler en phrases complètes. Lâche les barres.',
 };
 
 /** La note des etudes, une ligne */
@@ -103,6 +123,8 @@ const CHOIX_VALIDES: ChoixFin[] = ['rien', 'abdos', 'cardio', 'les_deux'];
 export function minutesValides(m: unknown): number {
   const n = Number(m);
   if (!Number.isFinite(n) || n <= 0) return FIN_PAR_DEFAUT.minutes;
+  // 1er novembre 2026 : ta durée habituelle (25, 40 min...) reste telle quelle, par pas de 5 jusqu'à 2 h
+  if (Number.isInteger(n) && n % 5 === 0 && n >= 5 && n <= 120) return n;
   return MINUTES_FIN.reduce((best, x) => (Math.abs(x - n) < Math.abs(best - n) ? x : best), MINUTES_FIN[0] as number);
 }
 
@@ -120,13 +142,101 @@ export function lireFinSeance(x: unknown): FinSeance | undefined {
     }
     if (Object.keys(pj).length) fin.parJour = pj;
   }
+  // 1er novembre 2026 : fréquences et type du cardio, champs facultatifs lus strictement
+  const fa = frequenceValide(o.abdosParSemaine);
+  if (fa) fin.abdosParSemaine = fa;
+  const fc = frequenceValide(o.cardioParSemaine);
+  if (fc) fin.cardioParSemaine = fc;
+  if (estType(o.cardioType)) fin.cardioType = o.cardioType;
+  if (o.parFrequence && typeof o.parFrequence === 'object') {
+    const pf: Record<string, ChoixFin> = {};
+    for (const [k, v] of Object.entries(o.parFrequence as Record<string, unknown>).slice(0, 60)) {
+      if (k && k.length <= 200 && CHOIX_VALIDES.includes(v as ChoixFin)) pf[k] = v as ChoixFin;
+    }
+    if (Object.keys(pf).length) fin.parFrequence = pf;
+  }
   return fin;
+}
+
+/** Une fréquence par semaine entre 1 et 6 ; 0 ou illisible : à chaque séance (undefined) */
+export function frequenceValide(x: unknown): number | undefined {
+  const n = Number(x);
+  return Number.isInteger(n) && n >= 1 && n <= 6 ? n : undefined;
 }
 
 /** Le choix qui vaut pour cette seance : le sien s'il y en a un, sinon celui de toutes les seances */
 export function choixDuJour(f: FinSeance | null | undefined, jourId: string): ChoixFin {
   if (!f) return 'rien';
-  return f.parJour?.[jourId] ?? f.choix;
+  return f.parJour?.[jourId] ?? f.parFrequence?.[jourId] ?? f.choix;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * 1er novembre 2026 : abdos et cardio 2 ou 3 fois par semaine, répartis dans ta semaine
+ * ---------------------------------------------------------------------------------------------- */
+
+/**
+ * Les séances (ids) de ta semaine qui reçoivent un ajout `n` fois par semaine. `semaine` : les séances de
+ * musculation de la semaine dans l'ordre des jours (un id peut revenir : un programme en rotation).
+ * Réparties d'un bout à l'autre de la semaine (1re, 3e...), jamais plus de `n` fois quand c'est possible ;
+ * si chaque séance revient plus de `n` fois, la première seule.
+ */
+export function seancesRepartees(semaine: readonly string[], n: number): Set<string> {
+  const L = semaine.length;
+  if (!L || n >= L) return new Set(semaine);
+  const compte = new Map<string, number>();
+  for (const id of semaine) compte.set(id, (compte.get(id) ?? 0) + 1);
+  const pris = new Set<string>();
+  let total = 0;
+  const essayer = (pos: number) => {
+    const id = semaine[pos];
+    if (pris.has(id)) return;
+    const c = compte.get(id) ?? 0;
+    if (total + c <= n) {
+      pris.add(id);
+      total += c;
+    }
+  };
+  for (let k = 0; k < n; k++) essayer(Math.floor((k * L) / n));
+  for (let pos = 0; pos < L && total < n; pos++) essayer(pos);
+  if (!pris.size) pris.add(semaine[0]);
+  return pris;
+}
+
+/**
+ * La fin de séance avec ses séances choisies par fréquence (parFrequence), recalculée à partir de ta semaine.
+ * `soeurs` : séance B (semaine B, version B) vers sa séance A ; elle suit le même choix.
+ * Sans fréquence, la fin revient telle quelle (sans parFrequence).
+ */
+export function avecFrequences(f: FinSeance, semaine: readonly string[], soeurs: Readonly<Record<string, string>> = {}): FinSeance {
+  const { parFrequence: _pf, ...base } = f;
+  const a = avecAbdos(base);
+  const c = avecCardio(base);
+  const nA = a ? base.abdosParSemaine : undefined;
+  const nC = c ? base.cardioParSemaine : undefined;
+  if ((!nA && !nC) || !semaine.length) return base;
+  const avecA = nA ? seancesRepartees(semaine, nA) : null;
+  const avecC = nC ? seancesRepartees(semaine, nC) : null;
+  const pf: Record<string, ChoixFin> = {};
+  for (const id of new Set(semaine)) {
+    const ch = choixDepuisCases(a && (!avecA || avecA.has(id)), c && (!avecC || avecC.has(id)));
+    if (ch !== base.choix) pf[id] = ch;
+  }
+  for (const [b, aId] of Object.entries(soeurs)) {
+    if (pf[aId] && !semaine.includes(b)) pf[b] = pf[aId];
+  }
+  return Object.keys(pf).length ? { ...base, parFrequence: pf } : base;
+}
+
+/** Combien de séances de ta semaine reçoivent les abdos et le cardio (après fréquences et choix séance par séance) */
+export function nombreDansLaSemaine(f: FinSeance | null | undefined, semaine: readonly string[]): { abdos: number; cardio: number } {
+  let abdos = 0;
+  let cardio = 0;
+  for (const id of semaine) {
+    const ch = choixDuJour(f, id);
+    if (caseCochee(ch, 'abdos')) abdos++;
+    if (caseCochee(ch, 'cardio')) cardio++;
+  }
+  return { abdos, cardio };
 }
 
 /** Une fin de seance qui ajoute quelque chose a au moins une seance */
@@ -187,7 +297,24 @@ export function exosAbdosFin(materiel: Materiel): (ExoProgramme & ExoFin)[] {
 
 export function cardioFin(minutes: number): CardioProgramme {
   const m = minutesValides(minutes);
-  return { sport: 'marche', minutes: m, consigne: CONSIGNE_FIN[m] };
+  return { sport: 'marche', minutes: m, consigne: CONSIGNE_FIN[m] ?? CONSIGNE_MARCHE };
+}
+
+/**
+ * 1er novembre 2026 (Houari : « les abdos reprennent les exercices habituels, y compris les supersets ») : tes abdos
+ * habituels, retenus par lib/v2/seances/habitudesFin.ts (au moins 3 fois sur les 4 dernières semaines), avec leurs
+ * liens (crunch puis roue). Rien de retenu : la planche et le crunch de toujours.
+ */
+let abdosHabituels: (ExoProgramme & ExoFin)[] | null = null;
+export function retenirAbdosHabituels(exos: readonly ExoProgramme[] | null | undefined): void {
+  abdosHabituels = exos && exos.length ? exos.map((e, i) => {
+    const { enchaine, ...reste } = e;
+    return { ...reste, ...(enchaine && i < exos.length - 1 ? { enchaine: true } : {}), fin: true as const };
+  }) : null;
+}
+export const abdosRetenus = (): readonly (ExoProgramme & ExoFin)[] | null => abdosHabituels;
+export function abdosDeFin(materiel: Materiel): (ExoProgramme & ExoFin)[] {
+  return abdosHabituels ? abdosHabituels.map((e) => ({ ...e })) : exosAbdosFin(materiel);
 }
 
 /** Consigne d'un cardio choisi qui n'est pas une marche inclinee de 15, 20 ou 30 min */
@@ -230,12 +357,13 @@ export function avecFinSeance<J extends JourProgramme>(jour: J, ctx: ContexteFin
   // pas d'abdos si la seance en a deja, jamais deux fois le meme exercice
   if (avecAbdos(f) && !jour.exos.some((e) => e.muscle === 'ABDOS')) {
     const deja = new Set(jour.exos.map((e) => e.nom));
-    exos = [...exos, ...exosAbdosFin(ctx!.materiel).filter((e) => !deja.has(e.nom))];
+    exos = [...exos, ...abdosDeFin(ctx!.materiel).filter((e) => !deja.has(e.nom))];
   }
   const ajout: AvecFin = { finFaite: true };
   if (avecCardio(f) && !jour.cardio) {
     // le cardio choisi pour ce jour du programme (cle « programme|jour », comme la seance en direct)
-    const choix = cardioPrevu(ctx?.programme?.id, jour.id, minutesValides(f.minutes));
+    // 1er novembre 2026 : le type prévu par ton programme, sinon ton habitude (cardioJour.ts)
+    const choix = cardioPrevu(ctx?.programme?.id, jour.id, minutesValides(f.minutes), f.cardioType);
     ajout.finCardio = cardioFinChoisi(choix);
     ajout.finCardioType = choix.type;
   }
@@ -260,6 +388,8 @@ const estAutre = (j: JourProgramme): boolean => typeof j.id === 'string' && j.id
 /** 26 octobre 2026 : les modules (force, grip, cou, mobilite) du programme actif sont retenus avec la fin de seance */
 export function retenirFinActive(id: string | null, fin?: FinSeance, modules?: readonly ModuleId[]): void {
   actif = id ? { id, fin, ...(modules?.length ? { modules: [...modules] } : {}) } : null;
+  // 1er novembre 2026 : le cardio prévu par ton programme, pour les écrans qui annoncent la séance
+  retenirTypeProgramme(id, fin?.cardioType);
 }
 
 /**
