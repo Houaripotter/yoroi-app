@@ -6,6 +6,7 @@
  */
 import { usePersonnageUtilisateur } from '@/components/yoroi/v2/perso/usePersonnageUtilisateur';
 import { couleurNote, noteSeance } from '@/lib/v2/seance/note';
+import { PerteEauSeance } from '@/components/yoroi/v2/corps/PeseeSeance';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
 import { DeviceEventEmitter, Image, Modal, Platform, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
@@ -979,6 +980,9 @@ export default function WorkoutDetailScreen() {
               onMusclesUpdated={(muscles) => setTraining((prev) => (prev ? { ...prev, muscles } : prev))}
             />
           ) : null}
+
+          {/* 1er novembre 2026 (AT) : perte d'eau estimee, pesee avant et apres (components/yoroi/v2/corps/PeseeSeance.tsx) */}
+          {params.demo !== '1' && t.date ? <PerteEauSeance date={t.date} debut={t.start_time ?? null} /> : null}
 
           {/* Effort et notes */}
           {effort > 0 || notes ? (
