@@ -320,6 +320,8 @@ describe('REGRESSION: Recovery & Edge Cases', () => {
 
     it('measurement weight is preserved as number', async () => {
       (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+      // 28 octobre 2026 : addMeasurement signale maintenant un enregistrement rate (le test d'avant laissait le coffre en echec)
+      (SecureStore.setItemAsync as jest.Mock).mockResolvedValue(undefined);
       const m = await addMeasurement({ date: '2026-02-10', weight: 75.5 });
       expect(typeof m.weight).toBe('number');
       expect(m.weight).toBe(75.5);
