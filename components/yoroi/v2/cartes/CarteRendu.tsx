@@ -28,7 +28,7 @@ import { traduire } from '@/lib/i18n/tr';
 import { Dessin, fondDe } from './Directions';
 import type { CtxDirection } from './Directions';
 import { ambiancePour } from './ambiance';
-// 2 novembre 2026 (cartes v10) : le nouveau moteur, choisi par l'interrupteur du Studio createur (ancien par defaut)
+// 2 novembre 2026 (cartes v10) : le nouveau moteur ; depuis le studio unique (meme jour), le seul, pour tout le monde
 import { CARTES_REGLAGE_EVENT, formatDuMoteur, lireMoteur, moteurCourant } from '@/lib/v2/cartes/store';
 import type { MoteurCartes } from '@/lib/v2/cartes/store';
 import { compositionEffective, contenuDe, famillesPour } from '@/lib/v2/cartes/moteur/familles';
@@ -193,7 +193,7 @@ export function chiffresDeCarte(brut: CarteData, data: CarteData, o: OptionsCart
 // LE NOUVEAU MOTEUR (cartes v10, 2 novembre 2026)
 // ============================================
 
-/** Le moteur choisi dans le Studio createur ; bascule tout de suite quand il change (ancien par defaut) */
+/** Le moteur des cartes : le nouveau, pour tout le monde depuis le 2 novembre 2026 (studio unique) */
 export function useMoteurCartes(): MoteurCartes {
   const [m, setM] = useState<MoteurCartes>(moteurCourant());
   useEffect(() => {
@@ -235,13 +235,27 @@ export function useTaillePhoto(uri: string | null | undefined): { w: number; h: 
   return t && t.uri === uri ? { w: t.w, h: t.h } : null;
 }
 
+/**
+ * 2 novembre 2026 (studio unique) : les chiffres que tu caches dans le studio (« Chiffres à afficher ») disparaissent du
+ * panneau et de l'autocollant. Il en reste toujours au moins un ; le chiffre heros du panneau ne se cache pas.
+ */
+export function sansChiffresCaches<T extends { stats: { l: string }[]; lignesAuto?: { l: string }[] }>(c: T, cache: string[] | null | undefined): T {
+  if (!cache?.length) return c;
+  const stats = c.stats.filter((x) => !cache.includes(x.l));
+  const garde = stats.length || !c.stats.length ? stats : c.stats.slice(0, 1);
+  const auto = c.lignesAuto ? c.lignesAuto.filter((x) => !cache.includes(x.l)) : undefined;
+  const lignesAuto = c.lignesAuto ? (auto?.length ? auto : c.lignesAuto.slice(0, 1)) : c.lignesAuto;
+  return { ...c, stats: garde, lignesAuto };
+}
+
 /** Le plan du nouveau moteur pour une carte ; null si le nouveau moteur ne la dessine pas */
 export function planNouveauMoteur(data: CarteData, o: OptionsCarte, v: VisuelsCarte, u: ReturnType<typeof useUnitePoids>, taille: { w: number; h: number } | null): { plan: Plan; photo: string | null } | null {
   const fams = famillesPour(data);
   if (!fams.length) return null;
   const famille = o.familleMoteur && fams.includes(o.familleMoteur) ? o.familleMoteur : fams[0];
-  const contenu = contenuDe(data, famille, u, o.masque);
-  if (!contenu) return null;
+  const brut = contenuDe(data, famille, u, o.masque);
+  if (!brut) return null;
+  const contenu = sansChiffresCaches(brut, o.cacheMoteur);
   const photo = optionsDessinees(o, v).photo;
   const aPhoto = !!photo && !!taille;
   const compo = compositionEffective(data, famille, o.compo ?? (photo ? 'A' : null), aPhoto);
