@@ -222,7 +222,7 @@ object Dessin {
                     val i = epaisseur * 1.4f
                     c.drawOval(RectF(rect.left + i, rect.top + i, rect.right - i, rect.bottom - i), trait(maxOf(1f, epaisseur * 0.12f)))
                 }
-                StyleW.A -> c.drawOval(rect, trait(epaisseur))
+                StyleW.A, StyleW.D -> c.drawOval(rect, trait(epaisseur))
             }
         }
         val f = fraction.coerceIn(0f, 1f)
