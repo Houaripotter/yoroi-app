@@ -53,9 +53,11 @@ type Props = {
   onCadeau?: (id: string) => void;
   /** 18 octobre : la prochaine scene a gagner avec la serie (« Encore 4 jours pour la scène Rue de Tokyo ») */
   palier?: string;
+  /** 2 novembre 2026 : l'ouverture plein ecran vient de se fermer (le Dojo peut proposer les rappels) */
+  onFerme?: () => void;
 };
 
-export function Aujourdhui({ serie, coffre, onOuvrir, onVerre, suite, onCadeau, palier }: Props) {
+export function Aujourdhui({ serie, coffre, onOuvrir, onVerre, suite, onCadeau, palier, onFerme }: Props) {
   useIllustrations(); // 27 octobre 2026 : le coffre suit le reglage Illustrations
   const { theme } = useYoroiTheme();
   const c = theme.colors;
@@ -204,7 +206,7 @@ export function Aujourdhui({ serie, coffre, onOuvrir, onVerre, suite, onCadeau, 
         <BoutonPrincipal onPress={verre} disabled={busy} accessibilityLabel={traduire("Noter un verre d’eau, 25 centilitres")} label={traduire("Noter un verre d’eau")} hauteur={48} tailleTexte={15} />
       ) : null}
     </View>
-      <OuvertureCoffre visible={ouverture} grand={coffre.grand} serie={serie.jours} ouvrir={ouvrirVraiment} suite={suite} onCadeau={onCadeau} onClose={() => setOuverture(false)} />
+      <OuvertureCoffre visible={ouverture} grand={coffre.grand} serie={serie.jours} ouvrir={ouvrirVraiment} suite={suite} onCadeau={onCadeau} onClose={() => { setOuverture(false); onFerme?.(); }} />
     </View>
   );
 }
