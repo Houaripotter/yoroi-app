@@ -330,5 +330,29 @@
           android:name="android.appwidget.provider"
           android:resource="@xml/yw_info_tableau" />
     </receiver>
+    <!-- Widget Seance du jour (30 octobre 2026, style D comme sur iPhone) -->
+    <receiver
+        android:name=".widget.YoroiSeanceJourWidget"
+        android:label="@string/yw_nom_seance"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/yw_info_seance" />
+    </receiver>
+    <!-- Widget Ton personnage (30 octobre 2026, style D comme sur iPhone) -->
+    <receiver
+        android:name=".widget.YoroiPersonnageWidget"
+        android:label="@string/yw_nom_perso"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/yw_info_perso" />
+    </receiver>
   </application>
 </manifest>
