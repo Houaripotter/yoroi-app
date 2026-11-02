@@ -107,7 +107,8 @@ export function mettreEnPage(e: EntreeMiseEnPage): Plan {
   const { contenu, format } = e;
   const G = GRILLE[format];
   const RH = hauteurPhoto(format);
-  const style: StyleMoteur = e.compo === 'A' && contenu.famille === 'muscu' ? e.style ?? 'color' : 'color';
+  // 2 novembre 2026 (studio unique) : le style (Color, Light, Dark) vaut pour toutes les cartes avec ta photo, sauf le record (or)
+  const style: StyleMoteur = e.compo === 'A' && !contenu.pal.gold && contenu.famille !== 'transfo' ? e.style ?? 'color' : 'color';
   const story = format === 'story';
   const base = {
     format, W: G.W, H: G.H, RH, compo: e.compo, style, contenu,
