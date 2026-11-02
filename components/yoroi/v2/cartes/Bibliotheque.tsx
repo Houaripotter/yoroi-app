@@ -69,7 +69,8 @@ export function Vignette({ d, options, visuels, onPress, largeur = VIGNETTE_L }:
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={traduire('Carte {0}, {1}', nomVignette(d), sous)} style={({ pressed }) => ({ width: largeur, gap: 7, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
       <View pointerEvents="none" style={{ borderRadius: 18, shadowColor: '#000', shadowOpacity: 0.16, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 4 }}>
-        <CarteApercu largeur={largeur} data={d} options={options} visuels={visuels} />
+        {/* 2 novembre 2026 (studio unique) : la vignette montre toujours le dessin de la carte (jamais un autocollant transparent) */}
+        <CarteApercu largeur={largeur} data={d} options={{ ...options, compo: 'B' }} visuels={visuels} />
       </View>
       <View style={{ gap: 1, paddingHorizontal: 2 }}>
         <Ink size={13.5} weight="extraBold" numberOfLines={1}>{traduire(nomVignette(d))}</Ink>
