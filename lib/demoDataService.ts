@@ -145,6 +145,8 @@ const DEMO_ASYNC_KEYS = [
   // la demo a les siens et la sortie du mode demo rend ceux de l'utilisateur
   'yoroi_xp_ledger_v1',
   'yoroi_armure_meta_v1',
+  // 2 novembre 2026 : la copie du Dojo partagee entre tes appareils suit le journal
+  'yoroi_dojo_partage_v1',
   // Ton espace (scene, personnage, sports favoris, blocs de l'accueil) : la demo a le sien
   'yoroi_espace_v1',
   // 17 octobre (captures des stores) : le sommeil est lu dans AsyncStorage (lib/sleepService.ts),
