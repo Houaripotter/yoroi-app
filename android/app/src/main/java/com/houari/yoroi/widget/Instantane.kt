@@ -21,7 +21,11 @@ data class PoidsW(
     val arriveeAu: LocalDate?,
     val serie: List<PointKg>,
     val ligne: List<PointKg>,
+    /** 28 octobre 2026 : le prochain palier du chemin vers ton cap (25, 50, 75 et 100 %), null sans cap */
+    val palier: PalierW? = null,
 )
+
+data class PalierW(val kg: Double, val reste: Double, val dernier: Boolean)
 
 data class SemaineW(val objectif: Int?, val faites: Int, val jours: List<Boolean>, val lundi: LocalDate?)
 
@@ -31,6 +35,35 @@ data class ChronoW(val id: String, val nom: String, val rounds: Int, val roundS:
 
 data class CombatW(val date: LocalDate, val categorieKg: Double?, val ecartKg: Double?)
 
+/**
+ * 30 octobre 2026 : la seance du jour de ton Coach (champ coach de l'instantane, textes deja traduits par l'app),
+ * absente sans programme suivi. Meme lecture que CoachI sur iPhone (ios/YoroiWidgets/Modele.swift).
+ */
+data class CoachW(
+    val titre: String,
+    val programme: String,
+    val exos: Int,
+    val minutes: Int,
+    val muscles: List<String>,
+    val aujourdhui: Boolean,
+    val etat: String,
+    val ensuite: String,
+    val genre: String,
+)
+
+/** 30 octobre 2026 : ton rang du Dojo et ton XP (champ dojo de l'instantane), comme DojoI sur iPhone */
+data class DojoW(
+    val rang: String,
+    val rangIndex: Int,
+    val rangs: Int,
+    val xp: Int,
+    val suivant: String?,
+    val xpSuivant: Int?,
+    /** 0 a 1 vers le palier suivant */
+    val part: Double,
+    val personnage: String?,
+)
+
 data class Instantane(
     val genere: Instant?,
     val unite: String,
@@ -39,6 +72,8 @@ data class Instantane(
     val eau: EauW?,
     val chronos: List<ChronoW>,
     val combat: CombatW?,
+    val coach: CoachW? = null,
+    val dojo: DojoW? = null,
 )
 
 object LectureInstantane {
@@ -59,6 +94,8 @@ object LectureInstantane {
                 eau = o.optJSONObject("eau")?.let { eau(it) },
                 chronos = chronos(o.optJSONArray("chronos")),
                 combat = o.optJSONObject("combat")?.let { combat(it) },
+                coach = o.optJSONObject("coach")?.let { coach(it) },
+                dojo = o.optJSONObject("dojo")?.let { dojo(it) },
             )
         } catch (e: Exception) {
             null
@@ -83,6 +120,10 @@ object LectureInstantane {
             arriveeAu = arrivee?.let { jour(texte(it, "au")) },
             serie = points(o.optJSONArray("serie30")),
             ligne = points(o.optJSONArray("ligne30")),
+            palier = o.optJSONObject("palier")?.let { pa ->
+                val kg = nombre(pa, "kg")
+                if (kg == null || kg <= 0) null else PalierW(kg, (nombre(pa, "reste") ?: 0.0).coerceAtLeast(0.0), pa.optBoolean("dernier", false))
+            },
         )
     }
 
@@ -132,6 +173,39 @@ object LectureInstantane {
         val date = jour(texte(o, "date")) ?: return null
         return CombatW(date, nombre(o, "categorieKg")?.takeIf { it > 0 }, nombre(o, "ecartKg"))
     }
+
+    private fun coach(o: JSONObject): CoachW {
+        val arr = o.optJSONArray("muscles")
+        val muscles = ArrayList<String>()
+        if (arr != null) {
+            for (i in 0 until arr.length()) {
+                val m = arr.optString(i, "").trim()
+                if (m.isNotEmpty()) muscles.add(m)
+            }
+        }
+        return CoachW(
+            titre = texte(o, "titre") ?: "",
+            programme = texte(o, "programme") ?: "",
+            exos = Math.round(nombre(o, "exos") ?: 0.0).toInt().coerceAtLeast(0),
+            minutes = Math.round(nombre(o, "minutes") ?: 0.0).toInt().coerceAtLeast(0),
+            muscles = muscles,
+            aujourdhui = o.optBoolean("aujourdhui", false),
+            etat = texte(o, "etat") ?: "",
+            ensuite = texte(o, "ensuite") ?: "",
+            genre = texte(o, "genre") ?: "muscu",
+        )
+    }
+
+    private fun dojo(o: JSONObject): DojoW = DojoW(
+        rang = texte(o, "rang") ?: "",
+        rangIndex = Math.round(nombre(o, "rangIndex") ?: 0.0).toInt().coerceAtLeast(0),
+        rangs = Math.round(nombre(o, "rangs") ?: 5.0).toInt().coerceAtLeast(1),
+        xp = Math.round(nombre(o, "xp") ?: 0.0).toInt().coerceAtLeast(0),
+        suivant = texte(o, "suivant"),
+        xpSuivant = nombre(o, "xpSuivant")?.let { Math.round(it).toInt() },
+        part = (nombre(o, "part") ?: 0.0).coerceIn(0.0, 1.0),
+        personnage = texte(o, "personnage"),
+    )
 
     private fun points(arr: JSONArray?): List<PointKg> {
         if (arr == null) return emptyList()
