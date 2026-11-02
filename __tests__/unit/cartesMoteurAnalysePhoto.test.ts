@@ -86,7 +86,8 @@ describe('avec le module natif', () => {
     const natif = { analyserPhoto: jest.fn().mockResolvedValue(reponse()), capacites: jest.fn() };
     const { analyse } = charger(natif);
     const a = await analyse.analyserPhoto('file:///cache/cartes_tmp/photo_1.jpg');
-    expect(natif.analyserPhoto).toHaveBeenCalledWith('file:///cache/cartes_tmp/photo_1.jpg');
+    // la carte analyse toujours a la taille par defaut (1024 px, en attendant le verdict du banc)
+    expect(natif.analyserPhoto).toHaveBeenCalledWith('file:///cache/cartes_tmp/photo_1.jpg', 1024);
     expect(a.raisons).toEqual([]);
     expect(a.niveau).toBe('A+');
     expect(analyse.niveauAffiche(a)).toBe('A');
@@ -185,5 +186,43 @@ describe('avec le module natif', () => {
     const m = { uri: '', largeur: 10, hauteur: 10, personnes: 1, pixels: Buffer.from(brut).toString('base64') };
     expect(photo.decoderPixels(m)).toBeNull();
     expect(photo.decoderPixels({ ...m, hauteur: 100 })?.length).toBe(1000);
+  });
+});
+
+describe('taille de la copie analysee (banc 1024 contre 1440)', () => {
+  it('1024 par defaut, le banc compare 1024 et 1440', () => {
+    const { photo } = charger(null);
+    expect(photo.TAILLE_ANALYSE_DEFAUT).toBe(1024);
+    expect([...photo.TAILLES_BANC]).toEqual([1024, 1440]);
+    expect(photo.tailleAnalyse()).toBe(1024);
+    expect(photo.tailleAnalyse(null)).toBe(1024);
+    expect(photo.tailleAnalyse(Number.NaN)).toBe(1024);
+  });
+
+  it('une taille demandee est bornee entre 512 et 2048 px, en entier', () => {
+    const { photo } = charger(null);
+    expect(photo.tailleAnalyse(1440)).toBe(1440);
+    expect(photo.tailleAnalyse(1439.6)).toBe(1440);
+    expect(photo.tailleAnalyse(10)).toBe(photo.TAILLE_ANALYSE_MIN);
+    expect(photo.tailleAnalyse(10_000)).toBe(photo.TAILLE_ANALYSE_MAX);
+  });
+
+  it('le banc passe la taille au natif, et la reponse garde taille, temps et memoire', async () => {
+    const natif = {
+      analyserPhoto: jest.fn().mockResolvedValue({ ...reponse(), tailleMax: 1440, memoireAvantMo: 180, memoireApresMo: 190, memoirePicMo: 240 }),
+      capacites: jest.fn(),
+    };
+    const { photo } = charger(natif);
+    const r = await photo.analyserPhoto('file:///p.jpg', { tailleMax: 1440 });
+    expect(natif.analyserPhoto).toHaveBeenCalledWith('file:///p.jpg', 1440);
+    expect(r.tailleMax).toBe(1440);
+    expect(r.memoireAvantMo).toBe(180);
+    expect(r.memoireApresMo).toBe(190);
+    expect(r.memoirePicMo).toBe(240);
+  });
+
+  it('sans module, meme avec une taille, la reponse vide', async () => {
+    const { photo } = charger(null);
+    await expect(photo.analyserPhoto('file:///p.jpg', { tailleMax: 1440 })).resolves.toEqual(photo.REPONSE_VIDE);
   });
 });
