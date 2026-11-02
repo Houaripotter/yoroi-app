@@ -83,6 +83,12 @@ enum Format {
   /// "72,4" dans l'unite choisie.
   static func poids(_ kg: Double, livres: Bool) -> String { decimal(versUnite(kg, livres: livres)) }
 
+  /// "78" pour un poids rond, sinon "78,4" (paliers et charges, 28 octobre 2026).
+  static func poidsCourt(_ kg: Double, livres: Bool) -> String {
+    let v = versUnite(kg, livres: livres)
+    return abs(v - v.rounded()) < 0.05 ? entier(v) : decimal(v)
+  }
+
   /// Ecart signe : "+0,4" ou "-1,2" (le moins est un trait d'union simple).
   static func ecart(_ kg: Double, livres: Bool) -> String {
     let v = versUnite(kg, livres: livres)
