@@ -19,6 +19,7 @@ import { copierAutocollant, enregistrerCarte, partagerCarte, partagerStory } fro
 import type { CarteData, OptionsCarte, StatKey } from '@/lib/v2/cartes/types';
 import type { VisuelsCarte } from './CarteRendu';
 import { traduire } from '@/lib/i18n/tr';
+import { effacerCopieCarte } from '@/lib/v2/cartes/tmp';
 
 export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>) {
   const ref = useRef<View>(null);
@@ -35,6 +36,21 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
   const [copie, setCopie] = useState(false);
   const [saved, setSaved] = useState(false);
   const styleLu = useRef(!!initial);
+  /**
+   * 2 novembre 2026 (confidentialite) : la copie de la photo de cette carte, pour l'effacer quand elle est
+   * remplacee, enlevee, ou quand tu quittes la carte. Seul un fichier de cacheDirectory/cartes_tmp/ est efface.
+   */
+  const photoTmp = useRef<string | null>(null);
+  const changerPhoto = useCallback((uri: string | null) => {
+    const avant = photoTmp.current;
+    photoTmp.current = uri;
+    setPhoto(uri);
+    if (avant && avant !== uri) void effacerCopieCarte(avant);
+  }, []);
+  useEffect(() => () => {
+    void effacerCopieCarte(photoTmp.current);
+    photoTmp.current = null;
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -81,11 +97,11 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
   const choisirPhoto = useCallback(async (src: 'gallery' | 'camera') => {
     const res = await pickCardPhoto(src, { onPreparation: setPhotoEnCours });
     if (res) {
-      setPhoto(res.uri);
+      changerPhoto(res.uri);
       // ta photo en plein fond : le personnage se retire, tu peux le remettre
       setStyle({ fond: 'photo', personnage: false, sansPersonne: false, epure: false });
     }
-  }, [setStyle]);
+  }, [setStyle, changerPhoto]);
 
   /**
    * 31 octobre 2026 : deux fonds seulement, ta photo ou une couleur franche. Les scenes ne sont plus proposees
@@ -97,9 +113,9 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
 
   /** Enleve ta photo de fond : la carte revient sur ta couleur */
   const enleverPhoto = useCallback(() => {
-    setPhoto(null);
+    changerPhoto(null);
     setStyle({ fond: 'couleur' });
-  }, [setStyle]);
+  }, [setStyle, changerPhoto]);
 
   /**
    * Les visuels d'une autre carte que celle de ce hook (vignettes, 17 octobre 2026) : meme scene, meme photo,
