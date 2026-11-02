@@ -8,10 +8,19 @@ type Natif = { analyserPhoto: jest.Mock; capacites: jest.Mock } | null;
 
 type Charge = { photo: typeof import('@/modules/yoroi-photo'); analyse: typeof import('@/lib/v2/cartes/moteur/analysePhoto') };
 
-function charger(natif: Natif): Charge {
+/** moteur : le reglage du Studio createur lu par analysePhoto au moment de l'appel ('nouveau' pour ces tests) */
+function charger(natif: Natif, moteur: 'ancien' | 'nouveau' = 'nouveau'): Charge {
   const mod: { v: Charge | null } = { v: null };
   jest.isolateModules(() => {
     jest.doMock('expo-modules-core', () => ({ requireOptionalNativeModule: () => natif }));
+    jest.doMock('@react-native-async-storage/async-storage', () => ({
+      __esModule: true,
+      default: {
+        getItem: jest.fn(async (k: string) => (k === 'yoroi_cartes_moteur_v1' ? moteur : null)),
+        setItem: jest.fn(async () => undefined),
+        removeItem: jest.fn(async () => undefined),
+      },
+    }));
     mod.v = { photo: require('@/modules/yoroi-photo'), analyse: require('@/lib/v2/cartes/moteur/analysePhoto') };
   });
   return mod.v as Charge;
@@ -161,6 +170,9 @@ describe('avec le module natif', () => {
       const natif = { analyserPhoto: jest.fn().mockReturnValue(new Promise(() => undefined)), capacites: jest.fn() };
       const { analyse, photo } = charger(natif);
       const p = analyse.analyserPhoto('file:///p.jpg');
+      // le moteur est d'abord lu (AsyncStorage), puis le natif est appele : on laisse passer ces etapes
+      for (let k = 0; k < 10 && natif.analyserPhoto.mock.calls.length === 0; k++) await Promise.resolve();
+      expect(natif.analyserPhoto).toHaveBeenCalled();
       jest.advanceTimersByTime(photo.DELAI_ANALYSE_MS + 10);
       await expect(p).resolves.toEqual(analyse.ANALYSE_VIDE);
     } finally {
