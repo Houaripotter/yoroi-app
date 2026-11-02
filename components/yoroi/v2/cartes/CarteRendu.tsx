@@ -6,8 +6,8 @@
  * « Ta photo » ou « Couleur », les 3 formats, le pied (logo et badges officiels) et la carte Avant apres.
  * Les autocollants (net, chrome, stickers) se dessinent aussi sans fond : le PNG garde la transparence.
  */
-import React, { forwardRef } from 'react';
-import { Image, View } from 'react-native';
+import React, { forwardRef, useEffect, useMemo, useState } from 'react';
+import { DeviceEventEmitter, Image, View } from 'react-native';
 import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
 import type { ImageSourcePropType } from 'react-native';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -28,6 +28,17 @@ import { traduire } from '@/lib/i18n/tr';
 import { Dessin, fondDe } from './Directions';
 import type { CtxDirection } from './Directions';
 import { ambiancePour } from './ambiance';
+// 2 novembre 2026 (cartes v10) : le nouveau moteur, choisi par l'interrupteur du Studio createur (ancien par defaut)
+import { CARTES_REGLAGE_EVENT, formatDuMoteur, lireMoteur, moteurCourant } from '@/lib/v2/cartes/store';
+import type { MoteurCartes } from '@/lib/v2/cartes/store';
+import { compositionEffective, contenuDe, famillesPour } from '@/lib/v2/cartes/moteur/familles';
+import { formatMoteur } from '@/lib/v2/cartes/moteur/grille';
+import { mettreEnPage } from '@/lib/v2/cartes/moteur/miseEnPage';
+import type { Plan } from '@/lib/v2/cartes/moteur/miseEnPage';
+import { photoMesuree, taillePhoto } from '@/lib/v2/cartes/moteur/analysePhoto';
+import type { AnalysePhoto } from '@/lib/v2/cartes/moteur/analysePhoto';
+import type { Recadrage } from '@/lib/v2/cartes/moteur/protection';
+import { CarteMoteur } from './moteur/CarteMoteur';
 
 export const CARTE_W = 360;
 export const HAUTEURS: Record<FormatId, number> = { story: 640, post: 450, carre: 360 };
@@ -64,6 +75,10 @@ export type VisuelsCarte = {
    * Jamais pour la carte enregistree ou partagee.
    */
   ambiance?: boolean;
+  /** 2 novembre 2026 (nouveau moteur) : l'analyse de ta photo (vide sans module photo), ton recadrage au doigt, et le geste en cours */
+  analyse?: AnalysePhoto | null;
+  recadrage?: Recadrage | null;
+  enveloppePhoto?: (photo: React.ReactNode) => React.ReactNode;
 };
 
 type Props = {
@@ -72,6 +87,8 @@ type Props = {
   visuels: VisuelsCarte;
   /** 31 octobre 2026 : le bloc des chiffres deplace et redimensionne au doigt dans l'atelier (session d'edition seulement) */
   placement?: Placement | null;
+  /** 2 novembre 2026 : force un moteur (Studio createur, mode comparer) ; absent, celui de l'interrupteur */
+  moteur?: MoteurCartes;
 };
 
 /** Taille de police pour que le texte tienne sur une ligne dans la largeur donnee */
@@ -170,14 +187,97 @@ export function chiffresDeCarte(brut: CarteData, data: CarteData, o: OptionsCart
   return { hero: all[0] ?? null, stats: all.slice(1, 4), titre: titreCarte(brut, o.masque) };
 }
 
+// ============================================
+// LE NOUVEAU MOTEUR (cartes v10, 2 novembre 2026)
+// ============================================
+
+/** Le moteur choisi dans le Studio createur ; bascule tout de suite quand il change (ancien par defaut) */
+export function useMoteurCartes(): MoteurCartes {
+  const [m, setM] = useState<MoteurCartes>(moteurCourant());
+  useEffect(() => {
+    let vivant = true;
+    lireMoteur().then((x) => vivant && setM(x)).catch(() => undefined);
+    const sub = DeviceEventEmitter.addListener(CARTES_REGLAGE_EVENT, (e: unknown) => {
+      const x = e && typeof e === 'object' ? (e as { moteur?: unknown }).moteur : undefined;
+      if (x === 'ancien' || x === 'nouveau') setM(x);
+    });
+    return () => {
+      vivant = false;
+      sub.remove();
+    };
+  }, []);
+  return m;
+}
+
+/** Vrai si le nouveau moteur dessine cette carte (sinon l'ancien, pour les cartes qu'il ne connait pas encore) */
+export function nouveauMoteurPour(d: CarteData | null | undefined, m: MoteurCartes): boolean {
+  return m === 'nouveau' && famillesPour(d).length > 0;
+}
+
+/** Le format dessine : le carre s'ouvre en 4:5 dans le nouveau moteur */
+export function formatDessine(d: CarteData | null | undefined, o: OptionsCarte, m: MoteurCartes): FormatId {
+  return formatDuMoteur(o.format, nouveauMoteurPour(d, m));
+}
+
+/** La taille de ta photo, lue une fois par photo */
+export function useTaillePhoto(uri: string | null | undefined): { w: number; h: number } | null {
+  const [t, setT] = useState<{ uri: string; w: number; h: number } | null>(null);
+  useEffect(() => {
+    let vivant = true;
+    if (!uri) return;
+    taillePhoto(uri).then((x) => vivant && x && setT({ uri, ...x })).catch(() => undefined);
+    return () => {
+      vivant = false;
+    };
+  }, [uri]);
+  return t && t.uri === uri ? { w: t.w, h: t.h } : null;
+}
+
+/** Le plan du nouveau moteur pour une carte ; null si le nouveau moteur ne la dessine pas */
+export function planNouveauMoteur(data: CarteData, o: OptionsCarte, v: VisuelsCarte, u: ReturnType<typeof useUnitePoids>, taille: { w: number; h: number } | null): { plan: Plan; photo: string | null } | null {
+  const fams = famillesPour(data);
+  if (!fams.length) return null;
+  const famille = o.familleMoteur && fams.includes(o.familleMoteur) ? o.familleMoteur : fams[0];
+  const contenu = contenuDe(data, famille, u, o.masque);
+  if (!contenu) return null;
+  const photo = optionsDessinees(o, v).photo;
+  const aPhoto = !!photo && !!taille;
+  const compo = compositionEffective(data, famille, o.compo ?? (photo ? 'A' : null), aPhoto);
+  const mesure = compo === 'A' && photo && taille ? photoMesuree(v.analyse, taille.w, taille.h) : null;
+  const plan = mettreEnPage({ contenu, compo, format: formatMoteur(o.format), style: o.styleCarte, photo: mesure, recadrage: v.recadrage ?? null, lumiere: v.analyse?.lumiere ?? null });
+  return { plan, photo: mesure ? photo : null };
+}
+
+function RenduNouveau({ data, options, visuels, u, W }: { data: CarteData; options: OptionsCarte; visuels: VisuelsCarte; u: ReturnType<typeof useUnitePoids>; W: number }) {
+  const photo = optionsDessinees(options, visuels).photo;
+  const taille = useTaillePhoto(photo);
+  const r = useMemo(() => planNouveauMoteur(data, options, visuels, u, taille), [data, options, visuels, u, taille]);
+  if (!r) return null;
+  const aa = data.avantApres;
+  const duo = r.plan.type === 'duo' && aa ? { avant: aa.avant.uri, apres: aa.apres.uri, flou: !!options.flou, poids: { avant: r.plan.contenu.poids?.avant ?? null, apres: r.plan.contenu.poids?.apres ?? null } } : null;
+  return <CarteMoteur plan={r.plan} largeur={W} photo={r.photo} taillePhoto={taille} duo={duo} enveloppePhoto={visuels.enveloppePhoto} />;
+}
+
 /**
  * La carte. Rendue a 360 de large ; l'apercu la reduit avec une echelle, la capture la prend a sa taille.
+ * 2 novembre 2026 (cartes v10) : selon l'interrupteur du Studio createur, l'ancien moteur (Directions.tsx) ou le nouveau
+ * (CarteMoteur.tsx) ; une carte que le nouveau moteur ne connait pas reste sur l'ancien.
  */
-export const CarteRendu = forwardRef<View, Props>(({ data: brut, options, visuels, placement }, ref) => {
+export const CarteRendu = forwardRef<View, Props>(({ data: brut, options, visuels, placement, moteur }, ref) => {
   // 18 octobre 2026 : charges calculees en kilos, dessinees dans l'unite du reglage (kg ou lb)
   const u = useUnitePoids();
+  const moteurLu = useMoteurCartes();
+  const m = moteur ?? moteurLu;
   const data = donneesEnUnite(brut, u);
   const W = CARTE_W;
+  if (nouveauMoteurPour(brut, m)) {
+    const Hn = HAUTEURS[formatDessine(brut, options, m)];
+    return (
+      <View ref={ref} collapsable={false} style={{ width: W, height: Hn, overflow: 'hidden' }}>
+        <RenduNouveau data={brut} options={{ ...options, format: formatDessine(brut, options, m) }} visuels={visuels} u={u} W={W} />
+      </View>
+    );
+  }
   const H = HAUTEURS[options.format];
   if (data.moment === 'avant_apres') {
     return (
@@ -221,9 +321,11 @@ CarteRendu.displayName = 'CarteRendu';
 
 /** Apercu reduit : la carte garde sa taille de 360 pour la capture, une echelle la fait tenir dans la largeur voulue */
 export const CarteApercu = forwardRef<View, Props & { largeur: number; damier?: boolean }>(({ largeur, damier, ...p }, ref) => {
-  const H = HAUTEURS[p.options.format];
+  const moteurLu = useMoteurCartes();
+  const m = p.moteur ?? moteurLu;
+  const H = HAUTEURS[formatDessine(p.data, p.options, m)];
   const s = largeur / CARTE_W;
-  const transparent = sortieTransparente(p.data, p.options);
+  const transparent = !nouveauMoteurPour(p.data, m) && sortieTransparente(p.data, p.options);
   return (
     <View style={{ width: largeur, height: H * s, borderRadius: 18 * s + 4, overflow: 'hidden', backgroundColor: transparent && damier !== false ? '#C9CBD1' : '#121318' }}>
       {/* l'autocollant seul : un damier dessous montre la transparence (il n'est pas dans la capture) */}
