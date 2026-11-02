@@ -125,7 +125,7 @@ export function vignettesBoutique(u: Univers, personnageKey: string | null | und
   // vague 47 : en Classique, les scenes Classique (salle, parc, ville, mer), pas les scenes du Japon
   const scenes =
     u === 'classique'
-      ? SCENES_CLASSIQUE.filter((x) => x.id.endsWith('_jour')).map((x) => ({ key: `scene_${x.id}`, nom: x.nom, image: x.image, genre: 'scene' as const, badge: x.offerte ? ({ texte: traduire('Offert'), ton: 'offert' } as BadgeVitrine) : ({ texte: traduire('Premium'), ton: 'premium' } as BadgeVitrine) }))
+      ? SCENES_CLASSIQUE.filter((x) => x.id.endsWith('_jour')).map((x) => ({ key: `scene_${x.id}`, nom: x.nom, image: x.image, genre: 'scene' as const, badge: x.offerte ? ({ texte: traduire('Offert'), ton: 'offert' } as BadgeVitrine) : x.rang ? ({ texte: traduire("Rang {0}", rangNom(x.rang, u)), ton: 'rang' } as BadgeVitrine) : ({ texte: traduire('Premium'), ton: 'premium' } as BadgeVitrine) }))
       : SCENES_VITRINE.map(scene).filter((v): v is Vignette => !!v);
 
   if (!aUnPersonnage(personnageKey)) return scenes.slice(0, 5);
