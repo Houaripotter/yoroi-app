@@ -2,10 +2,11 @@ import AppIntents
 import WidgetKit
 
 // Reglage d'un widget (iOS 17, appui long puis Modifier le widget) : son style.
-// « Comme dans l'app » suit Reglages, Style des widgets (A tant que rien n'a change).
+// « Comme dans l'app » suit Reglages, Style des widgets (D Scenes illustrees tant que rien n'a change).
 
 enum ChoixStyleW: String, AppEnum {
   case app
+  case scenes
   case lanternes
   case rouleau
   case armure
@@ -14,6 +15,7 @@ enum ChoixStyleW: String, AppEnum {
 
   static let caseDisplayRepresentations: [ChoixStyleW: DisplayRepresentation] = [
     .app: "Comme dans l'app",
+    .scenes: "Scènes illustrées",
     .lanternes: "Nuit de lanternes",
     .rouleau: "Rouleau et encre",
     .armure: "Armure laquée",
@@ -23,6 +25,7 @@ enum ChoixStyleW: String, AppEnum {
   var style: StyleW {
     switch self {
     case .app: return StyleW.depuis(GroupeYoroi.lireStyle())
+    case .scenes: return .d
     case .lanternes: return .a
     case .rouleau: return .b
     case .armure: return .c
