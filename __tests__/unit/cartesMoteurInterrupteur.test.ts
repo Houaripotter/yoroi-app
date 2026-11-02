@@ -1,6 +1,7 @@
 /**
- * Cartes v10 (2 novembre 2026) : l'interrupteur du nouveau moteur (lib/v2/cartes/store.ts).
- * Ancien par defaut, bascule tout de suite, reglage de ce telephone seulement : jamais dans les cles synchronisees.
+ * Cartes v10 (2 novembre 2026) : le moteur des cartes (lib/v2/cartes/store.ts).
+ * Studio unique (meme jour) : le nouveau moteur par defaut, pour tout le monde ; un ancien choix « ancien » (cle v1)
+ * ne revient jamais ; plus d'interrupteur dans le Studio createur. Reglage de ce telephone seulement.
  */
 const mockMemoire = new Map<string, string>();
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -23,17 +24,20 @@ import { join } from 'path';
 
 beforeEach(() => mockMemoire.clear());
 
-test('ancien par defaut, sans rien de range', async () => {
-  expect(MOTEUR_DEFAUT).toBe('ancien');
-  expect(CLE_MOTEUR).toBe('yoroi_cartes_moteur_v1');
-  expect(await lireMoteur()).toBe('ancien');
-  expect(moteurCourant()).toBe('ancien');
+test('nouveau par defaut, sans rien de range', async () => {
+  expect(MOTEUR_DEFAUT).toBe('nouveau');
+  expect(CLE_MOTEUR).toBe('yoroi_cartes_moteur_v2');
+  expect(await lireMoteur()).toBe('nouveau');
+  expect(moteurCourant()).toBe('nouveau');
 });
 
-test('une valeur inconnue retombe sur l ancien', async () => {
+test('une valeur inconnue retombe sur le nouveau ; un ancien choix « ancien » de la cle v1 est ignore', async () => {
   mockMemoire.set(CLE_MOTEUR, 'nimporte');
-  expect(await lireMoteur()).toBe('ancien');
-  expect(moteurValide(null)).toBe('ancien');
+  expect(await lireMoteur()).toBe('nouveau');
+  expect(moteurValide(null)).toBe('nouveau');
+  mockMemoire.clear();
+  mockMemoire.set('yoroi_cartes_moteur_v1', 'ancien');
+  expect(await lireMoteur()).toBe('nouveau');
 });
 
 test('nouveau puis retour a l ancien : instantane, prevenu par l evenement, range', async () => {
@@ -63,12 +67,9 @@ test('le carre s ouvre en 4:5 avec le nouveau moteur seulement', () => {
   expect(formatDuMoteur('story', true)).toBe('story');
 });
 
-test('l interrupteur ne se regle que dans le Studio createur', () => {
+test('plus d interrupteur dans le Studio createur', () => {
   const racine = join(__dirname, '..', '..');
   const diag = readFileSync(join(racine, 'components/yoroi/v2/studio/Diagnostic.tsx'), 'utf8');
-  expect(diag).toContain('ecrireMoteur');
-  // le Studio est monte derriere sa garde (mode createur actif, jeton reverifie)
-  const studio = readFileSync(join(racine, 'app/creator-mode.tsx'), 'utf8');
-  expect(studio).toMatch(/<StudioGate>/);
-  expect(studio).toContain("from '@/components/yoroi/v2/studio/Diagnostic'");
+  expect(diag).not.toContain('ecrireMoteur');
+  expect(diag).not.toContain("moteur=\"ancien\"");
 });
