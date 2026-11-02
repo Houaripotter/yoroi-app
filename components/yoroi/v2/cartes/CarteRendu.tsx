@@ -33,6 +33,7 @@ import { CARTES_REGLAGE_EVENT, formatDuMoteur, lireMoteur, moteurCourant } from 
 import type { MoteurCartes } from '@/lib/v2/cartes/store';
 import { compositionEffective, contenuDe, famillesPour } from '@/lib/v2/cartes/moteur/familles';
 import { formatMoteur } from '@/lib/v2/cartes/moteur/grille';
+import { cleBloc, positionValide } from '@/lib/v2/cartes/moteur/deplacement';
 import { mettreEnPage } from '@/lib/v2/cartes/moteur/miseEnPage';
 import type { Plan } from '@/lib/v2/cartes/moteur/miseEnPage';
 import { photoMesuree, taillePhoto } from '@/lib/v2/cartes/moteur/analysePhoto';
@@ -79,6 +80,8 @@ export type VisuelsCarte = {
   analyse?: AnalysePhoto | null;
   recadrage?: Recadrage | null;
   enveloppePhoto?: (photo: React.ReactNode) => React.ReactNode;
+  /** 2 novembre 2026 (bloc deplacable) : enveloppe le bloc des chiffres (le studio y pose le geste qui le deplace) */
+  enveloppeBloc?: (bloc: React.ReactNode) => React.ReactNode;
   /** 2 novembre 2026 (nouveau moteur) : la vue de l'autocollant seul, capturee pour Copier et Enregistrer */
   refAutocollant?: React.RefObject<View | null>;
 };
@@ -260,7 +263,10 @@ export function planNouveauMoteur(data: CarteData, o: OptionsCarte, v: VisuelsCa
   const aPhoto = !!photo && !!taille;
   const compo = compositionEffective(data, famille, o.compo ?? (photo ? 'A' : null), aPhoto);
   const mesure = compo === 'A' && photo && taille ? photoMesuree(v.analyse, taille.w, taille.h) : null;
-  const plan = mettreEnPage({ contenu, compo, format: formatMoteur(o.format), style: o.styleCarte, photo: mesure, recadrage: v.recadrage ?? null, lumiere: v.analyse?.lumiere ?? null });
+  const format = formatMoteur(o.format);
+  // 2 novembre 2026 (bloc deplacable) : ta place du bloc des chiffres, pour cette carte et ce format
+  const positionBloc = positionValide(o.positionsBloc?.[cleBloc(famille, compo, format)]);
+  const plan = mettreEnPage({ contenu, compo, format, style: o.styleCarte, photo: mesure, recadrage: v.recadrage ?? null, lumiere: v.analyse?.lumiere ?? null, positionBloc });
   return { plan, photo: mesure ? photo : null };
 }
 
@@ -271,7 +277,7 @@ function RenduNouveau({ data, options, visuels, u, W }: { data: CarteData; optio
   if (!r) return null;
   const aa = data.avantApres;
   const duo = r.plan.type === 'duo' && aa ? { avant: aa.avant.uri, apres: aa.apres.uri, flou: !!options.flou, poids: { avant: r.plan.contenu.poids?.avant ?? null, apres: r.plan.contenu.poids?.apres ?? null } } : null;
-  return <CarteMoteur plan={r.plan} largeur={W} photo={r.photo} taillePhoto={taille} duo={duo} enveloppePhoto={visuels.enveloppePhoto} refAutocollant={visuels.refAutocollant} />;
+  return <CarteMoteur plan={r.plan} largeur={W} photo={r.photo} taillePhoto={taille} duo={duo} enveloppePhoto={visuels.enveloppePhoto} enveloppeBloc={visuels.enveloppeBloc} refAutocollant={visuels.refAutocollant} />;
 }
 
 /**
