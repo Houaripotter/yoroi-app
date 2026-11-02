@@ -9,6 +9,7 @@ import type { JournalCartes } from './moments';
 import type { ModeleId, OptionsCarte, RaisonPesee } from './types';
 import { COULEURS } from './couleurs';
 import { DIRECTION_DEFAUT, estDirection, ORDRE_CARROUSEL } from './directions';
+import { positionsValides } from './moteur/deplacement';
 
 /**
  * 31 octobre 2026 (cartes v2) : les 10 directions remplacent les six modeles. Le nom MODELES_SIX reste pour les appels
@@ -85,7 +86,11 @@ export function migrerStyle(s: StyleMemorise): StyleMemorise {
   const modele = estDirection(s.modele) ? s.modele : DIRECTION_DEFAUT;
   const couleur = COULEURS.some((c) => c.id === s.couleur) ? s.couleur : STYLE_DEFAUT.couleur;
   const sortie = s.sortie === 'autocollant' ? 'autocollant' : 'story';
-  return { ...s, fond, modele, couleur, sortie };
+  // 2 novembre 2026 (bloc deplacable) : les places du bloc des chiffres, nettoyees (deux nombres de 0 a 1 par carte)
+  const positionsBloc = positionsValides(s.positionsBloc);
+  const out: StyleMemorise = { ...s, fond, modele, couleur, sortie, positionsBloc };
+  if (!positionsBloc) delete out.positionsBloc;
+  return out;
 }
 
 export async function ecrireStyle(s: StyleMemorise): Promise<void> {
