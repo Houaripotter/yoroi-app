@@ -38,20 +38,23 @@ type Attendu = { source: 'visage' | 'corps' | 'tete_de_dos' | 'zone_sure'; compa
 const V10: Record<string, { story: Attendu; post: Attendu }> = {
   selfie_miroir: { story: { source: 'visage', compact: false }, post: { source: 'visage', compact: false } },
   portrait_profil: { story: { source: 'visage', compact: false, etape: 'photo_reduite' }, post: { source: 'visage', compact: true, etape: 'photo_reduite' } },
-  salle: { story: { source: 'zone_sure', compact: false }, post: { source: 'zone_sure', compact: true } },
+  salle: { story: { source: 'zone_sure', compact: false }, post: { source: 'zone_sure', compact: false } },
   sombre: { story: { source: 'visage', compact: false }, post: { source: 'visage', compact: false } },
   lumineuse: { story: { source: 'visage', compact: false }, post: { source: 'visage', compact: false } },
   visage_haut: { story: { source: 'visage', compact: false }, post: { source: 'visage', compact: false } },
   visage_bas: { story: { source: 'visage', compact: false, etape: 'photo_reduite' }, post: { source: 'visage', compact: false, etape: 'photo_reduite' } },
   plan_large: { story: { source: 'corps', compact: false }, post: { source: 'corps', compact: false } },
-  gros_plan: { story: { source: 'visage', compact: true }, post: { source: 'visage', compact: false, etape: 'photo_reduite' } },
+  gros_plan: { story: { source: 'visage', compact: false }, post: { source: 'visage', compact: false, etape: 'photo_reduite' } },
   // 2 novembre 2026 (studio unique) : la bande plus basse laisse 84 px de photo en plus en story ; la photo horizontale
   // reste alors en plein cadre, le bloc compact sous les visages (avant : photo reduite sur fond floute)
+  // 2 novembre 2026 (bloc deplacable) : la bande collee en bas et plus fine (story 136 px, 4:5 104 px) laisse encore
+  // 80 px de photo en story et 20 px en 4:5 ; le bloc garde alors sa taille normale la ou il etait compact avant
+  // (salle, sans visage, record en 4:5 ; gros plan en story), toujours a 48 px au moins de la zone protegee
   horizontale: { story: { source: 'visage', compact: true }, post: { source: 'visage', compact: false, etape: 'photo_reduite' } },
-  sans_visage: { story: { source: 'zone_sure', compact: false }, post: { source: 'zone_sure', compact: true } },
+  sans_visage: { story: { source: 'zone_sure', compact: false }, post: { source: 'zone_sure', compact: false } },
   jjb_full: { story: { source: 'visage', compact: false }, post: { source: 'visage', compact: false } },
   course_rue: { story: { source: 'tete_de_dos', compact: false, etape: 'photo_reduite' }, post: { source: 'tete_de_dos', compact: true, etape: 'photo_reduite_remontee' } },
-  record_salle: { story: { source: 'zone_sure', compact: false }, post: { source: 'zone_sure', compact: true } },
+  record_salle: { story: { source: 'zone_sure', compact: false }, post: { source: 'zone_sure', compact: false } },
   annee_piste: { story: { source: 'corps', compact: false }, post: { source: 'corps', compact: false } },
 };
 
