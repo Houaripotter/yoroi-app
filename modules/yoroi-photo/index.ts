@@ -12,7 +12,7 @@ import type { CapacitesPhoto, MasqueNatif, ReponseNative, VisageNatif } from './
 export * from './src/YoroiPhoto.types';
 
 type ModuleNatif = {
-  analyserPhoto(uri: string): Promise<ReponseNative>;
+  analyserPhoto(uri: string, tailleMax: number): Promise<ReponseNative>;
   capacites(): CapacitesPhoto;
 };
 
@@ -20,6 +20,22 @@ const natif = requireOptionalNativeModule<ModuleNatif>('YoroiPhoto');
 
 /** Au-dela, on rend la reponse vide (le natif continue, sa reponse sera ignoree) */
 export const DELAI_ANALYSE_MS = 20_000;
+
+/**
+ * Grand cote de la copie analysee, en pixels. LE reglage de la taille : 1024 en attendant le verdict du banc
+ * (1024 contre 1440, banc/comparer.py). Le natif borne entre TAILLE_ANALYSE_MIN et TAILLE_ANALYSE_MAX.
+ */
+export const TAILLE_ANALYSE_DEFAUT = 1024;
+export const TAILLE_ANALYSE_MIN = 512;
+export const TAILLE_ANALYSE_MAX = 2048;
+/** Les deux tailles comparees par le banc photo */
+export const TAILLES_BANC = [1024, 1440] as const;
+
+/** Une taille demandee, ramenee a un entier entre le min et le max ; la taille par defaut si elle ne se lit pas */
+export function tailleAnalyse(px?: number | null): number {
+  if (typeof px !== 'number' || !Number.isFinite(px)) return TAILLE_ANALYSE_DEFAUT;
+  return Math.min(TAILLE_ANALYSE_MAX, Math.max(TAILLE_ANALYSE_MIN, Math.round(px)));
+}
 
 export const REPONSE_VIDE: ReponseNative = Object.freeze({
   visages: [],
@@ -95,21 +111,26 @@ export function normaliserReponse(r: Partial<ReponseNative> | null | undefined):
     detourageDisponible: r.detourageDisponible === true,
     erreurs: Array.isArray(r.erreurs) ? r.erreurs.filter((e) => typeof e === 'string') : [],
     dureeMs: nombre(r.dureeMs) ?? undefined,
+    tailleMax: nombre(r.tailleMax) ?? undefined,
+    memoireAvantMo: nombre(r.memoireAvantMo) ?? undefined,
+    memoireApresMo: nombre(r.memoireApresMo) ?? undefined,
+    memoirePicMo: nombre(r.memoirePicMo) ?? undefined,
   };
 }
 
 /**
- * Analyse une photo deja copiee dans le cache de l'app (file://). La copie est reduite a 1024 px et redressee par le natif.
+ * Analyse une photo deja copiee dans le cache de l'app (file://). La copie est redressee et reduite par le natif,
+ * a TAILLE_ANALYSE_DEFAUT (1024 px) sur le grand cote, ou a options.tailleMax (le banc compare 1024 et 1440).
  * Jamais d'erreur : la reponse vide si quelque chose manque.
  */
-export async function analyserPhoto(uri: string | null | undefined): Promise<ReponseNative> {
+export async function analyserPhoto(uri: string | null | undefined, options?: { tailleMax?: number }): Promise<ReponseNative> {
   if (!natif || !uri || typeof uri !== 'string') return { ...REPONSE_VIDE, visages: [], erreurs: [] };
   let minuteur: ReturnType<typeof setTimeout> | undefined;
   try {
     const delai = new Promise<null>((ok) => {
       minuteur = setTimeout(() => ok(null), DELAI_ANALYSE_MS);
     });
-    const r = await Promise.race([natif.analyserPhoto(uri), delai]);
+    const r = await Promise.race([natif.analyserPhoto(uri, tailleAnalyse(options?.tailleMax)), delai]);
     if (r === null) return { ...REPONSE_VIDE, visages: [], erreurs: ['delai'] };
     return normaliserReponse(r);
   } catch {
