@@ -20,6 +20,7 @@ import type { StatutDemande } from './v2/sante/connexion';
 import { enregistrementSommeilHC } from './v2/sante/sommeilHC';
 import type { NuitAEcrire } from './v2/sante/sommeilHC';
 import { traduire } from '@/lib/i18n/tr';
+import { champsKcalImport, classerKcalHealthConnect, type ChampsSourceKcal, type MetaHealthConnect } from '@/lib/v2/seance/sourceKcal';
 
 // ============================================
 // HEALTH CONNECT SDK (Android)
@@ -207,6 +208,10 @@ export interface HealthData {
     averageHeartRate?: number;
     maxHeartRate?: number;
     source?: string;
+    // 2 novembre 2026 : d'ou viennent les kcal (lib/v2/seance/sourceKcal.ts)
+    calories_source?: ChampsSourceKcal['calories_source'];
+    calories_appareil?: string | null;
+    calories_mesurees?: number | null;
   }[];
   bloodPressure?: {
     systolic: number;            // mmHg
@@ -1719,12 +1724,15 @@ class HealthConnectService {
           let distance: number | undefined;
           let calories: number | undefined;
           const sessionAny = session as any;
+          // 2 novembre 2026 : metadonnees des enregistrements d'ou viennent vraiment les kcal (source des kcal)
+          let metasKcal: MetaHealthConnect[] = [];
 
           if (sessionAny.route?.distance) {
             distance = Math.round(sessionAny.route.distance / 1000 * 100) / 100;
           }
           if (sessionAny.segments?.[0]?.totalCalories?.inKilocalories) {
             calories = Math.round(sessionAny.segments[0].totalCalories.inKilocalories);
+            metasKcal = [sessionAny.metadata];
           }
 
           // Lire les heart rate samples pour ce workout
@@ -1760,10 +1768,12 @@ class HealthConnectService {
               });
               if (calRecords?.records && calRecords.records.length > 0) {
                 let totalCal = 0;
+                const metas: MetaHealthConnect[] = [];
                 for (const cr of calRecords.records) {
                   totalCal += cr.energy?.inKilocalories || 0;
+                  if ((cr.energy?.inKilocalories || 0) > 0) metas.push((cr as any).metadata);
                 }
-                if (totalCal > 0) calories = Math.round(totalCal);
+                if (totalCal > 0) { calories = Math.round(totalCal); metasKcal = metas; }
               }
             } catch (e) {
               // Calories may not be available
@@ -1799,6 +1809,8 @@ class HealthConnectService {
             averageHeartRate: avgHR,
             maxHeartRate: maxHR,
             source: normalizeSourceName(source),
+            // 2 novembre 2026 : montre ou bracelet (type d'appareil), enregistrement automatique, saisie, ou Health Connect
+            ...champsKcalImport(calories, classerKcalHealthConnect(metasKcal)),
           });
         }
 
@@ -1848,6 +1860,9 @@ class HealthConnectService {
           distance: workout.distance ? parseFloat(workout.distance.toFixed(2)) : undefined,
           calories: workout.calories,
           heart_rate: workout.averageHeartRate,
+          calories_source: workout.calories_source ?? null,
+          calories_appareil: workout.calories_appareil ?? null,
+          calories_mesurees: workout.calories_mesurees ?? null,
           max_heart_rate: workout.maxHeartRate,
           source: workout.source || 'health_connect',
           notes: noteParts.length > 0 ? `${sportLabel} (${noteParts.join(', ')})` : sportLabel,
@@ -3397,6 +3412,9 @@ class HealthConnectService {
               distance: workout.distance ? parseFloat(workout.distance.toFixed(2)) : undefined,
               calories: workout.calories,
               heart_rate: workout.averageHeartRate,
+              calories_source: workout.calories_source ?? null,
+              calories_appareil: workout.calories_appareil ?? null,
+              calories_mesurees: workout.calories_mesurees ?? null,
               max_heart_rate: workout.maxHeartRate,
               source: workout.source || 'health_connect',
               notes: noteText,
