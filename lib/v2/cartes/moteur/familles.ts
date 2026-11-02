@@ -6,7 +6,10 @@
  *
  * 1 Seance de musculation (compositions A, B, C), 2 Record, 3 Course, 4 JJB (et sports de combat), 5 Marche,
  * 6 Avant apres, 7 Muscles, 8 Semaine, 9 Serie, 10 Annee.
- * Les autres cartes (pesee, mois, la plupart des exploits) restent sur l'ancien moteur : famillesPour rend [].
+ * 2 novembre 2026 (studio unique) : 11 Pesee, 12 Mois, 13 Objectif, 14 Exploit (paliers, compteurs, cumuls, techniques,
+ * bilans), 15 Sport (seance d'un autre sport : velo, natation, sport collectif...). Memes grille et finition ; chiffres
+ * lus dans chiffresDisponibles (chiffres.ts) et exploitVisible (exploits.ts), masquage du poids compris. Plus aucune carte
+ * ne reste sur l'ancien moteur : famillesPour ne rend [] que sans donnees.
  *
  * Autocollant (2 novembre 2026, _propositions/autocollant_2026-11-02, proposition A) : la 5e composition, tes chiffres
  * empiles et le logo sur fond transparent, pour la seance, le record, la course, le JJB et la marche (lignesAutocollant).
@@ -16,9 +19,10 @@ import { traduire } from '@/lib/i18n/tr';
 import type { UnitePoids } from '@/lib/v2/unitePoids';
 import { versUnitePoids } from '@/lib/v2/unitePoids';
 import type { ZoneId } from '@/lib/v2/programmes/zones';
-import { allure, duree, MOINS, nombre } from '../chiffres';
-import { exploitEnUnite } from '../unite';
-import type { CarteData, CompositionId, FamilleMoteur, Masque } from '../types';
+import { allure, chiffresDisponibles, duree, MOINS, nombre, titreCarte } from '../chiffres';
+import { exploitVisible } from '../exploits';
+import { exploitEnUnite, statsEnUnite } from '../unite';
+import type { CarteData, CompositionId, FamilleMoteur, Masque, StatKey, StatValue } from '../types';
 import { APLUS_ACTIF } from './analysePhoto';
 
 export type { CompositionId, FamilleMoteur };
@@ -39,7 +43,7 @@ export type Palette = {
   gold?: boolean;
 };
 
-export const PALETTES: Record<'muscu' | 'course' | 'jjb' | 'marche' | 'pesee' | 'record' | 'semaine' | 'serie' | 'annee', Palette> = {
+export const PALETTES: Record<'muscu' | 'course' | 'jjb' | 'marche' | 'pesee' | 'record' | 'semaine' | 'serie' | 'annee' | 'mois' | 'objectif' | 'exploit' | 'sport', Palette> = {
   muscu: { g: ['#3D9BFF', '#0A6FE8', '#0A3FB0'], deep: '#0A5BC4', fonce: [6, 26, 61] },
   course: { g: ['#7FDCF5', '#16B8DE', '#0784B8'], deep: '#06688E', fonce: [4, 40, 58] },
   jjb: { g: ['#9473FF', '#6E3DF5', '#3F1BB8'], deep: '#4F25D6', fonce: [27, 13, 77] },
@@ -49,6 +53,11 @@ export const PALETTES: Record<'muscu' | 'course' | 'jjb' | 'marche' | 'pesee' | 
   semaine: { g: ['#18B4E0', '#2F7BF0', '#7348F2', '#D9468E', '#F27A2A'], deep: '#4F25D6', fonce: [20, 11, 61] },
   serie: { g: ['#FF9A3C', '#F25A1E', '#B8251E'], deep: '#B83C0A', fonce: [61, 18, 4] },
   annee: { g: ['#2A3672', '#1F1650', '#0E0B22'], deep: '#8A6018', fonce: [14, 11, 34] },
+  // 2 novembre 2026 (studio unique) : les familles ajoutees, dans la meme gamme (trois arrets, un fonce pour la bande)
+  mois: { g: ['#6C8CFF', '#3F5BE8', '#2A2FB0'], deep: '#2F3FC4', fonce: [14, 18, 64] },
+  objectif: { g: ['#3DDC97', '#12B886', '#087F5B'], deep: '#0B7A55', fonce: [4, 44, 32] },
+  exploit: { g: ['#FF7A8A', '#E8364F', '#A61E4D'], deep: '#B5173B', fonce: [58, 8, 20] },
+  sport: { g: ['#5FD4FF', '#1E9BF0', '#1160C9'], deep: '#0D5BB5', fonce: [5, 30, 66] },
 };
 
 /** Le degrade or des records et de l'annee (5 arrets) */
@@ -64,7 +73,9 @@ export type Stat = { ic: IconeId; v: string; u?: string; l: string };
 export type EtatJour = 'seance' | 'repos' | 'inconnu';
 export type JourCarte = { sport: IconeId | null; minutes: number; statut: EtatJour };
 
-export type Visuel = 'trace' | 'piste' | 'kimono' | 'tapis' | 'courbe' | 'muscles' | 'semaine' | 'anneau' | 'points' | 'annee' | 'barre';
+export type Visuel = 'trace' | 'piste' | 'kimono' | 'tapis' | 'courbe' | 'muscles' | 'semaine' | 'anneau' | 'points' | 'annee' | 'barre'
+  /** 2 novembre 2026 (studio unique) : balance (pesee), calendrier (mois), jauge (objectif), medaille (exploit, sport) */
+  | 'balance' | 'calendrier' | 'jauge' | 'medaille';
 
 export type ContenuCarte = {
   famille: FamilleMoteur;
@@ -108,6 +119,12 @@ export type ContenuCarte = {
   sur?: string;
   /** l'autocollant : ses lignes, de haut en bas (familles AVEC_AUTOCOLLANT seulement) */
   lignesAuto?: LigneAutocollant[];
+  /** calendrier du mois : son nom, et les semaines tenues sur les semaines comptees (0 sans objectif) */
+  mois?: { nom: string; tenues: number; comptees: number };
+  /** jauge de l'objectif : fait sur total, et le repere du rythme a ce jour s'il est connu */
+  jauge?: { fait: number; total: number; attendu?: number; legende: string };
+  /** icone au centre de la medaille */
+  icMedaille?: IconeId;
 };
 
 /** Une ligne de l'autocollant : le chiffre, son icone et son libelle ; la ceinture du JJB a sa barre et ses degres */
@@ -140,6 +157,10 @@ function estMarche(d: CarteData): boolean {
 // ============================================
 
 const RECORDS = ['record_charge', 'record_distance', 'record_allure', 'record_rounds'];
+/** Les exploits de poids : dessines par la famille Pesee, avec le masquage du poids */
+const EXPLOITS_POIDS = ['poids_perdu', 'plus_bas', 'palier_poids', 'objectif_poids', 'chemin_poids', 'bilan_corps'];
+/** Les familles ajoutees le 2 novembre 2026 (studio unique) */
+export const FAMILLES_AJOUTEES: FamilleMoteur[] = ['pesee', 'mois', 'objectif', 'exploit', 'sport'];
 
 /** Les familles du nouveau moteur pour cette carte, la premiere par defaut ; [] : l'ancien moteur la dessine */
 export function famillesPour(d: CarteData | null | undefined): FamilleMoteur[] {
@@ -152,8 +173,13 @@ export function famillesPour(d: CarteData | null | undefined): FamilleMoteur[] {
       if (d.famille === 'muscu') return s.muscles?.groupes?.length ? ['muscu', 'muscles'] : ['muscu'];
       if (d.famille === 'course') return [estMarche(d) ? 'marche' : 'course'];
       if (d.famille === 'combat') return ['jjb'];
-      return [];
+      // 2 novembre 2026 (studio unique) : les autres sports (velo, natation, sport collectif...)
+      return ['sport'];
     }
+    case 'pesee':
+      return d.pesee ? ['pesee'] : [];
+    case 'mois':
+      return d.periode ? ['mois'] : [];
     case 'semaine':
       return d.semaine ? (serie ? ['semaine', 'serie'] : ['semaine']) : [];
     case 'avant_apres':
@@ -165,8 +191,12 @@ export function famillesPour(d: CarteData | null | undefined): FamilleMoteur[] {
       if (!t) return [];
       if (RECORDS.includes(t)) return ['record'];
       if (t === 'bilan_annee') return ['annee'];
-      if (t === 'serie_semaines') return serie ? ['serie'] : [];
-      return [];
+      if (t === 'serie_semaines' && serie) return ['serie'];
+      // 2 novembre 2026 (studio unique) : toutes les autres cartes d'exploit
+      if (t === 'bilan_mois') return ['mois'];
+      if (EXPLOITS_POIDS.includes(t)) return ['pesee'];
+      if (d.exploit?.barre && d.exploit.barre.total > 0) return ['objectif'];
+      return ['exploit'];
     }
     default:
       return [];
@@ -174,10 +204,10 @@ export function famillesPour(d: CarteData | null | undefined): FamilleMoteur[] {
 }
 
 /** Les familles qui acceptent ta photo (composition A) */
-const AVEC_PHOTO: FamilleMoteur[] = ['muscu', 'record', 'course', 'jjb', 'marche', 'transfo', 'annee'];
+const AVEC_PHOTO: FamilleMoteur[] = ['muscu', 'record', 'course', 'jjb', 'marche', 'transfo', 'annee', ...FAMILLES_AJOUTEES];
 
-/** Les familles qui ont un autocollant (seance, record, course, JJB, marche) */
-export const AVEC_AUTOCOLLANT: FamilleMoteur[] = ['muscu', 'record', 'course', 'jjb', 'marche'];
+/** Les familles qui ont un autocollant (seance, record, course, JJB, marche, et les familles ajoutees) */
+export const AVEC_AUTOCOLLANT: FamilleMoteur[] = ['muscu', 'record', 'course', 'jjb', 'marche', ...FAMILLES_AJOUTEES];
 
 /**
  * Les compositions proposees : A (ta photo plein cadre) si la famille l'accepte, B (le dessin), C (les donnees, musculation),
@@ -248,7 +278,7 @@ function gagneDuRecord(d: CarteData, u: UnitePoids): { v: string; u?: string } |
  *  - record : le nouveau record, l'ancien, ce qui est gagne.
  * Une donnee absente ou a 0 : pas de ligne. Jamais de kcal. [] pour les autres familles.
  */
-export function lignesAutocollant(d: CarteData, famille: FamilleMoteur, u: UnitePoids = 'kg'): LigneAutocollant[] {
+export function lignesAutocollant(d: CarteData, famille: FamilleMoteur, u: UnitePoids = 'kg', masque: Masque = 'aucun'): LigneAutocollant[] {
   const s = d.seance;
   const out: (LigneAutocollant | null)[] = [];
   switch (famille) {
@@ -294,8 +324,13 @@ export function lignesAutocollant(d: CarteData, famille: FamilleMoteur, u: Unite
       );
       break;
     }
-    default:
-      return [];
+    default: {
+      // 2 novembre 2026 (studio unique) : familles ajoutees, le chiffre heros puis deux chiffres du panneau
+      if (!FAMILLES_AJOUTEES.includes(famille)) return [];
+      const c = contenuSansAutocollant(d, famille, u, masque);
+      if (!c) return [];
+      out.push(c.hero.v ? { ic: c.ic, v: c.hero.v, u: c.hero.u, l: premiereMaj(c.libSans ?? c.lib) } : null, ...c.stats.slice(0, 2));
+    }
   }
   return out.filter((x): x is LigneAutocollant => !!x && !!x.v && x.ic !== 'kcal');
 }
@@ -304,7 +339,7 @@ export function lignesAutocollant(d: CarteData, famille: FamilleMoteur, u: Unite
 export function contenuDe(d: CarteData, famille: FamilleMoteur, u: UnitePoids = 'kg', masque: Masque = 'aucun'): ContenuCarte | null {
   const c = contenuSansAutocollant(d, famille, u, masque);
   if (!c || !AVEC_AUTOCOLLANT.includes(famille)) return c;
-  return { ...c, lignesAuto: lignesAutocollant(d, famille, u) };
+  return { ...c, lignesAuto: lignesAutocollant(d, famille, u, masque) };
 }
 
 function contenuSansAutocollant(d: CarteData, famille: FamilleMoteur, u: UnitePoids = 'kg', masque: Masque = 'aucun'): ContenuCarte | null {
@@ -468,6 +503,135 @@ function contenuSansAutocollant(d: CarteData, famille: FamilleMoteur, u: UnitePo
         famille, pal: PALETTES.annee, ic: 'annee', sport: traduire('Bilan annuel'), lib: traduire('Mon année {0}', an), libSans: traduire('Séances, toutes disciplines'),
         hero: { v: e.hero.value, u: e.hero.unit }, stats: (e.cotes ?? []).slice(0, 3).map((c) => ({ ic: 'objectif' as IconeId, v: c.value, u: c.unit, l: premiereMaj(c.label) })),
         visuel: 'annee', annee: an,
+      };
+    }
+    case 'pesee':
+    case 'mois':
+    case 'objectif':
+    case 'exploit':
+    case 'sport':
+      return contenuAjoute(d, famille, u, masque);
+    default:
+      return null;
+  }
+}
+
+// ============================================
+// LES FAMILLES AJOUTEES (2 novembre 2026, studio unique)
+// ============================================
+
+/** L'icone d'un chiffre de chiffresDisponibles (chiffres.ts) */
+const ICONE_DE: Partial<Record<StatKey, IconeId>> = {
+  poids: 'pesee', ecart: 'pesee', objectif_pct: 'objectif', reste: 'objectif', serie_semaines: 'serie',
+  seances: 'semaine', temps_total: 'duree', objectif_periode: 'objectif', distance: 'distance', charge: 'kilos',
+  rounds: 'rounds', jours_actifs: 'annee', sport_top: 'record', duree: 'duree', fc_moy: 'cardio', fc_max: 'cardio',
+  intensite: 'intensite', allure: 'allure', series: 'series', repetitions: 'series', denivele: 'pente', pente: 'pente',
+};
+
+/** Un chiffre de chiffres.ts en chiffre du moteur ; jamais de kcal */
+function statDe(x: StatValue): Stat | null {
+  if (!x.value || /kcal|calor/i.test(String(x.key)) || x.unit === 'kcal') return null;
+  return { ic: ICONE_DE[x.key] ?? 'objectif', v: x.value, u: x.unit, l: premiereMaj(x.label) };
+}
+
+/** Le nom du mois (« novembre ») : le premier mot du sous-titre de la carte, ecrit par periode.ts */
+function nomDuMois(d: CarteData): string {
+  return premiereMaj((d.sousTitre ?? '').split(/\s+/)[0] ?? '');
+}
+
+/** Vrai si le chiffre heros est deja « fait sur total » (3/4, 186 sur 208) */
+function dejaFaitSurTotal(h: { value: string; unit?: string }, b: { fait: number; total: number }): boolean {
+  const t = String(Math.round(b.total));
+  return h.value.includes('/') || (h.unit ?? '').includes(t) || !h.value;
+}
+
+function contenuAjoute(d: CarteData, famille: FamilleMoteur, u: UnitePoids, masque: Masque): ContenuCarte | null {
+  switch (famille) {
+    case 'pesee': {
+      // une pesee (moment pesee) ou un exploit de poids ; le masquage ne laisse jamais de poids absolu
+      if (d.moment === 'exploit' && d.exploit) {
+        const e = exploitVisible(exploitEnUnite(d.exploit, u), masque);
+        if (!e.hero.value) return null;
+        const stats = (e.cotes ?? []).slice(0, 3).map((c) => ({ ic: c.poids || c.unit === 'kg' || c.unit === 'lb' ? 'pesee' as IconeId : 'objectif' as IconeId, v: c.value, u: c.unit, l: premiereMaj(c.label) }));
+        return {
+          famille, pal: PALETTES.pesee, ic: 'pesee', sport: traduire('Pesée'), lib: e.accroche || e.surtitre, sur: e.surtitre,
+          hero: { v: e.hero.value, u: e.hero.unit }, stats, visuel: 'balance',
+        };
+      }
+      if (!d.pesee) return null;
+      const dispo = statsEnUnite(chiffresDisponibles(d, masque), u).map(statDe).filter(Boolean) as Stat[];
+      const [hero, ...reste] = dispo;
+      if (!hero) return null;
+      return {
+        famille, pal: PALETTES.pesee, ic: 'pesee', sport: traduire('Pesée'), lib: titreCarte(d, masque), libSans: titreCarte(d, masque),
+        hero: { v: hero.v, u: hero.u }, stats: reste.slice(0, 3), visuel: 'balance',
+      };
+    }
+    case 'mois': {
+      if (d.moment === 'exploit' && d.exploit) {
+        const e = exploitEnUnite(d.exploit, u);
+        if (!e.hero.value) return null;
+        return {
+          famille, pal: PALETTES.mois, ic: 'annee', sport: traduire('Mon mois'), lib: e.accroche || e.surtitre, sur: e.surtitre,
+          hero: { v: e.hero.value, u: e.hero.unit }, stats: (e.cotes ?? []).slice(0, 3).map((c) => ({ ic: 'objectif' as IconeId, v: c.value, u: c.unit, l: premiereMaj(c.label) })),
+          visuel: 'calendrier', mois: { nom: nomDuMois(d), tenues: 0, comptees: 0 },
+        };
+      }
+      const p = d.periode;
+      if (!p || p.type !== 'mois') return null;
+      // seances en grand ; puis temps d'entrainement, semaines a l'objectif, distance (ou kilos, rounds) : chiffres.ts
+      const dispo = chiffresDisponibles(d, masque).filter((x) => x.key !== 'seances');
+      const stats = dispo.map(statDe).filter(Boolean).slice(0, 3) as Stat[];
+      return {
+        famille, pal: PALETTES.mois, ic: 'annee', sport: traduire('Mon mois'), lib: traduire('Mon mois de {0}', nomDuMois(d).toLowerCase()), libSans: p.enCours ? traduire('Ce mois-ci, jusqu’ici') : traduire('Séances, toutes disciplines'),
+        hero: { v: nombre(p.seances, 0), u: p.seances > 1 ? traduire('séances') : traduire('séance') }, stats, visuel: 'calendrier',
+        mois: { nom: nomDuMois(d), tenues: p.parSemaine > 0 ? p.semainesTenues : 0, comptees: p.parSemaine > 0 ? p.semainesComptees : 0 },
+      };
+    }
+    case 'objectif': {
+      const x = d.exploit;
+      if (!x?.barre || !(x.barre.total > 0)) return null;
+      const e = exploitVisible(exploitEnUnite(x, u), masque);
+      const b = e.barre ?? x.barre;
+      const stats = (e.cotes ?? []).slice(0, 2).map((c) => ({ ic: 'objectif' as IconeId, v: c.value, u: c.unit, l: premiereMaj(c.label) }));
+      return {
+        famille, pal: PALETTES.objectif, ic: 'objectif', sport: traduire('Objectif'), lib: e.accroche || e.surtitre, sur: e.surtitre,
+        hero: e.hero.value ? { v: e.hero.value, u: e.hero.unit } : { v: nombre(b.fait, 0), u: `/${nombre(b.total, 0)}` },
+        // le « fait sur total » n'est repete dans le panneau que si le chiffre heros dit autre chose
+        stats: [...(dejaFaitSurTotal(e.hero, b) ? [] : [{ ic: 'serie' as IconeId, v: nombre(b.fait, 0), u: `/${nombre(b.total, 0)}`, l: premiereMaj(traduire('Séances faites')) }]), ...stats].slice(0, 3),
+        visuel: 'jauge', jauge: { fait: b.fait, total: b.total, attendu: b.attendu, legende: b.legende },
+      };
+    }
+    case 'exploit': {
+      if (!d.exploit) return null;
+      const e = exploitVisible(exploitEnUnite(d.exploit, u), masque);
+      if (!e.hero.value) return null;
+      const ic: IconeId = e.type === 'techniques' ? 'jjb' : e.type === 'cumul_km' ? 'distance' : e.type === 'cumul_tonnage' ? 'kilos' : e.type === 'cumul_rounds' ? 'rounds' : e.type === 'cumul_heures' ? 'duree' : e.type.startsWith('annee') ? 'annee' : 'record';
+      const stats = (e.cotes ?? []).slice(0, 3).map((c) => ({ ic: 'objectif' as IconeId, v: c.value, u: c.unit, l: premiereMaj(c.label) }));
+      return {
+        famille, pal: PALETTES.exploit, ic, sport: e.surtitre || traduire('Exploit'), lib: e.accroche || e.surtitre, sur: e.surtitre,
+        hero: { v: e.hero.value, u: e.hero.unit }, stats, visuel: 'medaille', icMedaille: ic,
+      };
+    }
+    case 'sport': {
+      const s = d.seance;
+      if (!s) return null;
+      const nom = d.sport || d.titre || traduire('Séance');
+      const ic = iconeDuSport(nom);
+      const icS: IconeId = ic === 'musculation' ? 'cardio' : ic;
+      const km = s.distanceKm > 0;
+      const x = duree(s.dureeMin);
+      const hero = s.dureeMin > 0 ? { v: x.value, u: x.unit } : km ? { v: nombre(s.distanceKm, 1), u: 'km' } : null;
+      if (!hero) return null;
+      const stats = [
+        km && s.dureeMin > 0 ? { ic: 'distance' as IconeId, v: nombre(s.distanceKm, s.distanceKm >= 100 ? 0 : 1), u: 'km', l: traduire('Distance') } : null,
+        s.rounds > 0 ? { ic: 'rounds' as IconeId, v: String(s.rounds), l: traduire('Rounds') } : null,
+        s.fcMoy > 0 ? { ic: 'cardio' as IconeId, v: String(Math.round(s.fcMoy)), u: 'bpm', l: traduire('Cardio moyen') } : null,
+        s.intensite ? { ic: 'intensite' as IconeId, v: String(s.intensite), u: '/10', l: traduire('Intensité') } : null,
+      ].filter(Boolean).slice(0, 3) as Stat[];
+      return {
+        famille, pal: PALETTES.sport, ic: icS, sport: nom, lib: s.dureeMin > 0 ? traduire('Durée') : traduire('Distance'),
+        hero, stats, visuel: 'medaille', icMedaille: icS,
       };
     }
     default:
