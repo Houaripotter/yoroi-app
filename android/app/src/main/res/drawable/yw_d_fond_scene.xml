@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Style D : fond sans scene, peche vers lilas (Seance du jour, Ton personnage) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+  <gradient android:angle="270" android:startColor="@color/yw_d_scene_haut" android:endColor="@color/yw_d_scene_bas" />
+  <corners android:radius="@dimen/yw_rayon" />
+</shape>
