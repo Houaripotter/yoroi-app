@@ -23,7 +23,7 @@ import { analyserPhoto } from '@/lib/v2/cartes/moteur/analysePhoto';
 import type { AnalysePhoto } from '@/lib/v2/cartes/moteur/analysePhoto';
 import type { Recadrage } from '@/lib/v2/cartes/moteur/protection';
 import { traduire } from '@/lib/i18n/tr';
-import { effacerCopieCarte } from '@/lib/v2/cartes/tmp';
+import { effacerCopieCarte, effacerMasques } from '@/lib/v2/cartes/tmp';
 
 export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>) {
   const ref = useRef<View>(null);
@@ -58,11 +58,18 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
     setPhoto(uri);
     setRecadrage(null);
     setAnalyse(null);
-    if (uri) analyserPhoto(uri).then((a) => photoTmp.current === uri && setAnalyse(a)).catch(() => undefined);
+    // phase native : le masque de la photo d'avant est efface avant d'analyser la nouvelle (cartes_tmp/masques/)
+    effacerMasques()
+      .catch(() => undefined)
+      .then(() => (uri ? analyserPhoto(uri) : null))
+      .then((a) => a && photoTmp.current === uri && setAnalyse(a))
+      .catch(() => undefined);
     if (avant && avant !== uri) void effacerCopieCarte(avant);
   }, []);
   useEffect(() => () => {
     void effacerCopieCarte(photoTmp.current);
+    // phase native : le masque de ta silhouette ne reste pas sur l'appareil quand tu quittes la carte
+    void effacerMasques();
     photoTmp.current = null;
   }, []);
 
