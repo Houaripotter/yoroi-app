@@ -198,7 +198,7 @@ function donneesDeSeance(t: Training, records: RecordCarte[]): NonNullable<Carte
     })(),
     fcMoy: t.heart_rate ?? 0,
     fcMax: t.max_heart_rate ?? 0,
-    // 2 novembre 2026 : kcal coupees sur les cartes tant que leur source n'est pas connue (voir kcalPourCarte) ; 0 cache le bloc
+    // 2 novembre 2026 : kcal seulement si mesurees (montre ou Sante) et pas retouchees (voir kcalPourCarte) ; 0 cache le bloc
     calories: kcalPourCarte(t) ?? 0,
     zones: zonesDe(t),
     records,
