@@ -24,6 +24,7 @@ import { noterPartage } from './mesure';
 import type { SourcePartage } from './mesure';
 import { texteSigne } from './texte';
 import { traduire } from '@/lib/i18n/tr';
+import { effacerApresPartage, effacerCopieCarte, effacerExport, rangerDansCartesTmp } from '@/lib/v2/cartes/tmp';
 
 export type CardPhoto = { uri: string; landscape: boolean };
 
@@ -63,7 +64,14 @@ export async function pickCardPhoto(source: 'gallery' | 'camera', opts?: { squar
     opts?.onPreparation?.(true);
     try {
       impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
-      return { uri: await resizeForCard(a.uri, a.width, a.height), landscape: (a.width || 0) > (a.height || 0) };
+      // 2 novembre 2026 (confidentialite) : la copie du selecteur et la version reduite passent par
+      // cacheDirectory/cartes_tmp/ ; la copie pleine taille est effacee des que la reduction est faite.
+      const copie = await rangerDansCartesTmp(a.uri, 'photo');
+      const reduite = await resizeForCard(copie, a.width, a.height);
+      if (reduite === copie) return { uri: copie, landscape: (a.width || 0) > (a.height || 0) };
+      const finale = await rangerDansCartesTmp(reduite, 'carte');
+      if (finale !== copie) await effacerCopieCarte(copie);
+      return { uri: finale, landscape: (a.width || 0) > (a.height || 0) };
     } finally {
       opts?.onPreparation?.(false);
     }
@@ -105,7 +113,9 @@ export async function pickCardPhoto(source: 'gallery' | 'camera', opts?: { squar
 
 async function capture(ref: RefObject<View | null>): Promise<string | null> {
   if (!ref.current) return null;
-  return captureRef(ref.current, { format: 'png', quality: 1, result: 'tmpfile' });
+  const brut = await captureRef(ref.current, { format: 'png', quality: 1, result: 'tmpfile' });
+  // 2 novembre 2026 : l'image exportee passe par cartes_tmp quand elle est dans le cache de l'app
+  return rangerDansCartesTmp(brut, 'export');
 }
 
 /**
@@ -117,8 +127,9 @@ async function capture(ref: RefObject<View | null>): Promise<string | null> {
 export async function shareCard(ref: RefObject<View | null>, dialogTitle = traduire('Partager ma carte YOROI'), fallbackMessage?: string, source?: SourcePartage): Promise<boolean> {
   impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
   if (source) noterPartage(source);
+  let uri: string | null = null;
   try {
-    const uri = await capture(ref);
+    uri = await capture(ref);
     if (!uri) {
       appAlert(traduire('Oups'), traduire('La carte n’est pas encore prête.'));
       return false;
@@ -142,19 +153,23 @@ export async function shareCard(ref: RefObject<View | null>, dialogTitle = tradu
     logger.error('[partage] share', e);
     appAlert(traduire('Oups'), traduire('Impossible de partager la carte.'));
     return false;
+  } finally {
+    // 2 novembre 2026 : l'image exportee est effacee apres le partage, termine ou annule
+    effacerApresPartage(uri);
   }
 }
 
 /** Enregistre la carte dans la galerie */
 export async function saveCard(ref: RefObject<View | null>): Promise<boolean> {
   impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+  let uri: string | null = null;
   try {
     const { status } = await requestPermissionsAsync();
     if ((status as string) !== 'granted' && (status as string) !== 'limited') {
       appAlert(traduire('Galerie bloquée'), traduire('Autorise l’accès à ta galerie pour enregistrer l’image.'));
       return false;
     }
-    const uri = await capture(ref);
+    uri = await capture(ref);
     if (!uri) return false;
     await saveToLibraryAsync(uri);
     notificationAsync(NotificationFeedbackType.Success).catch(() => {});
@@ -164,5 +179,8 @@ export async function saveCard(ref: RefObject<View | null>): Promise<boolean> {
     logger.error('[partage] save', e);
     appAlert(traduire('Oups'), traduire('Impossible d’enregistrer la carte.'));
     return false;
+  } finally {
+    // la galerie a sa propre copie : l'image exportee est effacee tout de suite
+    void effacerExport(uri);
   }
 }
