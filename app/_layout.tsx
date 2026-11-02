@@ -582,6 +582,8 @@ export default function RootLayout() {
           logger.info('Base de données initialisee');
           // Nettoyage unique des seances importees en double (avant la synchro entre appareils)
           await runDedupeMigrationOnce().catch(err => logger.error('Erreur nettoyage des doublons:', err));
+          // 2 novembre 2026 (cartes v10) : la date d'installation, ecrite une seule fois (estimee pour un utilisateur existant)
+          await import('@/lib/v2/installation').then((m) => m.poserDateInstallation()).catch(err => logger.error('Erreur date d’installation:', err));
           // Vague 45 : une demo (Heny) chargee par une ancienne version ne garde rien apres aujourd'hui (vraies donnees jamais touchees)
           import('@/lib/demoDataService').then((m) => m.trimDemoFuture()).catch(err => logger.error('Erreur nettoyage de la démo:', err));
           // Importer les événements sportifs en arrière-plan (ne bloque pas le reste)
