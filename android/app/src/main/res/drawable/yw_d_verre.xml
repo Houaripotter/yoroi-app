@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Style D : capsule de verre depoli, lisible sur ta scene -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+  <solid android:color="@color/yw_d_verre" />
+  <corners android:radius="14dp" />
+</shape>
