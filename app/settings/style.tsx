@@ -65,6 +65,7 @@ const MODES_THEME: { key: YoroiMode; label: string }[] = [
   { key: 'auto', label: traduire('Automatique') },
 ];
 const WIDGETS: Record<StyleWidgets, { clair: number; sombre: number }> = {
+  D: { clair: require('@/assets/widgets/apercu_d_clair.jpg'), sombre: require('@/assets/widgets/apercu_d_sombre.jpg') },
   A: { clair: require('@/assets/widgets/apercu_a_clair.jpg'), sombre: require('@/assets/widgets/apercu_a_sombre.jpg') },
   B: { clair: require('@/assets/widgets/apercu_b_clair.jpg'), sombre: require('@/assets/widgets/apercu_b_sombre.jpg') },
   C: { clair: require('@/assets/widgets/apercu_c_clair.jpg'), sombre: require('@/assets/widgets/apercu_c_sombre.jpg') },
