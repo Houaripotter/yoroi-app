@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Widgets Yoroi, style D Scenes illustrees (28 octobre 2026, direction B). Mode sombre : pastels en version profonde, jamais de noir (29 octobre 2026) -->
+  <color name="yw_d_fond">#26306E</color>
+  <color name="yw_d_encre">#F2F1EC</color>
+  <color name="yw_d_encre2">#B3F2F1EC</color>
+  <color name="yw_d_discret">#A8F2F1EC</color>
+  <color name="yw_d_trait">#29F2F1EC</color>
+  <color name="yw_d_tirets">#73F2F1EC</color>
+  <color name="yw_d_piste">#29FFFFFF</color>
+  <color name="yw_d_indigo">#A9BCF5</color>
+  <color name="yw_d_indigo_doux">#1AFFFFFF</color>
+  <color name="yw_d_sur_indigo">#1E2E86</color>
+  <color name="yw_d_allure">#9FE3C0</color>
+  <color name="yw_d_dessus">#A9BCF5</color>
+  <color name="yw_d_vite">#FFB59E</color>
+  <color name="yw_d_torii">#F0896A</color>
+  <color name="yw_d_torii_haut">#F2F1EC</color>
+  <color name="yw_d_titre">#FFB59E</color>
+  <color name="yw_d_bouton">#A9BCF5</color>
+  <color name="yw_d_eau">#A9BCF5</color>
+  <color name="yw_d_fait">#FFC98A</color>
+  <color name="yw_d_avenir">#47F2F1EC</color>
+  <color name="yw_d_creme">#F6DFA6</color>
+  <color name="yw_d_blanc">#FFFFFF</color>
+  <color name="yw_d_petit_haut">#7A3B47</color>
+  <color name="yw_d_petit_bas">#3E3577</color>
+  <color name="yw_d_moyen_debut">#7A3B47</color>
+  <color name="yw_d_moyen_milieu">#4A3584</color>
+  <color name="yw_d_moyen_fin">#2E3C8C</color>
+  <color name="yw_d_eau_haut">#1D6A55</color>
+  <color name="yw_d_eau_bas">#1E4F6E</color>
+  <color name="yw_d_chrono_haut">#2A3FA8</color>
+  <color name="yw_d_chrono_bas">#1E2E86</color>
+  <color name="yw_d_grand_haut">#26306E</color>
+  <color name="yw_d_grand_bas">#3A2F78</color>
+  <color name="yw_d_voile_haut">#0026306E</color>
+  <color name="yw_d_voile_milieu">#3326306E</color>
+  <color name="yw_d_voile_bas">#EB26306E</color>
+  <color name="yw_d_peche">#FFB59E</color>
+  <color name="yw_d_peche_halo">#40FFB59E</color>
+  <color name="yw_d_peche_texte">#5A2412</color>
+</resources>
