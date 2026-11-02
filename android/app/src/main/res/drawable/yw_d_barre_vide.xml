@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Style D : piste de la barre vers le rang suivant -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+  <solid android:color="@color/yw_d_barre_piste" />
+  <corners android:radius="100dp" />
+</shape>
