@@ -288,7 +288,7 @@ export default function OnSentraine() {
               <Ink size={14} weight="extraBold" color={c.accentText} style={{ flex: 1 }}>{traduire("Séance en cours")}</Ink>
               <Ink size={18} weight="black" style={{ fontVariant: ['tabular-nums'] }}>{fmtClock((now - draft.startedAt) / 1000)}</Ink>
             </View>
-            <Ink size={22} weight="black" tight>{draftTitle(draft)}</Ink>
+            <Ink size={22} weight="black" tight>{traduire(draftTitle(draft))}</Ink>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pressable onPress={() => router.push({ pathname: draftRoute(draft) as any, params: { resume: '1' } })} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? blancA(0.75) : c.surface })}>
                 <Ink size={15} weight="black" color={c.onPrimary}>{traduire("Reprendre")}</Ink>
@@ -349,7 +349,7 @@ export default function OnSentraine() {
           {sports.map((s) => {
             const img = sportImage(s, femme, 0);
             return (
-              <Pressable key={s} onPress={() => go(s)} accessibilityRole="button" accessibilityLabel={getSportName(s)} style={({ pressed }) => ({ width: tile, height: 150, borderRadius: 22, backgroundColor: sportTint(s), overflow: 'hidden', paddingTop: 8, paddingHorizontal: 10, paddingBottom: 10, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+              <Pressable key={s} onPress={() => go(s)} accessibilityRole="button" accessibilityLabel={traduire(getSportName(s))} style={({ pressed }) => ({ width: tile, height: 150, borderRadius: 22, backgroundColor: sportTint(s), overflow: 'hidden', paddingTop: 8, paddingHorizontal: 10, paddingBottom: 10, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
                 {/* l'illustration vit dans sa zone, le nom dessous sur une ligne : jamais l'une sur l'autre */}
                 <View style={{ flex: 1, marginBottom: 4, alignItems: 'center', justifyContent: 'center' }}>
                   {img ? (

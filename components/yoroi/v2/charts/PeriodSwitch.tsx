@@ -21,7 +21,7 @@ export const CHART_PERIODS: PeriodOption[] = [
   { value: 30, label: traduire('1 mois') },
   { value: 90, label: traduire('3 mois') },
   { value: 180, label: traduire('6 mois') },
-  { value: 365, label: '1 an' },
+  { value: 365, label: traduire('1 an') },
   { value: 0, label: traduire('Tout') },
 ];
 
@@ -34,7 +34,7 @@ export const SHORT_PERIODS: PeriodOption[] = [
   { value: 7, label: traduire('7 jours') },
   { value: 30, label: traduire('1 mois') },
   { value: 90, label: traduire('3 mois') },
-  { value: 365, label: '1 an' },
+  { value: 365, label: traduire('1 an') },
   { value: 0, label: traduire('Tout') },
 ];
 
@@ -82,7 +82,7 @@ export function isPremiumPeriod(days: number): boolean {
 
 /** « 3 M » se dit « 3 mois » */
 function spoken(p: PeriodOption): string {
-  return p.label.replace(/^(\d+) M$/, '$1 mois').replace(/^1 A$/, '1 an');
+  return traduire(p.label.replace(/^(\d+) M$/, '$1 mois').replace(/^1 A$/, '1 an'));
 }
 
 function Padlock({ color }: { color: string }) {

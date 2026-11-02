@@ -253,9 +253,9 @@ export function RankFrame({ rankIndex, dan = 0, radius = 28, children }: { rankI
         <View
           style={{ position: 'absolute', right: 14, bottom: 14, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: '#1D2029', borderWidth: 1, borderColor: DOJO.goldLight }}
           accessible
-          accessibilityLabel={dan === 1 ? '1er dan' : `${dan}e dan`}
+          accessibilityLabel={dan === 1 ? traduire('1er dan') : traduire('{0}e dan', dan)}
         >
-          <Ink size={12} weight="extraBold" color={DOJO.goldLight}>{dan === 1 ? '1er dan' : `${dan}e dan`}</Ink>
+          <Ink size={12} weight="extraBold" color={DOJO.goldLight}>{dan === 1 ? traduire('1er dan') : traduire('{0}e dan', dan)}</Ink>
         </View>
       ) : null}
     </View>

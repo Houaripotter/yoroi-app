@@ -7,16 +7,16 @@ import { accordSouleve, durationOf, exercisesOf, formatDuration, formatTonnage, 
 import { cardioFait, libelleCardio } from '@/lib/v2/seances/cardioJour';
 import type { UnitePoids } from '@/lib/v2/unitePoids';
 import { formatKg } from '@/lib/v2/weightStats';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, JOURS_LETTRES } from '@/lib/i18n/tr';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
-export const DOW_SHORT = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
+export const DOW_SHORT = [traduire('dim.'), traduire('lun.'), traduire('mar.'), traduire('mer.'), traduire('jeu.'), traduire('ven.'), traduire('sam.')];
 export const DOW_LONG = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
 /** Jours du planning : 0 = lundi */
 export const PLAN_DAYS = [traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi'), traduire('dimanche')];
-export const PLAN_DAYS_SHORT = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+export const PLAN_DAYS_SHORT = JOURS_LETTRES;
 export const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
-export const MONTHS_SHORT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
+export const MONTHS_SHORT = [traduire('janv.'), traduire('févr.'), traduire('mars'), traduire('avr.'), traduire('mai'), traduire('juin'), traduire('juil.'), traduire('août'), traduire('sept.'), traduire('oct.'), traduire('nov.'), traduire('déc.')];
 
 const p2 = (n: number) => String(n).padStart(2, '0');
 
@@ -65,7 +65,7 @@ export function firstSport(sport: string | undefined): string {
 export function sportLabel(sport: string | undefined): string {
   const ids = (sport ?? '').split(',').map((s) => s.trim()).filter(Boolean);
   if (ids.length === 0) return traduire('Séance');
-  return ids.map((s) => getSportName(s)).join(traduire(' et '));
+  return ids.map((s) => traduire(getSportName(s))).join(traduire(' et '));
 }
 
 export type SportFamily = 'muscu' | 'combat_sol' | 'combat_pied' | 'cardio' | 'autre';

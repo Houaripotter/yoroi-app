@@ -14,7 +14,7 @@ import { selectionAsync } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Sheet } from '@/components/yoroi/v2/seance/Sheet';
-import { traduire, LOCALE } from '@/lib/i18n/tr';
+import { traduire, LOCALE, LANG } from '@/lib/i18n/tr';
 
 const DAYS_SHORT = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
 const DAYS_LONG = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
@@ -49,6 +49,8 @@ export function shiftIso(iso: string, days: number): string {
 export function shortDayLabel(iso: string): string {
   const d = dateFromIso(iso);
   const year = d.getFullYear() !== new Date().getFullYear() ? ` ${d.getFullYear()}` : '';
+  // hors français : la date dans l'ordre et les mots de la langue
+  if (LANG !== 'fr') return d.toLocaleDateString(LOCALE, { weekday: 'short', day: 'numeric', month: 'short', ...(year ? { year: 'numeric' as const } : {}) });
   return `${DAYS_SHORT[d.getDay()]} ${d.getDate() === 1 ? '1er' : d.getDate()} ${MONTHS_SHORT[d.getMonth()]}${year}`;
 }
 
@@ -60,6 +62,10 @@ export function relativeDayLabel(iso: string): string {
   if (iso === shiftIso(today, 1)) return traduire('Demain');
   const d = dateFromIso(iso);
   const year = d.getFullYear() !== new Date().getFullYear() ? ` ${d.getFullYear()}` : '';
+  if (LANG !== 'fr') {
+    const t = d.toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long', ...(year ? { year: 'numeric' as const } : {}) });
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }
   const s = `${DAYS_LONG[d.getDay()]} ${d.getDate() === 1 ? '1er' : d.getDate()} ${MONTHS_LONG[d.getMonth()]}${year}`;
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
@@ -288,7 +294,7 @@ export function DateChips({ value, onChange, maxDate, minDate, time, onTimeChang
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
         {chip(todayLabel ?? traduire('Aujourd’hui'), value === today, () => onChange(today))}
         {chip(yesterdayLabel ?? traduire('Hier'), value === yesterday, () => onChange(yesterday))}
-        {chip(other ? shortDayLabel(value) : 'Autre date', other, () => setOpen(true), true, other ? traduire("Date choisie : {0}, toucher pour changer", shortDayLabel(value)) : traduire('Choisir une autre date'))}
+        {chip(other ? shortDayLabel(value) : traduire('Autre date'), other, () => setOpen(true), true, other ? traduire("Date choisie : {0}, toucher pour changer", shortDayLabel(value)) : traduire('Choisir une autre date'))}
       </View>
       {inline && open ? <View style={{ marginTop: 10 }} /> : null}
       <DatePickerSheet

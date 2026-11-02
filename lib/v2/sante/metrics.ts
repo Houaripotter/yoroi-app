@@ -103,7 +103,7 @@ export const FAMILY: Record<Family, { label: string; color: string; tint: string
   souffle: { label: traduire('Respiration'), color: '#2F7A80', tint: '#DDEDEE', kanji: '息' },
   sommeil: { label: traduire('Sommeil'), color: '#5A4E96', tint: '#E7E4F1', kanji: '眠' },
   recuperation: { label: traduire('Récupération'), color: '#6E8C3A', tint: '#E8EEDC', kanji: '癒' },
-  corps: { label: 'Corps', color: '#1D2029', tint: '#E8E5DE', kanji: '体' },
+  corps: { label: traduire('Corps'), color: '#1D2029', tint: '#E8E5DE', kanji: '体' },
   mobilite: { label: traduire('Mobilité'), color: '#3D5D9E', tint: '#E2E8F2', kanji: '歩' },
   environnement: { label: traduire('Environnement'), color: '#5E6B3A', tint: '#E9ECDD', kanji: '環' },
   nutrition: { label: traduire('Nutrition'), color: '#9A5B2E', tint: '#F3E6DA', kanji: '食' },

@@ -15,7 +15,7 @@ import { lienConfidentialite } from '@/lib/appConfig';
 
 import POLITIQUE from '@/data/politiqueConfidentialite.json';
 import { mesureDisponible } from '@/utils/telemetry';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG } from '@/lib/i18n/tr';
 
 /**
  * Le texte vit dans data/politiqueConfidentialite.json, partage avec la version web
@@ -33,7 +33,7 @@ export default function PrivacyPolicyScreen() {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const { language } = useI18n();
-  const isFR = language === 'fr';
+  const isFR = LANG === 'fr';
   const SECTIONS = sections(isFR ? 'fr' : 'en');
   const LAST_UPDATE = isFR ? POLITIQUE.miseAJour.fr : POLITIQUE.miseAJour.en;
 

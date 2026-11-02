@@ -169,7 +169,7 @@ export default function SeanceCardio() {
         if (existing) {
           appAlert(
             traduire('Une séance est en cours'),
-            traduire("{0}, commencée {1}. Tu la reprends ?", draftTitle(existing), draftAgo(existing)),
+            traduire("{0}, commencée {1}. Tu la reprends ?", traduire(draftTitle(existing)), draftAgo(existing)),
             [
               {
                 text: traduire('Nouvelle séance'),

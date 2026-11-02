@@ -110,9 +110,9 @@ export default function CompetitorSpaceScreen() {
             {traduire("Ton palmarès")}</SectionTitle>
           <Card style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingVertical: 18 }}>
             {[
-              { n: wins, l: 'victoires', k: 'etoile' as const },
+              { n: wins, l: traduire('victoires'), k: 'etoile' as const },
               { n: losses, l: traduire('défaites'), k: 'vague' as const },
-              { n: draws, l: 'nuls', k: 'eventail' as const },
+              { n: draws, l: traduire('nuls'), k: 'eventail' as const },
             ].map((s) => (
               <View key={s.l} style={{ alignItems: 'center', gap: 6 }}>
                 {s.n > 0 && s.k === 'etoile' ? <Hanko size={36} /> : (

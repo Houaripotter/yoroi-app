@@ -179,6 +179,11 @@ export function danLabel(n: number): string {
   return n === 1 ? '1er dan' : `${n}e dan`;
 }
 
+/** Le dan affiche a l'ecran, dans la langue de l'app (danLabel reste le texte francais garde dans le journal) */
+export function danAffiche(n: number): string {
+  return n === 1 ? traduire('1er dan') : traduire('{0}e dan', n);
+}
+
 export function rankFor(xp: number): ArmureRank {
   let r = RANKS[0];
   for (const k of RANKS) if (xp >= k.minXp) r = k;

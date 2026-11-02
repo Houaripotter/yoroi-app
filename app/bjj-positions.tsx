@@ -9,10 +9,10 @@ import Svg, { Path, Rect } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { ALL_SUBMISSIONS } from '@/components/BJJBodyMap';
-import { makeId, plural } from '@/lib/v2/combat/rounds';
+import { makeId } from '@/lib/v2/combat/rounds';
 import { BigButton, Card, Chip, CIcon, D, DetailScreen, Enter, Field, FormSheet, Glass, IconBtn, InkBar, N, P, Press, RankRow, Section, Stat, Stepper, tap, V } from '@/components/yoroi/v2/combat/ui';
 import { blancA } from '@/components/yoroi/livePalette';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, traduireSens } from '@/lib/i18n/tr';
 
 interface SubmissionEntry {
   id: string;
@@ -147,13 +147,13 @@ export default function BJJPositionsScreen() {
   }, [search]);
 
   return (
-    <DetailScreen title="Carte JJB" subtitle={traduire("Tes positions, tes finitions")}>
+    <DetailScreen title={traduire("Carte JJB")} subtitle={traduire("Tes positions, tes finitions")}>
       <Enter i={0}>
         <Glass style={{ flexDirection: 'row' }}>
-          <Stat value={String(g.a)} label="tentatives" color={N} />
-          <Stat value={String(g.s)} label="finitions" color={V} />
+          <Stat value={String(g.a)} label={traduire("tentatives")} color={N} />
+          <Stat value={String(g.s)} label={traduire("finitions")} color={V} />
           <Stat value={`${g.rate} %`} label={traduire("réussite")} color={D} />
-          <Stat value={g.t >= 60 ? `${Math.floor(g.t / 60)} h` : `${g.t} min`} label="en position" />
+          <Stat value={g.t >= 60 ? `${Math.floor(g.t / 60)} h` : `${g.t} min`} label={traduire("en position")} />
         </Glass>
       </Enter>
 
@@ -176,10 +176,10 @@ export default function BJJPositionsScreen() {
             })}
           </Svg>
           <Ink size={12} weight="extraBold" color="rgba(29,32,41,0.4)" style={{ position: 'absolute', left: 22, top: 20 }}>
-            Dessus
+            {traduire('Dessus')}
           </Ink>
           <Ink size={12} weight="extraBold" color="rgba(29,32,41,0.4)" style={{ position: 'absolute', left: 22, bottom: 18 }}>
-            Debout
+            {traduire('Debout')}
           </Ink>
           {positions.map((p) => {
             const c = ROLE[p.id]?.color ?? p.color;
@@ -198,17 +198,17 @@ export default function BJJPositionsScreen() {
                 }}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
-                accessibilityLabel={`${traduire(p.name)}, ${plural(s, 'finition')}`}
+                accessibilityLabel={`${traduireSens('garde', p.name)}, ${traduirePluriel(s, s > 1, '{0} finition', '{0} finitions', s)}`}
                 style={{ position: 'absolute', left: x - plateW / 2, top: y - plateH / 2, width: plateW, height: plateH }}
               >
                 <View style={{ flex: 1, borderTopLeftRadius: 18, borderTopRightRadius: 18, borderBottomLeftRadius: 6, borderBottomRightRadius: 6, backgroundColor: fill, borderWidth: on ? 3 : 1.5, borderColor: on ? P.ink : c, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
                   <View style={{ position: 'absolute', left: 0, right: 0, bottom: 10, height: 3, backgroundColor: dark ? blancA(0.4) : `${c}40` }} />
                   <Ink size={12} weight="black" color={dark ? P.white : P.ink} numberOfLines={2} style={{ textAlign: 'center', lineHeight: 14 }}>
-                    {traduire(p.name)}
+                    {traduireSens('garde', p.name)}
                   </Ink>
                   {s > 0 || p.timeMinutes > 0 ? (
                     <Ink size={11} weight="bold" color={dark ? 'rgba(255,255,255,0.9)' : P.ink2} numberOfLines={1}>
-                      {s > 0 ? plural(s, 'finition') : `${p.timeMinutes} min`}
+                      {s > 0 ? traduirePluriel(s, s > 1, '{0} finition', '{0} finitions', s) : `${p.timeMinutes} min`}
                     </Ink>
                   ) : null}
                 </View>
@@ -220,7 +220,7 @@ export default function BJJPositionsScreen() {
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
         {[
           { l: traduire('Positions du dessus'), c: '#6E8C3A' },
-          { l: 'Gardes', c: '#3D5D9E' },
+          { l: traduire('Gardes'), c: '#3D5D9E' },
           { l: traduire('Debout et transitions'), c: '#A8832F' },
         ].map((x) => (
           <View key={x.l} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -242,7 +242,7 @@ export default function BJJPositionsScreen() {
                 {ROLE[selected.id]?.role ?? 'Position'}
               </Ink>
               <Ink size={24} weight="black" tight>
-                {traduire(selected.name)}
+                {traduireSens('garde', selected.name)}
               </Ink>
             </View>
             <IconBtn icon="close" label={traduire("Fermer la position")} onPress={() => setSelectedId(null)} />
@@ -284,19 +284,19 @@ export default function BJJPositionsScreen() {
                     <Ink size={16} weight="black" color={rc}>
                       {`${rate} %`}
                     </Ink>
-                    <IconBtn icon="trash" size={36} label={`Retirer ${s.name}`} onPress={() => removeSub(selected.id, s.id)} />
+                    <IconBtn icon="trash" size={36} label={traduire('Retirer {0}', traduire(s.name))} onPress={() => removeSub(selected.id, s.id)} />
                   </View>
                   <InkBar value={rate / 100} color={rc} height={7} />
                   <View style={{ flexDirection: 'row', gap: 8 }}>
                     <Press onPress={() => bump(selected.id, s.id, 'attempts', 1)} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={traduire("Une tentative de plus pour {0}", s.name)}>
                       <View style={{ height: 44, borderRadius: 14, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
-                        <Ink size={14} weight="extraBold" color={N}>{`${s.attempts} tentatives`}</Ink>
+                        <Ink size={14} weight="extraBold" color={N}>{traduire('{0} tentatives', s.attempts)}</Ink>
                         <CIcon name="plus" size={14} color={N} />
                       </View>
                     </Press>
                     <Press onPress={() => bump(selected.id, s.id, 'successes', 1)} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={traduire("Une finition de plus pour {0}", s.name)}>
                       <View style={{ height: 44, borderRadius: 14, backgroundColor: V, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
-                        <Ink size={14} weight="extraBold" color={P.white}>{`${s.successes} finitions`}</Ink>
+                        <Ink size={14} weight="extraBold" color={P.white}>{traduire('{0} finitions', s.successes)}</Ink>
                         <CIcon name="plus" size={14} color={P.white} />
                       </View>
                     </Press>
@@ -323,13 +323,13 @@ export default function BJJPositionsScreen() {
               .sort((a, b) => b.s - a.s)
               .slice(0, 4)
               .map((x, i) => (
-                <RankRow key={x.p.id} index={i} label={traduire(x.p.name)} value={x.s} max={maxSucc} color={ROLE[x.p.id]?.color ?? x.p.color} />
+                <RankRow key={x.p.id} index={i} label={traduireSens('garde', x.p.name)} value={x.s} max={maxSucc} color={ROLE[x.p.id]?.color ?? x.p.color} />
               ))}
           </Card>
         </>
       ) : null}
 
-      <FormSheet visible={sheet} onClose={() => setSheet(false)} title={traduire("Nouvelle soumission")} sub={selected ? traduire("Depuis {0}", traduire(selected.name).toLowerCase()) : undefined}>
+      <FormSheet visible={sheet} onClose={() => setSheet(false)} title={traduire("Nouvelle soumission")} sub={selected ? traduire("Depuis {0}", traduireSens('garde', selected.name).toLowerCase()) : undefined}>
         <Field value={search} onChangeText={(v) => { setSearch(v); setName(v); }} placeholder={traduire("Cherche ou écris une soumission")} autoFocus />
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {suggestions.map((s) => (

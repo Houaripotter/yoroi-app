@@ -137,7 +137,7 @@ export default function EventDetailScreen() {
             <Glass style={{ alignSelf: 'flex-start', maxWidth: params.image_logo_url ? '100%' : '56%', padding: 16, gap: 6 }}>
               <View style={{ alignSelf: 'flex-start', paddingHorizontal: 10, height: 26, borderRadius: 9, backgroundColor: meta.color, justifyContent: 'center' }}>
                 <Ink size={12} weight="extraBold" color={P.white}>
-                  {days !== null && days >= 0 ? (days === 0 ? traduire("Aujourd'hui") : traduirePluriel(days, days > 1, "Dans {0} jour", "Dans {0} jours", days)) : meta.label}
+                  {days !== null && days >= 0 ? (days === 0 ? traduire("Aujourd'hui") : traduirePluriel(days, days > 1, "Dans {0} jour", "Dans {0} jours", days)) : traduire(meta.label)}
                 </Ink>
               </View>
               <Ink size={22} weight="black" tight>

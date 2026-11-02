@@ -156,7 +156,7 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
       delayLongPress={280}
       hitSlop={button < 44 ? (44 - button) / 2 : 0}
       accessibilityRole="button"
-      accessibilityLabel={`${dir > 0 ? 'Plus' : traduire('Moins')} ${fmtNum(step)} ${unit}`}
+      accessibilityLabel={`${dir > 0 ? traduire('Plus') : traduire('Moins')} ${fmtNum(step)} ${unit}`}
       style={({ pressed }) => ({ width: stack ? undefined : button, flex: stack ? 1 : undefined, height: button, borderRadius: stack ? 14 : button * 0.32, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.border : btnBg })}
     >
       <Icon name={dir > 0 ? 'plus' : 'minus'} size={stack ? 22 : 18} color={ink} strokeWidth={2.8} />
@@ -174,7 +174,7 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
       delayLongPress={280}
       hitSlop={{ top: 6, bottom: 6 }}
       accessibilityRole="button"
-      accessibilityLabel={`${dir > 0 ? 'Plus' : traduire('Moins')} ${fmtNum(fine ?? 0)} ${unit}`}
+      accessibilityLabel={`${dir > 0 ? traduire('Plus') : traduire('Moins')} ${fmtNum(fine ?? 0)} ${unit}`}
       style={({ pressed }) => ({ flex: stack ? 1 : undefined, minWidth: stack ? undefined : 52, height: 32, paddingHorizontal: 8, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: dark ? 'rgba(255,255,255,0.18)' : c.border, backgroundColor: pressed ? (dark ? 'rgba(255,255,255,0.12)' : c.fillSoft) : 'transparent' })}
     >
       <Ink size={13} weight="bold" color={dark ? c.onDarkSecondary : c.textSecondary} style={{ fontVariant: ['tabular-nums'] }}>{`${dir > 0 ? '+' : '\u2212'}${fmtNum(fine ?? 0)}`}</Ink>

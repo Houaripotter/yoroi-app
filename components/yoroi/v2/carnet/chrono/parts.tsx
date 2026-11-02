@@ -58,7 +58,7 @@ export function SettingRow({ label, value, onMinus, onPlus, hint, accent = P.ink
           {value}
         </Ink>
       </View>
-      {btn('plus', onPlus, 'Plus')}
+      {btn('plus', onPlus, traduire('Plus'))}
     </View>
   );
 }

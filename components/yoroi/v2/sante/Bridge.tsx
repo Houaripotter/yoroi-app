@@ -43,7 +43,7 @@ export function DataBridge() {
       <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
         <Node icon="watch" title={traduire("Tes appareils")} sub={android ? 'Fitbit, Garmin, Samsung, Withings' : 'Apple Watch, Garmin, Withings, Fitbit'} color={S.accent} tint={S.accentSoft} />
         <Arrow />
-        <Node icon="heart" title={android ? 'Health Connect' : 'Apple Santé'} sub={android ? traduire('Le coffre santé de Google') : traduire("Le coffre santé de l'iPhone")} color={S.indigo} tint={S.indigoSoft} />
+        <Node icon="heart" title={android ? 'Health Connect' : traduire('Apple Santé')} sub={android ? traduire('Le coffre santé de Google') : traduire("Le coffre santé de l'iPhone")} color={S.indigo} tint={S.indigoSoft} />
         <Arrow />
         <Node icon="shield" title="YOROI" sub={traduire("Lit, range et dessine tes courbes")} color={S.ink} tint="#E4E7F1" />
       </View>

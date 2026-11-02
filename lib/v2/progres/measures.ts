@@ -39,7 +39,7 @@ export const VIEW_FIELDS: { key: ViewKey; label: string; long: string; good: 'up
   { key: 'chest', label: 'Poitrine', long: traduire('Tour de poitrine'), good: 'up' },
   { key: 'arm', label: 'Bras', long: traduire('Tour de bras'), good: 'up' },
   { key: 'forearm', label: traduire('Avant bras'), long: traduire('Tour d’avant bras'), good: 'up' },
-  { key: 'waist', label: 'Taille', long: 'Tour de taille', good: 'down' },
+  { key: 'waist', label: 'Taille', long: traduire('Tour de taille'), good: 'down' },
   { key: 'navel', label: 'Nombril', long: traduire('Tour au nombril'), good: 'down' },
   { key: 'hips', label: 'Hanches', long: traduire('Tour de hanches'), good: 'none' },
   { key: 'thigh', label: 'Cuisse', long: traduire('Tour de cuisse'), good: 'none' },

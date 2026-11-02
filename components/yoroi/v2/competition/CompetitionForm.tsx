@@ -55,7 +55,7 @@ export function beltLabel(key?: string): string {
 /** Nom du sport : celui de l'app (getSportName), sinon le libelle de la fiche competition */
 export function competitionSportName(s: Sport): string {
   const n = getSportName(s);
-  return n === 'Autre' && s !== 'autre' ? SPORT_LABELS[s] : n;
+  return traduire(n === 'Autre' && s !== 'autre' ? SPORT_LABELS[s] : n);
 }
 
 /** Categorie choisie ; pour le JJB, le genre donne la liste IBJJF hommes ou femmes */
@@ -74,7 +74,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
   return (
     <View style={{ gap: 18 }}>
       <Field label={traduire("Nom de la compétition")} value={draft.nom} onChangeText={(nom) => set({ nom })} placeholder={traduire("Ex : Open de Paris")} icon="trophy" maxLength={100} />
-      <DateField label="Date" value={draft.date} onChange={(date) => set({ date })} minimumDate={minimumDate} />
+      <DateField label={traduire("Date")} value={draft.date} onChange={(date) => set({ date })} minimumDate={minimumDate} />
       <Field label={traduire("Lieu")} value={draft.lieu} onChangeText={(lieu) => set({ lieu })} placeholder={traduire("Ex : Paris, France")} icon="flag" maxLength={100} />
 
       <View style={{ gap: 6 }}>
@@ -119,7 +119,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
           ) : null}
           <ChipScroll>
             {categories.map((cat) => (
-              <Chip key={cat.id} label={traduire(cat.name)} sub={cat.open ? traduire('toutes catégories') : cat.maxWeight >= 900 ? traduire('sans limite') : `${formatKg(cat.maxWeight)} kg max`} active={draft.categorieId === cat.id} accent={P.accent} onPress={() => set({ categorieId: draft.categorieId === cat.id ? '' : cat.id })} />
+              <Chip key={cat.id} label={traduire(cat.name)} sub={cat.open ? traduire('toutes catégories') : cat.maxWeight >= 900 ? traduire('sans limite') : traduire('{0} kg max', formatKg(cat.maxWeight))} active={draft.categorieId === cat.id} accent={P.accent} onPress={() => set({ categorieId: draft.categorieId === cat.id ? '' : cat.id })} />
             ))}
           </ChipScroll>
         </View>
@@ -140,7 +140,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
         <Label>{traduire("Pesée officielle")}</Label>
         <ChipScroll>
           {([['veille', 'La veille'], ['jour', 'Le jour même']] as const).map(([k, l]) => (
-            <Chip key={k} label={l} active={draft.pesee === k} accent={P.accent} onPress={() => set({ pesee: draft.pesee === k ? '' : k })} />
+            <Chip key={k} label={traduire(l)} active={draft.pesee === k} accent={P.accent} onPress={() => set({ pesee: draft.pesee === k ? '' : k })} />
           ))}
         </ChipScroll>
       </View>
@@ -153,7 +153,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
           {TYPE_SUGGESTIONS.map((s) => (
             <Chip key={s} label={traduire(s)} active={!customOpen && draft.typeEvenement === s} onPress={() => { setCustomOpen(false); set({ typeEvenement: draft.typeEvenement === s ? '' : s }); }} />
           ))}
-          <Chip label="Autre" active={customOpen} onPress={() => { setCustomOpen(!customOpen); if (!customOpen && TYPE_SUGGESTIONS.includes(draft.typeEvenement)) set({ typeEvenement: '' }); }} />
+          <Chip label={traduire("Autre")} active={customOpen} onPress={() => { setCustomOpen(!customOpen); if (!customOpen && TYPE_SUGGESTIONS.includes(draft.typeEvenement)) set({ typeEvenement: '' }); }} />
         </ChipScroll>
         {customOpen ? (
           <Field label={traduire("Ton type d’événement")} value={draft.typeEvenement} onChangeText={(typeEvenement) => set({ typeEvenement })} placeholder={traduire("Ex : Open, Interclubs")} icon="star" maxLength={50} />

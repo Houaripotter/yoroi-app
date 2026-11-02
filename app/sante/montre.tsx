@@ -75,7 +75,7 @@ function BrandList({ onOpen }: { onOpen: (k: string) => void }) {
                   {traduire(w.name)}
                 </Ink>
                 <Ink size={12} weight="bold" color={p.ok ? S.ink2 : S.muted}>
-                  {`${w.kind}, ${sub}`}
+                  {`${traduire(w.kind)}, ${sub}`}
                 </Ink>
               </View>
               <SanteIcon name="chevron" size={16} color={S.muted} />
@@ -92,7 +92,7 @@ function BrandSheet({ w }: { w: Watch }) {
   const [plat, setPlat] = useState<'ios' | 'android'>(ANDROID ? 'android' : 'ios');
   const [syncing, setSyncing] = useState(false);
   const p = plat === 'android' ? w.android : w.ios;
-  const provider = plat === 'android' ? 'Health Connect' : 'Apple Santé';
+  const provider = plat === 'android' ? 'Health Connect' : traduire('Apple Santé');
   const mine = (plat === 'android') === ANDROID;
 
   const openSettings = () => {
@@ -131,7 +131,7 @@ function BrandSheet({ w }: { w: Watch }) {
               {traduire(w.name)}
             </Ink>
             <Ink size={13} weight="bold" color={S.ink2}>
-              {`${w.kind}, app ${p.app || w.ios.app || w.android.app}`}
+              {`${traduire(w.kind)}, app ${p.app || w.ios.app || w.android.app}`}
             </Ink>
           </View>
         </View>
@@ -240,7 +240,7 @@ function BrandSheet({ w }: { w: Watch }) {
             <Steps steps={p.steps} color={S.accent} />
             {mine ? (
               <View style={{ gap: 10 }}>
-                <SmallButton label={`Ouvrir ${provider}`} tone="light" icon="external" onPress={openSettings} />
+                <SmallButton label={traduire("Ouvrir {0}", provider)} tone="light" icon="external" onPress={openSettings} />
                 <SmallButton label={syncing ? 'Synchronisation' : traduire('C’est fait, synchroniser')} tone="red" icon="sync" busy={syncing} onPress={done} />
               </View>
             ) : null}
@@ -263,7 +263,7 @@ function ReadsCard() {
   const router = useRouter();
   const [asking, setAsking] = useState(false);
   const [done, setDone] = useState(false);
-  const provider = ANDROID ? 'Health Connect' : 'Apple Santé';
+  const provider = ANDROID ? 'Health Connect' : traduire('Apple Santé');
   const mine = METRICS.filter((m) => availableOn(m, ANDROID));
   const groups = FAMILY_ORDER.map((f) => ({ f, list: mine.filter((m) => m.family === f) })).filter((g) => g.list.length > 0);
   const events = mine.filter((m) => m.event).length;

@@ -67,7 +67,7 @@ export default function Sceaux() {
           <Hanko size={56} shape="rond" color={c.indigo} earned={lunes > 0} tampon="lapin_lune" />
           <View style={{ flex: 1, gap: 2 }}>
             <Ink size={17} weight="black">{traduire(LUNE.name)}</Ink>
-            <Ink size={13} color={c.textSecondary}>{traduire("{0}. Il se gagne chaque mois, +{1} XP à chaque fois.", LUNE.condition, XP_VALUES.lune)}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire("{0}. Il se gagne chaque mois, +{1} XP à chaque fois.", traduire(LUNE.condition), XP_VALUES.lune)}</Ink>
             <Ink size={14} weight="extraBold" color={lunes > 0 ? c.indigo : c.textMuted}>{lunes > 0 ? traduire("Gagnée {0} fois", lunes) : traduire('Pas encore gagnée')}</Ink>
           </View>
         </Animated.View>

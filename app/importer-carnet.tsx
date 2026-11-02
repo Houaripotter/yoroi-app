@@ -133,7 +133,7 @@ export default function ImporterCarnet() {
           <>
             <Ink size={14} color={c.textSecondary}>{traduire('Copie tes notes de muscu, même des années, et colle les ici. Une date sur une ligne, puis un exercice par ligne :')}</Ink>
             <View style={{ borderRadius: 16, padding: 12, backgroundColor: c.fillSubtle }}>
-              <Ink size={13} color={c.textSecondary}>{EXEMPLE}</Ink>
+              <Ink size={13} color={c.textSecondary}>{EXEMPLE.split('\n').map((l) => traduire(l)).join('\n')}</Ink>
             </View>
 
             <View style={{ flexDirection: 'row', gap: 8 }}>

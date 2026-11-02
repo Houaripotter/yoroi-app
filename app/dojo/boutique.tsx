@@ -97,8 +97,8 @@ function groupesScenes(classiqueDabord: boolean) {
   const nature = NATURE_SCENE_IDS as readonly string[];
   const vie = VIE_SCENE_IDS as readonly string[];
   const voyages = VOYAGE_SCENE_IDS as readonly string[];
-  const japon = { id: 'japon', titre: 'Japon', liste: THEMES.filter((t) => !estSceneClassique(t.id) && !nature.includes(t.id) && !vie.includes(t.id) && !voyages.includes(t.id)) };
-  const classique = { id: 'classique', titre: 'Classique', liste: SCENES_CLASSIQUES };
+  const japon = { id: 'japon', titre: traduire('Japon'), liste: THEMES.filter((t) => !estSceneClassique(t.id) && !nature.includes(t.id) && !vie.includes(t.id) && !voyages.includes(t.id)) };
+  const classique = { id: 'classique', titre: traduire('Classique'), liste: SCENES_CLASSIQUES };
   // 18 octobre 2026 : le pack Voyages, scenes animees (trois se gagnent avec la serie de jours), juste apres ta famille
   const voyage = { id: 'voyages', titre: traduire('Voyages'), liste: THEMES.filter((t) => voyages.includes(t.id)) };
   const reste = [
@@ -306,7 +306,8 @@ export default function Boutique() {
     const verrou = !persoLibre(base);
     // la vignette montre la teinte essayee, sinon la teinte choisie dans la galerie
     const cle = memePersonnage(shownKey, base) ? shownKey : avecTeinteGlobale(base);
-    const nom = opts.nomCourt ?? personnageName(base);
+    // affichage seul : le nom du personnage dans la langue de l'app
+    const nom = traduire(opts.nomCourt ?? personnageName(base));
     const p = parsePersonnage(base);
     const note = opts.note ?? (verrou && p.kind === 'pack' && p.pack.kind === 'monde' ? traduire("Rang {0}", rangNom(p.pack.unlockRank ?? 0, univers)) : null);
     return (
@@ -337,7 +338,7 @@ export default function Boutique() {
         : verrou && palier !== null
           ? traduire("{0} jours d’affilée", palier)
           : !t.premium
-            ? 'Offerte'
+            ? traduire('Offerte')
             : !isPremium && sceneGagnee(t.id)
               ? traduire('Gagnée')
               : !isPremium && essaiEnCours()?.id === t.id
@@ -359,7 +360,7 @@ export default function Boutique() {
   /* ---------- onglets et compteurs, d'apres le catalogue reel ---------- */
   const TABS: { id: Tab; label: string; count: number }[] = [
     { id: 'monde', label: traduire('Samouraïs'), count: MONDE_PERSONNAGES.length + 1 },
-    { id: 'classique', label: 'Classique', count: 2 },
+    { id: 'classique', label: traduire('Classique'), count: 2 },
     { id: 'vie', label: traduire('Vie réelle'), count: VIE_PERSONNAGES.length },
     { id: 'sport', label: traduire('Sports'), count: PACKS_SPORT.length },
     { id: 'legende', label: traduire('Légendes'), count: PACKS_LEGENDE.length },
@@ -426,7 +427,7 @@ export default function Boutique() {
             </View>
             {previewing ? (
               <Animated.View entering={FadeIn.duration(180)} style={{ position: 'absolute', left: 10, bottom: 10, flexDirection: 'row', gap: 8 }}>
-                <BoutonPrincipal onPress={valider} haptique="none" accessibilityLabel={bouton === 'Débloquer' ? traduire('Débloquer avec Premium') : bouton} label={bouton} hauteur={42} rayon={14} tailleTexte={14} lignes={1} compact />
+                <BoutonPrincipal onPress={valider} haptique="none" accessibilityLabel={bouton === 'Débloquer' ? traduire('Débloquer avec Premium') : bouton} label={traduire(bouton)} hauteur={42} rayon={14} tailleTexte={14} lignes={1} compact />
                 <Pressable
                   onPress={() => {
                     tap();

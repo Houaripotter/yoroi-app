@@ -150,7 +150,7 @@ export function TableauDuJour({
   const styleValeurs = useStyleValeurs();
   const styleContour = useStyleContour();
   const [feuille, setFeuille] = useState(false);
-  const unites: Record<string, string> = { pas: 'pas', exercice: 'min', 'energie-active': 'kcal' };
+  const unites: Record<string, string> = { pas: traduire('pas'), exercice: 'min', 'energie-active': 'kcal' };
   return (
     <View style={[{ borderRadius: 26, padding: 16, gap: 14 }, carteNeutre()]}>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
@@ -511,7 +511,7 @@ function MiniEau({ water, waterGoal, onOuvrir }: { water: number; waterGoal: num
   };
   return (
     <View style={{ flex: 1, minWidth: 0 }}>
-      <CadreMini onPress={onOuvrir} a11y={traduire("Eau : {0} litre sur {1}. Ouvrir l’eau du jour", formatLiters(affiche), formatLiters(waterGoal))} titre="Eau" couleur={trait} titreAGauche>
+      <CadreMini onPress={onOuvrir} a11y={traduire("Eau : {0} litre sur {1}. Ouvrir l’eau du jour", formatLiters(affiche), formatLiters(waterGoal))} titre={traduire('Eau')} couleur={trait} titreAGauche>
         <Bouteille part={waterGoal > 0 ? affiche / waterGoal : 0} couleur={c.anneau} vague={c.fin} contour={trait} largeur={30} hauteur={56} cle="mini:eau" />
         {/* la quantite dans le cyan exact de l'anneau, sur la meme pastille noire que les valeurs des anneaux (AA) */}
         <ValeurLegere style={styleValeurs === 'barre' ? 'pastille' : styleValeurs} couleur={c.anneau} size={15} rayon={9} centre valeur={`${formatLiters(quantite)} L`} />
@@ -536,7 +536,7 @@ function MiniEauPassee({ eau, goal }: { eau: { amount: number; goal: number | nu
   if (!eau) {
     return (
       <View style={{ flex: 1, minWidth: 0 }}>
-        <CadreMini onPress={ouvrir} a11y={traduire("Eau : pas de donnée ce jour. Ouvrir l’eau")} titre="Eau" couleur={trait} titreAGauche>
+        <CadreMini onPress={ouvrir} a11y={traduire("Eau : pas de donnée ce jour. Ouvrir l’eau")} titre={traduire('Eau')} couleur={trait} titreAGauche>
           <View style={{ flex: 1, justifyContent: 'center' }}>
             <Ink size={11.5} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>
               {traduire("Pas de donnée")}</Ink>

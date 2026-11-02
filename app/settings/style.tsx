@@ -395,7 +395,7 @@ export default function Personnaliser() {
               onPress={() => choisirCitation(s.id)}
               accessibilityRole="radio"
               accessibilityState={{ selected: actif }}
-              accessibilityLabel={`Citation, style ${s.nom}`}
+              accessibilityLabel={traduire("Citation, style {0}", traduire(s.nom))}
               style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
             >
               <View style={{ borderRadius: 16, borderWidth: 2, borderColor: actif ? c.accent : c.divider, backgroundColor: c.background, paddingTop: 14, paddingBottom: 10, paddingHorizontal: 10, gap: 8, opacity: citationCachee ? 0.55 : 1 }}>
@@ -560,7 +560,7 @@ export default function Personnaliser() {
           chevron={false}
           largeur={demi}
           titre={traduire("Icône de l’app")}
-          valeur={logoMeta.name}
+          valeur={traduire(logoMeta.name)}
           onPress={() => go(ROUTES_PERSONNALISER.icone)}
           apercu={
             <View style={{ height: 104, borderRadius: 15, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>

@@ -106,9 +106,9 @@ export default function CalculatorsScreen() {
             </View>
             <GenderSwitch value={gender} onChange={setGender} />
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <NumField label="Poids" value={weightStr} onChange={setWeightStr} unit="kg" maxLength={5} />
-              <NumField label="Taille" value={heightStr} onChange={setHeightStr} unit="cm" integer maxLength={3} />
-              <NumField label={traduire("Âge")} value={ageStr} onChange={setAgeStr} unit="ans" integer maxLength={3} />
+              <NumField label={traduire("Poids")} value={weightStr} onChange={setWeightStr} unit="kg" maxLength={5} />
+              <NumField label={traduire("Taille")} value={heightStr} onChange={setHeightStr} unit="cm" integer maxLength={3} />
+              <NumField label={traduire("Âge")} value={ageStr} onChange={setAgeStr} unit={traduire("ans")} integer maxLength={3} />
             </View>
             <Ink size={12} weight="medium" color={P.ink2}>
               {fromProfile ? traduire('Repris de ton profil et de ta dernière pesée. Tu peux tout modifier.') : traduire('Remplis ces trois valeurs : tous les calculateurs se mettent à jour en direct.')}
@@ -138,7 +138,7 @@ export default function CalculatorsScreen() {
           <CalcCard
             icon="percent"
             tone="gold"
-            title="IMG"
+            title={traduire("IMG")}
             sub={traduire("Estimation de ta masse grasse")}
             value={hasAll ? fmt(vImg) : null}
             unit="%"

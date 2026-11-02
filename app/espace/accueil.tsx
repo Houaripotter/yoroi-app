@@ -19,7 +19,7 @@ export default function TonAccueil() {
   useFocusEffect(
     useCallback(() => {
       getCitationNotifSettings()
-        .then((cs) => setCitStyle(cs?.enabled ? 'Rappel actif' : traduire('Sans rappel')))
+        .then((cs) => setCitStyle(cs?.enabled ? traduire('Rappel actif') : traduire('Sans rappel')))
         .catch(() => setCitStyle(undefined));
     }, []),
   );

@@ -13,7 +13,7 @@ import type { ImageSourcePropType } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { XP_VALUES, danLabel } from '@/lib/v2/armure';
+import { XP_VALUES, danAffiche } from '@/lib/v2/armure';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { SealMedal } from './SealMedal';
 import { ArmureEnConstruction, EtapesPiece } from './ArmureEnConstruction';
@@ -110,7 +110,7 @@ export function Celebration({ visible, rankUp, seals, recap, plate, xp = 0, imag
                 <Ink size={38} weight="black" tight color="#F5F6FB" numberOfLines={2} style={{ flexShrink: 1, textAlign: 'center' }}>{isDan ? nomRang : traduire("Tu passes {0}", nomRang)}</Ink>
               </View>
               {isDan ? (
-                <Ink size={22} weight="black" color={DOJO.goldLight}>{danLabel(rankUp!.dan ?? 1)}</Ink>
+                <Ink size={22} weight="black" color={DOJO.goldLight}>{danAffiche(rankUp!.dan ?? 1)}</Ink>
               ) : avecPersonnage ? (
                 <Ink size={16} color="#D9D6CC" style={{ textAlign: 'center' }}>{traduire("Nouvelle tenue : {0}", rangTenue(rankUp!.index, u))}</Ink>
               ) : pieceRang ? (

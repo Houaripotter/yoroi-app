@@ -100,7 +100,7 @@ export function DateField({ label, value, onChange, minimumDate }: { label?: str
           setOpen(true);
         }}
         accessibilityRole="button"
-        accessibilityLabel={`${label ?? 'Date'} : ${longDate(value)}`}
+        accessibilityLabel={traduire('{0} : {1}', label ?? traduire('Date'), longDate(value))}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 64, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingHorizontal: 16 }}>
           <View style={{ width: 44, height: 48, borderRadius: 12, backgroundColor: P.accentSoft, alignItems: 'center', justifyContent: 'center' }}>

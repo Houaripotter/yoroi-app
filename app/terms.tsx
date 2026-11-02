@@ -26,7 +26,7 @@ const CONTACT = 'yoroiapp@hotmail.com';
  */
 const EDITEUR: { nom: string; statut?: string; adresse?: string } | null = {
   nom: 'KABUTO',
-  statut: 'SASU au capital de 1 000 euros, SIREN 109 094 649, RCS Marseille.',
+  statut: traduire('SASU au capital de 1 000 euros, SIREN 109 094 649, RCS Marseille.'),
   adresse: traduire('Siège social : 55 rue Grignan, 13006 Marseille, France.'),
 };
 const APPLE_EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
@@ -37,7 +37,7 @@ type Section = { title: string; icon: IconName; content: string[]; link?: { labe
 
 function sections(): Section[] {
   const editeur = EDITEUR
-    ? [`YOROI est édité par ${EDITEUR.nom}.`, EDITEUR.statut, EDITEUR.adresse, `Contact : ${CONTACT}`].filter((l): l is string => Boolean(l))
+    ? [traduire('YOROI est édité par {0}.', EDITEUR.nom), EDITEUR.statut, EDITEUR.adresse, traduire('Contact : {0}', CONTACT)].filter((l): l is string => Boolean(l))
     : [traduire("YOROI est édité par son créateur. Pour toute question : {0}", CONTACT)];
   return [
     {

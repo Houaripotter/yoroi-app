@@ -7,6 +7,7 @@
  * Chaque route est directe (aucune ne passe par un relais de lib/v2/nav/direct.ts). Aucun import React Native :
  * tout se teste avec jest.
  */
+import { traduire } from '@/lib/i18n/tr';
 
 export const ROUTES_PERSONNALISER = {
   /** l'ecran Personnaliser lui-meme (le fichier garde son nom historique) */
@@ -34,7 +35,7 @@ export function choixCourbesInitial(param: unknown): ChoixCourbes | null {
 
 /** La petite ligne sous « Personnaliser » dans les Reglages : ce que tu as choisi, en quelques mots */
 export function resumePersonnaliser(a: { theme: string; scene: string; personnage: string; styleCourbe: number }): string {
-  const morceaux = [a.theme, a.scene, a.personnage.toLowerCase(), `courbe style ${a.styleCourbe}`].map((x) => String(x ?? '').trim()).filter(Boolean);
+  const morceaux = [a.theme, a.scene, a.personnage.toLowerCase(), traduire('courbe style {0}', a.styleCourbe)].map((x) => String(x ?? '').trim()).filter(Boolean);
   return morceaux.join(', ');
 }
 

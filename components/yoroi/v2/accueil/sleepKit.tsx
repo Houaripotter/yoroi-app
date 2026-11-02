@@ -8,10 +8,10 @@ import Svg, { Path, Rect } from 'react-native-svg';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import type { SleepEntry } from '@/lib/sleepService';
 import { Icon, P, Press, tap } from './kit';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG, LOCALE, JOURS_LETTRES } from '@/lib/i18n/tr';
 
-export const QUALITY_LABELS = ['', traduire('Très mauvaise'), 'Mauvaise', 'Correcte', 'Bonne', 'Excellente'];
-const DAYS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
+export const QUALITY_LABELS = ['', traduire('Très mauvaise'), traduire('Mauvaise'), traduire('Correcte'), traduire('Bonne'), traduire('Excellente')];
+const DAYS = [traduire('dim.'), traduire('lun.'), traduire('mar.'), traduire('mer.'), traduire('jeu.'), traduire('ven.'), traduire('sam.')];
 const DAYS_LONG = [traduire('Dimanche'), traduire('Lundi'), traduire('Mardi'), traduire('Mercredi'), traduire('Jeudi'), traduire('Vendredi'), traduire('Samedi')];
 const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
@@ -25,6 +25,8 @@ export function hm(min: number): string {
 export function clock(t?: string): string {
   if (!t) return '';
   const [h, m] = t.split(':');
+  // hors français : l'heure au format de la langue (« 11:00 PM », « 23:00 »)
+  if (LANG !== 'fr') return new Date(2026, 0, 1, parseInt(h, 10) || 0, parseInt(m ?? '0', 10) || 0).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
   return `${parseInt(h, 10)} h ${m ?? '00'}`;
 }
 
@@ -97,7 +99,7 @@ export function NightLetters({ days = 7, width = 320 }: { days?: number; width?:
   const letters = Array.from({ length: days }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (days - 1 - i));
-    return 'DLMMJVS'[d.getDay()];
+    return JOURS_LETTRES[(d.getDay() + 6) % 7];
   });
   return (
     <View style={{ flexDirection: 'row', width }}>

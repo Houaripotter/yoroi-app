@@ -230,7 +230,7 @@ export default function Reglages() {
 
   // Rappels
   const rem = status.reminders;
-  const remValue = rem === null ? undefined : rem.length ? `${rem.length} actif${rem.length > 1 ? 's' : ''}` : traduire('Aucun');
+  const remValue = rem === null ? undefined : rem.length ? traduirePluriel(rem.length, rem.length > 1, '{0} actif', '{0} actifs', rem.length) : traduire('Aucun');
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
@@ -321,11 +321,11 @@ export default function Reglages() {
         <Pressable
           onLongPress={onVersionLongPress}
           delayLongPress={1500}
-          accessibilityLabel={`Version ${APP_VERSION}`}
+          accessibilityLabel={traduire('Version {0}', APP_VERSION)}
           style={{ alignItems: 'center', paddingVertical: 14, gap: 4 }}
         >
           <Embleme size={34} color={c.textMuted} ring={c.border} />
-          <Ink size={13} weight="bold" color={c.textMuted}>{APP_VERSION ? `Version ${APP_VERSION}` : 'YOROI'}</Ink>
+          <Ink size={13} weight="bold" color={c.textMuted}>{APP_VERSION ? traduire('Version {0}', APP_VERSION) : 'YOROI'}</Ink>
           <Ink size={12} color={c.textMuted}>{traduire("Fait à Marseille, 100 % hors ligne")}</Ink>
         </Pressable>
       </ScrollView>

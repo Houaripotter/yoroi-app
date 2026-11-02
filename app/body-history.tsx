@@ -22,7 +22,7 @@ import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { ChargementBloc } from '@/components/yoroi/v2/chargement/Chargement';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
-import { traduire, traduirePluriel, LOCALE } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, traduireSens, LOCALE } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 export default function CorpsParMesure() {
@@ -145,7 +145,7 @@ export default function CorpsParMesure() {
         <CorpsHeader
           title={traduire("Ton corps")}
           sub={traduire("Chaque mesure, depuis le début")}
-          right={<RoundBtn icon="plus" label={traduire("Ajouter : {0}", metric.label)} tone="accent" onPress={() => setEdit('new')} />}
+          right={<RoundBtn icon="plus" label={traduire("Ajouter : {0}", traduire(metric.label))} tone="accent" onPress={() => setEdit('new')} />}
         />
 
         <View style={{ paddingTop: 16, gap: 14 }}>
@@ -157,8 +157,8 @@ export default function CorpsParMesure() {
                   const on = m.key === metric.key;
                   const n = counts[m.key] ?? 0;
                   return (
-                    <Pressable key={m.key} onPress={() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); setMetricKey(m.key); }} accessibilityRole="button" accessibilityLabel={traduirePluriel(n, n > 1, "{0}, {1} mesure", "{0}, {1} mesures", m.chip, n)} accessibilityState={{ selected: on }} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: on ? c.ink : blancA(0.75), borderWidth: on ? 0 : 1, borderColor: c.border, opacity: n === 0 && !on ? 0.6 : 1 }}>
-                      <Ink size={14} weight="extraBold" color={on ? P.paper : c.ink}>{m.chip}</Ink>
+                    <Pressable key={m.key} onPress={() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); setMetricKey(m.key); }} accessibilityRole="button" accessibilityLabel={traduirePluriel(n, n > 1, "{0}, {1} mesure", "{0}, {1} mesures", traduireSens('tour', m.chip), n)} accessibilityState={{ selected: on }} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: on ? c.ink : blancA(0.75), borderWidth: on ? 0 : 1, borderColor: c.border, opacity: n === 0 && !on ? 0.6 : 1 }}>
+                      <Ink size={14} weight="extraBold" color={on ? P.paper : c.ink}>{traduireSens('tour', m.chip)}</Ink>
                     </Pressable>
                   );
                 })}
@@ -171,7 +171,7 @@ export default function CorpsParMesure() {
               <ChargementBloc style={{ marginTop: 10 }} />
             ) : !stats ? (
               <View style={{ padding: 22, borderRadius: 26, backgroundColor: blancA(0.8), borderWidth: 1, borderColor: P.white, gap: 8 }}>
-                <Ink size={22} weight="black" tight>{traduire("{0} : rien pour l’instant", metric.label)}</Ink>
+                <Ink size={22} weight="black" tight>{traduire("{0} : rien pour l’instant", traduire(metric.label))}</Ink>
                 <Ink size={14} color={c.textSecondary}>{metric.group === 'measurements' ? traduire('Un mètre ruban, une minute, et tu suis ce qui change vraiment.') : traduire('Une balance à impédance ou une saisie à la main, et la courbe démarre.')}</Ink>
                 <BoutonPrincipal onPress={() => setEdit('new')} haptique="light" label={traduire("Ajouter une valeur")} hauteur={50} rayon={16} tailleTexte={15} style={{ marginTop: 6 }} />
               </View>
@@ -187,11 +187,11 @@ export default function CorpsParMesure() {
                     ) : null}
                   </View>
                   <Ink size={13} color={c.textMuted}>{traduire(metric.label)}, {longDay(stats.last.date)}</Ink>
-                  {points.length > 1 ? <InkLineChart points={points} color={c.indigo} height={190} digits={metric.digits} label={`Courbe : ${metric.label}`} /> : null}
+                  {points.length > 1 ? <InkLineChart points={points} color={c.indigo} height={190} digits={metric.digits} label={traduire('Courbe : {0}', traduire(metric.label))} /> : null}
                   <View style={{ flexDirection: 'row', gap: 8 }}>
                     <Mini label={traduire("plus bas")} value={`${fmtValue(stats.min, metric.digits)} ${metric.unit}`} />
                     <Mini label={traduire("plus haut")} value={`${fmtValue(stats.max, metric.digits)} ${metric.unit}`} />
-                    <Mini label="mesures" value={String(entries.length)} />
+                    <Mini label={traduire("mesures")} value={String(entries.length)} />
                   </View>
                 </View>
 
@@ -224,7 +224,7 @@ export default function CorpsParMesure() {
       <ValueSheet
         visible={edit !== null}
         onClose={() => setEdit(null)}
-        title={edit && edit !== 'new' ? traduire("Modifier : {0}", metric.label.toLocaleLowerCase(LOCALE)) : metric.label}
+        title={edit && edit !== 'new' ? traduire("Modifier : {0}", traduire(metric.label).toLocaleLowerCase(LOCALE)) : traduire(metric.label)}
         unit={metric.unit}
         initialValue={edit && edit !== 'new' ? edit.value : null}
         initialDate={edit && edit !== 'new' ? edit.date : undefined}

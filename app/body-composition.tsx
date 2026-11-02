@@ -350,7 +350,7 @@ function BodyComposition() {
           <Ink size={12} color={c.textSecondary} numberOfLines={2}>{subShown}</Ink>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Pressable onPress={() => bump(f, -1)} accessibilityRole="button" accessibilityLabel={traduire("{0}, moins", f.label)} style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
+          <Pressable onPress={() => bump(f, -1)} accessibilityRole="button" accessibilityLabel={traduire("{0}, moins", traduire(f.label))} style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
             <Ink size={22} weight="extraBold">−</Ink>
           </Pressable>
           <View style={{ flex: 1, height: 60, borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 }}>
@@ -366,12 +366,12 @@ function BodyComposition() {
               returnKeyType="done"
               selectTextOnFocus
               maxLength={6}
-              accessibilityLabel={`${f.label} en ${f.unit}`}
+              accessibilityLabel={traduire("{0} en {1}", traduire(f.label), traduire(f.unit))}
               style={[fontStyle('black'), { flexShrink: 1, minWidth: 64, height: 52, fontSize: 30, lineHeight: Platform.OS === 'ios' ? undefined : 36, color: c.ink, textAlign: 'right', paddingVertical: 0, paddingHorizontal: 2, includeFontPadding: false }]}
             />
             <Ink size={15} weight="bold" color={c.textSecondary} style={{ marginLeft: 6 }}>{traduire(f.unit)}</Ink>
           </View>
-          <Pressable onPress={() => bump(f, 1)} accessibilityRole="button" accessibilityLabel={traduire("{0}, plus", f.label)} style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
+          <Pressable onPress={() => bump(f, 1)} accessibilityRole="button" accessibilityLabel={traduire("{0}, plus", traduire(f.label))} style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
             <Ink size={22} weight="extraBold">+</Ink>
           </Pressable>
         </View>

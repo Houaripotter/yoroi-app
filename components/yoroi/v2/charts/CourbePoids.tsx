@@ -133,7 +133,7 @@ export function couleurPointStatut(ton: Statut['ton'] | null | undefined, sombre
 export type PointPoids = { date: string; value: number; week?: boolean };
 export type ScrubPoids = { point: PointPoids; index: number; last: boolean; statut: Statut | null };
 
-const MOIS_COURT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
+const MOIS_COURT = [traduire('janv.'), traduire('févr.'), traduire('mars'), traduire('avr.'), traduire('mai'), traduire('juin'), traduire('juil.'), traduire('août'), traduire('sept.'), traduire('oct.'), traduire('nov.'), traduire('déc.')];
 const DAY = 86400000;
 const AXIS_FONT = fontFamilies.medium;
 const BOLD_FONT = fontFamilies.extraBold ?? fontFamilies.bold;
@@ -746,7 +746,7 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
   const lastStatut = lastP ? statutRef.current(lastP) : null;
   const toriiA11y = toriiDate ? (atteint ? traduire(", cap atteint le {0}", jourCourt(toriiDate)) : traduire(", arrivée prévue le {0}", jourCourt(toriiDate))) : '';
   const a11y = lastP
-    ? traduire("{0}. Dernière pesée : {1} kilos, le {2}{3}{4}. Glisse ton doigt pour revoir chaque pesée.", label, kg1(lastP.value), jourCourt(lastP.date), lastStatut ? `, ${lastStatut.label.toLowerCase()}` : '', capOn ? `. Cap ${kg1(cap as number)} kilos${toriiA11y}` : '')
+    ? traduire("{0}. Dernière pesée : {1} kilos, le {2}{3}{4}. Glisse ton doigt pour revoir chaque pesée.", label, kg1(lastP.value), jourCourt(lastP.date), lastStatut ? `, ${traduire(lastStatut.label).toLowerCase()}` : '', capOn ? `. ${traduire("Cap {0} kilos{1}", kg1(cap as number), toriiA11y)}` : '')
     : label;
 
   const bubble = (() => {
@@ -938,7 +938,7 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
                 {/* vague 35 : avec la trajectoire, plus d'etiquette « Cap » flottante (sa ligne horizontale est cachee) */}
                 {g.mid ? null : (
                   <Etiq halo={surScene} x={2} y={g.capBelow ? g.capY + 15 : g.capY - 7} fontSize={11.5} fontFamily={BOLD_FONT} fill={POIDS.capText}>
-                    {`Cap ${kgCourt(cap as number)} kg`}
+                    {traduire("Cap {0} kg", kgCourt(cap as number))}
                   </Etiq>
                 )}
                 {g.toriiX != null && toriiDate && !compact ? (
@@ -1021,7 +1021,7 @@ export function LegendeCourbe({ rythme, cap, torii, atteint, allure = false, pro
   // chemin), puis les « ton » des deux derniers
   const largeur = (t: string) => t.length * 5.75 + 21;
   const tient = (r: string | null, c: string | null) => largeur(traduire('ton poids')) + (r ? largeur(r) : 0) + (c ? largeur(c) : 0) + 20 <= w;
-  const capCourt = capLong && atteint ? 'cap atteint' : capLong && torii ? traduire("ton cap le {0}", jourCourt(torii)) : capLong;
+  const capCourt = capLong && atteint ? traduire('cap atteint') : capLong && torii ? traduire("ton cap le {0}", jourCourt(torii)) : capLong;
   let rythmeTxt: string | null = rythme ? traduire('ton rythme prévu') : null;
   let capTxt = capLong;
   if (w > 0 && !tient(rythmeTxt, capTxt)) {

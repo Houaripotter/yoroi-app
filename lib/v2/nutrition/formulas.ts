@@ -16,16 +16,16 @@ export type Gender = GenreFormule;
 export type Source = { label: string; ref: string; url?: string };
 
 export const SOURCES = {
-  imc: { label: traduire('Indice de masse corporelle'), ref: 'Organisation mondiale de la santé, classification de l’IMC chez l’adulte' },
+  imc: { label: traduire('Indice de masse corporelle'), ref: traduire('Organisation mondiale de la santé, classification de l’IMC chez l’adulte') },
   deurenberg: { label: traduire('Formule de Deurenberg (1991)'), ref: 'British Journal of Nutrition' },
   mifflin: { label: traduire('Formule Mifflin St Jeor (1990)'), ref: 'American Journal of Clinical Nutrition', url: 'https://pubmed.ncbi.nlm.nih.gov/2305711/' },
-  lorentz: { label: traduire('Formule de Lorentz (1929)'), ref: 'Formule historique, donnée à titre indicatif' },
-  devine: { label: traduire('Formule de Devine (1974)'), ref: 'Formule pharmacologique, donnée à titre indicatif' },
-  epley: { label: traduire('Formule d’Epley (1985)'), ref: 'Estimation de la charge maximale à partir des répétitions' },
+  lorentz: { label: traduire('Formule de Lorentz (1929)'), ref: traduire('Formule historique, donnée à titre indicatif') },
+  devine: { label: traduire('Formule de Devine (1974)'), ref: traduire('Formule pharmacologique, donnée à titre indicatif') },
+  epley: { label: traduire('Formule d’Epley (1985)'), ref: traduire('Estimation de la charge maximale à partir des répétitions') },
   protein: { label: traduire('Position officielle de l’ISSN sur les protéines (2017)'), ref: 'Journal of the International Society of Sports Nutrition', url: 'https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0177-8' },
   carbs: { label: traduire('Burke et al. (2011)'), ref: 'Journal of Sports Sciences', url: 'https://www.tandfonline.com/doi/abs/10.1080/02640414.2011.585473' },
-  hydration: { label: traduire('Sawka et al. (2007), position de l’ACSM'), ref: 'Adapter ses apports à sa transpiration, éviter de perdre plus de 2 % de son poids pendant l’effort. Article en anglais', url: 'https://pubmed.ncbi.nlm.nih.gov/17277604/' },
-  timing: { label: traduire('Kerksick et al. (2017)'), ref: 'Position officielle de l’ISSN sur le moment des repas', url: 'https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0189-4' },
+  hydration: { label: traduire('Sawka et al. (2007), position de l’ACSM'), ref: traduire('Adapter ses apports à sa transpiration, éviter de perdre plus de 2 % de son poids pendant l’effort. Article en anglais'), url: 'https://pubmed.ncbi.nlm.nih.gov/17277604/' },
+  timing: { label: traduire('Kerksick et al. (2017)'), ref: traduire('Position officielle de l’ISSN sur le moment des repas'), url: 'https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0189-4' },
 } satisfies Record<string, Source>;
 
 // ============================================

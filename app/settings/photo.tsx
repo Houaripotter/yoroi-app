@@ -30,7 +30,7 @@ import { useIdentite } from '@/lib/v2/espace/useIdentite';
 import { aUnPersonnage } from '@/lib/v2/dojo/personnages';
 import { genreDuPersonnage } from '@/lib/v2/dojo/choisirUnivers';
 import { choisirPhoto, ouvrirReglagesTelephone, retirerPhoto } from '@/lib/v2/espace/photoProfil';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduireSens } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 function BoutonPhoto({ icon, label, onPress, disabled, principal }: { icon: IconName; label: string; onPress: () => void; disabled?: boolean; principal?: boolean }) {
@@ -144,7 +144,7 @@ export default function PhotoEtContour() {
         <Ink size={12} color={c.textMuted}>{photo ? traduire('Tu peux la changer quand tu veux') : traduire('Ajoute une photo pour la voir dans ton rond')}</Ink>
       </View>
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <BoutonPhoto icon="camera" label={traduire('Prendre')} onPress={() => prendre('camera')} disabled={occupe} principal={!photo} />
+        <BoutonPhoto icon="camera" label={traduireSens('photo', 'Prendre')} onPress={() => prendre('camera')} disabled={occupe} principal={!photo} />
         <BoutonPhoto icon="image" label={traduire('Galerie')} onPress={() => prendre('galerie')} disabled={occupe} />
       </View>
       {photo ? (

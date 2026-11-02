@@ -48,7 +48,7 @@ export default function SanteScreen() {
 
   const goals = st.goals ?? DEFAULT_GOALS;
   const series = st.series;
-  const provider = ANDROID ? 'Health Connect' : 'Apple Santé';
+  const provider = ANDROID ? 'Health Connect' : traduire('Apple Santé');
 
   const { withData, waiting } = useMemo(() => {
     const w: typeof METRICS = [];

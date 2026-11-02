@@ -8,7 +8,7 @@
 import type { Training } from '@/lib/database';
 import type { SleepEntry } from '@/lib/sleepService';
 import type { MesureSanteJour } from '@/lib/v2/accueil/enPlus';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 const p2 = (n: number) => String(n).padStart(2, '0');
 const iso = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
@@ -47,7 +47,7 @@ export const SANTE_EXEMPLE: MesureSanteJour[] = [
 
 export function recordExemple(aujourdhui: Date = new Date()): { titre: string; valeur: string; date: string; ecart: string | null } {
   const d = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), aujourdhui.getDate() - 3, 12);
-  return { titre: traduire('Développé couché'), valeur: '90 kg', date: iso(d), ecart: '+2,5 kg' };
+  return { titre: traduire('Développé couché'), valeur: '90 kg', date: iso(d), ecart: `+2${DECIMAL}5 kg` };
 }
 
 export const SERIE_EXEMPLE = {

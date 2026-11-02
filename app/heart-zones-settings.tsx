@@ -48,7 +48,7 @@ import { ZONES_CLAIR, ZONES_SOMBRE } from '@/lib/v2/zones/couleursZones';
 
 const GOUTTIERE = 20;
 const ANDROID = Platform.OS === 'android';
-const NOM_SANTE = ANDROID ? 'Health Connect' : 'Apple Santé';
+const NOM_SANTE = ANDROID ? 'Health Connect' : traduire('Apple Santé');
 
 const NOMS = ['Récupération', 'Endurance', 'Tempo', 'Seuil', 'Maximum'] as const;
 const EFFETS = [
@@ -398,7 +398,7 @@ export default function HeartZonesSettingsScreen() {
   const msg = resultat ? texteImport(resultat) : null;
 
   const options: { key: Methode; label: string }[] = useMemo(() => [
-    { key: 'apple', label: ANDROID ? 'Health Connect' : 'Apple Santé' },
+    { key: 'apple', label: ANDROID ? 'Health Connect' : traduire('Apple Santé') },
     { key: 'fcmax', label: traduire('Ma FC max') },
     { key: 'repos', label: traduire('Au repos') },
     { key: 'manuel', label: traduire('Mes valeurs') },

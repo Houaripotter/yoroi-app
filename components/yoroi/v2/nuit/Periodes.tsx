@@ -11,7 +11,7 @@ import { P } from '@/components/yoroi/livePalette';
 import type { SleepEntry } from '@/lib/sleepService';
 import { duree } from './outils';
 import { GrandeDuree } from './GrandeDuree';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, JOURS_LETTRES } from '@/lib/i18n/tr';
 
 export type Periode = 'J' | 'S' | 'M' | '6M';
 const LIBELLE: Record<Periode, string> = { J: 'J', S: 'S', M: 'M', '6M': '6 M' };
@@ -41,7 +41,7 @@ export function OngletsPeriode({ value, onChange }: { value: Periode; onChange: 
   );
 }
 
-const JOURS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+const JOURS = [JOURS_LETTRES[6], ...JOURS_LETTRES.slice(0, 6)];
 const JOURS_LONG = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
 const MOIS = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
 

@@ -26,7 +26,7 @@ import type { StyleCourbe } from '@/lib/v2/courbes/prefs';
 import type { Domaine } from '../accueil/domaines';
 import { couleurTraitDomaine } from '../charts/couleurDomaine';
 import { placeTampon, pointsDesBarres, reperesCouvrants } from '@/lib/v2/courbes/graphes';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, JOURS_LETTRES } from '@/lib/i18n/tr';
 
 export type ChartPoint = { date: string; value: number; record?: boolean; week?: boolean };
 
@@ -157,7 +157,7 @@ export function InkLineChart({ points: pointsIn, color, height = 220, compact, d
     const realSpan = Math.max(daysDiff(first, points[points.length - 1].date), 1);
     if (realSpan <= 10) {
       // une semaine : la lettre du jour sous chaque point
-      const LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+      const LETTERS = [JOURS_LETTRES[6], ...JOURS_LETTRES.slice(0, 6)];
       points.forEach((p, i) => {
         const d = new Date(`${p.date.slice(0, 10)}T12:00:00`);
         if (labels.length === 0 || xs[i] - labels[labels.length - 1].x > 22) labels.push({ x: xs[i], text: LETTERS[d.getDay()] });

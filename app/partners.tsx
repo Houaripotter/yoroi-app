@@ -32,9 +32,9 @@ const openMap = (address: string) => {
 
 
 function ItemCard({ item, onPress }: { item: Item; onPress: () => void }) {
-  const sub = [isCoach(item) ? item.title : item.type, item.location].filter(Boolean).join(', ');
+  const sub = [traduire(isCoach(item) ? item.title : item.type), item.location].filter(Boolean).join(', ');
   return (
-    <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={traduire("Voir {0}", item.name)}>
+    <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={traduire("Voir {0}", traduire(item.name))}>
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         <View style={{ height: 170, backgroundColor: P.ink }}>
           {item.imageUrl ? (
@@ -65,7 +65,7 @@ function ItemCard({ item, onPress }: { item: Item; onPress: () => void }) {
               {item.specialties.slice(0, 3).map((s) => (
                 <View key={s} style={{ paddingHorizontal: 10, height: 28, borderRadius: 14, justifyContent: 'center', backgroundColor: P.paper }}>
                   <Ink size={12} weight="bold" color={P.ink2}>
-                    {s}
+                    {traduire(s)}
                   </Ink>
                 </View>
               ))}
@@ -112,8 +112,8 @@ export default function PartnersScreen() {
     <DetailScreen title={traduire("Sélection YOROI")} subtitle={traduire("Des exemples de profils à chercher près de chez toi")}>
       <View style={{ flexDirection: 'row', backgroundColor: '#E6E4DD', borderRadius: 18, padding: 4 }}>
         {([
-          { k: 'coaches', l: 'Coachs', n: coaches.length },
-          { k: 'clubs', l: 'Clubs', n: CLUBS.length },
+          { k: 'coaches', l: traduire('Coachs'), n: coaches.length },
+          { k: 'clubs', l: traduire('Clubs'), n: CLUBS.length },
         ] as const).map((t) => {
           const on = tab === t.k;
           return (
@@ -170,7 +170,7 @@ export default function PartnersScreen() {
                     {traduire(selected.name)}
                   </Ink>
                   <Ink size={15} weight="bold" color={P.ink2}>
-                    {isCoach(selected) ? selected.title : selected.type}
+                    {traduire(isCoach(selected) ? selected.title : selected.type)}
                   </Ink>
                 </View>
                 {selected.bio ? (
@@ -205,7 +205,7 @@ export default function PartnersScreen() {
                       {selected.specialties.map((s) => (
                         <View key={s} style={{ paddingHorizontal: 14, height: 36, borderRadius: 18, justifyContent: 'center', backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
                           <Ink size={14} weight="bold">
-                            {s}
+                            {traduire(s)}
                           </Ink>
                         </View>
                       ))}

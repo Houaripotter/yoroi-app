@@ -78,7 +78,7 @@ export default function CombatAchievementsScreen() {
               {[
                 { v: stats.totalRounds, l: 'rounds' },
                 { v: stats.totalSessions, l: traduire('séances') },
-                { v: stats.uniquePartners, l: 'partenaires' },
+                { v: stats.uniquePartners, l: traduire('partenaires') },
               ].map((x) => (
                 <View key={x.l} style={{ flex: 1 }}>
                   <Ink size={20} weight="black" color={P.white}>{x.v}</Ink>
@@ -107,7 +107,7 @@ export default function CombatAchievementsScreen() {
                   <View
                     key={a.id}
                     accessible
-                    accessibilityLabel={`${a.title}, ${a.unlocked ? traduire('débloqué') : traduire('à débloquer')}. ${a.description}`}
+                    accessibilityLabel={`${traduire(a.title)}, ${a.unlocked ? traduire('débloqué') : traduire('à débloquer')}. ${a.description}`}
                     style={{ width: '48.5%', gap: 8, padding: 10, borderRadius: 16, backgroundColor: a.unlocked ? '#FBFAF7' : 'transparent', borderWidth: 1, borderColor: a.unlocked ? c.border : c.divider, borderStyle: a.unlocked ? 'solid' : 'dashed' }}
                   >
                     <Hanko color={cat.color} size={38} earned={a.unlocked} tampon={i % 2 ? 'record_combat' : 'victoire'} />

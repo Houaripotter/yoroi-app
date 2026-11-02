@@ -13,7 +13,7 @@ export function ExampleBadge() {
   const { theme } = useYoroiTheme();
   return (
     <View style={{ paddingHorizontal: 9, paddingVertical: 4, borderRadius: 9, backgroundColor: theme.colors.ink }}>
-      <Ink size={11} weight="extraBold" color={theme.colors.background}>exemple</Ink>
+      <Ink size={11} weight="extraBold" color={theme.colors.background}>{traduire('exemple')}</Ink>
     </View>
   );
 }
@@ -22,7 +22,7 @@ export function ExampleFrame({ children, caption, style }: { children: React.Rea
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
-    <View style={style} accessibilityLabel={caption ? `Exemple. ${caption}` : traduire('Exemple')}>
+    <View style={style} accessibilityLabel={caption ? traduire('Exemple. {0}', caption) : traduire('Exemple')}>
       <View style={{ opacity: 0.42 }} pointerEvents="none">
         {children}
       </View>

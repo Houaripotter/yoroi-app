@@ -257,7 +257,7 @@ export function Vestiaire() {
   };
   const choixClassique = (g: 'h' | 'f'): Choix => {
     const on = espace.personnage === `classique_${g}`;
-    const nom = g === 'f' ? 'Sportive' : 'Sportif';
+    const nom = g === 'f' ? traduire('Sportive') : traduire('Sportif');
     return {
       key: `classique_${g}`, nom, image: classiqueImage(g, rankIndex), fond: g === 'f' ? P.tuileSableFond : P.tuileMentheFond, on, lock: false,
       a11y: on ? traduire('{0}, ton personnage', nom) : nom,
@@ -269,7 +269,7 @@ export function Vestiaire() {
     const key = personnageKey(p, genre);
     const on = memePersonnage(espace.personnage, key);
     const lock = !isPackUnlocked(p, p.kind === 'monde' ? [] : owned, rankIndex, isPremium);
-    const nom = packDisplayName(p, genre);
+    const nom = traduire(packDisplayName(p, genre));
     const teinte = on ? separerTeinte(espace.personnage).teinte : null;
     return {
       key: p.id, nom, image: packImage(p, genre, on ? packLevel(p, rankIndex, {}) : 1, teinte), fond: p.fond, on, lock,
@@ -293,8 +293,8 @@ export function Vestiaire() {
   const COULEURS_RANGEES = [P.tuileMentheTexte, P.accent, P.etiquettePrune, P.tuileSableTexte, P.heart, P.mossText];
   const phraseUnivers = (id: 'japon' | 'classique' | 'aucun') => UNIVERS_CHOIX.find((u) => u.id === id)?.phrase;
   const rangees: { id: string; titre: string; sub?: string; items: Choix[] }[] = [
-    { id: 'japon', titre: 'Japon', sub: phraseUnivers('japon'), items: [choixGuerrier('h'), choixGuerrier('f')] },
-    { id: 'classique', titre: 'Classique', sub: phraseUnivers('classique'), items: [choixClassique('h'), choixClassique('f')] },
+    { id: 'japon', titre: traduire('Japon'), sub: phraseUnivers('japon'), items: [choixGuerrier('h'), choixGuerrier('f')] },
+    { id: 'classique', titre: traduire('Classique'), sub: phraseUnivers('classique'), items: [choixClassique('h'), choixClassique('f')] },
     {
       id: 'monde',
       titre: traduire('Le monde samouraï'),
@@ -483,7 +483,7 @@ export function Vestiaire() {
           </>
         ) : null}
         <View style={{ position: 'absolute', top: 14, left: 14, height: 26, paddingHorizontal: 10, borderRadius: 13, backgroundColor: P.glass, justifyContent: 'center' }}>
-          <Ink size={11} weight="extraBold" color={P.etiquettePrune} style={{ letterSpacing: 1.4, textTransform: 'uppercase' }}>{universNom}</Ink>
+          <Ink size={11} weight="extraBold" color={P.etiquettePrune} style={{ letterSpacing: 1.4, textTransform: 'uppercase' }}>{traduire(universNom)}</Ink>
         </View>
         <Pressable
           onPress={() => { selectionAsync().catch(() => {}); router.navigate('/(tabs)' as any); }}

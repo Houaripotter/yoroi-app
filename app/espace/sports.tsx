@@ -29,15 +29,15 @@ const CAT: Record<string, string> = {
   combat_striking: traduire('Combat, pieds et poings'),
   combat_grappling: traduire('Combat, lutte et sol'),
   fitness: traduire('Musculation et fitness'),
-  cardio: 'Cardio',
-  collectif: 'Sports collectifs',
-  raquettes: 'Raquettes',
-  danse: 'Danse',
-  glisse: 'Glisse',
+  cardio: traduire('Cardio'),
+  collectif: traduire('Sports collectifs'),
+  raquettes: traduire('Raquettes'),
+  danse: traduire('Danse'),
+  glisse: traduire('Glisse'),
   nature: traduire('Extérieur'),
-  aquatique: 'Sports aquatiques',
+  aquatique: traduire('Sports aquatiques'),
   precision: traduire('Précision et adresse'),
-  autre: 'Autres',
+  autre: traduire('Autres'),
 };
 
 const MUSCLE_IDS = new Set(['pectoraux', 'dos', 'epaules', 'biceps', 'triceps', 'abdos', 'jambes', 'mollets', 'avant_bras', 'fessiers']);
@@ -166,7 +166,7 @@ export default function TesSports() {
       ) : (
         groups.map(([cat, list]) => (
           <View key={cat} style={{ gap: 8 }}>
-            <Ink size={14} weight="extraBold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{CAT[cat] ?? 'Autres'}</Ink>
+            <Ink size={14} weight="extraBold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{CAT[cat] ?? traduire('Autres')}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {list.map((s) => {
                 const on = favs.includes(s.id);

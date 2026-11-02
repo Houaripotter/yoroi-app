@@ -32,7 +32,7 @@ const FORMATS: { id: Format; icon: IconName; label: string; sub: string }[] = [
 const PERIODS: { id: string; label: string; days: number | null }[] = [
   { id: '30', label: traduire('30 jours'), days: 30 },
   { id: '90', label: traduire('3 mois'), days: 90 },
-  { id: '365', label: '1 an', days: 365 },
+  { id: '365', label: traduire('1 an'), days: 365 },
   { id: 'all', label: traduire('Tout'), days: null },
 ];
 
@@ -172,7 +172,7 @@ export default function ExportDataScreen() {
             <Ink size={14} weight="extraBold">{traduire("Sport")}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {chip('all', traduire('Tous'), sport === '', () => setSport(''))}
-              {sports.map((id) => chip(id, getSportName(id), sport === id, () => setSport(id)))}
+              {sports.map((id) => chip(id, traduire(getSportName(id)), sport === id, () => setSport(id)))}
             </View>
           </View>
           <View style={{ gap: 8 }}>

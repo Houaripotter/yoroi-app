@@ -10,6 +10,7 @@ import { tap } from './ui';
 import { Icon } from './Icon';
 import { P } from '@/components/yoroi/livePalette';
 import { StickerSinon } from '@/components/yoroi/v2/ui/StickerSinon';
+import { traduire } from '@/lib/i18n/tr';
 
 export function SportShortcuts({ sports, femme, onPick }: { sports: string[]; femme: boolean; onPick: (sport: string) => void }) {
   const { theme } = useYoroiTheme();
@@ -24,7 +25,7 @@ export function SportShortcuts({ sports, femme, onPick }: { sports: string[]; fe
             key={s}
             onPress={() => { tap(); onPick(s); }}
             accessibilityRole="button"
-            accessibilityLabel={`Commencer ${name}`}
+            accessibilityLabel={traduire('Commencer {0}', name)}
             style={({ pressed }) => ({ flex: 1, gap: 6, transform: [{ scale: pressed ? 0.96 : 1 }] })}
           >
             <View style={{ height: 96, borderRadius: 18, backgroundColor: sportTint(s), overflow: 'hidden', alignItems: 'center', borderWidth: 1, borderColor: P.white }}>

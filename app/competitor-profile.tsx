@@ -18,7 +18,7 @@ import { ibjjfAdvised, ibjjfCategories, ibjjfWeightLabel, normalizeIbjjfId } fro
 import type { IbjjfCategory } from '@/lib/v2/competition/ibjjf';
 import logger from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
-import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, DECIMAL, LANG } from '@/lib/i18n/tr';
 
 const COMPETITOR_PROFILE_KEY = '@yoroi_competitor_profile';
 
@@ -26,11 +26,12 @@ type Cat = { id: string; name: string; weight: string; maxWeight: number };
 /** Liste commune de l'app (noms officiels portugais), voir lib/v2/competition/ibjjf.ts */
 const toCat = (c: IbjjfCategory): Cat => ({ id: c.id, name: c.name, weight: ibjjfWeightLabel(c), maxWeight: c.maxWeight });
 const BJJ_BELTS = [
-  { id: 'white', name: traduire('Blanche'), color: '#FFFFFF', edge: '#CFCAC0' },
-  { id: 'blue', name: traduire('Bleue'), color: '#2C4A84', edge: '#2C4A84' },
-  { id: 'purple', name: traduire('Violette'), color: '#5B3F86', edge: '#5B3F86' },
-  { id: 'brown', name: traduire('Marron'), color: '#6B4226', edge: '#6B4226' },
-  { id: 'black', name: traduire('Noire'), color: '#1D2029', edge: '#1D2029' },
+  // aria : la ceinture en entier hors français (« Ceinture {0} » recevait un nom déjà traduit : « Witte band band »)
+  { id: 'white', name: traduire('Blanche'), aria: 'Ceinture blanche', color: '#FFFFFF', edge: '#CFCAC0' },
+  { id: 'blue', name: traduire('Bleue'), aria: 'Ceinture bleue', color: '#2C4A84', edge: '#2C4A84' },
+  { id: 'purple', name: traduire('Violette'), aria: 'Ceinture violette', color: '#5B3F86', edge: '#5B3F86' },
+  { id: 'brown', name: traduire('Marron'), aria: 'Ceinture marron', color: '#6B4226', edge: '#6B4226' },
+  { id: 'black', name: traduire('Noire'), aria: 'Ceinture noire', color: '#1D2029', edge: '#1D2029' },
 ];
 
 type CompetitorProfile = { gender: 'male' | 'female' | null; category: string | null; belt: string | null; currentWeight: number | null };
@@ -189,7 +190,7 @@ export default function CompetitorProfileScreen() {
               {BJJ_BELTS.map((b, i) => {
                 const on = profile.belt === b.id;
                 return (
-                  <Press key={b.id} onPress={() => save({ ...profile, belt: b.id })} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={traduire("Ceinture {0}", b.name)}>
+                  <Press key={b.id} onPress={() => save({ ...profile, belt: b.id })} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={LANG === 'fr' ? traduire("Ceinture {0}", b.name) : traduire(b.aria)}>
                     <View style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 10, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: P.line2, backgroundColor: on ? P.paper : 'transparent', borderRadius: 14 }}>
                       <BeltSwatch color={b.color} edge={b.edge} width={58} height={14} />
                       <Ink size={16} weight="extraBold" style={{ flex: 1 }}>

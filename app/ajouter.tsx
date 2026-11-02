@@ -274,7 +274,7 @@ export default function Ajouter() {
 
   const others: Other[] = [
     { key: 'sommeil', title: traduire('Sommeil'), sub: traduire('aussi sur l’Accueil, Ta forme du jour'), href: '/sleep-input' },
-    { key: 'eau', title: 'Eau', sub: traduire('aussi sur l’Accueil, Ta forme du jour'), href: '/hydration' },
+    { key: 'eau', title: traduire('Eau'), sub: traduire('aussi sur l’Accueil, Ta forme du jour'), href: '/hydration' },
     { key: 'video', title: traduire('Vidéo'), sub: traduire('aussi dans le Carnet'), href: '/training-journal', params: { tab: 'videos', add: '1' } },
     { key: 'combat', title: traduire('Combat'), sub: traduire('un résultat en compétition'), href: '/seance/match' },
     { key: 'competition', title: traduire('Compétition'), sub: traduire('ta prochaine date'), href: '/add-competition' },
@@ -326,7 +326,7 @@ export default function Ajouter() {
                   <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: col }} />
                   <View style={{ flex: 1 }}>
                     <Ink size={13} weight="bold" color={col} style={{ opacity: 0.82 }}>{traduire("Séance en cours, {0}", fmtClock((Date.now() - draft.startedAt) / 1000))}</Ink>
-                    <Ink size={17} weight="black" color={col} numberOfLines={2}>{traduire("Reprendre : {0}", draftTitle(draft))}</Ink>
+                    <Ink size={17} weight="black" color={col} numberOfLines={2}>{traduire("Reprendre : {0}", traduire(draftTitle(draft)))}</Ink>
                   </View>
                 </>
               )}

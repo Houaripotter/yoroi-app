@@ -35,7 +35,7 @@ import { xpPremiereSemaine } from './ApercuProgres';
 import { sportShortName } from '@/lib/v2/seance/sportVisuals';
 import { JOURS_NOMS } from '@/components/yoroi/v2/espace/JoursPicker';
 import { useIllustrations } from '@/components/yoroi/v2/stickers';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, JOURS_LETTRES } from '@/lib/i18n/tr';
 
 const WEEKS = 4;
 
@@ -67,7 +67,7 @@ const SLIDES = [
   { titre: traduire('Tes records, **tamponnés**'), sous: traduire('Chaque record battu gagne son tampon et son trophée. Quelques exemples :'), fond: '#E6ECF8' },
 ];
 
-const JOURS_COURTS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const JOURS_COURTS = JOURS_LETTRES;
 
 /** Ta semaine : tes jours en couleurs, tes sports en stickers d'illustration, et la projection a quatre semaines (regles du Dojo) */
 function SemaineProjection({ days, sports, sessions, genre }: { days: number[]; sports: string[]; sessions: number; genre: 'h' | 'f' }) {

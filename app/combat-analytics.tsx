@@ -85,7 +85,7 @@ export default function CombatAnalyticsScreen() {
               </View>
               <View style={{ flexDirection: 'row' }}>
                 <Stat value={String(g.rounds)} label="rounds" />
-                <Stat value={String(partners.length)} label="partenaires" />
+                <Stat value={String(partners.length)} label={traduire("partenaires")} />
                 <Stat value={String(g.sg)} label="finitions" color={V} />
                 <Stat value={String(techniques.length)} label={traduire("thèmes")} />
               </View>

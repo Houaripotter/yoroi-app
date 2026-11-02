@@ -132,7 +132,7 @@ export default function LogoSelectionScreen() {
                 key={o.id}
                 onPress={() => choose(o.id, locked)}
                 accessibilityRole="button"
-                accessibilityLabel={`Fond ${o.name}${locked ? traduire(', Premium') : ''}${o.id === current ? traduire(', logo actuel') : ''}`}
+                accessibilityLabel={`${traduire('Fond {0}', traduire(o.name))}${locked ? traduire(', Premium') : ''}${o.id === current ? traduire(', logo actuel') : ''}`}
                 accessibilityState={{ selected: on }}
                 style={{ width: tileW }}
               >

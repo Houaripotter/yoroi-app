@@ -150,7 +150,7 @@ export default function Citations() {
                       {o.label === 'Perseverance' ? traduire('Persévérance') : o.label}
                     </Ink>
                     <Ink size={12} weight="bold" color={on ? (paletteSombre() ? '#4A4E5A' : '#B9BBC4') : P.ink2} numberOfLines={2}>
-                      {o.description.replace('Depassement', 'Dépassement').replace('Melange aleatoire', 'Mélange aléatoire').replace('Mindset de champion', 'Mental de champion')}
+                      {traduire(o.description.replace('Depassement', 'Dépassement').replace('Melange aleatoire', 'Mélange aléatoire').replace('Mindset de champion', 'Mental de champion'))}
                     </Ink>
                   </View>
                 </Press>

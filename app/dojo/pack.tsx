@@ -97,8 +97,8 @@ export default function Pack() {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 120, gap: 14 }} showsVerticalScrollIndicator={false}>
         <BackHeader
-          title={monde || vie ? packDisplayName(pack, gender) : pack.name}
-          subtitle={pack.kind === 'sport' ? 'Pack sport' : monde ? traduire('Monde samouraï') : vie ? traduire("Pack {0}, vie réelle", pack.name) : traduire('Légende')}
+          title={monde || vie ? packDisplayName(pack, gender) : traduire(pack.name)}
+          subtitle={pack.kind === 'sport' ? traduire('Pack sport') : monde ? traduire('Monde samouraï') : vie ? traduire("Pack {0}, vie réelle", pack.name) : traduire('Légende')}
           right={
             pack.kind === 'sport' || monde || vie ? (
               <View style={{ flexDirection: 'row', backgroundColor: c.fillSubtle, borderRadius: 14, padding: 3 }}>
@@ -146,9 +146,9 @@ export default function Pack() {
               <View key={l} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
                 <View style={{ width: '100%', height: 190, alignItems: 'center', justifyContent: 'flex-end' }}>
                   {unlocked || l === 1 ? (
-                    <Image source={pack.images[gender][l - 1]} style={{ width: '100%', height: 190, opacity: unlocked ? 1 : 0.9 }} resizeMode="contain" accessibilityLabel={traduire("{0}, niveau {1}", pack.name, l)} />
+                    <Image source={pack.images[gender][l - 1]} style={{ width: '100%', height: 190, opacity: unlocked ? 1 : 0.9 }} resizeMode="contain" accessibilityLabel={traduire("{0}, niveau {1}", traduire(pack.name), l)} />
                   ) : (
-                    <Image source={pack.images[gender][l - 1]} style={{ width: '100%', height: 190, opacity: 0.28, tintColor: '#6B6E78' }} resizeMode="contain" accessibilityLabel={traduire("{0}, niveau {1}, pas encore gagné", pack.name, l)} />
+                    <Image source={pack.images[gender][l - 1]} style={{ width: '100%', height: 190, opacity: 0.28, tintColor: '#6B6E78' }} resizeMode="contain" accessibilityLabel={traduire("{0}, niveau {1}, pas encore gagné", traduire(pack.name), l)} />
                   )}
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>

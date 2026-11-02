@@ -34,7 +34,7 @@ import { useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
 const RAYON = 22;
 
 export const MESURE_SANTE: Record<CleSanteJour, { nom: string; domaine: Domaine; d: string; a11y: string }> = {
-  pas: { nom: traduire('Pas'), domaine: 'forme', a11y: 'pas', d: 'M8.4 3.2c1.7 0 2.6 1.9 2.4 4.2-.2 2.3-1 3.9-2.5 3.9S5.9 9.6 5.9 7.3c0-2.3.8-4.1 2.5-4.1zM6.4 14h4.2l-.4 3a1.9 1.9 0 0 1-3.5 0zM15.6 7.2c1.7 0 2.5 1.8 2.5 4.1 0 2.3-.9 3.9-2.4 3.9s-2.4-1.6-2.5-3.9c-.2-2.3.7-4.1 2.4-4.1zM13.4 18h4.2l-.3 2.1a1.9 1.9 0 0 1-3.6 0z' },
+  pas: { nom: traduire('Pas'), domaine: 'forme', a11y: traduire('pas'), d: 'M8.4 3.2c1.7 0 2.6 1.9 2.4 4.2-.2 2.3-1 3.9-2.5 3.9S5.9 9.6 5.9 7.3c0-2.3.8-4.1 2.5-4.1zM6.4 14h4.2l-.4 3a1.9 1.9 0 0 1-3.5 0zM15.6 7.2c1.7 0 2.5 1.8 2.5 4.1 0 2.3-.9 3.9-2.4 3.9s-2.4-1.6-2.5-3.9c-.2-2.3.7-4.1 2.4-4.1zM13.4 18h4.2l-.3 2.1a1.9 1.9 0 0 1-3.6 0z' },
   'energie-active': { nom: traduire('Calories'), domaine: 'mensurations', a11y: traduire('kilocalories actives'), d: 'M12 3c.6 3.3 4.6 5.1 4.6 10a4.6 4.6 0 0 1-9.2 0c0-2.4 1.2-3.8 2.4-4.9.3 1.6 1 2.5 1.9 2.9C12.8 8.9 12 5.7 12 3z' },
   distance: { nom: 'Distance', domaine: 'eau', a11y: traduire('kilomètres'), d: 'M5 20.5c0-3.4 3.3-3.9 6.4-5.3 2.6-1.2 4.6-2.4 5.4-4.7M17 3a3.2 3.2 0 0 1 3.2 3.2c0 2.4-3.2 4.8-3.2 4.8s-3.2-2.4-3.2-4.8A3.2 3.2 0 0 1 17 3zM5 18a1.6 1.6 0 1 1 0 3.2A1.6 1.6 0 0 1 5 18z' },
   exercice: { nom: traduire('Exercice'), domaine: 'forme', a11y: traduire('minutes d’exercice'), d: 'M13 3L5 13.5h6L10 21l8-10.5h-6z' },
@@ -425,7 +425,7 @@ function Anneaux({ mesures, o, vitrine = false }: { mesures: MesureSanteJour[]; 
                   <>
                     <ChiffreAnime valeur={centre.valeur} format={(x) => texteMesureSante({ ...centre, valeur: Math.round(x) }).valeur} cle={`${cleAnneaux}:centre`} taille={anneaux.length > 2 ? 15 : 18} />
                     <Ink size={9.5} weight="bold" color={P.ink2}>
-                      pas
+                      {traduire('pas')}
                     </Ink>
                   </>
                 ) : null}

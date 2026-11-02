@@ -114,7 +114,7 @@ export default function InjuryDetailScreen() {
 
   if (!injury) {
     return (
-      <DetailScreen title="Blessure" subtitle={loaded ? undefined : traduire('Chargement')}>
+      <DetailScreen title={traduire("Blessure")} subtitle={loaded ? undefined : traduire('Chargement')}>
         {loaded ? <EmptyState title={traduire("Blessure introuvable")} text={traduire("Elle a sans doute été supprimée ou marquée comme guérie.")} action={traduire("Retour à l’infirmerie")} onAction={goBack} /> : null}
       </DetailScreen>
     );

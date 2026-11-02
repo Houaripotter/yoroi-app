@@ -3,9 +3,9 @@
  */
 import { traduire } from '@/lib/i18n/tr';
 const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
-const MONTHS_SHORT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
+const MONTHS_SHORT = [traduire('janv.'), traduire('févr.'), traduire('mars'), traduire('avr.'), traduire('mai'), traduire('juin'), traduire('juil.'), traduire('août'), traduire('sept.'), traduire('oct.'), traduire('nov.'), traduire('déc.')];
 const DAYS = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
-const DAYS_SHORT = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
+const DAYS_SHORT = [traduire('dim.'), traduire('lun.'), traduire('mar.'), traduire('mer.'), traduire('jeu.'), traduire('ven.'), traduire('sam.')];
 
 /** "AAAA-MM-JJ" lu en heure locale (new Date() le lirait en UTC) */
 export function parseLocalDate(d: string | undefined | null): Date {

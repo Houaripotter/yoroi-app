@@ -162,7 +162,7 @@ export default function QuickNutritionScreen() {
                     {m.foods.map((f) => (
                       <View key={f} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: P.paper }}>
                         <Ink size={13} weight="bold">
-                          {f}
+                          {traduire(f)}
                         </Ink>
                       </View>
                     ))}
@@ -196,8 +196,8 @@ export default function QuickNutritionScreen() {
           <H2 sub={traduire("Repris de ta dernière pesée, modifiable")}>{traduire("Tes besoins du jour")}</H2>
           <View style={{ gap: 10, marginTop: 10 }}>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <NumField label="Poids" value={weight} onChange={setWeight} unit="kg" placeholder="75" maxLength={5} />
-              <NumField label="Taille" value={height} onChange={setHeight} unit="cm" placeholder="175" integer maxLength={3} />
+              <NumField label={traduire("Poids")} value={weight} onChange={setWeight} unit="kg" placeholder="75" maxLength={5} />
+              <NumField label={traduire("Taille")} value={height} onChange={setHeight} unit="cm" placeholder="175" integer maxLength={3} />
             </View>
             <Segments items={(Object.keys(QUICK_ACTIVITY) as QuickActivity[]).map((k) => ({ key: k, label: QUICK_ACTIVITY[k].label }))} value={activity} onChange={setActivity} />
           </View>

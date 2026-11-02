@@ -67,7 +67,7 @@ export const NOMS_SCEAUX_CLASSIQUE: Record<string, { japon: string; classique: s
 
 /** Nom d'un sceau dans l'univers choisi */
 export function nomSceau(s: { id: string; name: string }, u: Univers): string {
-  return u === 'classique' ? traduire(NOMS_SCEAUX_CLASSIQUE[s.id]?.classique ?? s.name) : s.name;
+  return u === 'classique' ? traduire(NOMS_SCEAUX_CLASSIQUE[s.id]?.classique ?? s.name) : traduire(s.name);
 }
 
 /** Condition d'un sceau dans l'univers choisi (« Atteindre le rang Champion ») */

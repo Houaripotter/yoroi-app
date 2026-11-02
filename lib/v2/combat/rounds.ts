@@ -3,7 +3,7 @@
  * resultats, ceintures, comptages et dates.
  */
 import type { CombatRound, Training } from '@/lib/database';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export type Result = 'win' | 'loss' | 'draw';
 export type Letter = 'V' | 'D' | 'N';
@@ -155,7 +155,8 @@ export function agoText(iso?: string): string {
 }
 
 export function plural(n: number, one: string, many?: string): string {
-  return `${n} ${n > 1 ? many ?? `${one}s` : one}`;
+  // le français reste `${n} ${mot}` ; les autres langues lisent « {0} mot » dans le dictionnaire
+  return traduirePluriel(n, n > 1, `{0} ${one}`, `{0} ${many ?? `${one}s`}`, n);
 }
 
 export const makeId = () => `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;

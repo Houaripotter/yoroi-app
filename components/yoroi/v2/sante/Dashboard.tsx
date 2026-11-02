@@ -21,9 +21,9 @@ import { MetricCard } from './MetricCard';
 import { IconDot, METRIC_ICON, SanteIcon } from './SanteIcon';
 import { GlassBox, S, SmallButton } from './ui';
 import { P } from '@/components/yoroi/livePalette';
-import { traduire, LOCALE, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, LOCALE, DECIMAL, JOURS_LETTRES } from '@/lib/i18n/tr';
 
-const DAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+const DAY_LETTERS = [JOURS_LETTRES[6], ...JOURS_LETTRES.slice(0, 6)];
 
 export function ringItems(r: Rings | null, g: RingGoals): RingItem[] {
   const items: RingItem[] = [{ key: 'move', label: traduire('Bouger'), value: r?.move ?? null, goal: g.move, unit: 'kcal' }];
@@ -45,7 +45,7 @@ export function RingsCard({ rings, goals, week, onEditGoals }: { rings: Rings | 
         {week.map((d, i) => {
           const isToday = i === week.length - 1;
           return (
-            <View key={d.date} style={{ alignItems: 'center', gap: 4 }} accessibilityLabel={`${d.date} : ${thousands(d.move)} kilocalories actives`}>
+            <View key={d.date} style={{ alignItems: 'center', gap: 4 }} accessibilityLabel={traduire('{0} : {1} kilocalories actives', d.date, thousands(d.move))}>
               <MiniRings move={goals.move ? d.move / goals.move : 0} exercise={goals.exercise ? d.exercise / goals.exercise : 0} stand={goals.stand ? d.stand / goals.stand : 0} hasStand={hasStand} size={32} />
               <Ink size={11} weight={isToday ? 'black' : 'bold'} color={isToday ? S.ink : S.muted}>
                 {DAY_LETTERS[dateOf(d.date).getDay()]}

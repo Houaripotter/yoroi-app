@@ -8,9 +8,9 @@ import { Pressable, View } from 'react-native';
 import { selectionAsync } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, JOURS_LETTRES as LETTRES_LANGUE } from '@/lib/i18n/tr';
 
-export const JOURS_LETTRES = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+export const JOURS_LETTRES = LETTRES_LANGUE;
 export const JOURS_COURTS = [traduire('lun.'), traduire('mar.'), traduire('mer.'), traduire('jeu.'), traduire('ven.'), traduire('sam.'), traduire('dim.')];
 export const JOURS_NOMS = [traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi'), traduire('dimanche')];
 

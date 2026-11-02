@@ -63,7 +63,7 @@ import { FeuilleConseil } from './FeuilleConseil';
 import { fondAjouter, Icon, P, PlusPastille, Press } from './kit';
 import { carteNeutre, teinte, domaineDuLien } from './domaines';
 import type { Domaine } from './domaines';
-import { traduire, traduirePluriel, DECIMAL, LOCALE } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, DECIMAL, LOCALE, JOURS_LETTRES } from '@/lib/i18n/tr';
 import { LargeurEcranContext, useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
 import { largeurEcranPourColonne, rangeesTrois } from '@/lib/v2/nav/grandEcran';
 import { useProgrammeAccueil } from './useProgrammeAccueil';
@@ -83,7 +83,7 @@ export const RAYON_TUILE = 22;
 /** hauteur commune des demi tuiles : deux tuiles voisines ont toujours la meme taille */
 const HAUTEUR_DEMI = 138;
 
-const JOURS_LETTRE = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const JOURS_LETTRE = JOURS_LETTRES;
 const MOIS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
 // mensurations : toujours 1 decimale, comme Progres (vague 32)
@@ -474,7 +474,8 @@ export function derniereSeance(trainings: Training[]): Training | null {
 
 export function TuileDerniere({ last }: { last: Training }) {
   const router = useRouter();
-  const sport = getSportName(last.sport.split(',')[0].trim());
+  // affichage seul : le nom du sport dans la langue de l'app
+  const sport = traduire(getSportName(last.sport.split(',')[0].trim()));
   const min = durationOf(last);
   const quand = relativeDay(last.date);
   return (
@@ -625,7 +626,7 @@ export function TuileMensurations({ tailleFixe }: { tailleFixe?: { value: number
   const d = taille.length > 1 ? taille[taille.length - 1].value - taille[0].value : null;
   return (
     <Cadre domaine="mensurations" demi onPress={() => router.push({ pathname: '/measurements-detail', params: { field: 'waist' } } as any)} a11y={traduire("Tour de taille : {0} centimètres. Voir tes mensurations", cm(last.value))}>
-      <Entete domaine="mensurations" icone="body" titre="Tour de taille" />
+      <Entete domaine="mensurations" icone="body" titre={traduire("Tour de taille")} />
       <Bas>
         <ChiffreAnime valeur={last.value} format={(x) => cm(x)} cle="taille" taille={24} unite=" cm" />
         {/* 17 octobre soir : ta tendance, seulement avec deux mesures au moins */}
@@ -674,7 +675,7 @@ export function TuileMensurationsDefile() {
   return (
     <Cadre domaine="mensurations" a11y={traduirePluriel(mesures.length, mesures.length > 1, "Tes mensurations, {0} mesure", "Tes mensurations, {0} mesures", mesures.length)} style={{ gap: 10 }}>
       <Pressable onPress={() => router.push('/measurements-detail' as any)} accessibilityRole="button" accessibilityLabel={traduire("Tes mensurations. Voir le détail")} hitSlop={6}>
-        <Entete domaine="mensurations" icone="body" titre="Tes mensurations" droite={<Icon name="chevron" size={14} color={t.texte} width={2.6} />} />
+        <Entete domaine="mensurations" icone="body" titre={traduire("Tes mensurations")} droite={<Icon name="chevron" size={14} color={t.texte} width={2.6} />} />
       </Pressable>
       <ScrollView
         horizontal
@@ -1138,7 +1139,7 @@ export function TuileRecord({ record }: { record: { titre: string; valeur: strin
   const router = useRouter();
   const quand = relativeDay(record.date);
   return (
-    <Cadre domaine="seances" demi onPress={() => router.push('/records' as any)} a11y={traduire("Ton dernier record : {0}, {1}{2}, {3}. Voir tes records", record.titre, record.valeur, record.ecart ? `, ${record.ecart} sur le précédent` : '', quand)}>
+    <Cadre domaine="seances" demi onPress={() => router.push('/records' as any)} a11y={traduire("Ton dernier record : {0}, {1}{2}, {3}. Voir tes records", record.titre, record.valeur, record.ecart ? traduire(', {0} sur le précédent', record.ecart) : '', quand)}>
       <Entete domaine="seances" icone="star" titre={traduire("Dernier record")} />
       <Bas>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

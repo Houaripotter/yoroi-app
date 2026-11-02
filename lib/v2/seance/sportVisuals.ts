@@ -74,7 +74,8 @@ const SHORT: Record<string, string> = {
 };
 
 export function sportShortName(sport: string): string {
-  return SHORT[sport] ?? getSportName(sport);
+  // affichage seul : le nom court passe dans la langue de l'app
+  return traduire(SHORT[sport] ?? getSportName(sport));
 }
 
 /** Sports proposes par defaut quand l'utilisateur n'a pas encore de favoris */

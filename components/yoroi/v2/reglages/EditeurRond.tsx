@@ -95,9 +95,9 @@ export function EditeurRond({ style: st, onChange, contenu, scene, prenom, resum
   };
 
   const ONGLETS: { id: OngletRond; nom: string }[] = [
-    { id: 'photo', nom: 'Photo' },
-    { id: 'forme', nom: 'Forme' },
-    { id: 'contour', nom: 'Contour' },
+    { id: 'photo', nom: traduire('Photo') },
+    { id: 'forme', nom: traduire('Forme') },
+    { id: 'contour', nom: traduire('Contour') },
     { id: 'deco', nom: traduire('Déco') },
   ];
 

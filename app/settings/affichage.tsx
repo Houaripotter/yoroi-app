@@ -35,7 +35,7 @@ export default function AffichageEtIcone() {
     <EspaceScreen title={traduire("Affichage et icône")} subtitle={traduire("La taille du texte et l’icône de l’app")} gap={14}>
       <Card>
         <ValueRow first tint={TUILE.ardoise} sticker="taille_texte" icon="text" label={traduire("Taille du texte")} value={FONT_LABELS[(fontSizeLevel ?? 2) - 1] ?? traduire('Normale')} onPress={() => setOpen(true)} />
-        <ValueRow tint={TUILE.or} sticker="trois_apps" icon="frame" label={traduire("Icône de l’app")} value={logoName} onPress={() => router.push('/logo-selection' as any)} />
+        <ValueRow tint={TUILE.or} sticker="trois_apps" icon="frame" label={traduire("Icône de l’app")} value={traduire(logoName)} onPress={() => router.push('/logo-selection' as any)} />
       </Card>
 
       <ChoiceSheet

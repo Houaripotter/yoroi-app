@@ -55,19 +55,19 @@ const DAYS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
 /** Noms et textes affiches, en francais soigne (la bibliotheque garde ses identifiants) */
 const MODE_TEXT: Record<string, { name: string; description: string }> = {
-  '12_12': { name: 'Intermittent 12:12', description: traduire('Pour débuter. 12 h de jeûne, 12 h pour manger.') },
-  '14_10': { name: 'Intermittent 14:10', description: traduire('Progression douce. 14 h de jeûne, 10 h pour manger.') },
-  '16_8': { name: 'Intermittent 16:8', description: traduire('Le plus courant. 16 h de jeûne, 8 h pour manger.') },
-  '18_6': { name: 'Intermittent 18:6', description: traduire('Plus exigeant. 18 h de jeûne, 6 h pour manger.') },
-  '20_4': { name: 'Intermittent 20:4', description: traduire('Très exigeant. 20 h de jeûne, 4 h pour manger.') },
-  omad: { name: 'Un repas par jour', description: traduire('Un seul repas dans la journée. Réservé aux habitués.') },
-  ramadan: { name: 'Ramadan', description: traduire('Jeûne de l’aube au coucher du soleil.') },
-  yom_kippur: { name: 'Yom Kippour', description: traduire('Le Grand Pardon. Jeûne de 25 h.') },
-  careme: { name: 'Carême', description: traduire('40 jours avant Pâques. Abstinence ou jeûne partiel.') },
-  eat_stop_eat: { name: 'Jeûne de 24 h', description: traduire('24 h sans manger, une à deux fois par semaine.') },
-  prolonged_36: { name: 'Jeûne de 36 h', description: traduire('36 h de jeûne. Pour les habitués.') },
-  prolonged_48: { name: 'Jeûne de 48 h', description: traduire('48 h de jeûne. Uniquement pour les expérimentés.') },
-  prolonged_72: { name: 'Jeûne de 72 h', description: traduire('72 h de jeûne. Suivi médical recommandé.') },
+  '12_12': { name: traduire('Intermittent {0}', '12:12'), description: traduire('Pour débuter. 12 h de jeûne, 12 h pour manger.') },
+  '14_10': { name: traduire('Intermittent {0}', '14:10'), description: traduire('Progression douce. 14 h de jeûne, 10 h pour manger.') },
+  '16_8': { name: traduire('Intermittent {0}', '16:8'), description: traduire('Le plus courant. 16 h de jeûne, 8 h pour manger.') },
+  '18_6': { name: traduire('Intermittent {0}', '18:6'), description: traduire('Plus exigeant. 18 h de jeûne, 6 h pour manger.') },
+  '20_4': { name: traduire('Intermittent {0}', '20:4'), description: traduire('Très exigeant. 20 h de jeûne, 4 h pour manger.') },
+  omad: { name: traduire('Un repas par jour'), description: traduire('Un seul repas dans la journée. Réservé aux habitués.') },
+  ramadan: { name: traduire('Ramadan'), description: traduire('Jeûne de l’aube au coucher du soleil.') },
+  yom_kippur: { name: traduire('Yom Kippour'), description: traduire('Le Grand Pardon. Jeûne de 25 h.') },
+  careme: { name: traduire('Carême'), description: traduire('40 jours avant Pâques. Abstinence ou jeûne partiel.') },
+  eat_stop_eat: { name: traduire('Jeûne de 24 h'), description: traduire('24 h sans manger, une à deux fois par semaine.') },
+  prolonged_36: { name: traduire('Jeûne de 36 h'), description: traduire('36 h de jeûne. Pour les habitués.') },
+  prolonged_48: { name: traduire('Jeûne de 48 h'), description: traduire('48 h de jeûne. Uniquement pour les expérimentés.') },
+  prolonged_72: { name: traduire('Jeûne de 72 h'), description: traduire('72 h de jeûne. Suivi médical recommandé.') },
   custom: { name: traduire('Personnalisé'), description: traduire('Tes propres horaires.') },
 };
 const modeName = (m?: FastingMode) => (m ? MODE_TEXT[m.id]?.name ?? m.name : traduire('Jeûne'));

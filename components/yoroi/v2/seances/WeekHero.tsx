@@ -157,7 +157,7 @@ export function WeekTiles({ week, onOpenCharge, enLigne = false }: { week: WeekC
         <Tile teinte="bleu" sticker="musculation" label={traduire(vol.label)} value={vol.value} aide={vol.aide}>
           <Trend couleur={couleursTuile('bleu').texte} delta={vol.delta} text={vol.fmt(vol.delta)} hasPrev={hasPrev} />
         </Tile>
-        <Tile teinte="peche" sticker="force_eclair" label="charge" value={`${formatPoints(cur.load)}${NB}pts`} onPress={onOpenCharge} a11y={traduire("Ta charge d’entraînement, voir le détail")}>
+        <Tile teinte="peche" sticker="force_eclair" label={traduire('charge')} value={`${formatPoints(cur.load)}${NB}pts`} onPress={onOpenCharge} a11y={traduire("Ta charge d’entraînement, voir le détail")}>
           <Trend couleur={couleursTuile('peche').texte} delta={prev.load > 0 ? loadPct : cur.load} text={prev.load > 0 ? `${Math.abs(loadPct)}${NB}%` : `${formatPoints(cur.load)}${NB}pts`} hasPrev={hasPrev} />
         </Tile>
         <Tile teinte="menthe" sticker="calendrier" label={traduire("jours entraînés")} value={traduire("{0} sur 7", cur.days)}>
@@ -244,7 +244,7 @@ export function WeekHero({
         <Tile teinte="bleu" label={traduire(vol.label)} value={vol.value} aide={vol.aide}>
           <Trend couleur={couleursTuile('bleu').texte} delta={vol.delta} text={vol.fmt(vol.delta)} hasPrev={hasPrev} />
         </Tile>
-        <Tile teinte="peche" label="charge" value={`${formatPoints(cur.load)}${NB}pts`} onPress={onOpenCharge} a11y={traduire("Ta charge d’entraînement, voir le détail")}>
+        <Tile teinte="peche" label={traduire('charge')} value={`${formatPoints(cur.load)}${NB}pts`} onPress={onOpenCharge} a11y={traduire("Ta charge d’entraînement, voir le détail")}>
           <Trend couleur={couleursTuile('peche').texte} delta={prev.load > 0 ? loadPct : cur.load} text={prev.load > 0 ? `${Math.abs(loadPct)}${NB}%` : `${formatPoints(cur.load)}${NB}pts`} hasPrev={hasPrev} />
         </Tile>
         <Tile teinte="menthe" label={traduire("jours entraînés")} value={traduire("{0} sur 7", cur.days)}>

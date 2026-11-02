@@ -115,7 +115,7 @@ export default function NoterMaNuit() {
     <DetailScreen
       title={traduire("Ta nuit")}
       subtitle={dayLabel(date, true)}
-      footer={<BigButton label={saving ? 'Enregistrement' : traduire('Enregistrer ma nuit')} icon="check" onPress={save} disabled={saving || !valid} />}
+      footer={<BigButton label={saving ? traduire('Enregistrement') : traduire('Enregistrer ma nuit')} icon="check" onPress={save} disabled={saving || !valid} />}
     >
       <Enter i={0}>
         <DateChips value={date} onChange={setDate} todayLabel={traduire("Cette nuit")} yesterdayLabel={traduire("La veille")} activeColor={P.indigo} />

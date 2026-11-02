@@ -17,12 +17,12 @@ import { tap } from '@/components/yoroi/v2/dojo/parts';
 import type { ArmureState } from '@/lib/v2/armure';
 import { OuvertureCoffre, imageCoffre, type ResultatCoffre } from '@/components/yoroi/v2/dojo/OuvertureCoffre';
 import { rappelCoffreActif, setRappelCoffre } from '@/lib/v2/dojo/rappelCoffre';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, JOURS_LETTRES } from '@/lib/i18n/tr';
 import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const NB = ' ';
-const JOURS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const JOURS = JOURS_LETTRES;
 
 /** Flamme de la serie : orange vif quand la serie vit, grise sinon */
 export function Flamme({ size = 40, vive }: { size?: number; vive: boolean }) {

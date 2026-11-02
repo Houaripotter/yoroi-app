@@ -25,7 +25,7 @@ import type { ViewKey } from '@/lib/v2/progres/measures';
 import { num } from '@/lib/v2/progres/format';
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { P, blancA } from '@/components/yoroi/livePalette';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduireSens } from '@/lib/i18n/tr';
 
 export default function MeasurementsDetailScreen() {
   const { theme } = useYoroiTheme();
@@ -82,7 +82,7 @@ export default function MeasurementsDetailScreen() {
     ]);
   };
 
-  const spec: MetricSpec = { label: active?.long ?? 'Tes mensurations', unit: 'cm', digits: 1, good: active?.good ?? 'none', eps: 0.25, minSpan: 2 };
+  const spec: MetricSpec = { label: traduire(active?.long) ?? traduire('Tes mensurations'), unit: 'cm', digits: 1, good: active?.good ?? 'none', eps: 0.25, minSpan: 2 };
 
   const picker = (
     <View style={{ paddingHorizontal: GUTTER, marginTop: 12, gap: 10 }}>
@@ -110,7 +110,7 @@ export default function MeasurementsDetailScreen() {
               style={{ width: '31.5%', minHeight: 84, padding: 10, borderRadius: 18, backgroundColor: on ? c.ink : blancA(0.78), borderWidth: 1, borderColor: on ? c.ink : c.divider, gap: 2 }}
             >
               <Ink size={12} weight="bold" color={on ? c.onDarkSecondary : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-                {traduire(f.label)}
+                {traduireSens('tour', f.label)}
               </Ink>
               <Ink size={19} weight="black" tight color={on ? P.paper : c.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
                 {num(l.value, 1)}
@@ -132,7 +132,7 @@ export default function MeasurementsDetailScreen() {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <MetricDetail
         key={active?.key ?? 'vide'}
-        title="Tes mensurations"
+        title={traduire("Tes mensurations")}
         sub={traduire("Une prise par mois suffit pour voir ton corps changer.")}
         picker={fields.length ? picker : null}
         spec={spec}

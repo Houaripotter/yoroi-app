@@ -19,7 +19,7 @@ import { Hanko, tap } from './ui';
 import { P } from '@/components/yoroi/livePalette';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG } from '@/lib/i18n/tr';
 
 const FACT_ICON: Record<KeyFact['kind'], IconName> = {
   duree: 'clock',
@@ -37,8 +37,8 @@ export function HistoryCard({ t, femme, stamps = 0, showMonth }: { t: Training; 
   const router = useRouter();
   const d = dateOf(t.date);
   const day = `${DOW_SHORT[d.getDay()]} ${d.getDate()}${showMonth ? ` ${MONTHS_SHORT[d.getMonth()]}` : ''}`;
-  const time = t.start_time ? t.start_time.slice(0, 5).replace(':', ' h ') : '';
-  const when = sansTiret([day, time ? `à ${time}` : '', t.club_name].filter(Boolean).join(', '));
+  const time = t.start_time ? (LANG === 'fr' ? t.start_time.slice(0, 5).replace(':', ' h ') : t.start_time.slice(0, 5)) : '';
+  const when = sansTiret([day, time ? traduire('à {0}', time) : '', t.club_name].filter(Boolean).join(', '));
   const facts = keyFacts(t, useUnitePoids());
   const watch = isImported(t);
   const title = sansTiret(sessionTitle(t));
@@ -51,7 +51,7 @@ export function HistoryCard({ t, femme, stamps = 0, showMonth }: { t: Training; 
         router.push({ pathname: '/workout-detail', params: { id: String(t.id) } } as any);
       }}
       accessibilityRole="button"
-      accessibilityLabel={`${title}, ${when}${facts.length ? `, ${facts.map((f) => f.text).join(', ')}` : ''}${watch ? traduire(", importée depuis {0}", sourceLabel(t)) : ''}${stamps > 0 ? ', record battu' : ''}`}
+      accessibilityLabel={`${title}, ${when}${facts.length ? `, ${facts.map((f) => f.text).join(', ')}` : ''}${watch ? traduire(", importée depuis {0}", sourceLabel(t)) : ''}${stamps > 0 ? traduire(', record battu') : ''}`}
       style={({ pressed }) => ({ flexDirection: 'row', gap: 12, padding: 12, borderRadius: 20, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}
     >
       <SportThumb sport={t.sport} femme={femme} size={52} />
@@ -74,7 +74,7 @@ export function HistoryCard({ t, femme, stamps = 0, showMonth }: { t: Training; 
             {watch ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8, backgroundColor: c.fillSubtle }}>
                 <Icon name="watch" size={12} color={c.indigo} strokeWidth={2.4} />
-                <Ink size={11} weight="extraBold" color={c.indigo}>montre</Ink>
+                <Ink size={11} weight="extraBold" color={c.indigo}>{traduire('montre')}</Ink>
               </View>
             ) : null}
           </View>

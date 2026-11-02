@@ -350,18 +350,18 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
             const picked = sel === n;
             const col = couleurNote(n);
             return (
-              <Pressable key={mot} onPress={() => { selectionAsync().catch(() => {}); onChange({ technique: value.technique === n ? null : n }); }} accessibilityRole="button" accessibilityLabel={traduire("{0} {1} sur 5, {2}", note.nom, n, mot)} accessibilityState={{ selected: value.technique === n }} style={{ flex: 1, minHeight: 50, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: picked ? col.fill : on ? col.tint : blancA(0.75), borderWidth: on ? 0 : 1, borderColor: c.border }}>
+              <Pressable key={mot} onPress={() => { selectionAsync().catch(() => {}); onChange({ technique: value.technique === n ? null : n }); }} accessibilityRole="button" accessibilityLabel={traduire("{0} {1} sur 5, {2}", traduire(note.nom), n, traduire(mot))} accessibilityState={{ selected: value.technique === n }} style={{ flex: 1, minHeight: 50, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: picked ? col.fill : on ? col.tint : blancA(0.75), borderWidth: on ? 0 : 1, borderColor: c.border }}>
                 <Ink size={17} weight="black" color={picked ? col.onFill : on ? col.text : c.textMuted}>{n}</Ink>
               </Pressable>
             );
           })}
         </View>
         {value.technique ? (
-          <Ink size={13} weight="extraBold" color={couleurNote(value.technique).text} style={{ paddingHorizontal: 4 }}>{traduire("{0} sur 5, {1}", value.technique, note.mots[value.technique - 1].toLocaleLowerCase(LOCALE))}</Ink>
+          <Ink size={13} weight="extraBold" color={couleurNote(value.technique).text} style={{ paddingHorizontal: 4 }}>{traduire("{0} sur 5, {1}", value.technique, traduire(note.mots[value.technique - 1]).toLocaleLowerCase(LOCALE))}</Ink>
         ) : (
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 }}>
-            <Ink size={12} color={c.textMuted}>{`1, ${note.mots[0].toLocaleLowerCase(LOCALE)}`}</Ink>
-            <Ink size={12} color={c.textMuted}>{`5, ${note.mots[4].toLocaleLowerCase(LOCALE)}`}</Ink>
+            <Ink size={12} color={c.textMuted}>{`1, ${traduire(note.mots[0]).toLocaleLowerCase(LOCALE)}`}</Ink>
+            <Ink size={12} color={c.textMuted}>{`5, ${traduire(note.mots[4]).toLocaleLowerCase(LOCALE)}`}</Ink>
           </View>
         )}
       </Section>

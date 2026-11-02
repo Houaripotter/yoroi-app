@@ -184,7 +184,7 @@ export default function TaForme() {
               const m = MISSING[k];
               if (!m) return null;
               return (
-                <Press key={k} onPress={() => (m.href ? router.push(m.href as any) : undefined)} haptic={m.href ? 'light' : 'none'} accessibilityRole="button" accessibilityLabel={`${m.label} : ${m.text}`}>
+                <Press key={k} onPress={() => (m.href ? router.push(m.href as any) : undefined)} haptic={m.href ? 'light' : 'none'} accessibilityRole="button" accessibilityLabel={traduire('{0} : {1}', m.label, m.text)}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 }}>
                     <View style={{ width: 40, height: 40, borderRadius: 13, borderWidth: 1.5, borderStyle: 'dashed', borderColor: P.dashed, alignItems: 'center', justifyContent: 'center' }}>
                       <Icon name={FACTOR_ICON[k]} size={18} color={P.muted} />
@@ -217,7 +217,7 @@ export default function TaForme() {
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <Stat value={forme?.sleepAvg7 ? formatMinutes(forme.sleepAvg7) : traduire('pas noté')} label={traduire("de sommeil par nuit, 7 nuits")} color={P.indigo} />
             <Stat
-              value={forme?.daysSinceLast === null || forme?.daysSinceLast === undefined ? 'aucune' : forme.daysSinceLast === 0 ? traduire('aujourd’hui') : forme.daysSinceLast === 1 ? 'hier' : traduire("{0} jours", forme.daysSinceLast)}
+              value={forme?.daysSinceLast === null || forme?.daysSinceLast === undefined ? traduire('aucune') : forme.daysSinceLast === 0 ? traduire('aujourd’hui') : forme.daysSinceLast === 1 ? traduire('hier') : traduire("{0} jours", forme.daysSinceLast)}
               label={traduire("dernière séance")}
             />
           </View>

@@ -51,18 +51,18 @@ export function FicheCard({ title, category, read, difficulty, onOpen, onToggleR
   return (
     <View style={{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, flexDirection: 'row', overflow: 'hidden', minHeight: 92 }}>
       <View style={{ flex: 1 }}>
-      <Press onPress={onOpen} accessibilityRole="button" accessibilityLabel={`${title}, ${category}${read ? ', lue' : ''}`} style={{ flexDirection: 'row', minHeight: 92, flexGrow: 1 }}>
+      <Press onPress={onOpen} accessibilityRole="button" accessibilityLabel={`${title}, ${traduire(category)}${read ? traduire(', lue') : ''}`} style={{ flexDirection: 'row', minHeight: 92, flexGrow: 1 }}>
         <View style={{ width: 70, backgroundColor: m.soft, alignItems: 'center', justifyContent: 'center' }}>
           <Glyph kind={m.glyph} size={34} color={m.color} />
         </View>
         <View style={{ flex: 1, padding: 14, paddingRight: 4, gap: 4, justifyContent: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Ink size={12} weight="extraBold" color={m.color}>
-              {category}
+              {traduire(category)}
             </Ink>
             {difficulty ? (
               <Ink size={11} weight="bold" color={diffCouleur(difficulty) ?? P.muted}>
-                {difficulty}
+                {traduire(difficulty)}
               </Ink>
             ) : null}
           </View>
@@ -73,7 +73,7 @@ export function FicheCard({ title, category, read, difficulty, onOpen, onToggleR
       </Press>
       </View>
       <View style={{ width: 56, alignItems: 'center', justifyContent: 'center' }}>
-        <CheckDot on={read} onPress={onToggleRead} label={read ? traduire('Marquer comme non lue') : 'Marquer comme lue'} />
+        <CheckDot on={read} onPress={onToggleRead} label={read ? traduire('Marquer comme non lue') : traduire('Marquer comme lue')} />
       </View>
     </View>
   );
@@ -116,7 +116,7 @@ export function Reader({ content, read, onClose, onToggleRead, onSource }: { con
                 <Glyph kind={m.glyph} size={22} color={m.color} />
               </View>
               <Ink size={13} weight="extraBold" color={m.color} style={{ flex: 1 }}>
-                {content.kind === 'protocol' ? `${content.category}, ${content.difficulty.toLowerCase()}` : content.category}
+                {content.kind === 'protocol' ? `${traduire(content.category)}, ${traduire(content.difficulty).toLowerCase()}` : traduire(content.category)}
               </Ink>
               {read ? <Hanko size={36} /> : null}
             </View>
@@ -179,7 +179,7 @@ export function Reader({ content, read, onClose, onToggleRead, onSource }: { con
               </View>
             </>
           )}
-          <BigButton label={read ? traduire('Marquer comme non lue') : 'Marquer comme lue'} tone={read ? 'light' : 'ink'} icon="check" onPress={onToggleRead} />
+          <BigButton label={read ? traduire('Marquer comme non lue') : traduire('Marquer comme lue')} tone={read ? 'light' : 'ink'} icon="check" onPress={onToggleRead} />
         </View>
       ) : null}
     </Sheet>

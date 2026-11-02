@@ -50,7 +50,7 @@ import { GUTTER, MainButton, RoundIcon, decouper } from './ui';
 import { ApercuDansBarre, useApercuVisible } from '@/components/yoroi/v2/studio/PreviewBar';
 import { P } from '@/components/yoroi/livePalette';
 import { LiensLegaux } from '@/components/yoroi/v2/premium/LiensLegaux';
-import { traduire, LOCALE, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, LOCALE, DECIMAL, JOURS_LETTRES } from '@/lib/i18n/tr';
 import { BoutonLangue } from '@/components/yoroi/v2/langue/ChoixLangue';
 import { illustration, useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import Animated, { FadeIn, FadeOut, useReducedMotion } from 'react-native-reanimated';
@@ -183,20 +183,20 @@ function buildRows(g: 'h' | 'f'): Tile[][] {
   const r1: (Tile | null)[] = [
     { k: 'poids', w: 0 },
     // 27 octobre 2026 : le coach et ses programmes
-    { k: 'illu', w: 200, src: ILLU.coach, fond: '#E8ECFF', ink: '#3557D9', kicker: 'Coach', title: traduire('Ta séance du jour'), sub: traduire('Un programme sur tes jours') },
+    { k: 'illu', w: 200, src: ILLU.coach, fond: '#E8ECFF', ink: '#3557D9', kicker: traduire('Coach'), title: traduire('Ta séance du jour'), sub: traduire('Un programme sur tes jours') },
     { k: 'tampons', w: 196, ids: ['record_force', 'record_endurance', 'record_combat'], title: traduire('Records tamponnés'), sub: traduire('Muscu, course, combat') },
-    { k: 'illu', w: 188, src: ILLU.chrono, fond: '#F6EEDD', ink: '#A57A1C', kicker: 'Chrono', title: traduire('Rounds et Tabata'), sub: traduire('Le gong, les claquettes') },
+    { k: 'illu', w: 188, src: ILLU.chrono, fond: '#F6EEDD', ink: '#A57A1C', kicker: traduire('Chrono'), title: traduire('Rounds et Tabata'), sub: traduire('Le gong, les claquettes') },
     { k: 'image', w: 116, src: GUERRIER_IMAGES[g][4], label: 'Shōgun', sub: traduire('ton armure'), fond: '#F6EEDD' },
-    { k: 'couleur', w: 196, bg: 'gold', icon: 'share', kicker: 'Partage', title: traduire('Tes cartes'), sub: traduire('Story, Publication, Carré'), nouveau: true },
+    { k: 'couleur', w: 196, bg: 'gold', icon: 'share', kicker: traduire('Partage'), title: traduire('Tes cartes'), sub: traduire('Story, Publication, Carré'), nouveau: true },
     N_SPORTS ? { k: 'stat', w: 128, n: fmt(N_SPORTS), label: 'sports', sub: traduire('à noter en deux touches') } : null,
   ];
   const r2: (Tile | null)[] = [
-    { k: 'illu', w: 196, src: ILLU.jjb, fond: '#EFE6F3', ink: '#8A3F78', kicker: 'Carnet', title: N_TECH ? `${fmt(N_TECH)} techniques` : traduire('Tes techniques'), sub: traduire('JJB, lutte et frappes') },
+    { k: 'illu', w: 196, src: ILLU.jjb, fond: '#EFE6F3', ink: '#8A3F78', kicker: traduire('Carnet'), title: N_TECH ? traduire("{0} techniques", fmt(N_TECH)) : traduire('Tes techniques'), sub: traduire('JJB, lutte et frappes') },
     { k: 'tampons', w: 200, ids: ['medaille_or', 'medaille_argent', 'medaille_bronze'], title: traduire('Compétitions'), sub: traduire('Ta catégorie, tes médailles') },
     // 27 octobre 2026 : une des nouvelles scenes de Marseille, la calanque au couchant
     N_SCENES ? { k: 'scene', w: 168, src: SCENE_CALANQUE, label: traduire("{0} scènes", N_SCENES), sub: traduire('dont {0} nouvelles', NEW_SCENES.length), nouveau: true } : null,
-    { k: 'illu', w: 188, src: ILLU.ruban, fond: '#E3F2EA', ink: '#1C6B45', kicker: 'Mensurations', title: traduire('Taille, ventre, bras'), sub: traduire('Ce que la balance ne dit pas') },
-    { k: 'illu', w: 196, src: ILLU.kabuto, fond: '#E6ECF8', ink: '#3557D9', kicker: 'Illustrations', title: traduire('Stickers ou encre'), sub: traduire('Le style de ton app') },
+    { k: 'illu', w: 188, src: ILLU.ruban, fond: '#E3F2EA', ink: '#1C6B45', kicker: traduire('Mensurations'), title: traduire('Taille, ventre, bras'), sub: traduire('Ce que la balance ne dit pas') },
+    { k: 'illu', w: 196, src: ILLU.kabuto, fond: '#E6ECF8', ink: '#3557D9', kicker: traduire('Illustrations'), title: traduire('Stickers ou encre'), sub: traduire('Le style de ton app') },
     N_EXOS ? { k: 'stat', w: 144, n: fmt(N_EXOS), label: traduire('exercices'), sub: traduire('dans la bibliothèque'), tone: 'gold' } : null,
     { k: 'image', w: 112, src: sport('boxe', autre), label: 'Boxe', fond: '#F6EEDD' },
   ];
@@ -247,7 +247,7 @@ function TuilePoids({ h }: { h: number }) {
         <CartePoids demo series={series} targetWeight={77} startWeight={82} />
       </View>
       <View style={{ position: 'absolute', top: 6, right: 6 }}>
-        <Pastille label="Exemple" />
+        <Pastille label={traduire("Exemple")} />
       </View>
     </View>
   );
@@ -427,7 +427,7 @@ function PagePoids({ designW }: { designW: number }) {
     <PageCarte style={{ gap: 6 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ton poids")}</Ink>
-        <Pastille label="Exemple" tinte />
+        <Pastille label={traduire("Exemple")} tinte />
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
         <Ink size={34} weight="black" tight style={{ lineHeight: 38 }}>{`${String(der).replace('.', DECIMAL)} kg`}</Ink>
@@ -462,7 +462,7 @@ function PageRecords() {
           </View>
           {k === 0 ? (
             <View style={{ position: 'absolute', top: 8, right: 10 }}>
-              <Pastille label="Exemple" tinte />
+              <Pastille label={traduire("Exemple")} tinte />
             </View>
           ) : null}
         </PageCarte>
@@ -559,7 +559,7 @@ function PageSports({ g, designW }: { g: 'h' | 'f'; designW: number }) {
           {stats.map((s, k) => (
             <View key={s.l} style={{ alignItems: 'center' }}>
               <Ink size={24} weight="black" tight color={k === 1 ? c.goldDeep : c.accent}>{s.n}</Ink>
-              <Ink size={12} weight="extraBold" color={c.textSecondary}>{s.l}</Ink>
+              <Ink size={12} weight="extraBold" color={c.textSecondary}>{traduire(s.l)}</Ink>
             </View>
           ))}
         </PageCarte>
@@ -654,7 +654,7 @@ function PageCoach() {
       <PageCarte style={{ gap: 8, paddingVertical: 12 }}>
         <Ink size={10.5} weight="black" color="#8A3F78" style={{ letterSpacing: 1.2 }}>{traduire('TON PROGRAMME SUR TES JOURS')}</Ink>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((l, i) => (
+          {JOURS_LETTRES.map((l, i) => (
             <View key={i} style={{ width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: jours[i] ? '#EFE6F3' : c.fillSoft, borderWidth: jours[i] ? 2 : 0, borderColor: '#B35A9E' }}>
               <Ink size={13} weight="black" color={jours[i] ? '#6E2F60' : c.textMuted}>{traduire(l)}</Ink>
             </View>
@@ -1022,7 +1022,7 @@ export function Accroche({
             <LiensLegaux
               size={11.5}
               liens={[
-                { label: Platform.OS === 'ios' ? 'Conditions d’utilisation (EULA)' : 'Conditions d’utilisation', onPress: onOpenTerms },
+                { label: Platform.OS === 'ios' ? traduire('Conditions d’utilisation (EULA)') : traduire('Conditions d’utilisation'), onPress: onOpenTerms },
                 { label: traduire('Confidentialité'), onPress: onOpenPrivacy },
               ]}
             />

@@ -39,14 +39,14 @@ export default function Ceintures() {
         <View style={{ backgroundColor: P.white, borderWidth: 1, borderColor: c.border, borderRadius: 18, paddingVertical: 14, paddingHorizontal: 10, marginTop: 6, gap: 10 }}>
           <View style={{ flexDirection: 'row', gap: 2 }}>
             {BELTS.map((b) => (
-              <View key={b.id} style={{ flex: 1, alignItems: 'center', gap: 6 }} accessible accessibilityLabel={traduire("Niveau {0} à {1} séances", b.name, b.min)}>
+              <View key={b.id} style={{ flex: 1, alignItems: 'center', gap: 6 }} accessible accessibilityLabel={traduire("Niveau {0} à {1} séances", traduire(b.name), b.min)}>
                 <LevelPlate color={b.color} edge={b.edge} size={22} />
                 <Ink size={11} weight="extraBold" color={c.textSecondary}>{b.min}</Ink>
               </View>
             ))}
           </View>
           <Ink size={12} color={c.textMuted} style={{ textAlign: 'center', paddingHorizontal: 6 }}>
-            {traduire("{0}. Ce ne sont pas des grades : ton vrai grade se note dans ton profil.", BELTS.map((b) => b.name).join(', '))}</Ink>
+            {traduire("{0}. Ce ne sont pas des grades : ton vrai grade se note dans ton profil.", BELTS.map((b) => traduire(b.name)).join(', '))}</Ink>
         </View>
 
         {belts.length ? (
@@ -54,7 +54,7 @@ export default function Ceintures() {
             {[
               { v: String(belts.length), l: belts.length > 1 ? traduire('sports pratiqués') : traduire('sport pratiqué') },
               { v: String(belts.reduce((n, b) => n + b.count, 0)), l: traduire('séances au total') },
-              { v: [...belts].sort((a, b) => b.count - a.count)[0].belt.name, l: traduire('ton meilleur niveau') },
+              { v: traduire([...belts].sort((a, b) => b.count - a.count)[0].belt.name), l: traduire('ton meilleur niveau') },
             ].map((x) => (
               <View key={x.l} style={{ flex: 1, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 18, padding: 12, gap: 2 }}>
                 <Ink size={x.v.length > 6 ? 16 : 20} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{x.v}</Ink>
@@ -100,13 +100,13 @@ export default function Ceintures() {
                 )}
                 <View style={{ flex: 1, gap: 3 }}>
                   <Ink size={17} weight="extraBold" numberOfLines={2}>{sansTiret(traduire(b.sportName))}</Ink>
-                  <Ink size={13} color={c.textSecondary}>{traduirePluriel(b.count, b.count > 1, "Niveau {0}, {1} séance", "Niveau {0}, {1} séances", b.belt.name, b.count)}</Ink>
+                  <Ink size={13} color={c.textSecondary}>{traduirePluriel(b.count, b.count > 1, "Niveau {0}, {1} séance", "Niveau {0}, {1} séances", traduire(b.belt.name), b.count)}</Ink>
                 </View>
                 <LevelPlate color={b.belt.color} edge={b.belt.edge} size={26} />
               </View>
               <Bar progress={b.progress} color={barColor} />
               <Ink size={13} color={c.textSecondary}>
-                {b.next ? traduirePluriel(b.remaining, b.remaining > 1, "Encore {0} séance pour le niveau {1}", "Encore {0} séances pour le niveau {1}", b.remaining, b.next.name) : traduire('Niveau Maître\u00A0: le sommet de ce sport')}
+                {b.next ? traduirePluriel(b.remaining, b.remaining > 1, "Encore {0} séance pour le niveau {1}", "Encore {0} séances pour le niveau {1}", b.remaining, traduire(b.next.name)) : traduire('Niveau Maître\u00A0: le sommet de ce sport')}
               </Ink>
             </Animated.View>
           );

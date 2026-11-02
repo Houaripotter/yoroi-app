@@ -32,7 +32,7 @@ import { ExamplePreview } from '@/components/yoroi/v2/progres/ExamplePreview';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
 import { P } from '@/components/yoroi/livePalette';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, JOURS_LETTRES } from '@/lib/i18n/tr';
 
 const SOURCE_NAMES: Record<string, string> = {
   apple_health: 'Apple Santé',
@@ -60,7 +60,7 @@ const SOURCE_NAMES: Record<string, string> = {
   manual: traduire('Saisie dans YOROI'),
 };
 
-const DAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+const DAY_LETTERS = [JOURS_LETTRES[6], ...JOURS_LETTRES.slice(0, 6)];
 const LOAD_DAYS: Record<Period, number> = { jour: 14, semaine: 14, mois: 30, an: 365 };
 
 /** Valeurs d'exemple, seulement pour l'apercu voile marque « Exemple » */
@@ -418,7 +418,7 @@ export default function MetriqueScreen() {
     return (['deep', 'core', 'rem', 'awake'] as const).map((k) => ({ k, label: SLEEP_LABELS[k], color: SLEEP_COLORS[k], v: sum[k] / n }));
   })();
 
-  const sourceNames = sources.map((s) => SOURCE_NAMES[s] ?? s);
+  const sourceNames = sources.map((s) => traduire(SOURCE_NAMES[s] ?? s));
 
   return (
     <DetailScreen title={traduire(m.label)} subtitle={traduire(fam.label)}>
@@ -569,7 +569,7 @@ export default function MetriqueScreen() {
               {traduire("Montres qui l'envoient, selon les marques")}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {senders.map((w) => (
-                <Press key={w.key} onPress={() => router.push(`/sante/montre?marque=${w.key}` as any)} accessibilityRole="button" accessibilityLabel={`${w.name}, guide`}>
+                <Press key={w.key} onPress={() => router.push(`/sante/montre?marque=${w.key}` as any)} accessibilityRole="button" accessibilityLabel={traduire('{0}, guide', w.name)}>
                   <View style={{ minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 4, paddingRight: 10, borderRadius: 20, backgroundColor: S.paper, borderWidth: 1, borderColor: S.line2 }}>
                     <BrandMark text={w.mark} kind={w.kind} size={28} />
                     <Ink size={12} weight="extraBold">

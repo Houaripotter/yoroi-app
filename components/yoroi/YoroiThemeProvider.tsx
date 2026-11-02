@@ -40,7 +40,7 @@ function isMode(value: string | null): value is YoroiMode {
 
 /** Libelle court du mode, pour le toast et les reglages */
 export function libelleMode(mode: YoroiMode): string {
-  return mode === 'sombre' ? 'Mode sombre' : mode === 'auto' ? traduire('Mode auto, comme ton téléphone') : 'Mode clair';
+  return mode === 'sombre' ? traduire('Mode sombre') : mode === 'auto' ? traduire('Mode auto, comme ton téléphone') : traduire('Mode clair');
 }
 
 type ProviderProps = {

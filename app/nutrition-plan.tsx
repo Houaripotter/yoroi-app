@@ -13,12 +13,12 @@ import { BigNumber, Badge, ChoiceTile, GenderSwitch, H2, HRow, KV, MacroBars, No
 import { loadBodyData } from '@/lib/v2/nutrition/body';
 import { num } from '@/lib/v2/nutrition/formulas';
 import { ACTIVITY_LEVELS, GOALS, MACRO_PROFILES, SCIENTIFIC_SOURCES, calculateNutritionPlan, getMealCalories } from '@/lib/nutrition';
-import { traduire, DECIMAL, LOCALE } from '@/lib/i18n/tr';
+import { traduire, DECIMAL, LOCALE, LANG } from '@/lib/i18n/tr';
 
-const weekly = (s: string) => s.replace('.', DECIMAL).replace('kg/sem', 'kg par semaine').replace(/^-/, '−');
-/** Textes de la bibliotheque rendus lisibles : « 1 à 3 jours par semaine », sans barre oblique */
+const weekly = (s: string) => s.replace('.', DECIMAL).replace('kg/sem', traduire('kg par semaine')).replace(/^-/, '−');
+/** Textes de la bibliotheque rendus lisibles : « 1 à 3 jours par semaine », sans barre oblique (français seulement : les autres langues gardent leur traduction) */
 const pretty = (s: string) =>
-  s
+  LANG !== 'fr' ? s : s
     .replace(/(\d)\s*-\s*(\d)/g, '$1 à $2')
     .replace(/\/\s*semaine/g, ' par semaine')
     .replace(/\/\s*jour/g, ' par jour')
@@ -94,9 +94,9 @@ export default function NutritionPlanScreen() {
             <H2 sub={usingDefaults ? traduire('Complète ce qui manque pour un calcul juste') : traduire('Repris de ton profil et de ta dernière pesée')}>{traduire("Tes mesures")}</H2>
             <View style={{ gap: 10, marginTop: 10 }}>
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                <NumField label="Poids" value={weight} onChange={setWeight} unit="kg" placeholder="80" />
-                <NumField label="Taille" value={height} onChange={setHeight} unit="cm" placeholder="175" integer />
-                <NumField label={traduire("Âge")} value={age} onChange={setAge} unit="ans" placeholder="30" integer maxLength={3} />
+                <NumField label={traduire("Poids")} value={weight} onChange={setWeight} unit="kg" placeholder="80" />
+                <NumField label={traduire("Taille")} value={height} onChange={setHeight} unit="cm" placeholder="175" integer />
+                <NumField label={traduire("Âge")} value={age} onChange={setAge} unit={traduire("ans")} placeholder="30" integer maxLength={3} />
               </View>
               <GenderSwitch value={gender} onChange={setGender} />
             </View>
@@ -191,7 +191,7 @@ export default function NutritionPlanScreen() {
                 <View key={m.name} style={{ flexDirection: 'row', gap: 12 }}>
                   <View style={{ width: 50, alignItems: 'center' }}>
                     <Ink size={13} weight="black">
-                      {m.time}
+                      {LANG === 'fr' ? m.time : new Date(2026, 0, 1, parseInt(m.time, 10) || 0, parseInt(m.time.split('h')[1] ?? '0', 10) || 0).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' })}
                     </Ink>
                     {i < meals.length - 1 ? <View style={{ flex: 1, width: 3, borderRadius: 2, backgroundColor: P.line, marginTop: 6 }} /> : null}
                   </View>
@@ -208,7 +208,7 @@ export default function NutritionPlanScreen() {
                       <View style={{ width: `${(m.calories / maxMeal) * 100}%`, height: '100%', backgroundColor: P.ink, borderRadius: 3 }} />
                     </View>
                     <Ink size={12} weight="medium" color={P.ink2}>
-                      {m.example}
+                      {traduire(m.example)}
                     </Ink>
                   </View>
                 </View>
@@ -221,7 +221,7 @@ export default function NutritionPlanScreen() {
             <H2>{traduire("Sources scientifiques")}</H2>
             <View style={{ marginTop: 10 }}>
               <SourcesCard
-                sources={Object.values(SCIENTIFIC_SOURCES).map((s) => ({ label: s.name === 'ISSN Position Stand on Protein' ? traduire('Position officielle de l’ISSN sur les protéines') : s.name === 'ANSES Apports Nutritionnels' ? 'ANSES, apports nutritionnels' : s.name, ref: s.source, url: s.url }))}
+                sources={Object.values(SCIENTIFIC_SOURCES).map((s) => ({ label: s.name === 'ISSN Position Stand on Protein' ? traduire('Position officielle de l’ISSN sur les protéines') : s.name === 'ANSES Apports Nutritionnels' ? traduire('ANSES, apports nutritionnels') : s.name, ref: traduire(s.source), url: s.url }))}
                 note={traduire("Ces chiffres sont des estimations. Ajuste après deux à trois semaines selon ta balance et ton énergie.")}
               />
             </View>

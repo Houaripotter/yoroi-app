@@ -64,7 +64,7 @@ import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
 import { BentoEnfants, Case, LargeurPage } from '@/components/yoroi/v2/PageLarge';
 
 const NB = ' ';
-const SHORT_MONTHS = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
+const SHORT_MONTHS = [traduire('janv.'), traduire('févr.'), traduire('mars'), traduire('avr.'), traduire('mai'), traduire('juin'), traduire('juil.'), traduire('août'), traduire('sept.'), traduire('oct.'), traduire('nov.'), traduire('déc.')];
 const shortDay = (iso: string) => {
   const d = new Date(iso + 'T12:00:00');
   return `${d.getDate()} ${SHORT_MONTHS[d.getMonth()]}`;
@@ -557,7 +557,7 @@ export default function Dojo() {
         {/* Sceaux */}
         <Case>
         <Section i={5} ancre="sceaux">
-          <SectionHead title={traduire("Tes sceaux")} action="Collection" onAction={() => go('/dojo/sceaux')} />
+          <SectionHead title={traduire("Tes sceaux")} action={traduire("Collection")} onAction={() => go('/dojo/sceaux')} />
           <Pressable
             onPress={() => {
               tap();
@@ -646,7 +646,7 @@ export default function Dojo() {
               {
                 key: 'journal',
                 title: traduire('Journal d’XP'),
-                value: `${formatXp(xp)}${NB}XP gagnés`,
+                value: traduire('{0}{1}XP gagnés', formatXp(xp), NB),
                 fond: ton('lilas').fond,
                 kanjiColor: c.indigo,
                 tampon: u === 'classique' ? 'objectif_maintien' : 'frein_programme',
@@ -660,7 +660,7 @@ export default function Dojo() {
         {/* Vague 45 : la vitrine de la boutique remplace la porte « Personnages et scènes » */}
         <Case>
         <Section i={6}>
-          <SectionHead title={avecPerso ? traduire('Personnages et scènes') : traduire('Scènes')} action="Boutique" onAction={() => go('/dojo/boutique')} />
+          <SectionHead title={avecPerso ? traduire('Personnages et scènes') : traduire('Scènes')} action={traduire("Boutique")} onAction={() => go('/dojo/boutique')} />
           <VitrineBoutique vignettes={vignettes} total={traduire("{0} personnages, {1} scènes", PACKS.length + 1, THEMES.length)} onOuvrir={() => go('/dojo/boutique')} />
         </Section>
         </Case>

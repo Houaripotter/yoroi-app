@@ -20,7 +20,7 @@
 import { IMC_BAS, PERTE_MAX, PERTE_MIN, PRISE_MAX, PRISE_MIN, estimerArrivee, imcDe } from './estimation';
 import { projection } from '@/lib/v2/accueil/projection';
 import type { DayWeight } from '@/lib/v2/weightStats';
-import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, DECIMAL, LANG } from '@/lib/i18n/tr';
 
 /**
  * Tolerance autour de la bande, en kg : l'eau, le sel et le dernier repas font bouger la balance
@@ -378,8 +378,8 @@ export function decisionTorii(
 }
 
 const MOIS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
-const MOIS_COURT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
-const num = (d: Date) => (d.getDate() === 1 ? '1er' : String(d.getDate()));
+const MOIS_COURT = [traduire('janv.'), traduire('févr.'), traduire('mars'), traduire('avr.'), traduire('mai'), traduire('juin'), traduire('juil.'), traduire('août'), traduire('sept.'), traduire('oct.'), traduire('nov.'), traduire('déc.')];
+const num = (d: Date) => (d.getDate() === 1 && LANG === 'fr' ? '1er' : String(d.getDate()));
 
 /** « 18 novembre », avec l'annee si elle change */
 export function jourLong(iso: string, today: string): string {

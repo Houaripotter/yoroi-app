@@ -63,15 +63,15 @@ export const FighterCardView = forwardRef<View, { data: FighterData; id: CardIde
           <View style={{ gap: 4 }}>
             <PlateRow p={p} progress={id.rankProgress} count={10} w={Math.min(24, Math.floor((width - 70) / 10) - 2)} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-              <Ink size={11} weight="bold" color={p.ink2} numberOfLines={1} style={{ flexShrink: 1 }}>{next ? `En route vers ${rangNom(next.index)}` : traduire('Rang suprême atteint')}</Ink>
+              <Ink size={11} weight="bold" color={p.ink2} numberOfLines={1} style={{ flexShrink: 1 }}>{next ? traduire('En route vers {0}', rangNom(next.index)) : traduire('Rang suprême atteint')}</Ink>
               <Ink size={11} weight="bold" color={p.muted} numberOfLines={1}>{traduire("Depuis {0}", data.joinDate)}</Ink>
             </View>
           </View>
 
           <Panel p={p} style={{ gap: 8, paddingVertical: 10 }}>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Mini p={p} onPanel value={data.weight > 0 ? `${String(data.weight).replace('.', DECIMAL)} kg` : traduire('À peser')} label="Poids" />
-              <Mini p={p} onPanel value={data.height > 0 ? `${data.height} cm` : traduire('À saisir')} label="Taille" />
+              <Mini p={p} onPanel value={data.weight > 0 ? `${String(data.weight).replace('.', DECIMAL)} kg` : traduire('À peser')} label={traduire("Poids")} />
+              <Mini p={p} onPanel value={data.height > 0 ? `${data.height} cm` : traduire('À saisir')} label={traduire("Taille")} />
               <Mini p={p} onPanel value={`${id.weekStreak}`} label={traduire("Semaines réussies")} accent={p.accent} />
             </View>
             <View style={{ flexDirection: 'row', gap: 10 }}>

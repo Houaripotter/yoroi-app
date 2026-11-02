@@ -98,7 +98,7 @@ export function WeekPlates({ plates, size = 1 }: { plates: DayPlate[]; size?: nu
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
       {plates.map((p, i) => (
-        <View key={p.iso} style={{ alignItems: 'center', gap: 5 }} accessibilityLabel={`${PLAN_DAYS_SHORT[i]} ${p.state === 'done' ? 'fait' : p.state === 'planned' ? traduire('prévu') : p.state === 'missed' ? traduire('manqué') : p.state === 'rest' ? 'repos' : 'libre'}`}>
+        <View key={p.iso} style={{ alignItems: 'center', gap: 5 }} accessibilityLabel={`${PLAN_DAYS_SHORT[i]} ${p.state === 'done' ? traduire('fait') : p.state === 'planned' ? traduire('prévu') : p.state === 'missed' ? traduire('manqué') : p.state === 'rest' ? traduire('repos') : traduire('libre')}`}>
           <DayDot state={p.state} count={p.count} size={36 * size} carre />
           <Ink size={11} weight="black" color={p.isToday ? c.accentText : c.textSecondary}>{PLAN_DAYS_SHORT[i]}</Ink>
         </View>

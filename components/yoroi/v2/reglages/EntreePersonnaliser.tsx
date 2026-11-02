@@ -23,7 +23,7 @@ export function EntreePersonnaliser({ scene, personnage, resume, onPress }: { sc
         onPress();
       }}
       accessibilityRole="button"
-      accessibilityLabel={`Personnaliser : ${resume}`}
+      accessibilityLabel={traduire('Personnaliser : {0}', resume)}
       style={({ pressed }) => ({ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1.5, borderColor: c.accent, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 12, transform: [{ scale: pressed ? 0.99 : 1 }] })}
     >
       {/* ta scene et ton personnage */}

@@ -221,7 +221,7 @@ export function texteMesureSante(m: MesureSanteJour): { valeur: string; unite: s
   const dec = (n: number) => (Math.round(n * 10) / 10).toFixed(1).replace('.', DECIMAL);
   switch (m.cle) {
     case 'pas':
-      return { valeur: entier(m.valeur), unite: 'pas' };
+      return { valeur: entier(m.valeur), unite: traduire('pas') };
     case 'energie-active':
       return { valeur: entier(m.valeur), unite: 'kcal' };
     case 'distance':

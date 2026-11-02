@@ -121,7 +121,7 @@ export default function CompetitionCampScreen() {
                   {saved ? traduire('Fixé au lancement') : comp ? traduire('Calé sur ta compétition') : traduire('Avant la compétition')}
                 </Ink>
               </View>
-              <Stepper value={String(weeks)} label="semaines" onMinus={() => changeWeeks(weeks - 1)} onPlus={() => changeWeeks(weeks + 1)} />
+              <Stepper value={String(weeks)} label={traduire("semaines")} onMinus={() => changeWeeks(weeks - 1)} onPlus={() => changeWeeks(weeks + 1)} />
             </View>
             <View style={{ height: 1, backgroundColor: P.line2 }} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -157,7 +157,7 @@ export default function CompetitionCampScreen() {
                 </Ink>
                 <View style={{ paddingHorizontal: 10, height: 28, borderRadius: 10, backgroundColor: P.paper, justifyContent: 'center' }}>
                   <Ink size={12} weight="extraBold" color={ph.color}>
-                    {`${ph.weeks} sem.`}
+                    {traduire('{0} sem.', ph.weeks)}
                   </Ink>
                 </View>
               </View>

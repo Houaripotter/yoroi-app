@@ -12,7 +12,7 @@ import Svg, { Circle, Defs, Ellipse, Path, RadialGradient, Stop } from 'react-na
 import { useYoroiTheme } from '../../YoroiThemeProvider';
 import { Ink } from '../Ink';
 import type { ViewKey } from '@/lib/v2/progres/measures';
-import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, traduireSens, DECIMAL } from '@/lib/i18n/tr';
 import { getUserSettings } from '@/lib/storage';
 import { genreDesReglages } from '@/lib/genreCalcul';
 
@@ -215,7 +215,7 @@ export function Silhouette({ items, height = 310, active = null, onPressItem }: 
             const body = (
               <View style={{ alignItems: p.side === 'left' ? 'flex-end' : 'flex-start' }}>
                 <Ink size={12} weight="bold" color={on ? c.accent : c.textSecondary} numberOfLines={1}>
-                  {traduire(p.item.label)}
+                  {traduireSens('tour', p.item.label)}
                 </Ink>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5 }}>
                   <Ink size={17} weight="black" tight numberOfLines={1}>
@@ -232,7 +232,7 @@ export function Silhouette({ items, height = 310, active = null, onPressItem }: 
             const pos = { position: 'absolute' as const, top: p.top, width: colW, height: CALLOUT_H, justifyContent: 'center' as const, [p.side === 'left' ? 'left' : 'right']: 0 };
             if (!onPressItem) return <View key={p.item.key} style={pos}>{body}</View>;
             return (
-              <Pressable key={p.item.key} onPress={() => onPressItem(p.item.key)} accessibilityRole="button" accessibilityLabel={`${p.item.label}, ${p.item.value}${dt && dt !== '=' ? traduire(", {0} centimètre", dt) : ''}`} accessibilityState={{ selected: on }} hitSlop={4} style={pos}>
+              <Pressable key={p.item.key} onPress={() => onPressItem(p.item.key)} accessibilityRole="button" accessibilityLabel={`${traduireSens('tour', p.item.label)}, ${p.item.value}${dt && dt !== '=' ? traduire(", {0} centimètre", dt) : ''}`} accessibilityState={{ selected: on }} hitSlop={4} style={pos}>
                 {body}
               </Pressable>
             );

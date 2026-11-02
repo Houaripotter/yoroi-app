@@ -446,10 +446,10 @@ export function nomBadge(id: NomSticker | null): string | null {
 /** Le resume du rond, pour les sous titres : « Ta photo, hexagone, contour lilas, cœur » */
 export function resumeRond(st: StyleRond, contenu: 'photo' | 'personnage' | 'initiales'): string {
   const qui = contenu === 'photo' ? traduire('Ta photo') : contenu === 'personnage' ? traduire('Ton personnage') : traduire('Tes initiales');
-  const parts = [qui, nomForme(st.forme).toLowerCase()];
-  parts.push(st.contour === 'aucun' ? traduire('sans contour') : traduire('contour {0}', nomContour(st.contour).toLowerCase()));
+  const parts = [qui, traduire(nomForme(st.forme)).toLowerCase()];
+  parts.push(st.contour === 'aucun' ? traduire('sans contour') : traduire('contour {0}', traduire(nomContour(st.contour)).toLowerCase()));
   if (st.epaisseur === 'epaisse' && st.contour !== 'aucun') parts.push(traduire('épais'));
   const b = nomBadge(st.badge);
-  if (b) parts.push(b.toLowerCase());
+  if (b) parts.push(traduire(b).toLowerCase());
   return parts.join(', ');
 }

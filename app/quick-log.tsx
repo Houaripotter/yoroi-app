@@ -496,7 +496,7 @@ export default function DicteSeance() {
             <Enter i={1} style={{ gap: 8 }}>
               <SectionTitle>{traduire("Par exemple")}</SectionTitle>
               {EXAMPLES.map((ex) => (
-                <Press key={ex} onPress={() => setText(ex)} accessibilityRole="button" accessibilityLabel={`Exemple : ${traduire(ex)}`}>
+                <Press key={ex} onPress={() => setText(ex)} accessibilityRole="button" accessibilityLabel={traduire("Exemple : {0}", traduire(ex))}>
                   <View style={{ minHeight: 52, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <Ink size={14} weight="bold" color={P.ink2} style={{ flex: 1 }}>{traduire(ex)}</Ink>
                     <Icon name="chevron" size={16} color={P.muted} />

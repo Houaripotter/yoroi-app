@@ -254,7 +254,7 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
               {d.done.filter((t) => d.slots.some((s) => s.occ?.training_id === t.id)).length ? (
                 <Ink size={12} color={c.textMuted}>{traduire("Séance liée au créneau, touche le créneau pour l’ouvrir.")}</Ink>
               ) : null}
-              {empty ? <Ink size={13} color={c.textMuted}>{d.rest ? traduire('Repos') : 'Libre'}</Ink> : null}
+              {empty ? <Ink size={13} color={c.textMuted}>{d.rest ? traduire('Repos') : traduire('Libre')}</Ink> : null}
             </View>
           </View>
         );

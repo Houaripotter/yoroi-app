@@ -123,7 +123,7 @@ export default function SavoirScreen() {
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <View style={{ flex: 1 }}>
           <Pill
-            label={`Fiches (${scienceData.length})`}
+            label={traduire("Fiches ({0})", scienceData.length)}
             active={tab === 'ARTICLES'}
             onPress={() => {
               setTab('ARTICLES');
@@ -133,7 +133,7 @@ export default function SavoirScreen() {
         </View>
         <View style={{ flex: 1 }}>
           <Pill
-            label={`Protocoles (${protocolData.length})`}
+            label={traduire("Protocoles ({0})", protocolData.length)}
             active={tab === 'PROTOCOLES'}
             onPress={() => {
               setTab('PROTOCOLES');
@@ -163,7 +163,7 @@ export default function SavoirScreen() {
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <Chip label={traduire("Toutes")} active={cat === null} onPress={() => setCat(null)} />
         {categories.map((c) => (
-          <Chip key={c} label={c} active={cat === c} onPress={() => setCat(cat === c ? null : c)} />
+          <Chip key={c} label={traduire(c)} active={cat === c} onPress={() => setCat(cat === c ? null : c)} />
         ))}
       </View>
 

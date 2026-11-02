@@ -7,6 +7,7 @@
  * ecrase, tout est fusionne (lib/v2/onboarding/fusion.ts), et une lecture ratee n'ecrit rien.
  */
 import { setProprietes, track } from '@/utils/telemetry';
+import { traduire } from '@/lib/i18n/tr';
 import { DeviceEventEmitter, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
@@ -129,7 +130,7 @@ export async function saveOnboardingWeighIn(args: {
 // Apple Sante ou Health Connect (seulement sur appui)
 // ============================================================
 
-export const healthName = () => (Platform.OS === 'android' ? 'Health Connect' : 'Apple Santé');
+export const healthName = () => (Platform.OS === 'android' ? 'Health Connect' : traduire('Apple Santé'));
 
 /**
  * Connexion a la sante avec verification reelle (14 octobre 2026, SANTE CONNEXION) : une seule demande a la fois,

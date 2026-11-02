@@ -12,7 +12,7 @@ import { logger } from '@/lib/security/logger';
 import { BigButton, Card, Icon, P, Pill, Press, tap } from './kit';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { intensite, niveauDouleur } from '@/lib/v2/intensite';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG } from '@/lib/i18n/tr';
 
 export const BODY_ZONES: { key: string; label: string }[] = [
   { key: 'neck', label: traduire('Nuque') },
@@ -95,7 +95,7 @@ export function BodyZones({ body, onChange }: { body: BodyStatusData; onChange: 
           const s = st ? STATUS[st] : null;
           return (
             <View key={z.key} style={{ width: '48.6%' }}>
-            <Press onPress={() => open(z.key)} accessibilityRole="button" accessibilityLabel={`${z.label} : ${s ? s.label : traduire('rien de signalé')}`}>
+            <Press onPress={() => open(z.key)} accessibilityRole="button" accessibilityLabel={`${traduire(z.label)}${LANG === 'fr' ? ' : ' : ': '}${s ? s.label : traduire('rien de signalé')}`}>
               <View style={{ minHeight: 64, borderRadius: 18, backgroundColor: s ? s.soft : P.white, borderWidth: 1, borderColor: s ? s.soft : P.line2, paddingHorizontal: 14, paddingVertical: 10, justifyContent: 'center', gap: 2 }}>
                 <Ink size={15} weight="extraBold">
                   {traduire(z.label)}

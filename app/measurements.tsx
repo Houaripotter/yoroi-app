@@ -29,7 +29,7 @@ import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { logger } from '@/lib/security/logger';
 import Svg, { Path } from 'react-native-svg';
 import { P, blancA } from '@/components/yoroi/livePalette';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, traduireSens } from '@/lib/i18n/tr';
 import { MensurationsPlus } from '@/components/yoroi/v2/corps/MensurationsPlus';
 
 
@@ -51,7 +51,7 @@ const DEFAULTS: Record<MeasureKey, number> = {
   neck: 38, shoulders: 115, chest: 100, waist: 84, navel: 86, hips: 98, armR: 34, armL: 34, thighR: 56, thighL: 56, calfR: 38, calfL: 38, forearmR: 30, forearmL: 30,
 };
 
-const labelOf = (k: MeasureKey) => MEASURE_FIELDS.find((f) => f.key === k)?.label ?? k;
+const labelOf = (k: MeasureKey) => traduireSens('tour', MEASURE_FIELDS.find((f) => f.key === k)?.label ?? k);
 
 function MinusPlus({ kind, color }: { kind: 'minus' | 'plus'; color: string }) {
   return (
@@ -130,7 +130,7 @@ export default function MeasurementsScreen() {
     return {
       key: f.key,
       label: f.label,
-      value: avg ? `${num(avg, 1)} cm` : 'à mesurer',
+      value: avg ? `${num(avg, 1)} cm` : traduire('à mesurer'),
       delta: done && prevAvg && avg ? avg - prevAvg : null,
     };
   });
@@ -163,7 +163,7 @@ export default function MeasurementsScreen() {
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 120 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <DetailHeader
-          title="Tes mensurations"
+          title={traduire("Tes mensurations")}
           sub={traduire("Déjà remplies avec ta dernière mesure. Touche une zone, ajuste, enregistre.")}
           right={
             <IconButton label={traduire("Voir l’évolution")} onPress={() => router.push('/measurements-detail' as any)}>
@@ -201,7 +201,7 @@ export default function MeasurementsScreen() {
 
         <View style={{ marginHorizontal: GUTTER, marginTop: 18, borderRadius: 24, backgroundColor: blancA(0.78), borderWidth: 1, borderColor: c.divider, padding: 16, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}>
-            <Ink size={19} weight="black" tight>{zoneMeta.long}</Ink>
+            <Ink size={19} weight="black" tight>{traduire(zoneMeta.long)}</Ink>
             <Ink size={12} color={c.textSecondary} style={{ flexShrink: 1, textAlign: 'right' }}>{zone === 'waist' ? traduire('au plus fin, après une expiration') : zone === 'navel' ? traduire('à hauteur du nombril') : zone === 'arm' ? traduire('bras contracté, au plus large') : zone === 'forearm' ? traduire('au plus large, poing serré, bras tendu') : traduire('ruban à plat, sans serrer')}</Ink>
           </View>
           {zoneKeys.map((k) => {
@@ -284,7 +284,7 @@ export default function MeasurementsScreen() {
                 accessibilityState={{ selected: on }}
                 style={{ minHeight: 44, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: on ? c.ink : done ? c.successTint : 'transparent', borderWidth: 1.5, borderColor: on ? c.ink : done ? c.successTint : '#C9CEDF' }}
               >
-                <Ink size={13} weight="bold" color={on ? P.paper : done ? c.successText : c.textSecondary}>{traduire(f.label)}</Ink>
+                <Ink size={13} weight="bold" color={on ? P.paper : done ? c.successText : c.textSecondary}>{traduireSens('tour', f.label)}</Ink>
               </Pressable>
             );
           })}

@@ -28,10 +28,10 @@ import { MetricGrid } from './Dashboard';
 import { IconDot, METRIC_ICON, SanteIcon } from './SanteIcon';
 import { BrandMark, GlassBox, S, SmallButton } from './ui';
 import { P, blancA, paletteSombre } from '@/components/yoroi/livePalette';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, JOURS_LETTRES } from '@/lib/i18n/tr';
 
 const ANDROID = Platform.OS === 'android';
-const DAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+const DAY_LETTERS = [JOURS_LETTRES[6], ...JOURS_LETTRES.slice(0, 6)];
 
 // audit 43 : les tons suivent le theme (memes couleurs qu'avant en clair)
 const TONE = {
@@ -187,7 +187,7 @@ export function ConnectSteps({ provider, mode, connecting, onConnect, onPickBran
         traduire('Choisis ta marque'),
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {brands.map((w) => (
-            <Press key={w.key} onPress={() => onPickBrand(w.key)} accessibilityRole="button" accessibilityLabel={`Guide ${w.name}`}>
+            <Press key={w.key} onPress={() => onPickBrand(w.key)} accessibilityRole="button" accessibilityLabel={traduire('Guide {0}', w.name)}>
               <View style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 4, paddingRight: 10, borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: S.line2 }}>
                 <BrandMark text={w.mark} kind={w.kind} size={32} />
                 <Ink size={13} weight="extraBold">
@@ -207,7 +207,7 @@ export function ConnectSteps({ provider, mode, connecting, onConnect, onPickBran
             {__DEV__ ? traduire("Mode test : {0} ne s’ouvre pas dans Expo Go. Dans l’app installée, un seul bouton suffit.", provider) : traduire("{0} n’est pas disponible sur cet appareil pour l’instant.", provider)}
           </Ink>
         ) : (
-          <SmallButton label={connecting ? traduire('Connexion') : `Connecter ${provider}`} tone="red" icon="link" busy={connecting} onPress={onConnect} />
+          <SmallButton label={connecting ? traduire('Connexion') : traduire('Connecter {0}', provider)} tone="red" icon="link" busy={connecting} onPress={onConnect} />
         ),
       )}
     </GlassBox>

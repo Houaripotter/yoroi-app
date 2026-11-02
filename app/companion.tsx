@@ -210,7 +210,7 @@ export default function TableauCorps() {
               const on = tab === t;
               return (
                 <Pressable key={t} onPress={() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); setTab(t); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ flex: 1, minHeight: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.surface : 'transparent' }}>
-                  <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? c.ink : c.textSecondary}>{t === 'table' ? 'Tableau' : 'Courbes'}</Ink>
+                  <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? c.ink : c.textSecondary}>{t === 'table' ? traduire('Tableau') : traduire('Courbes')}</Ink>
                 </Pressable>
               );
             })}

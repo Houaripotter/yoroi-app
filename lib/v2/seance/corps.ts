@@ -47,10 +47,10 @@ export type MetricDef = {
 };
 
 export const METRICS: MetricDef[] = [
-  { key: 'weight', label: 'Poids', chip: 'Poids', unit: 'kg', group: 'composition', digits: 1, weightField: 'weight', bcField: 'weight' },
+  { key: 'weight', label: 'Poids', chip: traduire('Poids'), unit: 'kg', group: 'composition', digits: 1, weightField: 'weight', bcField: 'weight' },
   { key: 'fat_percent', label: 'Masse grasse', chip: 'Graisse', unit: '%', group: 'composition', digits: 1, weightField: 'fat_percent', bcField: 'bodyFatPercent' },
   { key: 'muscle', label: 'Muscle', chip: 'Muscle', unit: 'kg', group: 'composition', digits: 1, weightField: 'muscle_percent', bcField: 'muscleMass' },
-  { key: 'water_percent', label: 'Eau', chip: 'Eau', unit: '%', group: 'composition', digits: 1, weightField: 'water_percent', bcField: 'waterPercent' },
+  { key: 'water_percent', label: 'Eau', chip: traduire('Eau'), unit: '%', group: 'composition', digits: 1, weightField: 'water_percent', bcField: 'waterPercent' },
   { key: 'bone_mass', label: traduire('Os'), chip: traduire('Os'), unit: 'kg', group: 'composition', digits: 1, weightField: 'bone_mass', bcField: 'boneMass' },
   { key: 'visceral_fat', label: 'Graisse viscérale', chip: traduire('Viscérale'), unit: 'niveau', group: 'composition', digits: 1, weightField: 'visceral_fat', bcField: 'visceralFat' },
   { key: 'metabolic_age', label: traduire('Âge métabolique'), chip: traduire('Âge du corps'), unit: 'ans', group: 'composition', digits: 0, weightField: 'metabolic_age', bcField: 'metabolicAge' },

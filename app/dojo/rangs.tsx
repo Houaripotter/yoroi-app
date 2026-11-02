@@ -17,7 +17,7 @@ import { ArmureEnConstruction, EtapesPiece } from '@/components/yoroi/v2/dojo/Ar
 import { construction } from '@/lib/v2/dojo/pieces';
 import { BreathingFigure, GlassTag, ScenePlate } from '@/components/yoroi/v2/dojo/DojoHero';
 import { BackHeader, CheckIcon, ChevronIcon, LockIcon, RankFrame, formatXp, tap } from '@/components/yoroi/v2/dojo/parts';
-import { DAN_STEP, RANKS, danLabel, xpRulesFor } from '@/lib/v2/armure';
+import { DAN_STEP, RANKS, danAffiche, xpRulesFor } from '@/lib/v2/armure';
 import { useArmure } from '@/lib/v2/dojo/useArmure';
 import { THEME_IMAGES, aUnPersonnage, personnageImage } from '@/lib/v2/dojo/personnages';
 import { pieceDuRang } from '@/lib/v2/dojo/pieces';
@@ -190,7 +190,7 @@ export default function Rangs() {
               <Ink size={18} weight="black" tight color={dan > 0 ? c.ink : c.textSecondary}>{traduire("Les dan")}</Ink>
               <Ink size={13} color={dan > 0 ? c.textSecondary : c.textMuted}>{traduire("Après {0}, un dan tous les {1}{2}XP, sans fin.", rangNom(RANKS.length - 1, u), formatXp(DAN_STEP), NB)}</Ink>
               <Ink size={12} weight="bold" color={dan > 0 ? c.goldDeep : c.textMuted}>
-                {dan > 0 ? traduire("Tu es {0}", danLabel(dan)) : traduire("{0} à {1}{2}XP", danLabel(1), formatXp(RANKS[RANKS.length - 1].minXp + DAN_STEP), NB)}
+                {dan > 0 ? traduire("Tu es {0}", danAffiche(dan)) : traduire("{0} à {1}{2}XP", danAffiche(1), formatXp(RANKS[RANKS.length - 1].minXp + DAN_STEP), NB)}
               </Ink>
             </View>
           </View>

@@ -146,7 +146,7 @@ export default function InjuryEvaluationScreen() {
 
         {/* TYPE DE DOULEUR */}
         <Enter i={3}>
-          <H2 sub={isEdit ? undefined : 'Obligatoire'}>{traduire("Type de douleur")}</H2>
+          <H2 sub={isEdit ? undefined : traduire('Obligatoire')}>{traduire("Type de douleur")}</H2>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
             {PAIN_TYPES.map((t) => (
               <OptionTile key={t.id} icon={PAIN_ICONS[t.icon] ?? 'circle'} label={traduire(t.label)} active={painType === t.id} onPress={() => setPainType(t.id)} />
@@ -156,7 +156,7 @@ export default function InjuryEvaluationScreen() {
 
         {/* CAUSE */}
         <Enter i={4}>
-          <H2 sub={isEdit ? undefined : 'Obligatoire'}>Cause</H2>
+          <H2 sub={isEdit ? undefined : traduire('Obligatoire')}>{traduire('Cause')}</H2>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
             {INJURY_CAUSES.map((c) => (
               <OptionTile key={c.id} icon={CAUSE_ICONS[c.icon] ?? 'circle'} label={traduire(c.label)} active={cause === c.id} onPress={() => setCause(c.id)} />
@@ -181,10 +181,10 @@ export default function InjuryEvaluationScreen() {
                 </Ink>
               </View>
             </Press>
-            <Stepper value={days} onChange={setDays} unit="jours" min={1} max={365} />
+            <Stepper value={days} onChange={setDays} unit={traduire("jours")} min={1} max={365} />
             <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'space-between' }}>
               {[3, 7, 14, 21, 30].map((d) => (
-                <Chip key={d} label={`${d} j`} active={days === d} onPress={() => setDays(d)} />
+                <Chip key={d} label={traduire('{0} j', d)} active={days === d} onPress={() => setDays(d)} />
               ))}
             </View>
             <Ink size={12} weight="medium" color={P.ink2}>

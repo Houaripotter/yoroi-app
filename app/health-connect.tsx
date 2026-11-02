@@ -82,7 +82,7 @@ export default function HealthConnectScreen() {
   const [checking, setChecking] = useState(false);
   const [check, setCheck] = useState<Diag | null>(null);
 
-  const provider = Platform.OS === 'android' ? 'Health Connect' : 'Apple Santé';
+  const provider = Platform.OS === 'android' ? 'Health Connect' : traduire('Apple Santé');
   const isLive = source?.mode === 'live';
   const native = source?.mode === 'live' || source?.mode === 'off';
 
@@ -389,7 +389,7 @@ export default function HealthConnectScreen() {
 
   const openApp = () => safeOpenURL(Platform.OS === 'ios' ? 'x-apple-health://' : 'market://details?id=com.google.android.apps.healthdata');
 
-  const instructions = getConnectionInstructions().map((s) => s.replace(/^\d+\.\s*/, ''));
+  const instructions = getConnectionInstructions().map((s) => traduire(s.replace(/^\d+\.\s*/, '')));
   const anyPerm = perms ? Object.values(perms).some(Boolean) : false;
 
   return (

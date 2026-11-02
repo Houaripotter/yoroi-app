@@ -202,7 +202,7 @@ export default function ImportCSVScreen() {
               <Ink size={18} weight="black" tight>{traduire("Un seul fichier pour tout ton historique")}</Ink>
               <Ink size={14} color={P.ink2}>{traduire("Remplis le modèle sur ton ordinateur, puis importe le fichier ici.")}</Ink>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                <TypeBadge icon="scale" label="Poids" tint={P.indigo} soft={P.indigoSoft} />
+                <TypeBadge icon="scale" label={traduire("Poids")} tint={P.indigo} soft={P.indigoSoft} />
                 <TypeBadge icon="pulse" label={traduire("Composition")} tint={P.mossText} soft={P.mossSoft} />
                 <TypeBadge icon="ruler" label={traduire("Mensurations")} tint={P.goldDark} soft={P.goldSoft} />
               </View>

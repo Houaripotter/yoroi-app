@@ -88,7 +88,7 @@ export default function StyleDesWidgets() {
             {(['clair', 'sombre'] as const).map((m) => (
               <View key={m} style={{ width: apercu, gap: 6, alignItems: 'center' }}>
                 <Image source={APERCUS[choisi.id][m]} style={{ width: apercu, height: apercu, borderRadius: 18 }} resizeMode="cover" accessibilityIgnoresInvertColors />
-                <Ink size={12} weight="bold" color={c.textMuted}>{m === 'clair' ? 'En clair' : 'En sombre'}</Ink>
+                <Ink size={12} weight="bold" color={c.textMuted}>{m === 'clair' ? traduire('En clair') : traduire('En sombre')}</Ink>
               </View>
             ))}
           </View>

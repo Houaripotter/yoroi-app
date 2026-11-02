@@ -531,7 +531,7 @@ export function levelCondition(pack: PackDef, level: Level): string {
   // les rangs des legendes s'ecrivent dans ton univers (Confirme et Expert en Classique)
   if (level === 1) return traduire('avec Premium');
   if (pack.kind === 'legende') return traduire("Rang {0}", rangNom(level === 2 ? 2 : 3));
-  const sport = pack.name.toLowerCase();
+  const sport = traduire(pack.name).toLowerCase();
   return level === 2 ? traduire("niveau Motivé, 25 séances de {0}", sport) : traduire("niveau Aguerri, 100 séances de {0}", sport);
 }
 

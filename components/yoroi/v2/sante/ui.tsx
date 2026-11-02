@@ -87,7 +87,8 @@ export function SmallButton({ label, onPress, tone = 'ink', icon, busy, disabled
 /** Etat de la liaison avec Apple Sante ou Health Connect */
 export function SourceCard({ source, onConnect, onSync, syncing, connecting }: { source: SanteSource | null; onConnect?: () => void; onSync?: () => void; syncing?: boolean; connecting?: boolean }) {
   if (!source) return null;
-  const p = source.provider;
+  // affichage seul : le nom français de la source (Apple Santé) dans la langue de l'app
+  const p = traduire(source.provider);
   if (source.mode === 'expoGo' || source.mode === 'web' || source.mode === 'indisponible') {
     // 30 octobre 2026 : sur Mac, toujours les textes de l'app installee (jamais ceux du mode test)
     const dev = __DEV__ && source.mode !== 'indisponible';
@@ -127,13 +128,13 @@ export function SourceCard({ source, onConnect, onSync, syncing, connecting }: {
           </View>
           <View style={{ flex: 1 }}>
             <Ink size={17} weight="black" tight>
-              {`Relie ${p}`}
+              {traduire('Relie {0}', p)}
             </Ink>
             <Ink size={13} weight="bold" color={S.ink2}>
               {traduire("Ta montre et ta balance remplissent cet écran toutes seules")}</Ink>
           </View>
         </View>
-        {onConnect ? <SmallButton label={connecting ? traduire('Connexion') : `Connecter ${p}`} tone="red" icon="link" busy={connecting} onPress={onConnect} /> : null}
+        {onConnect ? <SmallButton label={connecting ? traduire('Connexion') : traduire('Connecter {0}', traduire(p))} tone="red" icon="link" busy={connecting} onPress={onConnect} /> : null}
       </GlassBox>
     );
   }

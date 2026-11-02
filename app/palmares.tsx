@@ -143,7 +143,7 @@ export default function PalmaresScreen() {
           <View style={{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: c.divider, padding: 18, gap: 12, shadowColor: c.ink, shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 2 }}>
             <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Ton palmarès")}</Ink>
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              {[{ v: record.victoires, l: 'victoires', col: c.ink }, { v: record.defaites, l: traduire('défaites'), col: c.accent }, { v: record.nuls, l: 'nuls', col: c.textSecondary }].map((x) => (
+              {[{ v: record.victoires, l: traduire('victoires'), col: c.ink }, { v: record.defaites, l: traduire('défaites'), col: c.accent }, { v: record.nuls, l: traduire('nuls'), col: c.textSecondary }].map((x) => (
                 <View key={x.l} style={{ flex: 1 }}>
                   <Ink size={44} weight="black" tight color={x.col} style={{ lineHeight: 48 }}>{String(x.v)}</Ink>
                   <Ink size={12} weight="bold" color={c.textMuted}>{x.l}</Ink>

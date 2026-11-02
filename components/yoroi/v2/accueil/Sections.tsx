@@ -24,7 +24,7 @@ import type { NextSession } from '@/lib/v2/accueil/home';
 import type { ActivityToday, NextTarget } from './Today';
 import { PlusHint } from '@/components/yoroi/v2/PlusHint';
 import { Card, Icon, P, Press, useAccent } from './kit';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, JOURS_LETTRES } from '@/lib/i18n/tr';
 
 /* ============ Titre de section ============ */
 
@@ -179,7 +179,7 @@ export function ActivityCard({ a }: { a: ActivityToday }) {
     { key: 'stand', label: traduire('Pas'), value: a.steps, goal: STEPS_GOAL, unit: 'pas' },
   ];
   const cols = [
-    { color: RING_COLORS.stand, value: a.steps !== null ? thousands(a.steps) : '0', unit: 'pas' },
+    { color: RING_COLORS.stand, value: a.steps !== null ? thousands(a.steps) : '0', unit: traduire('pas') },
     { color: RING_COLORS.move, value: a.move !== null ? thousands(a.move) : '0', unit: 'kcal' },
     { color: RING_COLORS.exercise, value: a.exercise !== null ? thousands(a.exercise) : '0', unit: 'min' },
   ];
@@ -211,7 +211,7 @@ export function ActivityCard({ a }: { a: ActivityToday }) {
 
 /* ============ Ta semaine ============ */
 
-const DAY_LETTERS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const DAY_LETTERS = JOURS_LETTRES;
 
 /**
  * Ta semaine (vague 26, remontee juste sous la carte Poids) : le nombre de seances et l'objectif,
@@ -327,7 +327,7 @@ export function WeekCard({ trainings, goal, femme = false, plannedDays = [], nex
         <Press
           onPress={() => router.push((last.id ? { pathname: '/workout-detail', params: { id: String(last.id) } } : '/seances') as any)}
           accessibilityRole="button"
-          accessibilityLabel={traduire("Ta dernière séance : {0}, {1}. Voir le détail", getSportName(lastSport), lastSub)}
+          accessibilityLabel={traduire("Ta dernière séance : {0}, {1}. Voir le détail", traduire(getSportName(lastSport)), lastSub)}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingVertical: 10, borderTopWidth: 1, borderColor: P.line2, backgroundColor: P.bande }}>
             <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: P.line2, overflow: 'hidden', alignItems: 'center' }}>

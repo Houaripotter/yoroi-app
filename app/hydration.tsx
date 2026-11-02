@@ -26,7 +26,7 @@ import { paletteSombre } from '@/components/yoroi/livePalette';
 import { Stepper, Toggle, clock, dayLabel, shiftTime } from '@/components/yoroi/v2/accueil/sleepKit';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, JOURS_LETTRES } from '@/lib/i18n/tr';
 
 type Slot = { enabled: boolean; time: string; amount: number };
 type SlotKey = 'morning' | 'afternoon' | 'evening';
@@ -180,7 +180,7 @@ export default function Hydratation() {
     d.setDate(d.getDate() - (6 - i));
     const key = localISO(d);
     const h = key === localISO() ? { date: key, amount, goal } : history.find((x) => x.date === key);
-    return { key, letter: 'DLMMJVS'[d.getDay()], data: h };
+    return { key, letter: JOURS_LETTRES[(d.getDay() + 6) % 7], data: h };
   });
   const withData = week.map((w) => w.data).filter((d): d is HydrationDay => !!d && d.amount > 0);
   const success = withData.filter((d) => d.amount >= d.goal).length;

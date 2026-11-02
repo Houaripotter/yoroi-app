@@ -120,7 +120,7 @@ export default function ScientificSourcesScreen() {
           </View>
           <Card style={{ padding: 6 }}>
             {s.items.map((it, i) => (
-              <Press key={it.url} onPress={() => safeOpenURL(it.url)} accessibilityRole="link" accessibilityLabel={`${it.title}. ${it.description}. Ouvrir`}>
+              <Press key={it.url} onPress={() => safeOpenURL(it.url)} accessibilityRole="link" accessibilityLabel={`${it.title}. ${it.description}. ${traduire('Ouvrir')}`}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, minHeight: 64, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: P.line2 }}>
                   <XIcon name="book" size={20} color={s.color} />
                   <View style={{ flex: 1, gap: 2 }}>

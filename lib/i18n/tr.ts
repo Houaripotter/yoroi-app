@@ -148,6 +148,20 @@ export function traduire(fr: string | null | undefined, ...valeurs: unknown[]): 
 }
 
 /**
+ * Même mot français, deux sens selon l'écran (« Taille » : hauteur ou tour de taille).
+ * Cherche la clé « fr§sens » dans le dictionnaire, sinon fait comme traduire(fr). Le français ne change pas.
+ */
+export function traduireSens(sens: string, fr: string, ...valeurs: unknown[]): string {
+  const t = LANG !== 'fr' ? load()[`${fr}§${sens}`] : undefined;
+  if (t === undefined) return traduire(fr, ...valeurs);
+  if (valeurs.length === 0) return t;
+  return t.replace(/\{(\d+)\}/g, (tout, i) => {
+    const k = Number(i);
+    return k < valeurs.length ? String(valeurs[k]) : tout;
+  });
+}
+
+/**
  * Pluriel. plurielFr garde exactement la règle d'origine du code pour le français.
  * Les autres langues suivent leur règle : singulier pour 1 seulement.
  */
@@ -162,3 +176,17 @@ export const LOCALE: string = ({ fr: 'fr-FR', en: 'en-US', de: 'de-DE', nl: 'nl-
 
 /** Séparateur décimal de la langue : virgule en français, allemand, néerlandais ; point en anglais. */
 export const DECIMAL: string = LANG === 'en' ? '.' : ',';
+
+/**
+ * Lettres des jours, lundi en premier, dans la langue de l'app (« L M M J V S D » en français, inchangé).
+ * Même table que lib/v2/sante/anneauxJours.ts, sans rien importer.
+ */
+export const JOURS_LETTRES: string[] = ({
+  fr: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
+  en: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+  de: ['M', 'D', 'M', 'D', 'F', 'S', 'S'],
+  nl: ['M', 'D', 'W', 'D', 'V', 'Z', 'Z'],
+  es: ['L', 'M', 'X', 'J', 'V', 'S', 'D'],
+  pt: ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'],
+  it: ['L', 'M', 'M', 'G', 'V', 'S', 'D'],
+} as Record<Lang, string[]>)[LANG];

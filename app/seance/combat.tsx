@@ -212,7 +212,7 @@ export default function SeanceCombat() {
         if (existing) {
           appAlert(
             traduire('Une séance est en cours'),
-            traduire("{0}, commencée {1}. Tu la reprends ?", draftTitle(existing), draftAgo(existing)),
+            traduire("{0}, commencée {1}. Tu la reprends ?", traduire(draftTitle(existing)), draftAgo(existing)),
             [
               {
                 text: traduire('Nouvelle séance'),
@@ -513,12 +513,12 @@ export default function SeanceCombat() {
         <Pressable onPress={draft.form ? abandon : () => router.back()} accessibilityRole="button" accessibilityLabel={draft.form ? traduire('Fermer sans enregistrer') : traduire('Réduire, la séance reste en cours')} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.fillSubtle }}>
           <Icon name={draft.form ? 'close' : 'down'} size={draft.form ? 18 : 20} strokeWidth={2.6} />
         </Pressable>
-        <Pressable onPress={() => setSportOpen(true)} accessibilityRole="button" accessibilityLabel={traduire("{0}, changer de sport", sportName)} style={{ flex: 1, minHeight: 44, justifyContent: 'center' }}>
+        <Pressable onPress={() => setSportOpen(true)} accessibilityRole="button" accessibilityLabel={traduire("{0}, changer de sport", traduire(sportName))} style={{ flex: 1, minHeight: 44, justifyContent: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Ink size={14} weight="bold" color={c.textSecondary} numberOfLines={1} style={{ flexShrink: 1 }}>{draft.label || sportName}, {draft.form && draft.details ? (draft.editId ? traduire('modifier') : dayLabel(draft.details.date).toLocaleLowerCase(LOCALE)) : fmtClock(elapsedSec)}</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary} numberOfLines={1} style={{ flexShrink: 1 }}>{traduire(draft.label || sportName)}, {draft.form && draft.details ? (draft.editId ? traduire('modifier') : dayLabel(draft.details.date).toLocaleLowerCase(LOCALE)) : fmtClock(elapsedSec)}</Ink>
             <Icon name="down" size={14} color={c.textSecondary} />
           </View>
-          <Ink size={22} weight="black" tight>{libelleTypeSeance(draft, aliasTypeSeance)}</Ink>
+          <Ink size={22} weight="black" tight>{traduire(libelleTypeSeance(draft, aliasTypeSeance))}</Ink>
         </Pressable>
         <BoutonPrincipal onPress={() => setFinishOpen(true)} hauteur={44} rayon={14} compact tailleTexte={15} lignes={1} label={draft.form ? traduire('Enregistrer') : traduire('Terminer')} />
       </View>
@@ -844,7 +844,7 @@ export default function SeanceCombat() {
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <MiniStat label={traduire("durée")} value={fmtMinutes(draft.form && draft.details ? draft.details.duration : elapsedSec / 60)} />
           <MiniStat label={draft.rounds.length > 1 ? traduire('rounds') : traduire('round')} value={String(draft.rounds.length)} />
-          <MiniStat label="type" value={libelleTypeSeance(draft, aliasTypeSeance)} />
+          <MiniStat label="type" value={traduire(libelleTypeSeance(draft, aliasTypeSeance))} />
         </View>
         <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Comment c’était ?")}</Ink>
         <ChoiceRow options={RPE} value={draft.rpe ?? null} onChange={(v) => update((d) => ({ ...d, rpe: v }))} columns={4} niveau={niveauRpe} />

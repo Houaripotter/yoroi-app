@@ -70,7 +70,7 @@ export default function MatchupMatrixScreen() {
             { k: 'beasts', l: 'Bêtes noires' },
             { k: 'friends', l: 'Favorables' },
           ] as const).map((f) => (
-            <Chip key={f.k} label={f.l} on={filter === f.k} onPress={() => setFilter(f.k)} />
+            <Chip key={f.k} label={traduire(f.l)} on={filter === f.k} onPress={() => setFilter(f.k)} />
           ))}
         </ChipScroll>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>

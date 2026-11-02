@@ -137,10 +137,10 @@ export function ClubFormContent({ editingClub, onDone, onCancel }: { editingClub
         </View>
 
         <View style={{ gap: 8 }}>
-          <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Sport : {0}", getSportName(sport))}</Ink>
+          <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Sport : {0}", traduire(getSportName(sport)))}</Ink>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {Array.from(new Set([sport, ...QUICK])).map((id) => (
-              <Chip key={id} label={getSportName(id)} on={id === sport} onPress={() => setSport(id)} />
+              <Chip key={id} label={traduire(getSportName(id))} on={id === sport} onPress={() => setSport(id)} />
             ))}
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, minHeight: 48, borderRadius: 16, backgroundColor: P.white, borderWidth: 1, borderColor: c.border }}>

@@ -43,7 +43,7 @@ export function libellesImport(platform: string): LibellesImport {
   return {
     nom,
     titre: traduire('Importe tes données'),
-    texte: traduire("Récupère ton poids, tes pas, ton sommeil et tes entraînements depuis {0}.", nom),
+    texte: traduire("Récupère ton poids, tes pas, ton sommeil et tes entraînements depuis {0}.", traduire(nom)),
     bouton: traduire('Importer'),
     plusTard: traduire('Plus tard'),
     enCours: 'Import en cours…',

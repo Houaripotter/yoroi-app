@@ -69,7 +69,7 @@ export function VitrineBoutique({ vignettes, total, onOuvrir }: { vignettes: Vig
       decelerationRate="fast"
     >
       {vignettes.map((v) => (
-        <Carte key={v.key} label={traduire("{0}, {1}. Ouvrir la boutique", v.nom, v.badge.texte)} onPress={onOuvrir}>
+        <Carte key={v.key} label={traduire("{0}, {1}. Ouvrir la boutique", traduire(v.nom), traduire(v.badge.texte))} onPress={onOuvrir}>
           <View style={cadre}>
             <View style={{ height: 116, borderRadius: 15, overflow: 'hidden', backgroundColor: v.fond ?? c.fillSoft, alignItems: 'center', justifyContent: 'flex-end' }}>
               {v.genre === 'scene' ? (

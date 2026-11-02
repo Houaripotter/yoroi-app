@@ -365,7 +365,7 @@ export default function TaScene() {
               onPress={() => changerFiltre(f.key)}
               accessibilityRole="tab"
               accessibilityState={{ selected: on }}
-              accessibilityLabel={traduire("{0}, {1} scènes", f.label, f.nombre)}
+              accessibilityLabel={traduire("{0}, {1} scènes", traduire(f.label), f.nombre)}
               style={({ pressed }) => ({ height: 36, paddingHorizontal: 14, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: on ? P.primary : pressed ? P.line2 : P.white, ...(on ? {} : OMBRE_PILULE) })}
             >
               <Ink size={13} weight="black" color={on ? P.onPrimary : P.ink2}>
@@ -648,14 +648,14 @@ function Vignette({
 }) {
   const s = ficheScene(id);
   const video = joue ? sceneAnimee(id)?.video ?? null : null;
-  const reperes = [s.animee ? 'animée' : '', s.son ? 'avec son' : '', locked ? (s.annuel ? 'avec l’abonnement annuel' : 'avec Premium') : '', s.nouveau ? 'nouvelle' : '', tienne ? 'ta scène' : '']
+  const reperes = [s.animee ? traduire('animée') : '', s.son ? traduire('avec son') : '', locked ? (s.annuel ? traduire('avec l’abonnement annuel') : traduire('avec Premium')) : '', s.nouveau ? traduire('nouvelle') : '', tienne ? traduire('ta scène') : '']
     .filter(Boolean)
     .join(', ');
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={traduire("Scène {0}{1}", s.nom, reperes ? `, ${reperes}` : '')}
+      accessibilityLabel={traduire("Scène {0}{1}", traduire(s.nom), reperes ? `, ${reperes}` : '')}
       accessibilityState={{ selected: tienne }}
       style={({ pressed }) => ({ width: largeur, opacity: pressed ? 0.9 : 1 })}
     >

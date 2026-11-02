@@ -79,7 +79,7 @@ export default function HealthProfessionalsScreen() {
           {traduire("Exemples génériques, sans lien avec de vrais professionnels.")}</Ink>
       </DetailScreen>
 
-      <BottomSheet visible={!!selected} onClose={() => setSelected(null)} title={selected?.name ?? ''} subtitle={traduire(selected?.title)}>
+      <BottomSheet visible={!!selected} onClose={() => setSelected(null)} title={traduire(selected?.name ?? '')} subtitle={traduire(selected?.title)}>
         {selected ? (
           <>
             {selected.imageUrl ? (
@@ -93,7 +93,7 @@ export default function HealthProfessionalsScreen() {
                 <Ink size={13} weight="extraBold" color={P.ink2}>
                   {traduire("À propos")}</Ink>
                 <Ink size={15} weight="medium" style={{ lineHeight: 22 }}>
-                  {selected.bio}
+                  {traduire(selected.bio)}
                 </Ink>
               </View>
             ) : null}
@@ -105,7 +105,7 @@ export default function HealthProfessionalsScreen() {
                   {selected.specialties.map((s) => (
                     <View key={s} style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
                       <Ink size={13} weight="bold">
-                        {s}
+                        {traduire(s)}
                       </Ink>
                     </View>
                   ))}
@@ -124,7 +124,7 @@ export default function HealthProfessionalsScreen() {
 
 function ProCard({ pro, onPress }: { pro: Pro; onPress: () => void }) {
   return (
-    <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={[pro.name, pro.title, pro.location].filter(Boolean).join(', ')}>
+    <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={[traduire(pro.name), traduire(pro.title), pro.location].filter(Boolean).join(', ')}>
       <Card style={{ flexDirection: 'row', gap: 14, alignItems: 'center', padding: 12 }}>
         <View style={{ width: 84, height: 96, borderRadius: 20, overflow: 'hidden', backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center' }}>
           {pro.imageUrl ? <Image source={pro.imageUrl} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors /> : <IconDot name="user" tone="ink" size={48} />}
@@ -137,7 +137,7 @@ function ProCard({ pro, onPress }: { pro: Pro; onPress: () => void }) {
             {pro.featured ? <Badge label={traduire("Recommandé")} tone="red" /> : null}
           </View>
           <Ink size={13} weight="bold" color={P.ink2} numberOfLines={3}>
-            {pro.title.replace(/\s&\s/g, ' et ')}
+            {traduire(pro.title.replace(/\s&\s/g, ' et '))}
           </Ink>
           {pro.location ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -151,7 +151,7 @@ function ProCard({ pro, onPress }: { pro: Pro; onPress: () => void }) {
             {pro.specialties.slice(0, 3).map((s) => (
               <View key={s} style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: P.paper }}>
                 <Ink size={11} weight="bold" color={P.ink2}>
-                  {s}
+                  {traduire(s)}
                 </Ink>
               </View>
             ))}

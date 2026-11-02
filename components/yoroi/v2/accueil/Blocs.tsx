@@ -22,10 +22,10 @@ import { BrushLine, BrushRing, Card, Hanko, Icon, P, Press, tap, useAccent } fro
 import { Torii } from './Ornements';
 import { devNow } from '@/lib/v2/creator/devClock';
 import { paletteSombre } from '@/components/yoroi/livePalette';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, JOURS_LETTRES } from '@/lib/i18n/tr';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
-const DAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const DAYS = JOURS_LETTRES;
 
 function Head({ title, right, color = P.ink }: { title: string; right?: string; color?: string }) {
   return (
