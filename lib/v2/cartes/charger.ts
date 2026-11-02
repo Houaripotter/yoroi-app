@@ -2,7 +2,7 @@
  * Cartes a partager : lecture des vraies donnees pour un moment (seance, pesee, semaine).
  * Rien n'est estime : un champ absent reste a 0 ou null et son bloc disparait de la carte.
  */
-import { getProfile, getTrainingById, getTrainings, getWeights } from '@/lib/database';
+import { getClubs, getProfile, getTrainingById, getTrainings, getWeights } from '@/lib/database';
 import type { Training, Weight } from '@/lib/database';
 import { getSportCategory, getSportName } from '@/lib/sports';
 import { getArmureState } from '@/lib/v2/armure';
@@ -21,6 +21,9 @@ import { bilanAnnee, bilanMois, cleExploit, exploitsPesee, exploitsSeance } from
 import type { CarteData, Exploit, RecordCarte } from './types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
+import { lirePratiques } from '@/lib/v2/profil/pratiques';
+import { chargerZone2 } from '@/lib/v2/seances/zone2';
+import { ceintureJjbDe, enZone2De, gpsSiAppareil, kilosDe, musclesDeSeance, serieDe } from './donneesEnPlus';
 
 const JOURS = [traduire('Dimanche'), traduire('Lundi'), traduire('Mardi'), traduire('Mercredi'), traduire('Jeudi'), traduire('Vendredi'), traduire('Samedi')];
 const MOIS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
@@ -50,6 +53,34 @@ export async function serieSemaines(): Promise<number> {
   } catch {
     return 0;
   }
+}
+
+/**
+ * 2 novembre 2026 : ce que les cartes lisent dans ton profil, chaque champ seulement s'il existe :
+ * ta ceinture de JJB et ses degres (tes pratiques), ta serie de jours et tes plus longues series (l'armure).
+ */
+export async function profilCarte(): Promise<Pick<CarteData, 'ceintureJjb' | 'serie'>> {
+  const out: Pick<CarteData, 'ceintureJjb' | 'serie'> = {};
+  try {
+    const clubs = await getClubs().catch(() => []);
+    const c = ceintureJjbDe((await lirePratiques(clubs ?? [])).pratiques);
+    if (c) out.ceintureJjb = c;
+  } catch {
+    // pratiques illisibles : pas de ceinture sur la carte
+  }
+  try {
+    const s = serieDe(await getArmureState());
+    if (s) out.serie = s;
+  } catch {
+    // armure indisponible : pas de serie
+  }
+  return out;
+}
+
+/** La carte avec les champs du profil en plus (ceinture de JJB, serie) ; null reste null */
+export async function avecProfil(c: CarteData | null): Promise<CarteData | null> {
+  if (!c) return c;
+  return { ...c, ...(await profilCarte()) };
 }
 
 function zonesDe(t: Training): number[] | null {
@@ -114,14 +145,25 @@ export async function chargerSeance(id: number): Promise<CarteData | null> {
     histo = [];
   }
   const prec = seancePrecedente(histo, t);
+  const seance = donneesDeSeance(t, records);
+  // 2 novembre 2026 : FC du cardio mesuree mais zone 2 pas gardee avec lui (anciennes seances) : ta zone 2 d'aujourd'hui
+  if (seance.fcCardio !== undefined && seance.enZone2 === undefined) {
+    try {
+      const z = enZone2De(seance.fcCardio, await chargerZone2());
+      if (z !== undefined) seance.enZone2 = z;
+    } catch {
+      // zone 2 inconnue : rien sur la carte
+    }
+  }
   return {
+    ...(await profilCarte()),
     moment: 'seance',
     titre: nomSport(t.sport) || traduire('Ma séance'),
     sousTitre: dateLongue(t.date),
     sport: first,
     famille: familleDe(getSportCategory(first), first),
     club: clubDe(t),
-    seance: donneesDeSeance(t, records),
+    seance,
     serieSemaines: await serieSemaines(),
     precedente: prec ? { date: prec.date.slice(0, 10), seance: donneesDeSeance(prec, []) } : null,
     grille: histo.length ? grilleSemaines(histo.map((x) => x.date), t.date) : null,
@@ -144,13 +186,24 @@ function donneesDeSeance(t: Training, records: RecordCarte[]): NonNullable<Carte
     distanceKm: t.distance && t.distance > 0 ? t.distance : cardio.distanceKm ?? 0,
     ...(cardio.penteMoy !== undefined ? { penteCardio: cardio.penteMoy } : {}),
     ...(cardio.fcMoy !== undefined ? { fcCardio: cardio.fcMoy } : {}),
+    // 2 novembre 2026 : vitesse du tapis et zone 2 (avec la zone gardee avec le cardio), muscles travailles
+    ...(cardio.vitesseMoy !== undefined ? { vitesseCardio: cardio.vitesseMoy } : {}),
+    ...(() => {
+      const z = enZone2De(cardio.fcMoy, cardio.zone2);
+      return z !== undefined ? { enZone2: z } : {};
+    })(),
+    ...(() => {
+      const m = musclesDeSeance(t);
+      return m ? { muscles: m } : {};
+    })(),
     fcMoy: t.heart_rate ?? 0,
     fcMax: t.max_heart_rate ?? 0,
     calories: t.calories ?? 0,
     zones: zonesDe(t),
     records,
     // 31 octobre 2026 : trace GPS, splits, denivele, series, techniques, lus dans la seance (absents sinon)
-    ...visuelsDeSeance(t),
+    // 2 novembre 2026 : trace, splits et denivele seulement s'ils viennent d'une montre ou de Sante
+    ...gpsSiAppareil(visuelsDeSeance(t), t),
   };
 }
 
@@ -243,7 +296,7 @@ export async function chargerPesee(opts: { id?: number; date?: string } = {}): P
     for (let i = ctx.pesees.length - 1; i >= 0; i--) if (ctx.pesees[i].date.slice(0, 10) === d) { idx = i; break; }
   }
   if (idx < 0) return null;
-  return carteDePesee(ctx, idx, await serieSemaines());
+  return avecProfil(carteDePesee(ctx, idx, await serieSemaines()));
 }
 
 /** Donnees du bilan d'une semaine (lundi en AAAA-MM-JJ) */
@@ -259,6 +312,7 @@ export async function chargerSemaine(lundi: string, deja?: { trainings?: Trainin
   const parJour: NonNullable<CarteData['semaine']>['parJour'] = jours.map(() => ({ sports: [], club: null }));
   const sports = new Map<string, number>();
   let minutes = 0;
+  const kilos = kilosDe(list);
   for (const t of [...list].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))) {
     const dow = (dateDe(t.date).getDay() + 6) % 7;
     jours[dow] = true;
@@ -281,6 +335,7 @@ export async function chargerSemaine(lundi: string, deja?: { trainings?: Trainin
     objectif = 0;
   }
   return {
+    ...(deja ? {} : await profilCarte()),
     moment: 'semaine',
     titre: traduire('Ma semaine'),
     sousTitre: plageSemaine(lundi),
@@ -294,6 +349,8 @@ export async function chargerSemaine(lundi: string, deja?: { trainings?: Trainin
       poidsEcart,
       objectif,
       parJour,
+      // 2 novembre 2026 : kilos souleves de la semaine, absents sans charge
+      ...(kilos > 0 ? { kilos } : {}),
     },
     serieSemaines: deja?.serie ?? (await serieSemaines()),
     // 31 octobre 2026 (cartes v2, Serie en feu) : les 12 semaines qui finissent par celle-ci
@@ -382,7 +439,7 @@ export async function chargerExploit(src: string, ref: string, cle: string): Pro
   else if (src === 'annee') list = [await chargerBilanAnnee(ref)].filter((x): x is CarteData => !!x);
   // page de bilan : ref « corps:AAAA-MM-JJ » ou « seance:ID »
   else if (src === 'bilan') list = [await carteBilan(ref)].filter((x): x is CarteData => !!x);
-  return list.find((c) => c.cle === cle) ?? list[0] ?? null;
+  return avecProfil(list.find((c) => c.cle === cle) ?? list[0] ?? null);
 }
 
 export type ListeCartes = { seances: CarteData[]; pesees: CarteData[]; semaines: CarteData[]; exploits?: CarteData[] };
