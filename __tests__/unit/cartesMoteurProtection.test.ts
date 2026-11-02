@@ -45,7 +45,9 @@ const V10: Record<string, { story: Attendu; post: Attendu }> = {
   visage_bas: { story: { source: 'visage', compact: false, etape: 'photo_reduite' }, post: { source: 'visage', compact: false, etape: 'photo_reduite' } },
   plan_large: { story: { source: 'corps', compact: false }, post: { source: 'corps', compact: false } },
   gros_plan: { story: { source: 'visage', compact: true }, post: { source: 'visage', compact: false, etape: 'photo_reduite' } },
-  horizontale: { story: { source: 'visage', compact: false, etape: 'photo_reduite' }, post: { source: 'visage', compact: false, etape: 'photo_reduite' } },
+  // 2 novembre 2026 (studio unique) : la bande plus basse laisse 84 px de photo en plus en story ; la photo horizontale
+  // reste alors en plein cadre, le bloc compact sous les visages (avant : photo reduite sur fond floute)
+  horizontale: { story: { source: 'visage', compact: true }, post: { source: 'visage', compact: false, etape: 'photo_reduite' } },
   sans_visage: { story: { source: 'zone_sure', compact: false }, post: { source: 'zone_sure', compact: true } },
   jjb_full: { story: { source: 'visage', compact: false }, post: { source: 'visage', compact: false } },
   course_rue: { story: { source: 'tete_de_dos', compact: false, etape: 'photo_reduite' }, post: { source: 'tete_de_dos', compact: true, etape: 'photo_reduite_remontee' } },
