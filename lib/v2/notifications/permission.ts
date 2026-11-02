@@ -21,7 +21,7 @@ import { logger } from '@/lib/security/logger';
 import { ouvrirFenetreRappels } from '@/components/yoroi/v2/notifications/FenetreRappels';
 import { noter } from './mesure';
 
-export type EcranPermission = 'pesee' | 'seance' | 'timer' | 'sparring' | 'reglages' | 'essai' | 'onboarding' | 'nouveautes';
+export type EcranPermission = 'pesee' | 'seance' | 'timer' | 'sparring' | 'reglages' | 'essai' | 'onboarding' | 'nouveautes' | 'coffre';
 
 // Point d'accroche pour la mesure : fonction vide, branché sur utils/telemetry.ts au chantier mesure
 export { noter } from './mesure';
@@ -156,7 +156,7 @@ export async function proposerNotifications(
 }
 
 /** Rappels déjà réglés dans l'app : on les (re)programme une fois la permission accordée */
-function reprogrammerRappels(): void {
+export function reprogrammerRappels(): void {
   import('@/lib/v2/pesee/rappelHabitude')
     .then(({ planifierRappelPesee }) => planifierRappelPesee())
     .catch((err) => logger.info('[Permission notif] rappel de pesée non reprogrammé', err));
