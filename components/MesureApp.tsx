@@ -9,6 +9,7 @@ import { useSegments } from 'expo-router';
 import * as Linking from 'expo-linking';
 import * as Notifications from 'expo-notifications';
 import { usePremium } from '@/context/PremiumContext';
+import { appVersion } from '@/components/yoroi/v2/espace/reglages/version';
 import {
   initTelemetry,
   nomEcran,
@@ -78,8 +79,15 @@ export function MesureApp() {
     (async () => {
       await initTelemetry();
       if (!vivant) return;
-      await trackFirstOpen();
+      await trackFirstOpen(appVersion());
       trackBoot(await origineDuLancement());
+      // 2 novembre 2026 : notifications autorisees ou non (reglage du telephone, relu a chaque lancement)
+      try {
+        const p = await Notifications.getPermissionsAsync();
+        setProprietes({ notifs_autorisees: p.status === 'granted' ? 'oui' : 'non' });
+      } catch {
+        // module absent (web)
+      }
       await trackReturn();
       try {
         const { getArmureState } = await import('@/lib/v2/armure');
