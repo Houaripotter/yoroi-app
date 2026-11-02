@@ -23,9 +23,14 @@ struct Contexte: Codable, Equatable {
   var eau: EauCtx
   var chronos: [ChronoPreset]
   var combat: CombatCtx?
+  /// 28 octobre 2026 (champs facultatifs, contrat toujours v1) : la seance du jour du Coach, ton rang du Dojo
+  /// et ta seance de musculation en cours. Absents : un iPhone d'avant, rien a montrer.
+  var coach: CoachCtx?
+  var dojo: DojoCtx?
+  var seance: SeanceCtx?
 
   enum CodingKeys: String, CodingKey {
-    case v, genere, profil, poids, semaine, eau, chronos, combat
+    case v, genere, profil, poids, semaine, eau, chronos, combat, coach, dojo, seance
   }
 
   /// Contexte vide, avant le premier envoi de l'iPhone.
@@ -38,6 +43,9 @@ struct Contexte: Codable, Equatable {
     eau = EauCtx.vide
     chronos = []
     combat = nil
+    coach = nil
+    dojo = nil
+    seance = nil
   }
 
   init(from decoder: Decoder) throws {
@@ -50,6 +58,9 @@ struct Contexte: Codable, Equatable {
     eau = c.lire(.eau, EauCtx.vide)
     chronos = c.lire(.chronos, [ChronoPreset]())
     combat = c.lireOpt(.combat)
+    coach = c.lireOpt(.coach)
+    dojo = c.lireOpt(.dojo)
+    seance = c.lireOpt(.seance)
   }
 
   /// Date de generation lue depuis le champ ISO (nil si illisible).
@@ -129,14 +140,16 @@ struct PoidsCtx: Codable, Equatable {
   var cap: Double?
   var serie30: [PointPoids]
   var ligne30: [PointPoids]
+  /// 28 octobre 2026 : le prochain palier du chemin vers ton cap (25, 50, 75 et 100 %), calcule par l'iPhone
+  var palier: PalierCtx?
 
   static let vide = PoidsCtx(dernier: nil, rythmeAujourdhui: nil, ecart: nil, statut: "aucun", phrase: nil, arrivee: nil, cap: nil, serie30: [], ligne30: [])
 
   enum CodingKeys: String, CodingKey {
-    case dernier, rythmeAujourdhui, ecart, statut, phrase, arrivee, cap, serie30, ligne30
+    case dernier, rythmeAujourdhui, ecart, statut, phrase, arrivee, cap, serie30, ligne30, palier
   }
 
-  init(dernier: DernierPoids?, rythmeAujourdhui: Double?, ecart: Double?, statut: String, phrase: String?, arrivee: PeriodeArrivee?, cap: Double?, serie30: [PointPoids], ligne30: [PointPoids]) {
+  init(dernier: DernierPoids?, rythmeAujourdhui: Double?, ecart: Double?, statut: String, phrase: String?, arrivee: PeriodeArrivee?, cap: Double?, serie30: [PointPoids], ligne30: [PointPoids], palier: PalierCtx? = nil) {
     self.dernier = dernier
     self.rythmeAujourdhui = rythmeAujourdhui
     self.ecart = ecart
@@ -146,6 +159,7 @@ struct PoidsCtx: Codable, Equatable {
     self.cap = cap
     self.serie30 = serie30
     self.ligne30 = ligne30
+    self.palier = palier
   }
 
   init(from decoder: Decoder) throws {
@@ -159,6 +173,7 @@ struct PoidsCtx: Codable, Equatable {
     cap = c.lireOpt(.cap)
     serie30 = c.lire(.serie30, [PointPoids]())
     ligne30 = c.lire(.ligne30, [PointPoids]())
+    palier = c.lireOpt(.palier)
   }
 }
 
@@ -287,5 +302,186 @@ struct CombatCtx: Codable, Equatable {
     let a = cal.startOfDay(for: maintenant)
     let b = cal.startOfDay(for: jour)
     return cal.dateComponents([.day], from: a, to: b).day
+  }
+}
+
+// MARK: - Direction B (28 octobre 2026) : palier, Coach, Dojo, seance guidee
+
+struct PalierCtx: Codable, Equatable {
+  /// Poids du palier, en kg.
+  var kg: Double
+  /// Ce qu'il reste jusqu'a lui, en kg.
+  var reste: Double
+  /// Ce palier est ton cap.
+  var dernier: Bool
+  /// Ta part du chemin deja faite (0 a 1).
+  var part: Double = 0
+
+  enum CodingKeys: String, CodingKey { case kg, reste, dernier, part }
+
+  init(kg: Double, reste: Double, dernier: Bool, part: Double = 0) {
+    self.kg = kg
+    self.reste = reste
+    self.dernier = dernier
+    self.part = part
+  }
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    kg = c.lire(.kg, 0)
+    reste = max(0, c.lire(.reste, 0))
+    dernier = c.lire(.dernier, false)
+    part = min(1, max(0, c.lire(.part, 0)))
+  }
+}
+
+/// La seance du jour de ton Coach. Les textes arrivent traduits par l'iPhone.
+struct CoachCtx: Codable, Equatable {
+  var titre: String
+  var programme: String
+  var exos: Int
+  var minutes: Int
+  var muscles: [String]
+  /// Vrai si c'est la seance a faire aujourd'hui (sinon jour de repos ou seance deja faite).
+  var aujourdhui: Bool
+  /// debut, aujourdhui, fait, repos, rattrape
+  var etat: String
+  var ensuite: String
+  /// muscu, cardio ou rounds
+  var genre: String
+
+  enum CodingKeys: String, CodingKey { case titre, programme, exos, minutes, muscles, aujourdhui, etat, ensuite, genre }
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    titre = c.lire(.titre, "")
+    programme = c.lire(.programme, "")
+    let e: Double = c.lire(.exos, 0)
+    exos = max(0, Int(e.rounded()))
+    let m: Double = c.lire(.minutes, 0)
+    minutes = max(0, Int(m.rounded()))
+    muscles = c.lire(.muscles, [String]())
+    aujourdhui = c.lire(.aujourdhui, false)
+    etat = c.lire(.etat, "")
+    ensuite = c.lire(.ensuite, "")
+    genre = c.lire(.genre, "muscu")
+  }
+
+  /// "6 exos, 45 min", "45 min" pour une seance sans exercice
+  var resume: String {
+    if exos > 0 && minutes > 0 { return String(format: NSLocalizedString("%@ exos, %@ min", comment: ""), "\(exos)", "\(minutes)") }
+    if exos > 0 { return String(format: NSLocalizedString("%@ exos", comment: ""), "\(exos)") }
+    return minutes > 0 ? "\(minutes) min" : programme
+  }
+}
+
+/// Ton rang du Dojo et ton XP.
+struct DojoCtx: Codable, Equatable {
+  var rang: String
+  var rangIndex: Int
+  var rangs: Int
+  var xp: Int
+  var suivant: String?
+  var xpSuivant: Int?
+  /// 0 a 1 vers le palier suivant
+  var part: Double
+  /// id du personnage choisi, nil « Sans personnage »
+  var personnage: String?
+
+  enum CodingKeys: String, CodingKey { case rang, rangIndex, rangs, xp, suivant, xpSuivant, part, personnage }
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    rang = c.lire(.rang, "")
+    let i: Double = c.lire(.rangIndex, 0)
+    rangIndex = max(0, Int(i.rounded()))
+    let n: Double = c.lire(.rangs, 5)
+    rangs = max(1, Int(n.rounded()))
+    let x: Double = c.lire(.xp, 0)
+    xp = max(0, Int(x.rounded()))
+    suivant = c.lireOpt(.suivant)
+    if let s: Double = c.lireOpt(.xpSuivant) { xpSuivant = Int(s.rounded()) } else { xpSuivant = nil }
+    part = min(1, max(0, c.lire(.part, 0)))
+    personnage = c.lireOpt(.personnage)
+  }
+}
+
+/// Un exercice de la seance en cours.
+struct ExoSeanceCtx: Codable, Equatable, Hashable {
+  var id: String
+  var nom: String
+  var faites: Int
+  var total: Int
+  /// repos apres une serie, en secondes
+  var repos: Int
+  /// charge de la prochaine serie (0 : poids du corps ou inconnue)
+  var kg: Double
+  var reps: Int
+
+  enum CodingKeys: String, CodingKey { case id, nom, faites, total, repos, kg, reps }
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    id = c.lire(.id, "")
+    nom = c.lire(.nom, "")
+    let f: Double = c.lire(.faites, 0)
+    faites = max(0, Int(f.rounded()))
+    let t: Double = c.lire(.total, 0)
+    total = max(0, Int(t.rounded()))
+    let r: Double = c.lire(.repos, 90)
+    repos = max(15, Int(r.rounded()))
+    kg = max(0, c.lire(.kg, 0))
+    let n: Double = c.lire(.reps, 0)
+    reps = max(0, Int(n.rounded()))
+  }
+
+  var fini: Bool { faites >= total }
+}
+
+/// Ta seance de musculation en cours sur l'iPhone, guidee sur la montre.
+struct SeanceCtx: Codable, Equatable {
+  var titre: String
+  var debutMs: Double
+  /// fin du repos en cours, en ms depuis 1970 (nil pendant l'effort)
+  var finReposMs: Double?
+  var reposTotalS: Int
+  var cur: Int
+  var exos: [ExoSeanceCtx]
+
+  enum CodingKeys: String, CodingKey { case titre, debutMs, finReposMs, reposTotalS, cur, exos }
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    titre = c.lire(.titre, "")
+    debutMs = c.lire(.debutMs, 0)
+    finReposMs = c.lireOpt(.finReposMs)
+    let r: Double = c.lire(.reposTotalS, 0)
+    reposTotalS = max(0, Int(r.rounded()))
+    let i: Double = c.lire(.cur, 0)
+    cur = max(0, Int(i.rounded()))
+    exos = c.lire(.exos, [ExoSeanceCtx]())
+  }
+
+  var debut: Date { Date(timeIntervalSince1970: debutMs / 1000) }
+
+  var finRepos: Date? { finReposMs.map { Date(timeIntervalSince1970: $0 / 1000) } }
+
+  /// L'exercice en cours, ou nil (plan vide).
+  var exoCourant: ExoSeanceCtx? {
+    guard !exos.isEmpty else { return nil }
+    return exos[min(max(0, cur), exos.count - 1)]
+  }
+
+  /// Toutes les series sont faites.
+  var bouclee: Bool { !exos.isEmpty && exos.allSatisfy { $0.fini } }
+
+  /// Prochain exercice avec une serie a faire apres l'index i (puis depuis le debut), comme l'ile de l'iPhone.
+  func prochain(apres i: Int) -> Int? {
+    guard !exos.isEmpty else { return nil }
+    for k in 1...exos.count {
+      let j = (i + k) % exos.count
+      if !exos[j].fini { return j }
+    }
+    return nil
   }
 }
