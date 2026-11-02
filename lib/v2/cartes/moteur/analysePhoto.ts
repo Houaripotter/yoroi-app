@@ -17,15 +17,15 @@ import type { ReponseNative } from '@/modules/yoroi-photo';
 import type { PhotoMesuree } from './protection';
 import { boiteCorps, critereAplus, visagesFiables } from './critereAplus';
 import type { MasqueGris, NiveauCarte } from './critereAplus';
+import { MODULE_PHOTO_ACTIF } from './reglagesPhoto';
+import { lireMoteur, moteurCourant } from '../store';
+import { effacerCopieCarte } from '../tmp';
 
 /** A+ est desactive : la composition ne peut pas etre affichee (decision a part, apres le banc) */
 export const APLUS_ACTIF = false as const;
 
-/**
- * Interrupteur du module photo. Faux : analyserPhoto rend toujours la reponse vide, sans appeler le natif,
- * et la carte retombe sur la zone sure et ton recadrage au doigt, comme avant la phase native. Retour arriere sans build natif.
- */
-export const MODULE_PHOTO_ACTIF: boolean = true;
+/** Interrupteur du module photo, constante du code JS : voir reglagesPhoto.ts */
+export { MODULE_PHOTO_ACTIF };
 
 /** Une boite en part de la photo, de 0 a 1, origine en haut a gauche */
 export type BoitePart = { x: number; y: number; l: number; h: number };
@@ -112,13 +112,32 @@ export function depuisReponse(r: ReponseNative): AnalysePhoto {
   };
 }
 
+/** Le nouveau moteur est-il choisi ? Lu au moment de l'appel (AsyncStorage), « Ancien » en cas de doute */
+async function nouveauMoteurChoisi(): Promise<boolean> {
+  try {
+    return (await lireMoteur()) === 'nouveau';
+  } catch {
+    return false;
+  }
+}
+
 /**
- * Analyse une photo. Jamais d'erreur, jamais d'attente sans fin : la reponse vide de secours si le module manque ou echoue.
+ * Analyse la photo d'une carte. Jamais d'erreur, jamais d'attente sans fin : la reponse vide de secours si le module
+ * manque ou echoue.
+ *
+ * Seulement avec le moteur « Nouveau » : avec « Ancien », ni Vision ni ML Kit ne tournent, la reponse est vide.
+ * Si l'interrupteur passe sur « Ancien » pendant l'analyse, son resultat est ignore et son masque efface.
+ * Seul le Banc photo du Studio createur appelle le module directement (modules/yoroi-photo), a ta demande.
  */
 export async function analyserPhoto(uri: string | null | undefined): Promise<AnalysePhoto> {
   try {
     if (!uri || !MODULE_PHOTO_ACTIF) return { ...ANALYSE_VIDE, visages: [], raisons: [] };
+    if (!(await nouveauMoteurChoisi())) return { ...ANALYSE_VIDE, visages: [], raisons: [] };
     const r = await analyserNatif(uri);
+    if (!MODULE_PHOTO_ACTIF || moteurCourant() !== 'nouveau') {
+      void effacerCopieCarte(r.masque?.uri);
+      return { ...ANALYSE_VIDE, visages: [], raisons: [] };
+    }
     if (!r.moteur) return { ...ANALYSE_VIDE, visages: [], raisons: [] };
     return depuisReponse(r);
   } catch {
