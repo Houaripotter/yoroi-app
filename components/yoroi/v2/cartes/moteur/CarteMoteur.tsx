@@ -15,7 +15,8 @@ import Svg, { Circle, Defs, Ellipse, G, Line, LinearGradient, Mask, Path, Patter
 import { fontFamilies, policesCartes } from '@/components/yoroi/fonts';
 import { traduire } from '@/lib/i18n/tr';
 import { COULEUR_SPORT, OR } from '@/lib/v2/cartes/moteur/familles';
-import type { ContenuCarte, IconeId, JourCarte, Stat } from '@/lib/v2/cartes/moteur/familles';
+import type { ContenuCarte, IconeId, JourCarte, Palette, Stat } from '@/lib/v2/cartes/moteur/familles';
+import type { StyleMoteur } from '@/lib/v2/cartes/moteur/degrade';
 import { GRILLE, largeurTexte } from '@/lib/v2/cartes/moteur/grille';
 import type { Cotes, PoliceMesure } from '@/lib/v2/cartes/moteur/grille';
 import { arretsEnPart } from '@/lib/v2/cartes/moteur/degrade';
@@ -621,6 +622,21 @@ const PALETTE_A = {
   light: { fonce: [243, 241, 236] as [number, number, number], ink: ENCRE, unite: '#0A5BC4', panBg: '#FFFFFF', valInk: ENCRE, valUnit: '#0A5BC4', labInk: '#3D4352', sep: 'rgba(11,14,21,0.12)', pillBg: 'rgba(255,255,255,0.86)', pillInk: ENCRE, bandBg: '#FFFFFF', bandBord: 'rgba(11,14,21,0.08)', bandInk: ENCRE, panBord: undefined as string | undefined },
 };
 
+type PaletteA = Omit<(typeof PALETTE_A)['color'], 'bandBg' | 'panBord'> & { bandBg: string | [string, string]; panBord: string | undefined };
+
+/**
+ * 2 novembre 2026 (studio unique) : le style (Color, Light, Dark) de la carte avec ta photo, pour toutes les familles
+ * (sauf le record, toujours or). La musculation garde exactement PALETTE_A ; les autres familles y prennent leur couleur.
+ */
+export function paletteA(style: StyleMoteur, famille: ContenuCarte['famille'], pal: Palette): PaletteA {
+  if (famille === 'muscu') return PALETTE_A[style] as PaletteA;
+  const f = pal.fonce;
+  const clair = f.map((x) => Math.min(255, Math.round(x * 1.7 + 8))) as [number, number, number];
+  if (style === 'dark') return { ...PALETTE_A.dark, unite: pal.g[0], valUnit: pal.g[0] } as PaletteA;
+  if (style === 'light') return { ...PALETTE_A.light, unite: pal.deep, valUnit: pal.deep } as PaletteA;
+  return { ...PALETTE_A.color, fonce: f, valUnit: pal.deep, bandBg: [rgba(clair, 1), rgba(f, 1)] } as PaletteA;
+}
+
 export function CarteMoteur({ plan, largeur, photo, taillePhoto, duo, enveloppePhoto, refAutocollant }: PropsCarteMoteur) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   if (plan.type === 'autocollant' && plan.autocollant) return <AutocollantMoteur plan={plan} largeur={largeur} refAutocollant={refAutocollant} />;
@@ -630,8 +646,9 @@ export function CarteMoteur({ plan, largeur, photo, taillePhoto, duo, enveloppeP
   const story = plan.format === 'story';
   const gold = !!c.pal.gold;
   const fonce = c.pal.fonce;
-  const carteA = plan.type === 'photo' && c.famille === 'muscu';
-  const PA = PALETTE_A[plan.style];
+  // 2 novembre 2026 (studio unique) : le style s'applique a toutes les cartes avec ta photo, sauf le record (or)
+  const carteA = plan.type === 'photo' && !gold;
+  const PA = paletteA(plan.style, c.famille, c.pal);
   const fondUni = gold ? '#0B0906' : rgba(fonce, 1);
   const tFam = teintesFam(gold, c.pal.deep);
   const libC = gold ? '#E8C478' : BLANC;
@@ -850,9 +867,113 @@ function dessinDu(c: ContenuCarte, TX: number, uid: string): React.ReactNode {
       return <Courbe c={c} TX={TX} uid={uid} />;
     case 'barre':
       return <Barre />;
+    case 'balance':
+      return <Balance />;
+    case 'calendrier':
+      return <Calendrier c={c} TX={TX} />;
+    case 'jauge':
+      return <Jauge c={c} TX={TX} />;
+    case 'medaille':
+      return <Medaille c={c} />;
     default:
       return null;
   }
+}
+
+// ============================================
+// LES DESSINS DES FAMILLES AJOUTEES (2 novembre 2026, studio unique), viewBox 960 x 900, meme trait blanc
+// ============================================
+
+/** Pesee : une balance, sans aucun chiffre (le poids, s'il est montre, est dans le bloc, masquage compris) */
+function Balance() {
+  return (
+    <G>
+      <Ellipse cx={480} cy={830} rx={320} ry={22} fill="rgba(0,0,0,0.16)" />
+      <Rect x={170} y={190} width={620} height={620} rx={110} fill={FILL} stroke={BLANC} strokeWidth={10} />
+      <Rect x={250} y={270} width={460} height={460} rx={80} fill="none" stroke={L2} strokeWidth={4} />
+      <Path d="M 330 520 A 150 150 0 0 1 630 520" fill="none" stroke={BLANC} strokeWidth={16} strokeLinecap="round" />
+      {[0, 1, 2, 3, 4, 5, 6].map((i) => {
+        const a = Math.PI + (i * Math.PI) / 6;
+        return <Line key={i} x1={480 + 150 * Math.cos(a)} y1={520 + 150 * Math.sin(a)} x2={480 + 118 * Math.cos(a)} y2={520 + 118 * Math.sin(a)} stroke={BLANC} strokeWidth={i % 3 ? 5 : 9} strokeLinecap="round" />;
+      })}
+      <Line x1={480} y1={530} x2={548} y2={420} stroke={BLANC} strokeWidth={12} strokeLinecap="round" />
+      <Circle cx={480} cy={530} r={22} fill={BLANC} />
+      <Rect x={360} y={600} width={240} height={70} rx={24} fill={BLANC} opacity={0.9} />
+      <Rect x={240} y={800} width={110} height={26} rx={13} fill={BLANC} />
+      <Rect x={610} y={800} width={110} height={26} rx={13} fill={BLANC} />
+    </G>
+  );
+}
+
+/** Mois : un calendrier avec le nom du mois ; dessous, une pastille par semaine comptee, pleine si l'objectif est tenu */
+function Calendrier({ c, TX }: { c: ContenuCarte; TX: number }) {
+  const m = c.mois;
+  const n = Math.min(6, m?.comptees ?? 0);
+  const nom = maj(m?.nom ?? '');
+  const sNom = Math.min(92, (92 * 560) / Math.max(1, larg(nom, 92, 'anton')));
+  const pw = n ? Math.min(110, (560 - (n - 1) * 18) / n) : 0;
+  const x0 = 480 - (n * pw + (n - 1) * 18) / 2;
+  return (
+    <G>
+      <Ellipse cx={480} cy={840} rx={330} ry={22} fill="rgba(0,0,0,0.16)" />
+      <Rect x={140} y={150} width={680} height={670} rx={64} fill={FILL} stroke={BLANC} strokeWidth={10} />
+      <Path d="M 140 300 L 140 214 A 64 64 0 0 1 204 150 L 756 150 A 64 64 0 0 1 820 214 L 820 300 Z" fill={BLANC} />
+      <Rect x={270} y={104} width={36} height={92} rx={18} fill={BLANC} stroke={c.pal.deep} strokeWidth={8} />
+      <Rect x={654} y={104} width={36} height={92} rx={18} fill={BLANC} stroke={c.pal.deep} strokeWidth={8} />
+      <Tx x={480} y={base(252 - sNom * 0.55, sNom, 'anton', 1.1)} s={sNom} p="anton" c={c.pal.deep} ancre="middle">{nom}</Tx>
+      {n ? (
+        <G>
+          {Array.from({ length: n }, (_, i) => (
+            <Rect key={i} x={x0 + i * (pw + 18)} y={470} width={pw} height={pw} rx={pw / 2} fill={i < (m?.tenues ?? 0) ? BLANC : 'none'} stroke={BLANC} strokeWidth={6} strokeOpacity={i < (m?.tenues ?? 0) ? 1 : 0.55} />
+          ))}
+          <Tx x={480} y={720} s={tailleLegende(maj(traduire('{0} semaines sur {1} à l’objectif', m?.tenues ?? 0, m?.comptees ?? 0)), 34 * TX, 600)} c={BLANC} ls={3 / 34} ancre="middle" op={0.9}>{maj(traduire('{0} semaines sur {1} à l’objectif', m?.tenues ?? 0, m?.comptees ?? 0))}</Tx>
+        </G>
+      ) : (
+        <G>
+          {Array.from({ length: 28 }, (_, i) => <Rect key={i} x={210 + (i % 7) * 80} y={370 + Math.floor(i / 7) * 100} width={60} height={60} rx={16} fill="none" stroke={L2} strokeWidth={4} />)}
+        </G>
+      )}
+    </G>
+  );
+}
+
+/** La taille d'une legende pour qu'elle tienne dans la largeur w */
+const tailleLegende = (t: string, s: number, w: number) => Math.min(s, (s * w) / Math.max(1, larg(t, s, 'x800', 3 / 34)));
+
+/** Objectif : la jauge, fait sur total, et le repere du rythme a ce jour quand il est connu */
+function Jauge({ c, TX }: { c: ContenuCarte; TX: number }) {
+  const j = c.jauge;
+  const f = j && j.total > 0 ? Math.max(0, Math.min(1, j.fait / j.total)) : 0;
+  const r = 320, C = 2 * Math.PI * r;
+  const at = j?.attendu != null && j.total > 0 ? Math.max(0, Math.min(1, j.attendu / j.total)) : null;
+  const aA = at != null ? -Math.PI / 2 + at * 2 * Math.PI : 0;
+  // le pourcentage fait, calcule sur tes vrais chiffres (fait sur total)
+  const txt = j ? `${nombre0(f * 100)} %` : '';
+  return (
+    <G>
+      <Circle cx={480} cy={430} r={r} fill={FILL} stroke={L2} strokeWidth={56} />
+      {f > 0 ? <Circle cx={480} cy={430} r={r} fill="none" stroke={BLANC} strokeWidth={56} strokeLinecap="round" strokeDasharray={`${C * f} ${C}`} transform="rotate(-90 480 430)" /> : null}
+      {at != null ? <Line x1={480 + (r - 46) * Math.cos(aA)} y1={430 + (r - 46) * Math.sin(aA)} x2={480 + (r + 46) * Math.cos(aA)} y2={430 + (r + 46) * Math.sin(aA)} stroke={c.pal.deep} strokeWidth={10} strokeLinecap="round" /> : null}
+      <Ic nom="objectif" x={430} y={270} t={100} c={BLANC} trait={1.8} />
+      <Tx x={480} y={590} s={Math.min(190, (190 * 420) / Math.max(1, larg(txt, 190, 'anton')))} p="anton" c={BLANC} ancre="middle">{txt}</Tx>
+      {j?.legende ? <Tx x={480} y={880} s={Math.min(34 * TX, (34 * TX * 900) / Math.max(1, larg(maj(j.legende), 34 * TX, 'x800', 0.1)))} c={BLANC} ls={0.1} ancre="middle" op={0.9}>{maj(j.legende)}</Tx> : null}
+    </G>
+  );
+}
+const nombre0 = (n: number) => String(Math.round(n));
+
+/** Exploit et autres sports : une medaille, l'icone du moment au centre (le chiffre est dans le bloc) */
+function Medaille({ c }: { c: ContenuCarte }) {
+  return (
+    <G>
+      <Path d="M 330 40 L 450 40 L 520 300 L 400 330 Z" fill={L2} stroke={BLANC} strokeWidth={8} strokeLinejoin="round" />
+      <Path d="M 630 40 L 510 40 L 440 300 L 560 330 Z" fill={FILL} stroke={BLANC} strokeWidth={8} strokeLinejoin="round" />
+      <Ellipse cx={480} cy={860} rx={260} ry={20} fill="rgba(0,0,0,0.16)" />
+      <Circle cx={480} cy={540} r={300} fill={FILL} stroke={BLANC} strokeWidth={12} />
+      <Circle cx={480} cy={540} r={250} fill="none" stroke={L2} strokeWidth={5} strokeDasharray="4 14" strokeLinecap="round" />
+      <Ic nom={c.icMedaille ?? c.ic} x={480 - 130} y={540 - 130} t={260} c={BLANC} trait={1.6} />
+    </G>
+  );
 }
 
 // ============================================
