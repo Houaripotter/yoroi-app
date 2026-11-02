@@ -16,15 +16,17 @@ class YoroiPhotoModule : Module() {
         "detourage" to true,
         "plateforme" to "android",
         "moteur" to AnalyseMLKit.MOTEUR,
-        "versionModele" to AnalyseMLKit.VERSION_MODELE
+        "versionModele" to AnalyseMLKit.VERSION_MODELE,
+        "tailleDefaut" to AnalyseMLKit.TAILLE_DEFAUT
       )
     }
 
     // File d'attente des modules Expo (un fil a part, pas le fil de l'ecran)
-    AsyncFunction("analyserPhoto") { uri: String ->
+    // tailleMax : grand cote de la copie analysee, envoye par index.ts (1024 par defaut), borne par AnalyseMLKit.taille
+    AsyncFunction("analyserPhoto") { uri: String, tailleMax: Int? ->
       val contexte = appContext.reactContext ?: return@AsyncFunction AnalyseMLKit.vide("lecture: pas de contexte")
       val dossier = File(File(appContext.cacheDirectory, "cartes_tmp"), "masques")
-      AnalyseMLKit.analyser(contexte, uri, dossier)
+      AnalyseMLKit.analyser(contexte, uri, dossier, tailleMax)
     }
 
     OnDestroy {
