@@ -17,6 +17,7 @@ import { noterPartage } from '@/lib/v2/partage/mesure';
 import type { SourcePartage } from '@/lib/v2/partage/mesure';
 import type { FormatId, Moment, TypeExploit } from './types';
 import { traduire } from '@/lib/i18n/tr';
+import { effacerApresPartage, effacerExport, rangerDansCartesTmp } from './tmp';
 
 const PX: Record<FormatId, { w: number; h: number }> = {
   story: { w: 1080, h: 1920 },
@@ -47,7 +48,10 @@ export async function capturerHD(ref: RefObject<View | null>, format: FormatId):
   if (!ref.current) return null;
   const px = PX[format];
   const k = Platform.OS === 'ios' ? PixelRatio.get() : 1;
-  return captureRef(ref.current, { format: 'png', quality: 1, result: 'tmpfile', width: px.w / k, height: px.h / k });
+  const brut = await captureRef(ref.current, { format: 'png', quality: 1, result: 'tmpfile', width: px.w / k, height: px.h / k });
+  // 2 novembre 2026 (confidentialite) : l'image exportee passe par cacheDirectory/cartes_tmp/ quand le systeme
+  // la laisse dans le cache de l'app ; sinon (iPhone : tmp/ReactNative) elle est liberee par view-shot apres usage
+  return rangerDansCartesTmp(brut, 'export');
 }
 
 /**
@@ -58,8 +62,9 @@ export async function capturerHD(ref: RefObject<View | null>, format: FormatId):
 export async function partagerStory(ref: RefObject<View | null>, format: FormatId, moment: Moment, onErreur?: Erreur, type?: TypeExploit): Promise<boolean> {
   impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
   noterPartage(sourceDe(moment, type));
+  let uri: string | null = null;
   try {
-    const uri = await capturerHD(ref, format);
+    uri = await capturerHD(ref, format);
     if (!uri) {
       dire(onErreur, traduire('Un instant'), traduire('La carte n’est pas encore prête, réessaie dans une seconde.'));
       return false;
@@ -71,6 +76,9 @@ export async function partagerStory(ref: RefObject<View | null>, format: FormatI
     logger.error('[cartes] partage story', e);
     dire(onErreur, traduire('Oups'), traduire('Impossible de partager la carte.'));
     return false;
+  } finally {
+    // 2 novembre 2026 : effacee apres le partage, termine ou annule
+    effacerApresPartage(uri);
   }
 }
 
@@ -84,6 +92,7 @@ function dire(onErreur: Erreur, titre: string, texte: string) {
 
 export async function enregistrerCarte(ref: RefObject<View | null>, format: FormatId, onErreur?: Erreur): Promise<boolean> {
   impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+  let uri: string | null = null;
   try {
     const perm = await requestPermissionsAsync(true);
     const st = perm.status as string;
@@ -91,7 +100,7 @@ export async function enregistrerCarte(ref: RefObject<View | null>, format: Form
       dire(onErreur, traduire('Pellicule bloquée'), traduire('Autorise YOROI à ajouter des photos dans les réglages de ton téléphone, puis réessaie.'));
       return false;
     }
-    const uri = await capturerHD(ref, format);
+    uri = await capturerHD(ref, format);
     if (!uri) {
       dire(onErreur, traduire('Un instant'), traduire('La carte n’est pas encore prête, réessaie dans une seconde.'));
       return false;
@@ -103,6 +112,9 @@ export async function enregistrerCarte(ref: RefObject<View | null>, format: Form
     logger.error('[cartes] enregistrement', e);
     dire(onErreur, traduire('Oups'), traduire('Impossible d’enregistrer la carte dans ta pellicule.'));
     return false;
+  } finally {
+    // la pellicule a sa propre copie : l'image exportee est effacee tout de suite
+    void effacerExport(uri);
   }
 }
 
@@ -110,8 +122,9 @@ export async function enregistrerCarte(ref: RefObject<View | null>, format: Form
 export async function partagerCarte(ref: RefObject<View | null>, format: FormatId, moment: Moment, onErreur?: Erreur, type?: TypeExploit): Promise<boolean> {
   impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
   noterPartage(sourceDe(moment, type));
+  let uri: string | null = null;
   try {
-    const uri = await capturerHD(ref, format);
+    uri = await capturerHD(ref, format);
     if (!uri) {
       dire(onErreur, traduire('Un instant'), traduire('La carte n’est pas encore prête, réessaie dans une seconde.'));
       return false;
@@ -125,6 +138,9 @@ export async function partagerCarte(ref: RefObject<View | null>, format: FormatI
     logger.error('[cartes] partage', e);
     dire(onErreur, traduire('Oups'), traduire('Impossible de partager la carte.'));
     return false;
+  } finally {
+    // 2 novembre 2026 : effacee apres le partage, termine ou annule
+    effacerApresPartage(uri);
   }
 }
 
