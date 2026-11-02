@@ -1,16 +1,33 @@
 /**
  * Etat d'un atelier de partage : habillage, photo de fond, capture, partage et enregistrement.
  */
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { View } from 'react-native';
 import { pickCardPhoto, saveCard, shareCard } from './capture';
 import type { CardVariant } from '@/components/yoroi/v2/partage/cardKit';
 import type { SourcePartage } from './mesure';
+import { effacerCopieCarte } from '@/lib/v2/cartes/tmp';
 
 export function useStudio(opts?: { initialStyle?: CardVariant; initialPhoto?: string | null; square?: boolean; dialogTitle?: string; fallbackMessage?: string; source?: SourcePartage }) {
   const cardRef = useRef<View>(null);
   const [style, setStyleState] = useState<CardVariant>(opts?.initialStyle ?? (opts?.initialPhoto ? 'photo' : 'laque'));
-  const [photo, setPhoto] = useState<string | null>(opts?.initialPhoto ?? null);
+  const [photo, setPhotoState] = useState<string | null>(opts?.initialPhoto ?? null);
+  /**
+   * 2 novembre 2026 (confidentialite) : la photo de l'atelier, effacee quand elle est remplacee ou quand tu quittes
+   * l'ecran. Seule une copie de cacheDirectory/cartes_tmp/ est effacee : la photo de profil passee en initialPhoto
+   * ou par setPhoto (dans documentDirectory) n'est jamais touchee.
+   */
+  const photoTmp = useRef<string | null>(opts?.initialPhoto ?? null);
+  const setPhoto = useCallback((uri: string | null) => {
+    const avant = photoTmp.current;
+    photoTmp.current = uri;
+    setPhotoState(uri);
+    if (avant && avant !== uri) void effacerCopieCarte(avant);
+  }, []);
+  useEffect(() => () => {
+    void effacerCopieCarte(photoTmp.current);
+    photoTmp.current = null;
+  }, []);
   const [landscape, setLandscape] = useState(false);
   const [busy, setBusy] = useState(false);
   const [photoEnCours, setPhotoEnCours] = useState(false);
@@ -22,7 +39,7 @@ export function useStudio(opts?: { initialStyle?: CardVariant; initialPhoto?: st
       setLandscape(res.landscape);
       setStyleState('photo');
     }
-  }, [opts?.square]);
+  }, [opts?.square, setPhoto]);
 
   const setStyle = useCallback((s: CardVariant) => {
     setStyleState(s);
