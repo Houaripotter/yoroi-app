@@ -10,6 +10,7 @@ import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import { activiteChronoDisponible, arreterActiviteNatif, demarrerActiviteNatif, majActiviteNatif } from './natif';
 import type { PlanIle } from '@/lib/v2/seance/actionsIle';
+import { majSeanceMontre, seanceDepuisPlan } from '@/lib/v2/montre/seanceMontre';
 
 export type EtatSeance = {
   /** titre de la séance (« Fessiers et ventre plat, Fessiers A ») */
@@ -29,6 +30,11 @@ export type EtatSeance = {
    * (lib/v2/seance/actionsIle.ts). Sans plan, la Live Activity reste en affichage seul.
    */
   plan?: PlanIle | null;
+  /**
+   * 28 octobre 2026 : pour l'Apple Watch, la charge et les répétitions de la prochaine série de chaque exercice,
+   * dans l'ordre du plan (lib/v2/montre/seanceMontre.ts). La Live Activity ne les reçoit pas (limite de 4 Ko).
+   */
+  charges?: { kg: number; reps: number }[] | null;
 };
 
 /** Le JSON attendu par la Live Activity du chrono (round et rounds à 0 : le libellé s'affiche) */
@@ -107,6 +113,12 @@ export function useActiviteSeance(etat: EtatSeance | null): void {
     dernier.current = cle;
     envoyer(etat);
   }, [cle]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 28 octobre 2026 : la meme seance guidee sur l'Apple Watch (charge comprise), sans toucher a la Live Activity
+  const cleMontre = etat ? JSON.stringify([etat.titre, etat.debutMs, etat.finReposMs ?? 0, etat.reposTotalS, etat.plan?.cur ?? 0, etat.plan?.exos ?? [], etat.charges ?? []]) : '';
+  useEffect(() => {
+    if (!etat) return;
+    majSeanceMontre(seanceDepuisPlan(etat));
+  }, [cleMontre]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
 /** Appuis de l'île appliqués : l'ancien minuteur de repos ne doit pas renvoyer un état périmé */
@@ -122,6 +134,8 @@ export function annulerMinuteurRepos(): void {
 export function terminerActiviteSeance(): void {
   if (minuteurRepos) clearTimeout(minuteurRepos);
   minuteurRepos = null;
+  // la montre quitte la seance guidee
+  majSeanceMontre(null);
   if (!seanceEnDirect) return;
   seanceEnDirect = false;
   if (activiteChronoDisponible()) arreterActiviteNatif();
