@@ -18,7 +18,7 @@ import { silhouetteCourante, type SilhouetteId } from '@/lib/v2/silhouette';
 import { GUERRIER_SILHOUETTES } from './silhouettesImages';
 import { LANTERNES_IDS, LANTERNES_IMAGES, SCENES_LANTERNES } from '@/lib/v2/espace/lanternes';
 import { SAMOURAI_IDS, SAMOURAI_IMAGES, SCENES_SAMOURAI } from '@/lib/v2/espace/samourai';
-import { SANS_PERSONNAGE } from './univers';
+import { SANS_PERSONNAGE, rangNom } from './univers';
 import { CLASSIQUE_SCENE_IDS, CLASSIQUE_SCENE_IMAGES, SCENES_CLASSIQUE } from '@/lib/v2/espace/classique';
 import { NATURE_SCENE_IDS, NATURE_SCENE_IMAGES, SCENES_NATURE } from '@/lib/v2/espace/nature';
 import { VOYAGE_SCENE_IDS, VOYAGE_SCENE_IMAGES, SCENES_VOYAGES } from '@/lib/v2/espace/voyages';
@@ -218,7 +218,7 @@ export const THEMES: { id: SceneId; name: string; premium: boolean; description:
   // vague 44 : le pack Samourai (Premium, la Salle d'armes offerte)
   ...SCENES_SAMOURAI.map((s) => ({ id: s.id as SceneId, name: s.nom, premium: !s.offerte, description: s.description, kanji: '', dark: s.sombre })),
   // vague 45 : le pack Classique (la salle de sport et le parc de jour offerts)
-  ...SCENES_CLASSIQUE.map((s) => ({ id: s.id as SceneId, name: s.nom, premium: !s.offerte, description: s.description, kanji: '', dark: s.sombre })),
+  ...SCENES_CLASSIQUE.map((s) => ({ id: s.id as SceneId, name: s.nom, premium: !s.offerte, description: s.description, kanji: '', dark: s.sombre, ...(s.rang ? { unlockRank: s.rang } : {}) })),
   // 14 octobre 2026 : le pack Nature et ville (Premium, meme regle que le pack Classique)
   ...SCENES_NATURE.map((s) => ({ id: s.id as SceneId, name: s.nom, premium: !s.offerte, description: s.description, kanji: '', dark: s.sombre })),
   // 16 octobre 2026 : les scenes des packs Vie reelle (Premium, meme regle que le pack Nature et ville)
@@ -266,11 +266,11 @@ export function themeCondition(t: ThemeDef): string | null {
   if (t.annual) return traduire('Offerte avec l’abonnement annuel');
   const palier = palierDeScene(t.id);
   if (palier !== null) return traduire("À {0} jours d’affilée dans le Dojo, ou avec Premium", palier);
-  if (t.unlockRank !== undefined) return traduire("Au rang {0}, ou avec Premium", RANK_LABELS_SCENES[t.unlockRank]);
+  // 2 novembre 2026 : le nom du rang dans ton univers (Regulier en Classique, Bushi au Japon)
+  if (t.unlockRank !== undefined) return traduire("Au rang {0}, ou avec Premium", rangNom(t.unlockRank));
   return traduire('Avec Premium');
 }
 
-const RANK_LABELS_SCENES = ['Ashigaru', 'Bushi', traduire('Samouraï'), 'Rōnin', 'Shōgun'];
 
 export function themeById(id: SceneId | string | undefined) {
   return THEMES.find((t) => t.id === id) ?? THEMES[0];
@@ -527,23 +527,24 @@ export function packLevel(pack: PackDef, rankIndex: number, sportCounts: Record<
 export function levelCondition(pack: PackDef, level: Level): string {
   if (pack.kind === 'monde') return mondeCondition(pack);
   if (pack.kind === 'vie') return traduire('avec Premium');
-  if (level === 1) return traduire('dès l’achat');
-  if (pack.kind === 'legende') return level === 2 ? traduire('rang Samouraï') : traduire('rang Rōnin');
+  // 2 novembre 2026 : aucun achat a l'unite n'est en vente (PACKS_STORE_READY), le niveau 1 vient avec Premium ;
+  // les rangs des legendes s'ecrivent dans ton univers (Confirme et Expert en Classique)
+  if (level === 1) return traduire('avec Premium');
+  if (pack.kind === 'legende') return traduire("Rang {0}", rangNom(level === 2 ? 2 : 3));
   const sport = pack.name.toLowerCase();
   return level === 2 ? traduire("niveau Motivé, 25 séances de {0}", sport) : traduire("niveau Aguerri, 100 séances de {0}", sport);
 }
 
-const RANK_LABELS = ['Ashigaru', 'Bushi', traduire('Samouraï'), 'Rōnin', 'Shōgun'];
 
 /** Condition d'un personnage du monde, en clair */
 export function mondeCondition(pack: PackDef): string {
   const r = pack.unlockRank ?? 0;
-  return r <= 0 ? traduire('offert dès le départ') : traduire("au rang {0}, ou tout de suite avec Premium", RANK_LABELS[r]);
+  return r <= 0 ? traduire('offert dès le départ') : traduire("au rang {0}, ou tout de suite avec Premium", rangNom(r));
 }
 
 /** Nom du rang qui debloque un personnage du monde */
 export function unlockRankName(pack: PackDef): string {
-  return RANK_LABELS[Math.max(0, Math.min(4, pack.unlockRank ?? 0))];
+  return rangNom(Math.max(0, Math.min(4, pack.unlockRank ?? 0)));
 }
 
 /**
