@@ -23,7 +23,7 @@ import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { lirePratiques } from '@/lib/v2/profil/pratiques';
 import { chargerZone2 } from '@/lib/v2/seances/zone2';
-import { ceintureJjbDe, enZone2De, gpsSiAppareil, kilosDe, musclesDeSeance, serieDe } from './donneesEnPlus';
+import { ceintureJjbDe, enZone2De, gpsSiAppareil, kcalPourCarte, kilosDe, musclesDeSeance, serieDe } from './donneesEnPlus';
 
 const JOURS = [traduire('Dimanche'), traduire('Lundi'), traduire('Mardi'), traduire('Mercredi'), traduire('Jeudi'), traduire('Vendredi'), traduire('Samedi')];
 const MOIS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
@@ -198,7 +198,8 @@ function donneesDeSeance(t: Training, records: RecordCarte[]): NonNullable<Carte
     })(),
     fcMoy: t.heart_rate ?? 0,
     fcMax: t.max_heart_rate ?? 0,
-    calories: t.calories ?? 0,
+    // 2 novembre 2026 : kcal coupees sur les cartes tant que leur source n'est pas connue (voir kcalPourCarte) ; 0 cache le bloc
+    calories: kcalPourCarte(t) ?? 0,
     zones: zonesDe(t),
     records,
     // 31 octobre 2026 : trace GPS, splits, denivele, series, techniques, lus dans la seance (absents sinon)
