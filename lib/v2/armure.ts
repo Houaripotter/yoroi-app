@@ -58,6 +58,7 @@ import { BELTS, beltFor } from '@/lib/v2/dojo/belts';
 import type { Belt } from '@/lib/v2/dojo/belts';
 import { traduire, traduirePluriel, DECIMAL, LOCALE } from '@/lib/i18n/tr';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
+import { CLE_DOJO_PARTAGE, construirePartage, fusionnerPartage, unirPartage } from '@/lib/v2/dojo/partageDojo';
 
 // ============================================================
 // Contrat
@@ -243,10 +244,11 @@ export type XpSource =
   | 'lune'
   | 'geste'
   | 'reprise'
-  | 'coffre';
+  | 'coffre'
+  | 'programme';
 
 /** semaine : valeur pour un objectif de 3 seances (voir weekXp) */
-export const XP_VALUES = { seance: 20, pesee: 5, mensurations: 10, photo: 10, record: 15, semaine: 50, sceau: 25, lune: 25, geste: 5 } as const;
+export const XP_VALUES = { seance: 20, pesee: 5, mensurations: 10, photo: 10, record: 15, semaine: 50, sceau: 25, lune: 25, geste: 5, programme: 10 } as const;
 
 /** Une semaine réussie rapporte 20 XP plus 10 par seance visee. */
 export function weekXp(goal: number): number {
@@ -257,14 +259,19 @@ export function weekXp(goal: number): number {
  * Vague 47 : coffre du jour. Il s'ouvre dans le Dojo une fois le geste du jour fait (seance, pesee,
  * mensurations, photo ou eau notee). base + 1 XP par jour de serie (au plus bonusMax), et le grand
  * coffre tous les 7 jours d'affilee. Il remplace le geste du jour credite tout seul.
+ *
+ * 2 novembre 2026 (analyse de la gamification) : le coffre pesait autant que l'entrainement, et un verre d'eau
+ * suffisait a l'ouvrir en grand. Le bonus de serie plafonne a 5 (au lieu de 10), et un jour avec seulement de
+ * l'eau notee donne la base seule, sans bonus de serie ni bonus du grand coffre (fort = false). L'eau garde la
+ * serie. Les coffres deja ouverts ne changent pas (le journal ne baisse jamais).
  */
-export const COFFRE = { base: 5, bonusMax: 10, grand: 25 } as const;
+export const COFFRE = { base: 5, bonusMax: 5, grand: 25 } as const;
 
-export function coffreXp(serie: number, chance = false): { xp: number; grand: boolean; chance: boolean } {
+export function coffreXp(serie: number, chance = false, fort = true): { xp: number; grand: boolean; chance: boolean } {
   const n = Math.max(1, serie);
   const grand = n % 7 === 0;
-  const part = COFFRE.base + Math.min(n - 1, COFFRE.bonusMax);
-  return { xp: part * (chance ? 2 : 1) + (grand ? COFFRE.grand : 0), grand, chance };
+  const part = fort ? COFFRE.base + Math.min(n - 1, COFFRE.bonusMax) : COFFRE.base;
+  return { xp: part * (chance ? 2 : 1) + (grand && fort ? COFFRE.grand : 0), grand, chance };
 }
 
 /**
@@ -326,7 +333,8 @@ export const XP_RULES: { source: XpSource; label: string; xp: number; limit: str
   { source: 'semaine', label: traduire('Semaine réussie'), xp: XP_VALUES.semaine, limit: traduire('1 par semaine') },
   { source: 'sceau', label: traduire('Sceau débloqué'), xp: XP_VALUES.sceau, limit: traduire('une fois par sceau') },
   { source: 'lune', label: traduire('Lune du mois'), xp: XP_VALUES.lune, limit: traduire('3 semaines réussies dans le mois') },
-  { source: 'coffre', label: traduire('Coffre du jour'), xp: COFFRE.base, limit: traduire("1 par jour, jusqu’à {0} avec ta série, +{1} au grand coffre tous les 7 jours", COFFRE.base + COFFRE.bonusMax, COFFRE.grand) },
+  { source: 'coffre', label: traduire('Coffre du jour'), xp: COFFRE.base, limit: traduire("1 par jour, jusqu’à {0} avec ta série et +{1} au grand coffre tous les 7 jours, les jours de séance, pesée, mensurations ou photo", COFFRE.base + COFFRE.bonusMax, COFFRE.grand) },
+  { source: 'programme', label: traduire('Séance de ton programme'), xp: XP_VALUES.programme, limit: traduire('1 par jour, en plus de la séance') },
 ];
 
 /** Regles avec l'XP de semaine calculee pour ton objectif. */
@@ -349,6 +357,7 @@ export const SOURCE_LABELS: Record<XpSource, string> = {
   geste: traduire('Gestes du jour'),
   reprise: traduire('Reprise de tes quêtes, défis et badges'),
   coffre: traduire('Coffres du jour'),
+  programme: traduire('Séances de programme'),
 };
 
 const SEANCES_PAR_JOUR = 2;
@@ -793,6 +802,7 @@ async function runSync(): Promise<ArmureSnapshot> {
     ledger,
     userMode,
     templatesRaw,
+    programmesRaw,
     oldPointsRaw,
     oldXpRaw,
     oldBadgesRaw,
@@ -812,6 +822,9 @@ async function runSync(): Promise<ArmureSnapshot> {
     readLedger(),
     safe(() => AsyncStorage.getItem('@yoroi_user_mode'), null),
     safe(() => AsyncStorage.getItem('@yoroi_training_templates'), null),
+    // 31 octobre 2026 : le sceau Lanterne de papier ecoute les nouveaux Programmes (tes programmes construits et
+    // le programme en cours), plus seulement les anciens modeles de seance que plus aucun ecran ne cree
+    safe(() => AsyncStorage.multiGet(['yoroi_programmes_perso_v1', 'yoroi_programme_actif_v1']).then((rows) => rows.map((r) => r[1])), [] as (string | null)[]),
     safe(() => AsyncStorage.getItem(OLD_POINTS_KEY), null),
     safe(() => AsyncStorage.multiGet([...OLD_XP_KEYS]).then((rows) => rows.map((r) => r[1])), [] as (string | null)[]),
     safe(() => AsyncStorage.getItem(OLD_BADGES_KEY), null),
@@ -1023,6 +1036,22 @@ async function runSync(): Promise<ArmureSnapshot> {
     add(k, h.date, 'record', XP_VALUES.record, h.label);
   }
 
+  // 5 bis. 2 novembre 2026 : seance de ton programme, 10 XP en plus de la seance, 1 par jour. Lue dans le programme
+  // en cours (yoroi_programme_actif_v1, partage entre tes appareils) ; la cle est la date, jamais deux fois le meme jour
+  try {
+    const actif = programmesRaw[1] ? (JSON.parse(programmesRaw[1]) as { faits?: unknown } | null) : null;
+    const faits = actif && Array.isArray(actif.faits) ? (actif.faits as { date?: unknown }[]) : [];
+    const joursSeance = new Set(pastTrainingsC.map((t) => dayOf(t.date)));
+    for (const f of faits) {
+      const d = typeof f?.date === 'string' ? dayOf(f.date) : '';
+      if (!d || d > today || !joursSeance.has(d) || !counts(d, false)) continue;
+      if (!eligible(d, undefined, ectx)) continue;
+      add(`programme:${d}`, d, 'programme', XP_VALUES.programme, traduire('Séance de ton programme'));
+    }
+  } catch {
+    // programme illisible : rien en plus
+  }
+
   // 6. Semaines réussies : 20 XP + 10 par seance visee
   const wk = computeWeeks(trainingsC, meta, today);
   const recentLimit = addDays(today, -ANTIDATE_JOURS - 6);
@@ -1061,6 +1090,19 @@ async function runSync(): Promise<ArmureSnapshot> {
   } catch {
     // journal d'hydratation illisible : pas de geste d'eau
   }
+  // 2 novembre 2026 : l'historique des jours d'eau (@yoroi_hydration_history) est partage entre tes appareils, le
+  // journal ci dessus non : un verre note sur l'iPhone compte aussi pour la serie vue sur l'iPad
+  try {
+    const hist = JSON.parse((await AsyncStorage.getItem('@yoroi_hydration_history')) ?? '[]') as unknown;
+    if (Array.isArray(hist)) {
+      for (const e of hist) {
+        const d = dayOf((e as { date?: string } | null)?.date);
+        if (d && Number((e as { amount?: number }).amount) > 0 && d <= today && counts(d, false)) hydraDays.add(d);
+      }
+    }
+  } catch {
+    // historique illisible : le journal suffit
+  }
   const activeDays = new Set<string>();
   pastTrainingsC.forEach((t) => activeDays.add(dayOf(t.date)));
   weightsC.forEach((w) => w.weight > 0 && dayOf(w.date) <= today && activeDays.add(dayOf(w.date)));
@@ -1072,12 +1114,15 @@ async function runSync(): Promise<ArmureSnapshot> {
   else if (hydraDays.has(today)) gesteKind = 'hydratation';
 
   const gesteFait = activeDays.has(today);
+  // 2 novembre 2026 : un geste « fort » (seance, pesee, mensurations, photo) ; l'eau seule garde la serie
+  const gesteFort = activeDays.has(today) && (gesteKind === 'seance' || gesteKind === 'pesee'
+    || measurementsC.some((mz) => dayOf(mz.date) === today) || photosC.some((ph) => dayOf(ph.date) === today));
   const serieCalc = computeSerie(activeDays, today, ancien ? null : departDay);
   const serieJours = serieCalc.jours;
   meta.serieRecord = Math.max(meta.serieRecord ?? 0, serieJours);
   const coffreCle = `coffre:${today}`;
   const chance = coupDeChance(today, meta.migratedAt ?? stamp);
-  const coffreCalc = coffreXp(serieJours, chance);
+  const coffreCalc = coffreXp(serieJours, chance, gesteFort);
   if (meta.coffreDemande === today && gesteFait) {
     add(coffreCle, today, 'coffre', coffreCalc.xp, traduirePluriel(serieJours, serieJours > 1, "{0}, {1} jour d’affilée{2}", "{0}, {1} jours d’affilée{2}", coffreCalc.grand ? traduire('Grand coffre') : traduire('Coffre du jour'), serieJours, coffreCalc.chance ? traduire(', coup de chance') : ''));
   }
@@ -1126,6 +1171,18 @@ async function runSync(): Promise<ArmureSnapshot> {
     programs = Array.isArray(list) ? list.length : 0;
   } catch {
     programs = 0;
+  }
+  try {
+    const persos = programmesRaw[0] ? (JSON.parse(programmesRaw[0]) as unknown) : [];
+    if (Array.isArray(persos)) programs += persos.length;
+  } catch {
+    // illisible : compte comme aucun
+  }
+  try {
+    const actif = programmesRaw[1] ? (JSON.parse(programmesRaw[1]) as { id?: unknown } | null) : null;
+    if (actif && typeof actif === 'object' && typeof actif.id === 'string' && actif.id) programs += 1;
+  } catch {
+    // illisible : compte comme aucun
   }
   // la date de naissance reste facultative : le profil est complet avec le prenom et la taille
   const profileComplete = !!(profile && profile.name && profile.name.trim() && profile.height_cm);
@@ -1300,6 +1357,7 @@ async function runSync(): Promise<ArmureSnapshot> {
     };
   }
   await writeMeta(meta);
+  await ecrirePartageDojo([...ledger, ...added], meta);
 
   const currentWeek = wk.weeks[wk.weeks.length - 1];
   const thisWeekSessions = currentWeek && currentWeek.monday === mondayOf(today) ? currentWeek.count : 0;
@@ -1335,7 +1393,7 @@ async function runSync(): Promise<ArmureSnapshot> {
     serie: { jours: serieJours, record: Math.max(meta.serieRecord ?? 0, serieJours), aSauver: !gesteFait && serieJours > 0, semaine: semaineSerie },
     coffre: {
       etat: coffreRow ? 'ouvert' : gesteFait ? 'pret' : 'verrouille',
-      xp: coffreRow ? coffreRow.a : coffreXp(serieDuCoffre, chance).xp,
+      xp: coffreRow ? coffreRow.a : coffreXp(serieDuCoffre, chance, gesteFort || !gesteFait).xp,
       grand: coffreRow ? coffreRow.l.startsWith('Grand') || coffreRow.l.startsWith(traduire('Grand coffre')) : coffreXp(serieDuCoffre).grand,
       chance: coffreRow ? coffreRow.l.includes('coup de chance') || coffreRow.l.includes(traduire(', coup de chance').trim()) : false,
       grandDans,
@@ -1576,6 +1634,57 @@ export async function requestArmureCatchup(): Promise<ArmureState> {
   cachedAt = 0;
   if (inflight) await inflight.catch(() => undefined);
   return (await syncArmure(true)).state;
+}
+
+/**
+ * 2 novembre 2026 : la copie du Dojo que la synchro envoie a tes autres appareils (lib/v2/dojo/partageDojo.ts).
+ * Ecrite seulement si elle a change ; rien n'y est jamais retire. Pas pendant une demo (la synchro est coupee,
+ * et la cle est mise de cote avec les autres, lib/demoDataService.ts).
+ */
+async function ecrirePartageDojo(journal: LedgerRow[], meta: Meta): Promise<void> {
+  if (ledgerIllisible || metaIllisible) return;
+  try {
+    const brut = await AsyncStorage.getItem(CLE_DOJO_PARTAGE);
+    let existant: unknown = [];
+    try {
+      existant = brut ? JSON.parse(brut) : [];
+    } catch {
+      existant = [];
+    }
+    const suite = JSON.stringify(unirPartage(existant, construirePartage(journal, meta)));
+    if (suite !== brut) await AsyncStorage.setItem(CLE_DOJO_PARTAGE, suite);
+  } catch (e) {
+    logger.warn('[Armure] copie partagee non ecrite', e);
+  }
+}
+
+/**
+ * 2 novembre 2026 : ce qui est arrive de tes autres appareils entre dans le journal d'ici (rien n'est retire,
+ * rien n'est compte deux fois), puis le Dojo est recalcule. Appele par la synchro (lib/v2/synchro/cles.ts).
+ */
+export async function appliquerPartageDojo(): Promise<boolean> {
+  let recu: unknown = null;
+  try {
+    const brut = await AsyncStorage.getItem(CLE_DOJO_PARTAGE);
+    recu = brut ? JSON.parse(brut) : null;
+  } catch {
+    return false;
+  }
+  if (!Array.isArray(recu)) return false;
+  const change = await exclusive(async () => {
+    const [meta, ledger] = await Promise.all([readMeta(), readLedger()]);
+    if (ledgerIllisible || metaIllisible) return false;
+    const f = fusionnerPartage(ledger, meta, recu);
+    if (!f.change) return false;
+    if (f.ajout.length) await writeLedger([...ledger, ...(f.ajout as LedgerRow[])]);
+    await writeMeta(f.meta);
+    return true;
+  });
+  if (!change) return false;
+  cachedAt = 0;
+  if (inflight) await inflight.catch(() => undefined);
+  await syncArmure(true).catch(() => undefined);
+  return true;
 }
 
 /** Ce que la sauvegarde garde du Dojo : le journal d'XP et la date de depart. */
