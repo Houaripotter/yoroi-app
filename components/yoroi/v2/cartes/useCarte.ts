@@ -18,6 +18,10 @@ import type { StyleMemorise } from '@/lib/v2/cartes/store';
 import { copierAutocollant, enregistrerCarte, partagerCarte, partagerStory } from '@/lib/v2/cartes/export';
 import type { CarteData, OptionsCarte, StatKey } from '@/lib/v2/cartes/types';
 import type { VisuelsCarte } from './CarteRendu';
+import { formatDessine, useMoteurCartes } from './CarteRendu';
+import { analyserPhoto } from '@/lib/v2/cartes/moteur/analysePhoto';
+import type { AnalysePhoto } from '@/lib/v2/cartes/moteur/analysePhoto';
+import type { Recadrage } from '@/lib/v2/cartes/moteur/protection';
 import { traduire } from '@/lib/i18n/tr';
 import { effacerCopieCarte } from '@/lib/v2/cartes/tmp';
 
@@ -41,10 +45,20 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
    * remplacee, enlevee, ou quand tu quittes la carte. Seul un fichier de cacheDirectory/cartes_tmp/ est efface.
    */
   const photoTmp = useRef<string | null>(null);
+  /**
+   * 2 novembre 2026 (cartes v10, nouveau moteur) : l'analyse de ta photo (visages, silhouette ; vide tant qu'il n'y a pas
+   * de module photo) et ton recadrage au doigt, propres a cette photo et a cette edition (jamais memorises).
+   */
+  const [analyse, setAnalyse] = useState<AnalysePhoto | null>(null);
+  const [recadrage, setRecadrage] = useState<Recadrage | null>(null);
+  const moteur = useMoteurCartes();
   const changerPhoto = useCallback((uri: string | null) => {
     const avant = photoTmp.current;
     photoTmp.current = uri;
     setPhoto(uri);
+    setRecadrage(null);
+    setAnalyse(null);
+    if (uri) analyserPhoto(uri).then((a) => photoTmp.current === uri && setAnalyse(a)).catch(() => undefined);
     if (avant && avant !== uri) void effacerCopieCarte(avant);
   }, []);
   useEffect(() => () => {
@@ -108,8 +122,12 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
    * (fichiers gardes dans lib/v2/cartes/scenesFond.ts) ; un ancien fond de scene retombe sur la couleur.
    */
   const fondEffectif = style.fond === 'photo' && photo ? 'photo' : 'couleur';
-  const options: OptionsCarte = { ...style, fond: fondEffectif, chiffres };
-  const visuels: VisuelsCarte = { scene, sceneId, photo, personnage };
+  const options0: OptionsCarte = { ...style, fond: fondEffectif, chiffres };
+  // 2 novembre 2026 (cartes v10) : le nouveau moteur n'a pas de carre, il s'ouvre en 4:5 (et la capture aussi)
+  const options: OptionsCarte = { ...options0, format: formatDessine(data, options0, moteur) };
+  const visuels: VisuelsCarte = { scene, sceneId, photo, personnage, analyse, recadrage };
+  /** « Recadrer automatiquement » : ton recadrage au doigt est oublie, la regle automatique reprend */
+  const recadrerAuto = useCallback(() => setRecadrage(null), []);
 
   /** Enleve ta photo de fond : la carte revient sur ta couleur */
   const enleverPhoto = useCallback(() => {
@@ -124,9 +142,9 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
   const visuelsPour = useCallback((d: CarteData): VisuelsCarte => {
     if (!personnage) return visuels;
     const fig = figureFor({ personnage: id.personnage!, rankIndex: id.rankIndex, genre: id.genre, sport: d.sport ?? null });
-    return { scene, sceneId, photo, personnage: fig };
+    return { scene, sceneId, photo, personnage: fig, analyse, recadrage };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scene, sceneId, photo, personnage, id.personnage, id.rankIndex, id.genre]);
+  }, [scene, sceneId, photo, personnage, id.personnage, id.rankIndex, id.genre, analyse, recadrage]);
 
   const enregistrer = useCallback(async (onErreur?: (titre: string, texte: string) => void) => {
     if (busy || !data) return false;
@@ -192,5 +210,5 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
     else setStyle({ sansPersonne: false, epure: false, personnage: persoVoulu });
   }, [personne.visible, persoVoulu, setStyle]);
 
-  return { ref, options, visuels, visuelsPour, style, setStyle, chiffres, setChiffres, photo, photoEnCours, choisirPhoto, enleverPhoto, enregistrer, partager, partagerEnStory, copier, copie, busy, saved, aPersonnage: !!personnage, personne, basculerPersonne };
+  return { ref, options, visuels, visuelsPour, style, setStyle, chiffres, setChiffres, photo, photoEnCours, choisirPhoto, enleverPhoto, enregistrer, partager, partagerEnStory, copier, copie, busy, saved, aPersonnage: !!personnage, personne, basculerPersonne, moteur, analyse, recadrage, setRecadrage, recadrerAuto };
 }
