@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCompetitions, getProfile, getTrainings, getWeights } from '@/lib/database';
 import type { Training } from '@/lib/database';
 import { getUserSettings } from '@/lib/storage';
-import { getSportName } from '@/lib/sports';
+import { MUSCLES, getSportName } from '@/lib/sports';
 import { DEFAULT_ESPACE, getEspace, objectifVise } from '@/lib/v2/espace';
 import { dedupeTrainings } from '@/lib/v2/seances/dedupe';
 import { loadHydration, localISO } from '@/lib/v2/accueil/hydration';
@@ -14,9 +14,16 @@ import { toDailySeries } from '@/lib/v2/weightStats';
 import type { MemoTorii } from '@/lib/v2/pesee/ligneDirectrice';
 import { COMBAT_PRESETS, COMBAT_SETTINGS_KEY, PREPA_SECONDS, loadClapEnabled } from '@/lib/v2/carnet/chrono';
 import type { CombatPreset } from '@/lib/v2/carnet/chrono';
-import type { ChronoMontre, SourcesContexte } from './contexte';
+import type { ChronoMontre, CoachMontre, DojoMontre, SourcesContexte } from './contexte';
 import { kgDeCategorie } from './contexte';
+import { seanceMontre } from './seanceMontre';
 import { traduire } from '@/lib/i18n/tr';
+import { RANKS, getArmureState } from '@/lib/v2/armure';
+import { aUnPersonnage } from '@/lib/v2/dojo/personnages';
+import { messageCoach } from '@/lib/v2/programmes/coach';
+import { nomDuProgramme } from '@/lib/v2/programmes/heroJour';
+import { dureeEstimee } from '@/lib/v2/programmes/express';
+import { chargerProgrammeActif, joursDuProgramme, planEffectif, prochainJour } from '@/lib/v2/programmes/suivi';
 
 /** meme cle que lib/v2/pesee/usePlanPoids.ts (date du torii gardee par la carte Poids) */
 const TORII_KEY = 'yoroi_torii_v1';
@@ -91,6 +98,58 @@ function sportsDe(favoris: string[], trainings: Training[], today: string): { id
   return [...new Set(ids)].slice(0, 8).map((id) => ({ id, nom: getSportName(id) || id }));
 }
 
+/**
+ * La séance du jour de ton Coach (28 octobre 2026) : la même que la grande carte du Coach (app/coach.tsx,
+ * prochainJour et messageCoach), programme du catalogue ou le tien. null sans programme suivi.
+ */
+async function lireCoach(femme: boolean): Promise<CoachMontre | null> {
+  const actif = await chargerProgrammeActif();
+  if (!actif) return null;
+  const suite = prochainJour(actif);
+  if (!suite) return null;
+  const { programme: p, jour } = suite;
+  const titre = traduire(jour.titre);
+  const m = messageCoach({ programme: p, actif, jours: joursDuProgramme(actif, p), prochaineSeance: titre, femme, fixe: !!planEffectif(actif, p) });
+  const genre: CoachMontre['genre'] = jour.cardio ? 'cardio' : jour.rounds ? 'rounds' : 'muscu';
+  let minutes = p.dureeMin;
+  if (jour.cardio) minutes = jour.cardio.minutes;
+  else if (jour.rounds) minutes = Math.round((jour.rounds.nombre * jour.rounds.dureeSec + Math.max(0, jour.rounds.nombre - 1) * jour.rounds.reposSec) / 60);
+  else if (jour.exos.length) minutes = dureeEstimee(jour.exos) || p.dureeMin;
+  const muscles = jour.muscles
+    .map((id) => MUSCLES.find((x) => x.id === id)?.name)
+    .filter((n): n is string => !!n)
+    .slice(0, 3)
+    .map((n) => traduire(n));
+  return {
+    titre,
+    programme: nomDuProgramme(traduire(p.titre)),
+    exos: jour.exos.length,
+    minutes: Math.max(0, Math.round(minutes || 0)),
+    muscles,
+    aujourdhui: m.seanceDuJour,
+    etat: m.etat,
+    ensuite: m.seanceDuJour ? '' : m.ensuite,
+    genre,
+  };
+}
+
+/** Ton rang du Dojo, ton XP et le palier suivant (comme l'Accueil), avec l'id de ton personnage */
+async function lireDojo(personnage: string | null | undefined): Promise<DojoMontre | null> {
+  const a = await getArmureState();
+  if (!a || !a.rank) return null;
+  const suivant = a.nextStep ?? null;
+  return {
+    rang: a.rankTitle ?? a.rank.name,
+    rangIndex: Math.max(0, Math.min(RANKS.length - 1, a.rank.index)),
+    rangs: RANKS.length,
+    xp: Math.max(0, Math.round(a.xp)),
+    suivant: suivant ? suivant.name : null,
+    xpSuivant: suivant ? suivant.minXp : null,
+    part: Math.max(0, Math.min(1, a.rankProgress ?? 0)),
+    personnage: personnage && aUnPersonnage(personnage) ? personnage : null,
+  };
+}
+
 export async function lireSourcesContexte(): Promise<SourcesContexte> {
   const today = localISO();
   const [weights, profil, settings, espace, trainings, hydration, memoRaw, chronos, comps] = await Promise.all([
@@ -115,6 +174,8 @@ export async function lireSourcesContexte(): Promise<SourcesContexte> {
     .filter((c) => c?.date && c.date.slice(0, 10) >= today && c.statut !== 'termine')
     .sort((a, b) => (a.date < b.date ? -1 : 1))[0];
   const objectif = objectifVise(espace);
+  const femme = (profil as { avatar_gender?: string | null } | null)?.avatar_gender === 'femme';
+  const [coach, dojo] = await Promise.all([sur(() => lireCoach(femme), null), sur(() => lireDojo(espace?.personnage), null)]);
   return {
     aujourdhui: today,
     genere: new Date().toISOString(),
@@ -128,5 +189,8 @@ export async function lireSourcesContexte(): Promise<SourcesContexte> {
     eau: { litres: hydration?.amount ?? 0, objectifLitres: hydration?.goal ?? null },
     chronos,
     competition: prochaine ? { date: prochaine.date.slice(0, 10), categorieKg: kgDeCategorie(prochaine.poids_max, prochaine.categorie_poids) } : null,
+    coach,
+    dojo,
+    seance: seanceMontre(),
   };
 }
