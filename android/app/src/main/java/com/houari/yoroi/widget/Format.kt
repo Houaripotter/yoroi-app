@@ -85,6 +85,13 @@ object Format {
     }
 
     /** « 750 ml », « 1,25 L » */
+    /** 28 octobre 2026 : « Palier 78,0 dans 0,4 kg » ou « Ton cap dans 0,4 kg », null sans palier */
+    fun palier(p: PoidsW, unite: String): String? {
+        val pa = p.palier ?: return null
+        val reste = poids(pa.reste, unite)
+        return if (pa.dernier) "Ton cap dans $reste" else "Palier ${uneDecimale(versUnite(pa.kg, unite))} dans $reste"
+    }
+
     fun eau(ml: Int): String {
         if (ml < 1000) return "$ml ml"
         var s = String.format(Locale.FRANCE, "%.2f", ml / 1000.0)
