@@ -7,6 +7,10 @@
  * 1 Seance de musculation (compositions A, B, C), 2 Record, 3 Course, 4 JJB (et sports de combat), 5 Marche,
  * 6 Avant apres, 7 Muscles, 8 Semaine, 9 Serie, 10 Annee.
  * Les autres cartes (pesee, mois, la plupart des exploits) restent sur l'ancien moteur : famillesPour rend [].
+ *
+ * Autocollant (2 novembre 2026, _propositions/autocollant_2026-11-02, proposition A) : la 5e composition, tes chiffres
+ * empiles et le logo sur fond transparent, pour la seance, le record, la course, le JJB et la marche (lignesAutocollant).
+ * Jamais de kcal, de pseudo ni de caractere japonais ; une donnee absente ou a 0 fait disparaitre sa ligne.
  */
 import { traduire } from '@/lib/i18n/tr';
 import type { UnitePoids } from '@/lib/v2/unitePoids';
@@ -102,7 +106,12 @@ export type ContenuCarte = {
   tuilesC?: Stat[];
   /** surtitre (record : « Nouveau record », serie : « Série en cours ») */
   sur?: string;
+  /** l'autocollant : ses lignes, de haut en bas (familles AVEC_AUTOCOLLANT seulement) */
+  lignesAuto?: LigneAutocollant[];
 };
+
+/** Une ligne de l'autocollant : le chiffre, son icone et son libelle ; la ceinture du JJB a sa barre et ses degres */
+export type LigneAutocollant = Stat & { ceinture?: { couleur: string; degres: number } };
 
 // ============================================
 // LE SPORT D'UNE SEANCE
@@ -167,7 +176,13 @@ export function famillesPour(d: CarteData | null | undefined): FamilleMoteur[] {
 /** Les familles qui acceptent ta photo (composition A) */
 const AVEC_PHOTO: FamilleMoteur[] = ['muscu', 'record', 'course', 'jjb', 'marche', 'transfo', 'annee'];
 
-/** Les compositions proposees : A (ta photo plein cadre) si la famille l'accepte, B (le dessin), C (les donnees, musculation) */
+/** Les familles qui ont un autocollant (seance, record, course, JJB, marche) */
+export const AVEC_AUTOCOLLANT: FamilleMoteur[] = ['muscu', 'record', 'course', 'jjb', 'marche'];
+
+/**
+ * Les compositions proposees : A (ta photo plein cadre) si la famille l'accepte, B (le dessin), C (les donnees, musculation),
+ * et l'autocollant pour les familles AVEC_AUTOCOLLANT quand il lui reste au moins une ligne.
+ */
 export function compositionsPour(d: CarteData, famille: FamilleMoteur): CompositionId[] {
   const out: CompositionId[] = [];
   if (AVEC_PHOTO.includes(famille)) out.push('A');
@@ -175,6 +190,7 @@ export function compositionsPour(d: CarteData, famille: FamilleMoteur): Composit
   if (APLUS_ACTIF && famille === 'muscu') out.push('Aplus');
   out.push('B');
   if (famille === 'muscu' && (d.seance?.barres?.length ?? 0) > 0) out.push('C');
+  if (AVEC_AUTOCOLLANT.includes(famille) && lignesAutocollant(d, famille).length > 0) out.push('autocollant');
   return out;
 }
 
@@ -213,8 +229,85 @@ function nombreDe(v: string | undefined): number | null {
 
 const premiereMaj = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
-/** Le contenu d'une carte pour une famille ; null si les donnees ne suffisent pas */
+/** Ce que le record a gagne sur l'ancien (meme regle que la carte) ; null si inconnu, nul ou pour une allure */
+function gagneDuRecord(d: CarteData, u: UnitePoids): { v: string; u?: string } | null {
+  if (!d.exploit) return null;
+  const e = exploitEnUnite(d.exploit, u);
+  const nv = nombreDe(e.hero.value), av = nombreDe(e.avant?.value);
+  const g = nv != null && av != null ? nv - av : null;
+  if (g == null || g === 0 || d.exploit.type === 'record_allure') return null;
+  return { v: `${g > 0 ? '+' : MOINS}${nombre(Math.abs(g), Math.abs(g) < 10 && g % 1 !== 0 ? 1 : 0)}`, u: e.hero.unit };
+}
+
+/**
+ * Les lignes de l'autocollant, lues dans les vraies donnees de la carte (maquette autocollant.js, proposition A) :
+ *  - seance de musculation : duree, kilos souleves, records ;
+ *  - course : distance, allure, duree ;
+ *  - JJB (et sports de combat) : duree, rounds, ceinture (JJB seulement) ;
+ *  - marche : duree, pente, vitesse (sinon distance sur duree, comme la carte) ;
+ *  - record : le nouveau record, l'ancien, ce qui est gagne.
+ * Une donnee absente ou a 0 : pas de ligne. Jamais de kcal. [] pour les autres familles.
+ */
+export function lignesAutocollant(d: CarteData, famille: FamilleMoteur, u: UnitePoids = 'kg'): LigneAutocollant[] {
+  const s = d.seance;
+  const out: (LigneAutocollant | null)[] = [];
+  switch (famille) {
+    case 'muscu': {
+      if (!s) return [];
+      const t = s.tonnage > 0 ? tonnes(s.tonnage, u) : null;
+      const n = s.records?.length ?? 0;
+      out.push(dureeStat(s.dureeMin), t ? { ic: 'kilos', v: t.v, u: t.u, l: traduire('Kilos soulevés') } : null, n > 0 ? { ic: 'record', v: String(n), l: n > 1 ? traduire('Records') : traduire('Record') } : null);
+      break;
+    }
+    case 'course': {
+      if (!s) return [];
+      const km = s.distanceKm > 0;
+      const al = km ? allure(s.dureeMin, s.distanceKm) : null;
+      out.push(km ? { ic: 'distance', v: nombre(s.distanceKm, s.distanceKm >= 100 ? 0 : 1), u: 'km', l: traduire('Distance') } : null, al ? { ic: 'allure', v: al, u: '/km', l: traduire('Allure') } : null, dureeStat(s.dureeMin));
+      break;
+    }
+    case 'jjb': {
+      if (!s) return [];
+      const ic = iconeDuSport(d.sport || d.titre);
+      const c = ic === 'jjb' ? d.ceintureJjb : null;
+      out.push(
+        dureeStat(s.dureeMin, ic === 'jjb' ? traduire('Sur le tatami') : traduire('Durée')),
+        s.rounds > 0 ? { ic: 'rounds', v: String(s.rounds), l: traduire('Rounds') } : null,
+        c ? { ic: 'ceinture', v: premiereMaj(traduire(c.ceinture)), l: c.degres > 0 ? traduire('Ceinture, {0} degrés', c.degres) : traduire('Ceinture'), ceinture: { couleur: COULEURS_CEINTURE[c.ceinture] ?? '#2563EB', degres: Math.max(0, Math.min(4, c.degres)) } } : null,
+      );
+      break;
+    }
+    case 'marche': {
+      if (!s) return [];
+      const vit = s.vitesseCardio && s.vitesseCardio > 0 ? s.vitesseCardio : s.distanceKm > 0 && s.dureeMin > 0 ? s.distanceKm / (s.dureeMin / 60) : 0;
+      out.push(dureeStat(s.dureeMin), s.penteCardio && s.penteCardio > 0 ? { ic: 'pente', v: nombre(s.penteCardio, 1), u: '%', l: traduire('Pente') } : null, vit > 0 ? { ic: 'vitesse', v: nombre(vit, 1), u: 'km/h', l: traduire('Vitesse') } : null);
+      break;
+    }
+    case 'record': {
+      if (!d.exploit) return [];
+      const e = exploitEnUnite(d.exploit, u);
+      const g = gagneDuRecord(d, u);
+      out.push(
+        e.hero.value ? { ic: 'record', v: e.hero.value, u: e.hero.unit, l: e.accroche || traduire('Nouveau record') } : null,
+        e.avant?.value ? { ic: 'objectif', v: e.avant.value, u: e.avant.unit, l: traduire('Ancien record') } : null,
+        g ? { ic: 'intensite', v: g.v, u: g.u, l: traduire('Gagné') } : null,
+      );
+      break;
+    }
+    default:
+      return [];
+  }
+  return out.filter((x): x is LigneAutocollant => !!x && !!x.v && x.ic !== 'kcal');
+}
+
+/** Le contenu d'une carte pour une famille ; null si les donnees ne suffisent pas (avec les lignes de l'autocollant) */
 export function contenuDe(d: CarteData, famille: FamilleMoteur, u: UnitePoids = 'kg', masque: Masque = 'aucun'): ContenuCarte | null {
+  const c = contenuSansAutocollant(d, famille, u, masque);
+  if (!c || !AVEC_AUTOCOLLANT.includes(famille)) return c;
+  return { ...c, lignesAuto: lignesAutocollant(d, famille, u) };
+}
+
+function contenuSansAutocollant(d: CarteData, famille: FamilleMoteur, u: UnitePoids = 'kg', masque: Masque = 'aucun'): ContenuCarte | null {
   const s = d.seance;
   const nomSport = d.sport || d.titre;
   switch (famille) {
