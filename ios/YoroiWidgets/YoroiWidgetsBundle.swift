@@ -13,6 +13,8 @@ struct YoroiWidgetsBundle: WidgetBundle {
     WidgetCombat()
     WidgetChrono()
     WidgetTableau()
+    WidgetSeanceJour()
+    WidgetPersonnage()
     ActiviteChrono()
     if #available(iOS 18.0, *) {
       ControleChrono()
