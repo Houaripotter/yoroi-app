@@ -15,15 +15,17 @@ public class YoroiPhotoModule: Module {
         "plateforme": YoroiPhotoModule.plateforme,
         "moteur": AnalyseVision.moteur,
         "versionModele": AnalyseVision.versionModele,
+        "tailleDefaut": AnalyseVision.tailleDefaut,
       ]
     }
 
     // File d'attente du module (pas le fil principal) : l'ecran ne se bloque pas pendant l'analyse
-    AsyncFunction("analyserPhoto") { (uri: String) -> [String: Any] in
+    // tailleMax : grand cote de la copie analysee, envoye par index.ts (1024 par defaut), borne par AnalyseVision.taille
+    AsyncFunction("analyserPhoto") { (uri: String, tailleMax: Int?) -> [String: Any] in
       let dossier = self.appContext?.config.cacheDirectory?
         .appendingPathComponent("cartes_tmp", isDirectory: true)
         .appendingPathComponent("masques", isDirectory: true)
-      var d = AnalyseVision.analyser(uri: uri, dossierMasques: dossier).dictionnaire()
+      var d = AnalyseVision.analyser(uri: uri, dossierMasques: dossier, tailleMax: tailleMax).dictionnaire()
       d["plateforme"] = YoroiPhotoModule.plateforme
       return d
     }
