@@ -20,6 +20,7 @@
  * nativement et aucun evenement n'est envoye quand l'app tourne sur un simulateur ou en mode dev.
  */
 import type { Transport } from './telemetryTransport.types';
+import { masquerChemins, masquerCheminsProfond } from './masquageChemins';
 
 let actifCourant = true;
 
@@ -108,6 +109,8 @@ export function __reinitialiserDetection(): void {
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 const masquerNombres = (s: unknown) => (typeof s === 'string' ? s.replace(/\d+(?:[.,]\d+)?/g, '#') : s);
+/** 2 novembre 2026 (confidentialite des cartes) : chemins file://, content://, ph:// et chemins bruts masques d'abord */
+const masquerTexte = (s: unknown) => masquerNombres(masquerChemins(s));
 
 const CATEGORIES_SURES = new Set(['mesure', 'navigation', 'app.lifecycle']);
 
@@ -117,7 +120,8 @@ function filtrerFilAriane(b: any): any | null {
   if (b.category === 'navigation' && b.data) {
     for (const k of ['from', 'to']) if (typeof b.data[k] === 'string') b.data[k] = b.data[k].replace(/\?.*$/, '');
   }
-  if (b.message) b.message = masquerNombres(b.message);
+  if (b.message) b.message = masquerTexte(b.message);
+  if (b.data) b.data = masquerCheminsProfond(b.data);
   return b;
 }
 
@@ -128,12 +132,22 @@ function filtrerEvenement(e: any): any | null {
   delete e.request;
   delete e.server_name;
   if (e.contexts?.device) delete e.contexts.device.name;
-  if (e.message) e.message = masquerNombres(e.message);
-  for (const ex of e.exception?.values ?? []) ex.value = masquerNombres(ex.value);
+  if (e.message) e.message = typeof e.message === 'string' ? masquerTexte(e.message) : masquerCheminsProfond(e.message);
+  if (e.logentry) {
+    if (e.logentry.message) e.logentry.message = masquerTexte(e.logentry.message);
+    if (e.logentry.params) e.logentry.params = masquerCheminsProfond(e.logentry.params);
+  }
+  for (const ex of e.exception?.values ?? []) {
+    ex.value = masquerTexte(ex.value);
+    if (ex.mechanism?.data) ex.mechanism.data = masquerCheminsProfond(ex.mechanism.data);
+  }
   e.breadcrumbs = (e.breadcrumbs ?? []).map(filtrerFilAriane).filter(Boolean);
   delete e.extra;
   return e;
 }
+
+/** Pour les tests seulement : les filtres passes a Sentry (beforeSend, beforeBreadcrumb) */
+export const __filtresSentry = { filtrerEvenement, filtrerFilAriane };
 
 function demarrerSentry(): void {
   if (__DEV__ || sentryPret) return;
