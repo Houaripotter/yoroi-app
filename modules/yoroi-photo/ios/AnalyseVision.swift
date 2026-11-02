@@ -3,7 +3,7 @@
 // les deux mesurent exactement la meme chose : memes requetes, memes revisions, meme reduction, meme masque.
 //
 // 1. La photo est lue depuis un fichier local (file://), jamais depuis internet.
-// 2. Elle est redressee (orientation EXIF) et reduite a 1024 px sur le grand cote, en une passe (ImageIO).
+// 2. Elle est redressee (orientation EXIF) et reduite a tailleMax px sur le grand cote (1024 par defaut), en une passe (ImageIO).
 // 3. Visages : VNDetectFaceRectanglesRequest, revision 3 (iOS 15, macOS 12).
 // 4. Detourage : VNGeneratePersonInstanceMaskRequest, revision 1 (iOS 17, macOS 14), toutes les personnes en un masque.
 //    Avant iOS 17 ou macOS 14 : visages seuls. En cas d'echec : visages seuls. Jamais d'exception vers l'app.
@@ -17,8 +17,30 @@ import ImageIO
 import Vision
 
 public enum AnalyseVision {
-  /// Grand cote de la copie analysee
-  public static let tailleMax = 1024
+  /// Grand cote de la copie analysee, par defaut (le meme que TAILLE_ANALYSE_DEFAUT dans index.ts)
+  public static let tailleDefaut = 1024
+  /// Bornes de la taille demandee (TAILLE_ANALYSE_MIN et TAILLE_ANALYSE_MAX dans index.ts)
+  public static let tailleMin = 512
+  public static let tailleMaxPermise = 2048
+
+  /// Une taille demandee, bornee ; la taille par defaut sans demande
+  public static func taille(_ demandee: Int?) -> Int {
+    guard let t = demandee else { return tailleDefaut }
+    return min(tailleMaxPermise, max(tailleMin, t))
+  }
+
+  /// Memoire residente de l'app, en Mo : maintenant, et le pic depuis le lancement (mach_task_basic_info)
+  public static func memoireMo() -> (actuelle: Double, pic: Double)? {
+    var info = mach_task_basic_info()
+    var n = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size / MemoryLayout<natural_t>.size)
+    let kr = withUnsafeMutablePointer(to: &info) {
+      $0.withMemoryRebound(to: integer_t.self, capacity: Int(n)) {
+        task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &n)
+      }
+    }
+    guard kr == KERN_SUCCESS else { return nil }
+    return (Double(info.resident_size) / 1_048_576, Double(info.resident_size_max) / 1_048_576)
+  }
   public static let moteur = "apple-vision"
 
   public static var detourageDisponible: Bool {
@@ -52,6 +74,10 @@ public enum AnalyseVision {
     public var lumiere: Double?
     public var erreurs: [String] = []
     public var dureeMs = 0.0
+    public var tailleMax = AnalyseVision.tailleDefaut
+    public var memoireAvantMo: Double?
+    public var memoireApresMo: Double?
+    public var memoirePicMo: Double?
 
     /// La reponse pour JavaScript (YoroiPhoto.types.ts) : aucune valeur nil, une cle absente vaut null cote JS
     public func dictionnaire() -> [String: Any] {
@@ -69,8 +95,12 @@ public enum AnalyseVision {
         "detourageDisponible": AnalyseVision.detourageDisponible,
         "erreurs": erreurs,
         "dureeMs": dureeMs,
+        "tailleMax": tailleMax,
       ]
       if let l = lumiere { d["lumiere"] = l }
+      if let m = memoireAvantMo { d["memoireAvantMo"] = m }
+      if let m = memoireApresMo { d["memoireApresMo"] = m }
+      if let m = memoirePicMo { d["memoirePicMo"] = m }
       if let m = masque {
         d["masque"] = [
           "uri": m.url?.absoluteString ?? "",
@@ -90,14 +120,27 @@ public enum AnalyseVision {
     return nil
   }
 
-  public static func analyser(uri: String, dossierMasques: URL?) -> Resultat {
+  /// tailleMax : grand cote de la copie analysee, borne ; 1024 sans demande. La memoire est lue hors du temps mesure.
+  public static func analyser(uri: String, dossierMasques: URL?, tailleMax demandee: Int? = nil) -> Resultat {
+    let avant = memoireMo()?.actuelle
+    var r = analyserCopie(uri: uri, dossierMasques: dossierMasques, tailleMax: taille(demandee))
+    r.memoireAvantMo = avant
+    if let m = memoireMo() {
+      r.memoireApresMo = m.actuelle
+      r.memoirePicMo = m.pic
+    }
+    return r
+  }
+
+  static func analyserCopie(uri: String, dossierMasques: URL?, tailleMax: Int) -> Resultat {
     let debut = Date()
     var r = Resultat()
+    r.tailleMax = tailleMax
     guard let u = url(depuis: uri) else {
       r.erreurs.append("lecture: adresse non locale")
       return r
     }
-    guard let photo = chargerRedressee(u) else {
+    guard let photo = chargerRedressee(u, tailleMax: r.tailleMax) else {
       r.erreurs.append("lecture: photo illisible")
       return r
     }
@@ -148,7 +191,7 @@ public enum AnalyseVision {
 
   /// Lecture, redressement et reduction en une passe (miniature ImageIO avec la transformation EXIF),
   /// puis copie en RGBA 8 bits sRGB : toutes les photos (HEIC 10 bits, PNG, JPEG) arrivent pareil dans Vision.
-  static func chargerRedressee(_ url: URL) -> PhotoChargee? {
+  static func chargerRedressee(_ url: URL, tailleMax: Int) -> PhotoChargee? {
     guard let source = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
     var largeurPhoto = 0, hauteurPhoto = 0
     if let p = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] {
