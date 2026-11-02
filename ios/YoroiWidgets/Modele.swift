@@ -37,8 +37,10 @@ struct PoidsI: Decodable, Equatable {
   var cap: Double? = nil
   var serie30: [PointI] = []
   var ligne30: [PointI] = []
+  /// 28 octobre 2026 : le prochain palier du chemin vers ton cap
+  var palier: PalierI? = nil
 
-  enum K: String, CodingKey { case dernier, ecart, statut, phrase, arrivee, cap, serie30, ligne30 }
+  enum K: String, CodingKey { case dernier, ecart, statut, phrase, arrivee, cap, serie30, ligne30, palier }
 
   init() {}
 
@@ -52,7 +54,97 @@ struct PoidsI: Decodable, Equatable {
     cap = c.lireOpt(.cap)
     serie30 = c.lire(.serie30, [PointI]())
     ligne30 = c.lire(.ligne30, [PointI]())
+    palier = c.lireOpt(.palier)
   }
+}
+
+/// Le prochain palier (25, 50, 75 et 100 % du chemin), calcule par l'app
+struct PalierI: Decodable, Equatable {
+  var kg: Double = 0
+  var reste: Double = 0
+  var dernier = false
+  /// ta part du chemin deja faite (0 a 1)
+  var part: Double = 0
+
+  enum K: String, CodingKey { case kg, reste, dernier, part }
+
+  init() {}
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: K.self)
+    kg = c.lire(.kg, 0.0)
+    reste = max(0, c.lire(.reste, 0.0))
+    dernier = c.lire(.dernier, false)
+    part = min(1, max(0, c.lire(.part, 0.0)))
+  }
+}
+
+/// La seance du jour de ton Coach (textes traduits par l'app)
+struct CoachI: Decodable, Equatable {
+  var titre = ""
+  var programme = ""
+  var exos = 0
+  var minutes = 0
+  var muscles: [String] = []
+  var aujourdhui = false
+  var etat = ""
+  var ensuite = ""
+  var genre = "muscu"
+
+  enum K: String, CodingKey { case titre, programme, exos, minutes, muscles, aujourdhui, etat, ensuite, genre }
+
+  init() {}
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: K.self)
+    titre = c.lire(.titre, "")
+    programme = c.lire(.programme, "")
+    exos = max(0, Int(c.lire(.exos, 0.0).rounded()))
+    minutes = max(0, Int(c.lire(.minutes, 0.0).rounded()))
+    muscles = c.lire(.muscles, [String]())
+    aujourdhui = c.lire(.aujourdhui, false)
+    etat = c.lire(.etat, "")
+    ensuite = c.lire(.ensuite, "")
+    genre = c.lire(.genre, "muscu")
+  }
+
+  /// "6 exos, 45 min"
+  var resume: String {
+    if exos > 0 && minutes > 0 { return String(format: NSLocalizedString("%@ exos, %@ min", comment: ""), "\(exos)", "\(minutes)") }
+    if exos > 0 { return String(format: NSLocalizedString("%@ exos", comment: ""), "\(exos)") }
+    return minutes > 0 ? "\(minutes) min" : programme
+  }
+}
+
+/// Ton rang du Dojo et ton XP
+struct DojoI: Decodable, Equatable {
+  var rang = ""
+  var rangIndex = 0
+  var rangs = 5
+  var xp = 0
+  var suivant: String? = nil
+  var xpSuivant: Int? = nil
+  var part = 0.0
+  var personnage: String? = nil
+
+  enum K: String, CodingKey { case rang, rangIndex, rangs, xp, suivant, xpSuivant, part, personnage }
+
+  init() {}
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: K.self)
+    rang = c.lire(.rang, "")
+    rangIndex = max(0, Int(c.lire(.rangIndex, 0.0).rounded()))
+    rangs = max(1, Int(c.lire(.rangs, 5.0).rounded()))
+    xp = max(0, Int(c.lire(.xp, 0.0).rounded()))
+    suivant = c.lireOpt(.suivant)
+    if let x: Double = c.lireOpt(.xpSuivant) { xpSuivant = Int(x.rounded()) } else { xpSuivant = nil }
+    part = min(1, max(0, c.lire(.part, 0.0)))
+    personnage = c.lireOpt(.personnage)
+  }
+
+  /// XP qu'il reste jusqu'au palier suivant, nil au bout
+  var xpRestant: Int? { xpSuivant.map { max(0, $0 - xp) } }
 }
 
 struct SemaineI: Decodable, Equatable {
@@ -142,8 +234,11 @@ struct Instantane: Decodable, Equatable {
   var eau = EauI()
   var chronos: [ChronoI] = []
   var combat: CombatI? = nil
+  /// 28 octobre 2026 (direction B) : la seance du jour du Coach et ton rang du Dojo
+  var coach: CoachI? = nil
+  var dojo: DojoI? = nil
 
-  enum K: String, CodingKey { case genere, profil, poids, semaine, eau, chronos, combat }
+  enum K: String, CodingKey { case genere, profil, poids, semaine, eau, chronos, combat, coach, dojo }
   enum KP: String, CodingKey { case prenom, unite }
 
   init() {}
@@ -160,6 +255,8 @@ struct Instantane: Decodable, Equatable {
     eau = c.lire(.eau, EauI())
     chronos = c.lire(.chronos, [ChronoI]())
     combat = c.lireOpt(.combat)
+    coach = c.lireOpt(.coach)
+    dojo = c.lireOpt(.dojo)
   }
 
   static func depuisJSON(_ texte: String) -> Instantane? {
@@ -229,6 +326,8 @@ struct EtatYoroi {
   var poids: PoidsI { inst.poids }
   var combat: CombatI? { joursAvantCombat == nil ? nil : inst.combat }
   var chrono: ChronoI? { inst.chronos.first }
+  var coach: CoachI? { inst.coach }
+  var dojo: DojoI? { inst.dojo }
 
   /// Rang du jour dans la semaine (0 lundi ... 6 dimanche)
   var rangAujourdhui: Int { Jours.ecart(de: Jours.lundi(maintenant), a: maintenant) }
