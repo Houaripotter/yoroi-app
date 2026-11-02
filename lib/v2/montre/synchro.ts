@@ -10,6 +10,12 @@ import { logger } from '@/lib/security/logger';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { HYDRATION_AMOUNT_EVENT, HYDRATION_GOAL_EVENT } from '@/lib/v2/accueil/hydration';
 import { ESPACE_CHANGED_EVENT } from '@/lib/v2/espace';
+import { ARMURE_CHANGED_EVENT } from '@/lib/v2/armure';
+import { PROGRAMME_CHANGED_EVENT } from '@/lib/v2/programmes/suivi';
+import { estActionIle, lireActionIle } from '@/lib/v2/seance/actionsIle';
+import type { ActionIle } from '@/lib/v2/seance/actionsIle';
+import { appliquerActionsIleApp } from '@/lib/v2/seance/ileApp';
+import { SEANCE_MONTRE_EVENT } from './seanceMontre';
 import { construireContexte } from './contexte';
 import { lireSourcesContexte } from './sources';
 import { appliquerCharges } from './actions';
@@ -20,6 +26,8 @@ import { activerSessionMontre, chargesEnAttente, ecouterChargesMontre, envoyerCo
 export const CHRONOS_CHANGED_EVENT = 'YOROI_CHRONOS_CHANGED';
 const TORII_EVENT = 'YOROI_TORII_CHANGED';
 const ANTI_REBOND_MS = 2000;
+/** une série validée ou un repos : la montre doit suivre vite (28 octobre 2026) */
+const ANTI_REBOND_SEANCE_MS = 400;
 
 let timer: ReturnType<typeof setTimeout> | null = null;
 let dernierEnvoi = '';
@@ -52,13 +60,32 @@ export async function envoyerContexteMontre(force = false): Promise<boolean> {
 }
 
 /** Envoi groupe : plusieurs changements en 2 s ne font qu'un envoi */
-export function planifierEnvoiMontre(): void {
+export function planifierEnvoiMontre(delai: number = ANTI_REBOND_MS): void {
   if (!pontMontreDisponible()) return;
   if (timer) clearTimeout(timer);
   timer = setTimeout(() => {
     timer = null;
     envoyerContexteMontre().catch(() => undefined);
-  }, ANTI_REBOND_MS);
+  }, delai);
+}
+
+/** Les appuis « Série faite » et « +15 s » de la montre (28 octobre 2026), lus dans les charges recues */
+function actionsIleDe(charges: unknown[]): ActionIle[] {
+  const out: ActionIle[] = [];
+  for (const c of charges) {
+    let o: unknown = c;
+    if (typeof c === 'string') {
+      try {
+        o = JSON.parse(c);
+      } catch {
+        continue;
+      }
+    }
+    if (!estActionIle(o)) continue;
+    const a = lireActionIle(o);
+    if (a) out.push(a);
+  }
+  return out;
 }
 
 let lecture: Promise<void> | null = null;
@@ -73,6 +100,10 @@ export function recevoirActionsMontre(): Promise<void> {
     try {
       const charges = await chargesEnAttente();
       if (charges.length === 0) return;
+      // 28 octobre 2026 : la seance guidee sur la montre ; ces appuis vont a la seance en cours, comme ceux de la
+      // Dynamic Island. appliquerCharges les compte ensuite comme traites (hors contrat des actions montre).
+      const ile = actionsIleDe(charges);
+      if (ile.length > 0) await appliquerActionsIleApp(ile).catch((e) => logger.warn('[Montre] appuis de seance non appliques', e));
       const { appliquees, traitees } = await appliquerCharges(charges);
       await retirerChargesEnAttente(traitees);
       if (appliquees > 0) planifierEnvoiMontre();
@@ -93,9 +124,11 @@ export function demarrerSynchroMontre(): () => void {
   activerSessionMontre()
     .then(() => recevoirActionsMontre())
     .finally(() => planifierEnvoiMontre());
-  const evts = [DATA_CHANGED_EVENT, HYDRATION_AMOUNT_EVENT, HYDRATION_GOAL_EVENT, ESPACE_CHANGED_EVENT, TORII_EVENT, CHRONOS_CHANGED_EVENT].map((e) =>
-    DeviceEventEmitter.addListener(e, planifierEnvoiMontre),
+  const evts = [DATA_CHANGED_EVENT, HYDRATION_AMOUNT_EVENT, HYDRATION_GOAL_EVENT, ESPACE_CHANGED_EVENT, TORII_EVENT, CHRONOS_CHANGED_EVENT, ARMURE_CHANGED_EVENT, PROGRAMME_CHANGED_EVENT].map((e) =>
+    DeviceEventEmitter.addListener(e, () => planifierEnvoiMontre()),
   );
+  // la seance en cours part vite : la montre suit chaque serie et chaque repos
+  evts.push(DeviceEventEmitter.addListener(SEANCE_MONTRE_EVENT, () => planifierEnvoiMontre(ANTI_REBOND_SEANCE_MS)));
   const app = AppState.addEventListener('change', (s) => {
     if (s === 'active') {
       recevoirActionsMontre().finally(() => planifierEnvoiMontre());
