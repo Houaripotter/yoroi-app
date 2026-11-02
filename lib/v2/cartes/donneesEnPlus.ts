@@ -7,7 +7,8 @@
  *  - zone 2 du cardio : FC moyenne mesuree et zone 2 (lib/v2/seances/zone2.ts, Karvonen) ;
  *  - muscles travailles : series validees de la seance (lib/v2/seances/musclesExercices.ts) ;
  *  - kilos souleves de la semaine : charge x repetitions (lib/v2/trainingWeek.ts, libelle kilosSouleves.ts) ;
- *  - trace GPS, temps au kilometre et denivele : seulement s'ils viennent d'une montre ou de Sante.
+ *  - trace GPS, temps au kilometre et denivele : seulement s'ils viennent d'une montre ou de Sante ;
+ *  - kcal : coupees pour l'instant (kcalPourCarte), leur source n'etant pas enregistree.
  * Les fonctions pures sont testees dans __tests__/unit/cartesDonneesEnPlus.test.ts.
  */
 import type { Training } from '@/lib/database';
@@ -106,4 +107,23 @@ export function vientDUnAppareil(t: Pick<Training, 'healthkit_uuid' | 'source'> 
 export function gpsSiAppareil<T extends Pick<DonneesSeance, 'trace' | 'splits' | 'deniveleM'>>(v: T, t: Pick<Training, 'healthkit_uuid' | 'source'>): T {
   if (vientDUnAppareil(t)) return v;
   return { ...v, trace: null, splits: null, deniveleM: 0 };
+}
+
+// ============================================
+// KCAL : COUPEES TANT QUE LEUR SOURCE N'EST PAS CONNUE
+// ============================================
+
+/**
+ * Les kcal a montrer sur une carte de partage. 2 novembre 2026, valide par Houari : aucune pour l'instant.
+ * Pourquoi : la base ne garde pas d'ou viennent les kcal d'une seance. La source de la seance (source, healthkit_uuid)
+ * ne suffit pas : l'ecran de saisie cardio (app/seance/cardio.tsx) permet de changer les kcal de n'importe quelle
+ * seance, meme importee de Sante, et la seance garde sa source d'origine. On ne peut donc pas distinguer des kcal
+ * mesurees par une montre ou Sante de kcal tapees a la main.
+ * Pour les remettre : enregistrer la source des kcal (par exemple une colonne calories_source : montre, sante ou
+ * saisie, remplie a l'import Sante et par la montre YOROI, passee a saisie quand tu les changes a la main), puis
+ * renvoyer ici t.calories seulement si cette source est une montre ou Sante. Les kcal restent partout ailleurs
+ * dans l'app (historique, detail de seance, base) : seules les cartes ne les recoivent plus.
+ */
+export function kcalPourCarte(_t: Pick<Training, 'calories' | 'source' | 'healthkit_uuid'>): number | undefined {
+  return undefined;
 }
