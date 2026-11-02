@@ -438,4 +438,10 @@ export type OptionsCarte = {
    * seulement (jamais memorises). Au moins un chiffre reste toujours.
    */
   cacheMoteur?: string[];
+  /**
+   * 2 novembre 2026 (bloc deplacable) : la place du bloc des chiffres que tu as choisie au doigt, par carte et par
+   * format (cle famille:composition:format, voir lib/v2/cartes/moteur/deplacement.ts), en part de la zone sure (0 a 1).
+   * Absente : la zone protegee automatique (visage, corps) decide. Memorisee avec ton style ; la photo, jamais.
+   */
+  positionsBloc?: Record<string, { x: number; y: number }>;
 };
