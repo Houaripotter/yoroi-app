@@ -18,6 +18,7 @@ import { BackHeader, Bar, CheckIcon, DOJO, LockIcon, tap } from '@/components/yo
 import { BreathingFigure } from '@/components/yoroi/v2/dojo/DojoHero';
 import { usePremium } from '@/context/PremiumContext';
 import { saveEspace } from '@/lib/v2/espace';
+import { track } from '@/utils/telemetry';
 import { useArmure } from '@/lib/v2/dojo/useArmure';
 import {
   PACKS_STORE_READY,
@@ -89,6 +90,7 @@ export default function Pack() {
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     // 27 octobre 2026 : comme la Boutique, un personnage du monde samourai remet l'univers Japon
     void saveEspace(monde ? { personnage: key, univers: 'japon' } : { personnage: key });
+    track('personnage_choisi', { type: pack.kind });
   };
 
   return (
