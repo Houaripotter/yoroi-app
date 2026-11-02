@@ -1,4 +1,5 @@
 import Foundation
+import HealthKit
 import Observation
 import OSLog
 import UserNotifications
@@ -23,6 +24,13 @@ import WidgetKit
 //   en arriere plan desactivee, seance d'entrainement en cours), c'est elle qui previent ;
 // - pause ou annulation : session et notification annulees.
 // Rien n'est envoye a l'iPhone ni ecrit dans Apple Sante.
+//
+// 29 octobre 2026 (Houari : il voyait l'alerte d'Apple, Arreter ou Ouvrir, et pas l'ecran de Yoroi) :
+// tant qu'un minuteur tourne ou sonne, une seance d'entrainement sans enregistrement (MaintienActif,
+// HKWorkoutSession, mode workout-processing deja declare) garde l'app vivante poignet baisse et au
+// premier plan au poignet leve. A la fin, l'app sonne et vibre elle meme et montre son ecran peche :
+// la session d'alarme n'est plus planifiee pendant ce temps (c'est elle qui affichait l'alerte d'Apple).
+// Elle reste en secours sans autorisation Apple Sante. App vraiment quittee : la notification previent.
 
 @Observable
 final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
@@ -33,7 +41,8 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   static let dureeSonnerieMax: TimeInterval = 300
   /// Ecart entre deux salves quand l'app sonne elle meme (premier plan).
   /// 26 octobre 2026 : 1,2 s coupait la salve en cours (elle durait plus longtemps). 1,8 s laisse
-  /// finir la salve (1,6 s), et le wizz tourne en continu par dessus.
+  /// finir la salve (1,8 s depuis le 27 octobre, notification, echec, nouvel essai), et le son tourne
+  /// en continu par dessus.
   static let ecartSonnerie: TimeInterval = 1.8
   /// Ecart entre deux vibrations de la session d'alarme (watchOS demande plus de 0 et 60 s au plus).
   /// 26 octobre 2026 : 0,8 s coupait la vibration et le son precedents avant leur fin, 1 s les laisse finir.
@@ -54,6 +63,19 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   private(set) var sonneEnBoucle = false
   /// Etat de la session d'alarme du dernier minuteur, affiche en mode Modifier pour les essais.
   private(set) var etatAlarme = ""
+  /// 29 octobre 2026 : l'alerte d'alarme d'Apple est a l'ecran (l'app n'etait pas active quand elle a sonne).
+  /// L'ecran peche attend : Arreter dans l'alerte ne le fait plus apparaitre une fraction de seconde,
+  /// Ouvrir le montre et la sonnerie continue jusqu'a Arreter.
+  private(set) var alarmeSysteme = false
+  /// 29 octobre 2026, pour les essais (mode Modifier des minuteurs, Reglages) : etat de la seance de maintien
+  /// et chemin qui a fait sonner la derniere fin de minuteur.
+  private(set) var etatMaintien = "inactive"
+  private(set) var derniereSonnerieVia = ""
+
+  func noterMaintien(_ texte: String) {
+    etatMaintien = texte
+    journal.info("Maintien : \(texte, privacy: .public)")
+  }
   private let journal = Logger(subsystem: "com.houari.yoroi.watchkitapp", category: "minuteur")
 
   @ObservationIgnored private var minuterie: Timer?
@@ -115,6 +137,7 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
 
   /// Reponse a la notification de fin : Arreter, Relancer, toucher la notification ou la fermer.
   func reponseNotification(identifiant: String, action: String, dureeS: Int?) {
+    derniereSonnerieVia = "notification a \(Format.heure(Date()))"
     nettoyer(maintenant: Date(), sonner: false)
     let duree = dureeS ?? sonnerie?.dureeS
     arreterSonnerie()
@@ -150,9 +173,10 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
 
   // MARK: Commandes
 
-  /// Lance un minuteur et renvoie son id.
+  /// Lance un minuteur et renvoie son id. recent : false pour le repos d'une seance guidee (28 octobre 2026),
+  /// qui ne prend pas de place dans tes Recents.
   @discardableResult
-  func lancer(secondes: Int) -> String {
+  func lancer(secondes: Int, recent: Bool = true) -> String {
     let s = min(99 * 60, max(1, secondes))
     let maintenant = Date()
     let a = MinuteurActif(id: UUID().uuidString, dureeS: s, totalS: Double(s), fin: maintenant.addingTimeInterval(Double(s)), restantPause: nil)
@@ -161,9 +185,11 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
       annulerNotification(retire.id)
     }
     etat.actifs.append(a)
-    etat.recents.removeAll { $0 == s }
-    etat.recents.insert(s, at: 0)
-    if etat.recents.count > 8 { etat.recents = Array(etat.recents.prefix(8)) }
+    if recent {
+      etat.recents.removeAll { $0 == s }
+      etat.recents.insert(s, at: 0)
+      if etat.recents.count > 8 { etat.recents = Array(etat.recents.prefix(8)) }
+    }
     if sonnerie != nil { arreterSonnerie() }
     enregistrer()
     planifierNotification(a, maintenant: maintenant)
@@ -196,13 +222,19 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   }
 
   func ajouter30(_ id: String) {
+    ajouter(id, secondes: 30)
+  }
+
+  /// Ajoute du temps a un minuteur (+30 s des minuteurs, +15 s du repos d'une seance guidee).
+  func ajouter(_ id: String, secondes: Int) {
     guard let i = etat.actifs.firstIndex(where: { $0.id == id }) else { return }
+    let plus = Double(max(1, secondes))
     var a = etat.actifs[i]
-    a.totalS += 30
+    a.totalS += plus
     if let f = a.fin {
-      a.fin = f.addingTimeInterval(30)
+      a.fin = f.addingTimeInterval(plus)
     } else {
-      a.restantPause = (a.restantPause ?? 0) + 30
+      a.restantPause = (a.restantPause ?? 0) + plus
     }
     etat.actifs[i] = a
     dernierDecompte[id] = nil
@@ -226,11 +258,13 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   func arreterSonnerie() {
     let id = sonnerie?.id
     sonnerie = nil
+    alarmeSysteme = false
     arreterBoucle()
     if let id { annulerNotification(id) }
     arreterSiInutile()
     // Prochain minuteur encore en marche : on replanifie l'alarme pour lui.
     planifierAlarme()
+    assurerMaintien()
   }
 
   /// Relance la meme duree depuis l'ecran de fin. Renvoie l'id du nouveau minuteur.
@@ -270,6 +304,16 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   func entrerPremierPlan() {
     lireAutorisation()
     resynchroniser()
+    if alarmeSysteme {
+      // Ouvrir dans l'alerte d'Apple : l'ecran peche s'affiche si la sonnerie tourne encore un instant apres
+      // (Arreter dans l'alerte ferme la session tout de suite : rien ne s'affiche alors).
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+        guard self.alarmeSysteme else { return }
+        if self.sonnerie != nil && (self.sonneEnBoucle || self.alarmeEnMarche) {
+          self.alarmeSysteme = false
+        }
+      }
+    }
     // L'app n'a pu replanifier l'alarme qu'au premier plan : on le fait maintenant si besoin.
     planifierAlarme()
     guard let s = sonnerie else { return }
@@ -288,7 +332,7 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   func quitterPremierPlan() {
     // Pendant la session d'alarme, l'app continue a sonner meme ecran eteint : on ne coupe pas.
     // Avant, ce retour en veille coupait la sonnerie de l'app juste apres avoir retire la notification.
-    if !alarmeEnMarche { arreterBoucle() }
+    if !alarmeEnMarche && !entrainementEnCours { arreterBoucle() }
     WidgetCenter.shared.reloadTimelines(ofKind: GenreWidget.minuteurs)
   }
 
@@ -298,6 +342,26 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
 
   /// Vrai quand la session d'alarme tourne : l'app peut sonner et vibrer meme ecran eteint.
   private var alarmeEnMarche: Bool { sessionAlarme?.state == .running }
+
+  /// 28 octobre 2026 : une seance d'entrainement (HKWorkoutSession) tourne. watchOS refuse alors la session
+  /// d'alarme, mais l'app reste vivante poignet baisse et revient au premier plan au poignet leve :
+  /// elle sonne et vibre elle meme, comme au premier plan.
+  private var entrainementEnCours: Bool {
+    (Seance.shared.avecSante && Seance.shared.etat == .enCours) || MaintienActif.shared.tourne
+  }
+
+  /// 29 octobre 2026 : garde l'app au premier plan tant qu'un minuteur tourne ou sonne ; arrete la seance
+  /// de maintien ensuite. Une vraie seance (chrono, seance libre) garde deja l'app : rien a lancer.
+  private func assurerMaintien() {
+    // la sonnerie finie (5 min sans Arreter), plus besoin de garder l'app : la batterie compte
+    let besoin = !etat.actifs.isEmpty || sonneEnBoucle
+    let seanceReelle = Seance.shared.etat == .enCours || Seance.shared.etat == .enPause
+    if besoin && !seanceReelle {
+      MaintienActif.shared.demarrer()
+    } else {
+      MaintienActif.shared.arreter()
+    }
+  }
 
   private func demarrerMinuterie() {
     guard minuterie == nil else { return }
@@ -322,6 +386,13 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
     }
     nettoyer(maintenant: maintenant, sonner: true)
     arreterSiInutile()
+    // une vraie seance vient de finir et un minuteur tourne encore : la seance de maintien reprend
+    if MaintienActif.shared.session == nil && !etat.actifs.isEmpty { assurerMaintien() }
+  }
+
+  /// La seance de maintien n'a pas pu demarrer : la session d'alarme d'avant reprend son role.
+  func maintienEchoue() {
+    planifierAlarme()
   }
 
   /// Retire les minuteurs finis. Celui qui vient de finir ouvre l'ecran Termine.
@@ -336,11 +407,11 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
     for a in finis { dernierDecompte[a.id] = nil }
     if sonner, let recent = finis.filter({ maintenant.timeIntervalSince($0.fin ?? maintenant) < 60 }).last {
       sonnerie = recent
-      if auPremierPlan || alarmeEnMarche {
+      if auPremierPlan || alarmeEnMarche || entrainementEnCours {
         // L'app sonne elle meme : la notification ne doit pas sonner en double.
         annulerNotification(recent.id)
         let aLInstant = maintenant.timeIntervalSince(recent.fin ?? maintenant) < 3
-        if aLInstant || !notifAutorisees || alarmeEnMarche { demarrerBoucle() }
+        if aLInstant || !notifAutorisees || alarmeEnMarche || entrainementEnCours { demarrerBoucle() }
       }
       // Ni l'un ni l'autre : la notification planifiee sonne a l'heure, rien a jouer ici.
     }
@@ -356,6 +427,7 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   private func enregistrer() {
     StockMinuteurs.ecrire(etat)
     WidgetCenter.shared.reloadTimelines(ofKind: GenreWidget.minuteurs)
+    assurerMaintien()
   }
 
   // MARK: Sonnerie (60 s au plus, Arreter coupe tout)
@@ -367,8 +439,15 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
     sonneEnBoucle = true
     finBoucle = Date().addingTimeInterval(MinuteurMoteur.dureeSonnerieMax)
     repetition.jusqua = finBoucle
-    // Le wizz tourne en boucle (session ambiante, haut parleur de la montre) jusqu'a Arreter.
-    Haptique.demarrerWizz()
+    // pour les essais : qui fait sonner
+    let via: String
+    if MaintienActif.shared.tourne { via = "app (seance de maintien)" }
+    else if alarmeEnMarche { via = auPremierPlan ? "app (session d'alarme)" : "alerte d'Apple (session d'alarme)" }
+    else if auPremierPlan { via = "app ouverte" }
+    else { via = "app (seance Sante)" }
+    derniereSonnerieVia = "\(via) a \(Format.heure(Date()))"
+    // Le son de fin tourne en boucle (alarme forte ou wizz, voir Haptique) jusqu'a Arreter.
+    Haptique.demarrerSonnerie()
     if alarmeEnMarche {
       vibrerParSession()
     } else {
@@ -380,7 +459,7 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   }
 
   private func tourDeSonnerie() {
-    guard sonnerie != nil, Date() < finBoucle, auPremierPlan || alarmeEnMarche else {
+    guard sonnerie != nil, Date() < finBoucle, auPremierPlan || alarmeEnMarche || entrainementEnCours else {
       arreterBoucle()
       return
     }
@@ -400,6 +479,7 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
     if alarmeEnMarche { annulerAlarme() }
     guard sonnait else { return }
     Haptique.couper()
+    assurerMaintien()
   }
 
   // MARK: Session d'alarme
@@ -411,6 +491,8 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   private func vibrerParSession() {
     guard let s = sessionAlarme, s.state == .running, !sessionNotifiee else { return }
     sessionNotifiee = true
+    // l'app n'est pas active : watchOS montre son alerte, l'ecran peche attend Ouvrir
+    if !auPremierPlan { alarmeSysteme = true }
     repetition.jusqua = max(finBoucle, Date().addingTimeInterval(5))
     repetition.repartir()
     let r = repetition
@@ -464,6 +546,8 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
     }
     guard auPremierPlan else { return }
     annulerAlarme()
+    // 29 octobre 2026 : l'app restera au premier plan (MaintienActif) : elle sonnera elle meme, sans l'alerte d'Apple
+    if MaintienActif.shared.demande { return }
     guard let c = cible, let fin = c.fin else { return }
     // La session demarre 4 s avant la fin : le temps de relancer l'app et de retirer la notification.
     let avance: TimeInterval = fin.timeIntervalSince(maintenant) > 10 ? 4 : 0
@@ -566,7 +650,7 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
       if !self.etat.actifs.isEmpty { self.demarrerMinuterie() }
       let attente = max(0, (cible?.fin ?? Date()).timeIntervalSinceNow)
       self.minuterieAlarme?.invalidate()
-      let t = Timer(timeInterval: attente, repeats: false) { [weak self] _ in self?.declencherAlarme() }
+      let t = Timer(timeInterval: attente, repeats: false) { _ in MinuteurMoteur.shared.declencherAlarme() }
       RunLoop.main.add(t, forMode: .common)
       self.minuterieAlarme = t
     }
@@ -596,7 +680,13 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
       self.minuterieAlarme = nil
       if self.sonneEnBoucle {
         self.arreterBoucle()
-        if !self.auPremierPlan { self.sonnerie = nil }
+        if !self.auPremierPlan || self.alarmeSysteme { self.sonnerie = nil }
+      }
+      if self.alarmeSysteme {
+        // Arreter dans l'alerte d'Apple : la sonnerie est finie, l'ecran peche ne doit pas apparaitre
+        self.alarmeSysteme = false
+        self.sonnerie = nil
+        self.assurerMaintien()
       }
       self.cibleAlarme = nil
       self.memoriserCible(nil)
@@ -625,5 +715,145 @@ final class Repetition: @unchecked Sendable {
     let t = Repetition.suite[tour % Repetition.suite.count]
     tour += 1
     return t
+  }
+}
+
+/// 29 octobre 2026 : seance d'entrainement de maintien, sans enregistrement (aucune donnee ecrite dans
+/// Apple Sante : pas de HKLiveWorkoutBuilder). Tant qu'elle tourne, watchOS garde l'app vivante poignet
+/// baisse et la remet au premier plan au poignet leve, comme pendant une seance. Elle ne demarre qu'avec
+/// l'autorisation d'ecrire les entrainements dans Apple Sante (deja demandee par les seances) ; sinon les
+/// minuteurs gardent la session d'alarme d'avant. Arretee avant toute vraie seance (Seance.demarrer).
+final class MaintienActif: NSObject, HKWorkoutSessionDelegate, @unchecked Sendable {
+  static let shared = MaintienActif()
+
+  private(set) var session: HKWorkoutSession?
+  /// Un essai rate : pas de nouvel essai avant 30 s.
+  private var echecLe = Date.distantPast
+  private var attenteFin: [CheckedContinuation<Void, Never>] = []
+
+  /// Une seance de maintien a ete demandee (elle demarre en un instant).
+  private(set) var demande = false
+
+  /// La seance de maintien tourne.
+  var tourne: Bool { session?.state == .running }
+
+  /// Note l'etat pour les essais, toujours plus tard sur le fil principal : MaintienActif peut etre appele
+  /// pendant la creation de MinuteurMoteur.shared, qui ne doit pas etre relu a ce moment la.
+  private func noter(_ texte: String) {
+    DispatchQueue.main.async { MinuteurMoteur.shared.noterMaintien(texte) }
+  }
+
+  /// Autorisation Sante en cours de demande (premier minuteur sur cette montre).
+  private var autorisationEnCours = false
+
+  func demarrer() {
+    guard session == nil, !autorisationEnCours else { return }
+    guard Date().timeIntervalSince(echecLe) > 30 else { return }
+    let sante = Sante.shared
+    guard sante.disponible else {
+      noter("impossible : pas d'Apple Sante")
+      return
+    }
+    // 29 octobre 2026 : cause du bug vu par Houari. L'acces Sante aux entrainements n'etait demande qu'au
+    // premier chrono ou a la premiere seance : sans lui la seance de maintien ne demarrait pas, la session
+    // d'alarme sonnait a sa place, avec l'alerte noire d'Apple. Il est maintenant demande au premier minuteur ;
+    // la session d'alarme n'est pas planifiee pendant la demande.
+    guard sante.peutEnregistrerEntrainement else {
+      if sante.store.authorizationStatus(for: HKObjectType.workoutType()) == .notDetermined {
+        autorisationEnCours = true
+        demande = true
+        noter("demande d'acces Sante")
+        Task {
+          _ = await sante.demanderAutorisation()
+          await MainActor.run {
+            self.autorisationEnCours = false
+            self.demande = false
+            if sante.peutEnregistrerEntrainement {
+              self.demarrer()
+              if self.session == nil { MinuteurMoteur.shared.maintienEchoue() }
+            } else {
+              noter("refusee : acces Sante aux entrainements refuse")
+              MinuteurMoteur.shared.maintienEchoue()
+            }
+          }
+        }
+      } else {
+        noter("refusee : acces Sante aux entrainements refuse")
+      }
+      return
+    }
+    let config = HKWorkoutConfiguration()
+    config.activityType = .other
+    config.locationType = .indoor
+    let s: HKWorkoutSession
+    do {
+      s = try HKWorkoutSession(healthStore: sante.store, configuration: config)
+    } catch {
+      echecLe = Date()
+      noter("echec : \(error.localizedDescription)")
+      return
+    }
+    s.delegate = self
+    session = s
+    demande = true
+    s.prepare()
+    s.startActivity(with: Date())
+    noter("demarree")
+  }
+
+  func arreter() {
+    guard let s = session else { return }
+    session = nil
+    demande = false
+    if s.state == .running || s.state == .paused || s.state == .prepared || s.state == .notStarted {
+      s.end()
+    }
+  }
+
+  /// Avant une vraie seance : une seule seance d'entrainement a la fois. Attend la fin (1,5 s au plus).
+  func arreterEtAttendre() async {
+    guard let s = session else { return }
+    await withCheckedContinuation { (suite: CheckedContinuation<Void, Never>) in
+      DispatchQueue.main.async {
+        self.attenteFin.append(suite)
+        self.arreter()
+        if s.state == .ended || s.state == .stopped || s.state == .notStarted { self.libererAttente() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { self.libererAttente() }
+      }
+    }
+  }
+
+  private func libererAttente() {
+    let l = attenteFin
+    attenteFin = []
+    for c in l { c.resume() }
+  }
+
+  func workoutSession(_ workoutSession: HKWorkoutSession, didChangeTo toState: HKWorkoutSessionState, from fromState: HKWorkoutSessionState, date: Date) {
+    DispatchQueue.main.async {
+      if toState == .running, self.session === workoutSession {
+        self.noter("en marche depuis \(Format.heure(Date()))")
+      }
+      if toState == .ended || toState == .stopped {
+        if self.session === workoutSession {
+          self.session = nil
+          self.demande = false
+          self.noter("arretee a \(Format.heure(Date()))")
+        }
+        self.libererAttente()
+      }
+    }
+  }
+
+  func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error) {
+    DispatchQueue.main.async {
+      guard self.session === workoutSession else { return }
+      self.session = nil
+      self.demande = false
+      self.echecLe = Date()
+      self.libererAttente()
+      self.noter("echec : \(error.localizedDescription)")
+      MinuteurMoteur.shared.maintienEchoue()
+    }
   }
 }
