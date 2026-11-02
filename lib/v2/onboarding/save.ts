@@ -95,6 +95,8 @@ export async function saveOnboardingWeighIn(args: {
     await saveWeighIn({ date: todayIso(), weight: args.weight, compo: {} }, history);
     done = { date: todayIso(), weight: args.weight, origin: 'manual' };
   }
+  // mesure : la premiere pesee de l'onboarding (pas celle deja gardee), le fait seulement
+  if (!done.conservee) track('poids_saisi', { methode: 'onboarding' });
   DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
 
   // deja recompensee une premiere fois : on ne refait pas la fete
