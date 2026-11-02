@@ -113,7 +113,7 @@ function charger(monde: Monde, options: { moduleActif?: boolean } = {}): Charge 
 /** Un monde ou le natif ecrit un vrai fichier de masque dans cartes_tmp/masques/ a chaque analyse */
 function monde(moteur: 'ancien' | 'nouveau' | null): Monde {
   const m: Monde = { fs: new Map(), efface: [], stockage: new Map(), natif: null };
-  if (moteur) m.stockage.set('yoroi_cartes_moteur_v1', moteur);
+  if (moteur) m.stockage.set('yoroi_cartes_moteur_v2', moteur);
   let n = 0;
   m.natif = {
     analyserPhoto: jest.fn(async () => {
@@ -142,11 +142,11 @@ describe('moteur « Ancien » : ni Vision ni ML Kit', () => {
     expect(definir.mock.calls.every(([a]) => a === null)).toBe(true);
   });
 
-  it('reglage jamais choisi (premier lancement) : « Ancien » par defaut, aucun appel au natif', async () => {
+  it('reglage jamais choisi (premier lancement) : « Nouveau » par defaut depuis le studio unique, une analyse', async () => {
     const w = monde(null);
     const { analyse } = charger(w);
-    await expect(analyse.analyserPhoto('file:///p.jpg')).resolves.toEqual(analyse.ANALYSE_VIDE);
-    expect(w.natif?.analyserPhoto).not.toHaveBeenCalled();
+    await analyse.analyserPhoto('file:///p.jpg');
+    expect(w.natif?.analyserPhoto).toHaveBeenCalledTimes(1);
   });
 
   it('« Nouveau » : une analyse, le resultat arrive a la carte', async () => {
