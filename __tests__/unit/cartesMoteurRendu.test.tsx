@@ -1,7 +1,7 @@
 /**
  * Cartes v10 (2 novembre 2026) : CarteRendu bascule entre les deux moteurs. Les 10 familles se dessinent avec le
- * nouveau moteur en story et en 4:5 ; l'ancien moteur reste celui par defaut ; une carte que le nouveau ne connait
- * pas (pesee) reste sur l'ancien ; le carre s'ouvre en 4:5.
+ * nouveau moteur en story et en 4:5 ; depuis le studio unique, le nouveau moteur est celui par defaut et dessine
+ * aussi la pesee ; le carre s'ouvre en 4:5.
  */
 import React from 'react';
 import { render } from '@testing-library/react-native';
@@ -45,13 +45,11 @@ test('le carre s ouvre en 4:5 avec le nouveau moteur, reste carre avec l ancien'
   expect(hauteurDe(r).height).toBe(HAUTEURS.post);
 });
 
-test('une pesee reste sur l ancien moteur, meme interrupteur sur nouveau', () => {
-  expect(formatDessine(DEMO_PESEE, opts('carre'), 'nouveau')).toBe('carre');
+test('studio unique : une pesee est dessinee par le nouveau moteur (le carre s ouvre en 4:5)', () => {
+  expect(formatDessine(DEMO_PESEE, opts('carre'), 'nouveau')).toBe('post');
 });
 
-test('sans interrupteur : l ancien moteur par defaut (aucune pastille du nouveau)', () => {
+test('sans moteur force : le nouveau moteur par defaut (la pastille du nouveau)', () => {
   const r = render(<CarteRendu data={DIX_FAMILLES[7].d} options={opts('story')} visuels={{}} />);
-  expect(JSON.stringify(r.toJSON())).not.toContain('MA SEMAINE');
-  const n = render(<CarteRendu data={DIX_FAMILLES[7].d} options={opts('story')} visuels={{}} moteur="nouveau" />);
-  expect(JSON.stringify(n.toJSON())).toContain('MA SEMAINE');
+  expect(JSON.stringify(r.toJSON())).toContain('MA SEMAINE');
 });
