@@ -78,6 +78,43 @@ enum Textes {
     return String(format: NSLocalizedString("Catégorie %@ %@", comment: ""), "\(Fmt.poids(k, livres))", "\(Fmt.unite(livres))")
   }
 
+  // MARK: Style D (28 octobre 2026)
+
+  /// « Palier 78 dans 0,4 kg », « Ton cap dans 0,4 kg », nil sans palier
+  static func palier(_ e: EtatYoroi) -> String? {
+    guard let p = e.poids.palier else { return nil }
+    // un poids rond s'ecrit sans decimale (« Palier 78 »)
+    func court(_ kg: Double) -> String {
+      let v = e.livres ? kg / Fmt.kgParLivre : kg
+      return abs(v - v.rounded()) < 0.05 ? Fmt.entier(v) : Fmt.decimal(v)
+    }
+    let reste = "\(court(p.reste)) \(Fmt.unite(e.livres))"
+    if p.dernier { return String(format: NSLocalizedString("Ton cap dans %@", comment: ""), reste) }
+    return String(format: NSLocalizedString("Palier %@ dans %@", comment: ""), court(p.kg), reste)
+  }
+
+  /// Ta part du chemin vers ton cap (0 a 1), pour placer ton personnage sur les pierres
+  static func partChemin(_ e: EtatYoroi) -> Double {
+    e.poids.palier?.part ?? (e.poids.cap == nil ? 0 : 0.5)
+  }
+
+  /// Ou tu en es avant la pesee du combat (1 : dans ta categorie), pour les marches de la banniere
+  static func partCombat(_ c: CombatI, _ e: EtatYoroi) -> Double {
+    guard let ec = c.ecartKg else { return 0.5 }
+    if ec <= 0.05 { return 1 }
+    return max(0.12, min(0.9, 1 - ec / 6))
+  }
+
+  /// « Bushi », « rang 2 sur 5 »
+  static func rang(_ d: DojoI) -> String {
+    String(format: NSLocalizedString("rang %@ sur %@", comment: ""), "\(d.rangIndex + 1)", "\(d.rangs)")
+  }
+
+  /// « 1 240 XP »
+  static func xp(_ v: Int) -> String {
+    String(format: NSLocalizedString("%@ XP", comment: ""), Fmt.entier(Double(v)))
+  }
+
   /// "aujourd'hui", "hier" ou "12 oct." (en coin de widget)
   static func jourDiscret(_ iso: String, _ maintenant: Date) -> String {
     let t = Fmt.jourRelatif(iso, maintenant)
