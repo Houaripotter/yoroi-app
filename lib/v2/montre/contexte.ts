@@ -49,11 +49,79 @@ export type ContexteMontre = {
     torii?: string;
     /** jours entiers depuis ta derniere pesee (0 aujourd'hui), null sans pesee */
     joursDepuis?: number | null;
+    /**
+     * 28 octobre 2026 (montre et widgets, direction B) : le prochain palier du chemin vers ton cap, meme regle que
+     * la carte Poids de l'accueil (paliers a 25, 50, 75 et 100 % du chemin, paliersDuChemin de
+     * components/yoroi/v2/accueil/CartePoids.tsx). kg : le poids du palier ; reste : ce qu'il reste jusqu'a lui ;
+     * dernier : ce palier est ton cap. Absent sans cap, en maintien ou cap atteint.
+     */
+    palier?: PalierMontre | null;
   };
   semaine: { objectif: number | null; faites: number; jours: boolean[]; lundi: string };
   eau: { ml: number; objectif: number | null; verre: number };
   chronos: ChronoMontre[];
   combat: { date: string; categorieKg: number | null; ecartKg: number | null } | null;
+  /** 28 octobre 2026 : la seance du jour du Coach (programme du catalogue ou le tien), absente sans programme suivi */
+  coach?: CoachMontre | null;
+  /** 28 octobre 2026 : ton rang du Dojo, ton XP et ton personnage (son image part a cote, lib/v2/widgets/synchro.ts) */
+  dojo?: DojoMontre | null;
+  /** 28 octobre 2026 : ta seance de musculation en cours, pour la guider sur la montre (lib/v2/montre/seanceMontre.ts) */
+  seance?: SeanceMontre | null;
+};
+
+/** part : ta part du chemin deja faite (0 a 1), pour placer ton personnage sur le chemin */
+export type PalierMontre = { kg: number; reste: number; dernier: boolean; part: number };
+
+/** Textes deja traduits par l'app : la montre et les widgets les affichent tels quels */
+export type CoachMontre = {
+  /** « Haut du corps » */
+  titre: string;
+  /** « Push Pull Legs » */
+  programme: string;
+  /** nombre d'exercices (0 pour une seance de cardio ou de rounds) */
+  exos: number;
+  /** duree indicative, en minutes */
+  minutes: number;
+  /** muscles travailles, noms traduits, 3 au plus */
+  muscles: string[];
+  /** vrai si c'est la seance a faire aujourd'hui (sinon : repos ou seance deja faite, et la suivante) */
+  aujourdhui: boolean;
+  etat: 'debut' | 'aujourdhui' | 'fait' | 'repos' | 'rattrape';
+  /** « Prochaine séance : jeudi, Jambes A. » un jour de repos, vide sinon */
+  ensuite: string;
+  /** « muscu », « cardio » ou « rounds » */
+  genre: 'muscu' | 'cardio' | 'rounds';
+};
+
+export type DojoMontre = {
+  /** « Bushi », « Shōgun, 2e dan » */
+  rang: string;
+  /** 0 a 4 */
+  rangIndex: number;
+  /** 5 rangs */
+  rangs: number;
+  xp: number;
+  /** palier suivant (« Samouraï »), null au bout */
+  suivant: string | null;
+  /** XP du palier suivant */
+  xpSuivant: number | null;
+  /** 0 a 1 vers le palier suivant */
+  part: number;
+  /** id du personnage choisi (lib/v2/dojo/personnages.ts), null « Sans personnage » */
+  personnage: string | null;
+};
+
+export type ExoSeanceMontre = { id: string; nom: string; faites: number; total: number; repos: number; kg: number; reps: number };
+
+export type SeanceMontre = {
+  titre: string;
+  debutMs: number;
+  /** fin du repos en cours (ms), null pendant l'effort */
+  finReposMs: number | null;
+  reposTotalS: number;
+  /** index de l'exercice en cours */
+  cur: number;
+  exos: ExoSeanceMontre[];
 };
 
 export type ProfilPlan = {
@@ -84,7 +152,25 @@ export type SourcesContexte = {
   eau: { litres: number; objectifLitres: number | null };
   chronos: ChronoMontre[];
   competition: { date: string; categorieKg: number | null } | null;
+  /** 28 octobre 2026 : calcules par sources.ts (ils ont besoin du stockage et des traductions) */
+  coach?: CoachMontre | null;
+  dojo?: DojoMontre | null;
+  seance?: SeanceMontre | null;
 };
+
+/** Paliers du chemin : 25, 50, 75 et 100 % (le dernier, ton cap, porte le torii), comme la carte Poids */
+const PALIERS_CHEMIN = [0.25, 0.5, 0.75, 1] as const;
+
+/** Le prochain palier entre ton depart et ton cap (meme regle que paliersDuChemin de la carte Poids), null sinon */
+export function prochainPalier(depart: number, cap: number, actuel: number): PalierMontre | null {
+  const total = cap - depart;
+  if (!(Math.abs(total) >= 0.1)) return null;
+  const part = Math.max(0, Math.min(1, (actuel - depart) / total));
+  const l = PALIERS_CHEMIN.map((f) => ({ f, kg: Math.round((depart + total * f) * 10) / 10, franchi: part >= f - 1e-6 }));
+  const s = l.find((x) => !x.franchi);
+  if (!s) return null;
+  return { kg: s.kg, reste: Math.max(0, Math.round(Math.abs(actuel - s.kg) * 10) / 10), dernier: s.f === 1, part: Math.round(part * 100) / 100 };
+}
 
 const r1 = (v: number) => Math.round(v * 10) / 10;
 const r2 = (v: number) => Math.round(v * 100) / 100;
@@ -192,6 +278,9 @@ function poidsDe(src: SourcesContexte): ContexteMontre['poids'] {
       }
     }
     if (ligne && torii && torii > today) out.torii = torii;
+    // le prochain palier du chemin, depuis le meme depart que la ligne directrice
+    const dep = t.depart?.poids;
+    if (typeof dep === 'number' && dep > 0) out.palier = prochainPalier(dep, cap, last.value);
   }
   return out;
 }
@@ -228,6 +317,10 @@ export function construireContexte(src: SourcesContexte): ContexteMontre {
           ecartKg: comp.categorieKg != null && poids.dernier ? r1(poids.dernier.kg - comp.categorieKg) : null,
         }
       : null,
+    // champs facultatifs : absents, la montre et les widgets d'avant les ignorent
+    ...(src.coach ? { coach: src.coach } : {}),
+    ...(src.dojo ? { dojo: src.dojo } : {}),
+    ...(src.seance ? { seance: src.seance } : {}),
   };
 }
 
