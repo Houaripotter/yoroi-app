@@ -71,3 +71,22 @@ _archive*
 _verif
 _sauvegarde_avant_mesure
 yoroi-videos
+
+# Exclusions ajoutees le 28 octobre 2026 (archive trop lourde)
+_propositions/**
+!_propositions/**/
+!_propositions/logo/couleurs/yoroi_logo_*_1024.png
+_transfert_claude/
+_archive_ancien_design_2026-10-09/
+_verif/
+.claude/
+*.ipa
+*.aab
+*.apk
+android/app/build/
+android/build/
+android/.gradle/
+android/app/.cxx/
+ios/Pods/
+ios/build/
+node_modules/
