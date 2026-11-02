@@ -33,8 +33,6 @@
 		2CF01094991CD5DCE0C79A07 /* GroupeYoroi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C063FD4F78FADF56318B96 /* GroupeYoroi.swift */; };
 		2D4D3641AB831AE14CF3C9E7 /* Partage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97CF327CBF06800D97DD3975 /* Partage.swift */; };
 		2E44273FBE52F49B338FF7AE /* ChronoAttributs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 436806CE4BF29115EE395172 /* ChronoAttributs.swift */; };
-		DC57ED544B6EB1173ED2391D /* SeanceIle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28703CC4E546F17F9BFD1ACA /* SeanceIle.swift */; };
-		BB904BC4550F0A08824D53DD /* SeanceIle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28703CC4E546F17F9BFD1ACA /* SeanceIle.swift */; };
 		2E6DA36B8BB65641FBA32466 /* ActiviteChrono.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300438CD96AE54ABB379D2C1 /* ActiviteChrono.swift */; };
 		2F3289A7578D7850653B3F03 /* WidgetsSante.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308F2E773F96B438565D2FEC /* WidgetsSante.swift */; };
 		2F648FC4B0C727348C12EE4F /* CourbeJour.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6C10B574A9C12B088E573FF /* CourbeJour.swift */; };
@@ -76,6 +74,7 @@
 		927D6FC93B28CD31C24811AF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 14F08D3C04354160B9E8F92A /* PrivacyInfo.xcprivacy */; };
 		96E71974713307EB78574186 /* Fournisseur.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12713373F39BA5E5B72F4AF9 /* Fournisseur.swift */; };
 		9866B757A0EBA38AAC1A36BC /* YoroiWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 6865ED75B31A3E0530F4354A /* YoroiWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A1A4E0000000000000000001 /* alarme.wav in Resources */ = {isa = PBXBuildFile; fileRef = A1A4E0000000000000000002 /* alarme.wav */; };
 		A1B2C3D400000001 /* TimerAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000010 /* TimerAttributes.swift */; };
 		A1B2C3D400000002 /* YoroiLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000020 /* YoroiLiveActivityManager.swift */; };
 		A1B2C3D400000003 /* YoroiLiveActivityManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000030 /* YoroiLiveActivityManager.m */; };
@@ -87,9 +86,11 @@
 		AB290530F71460AD1566460F /* Action.swift in Sources */ = {isa = PBXBuildFile; fileRef = F99F6965DE6A5EAD7C7133D4 /* Action.swift */; };
 		AE385C4F20322F9411F4948E /* CourbeJour.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6C10B574A9C12B088E573FF /* CourbeJour.swift */; };
 		AFA621F67C5FE8A997A186E9 /* Pods_Yoroi.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0AAA535F1854991A7C0DC7A /* Pods_Yoroi.framework */; };
+		B2B4E0000000000000000001 /* wizz_fort.wav in Resources */ = {isa = PBXBuildFile; fileRef = B2B4E0000000000000000002 /* wizz_fort.wav */; };
 		BA307D34802237D26257FC9B /* Minuteurs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078CE234D4B58CBF4D2DBD39 /* Minuteurs.swift */; };
 		BAC82B5FD8299E2961D8A11B /* Formats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20CAC604479EDEAC5F77E822 /* Formats.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		BB904BC4550F0A08824D53DD /* SeanceIle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28703CC4E546F17F9BFD1ACA /* SeanceIle.swift */; };
 		BE4FCFA00E27EE311B2FDB45 /* Raccourcis.swift in Sources */ = {isa = PBXBuildFile; fileRef = A70FAF6A9BAD6FDFD563CF1E /* Raccourcis.swift */; };
 		BF317DC371549B5D9D2DC355 /* MiniCourbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADA1B0AE2D3E112E413F86DC /* MiniCourbe.swift */; };
 		BGTASK01OBJBUILDF000001 /* BackgroundTaskModule.m in Sources */ = {isa = PBXBuildFile; fileRef = BGTASK01OBJFILEREF000001 /* BackgroundTaskModule.m */; };
@@ -107,6 +108,7 @@
 		D6D98440C02A34740C0F71DA /* WatchConnectivityBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E49616A4A5F9C00ECDA0DD06 /* WatchConnectivityBridge.swift */; };
 		D76A83A0A5F29E001480B2F4 /* DessinsStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1B642C29C1D0044E196CAB8 /* DessinsStyles.swift */; };
 		DA23309D5F1F98A7E8C3ADA0 /* GroupeYoroi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C063FD4F78FADF56318B96 /* GroupeYoroi.swift */; };
+		DC57ED544B6EB1173ED2391D /* SeanceIle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28703CC4E546F17F9BFD1ACA /* SeanceIle.swift */; };
 		DCFA33643A6240F399B65987 /* VuesWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 542CBEA178AA763195A50E87 /* VuesWidgets.swift */; };
 		DD52134B024D5105CE51DBF6 /* FournisseurYoroi.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BE5C0F22F2AC1504234A92 /* FournisseurYoroi.swift */; };
 		DE360AE1C5AF656F2A7E9DA6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8C043AD6DB5E790CFF9E9697 /* Assets.xcassets */; };
@@ -268,6 +270,7 @@
 		20CAC604479EDEAC5F77E822 /* Formats.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Formats.swift; sourceTree = "<group>"; };
 		2271CA4C6402AF138B83E3A4 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Yoroi/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		2541359F7F2B305E00132CB9 /* Optimiste.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Optimiste.swift; sourceTree = "<group>"; };
+		28703CC4E546F17F9BFD1ACA /* SeanceIle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SeanceIle.swift; sourceTree = "<group>"; };
 		2925456CC40465672F0E6288 /* TableauDuJour.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TableauDuJour.swift; sourceTree = "<group>"; };
 		2C0E7DBF14CDDA8917E9800C /* YoroiWatchWidgets.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = YoroiWatchWidgets.entitlements; sourceTree = "<group>"; };
 		2C258586859459E9087B7E10 /* RondMinuteur.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RondMinuteur.swift; sourceTree = "<group>"; };
@@ -278,7 +281,6 @@
 		38DF121D8F7FCBF2DDD2D5B3 /* WatchConnectivityBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = WatchConnectivityBridge.m; sourceTree = "<group>"; };
 		4212EFECB655ED54B895DA96 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		436806CE4BF29115EE395172 /* ChronoAttributs.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChronoAttributs.swift; sourceTree = "<group>"; };
-		28703CC4E546F17F9BFD1ACA /* SeanceIle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SeanceIle.swift; sourceTree = "<group>"; };
 		462F9D7DB5D35352153A07B8 /* Intents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Intents.swift; sourceTree = "<group>"; };
 		49841AC244D54BFE9CC6D2C4 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/HealthKit.framework; sourceTree = DEVELOPER_DIR; };
 		4A9DE26B3DA6190001ED3B65 /* Seance.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Seance.swift; sourceTree = "<group>"; };
@@ -303,6 +305,7 @@
 		98F958FCA6E5C08ACB7EC691 /* SanteCardio.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SanteCardio.swift; sourceTree = "<group>"; };
 		9D6EC3FAE348547B23CEA8B6 /* RacineVue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RacineVue.swift; sourceTree = "<group>"; };
 		9DBE6A78F54DAE5319777641 /* EntrainementVue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EntrainementVue.swift; sourceTree = "<group>"; };
+		A1A4E0000000000000000002 /* alarme.wav */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.wav; path = alarme.wav; sourceTree = "<group>"; };
 		A1B2C3D400000010 /* TimerAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TimerAttributes.swift; path = Yoroi/LiveActivity/TimerAttributes.swift; sourceTree = "<group>"; };
 		A1B2C3D400000020 /* YoroiLiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = YoroiLiveActivityManager.swift; path = Yoroi/LiveActivity/YoroiLiveActivityManager.swift; sourceTree = "<group>"; };
 		A1B2C3D400000030 /* YoroiLiveActivityManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = YoroiLiveActivityManager.m; path = Yoroi/LiveActivity/YoroiLiveActivityManager.m; sourceTree = "<group>"; };
@@ -317,6 +320,7 @@
 		ADC3B5DB6E61379CDD407921 /* MinuteurMoteur.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MinuteurMoteur.swift; sourceTree = "<group>"; };
 		AF382597EC20B8FD8B826009 /* SemaineVue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SemaineVue.swift; sourceTree = "<group>"; };
 		AFB3B17EE4644F3524380151 /* ConfigStyle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConfigStyle.swift; sourceTree = "<group>"; };
+		B2B4E0000000000000000002 /* wizz_fort.wav */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.wav; path = wizz_fort.wav; sourceTree = "<group>"; };
 		BA0F210D88915A040CE036D6 /* YoroiWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = YoroiWatchApp.swift; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		BC4AF5DFF2E9557678D34D77 /* Pods-Yoroi.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yoroi.release.xcconfig"; path = "Target Support Files/Pods-Yoroi/Pods-Yoroi.release.xcconfig"; sourceTree = "<group>"; };
@@ -521,6 +525,8 @@
 				549272E4B9B8D7FBABE2A782 /* Intents */,
 				38006C5E22014945D8819F7B /* gong.mp3 */,
 				0676449BCA0B6F0BA07D2B45 /* clap10.mp3 */,
+				A1A4E0000000000000000002 /* alarme.wav */,
+				B2B4E0000000000000000002 /* wizz_fort.wav */,
 				723297A86426D224C7BB50F9 /* AppShortcuts.strings */,
 			);
 			path = YoroiWatch;
@@ -815,7 +821,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 2710;
+				LastUpgradeCheck = 2720;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1250;
@@ -913,6 +919,8 @@
 				WIZZW4TCH001BUILDF000001 /* wizz.mp3 in Resources */,
 				045D6884D9F56F7D41C7B1E4 /* gong.mp3 in Resources */,
 				F7005E12E2911959273ECC79 /* clap10.mp3 in Resources */,
+				A1A4E0000000000000000001 /* alarme.wav in Resources */,
+				B2B4E0000000000000000001 /* wizz_fort.wav in Resources */,
 				24460A3F5A510E9664FED651 /* AppShortcuts.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1385,7 +1393,7 @@
 				CODE_SIGN_ENTITLEMENTS = Yoroi/Yoroi.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 40;
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_BITCODE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
@@ -1399,7 +1407,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.2;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -1426,7 +1434,7 @@
 				CODE_SIGN_ENTITLEMENTS = Yoroi/Yoroi.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 40;
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				INFOPLIST_FILE = Yoroi/Info.plist;
@@ -1435,7 +1443,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.2;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -1460,7 +1468,7 @@
 				CODE_SIGN_ENTITLEMENTS = YoroiWidgets/YoroiWidgets.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 40;
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -1471,7 +1479,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.2;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi.widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1493,12 +1501,12 @@
 				CODE_SIGN_ENTITLEMENTS = YoroiWatch/YoroiWatch.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 40;
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = YoroiWatch/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.2;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = (
 					"-framework",
@@ -1530,12 +1538,12 @@
 				CODE_SIGN_ENTITLEMENTS = YoroiWatch/YoroiWatch.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 40;
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = YoroiWatch/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.2;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = (
 					"-framework",
@@ -1566,7 +1574,7 @@
 				CODE_SIGN_ENTITLEMENTS = YoroiWidgets/YoroiWidgets.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 40;
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -1577,7 +1585,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.2;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi.widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1756,7 +1764,7 @@
 				CODE_SIGN_ENTITLEMENTS = YoroiWatchWidgets/YoroiWatchWidgets.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 40;
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -1767,7 +1775,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.2;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi.watchkitapp.widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1790,7 +1798,7 @@
 				CODE_SIGN_ENTITLEMENTS = YoroiWatchWidgets/YoroiWatchWidgets.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 40;
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -1801,7 +1809,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.2;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi.watchkitapp.widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
