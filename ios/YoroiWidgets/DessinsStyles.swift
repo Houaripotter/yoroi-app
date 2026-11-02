@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import WidgetKit
 
 // Dessins des trois styles : lanterne (A), losange (C), traits et anneaux au pinceau (B), courbe, anneau,
@@ -228,6 +229,12 @@ struct CourbeW: View {
         .overlay(Circle().stroke(pal.courbe, lineWidth: 1.6))
         .frame(width: 8, height: 8)
         .widgetAccentable()
+    case .d:
+      Circle()
+        .fill(Color.hexa(0xB4471E))
+        .overlay(Circle().stroke(Color.white, lineWidth: 2))
+        .frame(width: 10, height: 10)
+        .widgetAccentable()
     }
   }
 }
@@ -256,6 +263,9 @@ struct AnneauW: View {
         Circle().stroke(pal.piste, lineWidth: epaisseur)
         Circle().inset(by: epaisseur * 0.5 + 3).stroke(pal.trait, lineWidth: 0.8)
         arc
+      case .d:
+        Circle().stroke(pal.piste, lineWidth: epaisseur)
+        arc
       }
     }
     .padding(epaisseur / 2)
@@ -282,7 +292,7 @@ struct PointsW: View {
   static let initiales: [String] = { var c = Calendar(identifier: .gregorian); c.locale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "fr"); let s = c.veryShortStandaloneWeekdaySymbols; return Array(s[1...]) + [s[0]] }()
 
   var body: some View {
-    HStack(spacing: taille * (pal.style == .b ? 0.28 : 0.42)) {
+    HStack(spacing: taille * (pal.style == .b ? 0.28 : (pal.style == .d ? 0.36 : 0.42))) {
       ForEach(0..<7, id: \.self) { i in
         let fait = i < jours.count && jours[i]
         VStack(spacing: 3) {
@@ -334,6 +344,9 @@ struct PointsW: View {
       } else {
         Losange().stroke(i == aujourdhui ? pal.texte.opacity(0.8) : pal.avenir, lineWidth: 1)
       }
+    case .d:
+      // une petite lanterne : allumee les jours de seance, cernee aujourd'hui
+      LanterneD(allumee: fait, aujourdhui: i == aujourdhui, pal: pal)
     }
   }
 }
@@ -412,6 +425,15 @@ struct RondW<Contenu: View>: View {
           .widgetAccentable()
       }
       Circle().inset(by: 5.5).stroke(Color.primary.opacity(0.55), lineWidth: 0.8)
+    case .d:
+      // anneau fin, comme la maquette de l'ecran verrouille
+      Circle().inset(by: 2.5).stroke(Color.primary.opacity(0.28), lineWidth: 3.5)
+      Circle()
+        .inset(by: 2.5)
+        .trim(from: 0, to: f)
+        .stroke(Color.primary, style: StrokeStyle(lineWidth: 3.5, lineCap: .round))
+        .rotationEffect(.degrees(-90))
+        .widgetAccentable()
     }
   }
 }
@@ -432,6 +454,8 @@ struct TitreVerrou: View {
       case .c:
         Losange().frame(width: 7, height: 7)
         Text(texte.uppercased()).font(.system(size: 11, weight: .bold, design: .rounded)).tracking(1.2)
+      case .d:
+        Text(texte.uppercased()).font(.system(size: 10.5, weight: .heavy, design: .rounded)).tracking(1.3)
       }
     }
     .lineLimit(1)
@@ -444,6 +468,8 @@ struct TitreW: View {
   let pal: Palette
   let texte: String
   var taille: CGFloat = 13
+  /// style D : la couleur des capitales du widget (peche brun pour le poids, bleu pour la semaine...)
+  var couleurD: Color? = nil
 
   var body: some View {
     HStack(spacing: 5) {
@@ -469,9 +495,318 @@ struct TitreW: View {
           .font(.system(size: max(10, taille - 2), weight: .bold, design: .rounded))
           .tracking(1.4)
           .foregroundStyle(pal.titre)
+      case .d:
+        // petites capitales espacees, sans ornement (maquette Widgets-B)
+        Text(texte.uppercased())
+          .font(.system(size: max(10, taille - 1.5), weight: .heavy, design: .rounded))
+          .tracking(1.5)
+          .foregroundStyle(couleurD ?? pal.titre)
+          .widgetAccentable()
       }
     }
     .lineLimit(1)
     .minimumScaleFactor(0.8)
+  }
+}
+
+// MARK: - Style D (28 octobre 2026) : dessins des scenes illustrees
+
+/// Une lanterne de papier : allumee (orange doux, lueur) ou eteinte (gris lavande), cernee de marine aujourd'hui.
+struct LanterneD: View {
+  var allumee: Bool
+  var aujourdhui: Bool
+  let pal: Palette
+
+  var body: some View {
+    GeometryReader { g in
+      let w = g.size.width
+      let h = g.size.height
+      ZStack {
+        RoundedRectangle(cornerRadius: w * 0.5, style: .continuous)
+          .fill(allumee ? pal.fait : pal.avenir)
+          .shadow(color: allumee ? Color.hexa(0xFFBE78).opacity(0.85) : .clear, radius: w * 0.35)
+        RoundedRectangle(cornerRadius: w * 0.5, style: .continuous)
+          .fill(Color.black.opacity(0.06))
+          .frame(height: h * 0.14)
+          .frame(maxHeight: .infinity, alignment: .bottom)
+        if aujourdhui {
+          RoundedRectangle(cornerRadius: w * 0.55, style: .continuous)
+            .stroke(Color.hexa(0x23358F), lineWidth: max(1.5, w * 0.12))
+            .padding(-w * 0.12)
+        }
+      }
+    }
+    .widgetAccentable(allumee)
+    .accessibilityHidden(true)
+  }
+}
+
+/// Le fil des lanternes, une courbe molle d'un bord a l'autre.
+struct FilLanternes: Shape {
+  func path(in r: CGRect) -> Path {
+    var p = Path()
+    p.move(to: CGPoint(x: r.minX, y: r.minY + r.height * 0.25))
+    p.addQuadCurve(to: CGPoint(x: r.maxX, y: r.minY + r.height * 0.25), control: CGPoint(x: r.midX, y: r.minY + r.height * 1.2))
+    return p
+  }
+}
+
+/// Les sept lanternes de la semaine, accrochees au fil, lettres des jours dessous.
+struct SemaineLanternes: View {
+  let pal: Palette
+  var jours: [Bool]
+  var aujourdhui: Int
+  var largeur: CGFloat
+  var hauteur: CGFloat = 16
+
+  var body: some View {
+    let pas = largeur / 7
+    ZStack(alignment: .topLeading) {
+      FilLanternes()
+        .stroke(pal.sombre ? pal.doux : Color.hexa(0x8C91AA), lineWidth: 1.3)
+        .frame(width: largeur, height: 16)
+      HStack(spacing: 0) {
+        ForEach(0..<7, id: \.self) { i in
+          // les lanternes du milieu pendent un peu plus bas, comme sur le fil
+          let creux: CGFloat = i == 3 ? 7 : ((i == 2 || i == 4) ? 6 : ((i == 1 || i == 5) ? 3.5 : 0))
+          VStack(spacing: 2) {
+            Rectangle().fill(pal.sombre ? pal.doux : Color.hexa(0x8C91AA)).frame(width: 1.3, height: 6 + creux)
+            LanterneD(allumee: i < jours.count && jours[i], aujourdhui: i == aujourdhui, pal: pal)
+              .frame(width: hauteur * 0.72, height: hauteur)
+            Text(PointsW.initiales[i])
+              .font(.system(size: 9.5, weight: .heavy, design: .rounded))
+              .foregroundStyle(i == aujourdhui ? pal.texte : pal.doux)
+          }
+          .frame(width: pas)
+        }
+      }
+      .padding(.top, 4)
+    }
+    .frame(width: largeur, alignment: .topLeading)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel("\(jours.filter { $0 }.count) lanternes allumées cette semaine")
+  }
+}
+
+/// Le chemin du poids : colline, pierres de gue jusqu'au torii, soleil, et ton personnage sur sa pierre.
+struct CheminPierres: View {
+  let pal: Palette
+  /// part du chemin deja faite (0 a 1), pour placer ton personnage
+  var part: Double
+  var personnage: UIImage?
+
+  var body: some View {
+    GeometryReader { g in
+      let w = g.size.width
+      let h = g.size.height
+      // pierres le long d'une diagonale douce, du bas gauche vers le torii en haut a droite
+      let pierres: [CGPoint] = (0..<4).map { i in
+        let t = CGFloat(i) / 3
+        return CGPoint(x: w * (0.14 + 0.52 * t), y: h * (0.86 - 0.20 * t))
+      }
+      let ici = min(3, max(0, Int((part * 3).rounded())))
+      ZStack(alignment: .topLeading) {
+        Circle()
+          .fill(Color.hexa(pal.sombre ? 0x5A3A34 : 0xFFD2BF))
+          .frame(width: w * 0.18, height: w * 0.18)
+          .position(x: w * 0.86, y: h * 0.2)
+        Colline(haut: 0.56)
+          .fill(Color.hexa(pal.sombre ? 0x233A30 : 0xCDEBDB))
+        Colline(haut: 0.82)
+          .fill(Color.hexa(pal.sombre ? 0x1D3128 : 0xB5E0C8))
+        ForEach(0..<4, id: \.self) { i in
+          Ellipse()
+            .fill(Color.white.opacity(pal.sombre ? 0.75 : 0.95))
+            .overlay(Ellipse().fill(Color.hexa(0xC9D3F5).opacity(0.6)).offset(y: 2))
+            .frame(width: w * (0.16 - 0.015 * CGFloat(i)), height: 9)
+            .position(pierres[i])
+        }
+        ZStack {
+          ToriiRouge().fill(Color.hexa(0xF0896A))
+          ToriiNoir().fill(Color.hexa(0xF0896A))
+        }
+        .aspectRatio(1.1, contentMode: .fit)
+        .frame(width: w * 0.22)
+        .position(x: w * 0.84, y: h * 0.56)
+        .widgetAccentable()
+        if let personnage {
+          let p = pierres[ici]
+          Image(uiImage: personnage)
+            .resizable()
+            .scaledToFit()
+            .frame(height: w * 0.3)
+            .clipShape(Circle())
+            .background(Circle().fill(Color.white))
+            .overlay(Circle().stroke(Color.white, lineWidth: 2))
+            .frame(width: w * 0.18, height: w * 0.18)
+            .clipShape(Circle())
+            .position(x: p.x, y: p.y - w * 0.11)
+        }
+      }
+    }
+    .accessibilityHidden(true)
+  }
+}
+
+/// Une colline qui monte vers la droite, remplie jusqu'en bas.
+struct Colline: Shape {
+  /// hauteur du bord gauche, en part de la hauteur (0 en haut)
+  var haut: CGFloat
+
+  func path(in r: CGRect) -> Path {
+    var p = Path()
+    p.move(to: CGPoint(x: r.minX, y: r.minY + r.height * min(0.98, haut + 0.06)))
+    p.addCurve(to: CGPoint(x: r.maxX, y: r.minY + r.height * haut),
+               control1: CGPoint(x: r.minX + r.width * 0.35, y: r.minY + r.height * (haut - 0.08)),
+               control2: CGPoint(x: r.minX + r.width * 0.65, y: r.minY + r.height * (haut + 0.06)))
+    p.addLine(to: CGPoint(x: r.maxX, y: r.maxY))
+    p.addLine(to: CGPoint(x: r.minX, y: r.maxY))
+    p.closeSubpath()
+    return p
+  }
+}
+
+/// Une pastille de texte (« Pecs », « Dos »)
+struct PastilleD: View {
+  var texte: String
+  var fond: Color
+  var encre: Color
+
+  var body: some View {
+    Text(texte)
+      .font(.system(size: 11, weight: .heavy, design: .rounded))
+      .foregroundStyle(encre)
+      .lineLimit(1)
+      .padding(.horizontal, 9)
+      .frame(height: 22)
+      .background(fond, in: Capsule())
+  }
+}
+
+/// Barre de progression vers le rang suivant, lilas vers peche.
+struct BarreRang: View {
+  var part: Double
+  var hauteur: CGFloat = 8
+
+  var body: some View {
+    GeometryReader { g in
+      ZStack(alignment: .leading) {
+        Capsule().fill(Color.hexa(0xECEEF5))
+        Capsule()
+          .fill(LinearGradient(colors: [Color.hexa(0xC9B3E6), Color.hexa(0xF4A38C)], startPoint: .leading, endPoint: .trailing))
+          .frame(width: max(hauteur, g.size.width * CGFloat(min(1, max(0, part)))))
+          .widgetAccentable()
+      }
+    }
+    .frame(height: hauteur)
+    .accessibilityHidden(true)
+  }
+}
+
+/// Une capsule de verre depoli, lisible sur ta scene.
+extension View {
+  func verreD(_ rayon: CGFloat = 17) -> some View {
+    self.background(Color.white.opacity(0.9), in: RoundedRectangle(cornerRadius: rayon, style: .continuous))
+  }
+}
+
+/// La banniere du combat : un tissu accroche, coupe en V en bas.
+struct BanniereD: Shape {
+  func path(in r: CGRect) -> Path {
+    var p = Path()
+    p.move(to: CGPoint(x: r.minX, y: r.minY))
+    p.addLine(to: CGPoint(x: r.maxX, y: r.minY))
+    p.addLine(to: CGPoint(x: r.maxX, y: r.maxY))
+    p.addLine(to: CGPoint(x: r.midX, y: r.maxY - r.width * 0.18))
+    p.addLine(to: CGPoint(x: r.minX, y: r.maxY))
+    p.closeSubpath()
+    return p
+  }
+}
+
+/// Les marches jusqu'a la pesee : un trace en escalier, la part faite en peche, ton point, le torii au bout.
+struct MarchesPesee: View {
+  var part: Double
+
+  var body: some View {
+    GeometryReader { g in
+      let w = g.size.width - 30
+      let h = g.size.height
+      let f = CGFloat(min(1, max(0, part)))
+      ZStack(alignment: .topLeading) {
+        Escalier(fin: 1).stroke(Color.white, style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
+          .frame(width: w, height: h * 0.7)
+        Escalier(fin: f).stroke(Color.hexa(0xE9764F), style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
+          .frame(width: w, height: h * 0.7)
+          .widgetAccentable()
+        Circle()
+          .fill(Color.hexa(0xB4471E))
+          .overlay(Circle().stroke(Color.white, lineWidth: 3))
+          .frame(width: 12, height: 12)
+          .position(Escalier.point(f, CGSize(width: w, height: h * 0.7)))
+        ZStack {
+          ToriiRouge().fill(Color.hexa(0xF0896A))
+          ToriiNoir().fill(Color.hexa(0xF0896A))
+        }
+        .aspectRatio(1.1, contentMode: .fit)
+        .frame(width: 24)
+        .position(x: w + 18, y: h * 0.45)
+      }
+    }
+    .accessibilityHidden(true)
+  }
+}
+
+/// Trois marches qui descendent vers la droite, tracees jusqu'a la part `fin` (0 a 1).
+struct Escalier: Shape {
+  var fin: CGFloat
+
+  /// Le point du trace a la part t
+  static func point(_ t: CGFloat, _ s: CGSize) -> CGPoint {
+    let pts = sommets(s)
+    let total = longueurs(pts).reduce(0, +)
+    var reste = max(0, min(1, t)) * total
+    for i in 1..<pts.count {
+      let a = pts[i - 1], b = pts[i]
+      let l = hypot(b.x - a.x, b.y - a.y)
+      if reste <= l || i == pts.count - 1 {
+        let k = l > 0 ? min(1, reste / l) : 0
+        return CGPoint(x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k)
+      }
+      reste -= l
+    }
+    return pts.last ?? .zero
+  }
+
+  static func sommets(_ s: CGSize) -> [CGPoint] {
+    let w = s.width, h = s.height
+    return [CGPoint(x: 2, y: h * 0.2), CGPoint(x: w * 0.3, y: h * 0.2), CGPoint(x: w * 0.3, y: h * 0.5),
+            CGPoint(x: w * 0.6, y: h * 0.5), CGPoint(x: w * 0.6, y: h * 0.8), CGPoint(x: w - 2, y: h * 0.8)]
+  }
+
+  static func longueurs(_ pts: [CGPoint]) -> [CGFloat] {
+    guard pts.count > 1 else { return [] }
+    return (1..<pts.count).map { i in hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y) }
+  }
+
+  func path(in r: CGRect) -> Path {
+    var p = Path()
+    let pts = Escalier.sommets(r.size)
+    guard fin > 0.001 else { return p }
+    p.move(to: pts[0])
+    let total = Escalier.longueurs(pts).reduce(0, +)
+    var reste = min(1, fin) * total
+    for i in 1..<pts.count {
+      let a = pts[i - 1], b = pts[i]
+      let l = hypot(b.x - a.x, b.y - a.y)
+      if reste <= l {
+        let k = l > 0 ? reste / l : 0
+        p.addLine(to: CGPoint(x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k))
+        return p
+      }
+      p.addLine(to: b)
+      reste -= l
+    }
+    return p
   }
 }
