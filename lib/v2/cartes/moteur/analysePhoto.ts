@@ -21,6 +21,12 @@ import type { MasqueGris, NiveauCarte } from './critereAplus';
 /** A+ est desactive : la composition ne peut pas etre affichee (decision a part, apres le banc) */
 export const APLUS_ACTIF = false as const;
 
+/**
+ * Interrupteur du module photo. Faux : analyserPhoto rend toujours la reponse vide, sans appeler le natif,
+ * et la carte retombe sur la zone sure et ton recadrage au doigt, comme avant la phase native. Retour arriere sans build natif.
+ */
+export const MODULE_PHOTO_ACTIF: boolean = true;
+
 /** Une boite en part de la photo, de 0 a 1, origine en haut a gauche */
 export type BoitePart = { x: number; y: number; l: number; h: number };
 
@@ -111,7 +117,7 @@ export function depuisReponse(r: ReponseNative): AnalysePhoto {
  */
 export async function analyserPhoto(uri: string | null | undefined): Promise<AnalysePhoto> {
   try {
-    if (!uri) return { ...ANALYSE_VIDE, visages: [], raisons: [] };
+    if (!uri || !MODULE_PHOTO_ACTIF) return { ...ANALYSE_VIDE, visages: [], raisons: [] };
     const r = await analyserNatif(uri);
     if (!r.moteur) return { ...ANALYSE_VIDE, visages: [], raisons: [] };
     return depuisReponse(r);
