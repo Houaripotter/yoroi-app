@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ton personnage, style D (30 octobre 2026, comme sur iPhone) : ta scene en fond, ton personnage,
+     ton rang et la barre vers le rang suivant dans une capsule de verre. Un appui ouvre le Dojo. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/yw_d_fond_scene"
+    android:clipToOutline="true">
+  <ImageView android:id="@+id/yw_fond_img" android:layout_width="match_parent" android:layout_height="match_parent"
+      android:scaleType="centerCrop" android:src="@drawable/yw_d_fond_scene" android:importantForAccessibility="no" />
+  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:layout_gravity="bottom" android:layout_margin="10dp"
+      android:orientation="vertical" android:background="@drawable/yw_d_verre"
+      android:paddingLeft="10dp" android:paddingRight="10dp" android:paddingTop="8dp" android:paddingBottom="8dp">
+    <TextView android:id="@+id/yw_p_rang" style="@style/YwTitre"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:textSize="13sp" android:textStyle="bold" android:textColor="@color/yw_d_rang"
+        android:text="@string/yw_nom_perso" />
+    <ImageView android:id="@+id/yw_p_barre" android:layout_width="match_parent" android:layout_height="5dp"
+        android:layout_marginTop="5dp" android:scaleType="fitXY" android:src="@drawable/yw_d_barre_vide"
+        android:importantForAccessibility="no" />
+  </LinearLayout>
+</FrameLayout>
