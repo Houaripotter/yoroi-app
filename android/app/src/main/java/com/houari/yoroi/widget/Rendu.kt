@@ -22,6 +22,9 @@ object Liens {
     const val COMBAT = "yoroi://w/combat"
     const val AJOUT_COMPET = "yoroi://w/ajout-combat"
     const val CHRONO = "yoroi://w/timer?mode=combat"
+    /** 30 octobre 2026 : ta seance du jour (ecran Coach) et ton rang (Dojo), memes liens que sur iPhone */
+    const val COACH = "yoroi://w/coach"
+    const val DOJO = "yoroi://w/dojo"
 
     const val ACTION_EAU_PLUS = "com.houari.yoroi.widget.EAU_PLUS"
     const val ACTION_EAU_MOINS = "com.houari.yoroi.widget.EAU_MOINS"
