@@ -12,6 +12,11 @@
  *  - autocollant : tes chiffres empiles et le logo, sans fond (proposition A de _propositions/autocollant_2026-11-02,
  *    agrandie de 30 % sur la story). L'export ne prend que l'autocollant, environ 700 px de large (EXPORT_AUTOCOLLANT).
  * Testee dans __tests__/unit/cartesMoteurMiseEnPage.test.ts et cartesMoteurAutocollant.test.ts.
+ *
+ * 2 novembre 2026 (bloc deplacable) : sur Ta photo et sur l'Autocollant, le bloc des chiffres peut etre pose au doigt
+ * (positionBloc, relative a la zone sure, deplacement.ts). Sans position choisie, la zone protegee decide comme avant.
+ * Le plan donne alors la zone ou le bloc peut aller (deplacement), pour le geste du studio ; l'export dessine le
+ * meme plan, donc le bloc est exactement a la meme place relative que dans l'apercu.
  */
 import type { CompositionId } from '../types';
 import { arretsDegrade, forceDegrade } from './degrade';
@@ -20,6 +25,8 @@ import type { ContenuCarte, IconeId, LigneAutocollant } from './familles';
 import { cotes, GRILLE, hauteurBloc, hauteurPhoto, largeurTexte } from './grille';
 import type { Cotes, FormatMoteur } from './grille';
 import { placer } from './protection';
+import { bornesBloc, versPixels } from './deplacement';
+import type { BornesBloc, PositionBloc } from './deplacement';
 import type { PhotoMesuree, Placement, Recadrage } from './protection';
 
 export type Rect = { x: number; y: number; w: number; h: number };
@@ -86,6 +93,11 @@ export type Plan = {
   photo: { placement: Placement; arrets: Arret[]; force: number } | null;
   /** la composition autocollant : son plan, null sinon */
   autocollant?: PlanAutocollant | null;
+  /**
+   * Ta photo et l'autocollant : le bloc deplacable (sa place, en pixels de la carte), la zone ou son haut gauche peut
+   * aller, et si la place vient de toi (choisi) ou de la zone protegee automatique. null ailleurs.
+   */
+  deplacement?: (Rect & { bornes: BornesBloc; choisi: boolean }) | null;
 };
 
 export type EntreeMiseEnPage = {
@@ -99,6 +111,8 @@ export type EntreeMiseEnPage = {
   /** lumiere de la photo derriere le bloc et derriere la pastille, de 0 a 1, null si inconnue */
   lumiere?: number | null;
   lumiereHaut?: number | null;
+  /** la place du bloc des chiffres choisie au doigt (0 a 1 dans la zone sure), null : la place automatique */
+  positionBloc?: PositionBloc | null;
 };
 
 const SPECIAUX_45 = ['record', 'serie', 'transfo', 'muscles', 'semaine', 'annee'];
@@ -125,7 +139,14 @@ export function mettreEnPage(e: EntreeMiseEnPage): Plan {
     const a = autocollant(contenu.lignesAuto ?? [], Y1 - G.HAUT);
     a.x = Math.round((G.W - a.w) / 2);
     a.y = Math.round(G.HAUT + (Y1 - G.HAUT - a.h) / 2);
-    return { ...base, type: 'autocollant', bloc: null, visuel: { x: a.x, y: a.y, w: a.w, h: a.h }, autocollant: a };
+    const bornes = bornesBloc(format, a.w, a.h);
+    if (e.positionBloc) {
+      const p = versPixels(e.positionBloc, bornes);
+      a.x = p.x;
+      a.y = p.y;
+    }
+    const deplacement = { x: a.x, y: a.y, w: a.w, h: a.h, bornes, choisi: !!e.positionBloc };
+    return { ...base, type: 'autocollant', bloc: null, visuel: { x: a.x, y: a.y, w: a.w, h: a.h }, autocollant: a, deplacement };
   }
 
   // seance de musculation C : le tableau des kilos par serie, dans un seul bloc blanc
@@ -143,9 +164,19 @@ export function mettreEnPage(e: EntreeMiseEnPage): Plan {
   if (e.compo === 'A' && contenu.famille !== 'transfo' && e.photo) {
     const placement = placer(e.photo, format, { regle: contenu.famille === 'muscu' ? 'A' : 'famille', corpsToujours: !!contenu.corps, recadrage: e.recadrage });
     const b = blocDe(placement.top, placement.compact);
+    const bornes = bornesBloc(format, b.w, b.h);
+    let pl: Placement = placement;
+    if (e.positionBloc) {
+      // ta place l'emporte sur la zone protegee ; le degrade suit le bloc (fonce derriere lui, en haut ou en bas)
+      const p = versPixels(e.positionBloc, bornes);
+      b.x = p.x;
+      b.y = p.y;
+      pl = { ...placement, top: p.y, mode: p.y + b.h / 2 < RH / 2 ? 'haut' : 'bas', etapes: [...placement.etapes, 'deplace_au_doigt'] };
+    }
     const force = forceDegrade(e.lumiere, style);
-    const arrets = arretsDegrade(placement, b.h, RH, G.HAUT, G.PASTILLE, force, e.lumiereHaut);
-    return { ...base, type: 'photo', bloc: b, visuel: null, photo: { placement, arrets, force } };
+    const arrets = arretsDegrade(pl, b.h, RH, G.HAUT, G.PASTILLE, force, e.lumiereHaut);
+    const deplacement = { x: b.x, y: b.y, w: b.w, h: b.h, bornes, choisi: !!e.positionBloc };
+    return { ...base, type: 'photo', bloc: b, visuel: null, photo: { placement: pl, arrets, force }, deplacement };
   }
 
   // 4:5 sans photo, les compositions propres au format
