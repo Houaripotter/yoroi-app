@@ -1433,6 +1433,10 @@ export const importDataFromBackupObject = async (importedData: any, opts?: { alr
             what_didnt_work: training.what_didnt_work,
             session_rating: training.session_rating,
             session_mood: training.session_mood,
+            // 2 novembre 2026 : source des kcal (vide dans une sauvegarde plus ancienne : reste vide)
+            calories_source: training.calories_source,
+            calories_appareil: training.calories_appareil,
+            calories_mesurees: training.calories_mesurees,
           } as any);
           await keepCreatedAt('trainings', newId, raw?.created_at);
           if (newId) {
