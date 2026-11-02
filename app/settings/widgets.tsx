@@ -11,10 +11,12 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Card, EspaceScreen, GUTTER, Icon } from '@/components/yoroi/v2/espace/ui';
-import { STYLES_WIDGETS, setStyleWidgets, useStyleWidgets, type StyleWidgets } from '@/lib/v2/widgets/style';
+import { STYLES_WIDGETS, STYLE_WIDGETS_PAR_DEFAUT, setStyleWidgets, useStyleWidgets, type StyleWidgets } from '@/lib/v2/widgets/style';
 import { traduire } from '@/lib/i18n/tr';
 
 const APERCUS: Record<StyleWidgets, { clair: number; sombre: number }> = {
+  // 28 octobre 2026 : Scenes illustrees (direction B), le style par defaut
+  D: { clair: require('@/assets/widgets/apercu_d_clair.jpg'), sombre: require('@/assets/widgets/apercu_d_sombre.jpg') },
   A: { clair: require('@/assets/widgets/apercu_a_clair.jpg'), sombre: require('@/assets/widgets/apercu_a_sombre.jpg') },
   B: { clair: require('@/assets/widgets/apercu_b_clair.jpg'), sombre: require('@/assets/widgets/apercu_b_sombre.jpg') },
   C: { clair: require('@/assets/widgets/apercu_c_clair.jpg'), sombre: require('@/assets/widgets/apercu_c_sombre.jpg') },
@@ -26,9 +28,9 @@ export default function StyleDesWidgets() {
   const sombre = !!theme.isDark;
   const style = useStyleWidgets();
   const { width } = useWindowDimensions();
-  // trois vignettes sur la largeur de la carte, jamais coupees a 375 points
+  // les vignettes sur la largeur de la carte (quatre depuis le 28 octobre 2026), jamais coupees a 375 points
   const interieur = Math.min(560, width) - GUTTER * 2 - 24;
-  const tuile = Math.floor((interieur - 20) / 3);
+  const tuile = Math.floor((interieur - 10 * (STYLES_WIDGETS.length - 1)) / STYLES_WIDGETS.length);
   const apercu = Math.floor((interieur - 12) / 2);
   const choisi = STYLES_WIDGETS.find((s) => s.id === style) ?? STYLES_WIDGETS[0];
 
@@ -50,7 +52,7 @@ export default function StyleDesWidgets() {
                 onPress={() => choisir(s.id)}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: actif }}
-                accessibilityLabel={`${s.nom}${s.id === 'A' ? traduire(', par défaut') : ''}`}
+                accessibilityLabel={`${s.nom}${s.id === STYLE_WIDGETS_PAR_DEFAUT ? traduire(', par défaut') : ''}`}
                 style={({ pressed }) => ({ width: tuile, gap: 6, opacity: pressed ? 0.85 : 1 })}
               >
                 <View style={{ width: tuile, height: tuile, borderRadius: 18, borderWidth: 2.5, borderColor: actif ? c.accent : 'transparent', padding: 2 }}>
@@ -68,7 +70,7 @@ export default function StyleDesWidgets() {
                 </View>
                 <View style={{ gap: 1 }}>
                   <Ink size={13} weight="bold" color={actif ? c.ink : c.textSecondary} numberOfLines={2}>{traduire(s.nom)}</Ink>
-                  {s.id === 'A' ? <Ink size={11} color={c.textMuted} numberOfLines={1}>{traduire("Par défaut")}</Ink> : null}
+                  {s.id === STYLE_WIDGETS_PAR_DEFAUT ? <Ink size={11} color={c.textMuted} numberOfLines={1}>{traduire("Par défaut")}</Ink> : null}
                 </View>
               </Pressable>
             );
