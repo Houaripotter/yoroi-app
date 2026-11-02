@@ -96,3 +96,56 @@ export async function ecrireStyle(s: StyleMemorise): Promise<void> {
     // facultatif
   }
 }
+
+// ============================================
+// L'INTERRUPTEUR DU NOUVEAU MOTEUR (cartes v10, 2 novembre 2026)
+// ============================================
+
+/**
+ * Le moteur qui dessine les cartes : l'ancien (Directions.tsx, intact) ou le nouveau (lib/v2/cartes/moteur/).
+ * Reglage de CE telephone seulement : la cle n'est pas dans les cles synchronisees (lib/v2/synchro/cles.ts), test
+ * __tests__/unit/cartesMoteurInterrupteur.test.ts. Il se regle seulement dans le Studio createur (Diagnostic.tsx).
+ * Ancien par defaut. A la validation finale : MOTEUR_DEFAUT passe a 'nouveau'. Retour arriere : il revient a 'ancien'.
+ */
+export type MoteurCartes = 'ancien' | 'nouveau';
+export const CLE_MOTEUR = 'yoroi_cartes_moteur_v1';
+export const MOTEUR_DEFAUT: MoteurCartes = 'ancien';
+
+let moteurEnMemoire: MoteurCartes | null = null;
+
+export function moteurValide(v: unknown): MoteurCartes {
+  return v === 'nouveau' ? 'nouveau' : 'ancien';
+}
+
+/** Le moteur deja lu, sans attendre (ancien tant que la cle n'a pas ete lue) */
+export function moteurCourant(): MoteurCartes {
+  return moteurEnMemoire ?? MOTEUR_DEFAUT;
+}
+
+export async function lireMoteur(): Promise<MoteurCartes> {
+  try {
+    moteurEnMemoire = moteurValide(await AsyncStorage.getItem(CLE_MOTEUR));
+  } catch {
+    moteurEnMemoire = moteurEnMemoire ?? MOTEUR_DEFAUT;
+  }
+  return moteurEnMemoire;
+}
+
+/** Change le moteur ; toutes les cartes ouvertes basculent tout de suite (evenement CARTES_REGLAGE_EVENT) */
+export async function ecrireMoteur(m: MoteurCartes): Promise<void> {
+  moteurEnMemoire = moteurValide(m);
+  DeviceEventEmitter.emit(CARTES_REGLAGE_EVENT, { moteur: moteurEnMemoire });
+  try {
+    await AsyncStorage.setItem(CLE_MOTEUR, moteurEnMemoire);
+  } catch {
+    // le choix reste en memoire jusqu'a la fermeture de l'app
+  }
+}
+
+/**
+ * 2 novembre 2026 (cartes v10) : le format dessine. Le nouveau moteur n'a pas de carre : un ancien reglage carre
+ * s'ouvre en 4:5 (publication). L'ancien moteur garde ses trois formats.
+ */
+export function formatDuMoteur(format: OptionsCarte['format'], nouveau: boolean): OptionsCarte['format'] {
+  return nouveau && format === 'carre' ? 'post' : format;
+}
