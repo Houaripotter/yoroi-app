@@ -26,6 +26,7 @@ import { DEMO_SEANCE_COMBAT, DEMO_SEANCE_COURSE, DEMO_SEANCE_MUSCU, DEMO_SEMAINE
 import type { CarteData, OptionsCarte } from '@/lib/v2/cartes/types';
 import { lireDateInstallation } from '@/lib/v2/installation';
 import type { DateInstallation } from '@/lib/v2/installation';
+import { BancPhoto } from './BancPhoto';
 
 /**
  * 2 novembre 2026 (cartes v10) : l'interrupteur du nouveau moteur de cartes. Ici seulement : cet ecran est dans le
@@ -230,6 +231,7 @@ export function Diagnostic() {
       <Button tone="ghost" small icon="doc" label={traduire("Copier les infos de l’appareil")} onPress={() => void copyInfo()} />
 
       <InterrupteurMoteur />
+      <BancPhoto />
 
       <SubTitle>{traduire("Compteurs d’usage de ce téléphone")}</SubTitle>
       <Card>
