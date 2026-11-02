@@ -10,7 +10,7 @@
  * 6. ta note et ton ressenti, en compact. En bas : Créer ma carte, Terminer.
  * (25 octobre 2026) Avant la note : « Enregistrer cette séance » dans Mes séances (EnregistrerSeance).
  * Aucune XP ni sceau ici : la gamification vit dans l'onglet Dojo. Seule exception, le passage
- * de rang, celebre en plein ecran. Animations coupees si le telephone les reduit.
+ * de rang, celebre en plein ecran. 2 novembre 2026 : une ligne « Ton coffre t’attend dans le Dojo » quand il attend. Animations coupees si le telephone les reduit.
  * Parametre : id de la seance enregistree.
  * La demande de note passe par la feuille YOROI 5 secondes apres « Terminer » (lib/v2/bilan/avis.ts).
  */
@@ -331,6 +331,18 @@ export default function SeanceFin() {
                 comparaison={comparaison}
                 anime={anime}
               />
+            ) : null}
+
+            {/* 2 novembre 2026 : une seule ligne vers le Dojo quand le coffre du jour attend encore (ni XP ni chiffre ici) */}
+            {state?.coffre?.etat === 'pret' ? (
+              <Pressable
+                onPress={() => router.push('/(tabs)/dojo' as any)}
+                accessibilityRole="button"
+                accessibilityLabel={traduire('Ton coffre t’attend dans le Dojo')}
+                style={{ alignSelf: 'center', marginTop: 14, minHeight: 44, paddingHorizontal: 18, justifyContent: 'center' }}
+              >
+                <Ink size={15} weight="extraBold" color={c.accent} style={{ textAlign: 'center' }}>{traduire('Ton coffre t’attend dans le Dojo')}</Ink>
+              </Pressable>
             ) : null}
 
             {/* 4. Ton cœur et tes techniques, quand ils existent */}
