@@ -123,7 +123,28 @@ export const CLES_ELEMENTS: readonly SpecCle[] = [
       } catch { /* relu a la prochaine ouverture */ }
     },
   },
-  { cle: '@yoroi_scenes_gagnees_v1', type: 'scene', forme: 'liste', evenements: ['yoroi:scenes_gagnees'] },
+  // 2 novembre 2026 : la valeur est un objet ({ gagnees, essai, essayees }). Declaree en liste, elle ne se lisait pas
+  // et ne partait jamais. Le cache en memoire est relu (fusion avec ce qui est deja gagne ici, rien ne se perd).
+  {
+    cle: '@yoroi_scenes_gagnees_v1', type: 'scene', forme: 'objet', evenements: ['yoroi:scenes_gagnees'],
+    apres: async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        await (require('@/lib/v2/dojo/recompensesScenes') as typeof import('@/lib/v2/dojo/recompensesScenes')).chargerScenesGagnees();
+      } catch { /* relu a la prochaine ouverture */ }
+    },
+  },
+  // 2 novembre 2026 : ton Dojo (XP, coffres, reprise de ton rang, sceaux deja fetes) partage entre tes appareils
+  // (lib/v2/dojo/partageDojo.ts). Une ligne par element, rien n'est jamais retire.
+  {
+    cle: 'yoroi_dojo_partage_v1', type: 'scene', forme: 'liste', idChamp: 'k',
+    apres: async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        await (require('@/lib/v2/armure') as typeof import('@/lib/v2/armure')).appliquerPartageDojo();
+      } catch { /* applique au prochain echange */ }
+    },
+  },
   // Objectifs
   { cle: '@yoroi_user_goals', type: 'objectifs', forme: 'liste' },
   { cle: '@yoroi_v2_sante_ring_goals', type: 'objectifs', forme: 'objet' },
