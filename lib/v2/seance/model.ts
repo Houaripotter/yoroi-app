@@ -4,6 +4,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { CombatRound, Exercise } from '@/lib/database';
+import { familleDeSport, track } from '@/utils/telemetry';
 
 export type SeanceKind = 'muscu' | 'combat' | 'cardio';
 
@@ -301,6 +302,36 @@ export async function saveDraft(d: SeanceDraft): Promise<void> {
     await AsyncStorage.setItem(DRAFT_KEY, JSON.stringify({ ...d, majMs: Date.now() }));
   } catch {
     // stockage indisponible : la seance continue en memoire
+  }
+  void mesurerDemarrage(d);
+}
+
+/**
+ * 2 novembre 2026 (mesure) : une seance en direct demarre a sa premiere ecriture. Une seule fois par seance
+ * (startedAt retenu en memoire et sur le telephone), une seance reprise apres fermeture de l'app ne compte pas.
+ */
+const CLE_MESURE_DEBUT = '@yoroi_mesure_seance_demarree';
+let debutMesure: number | null = null;
+async function mesurerDemarrage(d: SeanceDraft): Promise<void> {
+  if (d.form || debutMesure === d.startedAt) return;
+  debutMesure = d.startedAt;
+  try {
+    if ((await AsyncStorage.getItem(CLE_MESURE_DEBUT)) === String(d.startedAt)) return;
+    await AsyncStorage.setItem(CLE_MESURE_DEBUT, String(d.startedAt));
+    const type = 'programme' in d && d.programme ? 'programme' : 'maSeance' in d && d.maSeance ? 'ma_seance' : 'libre';
+    track('seance_demarree', { famille: familleDeSport(d.sport), type });
+  } catch {
+    // la mesure ne bloque jamais la seance
+  }
+}
+
+/** 2 novembre 2026 (mesure) : seance en direct abandonnee sans enregistrer. Le fait seulement, aucune valeur. */
+export function mesurerAbandon(d: SeanceDraft | null | undefined): void {
+  if (!d || d.form) return;
+  try {
+    track('seance_abandonnee', { famille: familleDeSport(d.sport), etat: aDuTravail(d) ? 'commencee' : 'vide' });
+  } catch {
+    // rien
   }
 }
 
