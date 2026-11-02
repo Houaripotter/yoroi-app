@@ -178,13 +178,13 @@ describe('la grille : la bande du bas descend et prend moins de place', () => {
     expect(hauteurPhoto('story')).toBeGreaterThan(1920 - 300);
     expect(hauteurPhoto('post')).toBeGreaterThan(1350 - 152);
   });
-  test('la marge de securite du bas reste : les badges ne passent jamais sous la barre de reponse', () => {
+  test('2 novembre 2026 (bloc deplacable) : la bande collee en bas, les badges a 48 px du bord en story', () => {
     for (const f of ['story', 'post'] as const) {
-      expect(basDesBadges(f)).toBeLessThanOrEqual(GRILLE[f].H - MARGE_SURE_BAS[f]);
+      expect(basDesBadges(f)).toBe(GRILLE[f].H - MARGE_SURE_BAS[f]);
       // les badges restent dans la bande
       expect(GRILLE[f].BANDE_RANG + GRILLE[f].BADGE).toBeLessThanOrEqual(GRILLE[f].BANDE);
     }
-    expect(MARGE_SURE_BAS.story).toBeGreaterThanOrEqual(120);
+    expect(MARGE_SURE_BAS.story).toBe(48);
   });
   test('ton visage reste protege, en story et en 4:5', () => {
     for (const f of ['story', 'post'] as const) {
