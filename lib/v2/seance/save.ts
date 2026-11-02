@@ -16,6 +16,7 @@ import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { isoDay } from './format';
 import { normalizeRounds, weekStartOf } from './params';
 import { setsCount, tonnage } from '@/lib/v2/trainingWeek';
+import { APPAREIL_MONTRE_YOROI, champsKcalMesurees, champsKcalSaisie, normaliserSourceKcal, sourceApresSaisieKcal } from './sourceKcal';
 
 export type SeanceRecord = { name: string; weight: number; reps: number; kind: 'charge' | 'max' };
 
@@ -59,6 +60,20 @@ export type SaveOptions = {
 };
 
 const JOINED = ['club_name', 'club_logo', 'club_color', 'duration'] as const;
+
+/** Source de la seance enregistree par la montre YOROI (lib/v2/montre/actions.ts, SOURCE_MONTRE) */
+const SOURCE_MONTRE_YOROI = 'yoroi_montre';
+
+/**
+ * 2 novembre 2026 : source des kcal d'une NOUVELLE seance.
+ * Source deja donnee par l'appelant : gardee. Montre YOROI : 'appareil', « Montre YOROI » (capteur de la montre).
+ * Sinon, des kcal tapees : 'saisie'. Sans kcal : rien.
+ */
+export function sourceKcalNouvelleSeance(t: Training): Partial<Training> {
+  if (normaliserSourceKcal(t.calories_source)) return {};
+  if (t.source === SOURCE_MONTRE_YOROI) return champsKcalMesurees(t.calories, 'appareil', APPAREIL_MONTRE_YOROI);
+  return champsKcalSaisie(t.calories);
+}
 
 async function writeExtraColumns(id: number, opts: SaveOptions, isEdit: boolean): Promise<void> {
   const sets: string[] = [];
@@ -104,6 +119,10 @@ export async function saveSeance(training: Training, opts: SaveOptions): Promise
       source: existing.source ?? training.source,
     };
     for (const k of JOINED) delete merged[k];
+    // 2 novembre 2026 : kcal changees a la main -> 'saisie' (plus de kcal sur les cartes) ; effacees -> source effacee ;
+    // inchangees -> la source d'origine est gardee
+    const kcal = sourceApresSaisieKcal(existing, merged.calories);
+    if (kcal) Object.assign(merged, kcal);
     await updateTraining(opts.editId, merged);
     id = opts.editId;
     // 28 octobre 2026 : la modification est enregistree, sa saisie gardee (app fermee en cours) ne sert plus
@@ -114,7 +133,7 @@ export async function saveSeance(training: Training, opts: SaveOptions): Promise
       // rien
     }
   } else {
-    id = Number(await addTraining({ ...training, weekly_plan_id: opts.slotId ?? training.weekly_plan_id }));
+    id = Number(await addTraining({ ...training, ...sourceKcalNouvelleSeance(training), weekly_plan_id: opts.slotId ?? training.weekly_plan_id }));
   }
 
   await writeExtraColumns(id, opts, isEdit);
