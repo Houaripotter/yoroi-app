@@ -33,7 +33,7 @@ import type { ExerciseHistory, SetValue } from '@/lib/v2/seance/history';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { kgDepuisSaisie, saisieDepuisKg } from '@/lib/v2/unitePoids';
 import { useSauvegardeBrouillon } from '@/lib/v2/seance/useSauvegardeBrouillon';
-import { allerAExercice, seriesRestantes, chargerSaisie, clearDraft, effacerSaisie, loadDraft, loadRestPref, saveRestPref, uid } from '@/lib/v2/seance/model';
+import { allerAExercice, seriesRestantes, chargerSaisie, clearDraft, effacerSaisie, loadDraft, loadRestPref, mesurerAbandon, saveRestPref, uid } from '@/lib/v2/seance/model';
 import { offrirSaisie } from '@/lib/v2/seance/repriseSaisie';
 import type { LiveExercise, LiveSet, MuscuDraft, SessionDetails } from '@/lib/v2/seance/model';
 import { detailsFromTraining, loadTrainingForEdit, trainingFromDetails } from '@/lib/v2/seance/edit';
@@ -454,6 +454,7 @@ export default function SeanceMuscu() {
                       text: traduire('Effacer'),
                       style: 'destructive',
                       onPress: async () => {
+                        mesurerAbandon(existing);
                         await clearDraft();
                         terminerActiviteSeance();
                         setDraft(await fresh());
@@ -1166,6 +1167,7 @@ export default function SeanceMuscu() {
         onPress: async () => {
           finished.current = true;
           setFinishOpen(false);
+          mesurerAbandon(draft);
           await clearDraft();
           void annulerFinCardio();
           terminerActiviteSeance();
