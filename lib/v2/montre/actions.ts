@@ -21,6 +21,7 @@ import { demanderBilan } from '@/lib/v2/bilan/reglage';
 import { fini, lireAction } from './contrat';
 import type { ActionMontre } from './contrat';
 import { traduire } from '@/lib/i18n/tr';
+import { track } from '@/utils/telemetry';
 
 /** source rangee en base pour ce qui vient de la montre YOROI (une seance YOROI, pas un import) */
 export const SOURCE_MONTRE = 'yoroi_montre';
@@ -41,6 +42,8 @@ async function appliquerPoids(a: ActionMontre): Promise<string> {
     { date: jour, weight: kg, compo: {}, health: a.dansSante ? { date: jour, weight: kg, sourceKey: SOURCE_MONTRE, sourceLabel: 'Apple Watch' } : null },
     history ?? [],
   );
+  // mesure : pesee venue de la montre, le fait seulement
+  track('poids_saisi', { methode: 'montre' });
   DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
   return jour;
 }
