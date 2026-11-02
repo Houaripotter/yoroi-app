@@ -39,6 +39,7 @@ import { remiseAZeroAuDemarrage } from '@/lib/v2/visite/vitrine';
 import { appliquerVitesse, libelleVitesse, useVitesseVoix, vitesseCourante } from '@/lib/v2/visite/vitesseVoix';
 import { traduire } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { etapeVisite, track } from '@/utils/telemetry';
 
 const ONBOARDING_DONE_KEY = 'yoroi_onboarding_done';
 
@@ -490,6 +491,8 @@ export function VisiteGuidee() {
     const alive = () => runId.current === id;
     const e = ETAPES[index];
     if (!e) return;
+    // mesure : l'etape vue (son rang et sa partie), jamais en apercu
+    if (!apercuRef.current) track('visite_etape', { etape: etapeVisite(index), section: e.partie });
     let spoke = false;
     const say = () => {
       if (!spoke && alive()) {
@@ -998,7 +1001,7 @@ export function VisiteGuidee() {
             ) : null}
             {!last ? (
               // Passer, bien visible : une vraie pilule, pas un texte gris
-              <Pressable onPress={() => finish()} hitSlop={8} style={({ pressed }) => [s.passer, { backgroundColor: pressed ? c.fillSoft : c.surface, borderColor: c.border }]} accessibilityRole="button" accessibilityLabel={traduire("Quitter la visite")}>
+              <Pressable onPress={() => { if (!apercuRef.current) track('visite_passee', { etape: etapeVisite(index), section: ETAPES[index]?.partie ?? 'fin' }); finish(); }} hitSlop={8} style={({ pressed }) => [s.passer, { backgroundColor: pressed ? c.fillSoft : c.surface, borderColor: c.border }]} accessibilityRole="button" accessibilityLabel={traduire("Quitter la visite")}>
                 <Ink size={14} weight="black" color={c.ink}>{traduire("Passer")}</Ink>
               </Pressable>
             ) : null}
@@ -1042,7 +1045,11 @@ export function VisiteGuidee() {
             ) : null}
             <View style={{ flex: 1 }} />
             <BoutonPrincipal
-              onPress={() => (last ? finish() : go(index + 1))}
+              onPress={() => {
+                if (!last) return go(index + 1);
+                if (!apercuRef.current) track('visite_terminee');
+                finish();
+              }}
               haptique="light"
               accessibilityLabel={last ? traduire('Terminer la visite') : traduire('Étape suivante')}
               hauteur={46}
