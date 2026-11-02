@@ -10,6 +10,9 @@ enum GenreW {
   case combat
   case chrono
   case tableau
+  /// 28 octobre 2026 : seance du jour du Coach et ton personnage (direction B)
+  case seanceJour
+  case personnage
 }
 
 struct EntreeYoroi: TimelineEntry {
@@ -48,16 +51,19 @@ struct FournisseurYoroi: AppIntentTimelineProvider {
   private func entree(_ d: Date, _ style: StyleW, _ famille: WidgetFamily) -> EntreeYoroi {
     let verrou = famille.estVerrou
     // A : ta scene sur tous les widgets ; B : dans la fenetre du Tableau du jour
-    let veutScene = !verrou && (style == .a || (style == .b && genre == .tableau))
-    // C : ton personnage dans le Tableau du jour et le Chrono
-    let veutPerso = !verrou && style == .c && (genre == .tableau || genre == .chrono)
+    // Seance du jour et Ton personnage : ta scene dans tous les styles ; D : aussi en fond du Tableau du jour
+    let sceneD = style == .d && genre == .tableau
+    let veutScene = !verrou && (style == .a || (style == .b && genre == .tableau) || sceneD || genre == .seanceJour || genre == .personnage)
+    // C : ton personnage dans le Tableau du jour et le Chrono ; D : sur le chemin du poids et le Tableau du jour
+    let persoD = style == .d && (genre == .tableau || genre == .poids)
+    let veutPerso = !verrou && ((style == .c && (genre == .tableau || genre == .chrono)) || persoD || genre == .seanceJour || genre == .personnage)
     let grand = famille == .systemLarge || famille == .systemExtraLarge
     return EntreeYoroi(
       date: d,
       etat: EtatYoroi.lire(d),
       style: style,
       scene: veutScene ? ImagesW.charger(GroupeYoroi.urlScene, maxPixels: grand ? 1000 : 820) : nil,
-      personnage: veutPerso ? ImagesW.charger(GroupeYoroi.urlPersonnage, maxPixels: 600) : nil
+      personnage: veutPerso ? ImagesW.charger(GroupeYoroi.urlPersonnage, maxPixels: genre == .poids ? 160 : 600) : nil
     )
   }
 }
