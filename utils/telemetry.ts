@@ -55,10 +55,25 @@ export type TypeNotif =
   | 'pesee' | 'seance' | 'sommeil' | 'hydratation' | 'serie' | 'recap' | 'carte_sociale' | 'citation'
   | 'conseil' | 'montre' | 'charge' | 'competition' | 'sparring' | 'fin_essai' | 'synchro' | 'autre';
 export type TypeExport = 'json' | 'csv' | 'pdf';
-export type MethodePoids = 'manuel' | 'balance' | 'photo_balance' | 'sante' | 'onboarding';
+export type MethodePoids = 'manuel' | 'balance' | 'photo_balance' | 'sante' | 'onboarding' | 'montre';
 export type MethodeSeance = 'live' | 'dictee' | 'deja_faite' | 'saisie' | 'montre' | 'refaire';
 export type TypeObjectif = 'poids' | 'seance';
-export type EtapeVisite = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12' | '13' | '14';
+/** 2 novembre 2026 : rang de l'etape de la visite guidee (34 etapes), au dela ramene a '40' */
+export type EtapeVisite =
+  | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12' | '13' | '14' | '15' | '16' | '17' | '18' | '19' | '20'
+  | '21' | '22' | '23' | '24' | '25' | '26' | '27' | '28' | '29' | '30' | '31' | '32' | '33' | '34' | '35' | '36' | '37' | '38' | '39' | '40';
+/** Partie de la visite guidee (components/yoroi/v2/tour/etapes.ts, type Partie) */
+export type PartieVisite = 'accueil' | 'barre' | 'seances' | 'plus' | 'progres' | 'dojo' | 'fin';
+/** 2 novembre 2026 : categorie du programme (objectif du catalogue, lib/v2/programmes/types.ts) ou programme construit par toi */
+export type TypeProgramme = 'muscle' | 'force' | 'forme' | 'combat' | 'course' | 'perso';
+/** D'ou vient une seance en direct : un programme, une de « Mes séances », ou libre */
+export type TypeSeance = 'programme' | 'ma_seance' | 'libre';
+/** Seance abandonnee : rien de fait, ou au moins une serie, un round, une mesure */
+export type EtatSeance = 'vide' | 'commencee';
+/** Recompenses du Dojo */
+export type TypeRecompense = 'coffre' | 'grand_coffre' | 'essai_scene' | 'scene_serie';
+/** Personnage choisi : sa famille (lib/v2/dojo/personnages.ts), jamais son nom */
+export type TypePersonnage = 'guerrier' | 'classique' | 'aucun' | 'sport' | 'legende' | 'monde' | 'vie';
 
 export type NiveauStockage = 'proche' | 'critique';
 export type CauseStockage = 'total' | 'cle';
@@ -130,6 +145,16 @@ export interface Evenements {
   sante_connexion: { plateforme: Plateforme; resultat: Resultat };
   sauvegarde_exportee: { type: TypeExport };
   donnees_effacees: Rien;
+  // 2 novembre 2026 : programmes, seance en direct, Dojo, visite guidee
+  programme_choisi: { type: TypeProgramme; famille: Famille };
+  programme_seance_lancee: { type: TypeProgramme };
+  seance_demarree: { famille: Famille; type: TypeSeance };
+  seance_abandonnee: { famille: Famille; etat: EtatSeance };
+  recompense_recuperee: { type: TypeRecompense };
+  personnage_choisi: { type: TypePersonnage };
+  visite_etape: { etape: EtapeVisite; section: PartieVisite };
+  visite_terminee: Rien;
+  visite_passee: { etape: EtapeVisite; section: PartieVisite };
   /** 28 octobre 2026 : stockage de l'app presque plein (Android limite AsyncStorage), aucune valeur ni nom de cle */
   stockage_presque_plein: { niveau: NiveauStockage; cause: CauseStockage };
   // retention
@@ -207,6 +232,11 @@ export function trancheSerie(n: number): TrancheSerie {
 export function trancheNombre(n: number): TrancheNombre {
   if (n >= 8) return '8_plus';
   return String(Math.max(0, Math.floor(n))) as TrancheNombre;
+}
+
+/** Rang d'une etape de la visite (index a partir de 0) */
+export function etapeVisite(index: number): EtapeVisite {
+  return String(Math.min(40, Math.max(1, Math.floor(index) + 1))) as EtapeVisite;
 }
 
 export function trancheUsage(n: number): TrancheUsage {
@@ -374,12 +404,16 @@ export async function idInstanceMesure(): Promise<string | null> {
 
 const JOUR = 24 * 60 * 60 * 1000;
 
-/** Une seule fois dans la vie de l'app. ENVOYE D'ABORD, drapeau pose ensuite : un envoi rate sera retente. */
-export async function trackFirstOpen(): Promise<void> {
+/**
+ * Une seule fois dans la vie de l'app. ENVOYE D'ABORD, drapeau pose ensuite : un envoi rate sera retente.
+ * 2 novembre 2026 : version de l'app a l'installation (propriete version_installation), format 1.2.3 seulement.
+ */
+export async function trackFirstOpen(version?: string): Promise<void> {
   try {
     if (await AsyncStorage.getItem(CLE_FIRST_OPEN)) return;
     if (consentement === false || !transport.disponible) return;
     const ok = await envoyer('app_first_open');
+    if (ok && version && /^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(version)) setProprietes({ version_installation: version });
     if (ok) await AsyncStorage.setItem(CLE_FIRST_OPEN, '1');
   } catch {
     // retente au prochain lancement
