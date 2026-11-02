@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Widgets Yoroi, style D Scenes illustrees (28 octobre 2026, direction B). Mode clair -->
+  <color name="yw_d_fond">#F6EEDD</color>
+  <color name="yw_d_encre">#23358F</color>
+  <color name="yw_d_encre2">#B323358F</color>
+  <color name="yw_d_discret">#5A6290</color>
+  <color name="yw_d_trait">#1F23358F</color>
+  <color name="yw_d_tirets">#6623358F</color>
+  <color name="yw_d_piste">#ECEEF5</color>
+  <color name="yw_d_indigo">#23358F</color>
+  <color name="yw_d_indigo_doux">#1223358F</color>
+  <color name="yw_d_sur_indigo">#FFFFFF</color>
+  <color name="yw_d_allure">#1C6B45</color>
+  <color name="yw_d_dessus">#3557D9</color>
+  <color name="yw_d_vite">#B4471E</color>
+  <color name="yw_d_torii">#F0896A</color>
+  <color name="yw_d_torii_haut">#23358F</color>
+  <color name="yw_d_titre">#B4471E</color>
+  <color name="yw_d_bouton">#23358F</color>
+  <color name="yw_d_eau">#3557D9</color>
+  <color name="yw_d_fait">#FFC98A</color>
+  <color name="yw_d_avenir">#D5D9EE</color>
+  <color name="yw_d_creme">#F6DFA6</color>
+  <color name="yw_d_blanc">#FFFFFF</color>
+  <color name="yw_d_petit_haut">#FFE7DC</color>
+  <color name="yw_d_petit_bas">#F6EEDD</color>
+  <color name="yw_d_moyen_debut">#FFE1D6</color>
+  <color name="yw_d_moyen_milieu">#F6EEDD</color>
+  <color name="yw_d_moyen_fin">#EFE6F3</color>
+  <color name="yw_d_eau_haut">#E3F2EA</color>
+  <color name="yw_d_eau_bas">#EEF7F2</color>
+  <color name="yw_d_chrono_haut">#23358F</color>
+  <color name="yw_d_chrono_bas">#1E2E7C</color>
+  <color name="yw_d_grand_haut">#FFFFFF</color>
+  <color name="yw_d_grand_bas">#F5F6FB</color>
+  <color name="yw_d_voile_haut">#00FFFFFF</color>
+  <color name="yw_d_voile_milieu">#33FFFFFF</color>
+  <color name="yw_d_voile_bas">#EBFFFFFF</color>
+  <color name="yw_d_peche">#FFB59E</color>
+  <color name="yw_d_peche_halo">#40FFB59E</color>
+  <color name="yw_d_peche_texte">#5A2412</color>
+</resources>
