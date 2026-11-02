@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Style D : pastille d'un muscle de la seance du jour -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+  <solid android:color="@color/yw_d_menthe_fond" />
+  <corners android:radius="100dp" />
+</shape>
