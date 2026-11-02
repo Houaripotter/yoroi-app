@@ -17,6 +17,7 @@ import { verdictFc } from '@/lib/v2/seances/zone2';
 import { musclesSeance } from '@/lib/v2/seances/musclesExercices';
 import { tonnage } from '@/lib/v2/trainingWeek';
 import type { CarteData, DonneesSeance } from './types';
+import { kcalMesureesIntactes } from '@/lib/v2/seance/sourceKcal';
 
 // ============================================
 // CEINTURE DE JJB
@@ -110,20 +111,20 @@ export function gpsSiAppareil<T extends Pick<DonneesSeance, 'trace' | 'splits' |
 }
 
 // ============================================
-// KCAL : COUPEES TANT QUE LEUR SOURCE N'EST PAS CONNUE
+// KCAL : SEULEMENT MESUREES, ET PAS RETOUCHEES
 // ============================================
 
 /**
- * Les kcal a montrer sur une carte de partage. 2 novembre 2026, valide par Houari : aucune pour l'instant.
- * Pourquoi : la base ne garde pas d'ou viennent les kcal d'une seance. La source de la seance (source, healthkit_uuid)
- * ne suffit pas : l'ecran de saisie cardio (app/seance/cardio.tsx) permet de changer les kcal de n'importe quelle
- * seance, meme importee de Sante, et la seance garde sa source d'origine. On ne peut donc pas distinguer des kcal
- * mesurees par une montre ou Sante de kcal tapees a la main.
- * Pour les remettre : enregistrer la source des kcal (par exemple une colonne calories_source : montre, sante ou
- * saisie, remplie a l'import Sante et par la montre YOROI, passee a saisie quand tu les changes a la main), puis
- * renvoyer ici t.calories seulement si cette source est une montre ou Sante. Les kcal restent partout ailleurs
- * dans l'app (historique, detail de seance, base) : seules les cartes ne les recoivent plus.
+ * Les kcal a montrer sur une carte de partage (2 novembre 2026, cartes v7, valide par Houari).
+ * Rendues seulement si toutes ces conditions sont reunies (lib/v2/seance/sourceKcal.ts, kcalMesureesIntactes) :
+ * - la source des kcal est 'appareil' (montre, bracelet, montre YOROI) ou 'sante' (Apple Sante, Health Connect) ;
+ * - les kcal sont egales a celles recues (calories_mesurees) : une modification par n'importe quel chemin les coupe ;
+ * - la valeur est superieure a 0.
+ * Sinon rien : saisie a la main, source inconnue, anciennes seances (colonnes vides).
+ * RETOUR ARRIERE : renvoyer de nouveau undefined ici. Les kcal restent partout ailleurs dans l'app.
  */
-export function kcalPourCarte(_t: Pick<Training, 'calories' | 'source' | 'healthkit_uuid'>): number | undefined {
-  return undefined;
+export function kcalPourCarte(
+  t: Pick<Training, 'calories' | 'source' | 'healthkit_uuid' | 'calories_source' | 'calories_mesurees'>,
+): number | undefined {
+  return kcalMesureesIntactes(t);
 }
