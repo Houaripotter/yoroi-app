@@ -1389,6 +1389,8 @@ async function scanTable(db: any, table: string, resolver: Resolver) {
   const uidUpdates: Array<[any, string]> = [];
   // [uid, hash, updated_at]
   const stateUpserts: Array<[string, string, number]> = [];
+  // [uid, hash] : passage de l'empreinte v1 à v2, sans toucher aux dates
+  const hashOnly: [string, string][] = [];
   const selectCols = await scanColumns(db, table);
 
   const PAGE = 300;
@@ -1406,7 +1408,7 @@ async function scanTable(db: any, table: string, resolver: Resolver) {
 
       if (!uid) {
         const payload = await buildPayload(table, row, resolver);
-        const base = spec.natural?.(payload) ?? `c:${hash64(stableStringify(contentForUid(payload)))}`;
+        const base = spec.natural?.(payload) ?? `c:${hash64(stableStringify(contentForUid(table, payload)))}`;
         uid = base;
         let n = 0;
         while (usedUids.has(uid)) uid = `${base}#${++n}`;
@@ -1424,7 +1426,13 @@ async function scanTable(db: any, table: string, resolver: Resolver) {
         // Exception : une ligne supprimée puis recréée (corbeille) est une action récente.
         stateUpserts.push([uid, h, tombUids.has(uid) ? now : 0]);
       } else if (known !== h) {
-        stateUpserts.push([uid, h, now]);
+        if (known === hashLocalRowV1(table, row)) {
+          // Empreinte enregistrée par l'ancienne version, ligne inchangée : on change seulement la formule.
+          // Ni la date de modification, ni la date d'envoi ne bougent : rien ne repart, rien n'écrase rien.
+          hashOnly.push([uid, h]);
+        } else {
+          stateUpserts.push([uid, h, now]);
+        }
       }
     }
     if (rows.length < PAGE) break;
@@ -1436,6 +1444,13 @@ async function scanTable(db: any, table: string, resolver: Resolver) {
       `UPDATE ${table} SET sync_uid = CASE rowid ${part.map(() => 'WHEN ? THEN ?').join(' ')} END
        WHERE rowid IN (${part.map(() => '?').join(', ')})`,
       [...part.flatMap(([rid, uid]) => [rid, uid]), ...part.map(([rid]) => rid)]
+    );
+  }
+  for (const part of chunk(hashOnly, 200)) {
+    await db.runAsync(
+      `UPDATE sync_state SET hash = CASE uid ${part.map(() => 'WHEN ? THEN ?').join(' ')} END
+       WHERE tbl = ? AND uid IN (${part.map(() => '?').join(', ')})`,
+      [...part.flatMap(([uid, h]) => [uid, h]), table, ...part.map(([uid]) => uid)]
     );
   }
   for (const part of chunk(stateUpserts, 150)) {
@@ -1496,17 +1511,61 @@ async function scanColumns(db: any, table: string): Promise<string> {
 }
 
 /**
- * Empreinte de changement calculée sur la ligne LOCALE (clés étrangères = ids locaux).
- * Ainsi, la suppression d'un club ne fait pas passer toutes ses séances pour "modifiées".
+ * Colonnes ajoutées APRÈS la première empreinte (v1), table par table.
+ * Elles ne servent qu'à reconnaître une empreinte v1 (voir hashLocalRowV1) : l'empreinte v2 n'en a pas besoin.
+ * Toute colonne ajoutée plus tard à une table synchronisée peut être inscrite ici, par prudence,
+ * pour un téléphone qui sauterait des versions.
  */
-function hashLocalRow(table: string, row: Record<string, any>): string {
+const COLONNES_APRES_EMPREINTE_V1: Readonly<Record<string, ReadonlySet<string>>> = {
+  // 2 novembre 2026 : source des kcal (cartes v7)
+  trainings: new Set(['calories_source', 'calories_appareil', 'calories_mesurees']),
+};
+
+/** Colonnes qui comptent dans l'empreinte, avec leur valeur (règles communes v1 et v2) */
+function colonnesEmpreinte(table: string, row: Record<string, any>): [string, any][] {
   const spec = SPEC.get(table)!;
-  const out: Record<string, any> = {};
+  const out: [string, any][] = [];
   for (const [key, value] of Object.entries(row)) {
     if (key === '__rowid' || key === 'sync_uid' || key === 'created_at') continue;
     if (key === 'id' && !spec.textPk) continue;
     if (HEAVY_COLUMNS.has(key)) continue;
     if (isLocalPathColumn(key)) continue;
+    out.push([key, value]);
+  }
+  return out;
+}
+
+/**
+ * Empreinte de changement calculée sur la ligne LOCALE (clés étrangères = ids locaux).
+ * Ainsi, la suppression d'un club ne fait pas passer toutes ses séances pour "modifiées".
+ *
+ * Empreinte v2 (2 novembre 2026) : une colonne VIDE (NULL) ne compte pas.
+ * Ajouter une colonne à une table ne change donc l'empreinte d'aucune ligne : les lignes existantes ont
+ * la nouvelle colonne vide. Sans ça, toutes les séances passaient pour modifiées « maintenant » au scan
+ * suivant la migration, et pouvaient écraser une modification plus ancienne faite sur un autre appareil.
+ * Une vraie modification (vide -> valeur, valeur -> vide, valeur -> autre valeur) change toujours l'empreinte.
+ * L'empreinte reste propre à chaque appareil (jamais comparée entre appareils) : un appareil pas à jour garde
+ * son ancienne formule sans conséquence.
+ */
+function hashLocalRow(table: string, row: Record<string, any>): string {
+  const out: Record<string, any> = {};
+  for (const [key, value] of colonnesEmpreinte(table, row)) {
+    if (value === null || value === undefined) continue;
+    out[key] = value;
+  }
+  return hash64(stableStringify(out));
+}
+
+/**
+ * Empreinte v1 (avant le 2 novembre 2026), telle que l'ancienne version l'a enregistrée dans sync_state :
+ * toutes les colonnes, même vides, sauf les colonnes ajoutées depuis (encore vides, l'ancienne version
+ * ne les connaissait pas). Sert uniquement à reconnaître une ligne inchangée au premier scan après la mise à jour.
+ */
+function hashLocalRowV1(table: string, row: Record<string, any>): string {
+  const ajoutees = COLONNES_APRES_EMPREINTE_V1[table];
+  const out: Record<string, any> = {};
+  for (const [key, value] of colonnesEmpreinte(table, row)) {
+    if (ajoutees?.has(key) && (value === null || value === undefined)) continue;
     out[key] = value;
   }
   return hash64(stableStringify(out));
@@ -1595,11 +1654,17 @@ function hashPayload(payload: Record<string, any>): string {
   return hash64(stableStringify(rest));
 }
 
-/** Contenu servant à l'identifiant : stable, sans données annexes volumineuses */
-function contentForUid(payload: Record<string, any>): Record<string, any> {
+/**
+ * Contenu servant à l'identifiant : stable, sans données annexes volumineuses.
+ * Les colonnes ajoutées depuis (COLONNES_APRES_EMPREINTE_V1) ne comptent pas quand elles sont vides :
+ * la même séance reçoit le même identifiant sur un appareil à jour et sur un appareil qui ne les a pas.
+ */
+function contentForUid(table: string, payload: Record<string, any>): Record<string, any> {
+  const ajoutees = COLONNES_APRES_EMPREINTE_V1[table];
   const rest: Record<string, any> = {};
   for (const [k, v] of Object.entries(payload)) {
     if (k === 'created_at' || k.startsWith('__') || HEAVY_COLUMNS.has(k)) continue;
+    if (ajoutees?.has(k) && (v === null || v === undefined)) continue;
     rest[k] = v;
   }
   return rest;
@@ -1919,6 +1984,8 @@ export const __test__ = {
   buildPayload,
   createResolver,
   hash64,
+  hashLocalRow,
+  hashLocalRowV1,
   resetCaches: () => { schemaReady = false; tablesCache = null; columnsCache.clear(); },
   handleSyncData,
   sendDeltaTo,
