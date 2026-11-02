@@ -221,6 +221,14 @@ function RootLayoutContent() {
     return () => { cancelled = true; sub?.remove(); };
   }, []);
 
+  // 2 novembre 2026 (confidentialite des cartes) : copies de photos et images exportees laissees par une session
+  // coupee, effacees de cacheDirectory/cartes_tmp/ quelques secondes apres le lancement, sans bloquer ni lever.
+  useEffect(() => {
+    import('@/lib/v2/cartes/tmp')
+      .then(({ lancerNettoyageDemarrage }) => lancerNettoyageDemarrage())
+      .catch(() => {});
+  }, []);
+
   // Notification hebdo récap (dimanche 19h) : s'assure qu'elle est planifiée
   useEffect(() => {
     import('@/lib/weeklyRecapNotification')
