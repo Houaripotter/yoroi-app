@@ -9,7 +9,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { WeeklyPlan } from '@/lib/database';
 import { programmeParId, sportDuProgramme } from './catalogue';
 import { routeDuJour } from './lancer';
-import { chargerProgrammeActif, joursConseilles, prochainJour, semaineDuProgramme } from './suivi';
+import { chargerProgrammeActif, joursConseilles, prochainJour, semaineDuProgramme, typeDeProgramme } from './suivi';
+import { track } from '@/utils/telemetry';
 import type { Programme } from './types';
 
 const CLE = 'yoroi_programme_creneaux_v1';
@@ -78,7 +79,10 @@ export async function routeDuCreneau(slotId: number | null | undefined): Promise
     if (!p || !a || !p.jours.length || !estCreneauDuProgramme(c, slotId, p.id)) return null;
     // la séance à faire : celle du jour selon tes jours (planJours.ts), sinon la suivante dans l'ordre
     const suite = prochainJour(a);
-    return routeDuJour(p, suite?.jour ?? p.jours[a.prochain % p.jours.length], semaineDuProgramme(a));
+    const route = routeDuJour(p, suite?.jour ?? p.jours[a.prochain % p.jours.length], semaineDuProgramme(a));
+    // mesure : la seance du programme s'ouvre depuis ton planning (tous les appels sont des lancements)
+    track('programme_seance_lancee', { type: typeDeProgramme(p) });
+    return route;
   } catch {
     return null;
   }
