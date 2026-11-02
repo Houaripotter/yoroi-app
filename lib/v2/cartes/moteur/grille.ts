@@ -6,8 +6,14 @@
  *
  * 2 novembre 2026 (studio unique), Houari : « la bande du bas doit descendre et prendre moins de place, pour que la
  * photo fasse le beau gosse ». La bande passe de 300 a 216 px en story (de 152 a 124 en 4:5), le logo et les badges
- * de 88 a 72 px, colles vers le bas. En story, le bas des badges reste a MARGE_SURE_BAS (120 px) du bord : la barre
- * de reponse d'Instagram ne les couvre pas. La zone photo gagne 84 px en story et 28 px en 4:5.
+ * de 88 a 72 px, colles vers le bas.
+ *
+ * 2 novembre 2026 (bloc deplacable), Houari : « le logo et les badges VRAIMENT tout en bas, colles en bas comme sur
+ * les autres cartes, et plus fins » (la variante basse et fine de sa capture). Story : la bande passe de 216 a 136 px,
+ * le logo et les badges de 72 a 60 px, 48 px d'air sous les badges au lieu de 120. 4:5 : de 124 a 104 px, badges de
+ * 72 a 56 px, 24 px d'air dessous. La zone photo gagne 80 px en story et 20 px en 4:5.
+ * Choix assume de Houari : en story Instagram, la barre « Envoyer un message » de la personne qui regarde peut
+ * recouvrir le bas de la bande.
  */
 import type { FormatId } from '../types';
 
@@ -40,20 +46,21 @@ export type CotesCompactes = Pick<Cotes, 'LIB' | 'HERO' | 'STATS' | 'STAT_V' | '
 
 export const GRILLE: Record<FormatMoteur, Cotes & { COMPACT: CotesCompactes }> = {
   story: {
-    W: 1080, H: 1920, M: 64, HAUT: 200, PASTILLE: 64, BANDE: 216, BANDE_RANG: 24, BADGE: 72, AIR_BANDE: 40, LIB: 34, G1: 12, HERO: 300, G2: 32, STATS: 176, STAT_V: 96, STAT_L: 32,
+    W: 1080, H: 1920, M: 64, HAUT: 200, PASTILLE: 64, BANDE: 136, BANDE_RANG: 28, BADGE: 60, AIR_BANDE: 40, LIB: 34, G1: 12, HERO: 300, G2: 32, STATS: 176, STAT_V: 96, STAT_L: 32,
     COMPACT: { LIB: 30, HERO: 210, STATS: 140, STAT_V: 76, STAT_L: 28, G2: 24 },
   },
   post: {
-    W: 1080, H: 1350, M: 56, HAUT: 48, PASTILLE: 60, BANDE: 124, BANDE_RANG: 26, BADGE: 72, AIR_BANDE: 32, LIB: 30, G1: 10, HERO: 230, G2: 24, STATS: 150, STAT_V: 84, STAT_L: 28,
+    W: 1080, H: 1350, M: 56, HAUT: 48, PASTILLE: 60, BANDE: 104, BANDE_RANG: 24, BADGE: 56, AIR_BANDE: 32, LIB: 30, G1: 10, HERO: 230, G2: 24, STATS: 150, STAT_V: 84, STAT_L: 28,
     COMPACT: { LIB: 28, HERO: 170, STATS: 120, STAT_V: 66, STAT_L: 24, G2: 18 },
   },
 };
 
 /**
- * La marge de securite du bas : le bas du logo et des badges reste au moins a cette distance du bord.
- * Story : la barre de reponse d'Instagram (environ 6 % du bas sur un telephone 16:9). 4:5 : rien ne la couvre.
+ * L'air sous le logo et les badges : le bas des badges est exactement a cette distance du bord.
+ * 2 novembre 2026 (bloc deplacable) : 48 px en story (au lieu de 120), 24 px en 4:5. En story, la barre
+ * « Envoyer un message » d'Instagram peut recouvrir ce bas chez la personne qui regarde : choix de Houari.
  */
-export const MARGE_SURE_BAS: Record<FormatMoteur, number> = { story: 120, post: 24 };
+export const MARGE_SURE_BAS: Record<FormatMoteur, number> = { story: 48, post: 24 };
 
 /** Le bas du logo et des badges, en pixels depuis le haut */
 export function basDesBadges(f: FormatMoteur): number {
