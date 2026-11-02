@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 // Stockage partage par App Group entre l'app montre et l'extension de widgets.
 
@@ -10,7 +11,11 @@ enum Partage {
     static let contexteAffiche = "yoroi.contexte.affiche"
     static let file = "yoroi.file.actions"
     static let hapticFort = "yoroi.reglage.hapticFort"
+    /// Son fort de fin de minuteur (absent = actif).
+    static let sonFort = "yoroi.reglage.sonFort"
     static let sons = "yoroi.reglage.sons"
+    /// 28 octobre 2026 : son de fin de minuteur, "wizz" (absent = wizz) ou "alarme" (les bips aigus d'avant).
+    static let sonFin = "yoroi.reglage.sonFin"
     static let idsEcritsSante = "yoroi.sante.ids"
   }
 
@@ -69,5 +74,39 @@ enum Partage {
 
   static func ecrireFile(_ file: [ActionEnAttente]) {
     if let data = try? JSONEncoder().encode(file) { defaults.set(data, forKey: Cle.file) }
+  }
+
+  // MARK: Images de l'iPhone (28 octobre 2026)
+
+  /// Ton personnage (png transparent) et ta scene (jpg), reduits par l'iPhone et recus par WatchConnectivity
+  /// (Synchro, didReceive file). Gardes dans le dossier de l'App Group : les complications les lisent aussi.
+  static let fichierPersonnage = "montre_personnage.png"
+  static let fichierScene = "montre_scene.jpg"
+
+  static func urlImage(_ nom: String) -> URL? { dossier?.appendingPathComponent(nom) }
+
+  /// Range un fichier recu (deplace depuis son emplacement temporaire, qui disparait au retour de la methode).
+  static func rangerImage(depuis source: URL, nom: String) -> Bool {
+    guard let cible = urlImage(nom) else { return false }
+    let fm = FileManager.default
+    let temp = cible.appendingPathExtension("tmp")
+    try? fm.removeItem(at: temp)
+    do {
+      try fm.copyItem(at: source, to: temp)
+      if fm.fileExists(atPath: cible.path) {
+        _ = try fm.replaceItemAt(cible, withItemAt: temp)
+      } else {
+        try fm.moveItem(at: temp, to: cible)
+      }
+      return true
+    } catch {
+      try? fm.removeItem(at: temp)
+      return false
+    }
+  }
+
+  static func image(_ nom: String) -> UIImage? {
+    guard let url = urlImage(nom), FileManager.default.fileExists(atPath: url.path) else { return nil }
+    return UIImage(contentsOfFile: url.path)
   }
 }
