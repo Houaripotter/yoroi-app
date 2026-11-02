@@ -12,7 +12,7 @@ export type EvenementMesure =
   | 'notif_permission_refusee'
   | 'avis_demande';
 
-const ECRANS: readonly EcranPermission[] = ['pesee', 'seance', 'timer', 'sparring', 'reglages', 'essai'];
+const ECRANS: readonly EcranPermission[] = ['pesee', 'seance', 'timer', 'sparring', 'reglages', 'essai', 'coffre'];
 
 /** Branche sur utils/telemetry.ts (13 octobre 2026) */
 export function noter(evenement: EvenementMesure, details?: Record<string, string | number | boolean>): void {
