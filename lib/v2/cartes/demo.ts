@@ -1,6 +1,6 @@
 /**
  * Donnees de demonstration des cartes, utilisees seulement avec ?demo=1 (copie web, planche des modeles).
- * Jamais montrees a un utilisateur avec ses vraies donnees.
+ * Jamais montrees a un utilisateur avec ses vraies donnees. 2 novembre 2026 : sans kcal, comme les vraies cartes (kcalPourCarte).
  */
 import type { CarteData, DonneesSeance, Exploit, PhotoCarte } from './types';
 import type { Bibliotheque } from './bibliotheque';
@@ -39,7 +39,7 @@ export const DEMO_SEANCE_MUSCU: CarteData = {
   sport: 'musculation',
   famille: 'muscu',
   club: { nom: 'Salle de musculation' },
-  seance: { dureeMin: 72, rounds: 0, series: 18, tonnage: 12450, distanceKm: 0, fcMoy: 118, fcMax: 164, calories: 486, zones: null, records: [{ nom: traduire('Développé couché'), texte: traduire('100 kg pour 5 répétitions'), poids: 100, reps: 5, avant: 95 }], repetitions: 142, meilleures: [{ nom: traduire('Développé couché'), poids: 100, reps: 5 }, { nom: traduire('Développé militaire'), poids: 60, reps: 6 }, { nom: 'Dips', poids: 25, reps: 8 }], barres: [600, 800, 900, 500, 600, 640, 640, 900, 960, 1000, 420, 480, 480, 360, 380, 400, 300, 320] },
+  seance: { dureeMin: 72, rounds: 0, series: 18, tonnage: 12450, distanceKm: 0, fcMoy: 118, fcMax: 164, calories: 0, zones: null, records: [{ nom: traduire('Développé couché'), texte: traduire('100 kg pour 5 répétitions'), poids: 100, reps: 5, avant: 95 }], repetitions: 142, meilleures: [{ nom: traduire('Développé couché'), poids: 100, reps: 5 }, { nom: traduire('Développé militaire'), poids: 60, reps: 6 }, { nom: 'Dips', poids: 25, reps: 8 }], barres: [600, 800, 900, 500, 600, 640, 640, 900, 960, 1000, 420, 480, 480, 360, 380, 400, 300, 320] },
   serieSemaines: 6,
   precedente: precedenteDemo({ dureeMin: 76, series: 17, tonnage: 11920, repetitions: 131 }, '2026-10-07'),
   grille: grilleDemo(),
@@ -55,7 +55,7 @@ export const DEMO_SEANCE_COMBAT: CarteData = {
   sousTitre: traduire('Mardi 13 octobre'),
   sport: 'jjb',
   famille: 'combat',
-  seance: { dureeMin: 90, rounds: 6, series: 0, tonnage: 0, distanceKm: 0, fcMoy: 142, fcMax: 181, calories: 812, zones: [300, 1500, 1800, 1200, 600], records: [], intensite: 8, techniques: [traduire('Passage de garde en torreando'), traduire('Balayage en araignée'), traduire('Triangle depuis la garde')], courbeFc: [96, 110, 128, 150, 166, 158, 132, 118, 140, 164, 176, 160, 128, 116, 142, 168, 178, 162, 130, 120, 146, 170, 181, 166, 134, 122, 150, 172, 176, 150] },
+  seance: { dureeMin: 90, rounds: 6, series: 0, tonnage: 0, distanceKm: 0, fcMoy: 142, fcMax: 181, calories: 0, zones: [300, 1500, 1800, 1200, 600], records: [], intensite: 8, techniques: [traduire('Passage de garde en torreando'), traduire('Balayage en araignée'), traduire('Triangle depuis la garde')], courbeFc: [96, 110, 128, 150, 166, 158, 132, 118, 140, 164, 176, 160, 128, 116, 142, 168, 178, 162, 130, 120, 146, 170, 181, 166, 134, 122, 150, 172, 176, 150] },
   serieSemaines: 6,
   precedente: precedenteDemo({ dureeMin: 90, rounds: 5, intensite: 7 }, '2026-10-06'),
   grille: grilleDemo(),
@@ -71,7 +71,7 @@ export const DEMO_SEANCE_COURSE: CarteData = {
   sousTitre: traduire('Dimanche 11 octobre'),
   sport: 'running',
   famille: 'course',
-  seance: { dureeMin: 53, rounds: 0, series: 0, tonnage: 0, distanceKm: 10.24, fcMoy: 156, fcMax: 178, calories: 702, zones: [120, 600, 1300, 900, 260], records: [], trace: traceDemo(), deniveleM: 86, splits: [{ km: 1, secondes: 322 }, { km: 2, secondes: 314 }, { km: 3, secondes: 311 }, { km: 4, secondes: 309 }, { km: 5, secondes: 312 }, { km: 6, secondes: 306 }, { km: 7, secondes: 310 }, { km: 8, secondes: 304 }, { km: 9, secondes: 301 }, { km: 10, secondes: 296 }] },
+  seance: { dureeMin: 53, rounds: 0, series: 0, tonnage: 0, distanceKm: 10.24, fcMoy: 156, fcMax: 178, calories: 0, zones: [120, 600, 1300, 900, 260], records: [], trace: traceDemo(), deniveleM: 86, splits: [{ km: 1, secondes: 322 }, { km: 2, secondes: 314 }, { km: 3, secondes: 311 }, { km: 4, secondes: 309 }, { km: 5, secondes: 312 }, { km: 6, secondes: 306 }, { km: 7, secondes: 310 }, { km: 8, secondes: 304 }, { km: 9, secondes: 301 }, { km: 10, secondes: 296 }] },
   serieSemaines: 6,
   precedente: precedenteDemo({ dureeMin: 49.5, distanceKm: 9.1 }, '2026-10-04'),
   grille: grilleDemo(),
