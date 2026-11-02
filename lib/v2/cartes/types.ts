@@ -163,7 +163,17 @@ export type DonneesSemaine = {
   /** objectif de seances choisi, 0 s'il n'est pas choisi */
   objectif: number;
   /** lundi a dimanche (17 octobre 2026, modele Semaine) : les sports faits ce jour-la et le club de la premiere seance avec club */
-  parJour?: { sports: string[]; club?: { nom: string; logo?: string | null } | null }[];
+  parJour?: {
+    sports: string[];
+    club?: { nom: string; logo?: string | null } | null;
+    /** 2 novembre 2026 (cartes v10) : minutes du jour, somme de durationOf des seances de ce jour, 0 sans seance */
+    minutes?: number;
+    /**
+     * 2 novembre 2026 (cartes v10) : seance (au moins une seance), repos (jour passe ou aujourd'hui, connu, sans seance),
+     * inconnu (jour futur, ou avant le debut des donnees : date d'installation, lib/v2/installation.ts)
+     */
+    statut?: 'seance' | 'repos' | 'inconnu';
+  }[];
   /** 2 novembre 2026 : kilos souleves de la semaine (charge x repetitions des series de travail), absent a 0 */
   kilos?: number;
 };
@@ -345,6 +355,15 @@ export type Exploit = {
 export type Masque = 'aucun' | 'ecart' | 'pourcentage';
 
 /**
+ * 2 novembre 2026 (cartes v10, nouveau moteur, lib/v2/cartes/moteur/) : les 10 familles et les compositions.
+ * A : ta photo plein cadre ; A+ : le chiffre derriere ta silhouette (desactive) ; B : le dessin du sport ; C : les donnees.
+ */
+export type FamilleMoteur = 'muscu' | 'record' | 'course' | 'jjb' | 'marche' | 'transfo' | 'muscles' | 'semaine' | 'serie' | 'annee';
+export type CompositionId = 'A' | 'Aplus' | 'B' | 'C';
+/** Les trois styles de la carte A : Color, Light, Dark */
+export type StyleCarte = 'color' | 'light' | 'dark';
+
+/**
  * 31 octobre 2026 : six modeles proposes, Affiche, Bandeau, Neon nuit, Ticket, Medaille, Tableau de score.
  * Les anciens ids restent dans le type pour les reglages deja memorises : ils retombent sur l'Affiche.
  */
@@ -405,4 +424,10 @@ export type OptionsCarte = {
    * ou ta couleur ; 'autocollant' : PNG a fond transparent, a coller toi-meme sur ta story.
    */
   sortie?: 'story' | 'autocollant';
+  /** 2 novembre 2026 (cartes v10, nouveau moteur) : la famille choisie quand la carte en propose deux (seance : musculation ou muscles) */
+  familleMoteur?: FamilleMoteur;
+  /** 2 novembre 2026 (cartes v10) : la composition (A, B, C) ; A+ n'est jamais proposee tant qu'elle est desactivee */
+  compo?: CompositionId;
+  /** 2 novembre 2026 (cartes v10) : le style de la carte A */
+  styleCarte?: StyleCarte;
 };
