@@ -33,6 +33,7 @@ import { traduire, DECIMAL } from '@/lib/i18n/tr';
 import { BALANCE_FIELD, PHYSIQUE_LABELS } from '@/lib/v2/balance/format';
 import { computeBmi, EXTRA_BALANCE_KEY, EXTRA_KEYS, lastExtras, manualScale } from '@/lib/v2/progres/compoExtras';
 import type { ExtraKey } from '@/lib/v2/progres/compoExtras';
+import { track, trancheUsage } from '@/utils/telemetry';
 
 type FieldKey = 'weight' | 'fat' | 'muscleKg' | 'water' | 'bone' | 'visceral' | 'metabolicAge' | 'bmr' | ExtraKey;
 type Field = { key: FieldKey; label: string; unit: string; hint?: string; step: number; min: number; max: number; int?: boolean };
@@ -305,6 +306,9 @@ function BodyComposition() {
         },
         rawWeights,
       );
+      // mesure : le fait, jamais la valeur (une pesee completee ce jour-la ne compte pas comme nouvelle pesee)
+      if (!row) track('poids_saisi', { methode: 'manuel', tranche_pesees: trancheUsage(rawWeights.length + 1) });
+      track('composition_ajoutee');
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
       // 16 octobre : la page de bilan (graisse, muscle, eau...), ou retour direct si le bilan est coupe
