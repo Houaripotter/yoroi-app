@@ -359,7 +359,9 @@ export type Masque = 'aucun' | 'ecart' | 'pourcentage';
  * A : ta photo plein cadre ; A+ : le chiffre derriere ta silhouette (desactive) ; B : le dessin du sport ; C : les donnees.
  * Autocollant (2 novembre 2026) : tes chiffres et le logo sur fond transparent, a coller dans ta story.
  */
-export type FamilleMoteur = 'muscu' | 'record' | 'course' | 'jjb' | 'marche' | 'transfo' | 'muscles' | 'semaine' | 'serie' | 'annee';
+export type FamilleMoteur = 'muscu' | 'record' | 'course' | 'jjb' | 'marche' | 'transfo' | 'muscles' | 'semaine' | 'serie' | 'annee'
+  /** 2 novembre 2026 (studio unique) : les familles ajoutees, pour que le nouveau moteur dessine toutes les cartes */
+  | 'pesee' | 'mois' | 'objectif' | 'exploit' | 'sport';
 export type CompositionId = 'A' | 'Aplus' | 'B' | 'C' | 'autocollant';
 /** Les trois styles de la carte A : Color, Light, Dark */
 export type StyleCarte = 'color' | 'light' | 'dark';
@@ -431,4 +433,9 @@ export type OptionsCarte = {
   compo?: CompositionId;
   /** 2 novembre 2026 (cartes v10) : le style de la carte A */
   styleCarte?: StyleCarte;
+  /**
+   * 2 novembre 2026 (studio unique) : les chiffres du panneau que tu caches (leur libelle), le temps de cette edition
+   * seulement (jamais memorises). Au moins un chiffre reste toujours.
+   */
+  cacheMoteur?: string[];
 };
