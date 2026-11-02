@@ -21,7 +21,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DeviceEventEmitter, Image, Pressable, ScrollView, View } from 'react-native';
 import { illustration } from '@/components/yoroi/v2/stickers';
 import { OMBRE_CARTE, carteBlanche, tonDuRang } from '@/components/yoroi/v2/seance/pastel';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -62,6 +62,8 @@ import { FicheTechnique } from '@/components/yoroi/v2/programmes/FicheTechnique'
 import { ExplicationExo } from '@/components/yoroi/v2/programmes/ExplicationExo';
 import { VignetteExo } from '@/components/yoroi/v2/programmes/VignetteExo';
 import { FicheExercice } from '@/components/yoroi/v2/programmes/FicheExercice';
+import { noterDetailsPage } from '@/lib/v2/nav/RouvrirDernierePage';
+import { prendreDetailRestaure } from '@/lib/v2/nav/dernierePage';
 import { ficheDe } from '@/lib/v2/programmes/fiches';
 import { DUREES_EXPRESS, dureeEstimee, seanceExpress } from '@/lib/v2/programmes/express';
 import { demoDe } from '@/lib/v2/programmes/demos';
@@ -1074,7 +1076,17 @@ function LigneExo({ e, premier, raison, onChanger, onRevenir, carte, k = 0 }: { 
   const [deplie, setDeplie] = useState(false);
   const [technique, setTechnique] = useState(false);
   // 1er novembre 2026 : en carte, un toucher ouvre la fiche de l'exercice (components/yoroi/v2/programmes/FicheExercice.tsx)
-  const [fiche, setFiche] = useState(false);
+  // 2 novembre 2026 (derniere page) : la fiche ouverte quand l'app a ete fermee se rouvre une fois (lib/v2/nav/RouvrirDernierePage.tsx)
+  const ici = usePathname();
+  const [fiche, setFicheEtat] = useState(() => !!carte && prendreDetailRestaure('fiche', e.nom));
+  const setFiche = (o: boolean) => {
+    setFicheEtat(o);
+    noterDetailsPage(ici, o ? { fiche: e.nom } : {});
+  };
+  useEffect(() => {
+    if (fiche) noterDetailsPage(ici, { fiche: e.nom });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const aFiche = !!ficheDe(e.nom);
   const reps = e.repsMin === e.repsMax ? `${e.repsMin}` : traduire('{0} à {1}', e.repsMin, e.repsMax);
   const volume = e.secondes ? `${e.series} × ${reps} s` : `${e.series} × ${reps}`;
