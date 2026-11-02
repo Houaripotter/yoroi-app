@@ -24,6 +24,7 @@ import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { lirePratiques } from '@/lib/v2/profil/pratiques';
 import { chargerZone2 } from '@/lib/v2/seances/zone2';
 import { ceintureJjbDe, enZone2De, gpsSiAppareil, kcalPourCarte, kilosDe, musclesDeSeance, serieDe } from './donneesEnPlus';
+import { debutDesDonnees, lireDateInstallation } from '@/lib/v2/installation';
 
 const JOURS = [traduire('Dimanche'), traduire('Lundi'), traduire('Mardi'), traduire('Mercredi'), traduire('Jeudi'), traduire('Vendredi'), traduire('Samedi')];
 const MOIS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
@@ -301,7 +302,17 @@ export async function chargerPesee(opts: { id?: number; date?: string } = {}): P
 }
 
 /** Donnees du bilan d'une semaine (lundi en AAAA-MM-JJ) */
-export async function chargerSemaine(lundi: string, deja?: { trainings?: Training[]; ctx?: Contexte; serie?: number }): Promise<CarteData | null> {
+/**
+ * 2 novembre 2026 (cartes v10) : le statut d'un jour de la semaine. seance : au moins une seance ; inconnu : jour futur,
+ * ou avant le debut des donnees (date d'installation ou premiere seance, la plus ancienne) ; repos : sinon.
+ */
+export function statutDuJour(jour: string, fait: boolean, aujourdhui: string, debut: string | null): 'seance' | 'repos' | 'inconnu' {
+  if (fait) return 'seance';
+  if (jour > aujourdhui || (debut !== null && jour < debut)) return 'inconnu';
+  return 'repos';
+}
+
+export async function chargerSemaine(lundi: string, deja?: { trainings?: Training[]; ctx?: Contexte; serie?: number; installation?: string | null; aujourdhui?: string }): Promise<CarteData | null> {
   const fin = isoJour(new Date(dateDe(lundi).getFullYear(), dateDe(lundi).getMonth(), dateDe(lundi).getDate() + 6, 12));
   const all = deja?.trainings ?? dedupeTrainings((await getTrainings(400).catch(() => [])) ?? []);
   const list = all.filter((t) => {
@@ -310,19 +321,33 @@ export async function chargerSemaine(lundi: string, deja?: { trainings?: Trainin
   });
   if (!list.length) return null;
   const jours = [false, false, false, false, false, false, false];
-  const parJour: NonNullable<CarteData['semaine']>['parJour'] = jours.map(() => ({ sports: [], club: null }));
+  // 2 novembre 2026 (cartes v10) : minutes du jour (meme addition que le total) et statut seance, repos ou inconnu
+  const parJour: NonNullable<NonNullable<CarteData['semaine']>['parJour']> = jours.map(() => ({ sports: [], club: null, minutes: 0, statut: 'inconnu' as const }));
   const sports = new Map<string, number>();
   let minutes = 0;
   const kilos = kilosDe(list);
   for (const t of [...list].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))) {
     const dow = (dateDe(t.date).getDay() + 6) % 7;
     jours[dow] = true;
-    minutes += durationOf(t);
+    const duree = durationOf(t);
+    minutes += duree;
+    parJour[dow].minutes = (parJour[dow].minutes ?? 0) + duree;
     const n = nomSport(t.sport) || traduire('Séance');
     sports.set(n, (sports.get(n) ?? 0) + 1);
-    const j = parJour![dow];
+    const j = parJour[dow];
     if (!j.sports.includes(n)) j.sports.push(n);
     if (!j.club) j.club = clubDe(t);
+  }
+  const installation = deja && 'installation' in deja ? deja.installation ?? null : (await lireDateInstallation())?.date ?? null;
+  const premiere = all.reduce<string | null>((m, t) => {
+    const d = t.date.slice(0, 10);
+    return m === null || d < m ? d : m;
+  }, null);
+  const debutDonnees = debutDesDonnees(installation, premiere);
+  const aujourdhui = deja?.aujourdhui ?? isoJour(new Date());
+  for (let i = 0; i < 7; i++) {
+    const jour = isoJour(new Date(dateDe(lundi).getFullYear(), dateDe(lundi).getMonth(), dateDe(lundi).getDate() + i, 12));
+    parJour[i].statut = statutDuJour(jour, jours[i], aujourdhui, debutDonnees);
   }
   const ctx = deja?.ctx ?? (await contextePoids());
   const semaine = ctx.pesees.filter((w) => w.date.slice(0, 10) >= lundi && w.date.slice(0, 10) <= fin);
