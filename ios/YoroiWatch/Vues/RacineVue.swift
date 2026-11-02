@@ -14,11 +14,15 @@ struct RacineVue: View {
   /// d'une complication et d'ouvrir directement son ecran, sans montrer l'Accueil avant.
   @State private var pret = false
 
-  private var sonnerieVisible: Bool { minuteurs.sonnerie != nil && routeur.live == nil }
+  /// 29 octobre 2026 : pas pendant l'alerte d'Apple (Arreter y ferme tout, Ouvrir montre cet ecran ensuite)
+  private var sonnerieVisible: Bool { minuteurs.sonnerie != nil && !minuteurs.alarmeSysteme && routeur.live == nil }
 
   var body: some View {
     NavigationStack(path: $routeur.chemin) {
       TabView(selection: $routeur.page) {
+        AccueilVue()
+          .tag(Page.accueil)
+          .containerBackground(Teinte.fond, for: .tabView)
         AujourdhuiVue()
           .tag(Page.aujourdhui)
           .containerBackground(Teinte.fond, for: .tabView)
@@ -56,6 +60,7 @@ struct RacineVue: View {
         case .minuteurLibre: MinuteurLibreVue()
         case .coeur: CoeurVue()
         case .oxygene: OxygeneVue()
+        case .seanceGuidee: SeanceGuideeVue()
         }
       }
     }
@@ -101,7 +106,7 @@ struct RacineVue: View {
     }
     .task { await SanteCardio.shared.preparer() }
     .onChange(of: synchro.contexte.combat == nil) { _, sansCombat in
-      if sansCombat && routeur.page == .combat { routeur.page = .aujourdhui }
+      if sansCombat && routeur.page == .combat { routeur.page = .accueil }
     }
   }
 }
@@ -122,6 +127,8 @@ private extension View {
       .onContinueUserActivity(GenreWidget.eau) { _ in routeur.recevoir(lien: "eau") }
       .onContinueUserActivity(GenreWidget.chrono) { _ in routeur.recevoir(lien: "chrono") }
       .onContinueUserActivity(GenreWidget.combat) { _ in routeur.recevoir(lien: "combat") }
+      .onContinueUserActivity(GenreWidget.coach) { _ in routeur.recevoir(lien: "seance") }
+      .onContinueUserActivity(GenreWidget.rang) { _ in routeur.recevoir(lien: "accueil") }
   }
 }
 
