@@ -5,7 +5,8 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DeviceEventEmitter } from 'react-native';
-import { programmeParId } from './catalogue';
+import { programmeParId, sportDuProgramme } from './catalogue';
+import { familleDeSport, track, type TypeProgramme } from '@/utils/telemetry';
 import { TOUT_LE_MATERIEL } from './materiel';
 import type { Equipement } from './materiel';
 import type { JourProgramme, Programme } from './types';
@@ -1271,8 +1272,21 @@ export function enFileProgramme<T>(cle: string, fn: () => Promise<T>): Promise<T
   files.set(cle, p.catch(() => undefined));
   return p;
 }
+/** 2 novembre 2026 (mesure) : categorie du programme, liste fermee, jamais son nom ni ton contenu */
+export function typeDeProgramme(p: Programme): TypeProgramme {
+  return estProgrammePerso(p.id) ? 'perso' : p.objectif;
+}
 export function demarrerProgramme(...a: Parameters<typeof demarrerProgramme_>): ReturnType<typeof demarrerProgramme_> {
-  return enFileProgramme(CLE, () => demarrerProgramme_(...a)) as ReturnType<typeof demarrerProgramme_>;
+  return enFileProgramme(CLE, () => demarrerProgramme_(...a)).then((r) => {
+    // mesure : tu commences un programme (choix fait par toi, depuis la fiche, le depart ou le questionnaire)
+    try {
+      const p = r ? programmeParId(r.id) : undefined;
+      if (p) track('programme_choisi', { type: typeDeProgramme(p), famille: familleDeSport(sportDuProgramme(p)) });
+    } catch {
+      // la mesure ne bloque jamais le programme
+    }
+    return r;
+  }) as ReturnType<typeof demarrerProgramme_>;
 }
 export function enregistrerFin(...a: Parameters<typeof enregistrerFin_>): ReturnType<typeof enregistrerFin_> {
   return enFileProgramme(CLE, () => enregistrerFin_(...a)) as ReturnType<typeof enregistrerFin_>;
