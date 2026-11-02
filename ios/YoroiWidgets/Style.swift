@@ -53,14 +53,27 @@ enum Teinte {
     }
   }
 
-  /// Variantes claires pour la Dynamic Island (toujours sur fond noir)
+  /// Variantes claires pour la Dynamic Island et l'ecran verrouille (toujours sur fond sombre).
+  /// 28 octobre 2026, direction B : effort peche, repos menthe, preparation creme.
   static func phaseIle(_ p: String) -> Color {
     switch p {
-    case "repos": return Color.hexa(0x5FBF8A)
-    case "prepa": return Color.hexa(0xF2C14E)
-    default: return Color.hexa(0x8FA8DE)
+    case "repos": return Color.hexa(0x9FE3C0)
+    case "prepa": return Color.hexa(0xF6DFA6)
+    default: return Color.hexa(0xFFB59E)
     }
   }
+
+  /// Texte fonce pose sur la couleur de la phase (boutons)
+  static func surPhaseIle(_ p: String) -> Color {
+    switch p {
+    case "repos": return Color.hexa(0x123F2A)
+    case "prepa": return Color.hexa(0x4A3A12)
+    default: return Color.hexa(0x5A2412)
+    }
+  }
+
+  /// Fond de l'activite en direct : nuit bleutee
+  static let nuitIle = Color.hexa(0x0E1018)
 }
 
 extension Font {
@@ -188,6 +201,9 @@ enum Liens {
   static let combat = URL(string: "yoroi://w/combat")!
   static let ajouterCombat = URL(string: "yoroi://w/ajout-combat")!
   static let accueil = URL(string: "yoroi://w/accueil")!
+  /// 28 octobre 2026 : la seance du jour du Coach et ton rang du Dojo
+  static let coach = URL(string: "yoroi://w/coach")!
+  static let dojo = URL(string: "yoroi://w/dojo")!
 }
 
 // MARK: - Fond du widget
