@@ -18,6 +18,7 @@ struct SemaineVue: View {
       if !synchro.aRecuContexte && semaine.faites == 0 {
         EcranVide()
       } else {
+        ScrollView {
         VStack(spacing: 8) {
           HStack(alignment: .firstTextBaseline, spacing: 4) {
             Text("\(semaine.faites)")
@@ -55,6 +56,7 @@ struct SemaineVue: View {
               .font(.system(size: 13, weight: .semibold, design: .rounded))
               .foregroundStyle(Teinte.vert)
           }
+        }
         }
       }
     }
