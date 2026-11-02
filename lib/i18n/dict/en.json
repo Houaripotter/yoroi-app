@@ -21965,5 +21965,9 @@
 "Zones cardiaques non enregistrees": "Heart rate zones not saved",
 "Avant bras gauche entre 15 et 50 cm": "Left forearm between 15 and 50 cm",
 "Avant bras droit entre 15 et 50 cm": "Right forearm between 15 and 50 cm",
-"Une semaine calme. La suivante commence : choisis un petit objectif.": "A quiet week. The next one is starting: pick a small goal."
+"Une semaine calme. La suivante commence : choisis un petit objectif.": "A quiet week. The next one is starting: pick a small goal.",
+"Nouveau record sur cet exercice": "New PR on this exercise",
+"Ton record sur cet exercice : {0}": "Your PR on this exercise: {0}",
+"Dernière fois : max {0}": "Last time: max {0}",
+", les {0} paliers franchis": ", the {0} milestones reached"
 }

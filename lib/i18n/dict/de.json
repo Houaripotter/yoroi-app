@@ -21965,5 +21965,9 @@
 "Zones cardiaques non enregistrees": "Herzfrequenzzonen nicht gespeichert",
 "Avant bras gauche entre 15 et 50 cm": "Linker Unterarm zwischen 15 und 50 cm",
 "Avant bras droit entre 15 et 50 cm": "Rechter Unterarm zwischen 15 und 50 cm",
-"Une semaine calme. La suivante commence : choisis un petit objectif.": "Eine ruhige Woche. Die nächste beginnt: Setz dir ein kleines Ziel."
+"Une semaine calme. La suivante commence : choisis un petit objectif.": "Eine ruhige Woche. Die nächste beginnt: Setz dir ein kleines Ziel.",
+"Nouveau record sur cet exercice": "Neue Bestleistung bei dieser Übung",
+"Ton record sur cet exercice : {0}": "Deine Bestleistung bei dieser Übung: {0}",
+"Dernière fois : max {0}": "Letztes Mal: max. {0}",
+", les {0} paliers franchis": ", die {0} erreichten Stufen"
 }

@@ -21965,5 +21965,9 @@
 "Avant bras gauche entre 15 et 50 cm": "Antebrazo izquierdo entre 15 y 50 cm",
 "Avant bras droit entre 15 et 50 cm": "Antebrazo derecho entre 15 y 50 cm",
 "Une semaine calme. La suivante commence : choisis un petit objectif.": "Una semana tranquila. Empieza la siguiente: elige un pequeño objetivo.",
-"{0} min de {1}": "{0} min de {1}"
+"{0} min de {1}": "{0} min de {1}",
+"Nouveau record sur cet exercice": "Nuevo récord en este ejercicio",
+"Ton record sur cet exercice : {0}": "Tu récord en este ejercicio: {0}",
+"Dernière fois : max {0}": "La última vez: máx. {0}",
+", les {0} paliers franchis": ", los {0} niveles superados"
 }
