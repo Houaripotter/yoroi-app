@@ -75,7 +75,7 @@ target 'Yoroi' do
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['ENABLE_MODULE_VERIFIER'] = 'NO'
-        if target.name =~ /\ASDWebImage.+Coder\z/
+        if target.name =~ /\ASDWebImage.+Coder\z/ || ['libavif', 'libdav1d', 'libwebp'].include?(target.name)
           config.build_settings['MODULE_VERIFIER_SUPPORTED_LANGUAGES'] = ''
         end
       end
@@ -126,5 +126,19 @@ target 'Yoroi' do
         end
       end
     end
+  end
+
+  # Fix Xcode VerifyModule (libavif, SDWebImage*Coder...) : le reglage pose dans
+  # post_install est ecrase plus tard pendant pod install. On le force ici, a la
+  # toute fin, sur tous les pods. La verification de module n'est qu'un controle,
+  # la desactiver ne change rien a l'app.
+  post_integrate do |installer|
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['ENABLE_MODULE_VERIFIER'] = 'NO'
+        config.build_settings['MODULE_VERIFIER_SUPPORTED_LANGUAGES'] = ''
+      end
+    end
+    installer.pods_project.save
   end
 end
