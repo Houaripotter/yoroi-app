@@ -1,5 +1,6 @@
 import WidgetKit
 import Foundation
+import UIKit
 
 // Lit le contexte affiche par l'app montre dans l'App Group group.com.houari.yoroi.watch
 // (fichier contexte.json en premier, puis UserDefaults partages).
@@ -8,6 +9,8 @@ struct EntreeYoroi: TimelineEntry {
   let date: Date
   let contexte: Contexte?
   let dernierChrono: String?
+  /// 28 octobre 2026 : ton personnage recu de l'iPhone (complications Seance du jour et Rang), nil sinon.
+  var personnage: UIImage? = nil
 
   static let apercu = EntreeYoroi(date: Date(), contexte: nil, dernierChrono: nil)
 }
@@ -43,7 +46,9 @@ struct FournisseurYoroi: TimelineProvider {
     if let lu = c, lu.genere.isEmpty { c = nil }
     c?.ramenerAujourdhui(date)
     let nom = Partage.defaults.string(forKey: "yoroi.dernierChronoNom")
-    return EntreeYoroi(date: date, contexte: c, dernierChrono: nom)
+    // « Sans personnage » sur l'iPhone : pas d'image, meme si une ancienne est encore la
+    let perso = c?.dojo?.personnage == nil ? nil : Partage.image(Partage.fichierPersonnage)
+    return EntreeYoroi(date: date, contexte: c, dernierChrono: nom, personnage: perso)
   }
 
   /// Apercu de la galerie seulement, jamais affiche comme une vraie donnee.
