@@ -6,10 +6,11 @@
  * mis a l'echelle de l'apercu (CARTE_W points) : la capture en 1080 x 1920 ou 1080 x 1350 garde la meme mise en page.
  * Ta photo, les logos et l'anatomie sont des images posees autour du SVG.
  * A+ n'est jamais dessine (APLUS_ACTIF, analysePhoto.ts). Les kcal ne viennent que de kcalPourCarte (familles.ts).
+ * L'autocollant (2 novembre 2026) : sans fond, seulement tes chiffres et le logo ; sa vue seule est capturee (refAutocollant).
  */
 import React, { useId } from 'react';
-import { Image, View } from 'react-native';
-import type { ImageSourcePropType } from 'react-native';
+import { Image, PixelRatio, View } from 'react-native';
+import type { ImageSourcePropType, View as VueRN } from 'react-native';
 import Svg, { Circle, Defs, Ellipse, G, Line, LinearGradient, Mask, Path, Pattern, RadialGradient, Rect, Stop, Text as SvgText, TSpan, Image as SvgImage } from 'react-native-svg';
 import { fontFamilies, policesCartes } from '@/components/yoroi/fonts';
 import { traduire } from '@/lib/i18n/tr';
@@ -18,7 +19,7 @@ import type { ContenuCarte, IconeId, JourCarte, Stat } from '@/lib/v2/cartes/mot
 import { GRILLE, largeurTexte } from '@/lib/v2/cartes/moteur/grille';
 import type { Cotes, PoliceMesure } from '@/lib/v2/cartes/moteur/grille';
 import { arretsEnPart } from '@/lib/v2/cartes/moteur/degrade';
-import type { Plan } from '@/lib/v2/cartes/moteur/miseEnPage';
+import type { LigneAutoPosee, Plan } from '@/lib/v2/cartes/moteur/miseEnPage';
 import { ICONES } from './Icones';
 
 /**
@@ -54,6 +55,8 @@ const CALQUES_MUSCLES: Record<'face' | 'dos', Partial<Record<string, ImageSource
 };
 
 const LOGO = require('@/assets/logo d\'app/yoroi-logo2.png');
+/** 2 novembre 2026 : le logo detoure, sans fond ni halo, pour l'autocollant */
+const LOGO_DETOURE = require('@/assets/logo d\'app/yoroi-logo-detoure.png');
 const BADGE_APPLE = { image: require('@/assets/images/appstore.png') as ImageSourcePropType, ratio: 705 / 222 };
 const BADGE_GOOGLE = { image: require('@/assets/images/android.png') as ImageSourcePropType, ratio: 705 / 209 };
 
@@ -607,6 +610,8 @@ export type PropsCarteMoteur = {
   duo?: { avant: string; apres: string; flou: boolean; poids?: { avant: string | null; apres: string | null } } | null;
   /** enveloppe la photo (le studio y pose le geste du recadrage) */
   enveloppePhoto?: (photo: React.ReactNode) => React.ReactNode;
+  /** l'autocollant : la vue capturee seule (export recadre, fond transparent) */
+  refAutocollant?: React.Ref<VueRN>;
 };
 
 /** Couleurs de la carte A (seance de musculation avec photo), a.js PALETTE */
@@ -616,8 +621,9 @@ const PALETTE_A = {
   light: { fonce: [243, 241, 236] as [number, number, number], ink: ENCRE, unite: '#0A5BC4', panBg: '#FFFFFF', valInk: ENCRE, valUnit: '#0A5BC4', labInk: '#3D4352', sep: 'rgba(11,14,21,0.12)', pillBg: 'rgba(255,255,255,0.86)', pillInk: ENCRE, bandBg: '#FFFFFF', bandBord: 'rgba(11,14,21,0.08)', bandInk: ENCRE, panBord: undefined as string | undefined },
 };
 
-export function CarteMoteur({ plan, largeur, photo, taillePhoto, duo, enveloppePhoto }: PropsCarteMoteur) {
+export function CarteMoteur({ plan, largeur, photo, taillePhoto, duo, enveloppePhoto, refAutocollant }: PropsCarteMoteur) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
+  if (plan.type === 'autocollant' && plan.autocollant) return <AutocollantMoteur plan={plan} largeur={largeur} refAutocollant={refAutocollant} />;
   const G0 = GRILLE[plan.format];
   const { W, H, RH, contenu: c } = plan;
   const k = largeur / W;
@@ -1152,6 +1158,109 @@ function donnees(plan: Plan, c: ContenuCarte): React.ReactNode {
       {tuiles.map((t, i) => tuile(t, x0, yT + i * (Math.min(hT, (y1 - yT - 16 * (tuiles.length - 1)) / Math.max(1, tuiles.length)) + 16), wl))}
       {graphe(x0 + wl + 30, y0 + 6, x1 - x0 - wl - 30, y1)}
     </G>
+  );
+}
+
+// ============================================
+// L'AUTOCOLLANT (proposition A, _propositions/autocollant_2026-11-02/html/autocollant.js)
+// ============================================
+
+/** Le contour sombre, tres fin, sous le blanc */
+const CONTOUR = 'rgba(0,0,0,0.5)';
+/**
+ * L'ombre douce, sans filtre (react-native-svg n'en a pas partout, et view-shot doit la capturer) : la meme forme
+ * repetee en noir tres leger, de plus en plus large, decalee vers le bas. Largeur du trait en pixels, opacite.
+ */
+const OMBRE: [number, number][] = [[26, 0.03], [20, 0.035], [14, 0.045], [8, 0.06]];
+const DY_OMBRE = 3;
+
+type Peinture = { fill: string; stroke?: string; strokeWidth?: number; opacity?: number; dy: number };
+/** Les couches d'un element de l'autocollant : l'ombre, le contour, puis le blanc */
+function couches(dessin: (p: Peinture, i: number) => React.ReactNode, contour = 2.6): React.ReactNode {
+  return (
+    <G>
+      {OMBRE.map(([w, a], i) => dessin({ fill: '#000', stroke: '#000', strokeWidth: w, opacity: a, dy: DY_OMBRE }, i))}
+      {dessin({ fill: BLANC, stroke: CONTOUR, strokeWidth: contour, dy: 0 }, 10)}
+      {dessin({ fill: BLANC, dy: 0 }, 11)}
+    </G>
+  );
+}
+
+function LigneAuto({ a, cx, sL, sIc, gIc, hL }: { a: LigneAutoPosee; cx: number; sL: number; sIc: number; gIc: number; hL: number }) {
+  const xV = cx - a.wV / 2;
+  const yV = base(a.yV, a.sV, 'anton', 1);
+  const w1 = sIc + gIc + larg(a.l[0], sL, 'x700');
+  const x1 = cx - w1 / 2;
+  // l'icone : trait de 2 sur sa grille de 24 ; l'ombre et le contour l'elargissent (moitie moins que le texte, elle est fine)
+  const icone = (p: Peinture, i: number) => (
+    <G key={`i${i}`} opacity={p.opacity} transform={`translate(0 ${p.dy})`}>
+      <Ic nom={a.ic} x={x1} y={a.yL + (hL - sIc) / 2} t={sIc} c={p.stroke ?? BLANC} trait={2 + ((p.strokeWidth ?? 0) * (p.fill === '#000' ? 0.5 : 1) * 24) / sIc} />
+    </G>
+  );
+  const ceint = a.ceinture;
+  return (
+    <G>
+      {couches((p, i) => (
+        <SvgText key={`v${i}`} x={xV} y={yV + p.dy} fontSize={a.sV} fontFamily={POL.anton} fill={p.fill} stroke={p.stroke} strokeWidth={p.strokeWidth} strokeLinejoin="round" opacity={p.opacity}>
+          {a.v}
+          {a.u ? <TSpan fontSize={a.sU} dx={a.dU}>{a.u}</TSpan> : null}
+        </SvgText>
+      ))}
+      {ceint ? (
+        <G>
+          <Rect x={ceint.x - 1} y={ceint.y + 2} width={ceint.w + 2} height={ceint.h + 2} rx={5} fill="#000" opacity={0.28} />
+          <Rect x={ceint.x} y={ceint.y} width={ceint.w} height={ceint.h} rx={4} fill={ceint.couleur} stroke="rgba(255,255,255,0.85)" strokeWidth={2} />
+          {Array.from({ length: ceint.degres }, (_, i) => (
+            <Rect key={i} x={ceint.x + ceint.w - 8 - 6.5 - i * (6.5 + 4)} y={ceint.y} width={6.5} height={ceint.h} fill={BLANC} />
+          ))}
+        </G>
+      ) : null}
+      {couches(icone, 1.3)}
+      {a.l.map((t, j) => {
+        const x = j === 0 ? x1 + sIc + gIc : cx - larg(t, sL, 'x700') / 2;
+        const y = base(a.yL + j * hL, sL, 'x700', 1.088);
+        return (
+          <G key={j}>
+            {couches((p, i) => (
+              <SvgText key={`l${i}`} x={x} y={y + p.dy} fontSize={sL} fontFamily={POL.x700} fill={p.fill} stroke={p.stroke} strokeWidth={p.strokeWidth ? p.strokeWidth * 0.8 : undefined} strokeLinejoin="round" opacity={p.opacity}>{t}</SvgText>
+            ), 2.2)}
+          </G>
+        );
+      })}
+    </G>
+  );
+}
+
+/**
+ * L'autocollant sur la carte, sans aucun fond. La vue capturee (refAutocollant) a sa propre taille : environ 700 px
+ * de large sur l'appareil (a.export.w / densite de l'ecran, en points), reduite a l'apercu par une echelle posee sur
+ * son parent ; la capture la prend a sa taille, sans agrandir une petite image, et rien d'autre que l'autocollant.
+ */
+function AutocollantMoteur({ plan, largeur, refAutocollant }: { plan: Plan; largeur: number; refAutocollant?: React.Ref<VueRN> }) {
+  const a = plan.autocollant!;
+  const k = largeur / plan.W;
+  const pts = a.export.w / PixelRatio.get();
+  const kk = pts / a.w;
+  const e = (a.w * k) / pts;
+  const cx = a.w / 2;
+  return (
+    <View style={{ width: plan.W * k, height: plan.H * k }} collapsable={false} pointerEvents="none">
+      <View style={{ position: 'absolute', left: a.x * k, top: a.y * k, width: a.w * k, height: a.h * k }}>
+        <View style={{ width: a.w * kk, height: a.h * kk, transform: [{ scale: e }], transformOrigin: 'top left' } as object}>
+          <View ref={refAutocollant} collapsable={false} testID="autocollant-capture" style={{ width: a.w * kk, height: a.h * kk }}>
+            <Svg width={a.w * kk} height={a.h * kk} viewBox={`0 0 ${a.w} ${a.h}`}>
+              {a.lignes.map((l, i) => <LigneAuto key={i} a={l} cx={cx} sL={a.sL} sIc={a.sIc} gIc={a.gIc} hL={a.hL} />)}
+              <Rect x={a.trait.x - 1} y={a.trait.y + 1} width={a.trait.w + 2} height={a.trait.h + 2} rx={1.5} fill="#000" opacity={0.3} />
+              <Rect x={a.trait.x} y={a.trait.y} width={a.trait.w} height={a.trait.h} rx={1.5} fill={BLANC} opacity={0.85} />
+              {couches((p, i) => (
+                <SvgText key={`m${i}`} x={a.mot.x} y={base(a.mot.y - a.mot.s / 2, a.mot.s, 'x900', 1) + p.dy} fontSize={a.mot.s} fontFamily={POL.x900} letterSpacing={a.mot.ls * a.mot.s} fill={p.fill} stroke={p.stroke} strokeWidth={p.strokeWidth} strokeLinejoin="round" opacity={p.opacity}>YOROI</SvgText>
+              ))}
+            </Svg>
+            <Image source={LOGO_DETOURE} resizeMode="contain" style={{ position: 'absolute', left: a.logo.x * kk, top: a.logo.y * kk, width: a.logo.w * kk, height: a.logo.h * kk }} />
+          </View>
+        </View>
+      </View>
+    </View>
   );
 }
 
