@@ -24,21 +24,27 @@ export type SceneClassique = {
   /** bas de la scene sombre : ton prenom s'ecrit en blanc */
   sombre: boolean;
   offerte?: boolean;
+  /**
+   * 2 novembre 2026 : rang qui l'ouvre sans Premium (1 Regulier, 2 Confirme, 3 Expert, 4 Champion), comme le Pont
+   * ou le Chateau dans l'univers Japon. Avant, un compte gratuit Classique ne gagnait avec son rang que des scenes
+   * du Japon.
+   */
+  rang?: number;
   image: ImageSourcePropType;
 };
 
 export const SCENES_CLASSIQUE: SceneClassique[] = [
   { id: 'classique_salle_jour', nom: traduire('Salle de sport'), phrase: traduire('Les barres et les haltères au soleil'), description: traduire('La salle lumineuse, les racks et les haltères'), focus: 0.35, sombre: false, offerte: true, image: require('@/assets/avatars/app/classique/scenes/salle_jour.webp') },
   { id: 'classique_parc_jour', nom: 'Parc', phrase: traduire('L’allée sous les arbres'), description: traduire('La pelouse, les arbres et le chemin de footing'), focus: 0.4, sombre: false, offerte: true, image: require('@/assets/avatars/app/classique/scenes/parc_jour.webp') },
-  { id: 'classique_ville_jour', nom: 'Ville', phrase: traduire('Les toits et la rue au matin'), description: traduire('La rue calme, les immeubles et le ciel clair'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/classique/scenes/ville_jour.webp') },
-  { id: 'classique_mer_jour', nom: traduire('Bord de mer'), phrase: traduire('La promenade face à la mer'), description: traduire('La plage, la promenade et les vagues'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/classique/scenes/mer_jour.webp') },
-  { id: 'classique_piste_jour', nom: traduire('Piste d’athlétisme'), phrase: traduire('Les couloirs du stade'), description: traduire('La piste, les couloirs et les gradins'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/classique/scenes/piste_jour.webp') },
+  { id: 'classique_ville_jour', rang: 1, nom: 'Ville', phrase: traduire('Les toits et la rue au matin'), description: traduire('La rue calme, les immeubles et le ciel clair'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/classique/scenes/ville_jour.webp') },
+  { id: 'classique_mer_jour', rang: 1, nom: traduire('Bord de mer'), phrase: traduire('La promenade face à la mer'), description: traduire('La plage, la promenade et les vagues'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/classique/scenes/mer_jour.webp') },
+  { id: 'classique_piste_jour', rang: 2, nom: traduire('Piste d’athlétisme'), phrase: traduire('Les couloirs du stade'), description: traduire('La piste, les couloirs et les gradins'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/classique/scenes/piste_jour.webp') },
   { id: 'classique_desert_jour', nom: traduire('Désert'), phrase: traduire('Les dunes et l’oasis'), description: traduire('Les dunes dorées et l’oasis sous les palmiers'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/classique/scenes/desert_jour.webp') },
-  { id: 'classique_salle_nuit', nom: traduire('Salle de sport, le soir'), phrase: traduire('Les néons et la ville derrière la vitre'), description: traduire('La salle éclairée, la nuit tombée dehors'), focus: 0.35, sombre: true, image: require('@/assets/avatars/app/classique/scenes/salle_nuit.webp') },
-  { id: 'classique_parc_nuit', nom: traduire('Parc, le soir'), phrase: traduire('Les lampadaires sur l’allée'), description: traduire('L’allée du parc sous les lampadaires'), focus: 0.4, sombre: true, image: require('@/assets/avatars/app/classique/scenes/parc_nuit.webp') },
-  { id: 'classique_ville_nuit', nom: traduire('Ville, la nuit'), phrase: traduire('Les fenêtres allumées'), description: traduire('La rue et les immeubles sous les lumières'), focus: 0.4, sombre: true, image: require('@/assets/avatars/app/classique/scenes/ville_nuit.webp') },
+  { id: 'classique_salle_nuit', rang: 2, nom: traduire('Salle de sport, le soir'), phrase: traduire('Les néons et la ville derrière la vitre'), description: traduire('La salle éclairée, la nuit tombée dehors'), focus: 0.35, sombre: true, image: require('@/assets/avatars/app/classique/scenes/salle_nuit.webp') },
+  { id: 'classique_parc_nuit', rang: 3, nom: traduire('Parc, le soir'), phrase: traduire('Les lampadaires sur l’allée'), description: traduire('L’allée du parc sous les lampadaires'), focus: 0.4, sombre: true, image: require('@/assets/avatars/app/classique/scenes/parc_nuit.webp') },
+  { id: 'classique_ville_nuit', rang: 4, nom: traduire('Ville, la nuit'), phrase: traduire('Les fenêtres allumées'), description: traduire('La rue et les immeubles sous les lumières'), focus: 0.4, sombre: true, image: require('@/assets/avatars/app/classique/scenes/ville_nuit.webp') },
   { id: 'classique_mer_nuit', nom: traduire('Bord de mer, la nuit'), phrase: traduire('La lune sur les vagues'), description: traduire('La promenade et la mer sous la lune'), focus: 0.4, sombre: true, image: require('@/assets/avatars/app/classique/scenes/mer_nuit.webp') },
-  { id: 'classique_piste_nuit', nom: traduire('Stade, le soir'), phrase: traduire('Les projecteurs sur la piste'), description: traduire('La piste sous les projecteurs du stade'), focus: 0.4, sombre: true, image: require('@/assets/avatars/app/classique/scenes/piste_nuit.webp') },
+  { id: 'classique_piste_nuit', rang: 4, nom: traduire('Stade, le soir'), phrase: traduire('Les projecteurs sur la piste'), description: traduire('La piste sous les projecteurs du stade'), focus: 0.4, sombre: true, image: require('@/assets/avatars/app/classique/scenes/piste_nuit.webp') },
 ];
 
 export const CLASSIQUE_SCENE_IMAGES = Object.fromEntries(SCENES_CLASSIQUE.map((s) => [s.id, s.image])) as Record<ClassiqueSceneId, ImageSourcePropType>;
