@@ -43,13 +43,14 @@ import { VitrineBoutique } from '@/components/yoroi/v2/dojo/VitrineBoutique';
 import { imageDuRang, nomSceau, universDe, vignettesBoutique } from '@/lib/v2/dojo/dojoAffichage';
 import { libelleChemin, libelleConstruction, rangNom, rangTenue, rangTitre } from '@/lib/v2/dojo/univers';
 import { Bar, ChevronIcon, LevelPlate, LockIcon, PersonIcon, RankFrame, formatXp, tap } from '@/components/yoroi/v2/dojo/parts';
-import { RANKS, getPendingCelebration, getWelcome, markCelebrationSeen, markWelcomeSeen, openDailyChest, setWeekPause } from '@/lib/v2/armure';
+import { RANKS, getArmureState, getPendingCelebration, getWelcome, markCelebrationSeen, markWelcomeSeen, openDailyChest, setWeekPause } from '@/lib/v2/armure';
 import { GLASS_L, loadHydration, saveHydrationAmount } from '@/lib/v2/accueil/hydration';
 import { Aujourdhui } from '@/components/yoroi/v2/dojo/Aujourdhui';
 import { BoutonPause, FeuillePause } from '@/components/yoroi/v2/dojo/PauseSemaine';
 import { VisiteDojo, etatVisiteDojo, type CibleDojo, type Rect } from '@/components/yoroi/v2/dojo/VisiteDojo';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { programmerRappelCoffre } from '@/lib/v2/dojo/rappelCoffre';
+import { proposerNotifications, reprogrammerRappels } from '@/lib/v2/notifications/permission';
 import type { BeltInfo, Celebration as CelebrationData, PauseKind, WeekStatus, WelcomeSummary } from '@/lib/v2/armure';
 import { familyOf } from '@/lib/v2/dojo/seals';
 import { useArmure } from '@/lib/v2/dojo/useArmure';
@@ -236,6 +237,7 @@ export default function Dojo() {
 
   // Vague 47 : le coffre du jour, et un verre d'eau pour faire le geste en un geste
   const { isPremium, isAnnualPremium } = usePremium();
+  const coffreOuvertIci = useRef(false);
   const ouvrirCoffre = useCallback(async () => {
     const r = await openDailyChest();
     // 18 octobre : le grand coffre d'un compte gratuit offre 24 h d'essai d'une scene Voyages encore fermee
@@ -250,8 +252,27 @@ export default function Dojo() {
       if (v) cadeau = { id: v.id, nom: v.nom, image: v.image };
     }
     await reload(true);
+    if (r) coffreOuvertIci.current = true;
     return r ? { ...r, cadeau } : null;
   }, [reload, isPremium, isAnnualPremium, rank.index]);
+  // 2 novembre 2026 : juste apres l'ouverture d'un coffre (le premier compris), les rappels proposes avec leur vraie
+  // raison : la fenetre maison d'abord, celle du systeme seulement sur « Activer ». Memes regles que partout
+  // (lib/v2/notifications/permission.ts) : rien si deja autorisees ou refusees, 2 propositions au plus, 7 jours apres
+  // « Plus tard ».
+  const apresOuverture = useCallback(() => {
+    if (!coffreOuvertIci.current) return;
+    coffreOuvertIci.current = false;
+    setTimeout(() => {
+      void proposerNotifications('coffre', {
+        titre: traduire('Je te préviens quand ton coffre est prêt ?'),
+        texte: traduire('Un seul rappel doux le soir, seulement si ton coffre attend encore. Tu le coupes quand tu veux dans le Dojo.'),
+        onAccepte: () => {
+          reprogrammerRappels();
+          void getArmureState().then((s) => programmerRappelCoffre(s)).catch(() => undefined);
+        },
+      }).catch(() => undefined);
+    }, 500);
+  }, []);
   // mettre une scene gagnee ou en essai (la scene d'avant est gardee pour la fin de l'essai)
   const mettreScene = useCallback(
     async (id: string, essai: boolean) => {
@@ -415,7 +436,7 @@ export default function Dojo() {
           <Case>
           <Section i={1} ancre="aujourdhui">
             <TourAnchor id="dojo.aujourdhui" rayon={24}>
-              <Aujourdhui serie={st.serie} coffre={st.coffre} onOuvrir={ouvrirCoffre} onVerre={noterVerre} onCadeau={(id) => void mettreScene(id, true)} palier={isPremium ? undefined : textePalier} suite={cons.resteXp > 0 ? traduire("Encore {0}{1}XP pour {2}", formatXp(cons.resteXp), NB, cons.palier) : undefined} />
+              <Aujourdhui serie={st.serie} coffre={st.coffre} onOuvrir={ouvrirCoffre} onVerre={noterVerre} onCadeau={(id) => void mettreScene(id, true)} onFerme={apresOuverture} palier={isPremium ? undefined : textePalier} suite={cons.resteXp > 0 ? traduire("Encore {0}{1}XP pour {2}", formatXp(cons.resteXp), NB, cons.palier) : undefined} />
             </TourAnchor>
             {/* 18 octobre : ton rang, ton XP et ta serie a l'abri, copie automatique dans ton cloud */}
             <AbriDojo rang={title} xp={xp} serie={st.serie.jours} />
@@ -423,6 +444,28 @@ export default function Dojo() {
           </Case>
         ) : null}
 
+
+        {/* 2 novembre 2026 : tant qu'aucune seance n'est enregistree, une seule carte pour la premiere (elle disparait ensuite) */}
+        {st && Object.keys(st.sportCounts ?? {}).length === 0 ? (
+          <Case>
+          <Section i={1}>
+            <Pressable
+              onPress={() => {
+                tap();
+                go('/ajouter');
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={traduire('Ta première séance. Elle te rapporte 20 XP et fait avancer ta prochaine récompense. Enregistrer une séance')}
+              style={({ pressed }) => ({ ...carteBlanche(c.surface, c.border), backgroundColor: pressed ? c.fillSoft : c.surface, padding: 16, gap: 6 })}
+            >
+              <Ink size={12.5} weight="extraBold" color={c.accent}>{traduire('Ta première séance')}</Ink>
+              <Ink size={18} weight="black" tight>{traduire('+20 XP et ta prochaine récompense avance')}</Ink>
+              <Ink size={13} color={c.textSecondary}>{traduire('Musculation, course, combat ou une séance déjà faite : tout compte.')}</Ink>
+              <Ink size={15} weight="extraBold" color={c.accent} style={{ marginTop: 4 }}>{traduire('Enregistrer une séance')}</Ink>
+            </Pressable>
+          </Section>
+          </Case>
+        ) : null}
 
         {/* Vague 45 : « Ta prochaine recompense », la piece qui se construit et la barre vers le prochain rang, toujours visibles */}
         <Case>
