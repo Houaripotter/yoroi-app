@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Seance du jour : 4 x 2 comme le format moyen sur iPhone (ta scene et ton personnage a gauche, la seance a droite) -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="100dp"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="3600000"
+    android:initialLayout="@layout/yw_seance_d"
+    android:previewLayout="@layout/yw_seance_d"
+    android:description="@string/yw_desc_seance"
+    android:widgetCategory="home_screen" />
