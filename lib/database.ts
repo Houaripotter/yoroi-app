@@ -10,6 +10,7 @@ import { traduire } from '@/lib/i18n/tr';
 import { groupesDoublonsPesees, requeteMiseAJourPesee, requetePeseeExistante } from '@/lib/v2/pesee/miseAJourPesee';
 import { joursDeSuitePesee, poidsDuJour, poidsDuJourDabord } from '@/lib/v2/pesee/poidsDuJour';
 import type { LignePesee, ModifPesee } from '@/lib/v2/pesee/miseAJourPesee';
+import { colonnesSourceKcal, type SourceKcal } from '@/lib/v2/seance/sourceKcal';
 import { snapshotBeforeImport } from '@/lib/v2/sauvegarde/avantMiseAJour';
 
 /** 28 octobre 2026 : copie de securite locale avant une suppression groupee. Jamais bloquante. */
@@ -254,6 +255,17 @@ const _performInit = async () => {
 
   await safeAddColumn(database, 'trainings', 'calories', 'INTEGER');
 
+  // 2 novembre 2026 (cartes v7) : d'ou viennent les kcal d'une seance. Les anciennes seances gardent ces colonnes
+  // VIDES (on ne sait pas d'ou viennent leurs kcal) : aucune ligne existante n'est modifiee.
+  //   calories_source   : 'saisie' | 'sante' | 'appareil' | 'inconnue' | vide
+  //   calories_appareil : 'Apple Watch', 'Garmin', 'Montre YOROI'... ou vide
+  //   calories_mesurees : les kcal telles que recues de l'appareil ou de Sante (garde-fou des cartes), sinon vide
+  // RETOUR ARRIERE : arreter de lire et d'ecrire ces 3 colonnes (kcalPourCarte renvoie de nouveau undefined).
+  // Rien n'est supprime : jamais de DROP, les colonnes restent dans la base, vides ou non, sans effet.
+  await safeAddColumn(database, 'trainings', 'calories_source', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'calories_appareil', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'calories_mesurees', 'INTEGER');
+
   await safeAddColumn(database, 'trainings', 'intensity', 'INTEGER');
 
   await safeAddColumn(database, 'trainings', 'rounds', 'INTEGER');
@@ -355,6 +367,10 @@ const _performInit = async () => {
     `ALTER TABLE trash_trainings ADD COLUMN location_lon REAL`,
     `ALTER TABLE trash_trainings ADD COLUMN location_name TEXT`,
     `ALTER TABLE trash_trainings ADD COLUMN combat_rounds TEXT`,
+    // 2 novembre 2026 : source des kcal, gardee a la restauration depuis la corbeille
+    `ALTER TABLE trash_trainings ADD COLUMN calories_source TEXT`,
+    `ALTER TABLE trash_trainings ADD COLUMN calories_appareil TEXT`,
+    `ALTER TABLE trash_trainings ADD COLUMN calories_mesurees INTEGER`,
   ];
   for (const sql of trashMigrations) {
     try { await database.execAsync(sql); } catch (e) { _logUnexpectedMigrationError(e); }
@@ -849,6 +865,10 @@ export interface Training {
   healthkit_uuid?: string;           // UUID HealthKit pour lazy-load des details
   workout_details_json?: string;     // JSON complet (route GPS, FC, splits, météo)
   weekly_plan_id?: number;
+  // 2 novembre 2026 : d'ou viennent les kcal (lib/v2/seance/sourceKcal.ts). Vides sur les anciennes seances.
+  calories_source?: SourceKcal | null;
+  calories_appareil?: string | null;
+  calories_mesurees?: number | null;
   // Lieu d'entraînement (GPS capture manuelle)
   location_lat?: number;
   location_lon?: number;
@@ -1318,6 +1338,24 @@ const writeScoreEtCadre = async (database: any, id: number, data: Partial<Traini
   await database.runAsync(`UPDATE trainings SET ${sets.join(', ')} WHERE id = ?`, [...vals, id]);
 };
 
+/**
+ * 2 novembre 2026 : les 3 colonnes de la source des kcal (lib/v2/seance/sourceKcal.ts, colonnesSourceKcal).
+ * Ecrites seulement si elles sont fournies, effacees si les kcal sont effacees, jamais effacees par oubli.
+ * Jamais bloquant : colonnes absentes (migration ratee), la seance est quand meme enregistree.
+ */
+const ecrireSourceKcal = async (database: any, id: number, data: Record<string, unknown>): Promise<void> => {
+  const c = id ? colonnesSourceKcal(data) : null;
+  if (!c) return;
+  try {
+    await database.runAsync(
+      'UPDATE trainings SET calories_source = ?, calories_appareil = ?, calories_mesurees = ? WHERE id = ?',
+      [c.calories_source, c.calories_appareil, c.calories_mesurees, id]
+    );
+  } catch (e) {
+    logger.warn('[DB] Source des kcal non enregistree', e);
+  }
+};
+
 export const updateTrainingDetails = async (id: number, detailsJson: string): Promise<void> => {
   const database = await openDatabase();
   await database.runAsync(
@@ -1354,6 +1392,8 @@ export const updateTraining = async (id: number, data: Partial<Training>): Promi
      data.session_rating ?? null, data.session_mood || null, id]
   );
   await writeScoreEtCadre(database, id, data);
+  // Les kcal sont toujours reecrites ci-dessus (absentes = effacees) : la source suit la meme regle
+  await ecrireSourceKcal(database, id, 'calories' in data ? (data as Record<string, unknown>) : { ...data, calories: null });
   // Theme technique et types de seance : ecrits seulement s'ils sont fournis (pas d'effacement involontaire)
   if ('technical_theme' in data) {
     await database.runAsync('UPDATE trainings SET technical_theme = ? WHERE id = ?', [data.technical_theme || null, id]);
@@ -1398,6 +1438,7 @@ export const addTraining = async (data: Training): Promise<number> => {
     throw new Error('Failed to insert training record');
   }
   await writeScoreEtCadre(database, result.lastInsertRowId, data);
+  await ecrireSourceKcal(database, result.lastInsertRowId, data as unknown as Record<string, unknown>);
   return result.lastInsertRowId;
 };
 
@@ -1600,7 +1641,7 @@ export const getTrainingStats = async (): Promise<{ sport: string; count: number
   );
 };
 
-const TRASH_TABLE_SQL = `CREATE TABLE IF NOT EXISTS trash_trainings (id INTEGER PRIMARY KEY AUTOINCREMENT, original_id INTEGER, club_id INTEGER, sport TEXT, session_type TEXT, date TEXT, start_time TEXT, duration_minutes INTEGER, notes TEXT, muscles TEXT, exercises TEXT, technique_rating INTEGER, is_outdoor INTEGER DEFAULT 0, pente REAL, speed REAL, resistance INTEGER, watts INTEGER, cadence INTEGER, distance REAL, calories INTEGER, intensity INTEGER, rounds INTEGER, round_duration INTEGER, heart_rate INTEGER, max_heart_rate INTEGER, location_lat REAL, location_lon REAL, location_name TEXT, combat_rounds TEXT, created_at TEXT, deleted_at TEXT DEFAULT CURRENT_TIMESTAMP)`;
+const TRASH_TABLE_SQL = `CREATE TABLE IF NOT EXISTS trash_trainings (id INTEGER PRIMARY KEY AUTOINCREMENT, original_id INTEGER, club_id INTEGER, sport TEXT, session_type TEXT, date TEXT, start_time TEXT, duration_minutes INTEGER, notes TEXT, muscles TEXT, exercises TEXT, technique_rating INTEGER, is_outdoor INTEGER DEFAULT 0, pente REAL, speed REAL, resistance INTEGER, watts INTEGER, cadence INTEGER, distance REAL, calories INTEGER, intensity INTEGER, rounds INTEGER, round_duration INTEGER, heart_rate INTEGER, max_heart_rate INTEGER, location_lat REAL, location_lon REAL, location_name TEXT, combat_rounds TEXT, calories_source TEXT, calories_appareil TEXT, calories_mesurees INTEGER, created_at TEXT, deleted_at TEXT DEFAULT CURRENT_TIMESTAMP)`;
 
 let _trashTableReady = false;
 const ensureTrashTable = async (database: SQLite.SQLiteDatabase) => {
@@ -1623,8 +1664,8 @@ export const deleteTraining = async (id: number): Promise<number | null> => {
     try {
       await ensureTrashTable(database);
       const r = await database.runAsync(
-        `INSERT INTO trash_trainings (original_id, club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, heart_rate, max_heart_rate, location_lat, location_lon, location_name, combat_rounds, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [row.id, row.club_id || null, row.sport || null, row.session_type || null, row.date, row.start_time || null, row.duration_minutes || null, row.notes || null, row.muscles || null, row.exercises || null, row.technique_rating || null, row.is_outdoor || 0, row.distance || null, row.calories || null, row.intensity || null, row.rounds || null, row.round_duration || null, row.pente || null, row.speed || null, row.resistance || null, row.watts || null, row.cadence || null, row.heart_rate || null, row.max_heart_rate || null, row.location_lat || null, row.location_lon || null, row.location_name || null, row.combat_rounds || null, row.created_at || null]
+        `INSERT INTO trash_trainings (original_id, club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, heart_rate, max_heart_rate, location_lat, location_lon, location_name, combat_rounds, calories_source, calories_appareil, calories_mesurees, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [row.id, row.club_id || null, row.sport || null, row.session_type || null, row.date, row.start_time || null, row.duration_minutes || null, row.notes || null, row.muscles || null, row.exercises || null, row.technique_rating || null, row.is_outdoor || 0, row.distance || null, row.calories || null, row.intensity || null, row.rounds || null, row.round_duration || null, row.pente || null, row.speed || null, row.resistance || null, row.watts || null, row.cadence || null, row.heart_rate || null, row.max_heart_rate || null, row.location_lat || null, row.location_lon || null, row.location_name || null, row.combat_rounds || null, row.calories_source ?? null, row.calories_appareil ?? null, row.calories_mesurees ?? null, row.created_at || null]
       );
       trashId = r?.lastInsertRowId ?? null;
     } catch (e) {
@@ -1696,8 +1737,8 @@ export const restoreFromTrash = async (trashId: number): Promise<void> => {
   if (!item) return;
 
   await database.runAsync(
-    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, distance, calories, intensity, rounds, round_duration, is_outdoor, pente, speed, resistance, watts, cadence, heart_rate, max_heart_rate, location_lat, location_lon, location_name, combat_rounds, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, distance, calories, intensity, rounds, round_duration, is_outdoor, pente, speed, resistance, watts, cadence, heart_rate, max_heart_rate, location_lat, location_lon, location_name, combat_rounds, calories_source, calories_appareil, calories_mesurees, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [item.club_id, item.sport, item.session_type, item.date, item.start_time,
      item.duration_minutes, item.notes, item.muscles, item.exercises,
      item.technique_rating, item.distance, item.calories, item.intensity,
@@ -1705,7 +1746,7 @@ export const restoreFromTrash = async (trashId: number): Promise<void> => {
      item.pente, item.speed, item.resistance, item.watts, item.cadence,
      item.heart_rate || null, item.max_heart_rate || null,
      item.location_lat || null, item.location_lon || null, item.location_name || null,
-     item.combat_rounds || null, item.created_at]
+     item.combat_rounds || null, item.calories_source ?? null, item.calories_appareil ?? null, item.calories_mesurees ?? null, item.created_at]
   );
   await database.runAsync('DELETE FROM trash_trainings WHERE id = ?', [trashId]);
 };
