@@ -3,7 +3,8 @@ import SwiftUI
 import UIKit
 import WidgetKit
 
-// Trois habillages des widgets (13 octobre) : A Nuit de lanternes (par defaut), B Rouleau et encre, C Armure laquee.
+// Quatre habillages des widgets : D Scenes illustrees (par defaut depuis le 28 octobre 2026, direction B choisie
+// par Houari), A Nuit de lanternes, B Rouleau et encre, C Armure laquee (13 octobre).
 // Le style vient du reglage du widget (appui long, Modifier le widget) ou, par defaut, du reglage de l'app
 // (Reglages, Style des widgets, ecrit dans l'App Group). Maquettes : scratchpad/widgets_styles.
 
@@ -11,9 +12,11 @@ enum StyleW: String {
   case a = "A"
   case b = "B"
   case c = "C"
+  /// 28 octobre 2026 : Scenes illustrees, cartes pastel, ta scene et ton personnage
+  case d = "D"
 
-  /// "A", "B" ou "C" ; tout le reste donne A
-  static func depuis(_ s: String?) -> StyleW { StyleW(rawValue: (s ?? "").uppercased()) ?? .a }
+  /// "A", "B", "C" ou "D" ; tout le reste donne D (le style par defaut)
+  static func depuis(_ s: String?) -> StyleW { StyleW(rawValue: (s ?? "").uppercased()) ?? .d }
 }
 
 /// Place du widget, pour choisir son image de fond et son voile
@@ -23,6 +26,8 @@ enum DecorW {
   case eau
   case chrono
   case grand
+  /// 28 octobre 2026 : Ta semaine (lanternes du style D)
+  case semaine
 }
 
 extension WidgetFamily {
@@ -94,6 +99,20 @@ struct Palette {
                      courbe: hx(0xE2B964), tirets: hx(0xF7EEDC, 0.45), bleu: hx(0x8FB0EC), vert: hx(0x6FD39A), orange: hx(0xF0A040),
                      eau: hx(0x8FB0EC), piste: hx(0xF7EEDC, 0.14), fait: hx(0xE2B964), avenir: hx(0xE2B964, 0.60), trait: hx(0xE2B964, 0.25),
                      fondUni: hx(0x1A0B0A), lueur: hx(0xE2B964))
+    case (.d, false):
+      // 28 octobre 2026, Scenes illustrees en clair : bleu marine sur pastels (maquette Widgets-B)
+      return Palette(style: style, sombre: false, texte: hx(0x23358F), doux: hx(0x5A6290), titre: hx(0xB4471E),
+                     bouton: hx(0x23358F), surBouton: hx(0xFFFFFF), boutonDoux: hx(0x23358F, 0.07), contourDoux: hx(0x23358F, 0.22),
+                     courbe: hx(0x23358F), tirets: hx(0x23358F, 0.40), bleu: hx(0x3557D9), vert: hx(0x1C6B45), orange: hx(0xB4471E),
+                     eau: hx(0x3557D9), piste: hx(0xECEEF5), fait: hx(0xFFC98A), avenir: hx(0xD5D9EE), trait: hx(0x23358F, 0.12),
+                     fondUni: hx(0xF6EEDD), lueur: nil)
+    case (.d, true):
+      // en sombre : nuit bleutee et les memes pastels, lisibles
+      return Palette(style: style, sombre: true, texte: hx(0xF2F1EC), doux: hx(0xF2F1EC, 0.66), titre: hx(0xFFB59E),
+                     bouton: hx(0xA9BCF5), surBouton: hx(0x1E2E86), boutonDoux: hx(0xFFFFFF, 0.10), contourDoux: hx(0xF2F1EC, 0.30),
+                     courbe: hx(0xF2F1EC), tirets: hx(0xF2F1EC, 0.45), bleu: hx(0xA9BCF5), vert: hx(0x9FE3C0), orange: hx(0xFFB59E),
+                     eau: hx(0xA9BCF5), piste: hx(0xFFFFFF, 0.16), fait: hx(0xFFC98A), avenir: hx(0xF2F1EC, 0.28), trait: hx(0xF2F1EC, 0.16),
+                     fondUni: hx(0x26306E), lueur: hx(0xFFC98A))
     case (.c, false):
       return Palette(style: style, sombre: false, texte: hx(0x160F0D), doux: hx(0x160F0D, 0.62), titre: hx(0xA87A28),
                      bouton: hx(0x160F0D), surBouton: hx(0xF2D58E), boutonDoux: hx(0x160F0D, 0.04), contourDoux: hx(0xA87A28, 0.70),
@@ -157,6 +176,7 @@ enum ImagesW {
     case .eau: return "yw_a_lanternes_canal"
     case .chrono: return "yw_a_lanternes_festival"
     case .grand: return "yw_a_partage_nuit"
+    case .semaine: return "yw_a_machiya_nuit"
     }
   }
 }
@@ -219,6 +239,52 @@ struct FondW: View {
     case .a: FondLanternes(pal: pal, decor: decor, scene: scene)
     case .b: FondRouleau(pal: pal)
     case .c: FondLaque(pal: pal)
+    case .d: FondScenes(pal: pal, decor: decor, scene: scene)
+    }
+  }
+}
+
+/// D (28 octobre 2026) : un aplat pastel par widget (creme et peche pour le poids, lavande pour la semaine,
+/// peche et lilas pour le combat, menthe pour l'eau, marine pour le minuteur), ta scene en plein fond pour
+/// le Tableau du jour. Les dessins (chemin, lanternes, banniere) sont poses par le contenu.
+struct FondScenes: View {
+  let pal: Palette
+  let decor: DecorW
+  let scene: UIImage?
+
+  private var degrade: [Color] {
+    if pal.sombre {
+      // 29 octobre 2026 (Houari : pas de fond noir) : les pastels en version profonde, jamais du noir
+      switch decor {
+      case .chrono: return [Color.hexa(0x2A3FA8), Color.hexa(0x1E2E86)]
+      case .semaine: return [Color.hexa(0x2E3C8C), Color.hexa(0x4A3584)]
+      case .eau: return [Color.hexa(0x1D6A55), Color.hexa(0x1E4F6E)]
+      case .moyen: return [Color.hexa(0x7A3B47), Color.hexa(0x4A3584), Color.hexa(0x2E3C8C)]
+      case .grand: return [Color.hexa(0x26306E), Color.hexa(0x3A2F78)]
+      case .petit: return [Color.hexa(0x7A3B47), Color.hexa(0x3E3577)]
+      }
+    }
+    switch decor {
+    case .petit: return [Color.hexa(0xFFE7DC), Color.hexa(0xF6EEDD)]
+    case .semaine: return [Color.hexa(0xDDE6FA), Color.hexa(0xEFE6F3)]
+    case .moyen: return [Color.hexa(0xFFE1D6), Color.hexa(0xF6EEDD), Color.hexa(0xEFE6F3)]
+    case .eau: return [Color.hexa(0xE3F2EA), Color.hexa(0xEEF7F2)]
+    case .chrono: return [Color.hexa(0x23358F), Color.hexa(0x23358F)]
+    case .grand: return [Color.hexa(0xFFFFFF), Color.hexa(0xF5F6FB)]
+    }
+  }
+
+  var body: some View {
+    if decor == .grand, let scene {
+      pal.fondUni
+        .overlay {
+          Image(uiImage: scene)
+            .pleineDesaturee()
+            .scaledToFill()
+        }
+        .clipped()
+    } else {
+      LinearGradient(colors: degrade, startPoint: decor == .moyen ? .topLeading : .top, endPoint: decor == .moyen ? .bottomTrailing : .bottom)
     }
   }
 }
