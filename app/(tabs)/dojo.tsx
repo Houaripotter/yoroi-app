@@ -44,6 +44,7 @@ import { imageDuRang, nomSceau, universDe, vignettesBoutique } from '@/lib/v2/do
 import { libelleChemin, libelleConstruction, rangNom, rangTenue, rangTitre } from '@/lib/v2/dojo/univers';
 import { Bar, ChevronIcon, LevelPlate, LockIcon, PersonIcon, RankFrame, formatXp, tap } from '@/components/yoroi/v2/dojo/parts';
 import { RANKS, getArmureState, getPendingCelebration, getWelcome, markCelebrationSeen, markWelcomeSeen, openDailyChest, setWeekPause } from '@/lib/v2/armure';
+import { track } from '@/utils/telemetry';
 import { GLASS_L, loadHydration, saveHydrationAmount } from '@/lib/v2/accueil/hydration';
 import { Aujourdhui } from '@/components/yoroi/v2/dojo/Aujourdhui';
 import { BoutonPause, FeuillePause } from '@/components/yoroi/v2/dojo/PauseSemaine';
@@ -240,6 +241,8 @@ export default function Dojo() {
   const coffreOuvertIci = useRef(false);
   const ouvrirCoffre = useCallback(async () => {
     const r = await openDailyChest();
+    // mesure : le coffre du jour ouvert (le fait seulement, jamais l'XP)
+    if (r) track('recompense_recuperee', { type: r.grand ? 'grand_coffre' : 'coffre' });
     // 18 octobre : le grand coffre d'un compte gratuit offre 24 h d'essai d'une scene Voyages encore fermee
     let cadeau: { id: string; nom: string; image: ImageSourcePropType } | null = null;
     if (r?.grand && !isPremium) {
