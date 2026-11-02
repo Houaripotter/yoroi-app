@@ -43,6 +43,7 @@ import type { ObjectTypeIdentifier } from '@kingstinct/react-native-healthkit';
 import { IOS_ECRITURE_IPHONE, IOS_LECTURE_AVANCE, IOS_LECTURE_ESSENTIEL, ids } from './v2/sante/typesSante';
 import type { StatutDemande } from './v2/sante/connexion';
 import { traduire } from '@/lib/i18n/tr';
+import { champsKcalImport, classerKcalSanteIOS, type ChampsSourceKcal } from '@/lib/v2/seance/sourceKcal';
 
 // CRITIQUE: Ne pas importer directement depuis kingstinct au top-level pour éviter NitroModules error dans Expo Go
 let WorkoutActivityType: any = {};
@@ -257,6 +258,10 @@ export interface HealthData {
     averageHeartRate?: number;    // BPM
     maxHeartRate?: number;        // BPM
     source?: string;
+    // 2 novembre 2026 : d'ou viennent les kcal (lib/v2/seance/sourceKcal.ts)
+    calories_source?: ChampsSourceKcal['calories_source'];
+    calories_appareil?: string | null;
+    calories_mesurees?: number | null;
   }>;
   bloodPressure?: {
     systolic: number;            // mmHg
@@ -409,6 +414,12 @@ export const normalizeSourceName = (rawSource: string): string => {
   if (lower.includes('apple watch') || lower.includes('watch')) return 'apple_watch';
   if (lower.includes('iphone')) return 'iphone';
   return rawSource;
+};
+
+/** 2 novembre 2026 : les 3 champs de la source des kcal d'une seance lue de Sante (mapRawWorkouts), pour la base */
+const sourceKcalSeance = (w: unknown): ChampsSourceKcal => {
+  const o = (w ?? {}) as Partial<ChampsSourceKcal>;
+  return { calories_source: o.calories_source ?? null, calories_appareil: o.calories_appareil ?? null, calories_mesurees: o.calories_mesurees ?? null };
 };
 
 /**
@@ -2589,6 +2600,7 @@ class HealthConnectService {
           // getStatistic peut échouer si la FC n'était pas enregistrée pour cette séance
         }
 
+        const kcal = caloriesKcal != null ? appleInt(caloriesKcal) : undefined;
         mapped.push({
           id: deterministicId,
           hkUUID: uuid || undefined,
@@ -2597,7 +2609,9 @@ class HealthConnectService {
           endDate: endStr,
           duration: durationMin,
           distance: distanceMeters != null ? appleKm(distanceMeters) : undefined,
-          calories: caloriesKcal != null ? appleInt(caloriesKcal) : undefined,
+          calories: kcal,
+          // 2 novembre 2026 : Apple Watch (productType, appareil), autre montre, saisie dans Sante, ou Sante
+          ...champsKcalImport(kcal, classerKcalSanteIOS(workout)),
           averageHeartRate: hrAvg,
           maxHeartRate: hrMax,
           source: workout.sourceRevision?.source?.name || undefined,
@@ -2665,6 +2679,8 @@ class HealthConnectService {
               totalDistance: w.totalDistance > 0 ? { quantity: w.totalDistance, unit: 'm' } : undefined,
               totalEnergyBurned: w.totalEnergyBurned > 0 ? { quantity: w.totalEnergyBurned, unit: 'kcal' } : undefined,
               sourceRevision: { source: { name: w.sourceName, bundleIdentifier: (w as any).sourceBundleId } },
+              // 2 novembre 2026 : ni appareil ni saisie ne viennent de Swift ici : kcal classees 'sante', appareil vide
+              secoursNatif: true,
             }));
           }
         } catch (e: any) {
@@ -2724,6 +2740,7 @@ class HealthConnectService {
             distance: workout.distance ? parseFloat(workout.distance.toFixed(2)) : undefined,
             calories: workout.calories,
             heart_rate: workout.averageHeartRate,
+            ...sourceKcalSeance(workout),
             max_heart_rate: workout.maxHeartRate,
             source: workout.source ? normalizeSourceName(workout.source) : undefined,
             notes: noteParts.length > 0 ? `${workoutLabel} (${noteParts.join(', ')})` : workoutLabel,
@@ -5796,6 +5813,7 @@ class HealthConnectService {
               distance: workout.distance ? parseFloat(workout.distance.toFixed(2)) : undefined,
               calories: workout.calories,
               heart_rate: workout.averageHeartRate,
+              ...sourceKcalSeance(workout),
               max_heart_rate: workout.maxHeartRate,
               source: workout.source ? normalizeSourceName(workout.source) : undefined,
               notes: noteText,
@@ -6127,6 +6145,7 @@ class HealthConnectService {
                 distance: workout.distance ? parseFloat(workout.distance.toFixed(2)) : undefined,
                 calories: workout.calories,
                 heart_rate: workout.averageHeartRate,
+                ...sourceKcalSeance(workout),
                 max_heart_rate: workout.maxHeartRate,
                 source: workout.source ? normalizeSourceName(workout.source) : undefined,
                 notes: noteText,
@@ -6249,6 +6268,7 @@ class HealthConnectService {
       distance: workout.distance ? parseFloat(workout.distance.toFixed(2)) : undefined,
       calories: workout.calories,
       heart_rate: workout.averageHeartRate,
+      ...sourceKcalSeance(workout),
       max_heart_rate: workout.maxHeartRate,
       source: workout.source ? normalizeSourceName(workout.source) : undefined,
       notes: noteText,
