@@ -19,11 +19,19 @@
  * A+ n'est jamais propose. Autocollant : l'apercu le pose sur un damier, ou sur ta photo (apercu seulement) ;
  * « Copier l'autocollant » et « Enregistrer » prennent l'autocollant seul, recadre, en PNG transparent.
  * Pas de partage direct « instagram-stories » : il demande un identifiant d'app Facebook.
+ *
+ * 2 novembre 2026 (bloc deplacable), Houari : « que mes chiffres ne cachent ni mes abdos, ni mes pecs, ni mon visage ».
+ * Sur Ta photo et sur l'Autocollant pose sur ta photo, le bloc des chiffres se glisse au doigt : un seul geste sur
+ * l'apercu, qui regarde ou le doigt se pose. Sur le bloc, il deplace le bloc (il grossit un peu, le telephone vibre,
+ * une fine ligne montre le guide accroche : marges, centre, haut, milieu, bas) ; ailleurs, il recadre la photo. Le bloc
+ * reste dans la zone sure (deplacement.ts). Ta place est gardee par carte et par format (store.ts), en relatif ;
+ * « Recadrer automatiquement » et « Replacer les chiffres » rendent la place automatique. « Deplacer les chiffres »
+ * propose Haut, Milieu et Bas, pour qui ne peut pas glisser.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { runOnJS, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -32,12 +40,15 @@ import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { traduire } from '@/lib/i18n/tr';
+import { lightHaptic } from '@/lib/haptics';
 import { exploitAvecPoids } from '@/lib/v2/cartes/exploits';
 import { compositionEffective, compositionsPour, contenuDe, famillesPour } from '@/lib/v2/cartes/moteur/familles';
-import { GRILLE, hauteurPhoto } from '@/lib/v2/cartes/moteur/grille';
+import { formatMoteur, GRILLE, hauteurPhoto } from '@/lib/v2/cartes/moteur/grille';
+import { bornerEtAimanter, cleBloc, ECHELLE_SAISI, nomPosition, POSITIONS_BLOC, positionValide, sansPosition, toucheLeBloc, versPixels, versRelatif } from '@/lib/v2/cartes/moteur/deplacement';
+import type { NomPosition, PositionBloc } from '@/lib/v2/cartes/moteur/deplacement';
 import type { Recadrage } from '@/lib/v2/cartes/moteur/protection';
 import type { CarteData, CompositionId, FamilleMoteur, Masque, OptionsCarte, StyleCarte } from '@/lib/v2/cartes/types';
-import { CarteApercu, CARTE_W, Damier, HAUTEURS, optionsDessinees } from '../CarteRendu';
+import { CarteApercu, CARTE_W, Damier, HAUTEURS, optionsDessinees, planNouveauMoteur, useTaillePhoto } from '../CarteRendu';
 import type { useCarte } from '../useCarte';
 
 type Couleurs = ReturnType<typeof useYoroiTheme>['theme']['colors'];
@@ -60,6 +71,13 @@ const NOMS_STYLES: { id: StyleCarte; nom: string }[] = [
   { id: 'color', nom: 'Color' },
   { id: 'dark', nom: 'Dark' },
 ];
+const NOMS_POSITIONS: { id: NomPosition; nom: string }[] = [
+  { id: 'haut', nom: 'Haut' },
+  { id: 'milieu', nom: 'Milieu' },
+  { id: 'bas', nom: 'Bas' },
+];
+/** La couleur de la fine ligne de guide, visible sur une photo claire comme sombre */
+const COULEUR_GUIDE = '#FFD60A';
 const MASQUES: { id: Masque; nom: string }[] = [
   { id: 'aucun', nom: 'Mon poids' },
   { id: 'ecart', nom: 'L’écart seulement' },
@@ -189,6 +207,47 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
   // pixels de la carte (1080) par point de l'apercu
   const versCarte = GRILLE.story.W / largeur;
 
+  // --- le bloc des chiffres deplacable : sa place sur le plan dessine (le meme que l'export) ---
+  const fmt = formatMoteur(o.format);
+  const taille = useTaillePhoto(photo);
+  // le meme calcul que la carte dessinee (pur et leger), refait a chaque rendu
+  const planS = planNouveauMoteur(data, o, k.visuels, u, taille)?.plan ?? null;
+  const dep = planS?.deplacement ?? null;
+  const deplacable = !!dep && ((planS?.type === 'photo' && recadrable) || (planS?.type === 'autocollant' && !!k.photo));
+  const cle = cleBloc(famille, compo, fmt);
+  const maPlace = positionValide(o.positionsBloc?.[cle]);
+  const [menuPlace, setMenuPlace] = useState(false);
+  // pixels de la carte (1080) par point de la carte dessinee (360)
+  const pxParPoint = GRILLE.story.W / CARTE_W;
+  const bx = useSharedValue(0);
+  const by = useSharedValue(0);
+  const saisi = useSharedValue(0);
+  const surBloc = useSharedValue(0);
+  const guideX = useSharedValue(-1);
+  const guideY = useSharedValue(-1);
+  // le nouveau plan est dessine : le calque du bloc revient a zero, sans saut
+  useLayoutEffect(() => {
+    bx.value = 0;
+    by.value = 0;
+  }, [dep?.x, dep?.y, bx, by]);
+  const poserPlace = (p: PositionBloc | null) => {
+    k.setStyle({ positionsBloc: p ? { ...(o.positionsBloc ?? {}), [cle]: p } : sansPosition(o.positionsBloc, cle) });
+  };
+  const poserBloc = (x: number, y: number) => {
+    if (!dep) return;
+    const p = versRelatif(x, y, dep.bornes);
+    const q = versPixels(p, dep.bornes);
+    // meme place qu'avant : rien a redessiner, le calque revient a zero tout de suite
+    if (Math.abs(q.x - dep.x) < 0.5 && Math.abs(q.y - dep.y) < 0.5) {
+      bx.value = 0;
+      by.value = 0;
+    }
+    poserPlace(p);
+  };
+  const vibrer = () => {
+    void lightHaptic();
+  };
+
   // --- le geste du recadrage : sur le fil d'animation, recalcul au lacher ---
   const zoom = useSharedValue(1);
   const tx = useSharedValue(0);
@@ -206,6 +265,8 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
     tx.value = 0;
     ty.value = 0;
     k.recadrerAuto();
+    // le bloc des chiffres revient aussi a sa place automatique
+    if (maPlace) poserPlace(null);
   };
   const pincer = Gesture.Pinch()
     .enabled(recadrable)
@@ -215,18 +276,45 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
     .onEnd(() => {
       runOnJS(poser)(zoom.value, tx.value, ty.value);
     });
+  // un seul glisser : pose sur le bloc, il deplace le bloc ; ailleurs, il deplace la photo (pas de conflit entre les deux)
+  const R = deplacable && dep ? { x: dep.x, y: dep.y, w: dep.w, h: dep.h, bornes: dep.bornes } : null;
+  const W0 = GRILLE[fmt].W;
   const glisser = Gesture.Pan()
-    .enabled(recadrable)
+    .enabled(recadrable || deplacable)
     .minDistance(4)
+    .onBegin((e) => {
+      surBloc.value = R && toucheLeBloc(e.x * versCarte, e.y * versCarte, R) ? 1 : 0;
+    })
+    .onStart(() => {
+      if (surBloc.value === 1) {
+        saisi.value = withSpring(1, { damping: 18, stiffness: 320 });
+        runOnJS(vibrer)();
+      }
+    })
     .onUpdate((e) => {
-      tx.value = e.translationX;
-      ty.value = e.translationY;
+      if (surBloc.value === 1 && R) {
+        const a = bornerEtAimanter(R.x + e.translationX * versCarte, R.y + e.translationY * versCarte, R.bornes, R.w, R.h, W0);
+        bx.value = a.x - R.x;
+        by.value = a.y - R.y;
+        guideX.value = a.guideX;
+        guideY.value = a.guideY;
+      } else if (recadrable) {
+        tx.value = e.translationX;
+        ty.value = e.translationY;
+      }
     })
     .onEnd(() => {
-      runOnJS(poser)(zoom.value, tx.value, ty.value);
+      if (surBloc.value === 1 && R) runOnJS(poserBloc)(R.x + bx.value, R.y + by.value);
+      else if (recadrable) runOnJS(poser)(zoom.value, tx.value, ty.value);
+    })
+    .onFinalize(() => {
+      saisi.value = withSpring(0, { damping: 18, stiffness: 320 });
+      guideX.value = -1;
+      guideY.value = -1;
+      surBloc.value = 0;
     });
   const double = Gesture.Tap()
-    .enabled(recadrable)
+    .enabled(recadrable || deplacable)
     .numberOfTaps(2)
     .onEnd(() => {
       runOnJS(auto)();
@@ -237,7 +325,26 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
   const enveloppePhoto = (n: React.ReactNode) => (
     <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, top: 0, width: CARTE_W, height: RHpts }, stylePhoto]}>{n}</Animated.View>
   );
-  const visuels = { ...k.visuels, enveloppePhoto };
+  // le calque du bloc : il suit le doigt et grossit un peu autour de son centre (unites de la carte dessinee, 360)
+  const cxB = dep ? (dep.x + dep.w / 2) / pxParPoint : 0;
+  const cyB = dep ? (dep.y + dep.h / 2) / pxParPoint : 0;
+  const styleBloc = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: bx.value / pxParPoint + cxB },
+      { translateY: by.value / pxParPoint + cyB },
+      { scale: 1 + (ECHELLE_SAISI - 1) * saisi.value },
+      { translateX: -cxB },
+      { translateY: -cyB },
+    ],
+  }));
+  const Hpts = H;
+  const enveloppeBloc = (n: React.ReactNode) => (
+    <Animated.View testID="studio-bloc" pointerEvents="none" style={[{ position: 'absolute', left: 0, top: 0, width: CARTE_W, height: Hpts }, styleBloc]}>{n}</Animated.View>
+  );
+  // la fine ligne du guide accroche, pendant le geste (en points de l'apercu)
+  const styleGuideX = useAnimatedStyle(() => ({ opacity: guideX.value >= 0 ? 0.95 : 0, left: Math.max(0, guideX.value) / versCarte - 0.75 }));
+  const styleGuideY = useAnimatedStyle(() => ({ opacity: guideY.value >= 0 ? 0.95 : 0, top: Math.max(0, guideY.value) / versCarte - 0.75 }));
+  const visuels = { ...k.visuels, enveloppePhoto, ...(deplacable ? { enveloppeBloc } : null) };
 
   // --- la photo : ajouter, changer, prendre, enlever ; une photo ajoutee depuis Dessin ou Donnees passe en Ta photo ---
   const ajouterPhoto = async (src: 'gallery' | 'camera') => {
@@ -265,7 +372,7 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
   const apercu = (
     <View style={{ alignItems: 'center' }}>
       <GestureDetector gesture={geste}>
-        <View testID="studio-apercu" style={{ borderRadius: 18, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 8 }} accessibilityHint={recadrable ? traduire('Pince pour zoomer, glisse pour recadrer ta photo, touche deux fois pour revenir au cadrage automatique') : undefined}>
+        <View testID="studio-apercu" style={{ borderRadius: 18, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 8 }} accessibilityHint={recadrable ? traduire('Pince pour zoomer, glisse pour recadrer ta photo, glisse tes chiffres pour les déplacer, touche deux fois pour revenir au cadrage automatique') : deplacable ? traduire('Glisse tes chiffres pour les déplacer') : undefined}>
           <CarteApercu
             ref={k.ref}
             largeur={largeur}
@@ -274,6 +381,12 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
             visuels={visuels}
             dessous={estAuto ? (k.photo ? <Image source={{ uri: k.photo }} resizeMode="cover" style={{ width: '100%', height: '100%' }} /> : <Damier w={largeur} h={(largeur * H) / CARTE_W} />) : undefined}
           />
+          {deplacable ? (
+            <>
+              <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 0, bottom: 0, width: 1.5, backgroundColor: COULEUR_GUIDE }, styleGuideX]} />
+              <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, right: 0, height: 1.5, backgroundColor: COULEUR_GUIDE }, styleGuideY]} />
+            </>
+          ) : null}
         </View>
       </GestureDetector>
     </View>
@@ -300,7 +413,7 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
   );
 
   const sectionPhoto = (
-    <Section key="photo" testID="studio-photo" c={c} titre={traduire('Ta photo')} sous={k.photoEnCours ? traduire('Photo en préparation') : recadrable ? traduire('Pince et glisse sur l’aperçu.') : estAuto ? traduire('Sous l’autocollant, dans l’aperçu seulement.') : !k.photo ? traduire('Elle n’est jamais gardée quand tu quittes la carte.') : undefined}>
+    <Section key="photo" testID="studio-photo" c={c} titre={traduire('Ta photo')} sous={k.photoEnCours ? traduire('Photo en préparation') : recadrable ? traduire('Pince et glisse sur l’aperçu. Glisse tes chiffres pour les déplacer.') : deplacable ? traduire('Sous l’autocollant, dans l’aperçu seulement. Glisse tes chiffres pour les placer.') : estAuto ? traduire('Sous l’autocollant, dans l’aperçu seulement.') : !k.photo ? traduire('Elle n’est jamais gardée quand tu quittes la carte.') : undefined}>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {k.photo ? (
           <>
@@ -315,7 +428,20 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
           </>
         )}
       </View>
-      {recadrable && k.recadrage ? <Choix testID="photo-auto" c={c} on={false} icon="restore" label={traduire('Recadrer automatiquement')} onPress={auto} /> : null}
+      {recadrable && (k.recadrage || maPlace) ? <Choix testID="photo-auto" c={c} on={false} icon="restore" label={traduire('Recadrer automatiquement')} onPress={auto} /> : null}
+      {deplacable ? (
+        <Pastilles>
+          <Choix testID="bloc-deplacer" c={c} on={menuPlace} icon="grid" label={traduire('Déplacer les chiffres')} onPress={() => setMenuPlace((x) => !x)} />
+          {maPlace ? <Choix testID="bloc-replacer" c={c} on={false} icon="restore" label={traduire('Replacer les chiffres')} onPress={() => poserPlace(null)} /> : null}
+        </Pastilles>
+      ) : null}
+      {deplacable && menuPlace ? (
+        <View accessibilityLabel={traduire('Place de tes chiffres')} style={{ flexDirection: 'row', gap: 8 }}>
+          {NOMS_POSITIONS.map((x) => (
+            <Choix key={x.id} testID={`bloc-${x.id}`} c={c} on={nomPosition(maPlace) === x.id} label={traduire(x.nom)} onPress={() => poserPlace(POSITIONS_BLOC[x.id])} />
+          ))}
+        </View>
+      ) : null}
     </Section>
   );
 
