@@ -1,9 +1,11 @@
 import AppIntents
 import SwiftUI
+import UIKit
 import WidgetKit
 
 // Les widgets d'une idee chacun : Poids, Ta semaine, Eau, Combat, Chrono, dans le style choisi
-// (A Nuit de lanternes par defaut, B Rouleau et encre, C Armure laquee).
+// (D Scenes illustrees par defaut depuis le 28 octobre 2026, A Nuit de lanternes, B Rouleau et encre, C Armure laquee).
+// Style D : ton poids en chemin de pierres jusqu'au torii, ta semaine en 7 lanternes, le combat sur une banniere.
 // Ecran d'accueil (iPhone et iPad), ecran verrouille (seules les formes changent), StandBy, mode teinte (widgetAccentable).
 // Les memes kind qu'avant : les widgets deja poses restent en place et prennent le style de l'app.
 
@@ -79,7 +81,9 @@ struct VuePoids: View {
               }
             }
           }
-          if etat.poids.ecart != nil, let s = Textes.statut(etat.poids.statut) {
+          if entree.style == .d, let t = Textes.palier(etat) {
+            Text(t).font(legendeVerrou(12))
+          } else if etat.poids.ecart != nil, let s = Textes.statut(etat.poids.statut) {
             Text(s).font(legendeVerrou(12))
           } else {
             Text(Fmt.jourRelatif(d.date, etat.maintenant)).font(legendeVerrou(12))
@@ -130,7 +134,39 @@ struct VuePoids: View {
     }
   }
 
+  /// D : « Ton chemin », le poids, le prochain palier, et ton personnage sur les pierres jusqu'au torii
+  private func petitD(_ pal: Palette, _ d: DernierI) -> some View {
+    ZStack(alignment: .topLeading) {
+      CheminPierres(pal: pal, part: Textes.partChemin(etat), personnage: entree.personnage)
+        .padding(-16)
+      VStack(alignment: .leading, spacing: 1) {
+        TitreW(pal: pal, texte: NSLocalizedString("Ton chemin", comment: ""), taille: 12)
+        GrosPoidsW(pal: pal, kg: d.kg, livres: etat.livres, taille: 34)
+        if let t = Textes.palier(etat) {
+          Text(t)
+            .font(pal.legende(11.5, .heavy))
+            .foregroundStyle(pal.sombre ? pal.titre : Color.hexa(0x7A3A24))
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+        } else {
+          EcartW(pal: pal, etat: etat, taille: 12)
+        }
+      }
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+  }
+
   private func petit(_ pal: Palette, _ d: DernierI) -> some View {
+    Group {
+      if pal.style == .d {
+        petitD(pal, d)
+      } else {
+        petitClassique(pal, d)
+      }
+    }
+  }
+
+  private func petitClassique(_ pal: Palette, _ d: DernierI) -> some View {
     VStack(alignment: .leading, spacing: 3) {
       EnteteW(pal: pal, titre: NSLocalizedString("Poids", comment: ""), coin: Textes.jourDiscret(d.date, etat.maintenant))
       Spacer(minLength: 0)
@@ -155,7 +191,15 @@ struct VuePoids: View {
         VStack(alignment: .leading, spacing: 2) {
           GrosPoidsW(pal: pal, kg: d.kg, livres: etat.livres, taille: 38)
           EcartW(pal: pal, etat: etat, taille: 14)
-          StatutW(pal: pal, etat: etat, taille: 12)
+          if pal.style == .d, let t = Textes.palier(etat) {
+            Text(t)
+              .font(pal.legende(12, .heavy))
+              .foregroundStyle(pal.titre)
+              .lineLimit(1)
+              .minimumScaleFactor(0.7)
+          } else {
+            StatutW(pal: pal, etat: etat, taille: 12)
+          }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         CourbeW(pal: pal, serie: etat.poids.serie30, ligne: etat.poids.ligne30)
@@ -227,10 +271,10 @@ struct VueSemaine: View {
   private var etat: EtatYoroi { entree.etat }
 
   var body: some View {
-    HabilleW(entree: entree, decor: famille == .systemMedium ? .moyen : .petit) { pal in
+    HabilleW(entree: entree, decor: famille == .systemMedium ? .moyen : .semaine) { pal in
       contenu(pal)
     }
-    .widgetURL(famille == .systemSmall ? Liens.seance : Liens.seances)
+    .widgetURL(famille == .systemSmall && entree.style != .d ? Liens.seance : Liens.seances)
   }
 
   @ViewBuilder private func contenu(_ pal: Palette) -> some View {
@@ -299,7 +343,36 @@ struct VueSemaine: View {
     .minimumScaleFactor(0.7)
   }
 
+  /// D : sept lanternes sur leur fil, allumees les jours de seance
+  private func petitD(_ pal: Palette) -> some View {
+    GeometryReader { g in
+      VStack(alignment: .leading, spacing: 4) {
+        SemaineLanternes(pal: pal, jours: etat.jours, aujourdhui: etat.rangAujourdhui, largeur: g.size.width + 8, hauteur: 21)
+          .padding(.horizontal, -4)
+          .padding(.top, -6)
+        Spacer(minLength: 0)
+        TitreW(pal: pal, texte: NSLocalizedString("Ta semaine", comment: ""), taille: 12, couleurD: pal.bleu)
+        chiffre(pal)
+        Text(String(format: NSLocalizedString(etat.faites > 1 ? "%@ lanternes allumées" : "%@ lanterne allumée", comment: ""), "\(etat.faites)"))
+          .font(pal.legende(11, .bold))
+          .foregroundStyle(pal.doux)
+          .lineLimit(1)
+          .minimumScaleFactor(0.7)
+      }
+    }
+  }
+
   private func petit(_ pal: Palette) -> some View {
+    Group {
+      if pal.style == .d {
+        petitD(pal)
+      } else {
+        petitClassique(pal)
+      }
+    }
+  }
+
+  private func petitClassique(_ pal: Palette) -> some View {
     VStack(alignment: .leading, spacing: 5) {
       TitreW(pal: pal, texte: NSLocalizedString("Ta semaine", comment: ""))
       chiffre(pal)
@@ -610,7 +683,99 @@ struct VueCombat: View {
     }
   }
 
+  /// D : les jours sur une banniere, puis ce qu'il reste avant la pesee
+  private func banniere(_ pal: Palette, _ n: Int, largeur: CGFloat) -> some View {
+    ZStack(alignment: .top) {
+      BanniereD()
+        .fill(Color.white)
+        .shadow(color: Color.hexa(0x7A2E1C).opacity(0.22), radius: 5, y: 4)
+      BanniereD()
+        .fill(Color.hexa(0xF0896A))
+        .frame(height: largeur * 0.2)
+        .clipped()
+        .frame(maxHeight: .infinity, alignment: .top)
+        .mask(BanniereD())
+      VStack(spacing: 0) {
+        Text(n == 0 ? NSLocalizedString("J", comment: "") : "\(n)")
+          .font(pal.chiffre(largeur * 0.6, .heavy))
+          .foregroundStyle(Color.hexa(0xB4471E))
+          .lineLimit(1)
+          .minimumScaleFactor(0.5)
+          .widgetAccentable()
+        Text(n == 1 ? NSLocalizedString("jour", comment: "").uppercased() : NSLocalizedString("jours", comment: "").uppercased())
+          .font(.system(size: 10, weight: .heavy, design: .rounded))
+          .tracking(1.2)
+          .foregroundStyle(Color.hexa(0x7A3A24))
+      }
+      .padding(.top, largeur * 0.32)
+    }
+    .frame(width: largeur, height: largeur * 1.55)
+    .accessibilityElement(children: .combine)
+  }
+
+  private func petitD(_ pal: Palette, _ c: CombatI, _ n: Int) -> some View {
+    HStack(alignment: .top, spacing: 10) {
+      banniere(pal, n, largeur: 58)
+      VStack(alignment: .leading, spacing: 3) {
+        TitreW(pal: pal, texte: NSLocalizedString("Combat", comment: ""), taille: 11)
+        Text(Fmt.jourCourt(c.date))
+          .font(pal.legende(12, .bold))
+          .foregroundStyle(pal.texte)
+        Spacer(minLength: 0)
+        if let r = Textes.resteCombat(c, etat.livres) {
+          Text(r.0)
+            .font(pal.legende(12, .heavy))
+            .foregroundStyle(r.1 ? pal.vert : pal.titre)
+            .lineLimit(2)
+            .minimumScaleFactor(0.7)
+        }
+      }
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+  }
+
+  private func moyenD(_ pal: Palette, _ c: CombatI, _ n: Int) -> some View {
+    HStack(alignment: .top, spacing: 16) {
+      banniere(pal, n, largeur: 70)
+      VStack(alignment: .leading, spacing: 3) {
+        TitreW(pal: pal, texte: NSLocalizedString("Prochain combat", comment: ""), taille: 12)
+        Text(Fmt.jourLong(c.date).capitalized(with: Locale(identifier: Bundle.main.preferredLocalizations.first ?? "fr")))
+          .font(pal.fort(16, .heavy))
+          .foregroundStyle(pal.sombre ? pal.texte : Color.hexa(0x5A2412))
+          .lineLimit(1)
+          .minimumScaleFactor(0.7)
+        if let cat = Textes.categorie(c, etat.livres) {
+          Text(cat)
+            .font(pal.legende(12, .bold))
+            .foregroundStyle(pal.sombre ? pal.doux : Color.hexa(0x7A3A24))
+            .lineLimit(1)
+        }
+        Spacer(minLength: 0)
+        MarchesPesee(part: Textes.partCombat(c, etat))
+          .frame(height: 30)
+        if let r = Textes.resteCombat(c, etat.livres) {
+          Text(r.1 ? r.0 : String(format: NSLocalizedString("%@ avant la pesée", comment: ""), r.0))
+            .font(pal.legende(12.5, .heavy))
+            .foregroundStyle(r.1 ? pal.vert : pal.titre)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+        }
+      }
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+  }
+
   private func petit(_ pal: Palette, _ c: CombatI, _ n: Int) -> some View {
+    Group {
+      if pal.style == .d {
+        petitD(pal, c, n)
+      } else {
+        petitClassique(pal, c, n)
+      }
+    }
+  }
+
+  private func petitClassique(_ pal: Palette, _ c: CombatI, _ n: Int) -> some View {
     VStack(alignment: .leading, spacing: 3) {
       EnteteW(pal: pal, titre: NSLocalizedString("Combat", comment: ""), coin: Fmt.jourCourt(c.date))
       Spacer(minLength: 0)
@@ -633,6 +798,16 @@ struct VueCombat: View {
   }
 
   private func moyen(_ pal: Palette, _ c: CombatI, _ n: Int) -> some View {
+    Group {
+      if pal.style == .d {
+        moyenD(pal, c, n)
+      } else {
+        moyenClassique(pal, c, n)
+      }
+    }
+  }
+
+  private func moyenClassique(_ pal: Palette, _ c: CombatI, _ n: Int) -> some View {
     HStack(alignment: .center, spacing: 14) {
       VStack(alignment: .leading, spacing: 3) {
         TitreW(pal: pal, texte: NSLocalizedString("Combat", comment: ""))
@@ -756,7 +931,62 @@ struct VueChrono: View {
         .scaledToFit()
         .frame(width: 66, height: 66)
         .shadow(color: Color.black.opacity(0.35), radius: 3, y: 2)
+    case .d:
+      TitreW(pal: pal, texte: NSLocalizedString("Rounds", comment: ""), taille: 12, couleurD: Color.hexa(0xF6DFA6))
     }
+  }
+
+  /// D : le bouton lecture peche, cerne d'un halo
+  private var lectureD: some View {
+    ZStack {
+      Circle().fill(Color.hexa(0xFFB59E).opacity(0.25)).frame(width: 56, height: 56)
+      Circle().fill(Color.hexa(0xFFB59E)).frame(width: 46, height: 46)
+      Image(systemName: "play.fill")
+        .font(.system(size: 17, weight: .heavy))
+        .foregroundStyle(Color.hexa(0x5A2412))
+        .offset(x: 1.5)
+    }
+    .widgetAccentable()
+    .accessibilityHidden(true)
+  }
+
+  /// D : fond marine, « Rounds », 5 × 3 en grand, le detail et deux pastilles
+  private func petitD(_ pal: Palette) -> some View {
+    let ch = etat.chrono
+    let grand: String = {
+      guard let c = ch, c.rounds > 0, c.roundS > 0 else { return Textes.chronoNom(ch) }
+      return c.roundS % 60 == 0 ? "\(c.rounds) × \(c.roundS / 60)" : "\(c.rounds) × \(Fmt.duree(c.roundS))"
+    }()
+    let detail: String = {
+      guard let c = ch, c.rounds > 0, c.roundS > 0 else { return NSLocalizedString("Ouvre ton chrono", comment: "") }
+      let base = c.roundS % 60 == 0 ? "min" : ""
+      if c.reposS > 0 { return base.isEmpty ? String(format: NSLocalizedString("repos %@", comment: ""), Fmt.duree(c.reposS)) : String(format: NSLocalizedString("min, repos %@", comment: ""), Fmt.duree(c.reposS)) }
+      return base
+    }()
+    return VStack(alignment: .leading, spacing: 2) {
+      HStack(alignment: .top) {
+        ornement(pal)
+        Spacer(minLength: 0)
+        lectureD
+          .offset(x: 4, y: -4)
+      }
+      Spacer(minLength: 0)
+      Text(grand)
+        .font(pal.chiffre(34, .heavy))
+        .foregroundStyle(Color.white)
+        .lineLimit(1)
+        .minimumScaleFactor(0.5)
+      Text(detail)
+        .font(pal.legende(11, .bold))
+        .foregroundStyle(Color.white.opacity(0.72))
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
+      HStack(spacing: 5) {
+        PastilleD(texte: Textes.chronoNom(ch), fond: Color.white.opacity(0.16), encre: Color.white)
+      }
+      .padding(.top, 4)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
   }
 
   private var personnage: Image {
@@ -765,6 +995,16 @@ struct VueChrono: View {
   }
 
   private func petit(_ pal: Palette) -> some View {
+    Group {
+      if pal.style == .d {
+        petitD(pal)
+      } else {
+        petitClassique(pal)
+      }
+    }
+  }
+
+  private func petitClassique(_ pal: Palette) -> some View {
     ZStack(alignment: .topLeading) {
       if pal.style == .c {
         // ton personnage en pied, a droite
