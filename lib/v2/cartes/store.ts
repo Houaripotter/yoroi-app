@@ -104,20 +104,21 @@ export async function ecrireStyle(s: StyleMemorise): Promise<void> {
 /**
  * Le moteur qui dessine les cartes : l'ancien (Directions.tsx, intact) ou le nouveau (lib/v2/cartes/moteur/).
  * Reglage de CE telephone seulement : la cle n'est pas dans les cles synchronisees (lib/v2/synchro/cles.ts), test
- * __tests__/unit/cartesMoteurInterrupteur.test.ts. Il se regle seulement dans le Studio createur (Diagnostic.tsx).
- * Ancien par defaut. A la validation finale : MOTEUR_DEFAUT passe a 'nouveau'. Retour arriere : il revient a 'ancien'.
+ * __tests__/unit/cartesMoteurInterrupteur.test.ts.
+ * 2 novembre 2026 (studio unique) : le nouveau moteur est le seul, pour tout le monde. L'interrupteur du Studio
+ * createur est retire ; la cle passe en v2 pour qu'un ancien choix « ancien » (cle v1) ne revienne jamais.
  */
 export type MoteurCartes = 'ancien' | 'nouveau';
-export const CLE_MOTEUR = 'yoroi_cartes_moteur_v1';
-export const MOTEUR_DEFAUT: MoteurCartes = 'ancien';
+export const CLE_MOTEUR = 'yoroi_cartes_moteur_v2';
+export const MOTEUR_DEFAUT: MoteurCartes = 'nouveau';
 
 let moteurEnMemoire: MoteurCartes | null = null;
 
 export function moteurValide(v: unknown): MoteurCartes {
-  return v === 'nouveau' ? 'nouveau' : 'ancien';
+  return v === 'ancien' ? 'ancien' : 'nouveau';
 }
 
-/** Le moteur deja lu, sans attendre (ancien tant que la cle n'a pas ete lue) */
+/** Le moteur deja lu, sans attendre (nouveau tant que la cle n'a pas ete lue) */
 export function moteurCourant(): MoteurCartes {
   return moteurEnMemoire ?? MOTEUR_DEFAUT;
 }
