@@ -74,6 +74,8 @@ final class Seance: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBuilderDele
   // MARK: Cycle de vie
 
   func demarrer(activite: HKWorkoutActivityType, interieur: Bool) async {
+    // 29 octobre 2026 : la seance de maintien des minuteurs laisse la place (une seule seance a la fois)
+    await MaintienActif.shared.arreterEtAttendre()
     await MainActor.run { self.reinitialiser() }
     let sante = Sante.shared
     if sante.disponible && !sante.peutEnregistrerEntrainement {
