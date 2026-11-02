@@ -41,6 +41,8 @@ export type SafetySnapshot = {
   unreadableKeys?: string[];
   /** IMPORT MULTI : copie faite pour une autre raison qu'une mise a jour (texte affiche tel quel) */
   reason?: string;
+  /** 2 novembre 2026 : numero de schema vise par les migrations qui ont suivi cette copie */
+  schema?: number;
 };
 
 /** IMPORT MULTI : marque des dossiers des copies faites avant un import (rangees a part des copies de mise a jour) */
@@ -195,21 +197,38 @@ export async function snapshotBeforeImport(database: SQLite.SQLiteDatabase, reas
   }
 }
 
+/** Numero de schema enregistre dans la base (PRAGMA user_version, 0 si jamais ecrit), null si illisible */
+async function schemaDeLaBase(database: SQLite.SQLiteDatabase): Promise<number | null> {
+  try {
+    const row = await database.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
+    const n = Number(row?.user_version);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * A appeler avec la base ouverte, AVANT toute creation ou modification de table.
  * Ne fait rien si cette version a deja tourne sur ce telephone, ou si c'est une premiere installation.
+ *
+ * 2 novembre 2026 : `schemaCible` (facultatif) = numero de schema que les migrations vont ecrire.
+ * Si la base porte un numero plus petit, la copie se fait AUSSI quand le numero de version de l'app
+ * n'a pas change (build de test, meme version). Sans `schemaCible`, rien ne change par rapport a avant.
  */
-export async function snapshotBeforeMigrations(database: SQLite.SQLiteDatabase): Promise<SafetySnapshot | null> {
+export async function snapshotBeforeMigrations(database: SQLite.SQLiteDatabase, schemaCible?: number): Promise<SafetySnapshot | null> {
   if (Platform.OS === 'web' || !FileSystem.documentDirectory) return null;
   try {
     const to = installedVersion();
     const seen = await AsyncStorage.getItem(DATA_VERSION_KEY);
-    if (seen && seen === to) return null;
+    const schemaActuel = schemaCible != null ? await schemaDeLaBase(database) : null;
+    const schemaMonte = schemaCible != null && schemaActuel != null && schemaActuel < schemaCible;
+    if (seen && seen === to && !schemaMonte) return null;
     // Deja une copie pour cette version (migrations ratees puis relancees) : on garde la premiere,
     // celle d'avant tout changement, au lieu d'en refaire une
     try {
       const last = JSON.parse((await AsyncStorage.getItem(SAFETY_LAST_KEY)) ?? 'null') as SafetySnapshot | null;
-      if (last && last.to === to) { current = last; return null; }
+      if (last && last.to === to && (!schemaMonte || last.schema === schemaCible)) { current = last; return null; }
     } catch {
       // illisible : on refait une copie
     }
@@ -217,8 +236,9 @@ export async function snapshotBeforeMigrations(database: SQLite.SQLiteDatabase):
     let keys: readonly string[] = [];
     try { keys = (await AsyncStorage.getAllKeys()) ?? []; } catch { keys = []; }
     if (!hasDb && keys.length === 0) return null; // premiere installation : rien a proteger
-    const from = seen ?? 'version precedente';
+    const from = seen && seen === to && schemaMonte ? `${seen} schema ${schemaActuel}` : (seen ?? 'version precedente');
     const snap = await writeSnapshot(database, keys as string[], hasDb, from, to);
+    if (schemaCible != null) snap.schema = schemaCible;
     await AsyncStorage.setItem(SAFETY_LAST_KEY, JSON.stringify(snap)).catch(() => undefined);
     await rotate(`${FileSystem.documentDirectory}${DIR_NAME}/`);
     current = snap;
