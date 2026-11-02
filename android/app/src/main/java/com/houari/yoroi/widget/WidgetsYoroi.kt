@@ -10,7 +10,7 @@ import android.util.Log
 import org.json.JSONObject
 
 /**
- * Les 6 widgets Android de Yoroi. Les noms de classe Dashboard, Hydration et Streak sont gardes
+ * Les 8 widgets Android de Yoroi. Les noms de classe Dashboard, Hydration et Streak sont gardes
  * pour que les widgets deja poses sur l'ecran d'accueil passent au nouveau design sans etre retires.
  */
 class YoroiPoidsWidget : WidgetYoroi(VuePoids)
@@ -19,6 +19,9 @@ class YoroiHydrationWidget : WidgetYoroi(VueEau)
 class YoroiCombatWidget : WidgetYoroi(VueCombat)
 class YoroiChronoWidget : WidgetYoroi(VueChrono)
 class YoroiDashboardWidget : WidgetYoroi(VueTableau)
+/** 30 octobre 2026 : Seance du jour et Ton personnage, en style D comme sur iPhone (SeanceEtPersonnage.kt) */
+class YoroiSeanceJourWidget : WidgetYoroi(VueSeanceJour)
+class YoroiPersonnageWidget : WidgetYoroi(VuePersonnage)
 
 abstract class WidgetYoroi(private val vue: Vue) : AppWidgetProvider() {
 
@@ -54,6 +57,8 @@ object WidgetsYoroi {
         YoroiCombatWidget::class.java to VueCombat,
         YoroiChronoWidget::class.java to VueChrono,
         YoroiDashboardWidget::class.java to VueTableau,
+        YoroiSeanceJourWidget::class.java to VueSeanceJour,
+        YoroiPersonnageWidget::class.java to VuePersonnage,
     )
 
     /** Redessine tous les widgets poses, avec les donnees du moment */
