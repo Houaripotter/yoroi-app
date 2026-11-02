@@ -52,6 +52,7 @@ import {
   separerTeinte,
   type PackDef,
 } from '@/lib/v2/dojo/personnages';
+import { track } from '@/utils/telemetry';
 import { CATEGORIES_VIE, PACKS_VIE_PRETS } from '@/lib/v2/dojo/packsVie';
 import { RANG_NOMS, UNIVERS_CHOIX, libelleConstruction } from '@/lib/v2/dojo/univers';
 import { choisirUnivers, choixUniversDe, genreDuPersonnage } from '@/lib/v2/dojo/choisirUnivers';
@@ -251,7 +252,7 @@ export function Vestiaire() {
     return {
       key: `guerrier_${g}`, nom, image: guerrierImage(g, rankIndex), fond: g === 'f' ? P.programmeFond : P.tuileIndigo, on, lock: false,
       a11y: on ? traduire('{0}, ton personnage', nom) : nom,
-      onPress: () => { selectionAsync().catch(() => {}); void choisirUnivers('japon', g).then(succes); },
+      onPress: () => { selectionAsync().catch(() => {}); track('personnage_choisi', { type: 'guerrier' }); void choisirUnivers('japon', g).then(succes); },
     };
   };
   const choixClassique = (g: 'h' | 'f'): Choix => {
@@ -260,7 +261,7 @@ export function Vestiaire() {
     return {
       key: `classique_${g}`, nom, image: classiqueImage(g, rankIndex), fond: g === 'f' ? P.tuileSableFond : P.tuileMentheFond, on, lock: false,
       a11y: on ? traduire('{0}, ton personnage', nom) : nom,
-      onPress: () => { selectionAsync().catch(() => {}); void choisirUnivers('classique', g).then(succes); },
+      onPress: () => { selectionAsync().catch(() => {}); track('personnage_choisi', { type: 'classique' }); void choisirUnivers('classique', g).then(succes); },
     };
   };
   // monde samourai : choisi s'il est debloque, sinon sa fiche (comme avant) ; packs : leur fiche, qui equipe
@@ -277,6 +278,7 @@ export function Vestiaire() {
         selectionAsync().catch(() => {});
         if (p.kind === 'monde' && !lock) {
           // comme la Boutique : le monde samourai remet l'univers Japon (rangs Ashigaru a Shogun) ; la montre suit
+          track('personnage_choisi', { type: 'monde' });
           void saveEspace({ personnage: key, univers: 'japon' })
             .then(() => writeOldAvatar(key))
             .then(succes)
@@ -305,6 +307,7 @@ export function Vestiaire() {
   ];
   const pickAucun = () => {
     selectionAsync().catch(() => {});
+    track('personnage_choisi', { type: 'aucun' });
     void choisirUnivers('aucun', genre).then(succes);
   };
 
