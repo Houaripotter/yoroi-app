@@ -23,6 +23,8 @@ struct WidgetsSuivi: WidgetBundle {
     WidgetChrono()
     WidgetCombat()
     WidgetMinuteurs()
+    WidgetCoach()
+    WidgetRang()
   }
 }
 
@@ -99,6 +101,34 @@ struct WidgetCombat: Widget {
     }
     .configurationDisplayName("Yoroi Combat")
     .description("Les jours avant ton prochain combat.")
+    .supportedFamilies(famillesToutes)
+  }
+}
+
+// MARK: Direction B (28 octobre 2026) : la seance du jour du Coach, ton rang et ton personnage
+
+struct WidgetCoach: Widget {
+  var body: some WidgetConfiguration {
+    StaticConfiguration(kind: GenreWidget.coach, provider: FournisseurYoroi()) { e in
+      VueCoachWidget(entree: e)
+        .containerBackground(Color.black, for: .widget)
+        .widgetURL(URL(string: "yoroimontre://seance"))
+    }
+    .configurationDisplayName("Yoroi Séance du jour")
+    .description("La séance du jour de ton Coach.")
+    .supportedFamilies(famillesToutes)
+  }
+}
+
+struct WidgetRang: Widget {
+  var body: some WidgetConfiguration {
+    StaticConfiguration(kind: GenreWidget.rang, provider: FournisseurYoroi()) { e in
+      VueRangWidget(entree: e)
+        .containerBackground(Color.black, for: .widget)
+        .widgetURL(URL(string: "yoroimontre://accueil"))
+    }
+    .configurationDisplayName("Yoroi Rang")
+    .description("Ton personnage, ton rang et ton XP.")
     .supportedFamilies(famillesToutes)
   }
 }
