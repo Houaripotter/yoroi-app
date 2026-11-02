@@ -11,6 +11,7 @@ struct CombatVue: View {
   var body: some View {
     Group {
       if let c = synchro.contexte.combat, let j = c.joursRestants() {
+        ScrollView {
         VStack(spacing: 4) {
           if j > 0 {
             Text("Combat dans")
@@ -47,6 +48,8 @@ struct CombatVue: View {
                 .foregroundStyle(Teinte.vert)
             }
           }
+        }
+        .frame(maxWidth: .infinity)
         }
       } else {
         EcranVide(icone: "calendar", texte: NSLocalizedString("Aucun combat prévu", comment: ""))
