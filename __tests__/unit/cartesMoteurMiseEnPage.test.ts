@@ -71,7 +71,7 @@ describe('familles et compositions', () => {
       expect(l).not.toContain('Aplus');
       if (x.famille !== 'muscu') expect(l).not.toContain('C');
     }
-    expect(compositionsPour(FAM_MUSCU, 'muscu')).toEqual(['A', 'B', 'C']);
+    expect(compositionsPour(FAM_MUSCU, 'muscu')).toEqual(['A', 'B', 'C', 'autocollant']);
     expect(compositionEffective(FAM_MUSCU, 'muscu', 'Aplus', true)).toBe('B');
     expect(compositionEffective(FAM_MUSCU, 'muscu', 'A', false)).toBe('B');
     expect(compositionEffective(FAM_MUSCU, 'muscu', 'A', true)).toBe('A');
