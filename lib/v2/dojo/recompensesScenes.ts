@@ -12,6 +12,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DeviceEventEmitter } from 'react-native';
 import { VOYAGE_SCENE_IDS, type VoyageSceneId } from '@/lib/v2/espace/voyages';
+import { track } from '@/utils/telemetry';
 
 const KEY = '@yoroi_scenes_gagnees_v1';
 export const SCENES_GAGNEES_EVENT = 'yoroi:scenes_gagnees';
@@ -115,6 +116,8 @@ export async function verifierPaliersSerie(jours: number, record = 0): Promise<V
   const meilleur = Math.max(jours, record);
   const nouvelles = PALIERS_SCENES.filter((p) => meilleur >= p.jours && !cache.gagnees.includes(p.scene)).map((p) => p.scene);
   if (nouvelles.length) await ecrire({ ...cache, gagnees: [...cache.gagnees, ...nouvelles] });
+  // mesure : une scene gagnee avec la serie (le fait seulement)
+  nouvelles.forEach(() => track('recompense_recuperee', { type: 'scene_serie' }));
   return nouvelles;
 }
 
@@ -133,6 +136,7 @@ export async function donnerEssaiGrandCoffre(verrouillee: (id: VoyageSceneId) =>
   const id = liste[jour % liste.length];
   const essai: EssaiScene = { id, fin: now + DUREE_ESSAI_MS };
   await ecrire({ ...cache, essai, essayees: jamais.length ? [...cache.essayees, id] : [id] });
+  track('recompense_recuperee', { type: 'essai_scene' });
   return essai;
 }
 
