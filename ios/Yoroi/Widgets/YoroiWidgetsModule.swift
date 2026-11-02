@@ -2,6 +2,7 @@ import Foundation
 import UIKit
 import WidgetKit
 import ActivityKit
+import WatchConnectivity
 internal import React
 
 // Module natif YoroiWidgets (meme nom et memes fonctions que le module Android) :
@@ -10,6 +11,7 @@ internal import React
 //  setPersonnageImage(uri)    copie ton personnage (meme image que l'Accueil, 600 px de haut, png transparent)
 //  setStyle(style)            style des widgets : "A" Nuit de lanternes (par defaut), "B" Rouleau et encre, "C" Armure laquee
 //  setSeason(saison)          decoration de saison des widgets : "halloween", "noel" ou "" (aucune, ou decorations coupees)
+//  sendImagesToWatch()        passe ton personnage et ta scene, reduits, a l'Apple Watch jumelee (28 octobre 2026)
 //  getPendingActions()        renvoie la file des actions faites depuis un widget (JSON tableau)
 //  clearPendingActions(ids)   retire de la file les actions appliquees par l'app
 //  reload()                   demande a iOS de redessiner les widgets
@@ -190,6 +192,53 @@ class YoroiWidgetsModule: NSObject {
         WidgetCenter.shared.reloadAllTimelines()
         resolve(true)
       }
+    }
+  }
+
+  // MARK: Images pour l'Apple Watch (28 octobre 2026)
+
+  /// Ton personnage (png 240 px de haut) et ta scene (jpg 320 px de large), repris des fichiers deja copies pour les
+  /// widgets, passent a la montre jumelee par WatchConnectivity (transferFile). Rien ne sort de tes appareils.
+  /// Un envoi encore en cours du meme genre est annule : seule la derniere image compte.
+  /// false : pas de montre jumelee, pas d'app montre, session pas encore active, ou rien a envoyer.
+  @objc
+  func sendImagesToWatch(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    guard WCSession.isSupported() else {
+      resolve(false)
+      return
+    }
+    let session = WCSession.default
+    guard session.activationState == .activated, session.isPaired, session.isWatchAppInstalled else {
+      resolve(false)
+      return
+    }
+    file.async {
+      var envoyes = 0
+      let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first ?? FileManager.default.temporaryDirectory
+      let pieces: [(genre: String, source: URL?, nom: String)] = [
+        ("personnage", GroupeYoroi.urlPersonnage, "yoroi_montre_personnage.png"),
+        ("scene", GroupeYoroi.urlScene, "yoroi_montre_scene.jpg"),
+      ]
+      for piece in pieces {
+        guard let source = piece.source, FileManager.default.fileExists(atPath: source.path),
+              let data = try? Data(contentsOf: source), let image = UIImage(data: data) else { continue }
+        let petite: Data? = piece.genre == "personnage"
+          ? YoroiWidgetsModule.reduirePNG(image, hauteur: 240)
+          : YoroiWidgetsModule.reduire(image, largeur: 320)
+        guard let petite else { continue }
+        let cible = caches.appendingPathComponent(piece.nom)
+        do {
+          try petite.write(to: cible, options: .atomic)
+        } catch {
+          continue
+        }
+        for t in session.outstandingFileTransfers where (t.file.metadata?["yoroiImage"] as? String) == piece.genre {
+          t.cancel()
+        }
+        _ = session.transferFile(cible, metadata: ["yoroiImage": piece.genre])
+        envoyes += 1
+      }
+      resolve(envoyes > 0)
     }
   }
 
