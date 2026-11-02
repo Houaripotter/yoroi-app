@@ -34,6 +34,8 @@ object VuePoids : Vue {
         val v = RemoteViews(ctx.packageName, Styles.layout(gabarit, st))
         Styles.fondScene(v, ctx, st, wDp, hDp)
         Rendu.entetePoids(v, inst, p, kg, d, avecDate = true)
+        // 28 octobre 2026, style D : le prochain palier du chemin a la place de la date
+        if (st == StyleW.D) Format.palier(p, inst.unite)?.let { Rendu.texteOuRien(v, R.id.yw_date, it) }
         v.setOnClickPendingIntent(android.R.id.background, Liens.ouvrir(ctx, Liens.POIDS))
 
         if (moyen) {
@@ -174,10 +176,10 @@ object VueTableau : Vue {
         val inst = d.inst ?: return Rendu.vide(ctx, R.string.yw_nom_tableau, ctx.getString(R.string.yw_vide), Liens.ACCUEIL)
         val st = Styles.lire(ctx)
         val v = RemoteViews(ctx.packageName, Styles.layout(Gabarit.TABLEAU, st))
-        Styles.fondScene(v, ctx, st, wDp, hDp)
+        Styles.fondScene(v, ctx, st, wDp, hDp, tableau = true)
         val e = Rendu.echelle(ctx)
         // A : 78 dp sur ta scene ; B et C : une fenetre ou un bandeau de 84 dp, a 10 dp des bords
-        val banniereDp = if (st == StyleW.A) 78f else 94f
+        val banniereDp = if (st == StyleW.A || st == StyleW.D) 78f else 94f
         v.setOnClickPendingIntent(android.R.id.background, Liens.ouvrir(ctx, Liens.ACCUEIL))
 
         // bandeau de la scene
@@ -186,8 +188,8 @@ object VueTableau : Vue {
         if (avecBanniere) {
             v.setTextViewText(R.id.yw_t_date, Format.jourLongMaj(d.aujourdhui))
             when (st) {
-                // A : ta scene est deja le fond du widget
-                StyleW.A -> v.setViewVisibility(R.id.yw_scene, View.GONE)
+                // A et D : ta scene est deja le fond du widget
+                StyleW.A, StyleW.D -> v.setViewVisibility(R.id.yw_scene, View.GONE)
                 // B : ta scene nette dans une fenetre arrondie (sinon le chateau, ou la nuit en sombre)
                 StyleW.B -> {
                     val scene = if (hDp >= 280) Scene.charger(ctx) else null
