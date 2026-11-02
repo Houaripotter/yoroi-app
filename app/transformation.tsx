@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { captureRef } from 'react-native-view-shot';
+import { effacerApresPartage, effacerExport, rangerDansCartesTmp } from '@/lib/v2/cartes/tmp';
 import { isAvailableAsync, shareAsync } from 'expo-sharing';
 import { requestPermissionsAsync, saveToLibraryAsync } from 'expo-media-library';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
@@ -176,9 +177,12 @@ export default function TransformationScreen() {
 
   const doShare = async () => {
     noterPartage('avant_apres');
+    // 2 novembre 2026 (confidentialite) : l'image exportee passe par cacheDirectory/cartes_tmp/ et est effacee
+    // apres le partage, termine ou annule. Tes photos d'avant et d'apres, gardees dans l'app, ne sont jamais touchees.
+    let uri: string | null = null;
     try {
       if (!cardRef.current) return;
-      const uri = await captureRef(cardRef, { format: 'jpg', quality: 0.92, width: 1080 });
+      uri = await rangerDansCartesTmp(await captureRef(cardRef, { format: 'jpg', quality: 0.92, width: 1080 }), 'export');
       setShareOpen(false);
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
       if (await isAvailableAsync()) await shareAsync(uri, { mimeType: 'image/jpeg', dialogTitle: traduire('Ton avant et après') });
@@ -190,13 +194,16 @@ export default function TransformationScreen() {
       logger.error('Partage de la comparaison impossible', err);
       setShareOpen(false);
       setNotice(traduire('L’image n’a pas pu être créée, réessaie.'));
+    } finally {
+      effacerApresPartage(uri);
     }
   };
 
   const doSave = async () => {
+    let uri: string | null = null;
     try {
       if (!cardRef.current) return;
-      const uri = await captureRef(cardRef, { format: 'jpg', quality: 0.92, width: 1080 });
+      uri = await rangerDansCartesTmp(await captureRef(cardRef, { format: 'jpg', quality: 0.92, width: 1080 }), 'export');
       setShareOpen(false);
       const { status } = await requestPermissionsAsync();
       if (status === 'granted') {
@@ -208,6 +215,9 @@ export default function TransformationScreen() {
       logger.error('Enregistrement dans la galerie impossible', err);
       setShareOpen(false);
       setNotice(traduire('Enregistrement impossible, réessaie.'));
+    } finally {
+      // la galerie a sa propre copie : effacee tout de suite
+      void effacerExport(uri);
     }
   };
 
