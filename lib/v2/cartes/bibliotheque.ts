@@ -5,7 +5,7 @@
  * Une rubrique sans donnee reste vide : l'ecran le dit en une phrase, rien n'est invente.
  */
 import { logger } from '@/lib/security/logger';
-import { carteDePesee, chargerExploits, chargerSeance, chargerSemaine, contextePoids, dateLongue, grilleSemaines, parSemaine, serieSemaines, toutesSeances } from './charger';
+import { avecProfil, carteDePesee, chargerExploits, chargerSeance, chargerSemaine, contextePoids, dateLongue, grilleSemaines, parSemaine, serieSemaines, toutesSeances } from './charger';
 import { isoJour, lundiDe } from './moments';
 import { bornesPeriode, carteDuMoment, cartePeriode, compteursDuMoment, objectifsDuMoment, rangerExploits } from './periode';
 import { lundiIso } from './exploits';
@@ -54,7 +54,8 @@ export async function chargerPeriode(type: 'mois' | 'annee', ref: string): Promi
   const w = await parSemaine();
   const { fin } = bornesPeriode(type, ref);
   const jour = fin < auj ? fin : auj;
-  return cartePeriode(trainings, type, ref, { parSemaine: w, aujourdhui: auj, grille: trainings.length ? grilleSemaines(trainings.map((t) => t.date), jour) : null });
+  // 2 novembre 2026 : ta ceinture de JJB et ta serie en plus, s'ils existent
+  return avecProfil(cartePeriode(trainings, type, ref, { parSemaine: w, aujourdhui: auj, grille: trainings.length ? grilleSemaines(trainings.map((t) => t.date), jour) : null }));
 }
 
 /** Un objectif ou un compteur du moment, retrouve par sa cle (« objectif:semaine_objectif ») */
@@ -62,7 +63,7 @@ export async function chargerDuMoment(src: 'objectif' | 'compteur', cle: string)
   const trainings = await toutesSeances();
   const auj = isoJour(new Date());
   const list = src === 'objectif' ? await objectifsMaintenant(trainings, await parSemaine(), auj, await serieSemaines()) : compteursMaintenant(trainings, auj);
-  return list.find((c) => c.cle === cle) ?? list[0] ?? null;
+  return avecProfil(list.find((c) => c.cle === cle) ?? list[0] ?? null);
 }
 
 /** Toute la bibliotheque, rubrique par rubrique */
