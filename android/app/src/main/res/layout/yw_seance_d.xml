@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Seance du jour, style D (30 octobre 2026, comme sur iPhone) : ta scene et ton personnage a gauche,
+     la seance de ton Coach, ses muscles et Commencer a droite. Un appui ouvre ton Coach. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/yw_d_fond_seance"
+    android:clipToOutline="true">
+  <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+      android:orientation="horizontal">
+    <FrameLayout android:id="@+id/yw_s_gauche" android:layout_width="130dp" android:layout_height="match_parent">
+      <ImageView android:id="@+id/yw_s_image" android:layout_width="match_parent" android:layout_height="match_parent"
+          android:scaleType="centerCrop" android:src="@drawable/yw_d_fond_scene" android:importantForAccessibility="no" />
+    </FrameLayout>
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent"
+        android:orientation="vertical" android:padding="@dimen/yw_marge">
+      <TextView android:id="@+id/yw_s_titre" style="@style/YwTitre"
+          android:layout_width="match_parent" android:layout_height="wrap_content"
+          android:textSize="10sp" android:textStyle="bold" android:textAllCaps="true" android:letterSpacing="0.12"
+          android:textColor="@color/yw_d_titre" android:text="@string/yw_ton_coach" />
+      <LinearLayout android:id="@+id/yw_s_avec" android:layout_width="match_parent" android:layout_height="0dp"
+          android:layout_weight="1" android:layout_marginTop="4dp" android:orientation="vertical">
+        <TextView android:id="@+id/yw_s_nom" style="@style/YwChiffre"
+            android:layout_width="match_parent" android:layout_height="25dp"
+            android:gravity="center_vertical|start" android:textColor="@color/yw_d_encre"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="12sp"
+            android:autoSizeMaxTextSize="19sp" android:autoSizeStepGranularity="1sp"
+            android:text="@string/yw_nom_seance" />
+        <TextView android:id="@+id/yw_s_resume" style="@style/YwPetit"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="2dp" android:textSize="12sp" android:textStyle="bold"
+            android:textColor="@color/yw_d_discret" android:visibility="gone" />
+        <LinearLayout android:id="@+id/yw_s_muscles" android:layout_width="match_parent" android:layout_height="22dp"
+            android:layout_marginTop="6dp" android:orientation="horizontal" android:visibility="gone">
+          <TextView android:id="@+id/yw_s_m0" style="@style/YwPetit"
+              android:layout_width="wrap_content" android:layout_height="22dp" android:gravity="center"
+              android:paddingLeft="9dp" android:paddingRight="9dp" android:textSize="11sp" android:textStyle="bold"
+              android:textColor="@color/yw_d_bleu_encre" android:background="@drawable/yw_d_pastille_bleu"
+              android:visibility="gone" />
+          <TextView android:id="@+id/yw_s_m1" style="@style/YwPetit"
+              android:layout_width="wrap_content" android:layout_height="22dp" android:gravity="center"
+              android:layout_marginStart="4dp"
+              android:paddingLeft="9dp" android:paddingRight="9dp" android:textSize="11sp" android:textStyle="bold"
+              android:textColor="@color/yw_d_menthe_encre" android:background="@drawable/yw_d_pastille_menthe"
+              android:visibility="gone" />
+          <TextView android:id="@+id/yw_s_m2" style="@style/YwPetit"
+              android:layout_width="wrap_content" android:layout_height="22dp" android:gravity="center"
+              android:layout_marginStart="4dp"
+              android:paddingLeft="9dp" android:paddingRight="9dp" android:textSize="11sp" android:textStyle="bold"
+              android:textColor="@color/yw_d_lilas_encre" android:background="@drawable/yw_d_pastille_lilas"
+              android:visibility="gone" />
+        </LinearLayout>
+        <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+        <LinearLayout android:id="@+id/yw_s_bouton" android:layout_width="match_parent" android:layout_height="32dp"
+            android:orientation="horizontal" android:gravity="center" android:background="@drawable/yw_d_bouton"
+            android:paddingLeft="10dp" android:paddingRight="10dp">
+          <ImageView android:id="@+id/yw_s_bouton_icone" android:layout_width="12dp" android:layout_height="12dp"
+              android:src="@drawable/yw_d_jouer" android:importantForAccessibility="no" />
+          <TextView android:id="@+id/yw_s_bouton_texte" style="@style/YwTitre"
+              android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:layout_marginStart="6dp" android:textSize="13sp" android:textStyle="bold"
+              android:textColor="@color/yw_d_sur_indigo" android:text="@string/yw_commencer" />
+        </LinearLayout>
+      </LinearLayout>
+      <TextView android:id="@+id/yw_s_vide" style="@style/YwTexte"
+          android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+          android:gravity="center_vertical" android:maxLines="3" android:textSize="15sp" android:textStyle="bold"
+          android:textColor="@color/yw_d_encre" android:visibility="gone" />
+    </LinearLayout>
+  </LinearLayout>
+</FrameLayout>
