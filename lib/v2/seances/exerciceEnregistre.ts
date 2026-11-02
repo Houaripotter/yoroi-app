@@ -61,17 +61,34 @@ export function resumeCardioDe(x: unknown): ResumeCardio | null {
 
 /**
  * Les chiffres cles du cardio d'une seance de musculation, pour les cartes de seance : distance (saisie ou calculee
- * depuis la vitesse du tapis), pente moyenne et FC moyenne du cardio, sur le premier cardio qui les a.
+ * depuis la vitesse du tapis), pente moyenne, vitesse moyenne et FC moyenne du cardio (avec sa zone 2 gardee),
+ * sur le premier cardio qui les a.
  */
-export function chiffresCardio(exos: readonly unknown[] | null | undefined): { distanceKm?: number; penteMoy?: number; fcMoy?: number } {
-  const out: { distanceKm?: number; penteMoy?: number; fcMoy?: number } = {};
+export type ChiffresCardio = {
+  distanceKm?: number;
+  penteMoy?: number;
+  fcMoy?: number;
+  /** 2 novembre 2026 : vitesse moyenne du tapis (km/h), telle qu'enregistree avec le cardio */
+  vitesseMoy?: number;
+  /** 2 novembre 2026 : la zone 2 gardee avec le cardio qui a la FC moyenne (bpm), absente si elle n'a pas ete gardee */
+  zone2?: { min: number; max: number };
+};
+
+export function chiffresCardio(exos: readonly unknown[] | null | undefined): ChiffresCardio {
+  const out: ChiffresCardio = {};
   for (const e of exos ?? []) {
     const r = resumeCardioDe(e);
     if (!r) continue;
     const d = Number((e as { distance?: unknown }).distance);
     if (out.distanceKm === undefined && Number.isFinite(d) && d > 0) out.distanceKm = d;
     if (out.penteMoy === undefined && typeof r.penteMoy === 'number') out.penteMoy = r.penteMoy;
-    if (out.fcMoy === undefined && typeof r.fcMoy === 'number' && r.fcMoy > 0) out.fcMoy = r.fcMoy;
+    if (out.vitesseMoy === undefined && typeof r.vitesseMoy === 'number' && r.vitesseMoy > 0) out.vitesseMoy = r.vitesseMoy;
+    if (out.fcMoy === undefined && typeof r.fcMoy === 'number' && r.fcMoy > 0) {
+      out.fcMoy = r.fcMoy;
+      // la zone 2 du meme cardio que la FC : celle du moment de la seance
+      const z = r.zone2;
+      if (z && typeof z.min === 'number' && typeof z.max === 'number' && z.max > z.min) out.zone2 = { min: z.min, max: z.max };
+    }
   }
   return out;
 }
