@@ -255,7 +255,7 @@ function PointsPages({ nb, page, couleur, inactif }: { nb: number; page: number;
 /**
  * 2 novembre 2026 (proposition A) : la ligne fine des paliers. Ton depart en petit a gauche, puis un rond par palier :
  * atteint (rond plein vert P.moss avec une coche), prochain (anneau de l'accent autour d'un point) ou a venir (rond gris
- * vide). Le trait est vert jusqu'au dernier palier atteint, gris ensuite. Le chiffre de chaque palier dessous.
+ * vide). Le trait est dans l'accent jusqu'au dernier palier atteint, gris ensuite (seuls les ronds atteints sont verts). Le chiffre de chaque palier dessous.
  * 2 novembre 2026 soir (Houari : les paliers atteints en vert) : la coche en P.white sur P.moss, 3,8 a 1 en clair
  * (blanc sur #6E8C3A) et 7,2 a 1 en sombre (encre #1A1E29 sur #93B562), au dessus du seuil de 3 a 1 d'une icone.
  */
@@ -276,7 +276,7 @@ function LigneDePaliers({ depart, ligne, accent, sombre }: { depart: number; lig
   return (
     <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ height: L.hauteur, marginTop: 18, marginLeft: L.margeG, marginRight: L.margeD }}>
       {ligne.paliers.map((_, i) => (
-        <View key={`t${i}`} style={{ position: 'absolute', top: L.centre - L.trait / 2, height: L.trait, left: x(i), width: `${100 / n}%`, backgroundColor: i < ligne.atteints ? P.moss : P.line }} />
+        <View key={`t${i}`} style={{ position: 'absolute', top: L.centre - L.trait / 2, height: L.trait, left: x(i), width: `${100 / n}%`, backgroundColor: i < ligne.atteints ? accent : P.line }} />
       ))}
       <View style={{ position: 'absolute', left: x(0), top: L.centre - L.depart / 2, width: L.depart, height: L.depart, borderRadius: L.depart / 2, borderWidth: 2, borderColor: gris, backgroundColor: P.white, transform: [{ translateX: -L.depart / 2 }] }} />
       {chiffre('d', 0, formatKg(depart), P.muted, 'bold', 11)}
