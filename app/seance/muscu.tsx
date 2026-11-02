@@ -100,7 +100,10 @@ import { playWizzSound } from '@/lib/soundManager';
 import { encouragement, etatSerie, nouvelleSerie, remettreSerie, sansSerie, seriesAFaire } from '@/lib/v2/seances/seriesSaisie';
 import { chargerMinuteurRepos, enregistrerMinuteurRepos, reposApresSerie } from '@/lib/v2/seances/minuteurRepos';
 import { objectifExo, seriesVisees, texteReps, texteSerie } from '@/lib/v2/seances/objectifExo';
-import { chargerReglages, cranDe, enregistrerCran, typeReglage, CRAN_MAX } from '@/lib/v2/seances/reglagesMachine';
+import { chargerReglages, enregistrerCran, typeReglage, CRAN_MAX } from '@/lib/v2/seances/reglagesMachine';
+import { cranAffiche, cranAvant, indexReperes, libelleCharge, recordBattu, reperesDe, serieDerniereFois } from '@/lib/v2/seances/reperesExo';
+import { Icon as IconSeances } from '@/components/yoroi/v2/seances/Icon';
+import { useGrandEcran } from '@/lib/v2/nav/useGrandEcran';
 import type { Reglages } from '@/lib/v2/seances/reglagesMachine';
 import { libelleHauteurPoulie } from '@/lib/v2/seances/hauteurPoulie';
 import { chargerEcartes, ecarterExercice, ecartesEnMemoire, nomsEcartes } from '@/lib/v2/seances/exercicesEcartes';
@@ -344,7 +347,7 @@ export default function SeanceMuscu() {
               // series proposees ; « la derniere fois » reste ta vraie derniere seance (rien si premiere fois)
               const hx = h.map.get(normName(e.nom));
               const sets: LiveSet[] = prop.series.map((sv, i) => {
-                const last = hx?.lastSets[Math.min(i, (hx?.lastSets.length ?? 1) - 1)];
+                const last = serieDerniereFois(hx, i);
                 return { id: uid(), weight: sv.weight, reps: sv.reps, done: false, ...(last ? { prevWeight: last.weight, prevReps: last.reps } : {}) };
               });
               // 30 octobre 2026 : la case du programme (pour retenir un remplacement) et les series visees
@@ -504,7 +507,7 @@ export default function SeanceMuscu() {
       name,
       sets: e.sets.map((st, i) => {
         if (st.done) return st;
-        const last = h?.lastSets[Math.min(i, (h?.lastSets.length ?? 1) - 1)];
+        const last = serieDerniereFois(h, i);
         return last ? { ...st, weight: last.weight, reps: last.reps, prevWeight: last.weight, prevReps: last.reps } : { ...st, prevWeight: undefined, prevReps: undefined };
       }),
     }));
@@ -755,7 +758,7 @@ export default function SeanceMuscu() {
     // (E3) meme objectif de series et de repetitions ; charges de ta derniere fois sur l'exercice choisi
     const reps = ex.cible?.repsMin ?? ex.objectifReps ?? ex.sets.find((x) => !x.done)?.reps ?? 10;
     const sets: LiveSet[] = ex.sets.map((_, i) => {
-      const last = h?.lastSets[Math.min(i, (h?.lastSets.length ?? 1) - 1)];
+      const last = serieDerniereFois(h, i);
       return { id: uid(), weight: last?.weight ?? 0, reps: last?.reps ?? reps, done: false, ...(last ? { prevWeight: last.weight, prevReps: last.reps } : {}) };
     });
     const original = sansPrise(ex.name).base;
@@ -797,7 +800,7 @@ export default function SeanceMuscu() {
     const reps = ex.cible?.repsMin ?? ex.objectifReps ?? ex.sets.find((x) => !x.done)?.reps ?? 10;
     const seriesNeuves = (l: LiveSet[]): LiveSet[] =>
       l.map((_, i) => {
-        const last = h?.lastSets[Math.min(i, (h?.lastSets.length ?? 1) - 1)];
+        const last = serieDerniereFois(h, i);
         return { id: uid(), weight: last?.weight ?? 0, reps: last?.reps ?? reps, done: false, ...(last ? { prevWeight: last.weight, prevReps: last.reps } : {}) };
       });
     const nouvelId = uid();
@@ -1252,6 +1255,9 @@ export default function SeanceMuscu() {
   const libre = useMemo(() => (libreNom ? proposerLibre(seancesDeLExo(toutesSeances, libreNom, 2)) : null), [libreNom, toutesSeances]);
   // 28 octobre 2026 : coach vocal, une voix dans les écouteurs (lib/v2/coachVocal)
   useCoachVocal(draft, toutesSeances);
+  // 2 novembre 2026 : record, max de la derniere fois et cran en haut de l'exercice (lib/v2/seances/reperesExo.ts)
+  const indexRep = useMemo(() => indexReperes(toutesSeances as unknown as Parameters<typeof indexReperes>[0]), [toutesSeances]);
+  const grandEcran = useGrandEcran();
 
   if (!draft) {
     return <View style={{ flex: 1, backgroundColor: c.background }}><Stack.Screen options={{ gestureEnabled: false }} /></View>;
@@ -1264,7 +1270,9 @@ export default function SeanceMuscu() {
   const barreOn = !draft.form && !restOn && !cardioActif;
   const bottomSpace = insets.bottom + (restOn ? 110 : barreOn ? 130 : 30);
   const hCurrent = current ? hist.map.get(normName(current.name)) : undefined;
-  const lastBest = hCurrent ? bestSet(hCurrent.lastSets) : null;
+  const rep = current ? reperesDe(indexRep, current.name) : null;
+  const cranHaut = current ? cranAffiche(current.cran, cranAvant(cransAvant, current.name)) : null;
+  const recordNeuf = !!rep?.record && !!current && !draft.form && recordBattu(rep.record, current.sets);
   // 30 octobre 2026 (C) : l'objectif de series de l'exercice (lib/v2/seances/objectifExo.ts)
   const objectif = current ? objectifExo(current) : null;
   // objectif atteint en direct : l'exercice est boucle, une serie ajoutee en plus reste possible sans etre poussee
@@ -1343,15 +1351,46 @@ export default function SeanceMuscu() {
                   <Ink size={13} weight="extraBold" color={c.accent}>{traduire('EXERCICE {0} SUR {1}', draft.exercises.indexOf(current) + 1, draft.exercises.length)}</Ink>
                 ) : null}
                 <Ink size={30} weight="black" tight>{sansTiret(traduire(current.name))}</Ink>
-                {current.cardio ? null : <Ink size={14} color={c.textSecondary}>
-                  {lastBest && hCurrent ? (
-                    <>
-                      {traduire("La dernière fois, {0} : ", relativeDay(hCurrent.lastDate))}<Ink size={14} weight="extraBold">{lastBest.weight > 0 ? (lb ? traduire("{0} livres pour {1}", fmtNum(saisieDepuisKg(lastBest.weight, unite)), lastBest.reps) : traduire("{0} kilos pour {1}", fmtNum(saisieDepuisKg(lastBest.weight, unite)), lastBest.reps)) : traduire("{0} répétitions", lastBest.reps)}</Ink>
-                    </>
-                  ) : (
-                    traduire('Première fois sur cet exercice. Ce que tu fais aujourd’hui devient ta référence.')
-                  )}
-                </Ink>}
+                {/* 2 novembre 2026 (Houari) : ton record, le max de la derniere fois et le cran, cote a cote sous le nom.
+                    Deux lignes au plus, rien de coupe : le record et le cran (courts) d'abord, puis « Dernière fois ». */}
+                {current.cardio || !rep ? null : (
+                  <>
+                    {rep.record || rep.derniere || cranHaut != null ? (
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                        {rep.record ? (
+                          <View
+                            accessible
+                            accessibilityLabel={recordNeuf ? traduire('Nouveau record sur cet exercice') : traduire('Ton record sur cet exercice : {0}', rep.record.weight > 0 ? libelleCharge(rep.record.weight, unite) : traduire('{0} répétitions', rep.record.reps))}
+                            style={{ flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: grandEcran ? 32 : 28, paddingLeft: 6, paddingRight: 10, borderRadius: 10, backgroundColor: recordNeuf ? c.accent : c.accentTint }}
+                          >
+                            <IconSeances name="trophy" size={grandEcran ? 18 : 16} color={recordNeuf ? c.onAccent : c.accentText} />
+                            <Ink size={grandEcran ? 14 : 13} weight="extraBold" color={recordNeuf ? c.onAccent : c.accentText} numberOfLines={1}>
+                              {recordNeuf
+                                ? traduire('Nouveau record')
+                                : traduire('Record {0}', rep.record.weight > 0 ? libelleCharge(rep.record.weight, unite) : traduire('{0} répétitions', rep.record.reps))}
+                            </Ink>
+                          </View>
+                        ) : null}
+                        {cranHaut != null ? (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: grandEcran ? 32 : 28, paddingLeft: illus.stickers ? 4 : 10, paddingRight: 10, borderRadius: 10, backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider }}>
+                            <StickerSinon nom="reglage_machine" taille={grandEcran ? 22 : 20} />
+                            <Ink size={grandEcran ? 14 : 13} weight="extraBold" numberOfLines={1}>{traduire('Cran {0}', cranHaut)}</Ink>
+                          </View>
+                        ) : null}
+                        {rep.derniere ? (
+                          <View style={{ flexShrink: 1, maxWidth: '100%', minHeight: grandEcran ? 32 : 28, justifyContent: 'center', paddingHorizontal: 10, borderRadius: 10, backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider }}>
+                            <Ink size={grandEcran ? 14 : 13} weight="bold" color={c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                              {traduire('Dernière fois : max {0}', setLabel(rep.derniere.max, unite))}
+                            </Ink>
+                          </View>
+                        ) : null}
+                      </View>
+                    ) : null}
+                    {!rep.record && !rep.derniere ? (
+                      <Ink size={14} color={c.textSecondary}>{traduire('Première fois sur cet exercice. Ce que tu fais aujourd’hui devient ta référence.')}</Ink>
+                    ) : null}
+                  </>
+                )}
                 {libre ? (
                   <Ink size={13} weight="bold" color={libre.raison === 'monte' ? c.accent : c.textSecondary}>
                     {libre.raison === 'monte'
@@ -1391,7 +1430,7 @@ export default function SeanceMuscu() {
               // 31 octobre 2026 : une de tes machines (machinesPerso.ts) a toujours son reglage
               const type = machineDe(machinesEnMemoire(), sansPrise(current.name).base) ? 'ouvert' : typeReglage(current.name);
               const hauteur = libelleHauteurPoulie(current.name);
-              const avant = cranDe(cransAvant, current.name);
+              const avant = cranAvant(cransAvant, current.name);
               const valeur = current.cran !== undefined ? current.cran : avant;
               if (type === 'aucun' && valeur == null && !hauteur) return null;
               const ouvert = type === 'ouvert' || valeur != null || !!hauteur || reglageOuvert.includes(current.id);
