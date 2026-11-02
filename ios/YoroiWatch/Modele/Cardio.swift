@@ -17,6 +17,9 @@ enum GenreWidget {
   static let eau = "yoroi.montre.eau"
   static let chrono = "yoroi.montre.chrono"
   static let combat = "yoroi.montre.combat"
+  // 28 octobre 2026, direction B : la seance du jour du Coach, ton rang et ton personnage.
+  static let coach = "yoroi.montre.coach"
+  static let rang = "yoroi.montre.rang"
 }
 
 /// Combien de temps une mesure reste "fraiche" (chiffre blanc et jauge en couleur).
