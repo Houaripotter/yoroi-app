@@ -31,6 +31,10 @@
  * Pas pour la carte holographique ni la Retrospective (voir lib/v2/cartes/zoneVisage.ts).
  * 2 novembre 2026 (cartes v10) : avec l'interrupteur du Studio createur sur « nouveau », les cartes que le nouveau moteur
  * connait s'ouvrent dans son studio (components/yoroi/v2/cartes/moteur/StudioMoteur.tsx). Ancien moteur par defaut.
+ * 2 novembre 2026 (derniere page) : l'app fermee completement se rouvre sur cette carte (lib/v2/nav/RouvrirDernierePage.tsx).
+ * La carte donne son onglet et ses chiffres choisis (&onglet=, &chiffres=) ; son style revient deja par lib/v2/cartes/store.ts.
+ * La photo n'est jamais gardee (ses copies sont effacees a la sortie, lib/v2/cartes/tmp.ts) : &avaitPhoto=1 propose
+ * seulement « Ajouter ta photo ».
  */
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
@@ -65,6 +69,7 @@ import type { CarteData, FormatId, Masque, OptionsCarte, PhotoCarte } from '@/li
 import { logger } from '@/lib/security/logger';
 import { traduire } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { noterDetailsPage } from '@/lib/v2/nav/RouvrirDernierePage';
 
 /** Formats expliques par usage : le ratio reste en petit, les apps aident a choisir */
 const FORMATS: { id: FormatId; nom: string; apps: string; ratio: string; forme: { w: number; h: number } }[] = [
@@ -168,6 +173,25 @@ const BARRE_BAS = 56 + 10 + 52 + 12 + 14;
 const VIGNETTE_L = 96;
 
 /** Les onglets des options, sous l'apercu : un seul groupe d'options a la fois, la carte reste a l'ecran */
+/**
+ * 2 novembre 2026 : la carte rouverte apres une fermeture de l'app revient sans ta photo (jamais gardee).
+ * Un toucher la rajoute ; la croix ferme le bandeau.
+ */
+function BandeauPhoto({ c, haut, onAjouter, onFermer }: { c: Couleurs; haut: number; onAjouter: () => void; onFermer: () => void }) {
+  return (
+    <View style={{ position: 'absolute', left: 16, right: 16, top: haut, zIndex: 20, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}>
+      <Icon name="image" size={20} color={c.ink} />
+      <Ink size={13} color={c.textSecondary} style={{ flex: 1 }}>{traduire('Ta photo n’est pas gardée quand tu quittes la carte.')}</Ink>
+      <Pressable onPress={onAjouter} accessibilityRole="button" accessibilityLabel={traduire('Ajouter ta photo')} style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 12, borderRadius: 20, justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.primary })}>
+        <Ink size={13} weight="extraBold" color={c.onPrimary}>{traduire('Ajouter ta photo')}</Ink>
+      </Pressable>
+      <Pressable onPress={onFermer} accessibilityRole="button" accessibilityLabel={traduire('Fermer')} hitSlop={10} style={{ minHeight: 40, minWidth: 32, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="close" size={16} color={c.textSecondary} />
+      </Pressable>
+    </View>
+  );
+}
+
 function Onglets({ c, liste, actif, onChange }: { c: Couleurs; liste: { id: Onglet; nom: string }[]; actif: Onglet; onChange: (o: Onglet) => void }) {
   return (
     <View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: 4, padding: 4, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
@@ -196,7 +220,7 @@ export default function CarteEditeur() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
-  const p = useLocalSearchParams<{ moment?: string; id?: string; date?: string; debut?: string; demo?: string; sport?: string; type?: string; src?: string; ref?: string; cle?: string; onglet?: string; avant?: string; apres?: string; flou?: string; photo?: string; photo2?: string; photo3?: string; photo4?: string }>();
+  const p = useLocalSearchParams<{ moment?: string; id?: string; date?: string; debut?: string; demo?: string; sport?: string; type?: string; src?: string; ref?: string; cle?: string; onglet?: string; chiffres?: string; avaitPhoto?: string; avant?: string; apres?: string; flou?: string; photo?: string; photo2?: string; photo3?: string; photo4?: string }>();
   const [data, setData] = useState<CarteData | null>(null);
   const [vide, setVide] = useState(false);
   const aa = p.moment === 'avant_apres';
@@ -345,6 +369,26 @@ export default function CarteEditeur() {
   const actif: Onglet = onglets.some((x) => x.id === onglet) ? onglet : onglets[0].id;
   const actifRef = useRef(actif);
   actifRef.current = actif;
+
+  // 2 novembre 2026 (derniere page) : les chiffres choisis reviennent une fois, s'ils existent encore pour cette carte
+  const chiffresRepris = useRef(false);
+  useEffect(() => {
+    if (chiffresRepris.current || !data || !p.chiffres) return;
+    chiffresRepris.current = true;
+    const ok = new Set<string>(chiffresDisponibles(data, k.options.masque).map((s) => s.key));
+    const l = p.chiffres.split(',').filter((x) => ok.has(x)) as typeof k.chiffres;
+    if (l.length >= MIN_CHIFFRES && l.length <= MAX_CHIFFRES) k.setChiffres(l);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+  // ce qu'il faut pour rouvrir cette carte apres une fermeture de l'app : jamais la photo, seulement qu'il y en avait une
+  useEffect(() => {
+    if (!data || aa) return;
+    noterDetailsPage('/carte', { onglet: actif, chiffres: k.chiffres.join(','), avaitPhoto: k.photo ? '1' : '' });
+  }, [data, aa, actif, k.chiffres, k.photo]);
+  const [bandeauFerme, setBandeauFerme] = useState(false);
+  const bandeauPhoto = p.avaitPhoto === '1' && !!data && !aa && !k.photo && !k.photoEnCours && !bandeauFerme ? (
+    <BandeauPhoto c={c} haut={insets.top + ENTETE + 6} onAjouter={() => { setBandeauFerme(true); void k.choisirPhoto('gallery'); }} onFermer={() => setBandeauFerme(true)} />
+  ) : null;
   // 31 octobre 2026 : plus d'interrupteur personnage ; le fond se choisit entre ta photo et une couleur
   const fondPhoto = o.fond === 'photo' && !!k.photo;
   // avec ta photo, la couleur sert encore a la carte holographique
@@ -401,7 +445,14 @@ export default function CarteEditeur() {
 
   // 2 novembre 2026 (cartes v10) : interrupteur du Studio createur sur « nouveau » : le studio du nouveau moteur.
   // La carte Avant apres garde cet ecran (choix des photos, flou), dessinee par le nouveau moteur via CarteRendu.
-  if (data && !aa && nouveauMoteurPour(data, k.moteur)) return <StudioMoteur data={data} k={k} onRetour={retour} />;
+  if (data && !aa && nouveauMoteurPour(data, k.moteur)) {
+    return (
+      <View style={{ flex: 1 }}>
+        <StudioMoteur data={data} k={k} onRetour={retour} />
+        {bandeauPhoto}
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
@@ -662,6 +713,7 @@ export default function CarteEditeur() {
           )}
         </View>
       </View>
+      {bandeauPhoto}
     </View>
   );
 }
