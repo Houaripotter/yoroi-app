@@ -83,11 +83,12 @@ object Magasin {
     }
 
     /** Style des widgets : "A" Nuit de lanternes (par defaut), "B" Rouleau et encre, "C" Armure laquee */
-    fun style(ctx: Context): String = synchronized(verrou) { prefs(ctx).getString(CLE_STYLE, "A") ?: "A" }
+    /** "A", "B", "C" ou "D" ; D (Scenes illustrees) tant que rien n'a ete choisi (28 octobre 2026) */
+    fun style(ctx: Context): String = synchronized(verrou) { prefs(ctx).getString(CLE_STYLE, "D") ?: "D" }
 
     fun ecrireStyle(ctx: Context, style: String) {
         val s = style.trim().uppercase()
-        synchronized(verrou) { prefs(ctx).edit().putString(CLE_STYLE, if (s == "B" || s == "C") s else "A").commit() }
+        synchronized(verrou) { prefs(ctx).edit().putString(CLE_STYLE, if (s == "A" || s == "B" || s == "C") s else "D").commit() }
     }
 
     fun maintenantIso(): String = FORMAT_AT.format(Instant.now())
