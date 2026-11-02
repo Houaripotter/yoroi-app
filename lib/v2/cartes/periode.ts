@@ -9,7 +9,7 @@ import type { Training } from '@/lib/database';
 import { getSportCategory } from '@/lib/sports';
 import { durationOf, tonnage as tonnageDe } from '@/lib/v2/trainingWeek';
 import { familleDe, MOINS, nombre } from './chiffres';
-import { estCombat, legendeRythme, lundiIso, nomSport, objectifAnnee, roundsDe, serieSemaines, trier } from './exploits';
+import { estCombat, legendeRythme, lundiIso, nomSport, objectifAnnee, recordsDe, roundsDe, serieSemaines, trier } from './exploits';
 import type { CarteData, CoteExploit, DonneesPeriode, Exploit } from './types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
@@ -98,6 +98,8 @@ export function donneesPeriode(trainings: Training[], type: 'mois' | 'annee', re
   }
   const oa = type === 'annee' && w > 0 ? objectifAnnee(tries, w, fin) : null;
   const prec = bornesPeriode(type, periodePrecedente(type, ref));
+  // 2 novembre 2026 : records de l'annee, chaque seance comparee a toutes celles d'avant (meme regle que les cartes de record)
+  const records = type === 'annee' ? recordsAnnee(tries, list) : 0;
   return {
     type,
     ref,
@@ -116,7 +118,22 @@ export function donneesPeriode(trainings: Training[], type: 'mois' | 'annee', re
     semainesComptees: comptees,
     objectifAnnee: oa ? { fait: oa.fait, total: oa.total, attendu: oa.fait < oa.total && auj < b.fin ? oa.attendu : undefined } : null,
     precedent: tries.filter((t) => jourDe(t) >= prec.debut && jourDe(t) <= prec.fin).length,
+    ...(records > 0 ? { records } : {}),
   };
+}
+
+/**
+ * Nombre de records battus par les seances `periode` (triees), chacune comparee a toutes les seances d'avant
+ * dans `tries` : charge (trois au plus par seance), distance, allure, rounds. Il faut un ancien record pour en battre un.
+ */
+export function recordsAnnee(tries: Training[], periode: Training[]): number {
+  let n = 0;
+  for (const t of periode) {
+    const i = tries.indexOf(t);
+    if (i < 0) continue;
+    n += recordsDe(t, tries.slice(0, i)).length;
+  }
+  return n;
 }
 
 /** Le sport le plus pratique de la periode (son id), pour la famille, la photo et le sticker de la carte */
