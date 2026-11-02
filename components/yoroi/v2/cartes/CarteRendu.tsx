@@ -79,6 +79,8 @@ export type VisuelsCarte = {
   analyse?: AnalysePhoto | null;
   recadrage?: Recadrage | null;
   enveloppePhoto?: (photo: React.ReactNode) => React.ReactNode;
+  /** 2 novembre 2026 (nouveau moteur) : la vue de l'autocollant seul, capturee pour Copier et Enregistrer */
+  refAutocollant?: React.RefObject<View | null>;
 };
 
 type Props = {
@@ -255,7 +257,7 @@ function RenduNouveau({ data, options, visuels, u, W }: { data: CarteData; optio
   if (!r) return null;
   const aa = data.avantApres;
   const duo = r.plan.type === 'duo' && aa ? { avant: aa.avant.uri, apres: aa.apres.uri, flou: !!options.flou, poids: { avant: r.plan.contenu.poids?.avant ?? null, apres: r.plan.contenu.poids?.apres ?? null } } : null;
-  return <CarteMoteur plan={r.plan} largeur={W} photo={r.photo} taillePhoto={taille} duo={duo} enveloppePhoto={visuels.enveloppePhoto} />;
+  return <CarteMoteur plan={r.plan} largeur={W} photo={r.photo} taillePhoto={taille} duo={duo} enveloppePhoto={visuels.enveloppePhoto} refAutocollant={visuels.refAutocollant} />;
 }
 
 /**
@@ -320,16 +322,21 @@ export const CarteRendu = forwardRef<View, Props>(({ data: brut, options, visuel
 CarteRendu.displayName = 'CarteRendu';
 
 /** Apercu reduit : la carte garde sa taille de 360 pour la capture, une echelle la fait tenir dans la largeur voulue */
-export const CarteApercu = forwardRef<View, Props & { largeur: number; damier?: boolean }>(({ largeur, damier, ...p }, ref) => {
+/**
+ * dessous (2 novembre 2026, autocollant du nouveau moteur) : ce qui est montre sous la carte transparente, pour l'apercu
+ * seulement (damier ou ta photo) ; jamais dans la capture. Sans dessous, rien ne change.
+ */
+export const CarteApercu = forwardRef<View, Props & { largeur: number; damier?: boolean; dessous?: React.ReactNode }>(({ largeur, damier, dessous, ...p }, ref) => {
   const moteurLu = useMoteurCartes();
   const m = p.moteur ?? moteurLu;
   const H = HAUTEURS[formatDessine(p.data, p.options, m)];
   const s = largeur / CARTE_W;
   const transparent = !nouveauMoteurPour(p.data, m) && sortieTransparente(p.data, p.options);
   return (
-    <View style={{ width: largeur, height: H * s, borderRadius: 18 * s + 4, overflow: 'hidden', backgroundColor: transparent && damier !== false ? '#C9CBD1' : '#121318' }}>
+    <View style={{ width: largeur, height: H * s, borderRadius: 18 * s + 4, overflow: 'hidden', backgroundColor: dessous ? '#C9CBD1' : transparent && damier !== false ? '#C9CBD1' : '#121318' }}>
+      {dessous ? <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: largeur, height: H * s }}>{dessous}</View> : null}
       {/* l'autocollant seul : un damier dessous montre la transparence (il n'est pas dans la capture) */}
-      {transparent && damier !== false ? <Damier w={largeur} h={H * s} /> : null}
+      {!dessous && transparent && damier !== false ? <Damier w={largeur} h={H * s} /> : null}
       <View style={{ width: CARTE_W, height: H, transform: [{ scale: s }], transformOrigin: 'top left' } as object}>
         <CarteRendu ref={ref} {...p} />
       </View>
@@ -338,7 +345,7 @@ export const CarteApercu = forwardRef<View, Props & { largeur: number; damier?: 
 });
 CarteApercu.displayName = 'CarteApercu';
 
-function Damier({ w, h }: { w: number; h: number }) {
+export function Damier({ w, h }: { w: number; h: number }) {
   return (
     <Svg pointerEvents="none" width={w} height={h} style={{ position: 'absolute', left: 0, top: 0 }}>
       <Defs>
