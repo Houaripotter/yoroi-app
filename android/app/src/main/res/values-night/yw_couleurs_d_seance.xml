@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Style D en sombre : le cote seance passe au degrade indigo violet, comme sur iPhone -->
+<resources>
+  <color name="yw_d_seance_haut">#2E3C8C</color>
+  <color name="yw_d_seance_bas">#4A3584</color>
+</resources>
