@@ -147,15 +147,19 @@ export async function partagerCarte(ref: RefObject<View | null>, format: FormatI
 /**
  * 31 octobre 2026 (cartes v2) : l'autocollant seul copie dans le presse-papiers, en PNG transparent.
  * Dans la story Instagram, un appui long puis Coller le pose comme un sticker sur ta photo ou ta video.
+ * Ancien moteur : la carte entiere, au format de la carte (1080 x 1920 en story).
+ * 2 novembre 2026, nouveau moteur (recadre) : ref est la vue de l'autocollant seul (CarteMoteur, refAutocollant), deja a
+ * environ 700 px de large sur l'appareil ; elle est prise a sa taille, sans zone vide autour (optionsAutocollant).
+ * En base64 : aucun fichier n'est ecrit.
  */
-export async function copierAutocollant(ref: RefObject<View | null>, format: FormatId, moment: Moment, onErreur?: Erreur): Promise<boolean> {
+export async function copierAutocollant(ref: RefObject<View | null>, format: FormatId, moment: Moment, onErreur?: Erreur, recadre = false): Promise<boolean> {
   impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
   noterPartage(sourceDe(moment));
   try {
     if (!ref.current) return false;
     const px = PX[format];
     const k = Platform.OS === 'ios' ? PixelRatio.get() : 1;
-    const b64 = await captureRef(ref.current, { format: 'png', quality: 1, result: 'base64', width: px.w / k, height: px.h / k });
+    const b64 = await captureRef(ref.current, recadre ? optionsAutocollant('base64') : { format: 'png', quality: 1, result: 'base64', width: px.w / k, height: px.h / k });
     await setImageAsync(b64);
     notificationAsync(NotificationFeedbackType.Success).catch(() => {});
     return true;
@@ -163,5 +167,49 @@ export async function copierAutocollant(ref: RefObject<View | null>, format: For
     logger.error('[cartes] copie autocollant', e);
     dire(onErreur, traduire('Oups'), traduire('Impossible de copier l’autocollant.'));
     return false;
+  }
+}
+
+/**
+ * 2 novembre 2026 (nouveau moteur) : la capture de l'autocollant seul. Toujours en PNG (la transparence reste) ;
+ * sans largeur ni hauteur : la vue est deja a la taille de l'export (EXPORT_AUTOCOLLANT, miseEnPage.ts).
+ */
+export function optionsAutocollant(result: 'base64' | 'tmpfile'): { format: 'png'; quality: number; result: 'base64' | 'tmpfile' } {
+  return { format: 'png', quality: 1, result };
+}
+
+/** L'autocollant seul en fichier PNG, range dans cartes_tmp/ quand le systeme le laisse dans le cache de l'app */
+export async function capturerAutocollant(ref: RefObject<View | null>): Promise<string | null> {
+  if (!ref.current) return null;
+  const brut = await captureRef(ref.current, optionsAutocollant('tmpfile'));
+  return rangerDansCartesTmp(brut, 'autocollant');
+}
+
+/** 2 novembre 2026 (nouveau moteur) : l'autocollant seul, en PNG transparent, dans la pellicule. Vrai si c'est fait. */
+export async function enregistrerAutocollant(ref: RefObject<View | null>, onErreur?: Erreur): Promise<boolean> {
+  impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+  let uri: string | null = null;
+  try {
+    const perm = await requestPermissionsAsync(true);
+    const st = perm.status as string;
+    if (st !== 'granted' && st !== 'limited') {
+      dire(onErreur, traduire('Pellicule bloquée'), traduire('Autorise YOROI à ajouter des photos dans les réglages de ton téléphone, puis réessaie.'));
+      return false;
+    }
+    uri = await capturerAutocollant(ref);
+    if (!uri) {
+      dire(onErreur, traduire('Un instant'), traduire('L’autocollant n’est pas encore prêt, réessaie dans une seconde.'));
+      return false;
+    }
+    await saveToLibraryAsync(uri);
+    notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+    return true;
+  } catch (e) {
+    logger.error('[cartes] enregistrement autocollant', e);
+    dire(onErreur, traduire('Oups'), traduire('Impossible d’enregistrer l’autocollant dans ta pellicule.'));
+    return false;
+  } finally {
+    // la pellicule a sa propre copie : le PNG exporte est efface tout de suite
+    void effacerExport(uri);
   }
 }
