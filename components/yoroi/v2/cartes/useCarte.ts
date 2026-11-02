@@ -128,13 +128,16 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
     setCopie(false);
   }, []);
 
-  const choisirPhoto = useCallback(async (src: 'gallery' | 'camera') => {
+  /** Vrai si une photo a ete choisie (2 novembre 2026, studio unique : le studio passe alors en composition Ta photo) */
+  const choisirPhoto = useCallback(async (src: 'gallery' | 'camera'): Promise<boolean> => {
     const res = await pickCardPhoto(src, { onPreparation: setPhotoEnCours });
     if (res) {
       changerPhoto(res.uri);
       // ta photo en plein fond : le personnage se retire, tu peux le remettre
       setStyle({ fond: 'photo', personnage: false, sansPersonne: false, epure: false });
+      return true;
     }
+    return false;
   }, [setStyle, changerPhoto]);
 
   /**
