@@ -16,7 +16,7 @@ function charger(natif: Natif, moteur: 'ancien' | 'nouveau' = 'nouveau'): Charge
     jest.doMock('@react-native-async-storage/async-storage', () => ({
       __esModule: true,
       default: {
-        getItem: jest.fn(async (k: string) => (k === 'yoroi_cartes_moteur_v1' ? moteur : null)),
+        getItem: jest.fn(async (k: string) => (k === 'yoroi_cartes_moteur_v2' ? moteur : null)),
         setItem: jest.fn(async () => undefined),
         removeItem: jest.fn(async () => undefined),
       },
