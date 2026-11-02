@@ -53,6 +53,7 @@ import { healthConnect } from '@/lib/healthConnect';
 import * as Notifications from 'expo-notifications';
 import { cibleDeNotification, cleReponse, deposerCible } from '@/lib/v2/notifications/toucher';
 import { OuvertureNotifications } from '@/lib/v2/notifications/OuvertureNotifications';
+import { RouvrirDernierePage } from '@/lib/v2/nav/RouvrirDernierePage';
 import { lancerImportDiscret } from '@/lib/v2/sante/importDiscret';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -534,6 +535,8 @@ function RootLayoutContent() {
       <AnnulerSuppression />
       {/* Notification touchee : ouvre son ecran (carte de la seance...) une fois l'app prete */}
       <OuvertureNotifications />
+      {/* 2 novembre 2026 : app fermee completement, elle se rouvre sur ta derniere page (moins de 2 heures) */}
+      <RouvrirDernierePage />
       {/* Studio : coupe les modes de test quand le mode createur n'est pas actif */}
       <CreatorGuard />
       {/* Vague 47 : sans Premium, les scenes et personnages Premium sont mis de cote, puis reviennent avec Premium */}
