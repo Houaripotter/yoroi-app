@@ -6,9 +6,12 @@
  * Ta photo se recadre au doigt : pincer pour zoomer, glisser pour deplacer. Pendant le geste, tout se passe sur le fil
  * d'animation (Reanimated) sans recalcul de la carte ; le moteur recalcule une fois, au lacher. Double appui ou
  * « Recadrer automatiquement » : retour au cadrage automatique. A+ n'est jamais propose.
+ * Autocollant (2 novembre 2026) : l'apercu le pose sur un damier, ou sur ta photo si tu en as choisi une (apercu seulement) ;
+ * « Copier l'autocollant » et « Enregistrer » prennent l'autocollant seul, recadre, en PNG transparent.
+ * Pas de partage direct « instagram-stories » : il demande un identifiant d'app Facebook.
  */
 import React from 'react';
-import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { Image, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -22,7 +25,7 @@ import { compositionEffective, compositionsPour, famillesPour } from '@/lib/v2/c
 import { GRILLE, hauteurPhoto } from '@/lib/v2/cartes/moteur/grille';
 import type { Recadrage } from '@/lib/v2/cartes/moteur/protection';
 import type { CarteData, CompositionId, FamilleMoteur, StyleCarte } from '@/lib/v2/cartes/types';
-import { CarteApercu, CARTE_W, HAUTEURS, optionsDessinees } from '../CarteRendu';
+import { CarteApercu, CARTE_W, Damier, HAUTEURS, optionsDessinees } from '../CarteRendu';
 import type { useCarte } from '../useCarte';
 
 type Couleurs = ReturnType<typeof useYoroiTheme>['theme']['colors'];
@@ -36,6 +39,7 @@ const NOMS_COMPOS: Record<CompositionId, { nom: string; sous: string }> = {
   Aplus: { nom: 'Derrière toi', sous: '' },
   B: { nom: 'Dessin', sous: 'Le dessin de ton sport' },
   C: { nom: 'Données', sous: 'Tes kilos série par série' },
+  autocollant: { nom: 'Autocollant', sous: 'Tes chiffres sur fond transparent, à coller sur ta photo ou ta vidéo' },
 };
 const NOMS_STYLES: { id: StyleCarte; nom: string }[] = [
   { id: 'color', nom: 'Color' },
@@ -80,6 +84,7 @@ export function StudioMoteur({ data, k, onRetour }: { data: CarteData; k: Return
   const photo = optionsDessinees(o, k.visuels).photo;
   const compo = compositionEffective(data, famille, o.compo ?? (photo ? 'A' : null), !!photo);
   const recadrable = compo === 'A' && !!photo && famille !== 'transfo';
+  const estAuto = compo === 'autocollant';
   const H = HAUTEURS[o.format];
 
   // la taille de l'apercu : la place libre, sans jamais deborder
@@ -145,7 +150,14 @@ export function StudioMoteur({ data, k, onRetour }: { data: CarteData; k: Return
     <View style={{ alignItems: 'center', gap: 10 }}>
       <GestureDetector gesture={geste}>
         <View style={{ borderRadius: 18, shadowColor: '#000', shadowOpacity: 0.22, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 8 }} accessibilityHint={recadrable ? traduire('Pince pour zoomer, glisse pour recadrer ta photo, touche deux fois pour revenir au cadrage automatique') : undefined}>
-          <CarteApercu ref={k.ref} largeur={largeur} data={data} options={o} visuels={visuels} />
+          <CarteApercu
+            ref={k.ref}
+            largeur={largeur}
+            data={data}
+            options={o}
+            visuels={visuels}
+            dessous={estAuto ? (k.photo ? <Image source={{ uri: k.photo }} resizeMode="cover" style={{ width: '100%', height: '100%' }} /> : <Damier w={largeur} h={(largeur * H) / CARTE_W} />) : undefined}
+          />
         </View>
       </GestureDetector>
       {recadrable ? (
@@ -183,10 +195,12 @@ export function StudioMoteur({ data, k, onRetour }: { data: CarteData; k: Return
           {NOMS_STYLES.map((s) => <Choix key={s.id} c={c} on={(o.styleCarte ?? 'color') === s.id} label={s.nom} onPress={() => k.setStyle({ styleCarte: s.id })} />)}
         </Rangee>
       ) : null}
-      <Rangee c={c} titre={traduire('Format')}>
-        <Choix c={c} on={o.format === 'story'} label={traduire('Story')} onPress={() => k.setStyle({ format: 'story' })} />
-        <Choix c={c} on={o.format !== 'story'} label={traduire('Publication 4:5')} onPress={() => k.setStyle({ format: 'post' })} />
-      </Rangee>
+      {!estAuto ? (
+        <Rangee c={c} titre={traduire('Format')}>
+          <Choix c={c} on={o.format === 'story'} label={traduire('Story')} onPress={() => k.setStyle({ format: 'story' })} />
+          <Choix c={c} on={o.format !== 'story'} label={traduire('Publication 4:5')} onPress={() => k.setStyle({ format: 'post' })} />
+        </Rangee>
+      ) : null}
       {famille !== 'transfo' && compos.includes('A') ? (
         <Rangee c={c} titre={traduire('Ta photo')}>
           <Choix c={c} on={false} icon="image" label={k.photoEnCours ? traduire('Photo en préparation') : k.photo ? traduire('Changer de photo') : traduire('Galerie')} onPress={() => { if (!k.photoEnCours) void k.choisirPhoto('gallery'); }} />
@@ -197,7 +211,19 @@ export function StudioMoteur({ data, k, onRetour }: { data: CarteData; k: Return
     </View>
   );
 
-  const boutons = (
+  // l'autocollant : Copier (a coller dans ta story Instagram) et Enregistrer (pour TikTok, ou si Coller manque sur Android)
+  const boutonsAuto = (
+    <View style={{ gap: 10 }}>
+      <BoutonPrincipal onPress={() => void k.copierAutocollantSeul()} haptique="none" disabled={!!k.busy} accessibilityLabel={traduire('Copier l’autocollant')} accessibilityHint={traduire('Dans ta story Instagram, appuie longtemps puis Coller')} label={k.busy === 'copie' ? traduire('Un instant') : k.copie ? traduire('Autocollant copié') : traduire('Copier l’autocollant')} tailleTexte={16} lignes={1} hauteur={56} icone={(col) => <Icon name={k.copie ? 'check' : 'doc'} size={19} color={col} />} />
+      <Pressable onPress={() => void k.enregistrerAutocollantSeul()} disabled={!!k.busy} accessibilityRole="button" accessibilityLabel={traduire('Enregistrer l’autocollant dans la pellicule')} style={({ pressed }) => ({ height: 52, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
+        <Icon name={k.saved ? 'check' : 'download'} size={19} color={k.saved ? c.successText : c.ink} />
+        <Ink size={15} weight="extraBold" color={k.saved ? c.successText : c.ink}>{k.busy === 'save' ? traduire('Un instant') : k.saved ? traduire('Enregistré') : traduire('Enregistrer')}</Ink>
+      </Pressable>
+      <Ink size={12} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire('Instagram : appuie longtemps dans ta story, puis Coller. TikTok : enregistre-le, puis ajoute-le depuis ta pellicule.')}</Ink>
+    </View>
+  );
+
+  const boutons = estAuto ? boutonsAuto : (
     <View style={{ gap: 10 }}>
       <BoutonPrincipal onPress={() => void k.partagerEnStory()} haptique="none" disabled={!!k.busy} accessibilityLabel={traduire('Partager en story')} accessibilityHint={traduire('Ouvre le partage de ton téléphone : choisis Instagram, puis Story')} label={k.busy === 'story' ? traduire('Un instant') : traduire('Partager en story')} tailleTexte={16} lignes={1} hauteur={56} icone={(col) => <Icon name="share" size={19} color={col} />} />
       <View style={{ flexDirection: 'row', gap: 10 }}>
