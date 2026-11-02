@@ -4,8 +4,10 @@
  *  - setSnapshot(json) : l'instantane v1 (le meme JSON que la montre, lib/v2/montre/contexte.ts)
  *  - setSceneImage(uri) : la scene d'Accueil, reduite par le natif (fond du style A, fenetre du style B, Tableau du jour)
  *  - setPersonnageImage(uri) : ton personnage, la meme image que l'Accueil, sans rang ni XP (style C) ; uri vide : le retire
- *  - setStyle(style) : style des widgets, "A" Nuit de lanternes (par defaut), "B" Rouleau et encre, "C" Armure laquee
+ *  - setStyle(style) : style des widgets, "D" Scenes illustrees (par defaut depuis le 28 octobre 2026), "A" Nuit de lanternes,
+ *    "B" Rouleau et encre, "C" Armure laquee
  *  - setSeason(saison) : decoration de saison des widgets, "halloween", "noel" ou "" (lib/v2/widgets/saison.ts ; iOS)
+ *  - sendImagesToWatch() : passe ta scene et ton personnage deja copies, reduits, a l'Apple Watch jumelee (iOS, 28 octobre 2026)
  *  - getPendingActions() : JSON tableau des actions faites depuis un widget (+ 1 verre, retrait)
  *  - clearPendingActions(ids) : retire les actions appliquees
  *  - reload() : redessine les widgets
@@ -20,6 +22,7 @@ type ModuleWidgets = {
   setPersonnageImage?: (uri: string) => Promise<boolean>;
   setStyle?: (style: string) => Promise<boolean>;
   setSeason?: (saison: string) => Promise<boolean>;
+  sendImagesToWatch?: () => Promise<boolean>;
   getPendingActions?: () => Promise<string | unknown[]>;
   clearPendingActions?: (ids: string[]) => Promise<boolean>;
   reload?: () => Promise<boolean>;
@@ -72,7 +75,7 @@ export async function ecrirePersonnageNatif(uri: string): Promise<boolean> {
   }
 }
 
-/** Le style des widgets ("A", "B" ou "C") dans l'App Group (iOS) ou les SharedPreferences (Android) */
+/** Le style des widgets ("A", "B", "C" ou "D") dans l'App Group (iOS) ou les SharedPreferences (Android) */
 export async function ecrireStyleNatif(style: string): Promise<boolean> {
   const m = mod();
   if (!m?.setStyle) return false;
@@ -92,6 +95,20 @@ export async function ecrireSaisonNatif(saison: string): Promise<boolean> {
   if (typeof m?.setSeason !== 'function') return false;
   try {
     return !!(await m.setSeason(saison));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 28 octobre 2026 : ta scene et ton personnage (les fichiers deja copies pour les widgets) passent, reduits, a
+ * l'Apple Watch jumelee par WatchConnectivity. false sans montre, sans l'app montre, sur Android ou un ancien build.
+ */
+export async function envoyerImagesMontreNatif(): Promise<boolean> {
+  const m = mod();
+  if (typeof m?.sendImagesToWatch !== 'function') return false;
+  try {
+    return !!(await m.sendImagesToWatch());
   } catch {
     return false;
   }
