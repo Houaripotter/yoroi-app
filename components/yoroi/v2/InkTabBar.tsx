@@ -21,6 +21,7 @@ import { Ink } from './Ink';
 import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
 import { traduire } from '@/lib/i18n/tr';
 import { STICKERS, useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+import { useCoffrePret } from '@/components/yoroi/v2/dojo/useCoffrePret';
 
 const ICONS: Record<string, { label: string; d: string[]; join?: boolean; sticker: NomSticker }> = {
   index: { label: traduire('Accueil'), d: ['M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'], join: true, sticker: 'torii' },
@@ -45,6 +46,8 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
   const insets = useSafeAreaInsets();
   const bottom = Math.max(insets.bottom - 8, 0) + 14;
   const illus = useIllustrations();
+  // 2 novembre 2026 : un point d'or sur l'onglet Dojo quand le coffre du jour attend (aucun chiffre)
+  const coffrePret = useCoffrePret();
 
   const renderTab = (name: string) => {
     const index = state.routes.findIndex((r) => r.name === name);
@@ -52,6 +55,7 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
     const route = state.routes[index];
     const focused = state.index === index;
     const icon = ICONS[name];
+    const point = name === 'dojo' && coffrePret && !focused;
     const onPress = () => {
       selectionAsync().catch(() => {});
       const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
@@ -64,7 +68,7 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
       <Pressable
         onPress={onPress}
         accessibilityRole="tab"
-        accessibilityLabel={traduire(icon.label)}
+        accessibilityLabel={point ? traduire('Dojo, ton coffre est prêt') : traduire(icon.label)}
         accessibilityState={{ selected: focused }}
         style={[styles.tab, focused ? { backgroundColor: c.primary } : null]}
         hitSlop={4}
@@ -93,6 +97,7 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
             {traduire(icon.label)}
           </Ink>
         ) : null}
+        {point ? <View pointerEvents="none" style={[styles.point, { backgroundColor: c.gold, borderColor: c.surface }]} /> : null}
       </Pressable>
       </TourAnchor>
       </Animated.View>
@@ -158,6 +163,7 @@ const styles = StyleSheet.create({
   ancre: { flex: 1 },
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 24, paddingHorizontal: 12 },
   sticker: { width: 27, height: 27, margin: -2 },
+  point: { position: 'absolute', top: 6, right: 6, width: 11, height: 11, borderRadius: 6, borderWidth: 2 },
   stickerActif: { width: 30, height: 30, margin: -3 },
   add: {
     width: 48,
