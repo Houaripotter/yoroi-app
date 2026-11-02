@@ -45,7 +45,7 @@ export type ReponseNative = {
   moteur: string;
   /** versions figees des requetes ou des modeles */
   versionModele: string;
-  /** taille de la copie analysee (1024 px au plus sur le grand cote) */
+  /** taille de la copie analysee (tailleMax px au plus sur le grand cote, 1024 par defaut) */
   largeur: number;
   hauteur: number;
   /** taille de la photo d'origine, une fois redressee */
@@ -56,6 +56,13 @@ export type ReponseNative = {
   /** ce qui a echoue, sans jamais planter : 'lecture', 'visages: ...', 'detourage: ...' */
   erreurs: string[];
   dureeMs?: number;
+  /** grand cote demande pour la copie analysee, apres bornage par le natif */
+  tailleMax?: number;
+  /** memoire de l'app, en Mo, juste avant et juste apres l'analyse (iOS et Mac : residente ; Android : tas natif + Java) */
+  memoireAvantMo?: number;
+  memoireApresMo?: number;
+  /** iOS et Mac : pic de memoire residente de l'app depuis son lancement (pas seulement l'analyse). Android : absent */
+  memoirePicMo?: number;
 };
 
 export type CapacitesPhoto = {
@@ -64,4 +71,6 @@ export type CapacitesPhoto = {
   plateforme: PlateformePhoto | null;
   moteur: string;
   versionModele: string;
+  /** grand cote par defaut de la copie analysee, cote natif (1024) */
+  tailleDefaut?: number;
 };
