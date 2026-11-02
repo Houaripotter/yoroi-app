@@ -19,7 +19,7 @@ struct PeserVue: View {
   var body: some View {
     VStack(spacing: 6) {
       Spacer(minLength: 0)
-      GrosChiffre(valeur: pret ? Format.decimal(arrondi) : "--", unite: Format.symbole(livres: livres), taille: 52)
+      GrosChiffre(valeur: pret ? Format.decimal(arrondi) : "--", unite: Format.symbole(livres: livres), taille: 56)
         .focusable(true)
         .focused($couronne)
         .digitalCrownRotation(
@@ -45,6 +45,11 @@ struct PeserVue: View {
         .font(.system(size: 13, design: .rounded))
         .foregroundStyle(Teinte.texteDoux)
 
+      // 28 octobre 2026 : ton prochain palier suit la couronne
+      if pret, let p = synchro.contexte.poids.palier {
+        palier(p)
+      }
+
       Spacer(minLength: 0)
 
       BoutonPlein(titre: envoi ? NSLocalizedString("Enregistré", comment: "") : NSLocalizedString("Valider", comment: ""), icone: envoi ? "checkmark" : nil) {
@@ -58,6 +63,33 @@ struct PeserVue: View {
       if floor(ancienne) != floor(nouvelle) { Haptique.cran() }
     }
     .task { await preparer() }
+  }
+
+  /// « Palier 78 dans 0,4 kg », ou « Palier 78 franchi » des que la couronne le passe.
+  private func palier(_ p: PalierCtx) -> some View {
+    let kg = Format.versKg(arrondi, livres: livres)
+    // le sens du chemin : vers le bas si ton cap est sous le palier
+    let descend = (synchro.contexte.poids.cap ?? p.kg) <= p.kg
+    let franchi = descend ? kg <= p.kg + 0.001 : kg >= p.kg - 0.001
+    let reste = abs(kg - p.kg)
+    let texte: String
+    if franchi {
+      texte = p.dernier ? NSLocalizedString("Ton cap est atteint", comment: "") : String(format: NSLocalizedString("Palier %@ franchi", comment: ""), Format.poidsCourt(p.kg, livres: livres))
+    } else {
+      texte = TextesB.palier(PalierCtx(kg: p.kg, reste: reste, dernier: p.dernier), livres: livres)
+    }
+    return HStack(spacing: 6) {
+      Torii(couleur: Teinte.torii).frame(width: 15, height: 14)
+      Text(texte)
+        .font(.system(size: 12, weight: .heavy, design: .rounded))
+        .foregroundStyle(franchi ? Teinte.mentheTexte : Teinte.coachSous)
+        .lineLimit(1)
+        .minimumScaleFactor(0.6)
+    }
+    .padding(.horizontal, 10)
+    .frame(maxWidth: .infinity, minHeight: 32)
+    .background(franchi ? Teinte.menthe : Teinte.cremeClair, in: Capsule())
+    .animation(.easeOut(duration: 0.2), value: franchi)
   }
 
   private func preparer() async {
