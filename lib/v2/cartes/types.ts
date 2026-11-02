@@ -357,9 +357,10 @@ export type Masque = 'aucun' | 'ecart' | 'pourcentage';
 /**
  * 2 novembre 2026 (cartes v10, nouveau moteur, lib/v2/cartes/moteur/) : les 10 familles et les compositions.
  * A : ta photo plein cadre ; A+ : le chiffre derriere ta silhouette (desactive) ; B : le dessin du sport ; C : les donnees.
+ * Autocollant (2 novembre 2026) : tes chiffres et le logo sur fond transparent, a coller dans ta story.
  */
 export type FamilleMoteur = 'muscu' | 'record' | 'course' | 'jjb' | 'marche' | 'transfo' | 'muscles' | 'semaine' | 'serie' | 'annee';
-export type CompositionId = 'A' | 'Aplus' | 'B' | 'C';
+export type CompositionId = 'A' | 'Aplus' | 'B' | 'C' | 'autocollant';
 /** Les trois styles de la carte A : Color, Light, Dark */
 export type StyleCarte = 'color' | 'light' | 'dark';
 
