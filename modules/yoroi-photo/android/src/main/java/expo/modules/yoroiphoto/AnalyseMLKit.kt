@@ -1,7 +1,7 @@
 // AnalyseMLKit.kt : le coeur du module photo YOROI sur Android, avec Google ML Kit (modeles dans l'app).
 //
 // 1. La photo est lue depuis un fichier local (file:// ou content://), jamais depuis internet.
-// 2. Elle est redressee (EXIF) et reduite a 1024 px sur le grand cote.
+// 2. Elle est redressee (EXIF) et reduite a tailleMax px sur le grand cote (1024 par defaut).
 // 3. Visages : ML Kit Face Detection, mode precis, reperes du visage, visages d'au moins 4 % de la largeur.
 // 4. Detourage : ML Kit Selfie Segmentation, mode image seule, masque a la taille de la copie.
 // 5. Le masque est ecrit en PNG gris dans cartes_tmp/masques/ et rendu en octets (base64) pour le critere A+.
@@ -14,6 +14,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Matrix
 import android.net.Uri
+import android.os.Debug
 import android.os.SystemClock
 import android.util.Base64
 import androidx.exifinterface.media.ExifInterface
@@ -34,7 +35,10 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 object AnalyseMLKit {
-  const val TAILLE_MAX = 1024
+  /** Grand cote de la copie analysee, par defaut (le meme que TAILLE_ANALYSE_DEFAUT dans index.ts) */
+  const val TAILLE_DEFAUT = 1024
+  const val TAILLE_MIN = 512
+  const val TAILLE_MAX_PERMISE = 2048
   const val MOTEUR = "google-mlkit"
   const val VERSION_MODELE = "face-detection:16.1.7+segmentation-selfie:16.0.0-beta6"
   private const val DELAI_S = 15L
@@ -80,9 +84,34 @@ object AnalyseMLKit {
     "erreurs" to listOfNotNull(erreur)
   )
 
-  fun analyser(contexte: Context, uri: String, dossierMasques: File): Map<String, Any?> {
+  /** Une taille demandee, bornee ; la taille par defaut sans demande */
+  fun taille(demandee: Int?): Int = if (demandee == null) TAILLE_DEFAUT else min(TAILLE_MAX_PERMISE, max(TAILLE_MIN, demandee))
+
+  /**
+   * Memoire utilisee par l'app, en Mo : tas natif (bitmaps depuis Android 8, modeles ML Kit) + tas Java.
+   * Quasi gratuit, contrairement a Debug.getPss(). Lue hors du temps mesure.
+   */
+  private fun memoireMo(): Double? = try {
+    val rt = Runtime.getRuntime()
+    (Debug.getNativeHeapAllocatedSize() + rt.totalMemory() - rt.freeMemory()).toDouble() / 1_048_576.0
+  } catch (_: Throwable) {
+    null
+  }
+
+  /** tailleMax : grand cote de la copie analysee, borne ; 1024 sans demande */
+  fun analyser(contexte: Context, uri: String, dossierMasques: File, tailleMax: Int? = null): Map<String, Any?> {
+    val t = taille(tailleMax)
+    val avant = memoireMo()
+    val sortie = analyserCopie(contexte, uri, dossierMasques, t).toMutableMap()
+    sortie["tailleMax"] = t
+    avant?.let { sortie["memoireAvantMo"] = it }
+    memoireMo()?.let { sortie["memoireApresMo"] = it }
+    return sortie
+  }
+
+  private fun analyserCopie(contexte: Context, uri: String, dossierMasques: File, tailleMax: Int): Map<String, Any?> {
     val debut = SystemClock.elapsedRealtime()
-    val photo = try { chargerRedressee(contexte, uri) } catch (e: Throwable) { null }
+    val photo = try { chargerRedressee(contexte, uri, tailleMax) } catch (e: Throwable) { null }
       ?: return vide("lecture: photo illisible")
     val bmp = photo.bitmap
     val w = bmp.width
@@ -166,7 +195,7 @@ object AnalyseMLKit {
   private class PhotoChargee(val bitmap: Bitmap, val largeurPhoto: Int, val hauteurPhoto: Int)
 
   /** Seulement file:// et content:// (copie du selecteur). http, https et le reste sont refuses. */
-  private fun chargerRedressee(contexte: Context, texte: String): PhotoChargee? {
+  private fun chargerRedressee(contexte: Context, texte: String, tailleMax: Int): PhotoChargee? {
     val uri = if (texte.startsWith("/")) Uri.fromFile(File(texte)) else Uri.parse(texte)
     if (uri.scheme != "file" && uri.scheme != "content") return null
     val resolveur = contexte.contentResolver
@@ -178,9 +207,9 @@ object AnalyseMLKit {
     fluxTaille.use { BitmapFactory.decodeStream(it, null, bornes) }
     if (bornes.outWidth <= 0 || bornes.outHeight <= 0) return null
 
-    // sous-echantillonnage par puissance de 2, sans descendre sous 1024 px
+    // sous-echantillonnage par puissance de 2, sans descendre sous tailleMax
     var pas = 1
-    while (max(bornes.outWidth, bornes.outHeight) / (pas * 2) >= TAILLE_MAX) pas *= 2
+    while (max(bornes.outWidth, bornes.outHeight) / (pas * 2) >= tailleMax) pas *= 2
     val options = BitmapFactory.Options().apply {
       inSampleSize = pas
       inPreferredConfig = Bitmap.Config.ARGB_8888
@@ -207,7 +236,7 @@ object AnalyseMLKit {
       ExifInterface.ORIENTATION_TRANSPOSE, ExifInterface.ORIENTATION_ROTATE_90,
       ExifInterface.ORIENTATION_TRANSVERSE, ExifInterface.ORIENTATION_ROTATE_270
     )
-    val echelle = min(1f, TAILLE_MAX.toFloat() / max(brut.width, brut.height))
+    val echelle = min(1f, tailleMax.toFloat() / max(brut.width, brut.height))
     matrice.postScale(echelle, echelle)
     val redresse = Bitmap.createBitmap(brut, 0, 0, brut.width, brut.height, matrice, true)
     if (redresse !== brut) brut.recycle()
