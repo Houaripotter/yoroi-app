@@ -27,6 +27,7 @@ import { signaturePartage } from '@/constants/partage';
 import { noterPartage } from '@/lib/v2/partage/mesure';
 import type { SourcePartage } from '@/lib/v2/partage/mesure';
 import { traduire } from '@/lib/i18n/tr';
+import { effacerApresPartage, effacerCopieCarte, rangerDansCartesTmp } from '@/lib/v2/cartes/tmp';
 
 export type ShareRecord = {
   exerciseName: string;
@@ -127,6 +128,23 @@ export function RecordShareSheet({ data, onClose, source = 'record_mouvement' }:
   const [photo, setPhoto] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /** 2 novembre 2026 (confidentialite) : copie de la photo dans cacheDirectory/cartes_tmp/, effacee a la fermeture */
+  const photoTmp = useRef<string | null>(null);
+  const changerPhoto = (uri: string | null) => {
+    const avant = photoTmp.current;
+    photoTmp.current = uri;
+    setPhoto(uri);
+    if (avant && avant !== uri) void effacerCopieCarte(avant);
+  };
+  useEffect(() => {
+    if (data || !photoTmp.current) return;
+    void effacerCopieCarte(photoTmp.current);
+    photoTmp.current = null;
+    setPhoto(null);
+  }, [data]);
+  useEffect(() => () => {
+    void effacerCopieCarte(photoTmp.current);
+  }, []);
 
   useEffect(() => {
     if (!data) return;
@@ -147,7 +165,7 @@ export function RecordShareSheet({ data, onClose, source = 'record_mouvement' }:
       }
       const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: false, quality: 0.9 });
       if (!r.canceled && r.assets?.[0]) {
-        setPhoto(r.assets[0].uri);
+        changerPhoto(await rangerDansCartesTmp(r.assets[0].uri, 'photo'));
         setFond('photo');
         tap();
       }
@@ -160,8 +178,10 @@ export function RecordShareSheet({ data, onClose, source = 'record_mouvement' }:
     if (!shot.current?.capture) return;
     noterPartage(source);
     setBusy(true);
+    let uri: string | null = null;
     try {
-      const uri = await shot.current.capture();
+      const brut = await shot.current.capture();
+      uri = brut ? await rangerDansCartesTmp(brut, 'export') : null;
       if (!uri) return;
       if (await isAvailableAsync()) await shareAsync(uri, { mimeType: 'image/png', dialogTitle: traduire('Partager mon record') });
       else {
@@ -173,6 +193,8 @@ export function RecordShareSheet({ data, onClose, source = 'record_mouvement' }:
       appAlert(traduire('Oups'), traduire('La carte n’a pas pu être partagée.'));
     } finally {
       setBusy(false);
+      // 2 novembre 2026 : l'image exportee est effacee apres le partage, termine ou annule
+      effacerApresPartage(uri);
     }
   };
 
