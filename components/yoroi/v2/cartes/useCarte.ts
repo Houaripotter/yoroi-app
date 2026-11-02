@@ -19,11 +19,12 @@ import { copierAutocollant, enregistrerCarte, partagerCarte, partagerStory } fro
 import type { CarteData, OptionsCarte, StatKey } from '@/lib/v2/cartes/types';
 import type { VisuelsCarte } from './CarteRendu';
 import { formatDessine, useMoteurCartes } from './CarteRendu';
-import { analyserPhoto } from '@/lib/v2/cartes/moteur/analysePhoto';
+import { creerAnalyseCarte } from '@/lib/v2/cartes/moteur/analyseCarte';
+import type { AnalyseCarte } from '@/lib/v2/cartes/moteur/analyseCarte';
 import type { AnalysePhoto } from '@/lib/v2/cartes/moteur/analysePhoto';
 import type { Recadrage } from '@/lib/v2/cartes/moteur/protection';
 import { traduire } from '@/lib/i18n/tr';
-import { effacerCopieCarte, effacerMasques } from '@/lib/v2/cartes/tmp';
+import { effacerCopieCarte } from '@/lib/v2/cartes/tmp';
 
 export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>) {
   const ref = useRef<View>(null);
@@ -52,25 +53,35 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
   const [analyse, setAnalyse] = useState<AnalysePhoto | null>(null);
   const [recadrage, setRecadrage] = useState<Recadrage | null>(null);
   const moteur = useMoteurCartes();
+  /**
+   * Phase native : l'analyse de la photo, SEULEMENT avec le moteur « Nouveau » (lib/v2/cartes/moteur/analyseCarte.ts).
+   * Avec « Ancien », ni Vision ni ML Kit ne tournent. Les masques (cartes_tmp/masques/) sont effaces au changement de
+   * photo, au passage a « Ancien », apres un export ou un partage, et quand tu quittes la carte.
+   */
+  const analyseur = useRef<AnalyseCarte | null>(null);
+  if (!analyseur.current) analyseur.current = creerAnalyseCarte(setAnalyse);
   const changerPhoto = useCallback((uri: string | null) => {
     const avant = photoTmp.current;
     photoTmp.current = uri;
     setPhoto(uri);
     setRecadrage(null);
-    setAnalyse(null);
-    // phase native : le masque de la photo d'avant est efface avant d'analyser la nouvelle (cartes_tmp/masques/)
-    effacerMasques()
-      .catch(() => undefined)
-      .then(() => (uri ? analyserPhoto(uri) : null))
-      .then((a) => a && photoTmp.current === uri && setAnalyse(a))
-      .catch(() => undefined);
+    void analyseur.current?.changerPhoto(uri);
     if (avant && avant !== uri) void effacerCopieCarte(avant);
   }, []);
-  useEffect(() => () => {
-    void effacerCopieCarte(photoTmp.current);
-    // phase native : le masque de ta silhouette ne reste pas sur l'appareil quand tu quittes la carte
-    void effacerMasques();
-    photoTmp.current = null;
+  useEffect(() => {
+    void analyseur.current?.moteurChange(moteur);
+  }, [moteur]);
+  useEffect(() => {
+    analyseur.current?.ouvrir();
+    return () => {
+      void effacerCopieCarte(photoTmp.current);
+      // phase native : le masque de ta silhouette ne reste pas sur l'appareil quand tu quittes la carte
+      void analyseur.current?.fermer();
+      photoTmp.current = null;
+    };
+  }, []);
+  const apresExport = useCallback(() => {
+    void analyseur.current?.apresExport();
   }, []);
 
   useEffect(() => {
@@ -162,8 +173,9 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
       return ok;
     } finally {
       setBusy(null);
+      apresExport();
     }
-  }, [busy, data, options.format]);
+  }, [busy, data, options.format, apresExport]);
 
   const partager = useCallback(async (onErreur?: (titre: string, texte: string) => void) => {
     if (busy || !data) return false;
@@ -172,8 +184,9 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
       return await partagerCarte(ref, options.format, data.moment, onErreur, data.exploit?.type);
     } finally {
       setBusy(null);
+      apresExport();
     }
-  }, [busy, data, options.format]);
+  }, [busy, data, options.format, apresExport]);
 
   /** 31 octobre 2026 (cartes v2) : « Partager en story », la feuille du systeme avec l'image en PNG */
   const partagerEnStory = useCallback(async (onErreur?: (titre: string, texte: string) => void) => {
@@ -183,8 +196,9 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
       return await partagerStory(ref, options.format, data.moment, onErreur, data.exploit?.type);
     } finally {
       setBusy(null);
+      apresExport();
     }
-  }, [busy, data, options.format]);
+  }, [busy, data, options.format, apresExport]);
 
   /** 31 octobre 2026 (cartes v2) : l'autocollant transparent copie, a coller dans ta story */
   const copier = useCallback(async (onErreur?: (titre: string, texte: string) => void) => {
@@ -196,8 +210,9 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
       return ok;
     } finally {
       setBusy(null);
+      apresExport();
     }
-  }, [busy, data, options.format]);
+  }, [busy, data, options.format, apresExport]);
 
   /**
    * Interrupteur de la personne sur la carte (17 octobre 2026) : ton personnage, ou ta photo si elle est en fond.
