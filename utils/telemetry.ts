@@ -49,7 +49,7 @@ export type TrancheNombre = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8_p
 export type TrancheUsage = '1' | '2_5' | '6_20' | '21_50' | '51_plus';
 export type Rang = '1' | '2' | '3' | '4' | '5';
 export type Statut = 'gratuit' | 'essai' | 'abonne';
-export type EcranPermission = 'pesee' | 'seance' | 'timer' | 'sparring' | 'reglages' | 'essai';
+export type EcranPermission = 'pesee' | 'seance' | 'timer' | 'sparring' | 'reglages' | 'essai' | 'coffre';
 export type MomentAvis = 'troisieme_seance';
 export type TypeNotif =
   | 'pesee' | 'seance' | 'sommeil' | 'hydratation' | 'serie' | 'recap' | 'carte_sociale' | 'citation'
