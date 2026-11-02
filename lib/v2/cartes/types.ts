@@ -3,6 +3,9 @@
  * Trois moments : une seance enregistree, une pesee qui montre un progres, le bilan de la semaine.
  * Tout vient des vraies donnees : un champ absent (null ou 0) fait disparaitre son bloc.
  */
+import type { CeintureId } from '@/lib/v2/profil/gammes';
+import type { ZoneId } from '@/lib/v2/programmes/zones';
+import type { MuscleName } from '@/lib/v2/progres/strength';
 
 /** 31 octobre 2026 (bibliotheque des cartes) : 'mois' et 'annee', ton mois et ton annee d'entrainement */
 export type Moment = 'seance' | 'pesee' | 'semaine' | 'exploit' | 'avant_apres' | 'mois' | 'annee';
@@ -105,6 +108,21 @@ export type DonneesSeance = {
   /** 31 octobre 2026 : cardio de fin de seance (exercice cardio de la musculation), pente moyenne et FC moyenne du cardio */
   penteCardio?: number;
   fcCardio?: number;
+  /**
+   * 2 novembre 2026 (donnees en plus, toutes facultatives, absentes si elles n'existent pas) :
+   * vitesse moyenne du tapis du cardio de fin de seance (km/h), telle qu'enregistree
+   */
+  vitesseCardio?: number;
+  /**
+   * le cardio etait en zone 2 : seulement avec une FC moyenne mesuree (Sante) et une zone 2 connue
+   * (gardee avec le cardio, sinon calculee par lib/v2/seances/zone2.ts). Vrai dedans, faux hors zone, absent sinon.
+   */
+  enZone2?: boolean;
+  /**
+   * muscles travailles : zones a allumer et series de travail par groupe (muscles principaux), comptees sur les series
+   * validees de la seance (lib/v2/seances/musclesExercices.ts). Absent sans exercice reconnu.
+   */
+  muscles?: { zones: ZoneId[]; groupes: { nom: MuscleName; series: number }[] } | null;
 };
 
 /**
@@ -146,6 +164,8 @@ export type DonneesSemaine = {
   objectif: number;
   /** lundi a dimanche (17 octobre 2026, modele Semaine) : les sports faits ce jour-la et le club de la premiere seance avec club */
   parJour?: { sports: string[]; club?: { nom: string; logo?: string | null } | null }[];
+  /** 2 novembre 2026 : kilos souleves de la semaine (charge x repetitions des series de travail), absent a 0 */
+  kilos?: number;
 };
 
 /**
@@ -178,6 +198,11 @@ export type DonneesPeriode = {
   objectifAnnee?: { fait: number; total: number; attendu?: number } | null;
   /** seances de la periode d'avant (mois d'avant, annee d'avant) */
   precedent: number;
+  /**
+   * 2 novembre 2026 : annee seulement, records battus dans l'annee (charge, distance, allure, rounds), comptes
+   * seance par seance avec la meme regle que les cartes de record (exploits.ts, recordsDe). Absent a 0.
+   */
+  records?: number;
 };
 
 /** Une photo de corps pour la carte Avant apres (17 octobre 2026) */
@@ -233,6 +258,13 @@ export type CarteData = {
   exploit?: Exploit;
   /** d'ou vient l'exploit, pour le retrouver dans l'atelier : seance (id), pesee (date), mois (AAAA-MM), annee (AAAA) */
   source?: { type: 'seance' | 'pesee' | 'mois' | 'annee' | 'bilan' | 'objectif' | 'compteur'; ref: string };
+  /** 2 novembre 2026 : ta ceinture de JJB et ses degres, lus dans tes pratiques (lib/v2/profil/pratiques.ts), absents sans ceinture */
+  ceintureJjb?: { ceinture: CeintureId; degres: number } | null;
+  /**
+   * 2 novembre 2026 : ta serie, lue dans l'armure (lib/v2/armure.ts) : jours d'affilee en cours, plus longue serie
+   * de jours et plus longue serie de semaines a l'objectif. Chaque chiffre est absent s'il n'est pas connu.
+   */
+  serie?: { jours?: number; recordJours?: number; recordSemaines?: number } | null;
   /** cle du moment (une seule proposition automatique par moment) */
   cle: string;
 };
