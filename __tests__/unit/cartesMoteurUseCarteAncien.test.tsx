@@ -4,6 +4,7 @@
  */
 /* eslint-disable @typescript-eslint/no-require-imports */
 import { renderHook, act } from '@testing-library/react-native';
+// 2 novembre 2026 (studio unique) : l'ancien moteur n'est plus montre, mais son garde-fou (pas de natif) reste teste
 
 const mockNatif = { analyserPhoto: jest.fn(), capacites: jest.fn() };
 const mockStockage = new Map<string, string>();
@@ -47,7 +48,7 @@ describe('useCarte et le module photo', () => {
   });
 
   it('« Ancien » actif : choix d une photo, aucun appel au natif', async () => {
-    mockStockage.set('yoroi_cartes_moteur_v1', 'ancien');
+    mockStockage.set('yoroi_cartes_moteur_v2', 'ancien');
     const { result, unmount } = renderHook(() => useCarte(null));
     await act(async () => {
       await result.current.choisirPhoto('gallery');
@@ -60,7 +61,7 @@ describe('useCarte et le module photo', () => {
   });
 
   it('« Nouveau » actif : choix d une photo, une analyse', async () => {
-    mockStockage.set('yoroi_cartes_moteur_v1', 'nouveau');
+    mockStockage.set('yoroi_cartes_moteur_v2', 'nouveau');
     const { result, unmount } = renderHook(() => useCarte(null));
     await act(async () => {
       await laisserFiler();
