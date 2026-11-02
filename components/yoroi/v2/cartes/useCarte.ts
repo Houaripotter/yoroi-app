@@ -15,7 +15,7 @@ import { pickCardPhoto } from '@/lib/v2/partage/capture';
 import { chiffresParDefaut } from '@/lib/v2/cartes/chiffres';
 import { ecrireStyle, lireStyle, STYLE_DEFAUT } from '@/lib/v2/cartes/store';
 import type { StyleMemorise } from '@/lib/v2/cartes/store';
-import { copierAutocollant, enregistrerCarte, partagerCarte, partagerStory } from '@/lib/v2/cartes/export';
+import { copierAutocollant, enregistrerAutocollant, enregistrerCarte, partagerCarte, partagerStory } from '@/lib/v2/cartes/export';
 import type { CarteData, OptionsCarte, StatKey } from '@/lib/v2/cartes/types';
 import type { VisuelsCarte } from './CarteRendu';
 import { formatDessine, useMoteurCartes } from './CarteRendu';
@@ -28,6 +28,8 @@ import { effacerCopieCarte } from '@/lib/v2/cartes/tmp';
 
 export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>) {
   const ref = useRef<View>(null);
+  /** 2 novembre 2026 (nouveau moteur) : la vue de l'autocollant seul, capturee recadree */
+  const refAutocollant = useRef<View>(null);
   const id = useCardIdentity();
   const [style, setStyleState] = useState<StyleMemorise>({ ...STYLE_DEFAUT, ...initial });
   const [chiffres, setChiffres] = useState<StatKey[]>(initial?.chiffres ?? []);
@@ -143,7 +145,7 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
   const options0: OptionsCarte = { ...style, fond: fondEffectif, chiffres };
   // 2 novembre 2026 (cartes v10) : le nouveau moteur n'a pas de carre, il s'ouvre en 4:5 (et la capture aussi)
   const options: OptionsCarte = { ...options0, format: formatDessine(data, options0, moteur) };
-  const visuels: VisuelsCarte = { scene, sceneId, photo, personnage, analyse, recadrage };
+  const visuels: VisuelsCarte = { scene, sceneId, photo, personnage, analyse, recadrage, refAutocollant };
   /** « Recadrer automatiquement » : ton recadrage au doigt est oublie, la regle automatique reprend */
   const recadrerAuto = useCallback(() => setRecadrage(null), []);
 
@@ -215,6 +217,36 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
   }, [busy, data, options.format, apresExport]);
 
   /**
+   * 2 novembre 2026 (nouveau moteur, composition Autocollant) : l'autocollant seul, recadre, en PNG transparent.
+   * Copier : dans le presse-papiers, a coller dans ta story Instagram. Enregistrer : dans la pellicule (TikTok, Android).
+   */
+  const copierAutocollantSeul = useCallback(async (onErreur?: (titre: string, texte: string) => void) => {
+    if (busy || !data) return false;
+    setBusy('copie');
+    try {
+      const ok = await copierAutocollant(refAutocollant, options.format, data.moment, onErreur, true);
+      setCopie(ok);
+      return ok;
+    } finally {
+      setBusy(null);
+      apresExport();
+    }
+  }, [busy, data, options.format, apresExport]);
+
+  const enregistrerAutocollantSeul = useCallback(async (onErreur?: (titre: string, texte: string) => void) => {
+    if (busy || !data) return false;
+    setBusy('save');
+    try {
+      const ok = await enregistrerAutocollant(refAutocollant, onErreur);
+      if (ok) setSaved(true);
+      return ok;
+    } finally {
+      setBusy(null);
+      apresExport();
+    }
+  }, [busy, data, apresExport]);
+
+  /**
    * Interrupteur de la personne sur la carte (17 octobre 2026) : ton personnage, ou ta photo si elle est en fond.
    * Eteint (memorise) : ni personnage ni photo, seulement les chiffres, le titre et la signature.
    */
@@ -232,5 +264,5 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
     else setStyle({ sansPersonne: false, epure: false, personnage: persoVoulu });
   }, [personne.visible, persoVoulu, setStyle]);
 
-  return { ref, options, visuels, visuelsPour, style, setStyle, chiffres, setChiffres, photo, photoEnCours, choisirPhoto, enleverPhoto, enregistrer, partager, partagerEnStory, copier, copie, busy, saved, aPersonnage: !!personnage, personne, basculerPersonne, moteur, analyse, recadrage, setRecadrage, recadrerAuto };
+  return { ref, refAutocollant, copierAutocollantSeul, enregistrerAutocollantSeul, options, visuels, visuelsPour, style, setStyle, chiffres, setChiffres, photo, photoEnCours, choisirPhoto, enleverPhoto, enregistrer, partager, partagerEnStory, copier, copie, busy, saved, aPersonnage: !!personnage, personne, basculerPersonne, moteur, analyse, recadrage, setRecadrage, recadrerAuto };
 }
