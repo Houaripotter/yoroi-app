@@ -16,12 +16,18 @@
   <string name="yw_desc_chrono">Lance ton chrono de rounds en un appui</string>
   <string name="yw_nom_tableau">Tableau du jour</string>
   <string name="yw_desc_tableau">Poids, semaine, eau et prochain combat sur ta scène</string>
+  <string name="yw_nom_seance">Séance du jour</string>
+  <string name="yw_desc_seance">La séance que ton Coach te propose aujourd\'hui, dans ta scène</string>
+  <string name="yw_nom_perso">Ton personnage</string>
+  <string name="yw_desc_perso">Ton personnage dans ta scène, avec ton rang et ta progression</string>
   <!-- Widgets : textes affiches -->
   <string name="yw_vide">Ouvre Yoroi pour commencer</string>
   <string name="yw_plus_verre">+ 1 verre</string>
   <string name="yw_retirer_verre">Retirer un verre</string>
   <string name="yw_seance_faite">Séance faite</string>
   <string name="yw_lancer">Lancer</string>
+  <string name="yw_commencer">Commencer</string>
+  <string name="yw_ton_coach">Ton coach</string>
   <string name="yw_courbe_30">Ta courbe sur 30 jours</string>
   <string name="yw_ajouter_compet">Ajouter</string>
   <string name="yw_aucune_compet">Aucune compétition prévue</string>
