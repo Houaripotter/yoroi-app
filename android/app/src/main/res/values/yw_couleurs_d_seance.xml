@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Style D, widgets Seance du jour et Ton personnage (30 octobre 2026), memes couleurs que sur iPhone -->
+<resources>
+  <color name="yw_d_seance_haut">#FFFFFF</color>
+  <color name="yw_d_seance_bas">#FFFFFF</color>
+  <color name="yw_d_scene_haut">#FFE1D6</color>
+  <color name="yw_d_scene_bas">#EFE6F3</color>
+  <color name="yw_d_bleu_fond">#E6ECF8</color>
+  <color name="yw_d_bleu_encre">#3557D9</color>
+  <color name="yw_d_menthe_fond">#E3F2EA</color>
+  <color name="yw_d_menthe_encre">#1C6B45</color>
+  <color name="yw_d_lilas_fond">#EFE6F3</color>
+  <color name="yw_d_lilas_encre">#8A3F78</color>
+  <color name="yw_d_verre">#E6FFFFFF</color>
+  <color name="yw_d_rang">#23358F</color>
+  <color name="yw_d_barre_piste">#ECEEF5</color>
+</resources>
