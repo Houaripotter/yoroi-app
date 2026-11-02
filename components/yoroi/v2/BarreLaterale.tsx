@@ -26,6 +26,7 @@ import { RondProfil } from '@/components/yoroi/v2/accueil/Scene';
 import { useIdentite } from '@/lib/v2/espace/useIdentite';
 import { LARGEUR_BARRE_COMPACTE, LARGEUR_BARRE_LATERALE } from '@/lib/v2/nav/grandEcran';
 import { useModeEcran } from '@/lib/v2/nav/useGrandEcran';
+import { useCoffrePret } from '@/components/yoroi/v2/dojo/useCoffrePret';
 import { traduire } from '@/lib/i18n/tr';
 import { STICKERS, type NomSticker } from '@/components/yoroi/v2/stickers';
 
@@ -40,6 +41,13 @@ const ORDRE = ['index', 'seances', 'progres', 'dojo'];
 type Props = BottomTabBarProps & { onPressAdd: () => void };
 
 /** Le sticker d'un onglet en pleine couleur : 30 ouvert, 26 sinon (la ligne garde sa hauteur) */
+/** 2 novembre 2026 : le point d'or de l'onglet Dojo quand le coffre du jour attend */
+function PointCoffre({ haut, droite }: { haut: number; droite: number }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  return <View pointerEvents="none" style={{ position: 'absolute', top: haut, right: droite, width: 11, height: 11, borderRadius: 6, borderWidth: 2, backgroundColor: c.gold, borderColor: c.surface }} />;
+}
+
 function StickerOnglet({ nom, ouvert }: { nom: NomSticker; ouvert?: boolean }) {
   const t = ouvert ? 30 : 26;
   return <Image source={STICKERS[nom]} style={{ width: t, height: t, margin: (21 - t) / 2 }} resizeMode="contain" accessibilityIgnoresInvertColors />;
@@ -53,6 +61,7 @@ function BarreLarge({ state, navigation, onPressAdd, onChoisi }: Props & { onCho
   const router = useRouter();
   const { profile, armure } = useIdentite();
   const prenom = profile?.name?.trim().split(' ')[0] || traduire('Athlète');
+  const coffrePret = useCoffrePret();
 
   const onglet = (name: string) => {
     const index = state.routes.findIndex((r) => r.name === name);
@@ -71,7 +80,7 @@ function BarreLarge({ state, navigation, onPressAdd, onChoisi }: Props & { onCho
         <Pressable
           onPress={onPress}
           accessibilityRole="tab"
-          accessibilityLabel={traduire(icon.label)}
+          accessibilityLabel={name === 'dojo' && coffrePret && !focused ? traduire('Dojo, ton coffre est prêt') : traduire(icon.label)}
           accessibilityState={{ selected: focused }}
           style={({ pressed }) => [styles.ligne, focused ? { backgroundColor: c.primary } : pressed ? { backgroundColor: c.accentTint } : null]}
         >
@@ -79,6 +88,7 @@ function BarreLarge({ state, navigation, onPressAdd, onChoisi }: Props & { onCho
           <Ink size={15.5} weight={focused ? 'black' : 'extraBold'} color={focused ? c.onPrimary : c.textSecondary} numberOfLines={1}>
             {traduire(icon.label)}
           </Ink>
+          {name === 'dojo' && coffrePret && !focused ? <PointCoffre haut={8} droite={12} /> : null}
         </Pressable>
       </TourAnchor>
     );
@@ -163,7 +173,7 @@ function Bulle({ texte }: { texte: string }) {
 }
 
 /** Un bouton de la barre compacte : son sticker, sa pilule pastel quand il est ouvert, son nom en bulle */
-function Case({ nom, libelle, ouvert, onPress, enfant }: { nom?: NomSticker; libelle: string; ouvert?: boolean; onPress: () => void; enfant?: React.ReactNode }) {
+function Case({ nom, libelle, ouvert, onPress, enfant, point }: { nom?: NomSticker; libelle: string; ouvert?: boolean; onPress: () => void; enfant?: React.ReactNode; point?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const [bulle, setBulle] = useState(false);
@@ -184,6 +194,7 @@ function Case({ nom, libelle, ouvert, onPress, enfant }: { nom?: NomSticker; lib
         style={({ pressed }) => [styles.case, ouvert ? { backgroundColor: c.primary } : pressed || bulle ? { backgroundColor: c.accentTint } : null]}
       >
         {enfant ?? (nom ? <Image source={STICKERS[nom]} style={{ width: ouvert ? 34 : 30, height: ouvert ? 34 : 30 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null)}
+        {point ? <PointCoffre haut={6} droite={6} /> : null}
       </Pressable>
       {bulle ? <Bulle texte={libelle} /> : null}
     </View>
@@ -198,6 +209,7 @@ function BarreCompacte({ state, navigation, onPressAdd, onDeplier }: Props & { o
   const router = useRouter();
   const { profile, armure } = useIdentite();
   const prenom = profile?.name?.trim().split(' ')[0] || traduire('Athlète');
+  const coffrePret = useCoffrePret();
   return (
     <TourAnchor id="onglet.barre" style={[styles.compacte, { backgroundColor: c.surface, borderRightColor: c.border, paddingTop: insets.top + 18, paddingBottom: insets.bottom + 16 }]}>
       <Case nom="liste" libelle={traduire('Ouvrir le menu')} onPress={() => { selectionAsync().catch(() => {}); onDeplier(); }} />
@@ -227,8 +239,9 @@ function BarreCompacte({ state, navigation, onPressAdd, onDeplier }: Props & { o
             <TourAnchor key={name} id={`onglet.${name}`} rayon={20}>
               <Case
                 nom={ONGLETS[name].sticker}
-                libelle={traduire(ONGLETS[name].label)}
+                libelle={name === 'dojo' && coffrePret && !focused ? traduire('Dojo, ton coffre est prêt') : traduire(ONGLETS[name].label)}
                 ouvert={focused}
+                point={name === 'dojo' && coffrePret && !focused}
                 onPress={() => {
                   selectionAsync().catch(() => {});
                   const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
