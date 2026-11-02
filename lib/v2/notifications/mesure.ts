@@ -2,7 +2,7 @@
  * Points d'accroche pour la mesure (permission de notification, demande d'avis).
  * Branches sur utils/telemetry.ts depuis le 13 octobre 2026 : seuls des noms et des ecrans de listes fermees partent.
  */
-import { track, type EcranPermission } from '@/utils/telemetry';
+import { setProprietes, track, type EcranPermission } from '@/utils/telemetry';
 
 export type EvenementMesure =
   | 'notif_permission_proposee'
@@ -24,4 +24,9 @@ export function noter(evenement: EvenementMesure, details?: Record<string, strin
   const ecran: EcranPermission = typeof e === 'string' && (ECRANS as string[]).includes(e) ? (e as EcranPermission) : 'reglages';
   const nom = evenement === 'notif_permission_acceptee' ? 'notif_permission_accordee' : evenement;
   track(nom, { ecran });
+}
+
+/** 2 novembre 2026 : propriete utilisateur notifs_autorisees, une fois la reponse du systeme connue */
+export function noterAutorisation(ok: boolean): void {
+  setProprietes({ notifs_autorisees: ok ? 'oui' : 'non' });
 }
