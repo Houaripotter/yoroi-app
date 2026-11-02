@@ -613,6 +613,11 @@ export type PropsCarteMoteur = {
   enveloppePhoto?: (photo: React.ReactNode) => React.ReactNode;
   /** l'autocollant : la vue capturee seule (export recadre, fond transparent) */
   refAutocollant?: React.Ref<VueRN>;
+  /**
+   * 2 novembre 2026 (bloc deplacable) : enveloppe le bloc des chiffres (Ta photo) ou l'autocollant, dessine sur son
+   * propre calque de la taille de la carte ; le studio y pose le geste qui le deplace. L'export prend le meme calque.
+   */
+  enveloppeBloc?: (bloc: React.ReactNode) => React.ReactNode;
 };
 
 /** Couleurs de la carte A (seance de musculation avec photo), a.js PALETTE */
@@ -637,9 +642,9 @@ export function paletteA(style: StyleMoteur, famille: ContenuCarte['famille'], p
   return { ...PALETTE_A.color, fonce: f, valUnit: pal.deep, bandBg: [rgba(clair, 1), rgba(f, 1)] } as PaletteA;
 }
 
-export function CarteMoteur({ plan, largeur, photo, taillePhoto, duo, enveloppePhoto, refAutocollant }: PropsCarteMoteur) {
+export function CarteMoteur({ plan, largeur, photo, taillePhoto, duo, enveloppePhoto, refAutocollant, enveloppeBloc }: PropsCarteMoteur) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
-  if (plan.type === 'autocollant' && plan.autocollant) return <AutocollantMoteur plan={plan} largeur={largeur} refAutocollant={refAutocollant} />;
+  if (plan.type === 'autocollant' && plan.autocollant) return <AutocollantMoteur plan={plan} largeur={largeur} refAutocollant={refAutocollant} enveloppeBloc={enveloppeBloc} />;
   const G0 = GRILLE[plan.format];
   const { W, H, RH, contenu: c } = plan;
   const k = largeur / W;
@@ -707,13 +712,21 @@ export function CarteMoteur({ plan, largeur, photo, taillePhoto, duo, enveloppeP
 
   const images: React.ReactNode[] = [];
   let corps: React.ReactNode = null;
+  // Ta photo : le bloc des chiffres sur son propre calque, par-dessus la bande (il n'y descend jamais), pour le deplacer
+  let calqueBloc: React.ReactNode = null;
 
   if (plan.type === 'photo') {
-    corps = carteA ? (
+    const bloc = carteA ? (
       <Bloc plan={plan} lib={c.lib} libC={PA.ink} heroC={PA.ink} uniteC={PA.unite} t={{ panBg: PA.panBg, panBord: PA.panBord, valInk: PA.valInk, valUnit: PA.valUnit, labInk: PA.labInk, sep: PA.sep }} toujoursIcone gapIcone={plan.bloc!.compact ? 14 : 20} />
     ) : (
       <Bloc plan={plan} lib={c.lib} libC={libC} heroC={heroC} or={orId} t={tFam} />
     );
+    const svgBloc = (
+      <Svg testID="carte-bloc" width={W * k} height={H * k} viewBox={`0 0 ${W} ${H}`} style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">
+        {bloc}
+      </Svg>
+    );
+    calqueBloc = enveloppeBloc ? enveloppeBloc(svgBloc) : svgBloc;
   } else if (plan.type === 'dessin' || plan.type === 'duo') {
     const v = plan.visuel!;
     let dessin: React.ReactNode = null;
@@ -812,6 +825,7 @@ export function CarteMoteur({ plan, largeur, photo, taillePhoto, duo, enveloppeP
       </Svg>
       {images}
       <ImagesBande plan={plan} k={k} />
+      {calqueBloc}
     </View>
   );
 }
@@ -1357,16 +1371,18 @@ function LigneAuto({ a, cx, sL, sIc, gIc, hL }: { a: LigneAutoPosee; cx: number;
  * de large sur l'appareil (a.export.w / densite de l'ecran, en points), reduite a l'apercu par une echelle posee sur
  * son parent ; la capture la prend a sa taille, sans agrandir une petite image, et rien d'autre que l'autocollant.
  */
-function AutocollantMoteur({ plan, largeur, refAutocollant }: { plan: Plan; largeur: number; refAutocollant?: React.Ref<VueRN> }) {
+function AutocollantMoteur({ plan, largeur, refAutocollant, enveloppeBloc }: { plan: Plan; largeur: number; refAutocollant?: React.Ref<VueRN>; enveloppeBloc?: (bloc: React.ReactNode) => React.ReactNode }) {
   const a = plan.autocollant!;
   const k = largeur / plan.W;
   const pts = a.export.w / PixelRatio.get();
   const kk = pts / a.w;
   const e = (a.w * k) / pts;
   const cx = a.w / 2;
+  const pose = (n: React.ReactNode) => (enveloppeBloc ? enveloppeBloc(n) : n);
   return (
     <View style={{ width: plan.W * k, height: plan.H * k }} collapsable={false} pointerEvents="none">
-      <View style={{ position: 'absolute', left: a.x * k, top: a.y * k, width: a.w * k, height: a.h * k }}>
+      {pose(
+      <View testID="carte-bloc" style={{ position: 'absolute', left: a.x * k, top: a.y * k, width: a.w * k, height: a.h * k }}>
         <View style={{ width: a.w * kk, height: a.h * kk, transform: [{ scale: e }], transformOrigin: 'top left' } as object}>
           <View ref={refAutocollant} collapsable={false} testID="autocollant-capture" style={{ width: a.w * kk, height: a.h * kk }}>
             <Svg width={a.w * kk} height={a.h * kk} viewBox={`0 0 ${a.w} ${a.h}`}>
@@ -1380,7 +1396,8 @@ function AutocollantMoteur({ plan, largeur, refAutocollant }: { plan: Plan; larg
             <Image source={LOGO_DETOURE} resizeMode="contain" style={{ position: 'absolute', left: a.logo.x * kk, top: a.logo.y * kk, width: a.logo.w * kk, height: a.logo.h * kk }} />
           </View>
         </View>
-      </View>
+      </View>,
+      )}
     </View>
   );
 }
