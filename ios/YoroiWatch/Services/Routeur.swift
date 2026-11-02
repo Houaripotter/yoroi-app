@@ -17,6 +17,8 @@ enum Ecran: Hashable {
   case minuteurLibre
   case coeur
   case oxygene
+  /// 28 octobre 2026 : ta seance de musculation de l'iPhone, guidee sur la montre
+  case seanceGuidee
 }
 
 enum ModeLive: Equatable {
@@ -25,6 +27,8 @@ enum ModeLive: Equatable {
 }
 
 enum Page: Int, Hashable {
+  /// 28 octobre 2026 : l'accueil « ton dojo au poignet » (rang, Coach, poids, semaine)
+  case accueil = -1
   case aujourdhui = 0
   case entrainement
   case semaine
@@ -39,7 +43,7 @@ final class Routeur {
   static let shared = Routeur()
 
   var chemin: [Ecran] = []
-  var page: Page = .aujourdhui
+  var page: Page = .accueil
   /// Seance en direct affichee en plein ecran (chrono ou seance libre).
   var live: ModeLive?
 
@@ -111,7 +115,8 @@ final class Routeur {
   // MARK: Liens des complications
 
   /// Liens des complications : yoroimontre://minuteurs, minuteur, coeur, oxygene, cardio, repos,
-  /// respiration, chrono, peser, aujourdhui, eau, semaine, combat.
+  /// respiration, chrono, peser, aujourdhui, eau, semaine, combat, et depuis le 28 octobre 2026
+  /// accueil, coach, rang et seance (la seance guidee si elle tourne, sinon l'accueil).
   func ouvrir(url: URL) { recevoir(url: url) }
 
   func recevoir(url: URL) {
@@ -148,8 +153,10 @@ final class Routeur {
     case "peser": return (.aujourdhui, [.peser])
     case "eau": return (.eau, [])
     case "semaine": return (.semaine, [])
-    case "combat": return (Synchro.shared.contexte.combat != nil ? .combat : .aujourdhui, [])
-    default: return (.aujourdhui, [])
+    case "combat": return (Synchro.shared.contexte.combat != nil ? .combat : .accueil, [])
+    case "aujourdhui", "poids": return (.aujourdhui, [])
+    case "seance": return (.accueil, SeanceGuidee.shared.active ? [.seanceGuidee] : [])
+    default: return (.accueil, [])
     }
   }
 
