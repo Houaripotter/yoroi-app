@@ -5,7 +5,8 @@ import Foundation
 //  - l'instantane (meme JSON v1 que la montre) ecrit par l'app a chaque synchro ;
 //  - la file des actions faites depuis un widget (+ 1 verre, retrait), lue puis videe par l'app ;
 //  - l'image reduite de la scene d'Accueil choisie (fond du style A, fenetre du style B, bandeau du Tableau du jour) ;
-//  - le style des widgets choisi dans l'app (A Nuit de lanternes par defaut, B Rouleau et encre, C Armure laquee) ;
+//  - le style des widgets choisi dans l'app (D Scenes illustrees par defaut depuis le 28 octobre 2026, A Nuit de
+//    lanternes, B Rouleau et encre, C Armure laquee) ;
 //  - l'image de ton personnage, la meme que l'Accueil, sans rang ni XP (style C) ;
 //  - la decoration de saison (halloween, noel ou vide), calculee par l'app (18 octobre 2026).
 
@@ -32,15 +33,15 @@ enum GroupeYoroi {
 
   // MARK: Style des widgets
 
-  /// "A", "B" ou "C" ; A tant que rien n'a ete choisi
+  /// "A", "B", "C" ou "D" ; D tant que rien n'a ete choisi (28 octobre 2026)
   static func lireStyle() -> String {
-    let s = (defauts?.string(forKey: cleStyle) ?? "A").uppercased()
-    return s == "B" || s == "C" ? s : "A"
+    let s = (defauts?.string(forKey: cleStyle) ?? "D").uppercased()
+    return ["A", "B", "C", "D"].contains(s) ? s : "D"
   }
 
   static func ecrireStyle(_ s: String) {
     let v = s.uppercased()
-    defauts?.set(v == "B" || v == "C" ? v : "A", forKey: cleStyle)
+    defauts?.set(["A", "B", "C", "D"].contains(v) ? v : "D", forKey: cleStyle)
   }
 
   // MARK: Decoration de saison (Halloween, Noel)
