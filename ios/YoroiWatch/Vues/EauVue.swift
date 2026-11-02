@@ -13,6 +13,7 @@ struct EauVue: View {
   }
 
   var body: some View {
+    ScrollView {
     VStack(spacing: 6) {
       Anneau(progression: progression, couleur: Teinte.bleu, epaisseur: 8) {
         VStack(spacing: 0) {
@@ -51,6 +52,7 @@ struct EauVue: View {
         .foregroundStyle(Color.black)
         .accessibilityLabel("Ajouter un verre")
       }
+    }
     }
     .navigationTitle("Eau")
   }
