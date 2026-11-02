@@ -5,7 +5,7 @@
  * qui ouvre le meme effacement complet que la carte rouge du haut du Studio (RepartirDeZero.tsx).
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
@@ -19,6 +19,100 @@ import { clearRecentLogs, getRecentLogs, type LocalLogEntry } from '@/lib/securi
 import { KV, Note, SearchField, SmallAction, StudioSection, SubTitle, confirm, useStudio } from './parts';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire, DECIMAL, LOCALE } from '@/lib/i18n/tr';
+import { CarteApercu, useMoteurCartes } from '@/components/yoroi/v2/cartes/CarteRendu';
+import { ecrireMoteur, STYLE_DEFAUT } from '@/lib/v2/cartes/store';
+import type { MoteurCartes } from '@/lib/v2/cartes/store';
+import { DEMO_SEANCE_COMBAT, DEMO_SEANCE_COURSE, DEMO_SEANCE_MUSCU, DEMO_SEMAINE, demoExploit } from '@/lib/v2/cartes/demo';
+import type { CarteData, OptionsCarte } from '@/lib/v2/cartes/types';
+import { lireDateInstallation } from '@/lib/v2/installation';
+import type { DateInstallation } from '@/lib/v2/installation';
+
+/**
+ * 2 novembre 2026 (cartes v10) : l'interrupteur du nouveau moteur de cartes. Ici seulement : cet ecran est dans le
+ * Studio, monte derriere StudioGate (app/creator-mode.tsx : mode createur actif et jeton reverifie a chaque ouverture).
+ * Ancien par defaut ; le retour a l'ancien est instantane (toutes les cartes ouvertes basculent).
+ * « Comparer » montre des cartes de demonstration dessinees par les deux moteurs, cote a cote.
+ */
+const CARTES_COMPARER: { nom: string; d: CarteData }[] = [
+  { nom: 'Séance', d: DEMO_SEANCE_MUSCU },
+  { nom: 'Course', d: DEMO_SEANCE_COURSE },
+  { nom: 'Combat', d: DEMO_SEANCE_COMBAT },
+  { nom: 'Semaine', d: DEMO_SEMAINE },
+  { nom: 'Record', d: demoExploit('record_charge') },
+];
+
+function InterrupteurMoteur() {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const moteur = useMoteurCartes();
+  const [comparer, setComparer] = useState(false);
+  const [format, setFormat] = useState<'story' | 'post'>('story');
+  const [installation, setInstallation] = useState<DateInstallation | null>(null);
+  useEffect(() => {
+    lireDateInstallation().then(setInstallation).catch(() => undefined);
+  }, []);
+  const choix = (m: MoteurCartes | 'comparer', label: string) => {
+    const on = m === 'comparer' ? comparer : !comparer && moteur === m;
+    return (
+      <Pressable
+        key={m}
+        onPress={() => {
+          if (m === 'comparer') setComparer((x) => !x);
+          else {
+            setComparer(false);
+            void ecrireMoteur(m);
+          }
+        }}
+        accessibilityRole="button"
+        accessibilityState={{ selected: on }}
+        accessibilityLabel={label}
+        style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.primary : pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: on ? c.primary : c.border })}
+      >
+        <Ink size={14} weight="extraBold" color={on ? c.onPrimary : c.ink}>{label}</Ink>
+      </Pressable>
+    );
+  };
+  const options: OptionsCarte = { ...STYLE_DEFAUT, format, chiffres: [] };
+  return (
+    <>
+      <SubTitle>{traduire('Cartes de partage : moteur')}</SubTitle>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {choix('ancien', traduire('Ancien'))}
+        {choix('nouveau', traduire('Nouveau'))}
+        {choix('comparer', traduire('Comparer'))}
+      </View>
+      <Note>{traduire('Ce téléphone seulement, jamais synchronisé. Ancien par défaut. Le nouveau dessine les séances, la semaine, les records, l’année et l’avant après ; les autres cartes restent sur l’ancien.')}</Note>
+      <Card>
+        <KV first label={traduire('Moteur des cartes')} value={moteur === 'nouveau' ? traduire('Nouveau') : traduire('Ancien')} />
+        <KV label={traduire('Date d’installation')} value={installation ? `${installation.date}${installation.statut === 'estimee' ? ` (${traduire('estimée')})` : ''}` : traduire('pas encore écrite')} />
+      </Card>
+      {comparer ? (
+        <View style={{ gap: 10 }}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <SmallAction label={format === 'story' ? traduire('Passer en 4:5') : traduire('Passer en story')} onPress={() => setFormat((f) => (f === 'story' ? 'post' : 'story'))} />
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 18, paddingRight: 8 }}>
+            {CARTES_COMPARER.map((x) => (
+              <View key={x.nom} style={{ gap: 6 }}>
+                <Ink size={13} weight="extraBold">{traduire(x.nom)}</Ink>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <View style={{ gap: 4, alignItems: 'center' }}>
+                    <CarteApercu largeur={130} data={x.d} options={options} visuels={{ ambiance: false }} moteur="ancien" />
+                    <Ink size={11} weight="bold" color={c.textSecondary}>{traduire('Ancien')}</Ink>
+                  </View>
+                  <View style={{ gap: 4, alignItems: 'center' }}>
+                    <CarteApercu largeur={130} data={x.d} options={options} visuels={{ ambiance: false }} moteur="nouveau" />
+                    <Ink size={11} weight="bold" color={c.textSecondary}>{traduire('Nouveau')}</Ink>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
+    </>
+  );
+}
 
 const FIRST = 15;
 
@@ -134,6 +228,8 @@ export function Diagnostic() {
         <KV label={traduire("Expo SDK")} value={info.sdk} />
       </Card>
       <Button tone="ghost" small icon="doc" label={traduire("Copier les infos de l’appareil")} onPress={() => void copyInfo()} />
+
+      <InterrupteurMoteur />
 
       <SubTitle>{traduire("Compteurs d’usage de ce téléphone")}</SubTitle>
       <Card>
