@@ -3,6 +3,11 @@
  * Source : _propositions/cartes_v10_2026-11-02/html/a.js et fam.js (GRILLE, AIR_VISAGE). Rien d'invente :
  * marges, hauteur de la pastille, du chiffre, du panneau des chiffres, de la bande du bas, 48 px d'air autour du visage.
  * Le carre (1:1) n'existe pas dans ce moteur : il s'ouvre en 4:5 (voir formatMoteur).
+ *
+ * 2 novembre 2026 (studio unique), Houari : « la bande du bas doit descendre et prendre moins de place, pour que la
+ * photo fasse le beau gosse ». La bande passe de 300 a 216 px en story (de 152 a 124 en 4:5), le logo et les badges
+ * de 88 a 72 px, colles vers le bas. En story, le bas des badges reste a MARGE_SURE_BAS (120 px) du bord : la barre
+ * de reponse d'Instagram ne les couvre pas. La zone photo gagne 84 px en story et 28 px en 4:5.
  */
 import type { FormatId } from '../types';
 
@@ -35,14 +40,26 @@ export type CotesCompactes = Pick<Cotes, 'LIB' | 'HERO' | 'STATS' | 'STAT_V' | '
 
 export const GRILLE: Record<FormatMoteur, Cotes & { COMPACT: CotesCompactes }> = {
   story: {
-    W: 1080, H: 1920, M: 64, HAUT: 200, PASTILLE: 64, BANDE: 300, BANDE_RANG: 60, BADGE: 88, AIR_BANDE: 48, LIB: 34, G1: 12, HERO: 300, G2: 32, STATS: 176, STAT_V: 96, STAT_L: 32,
+    W: 1080, H: 1920, M: 64, HAUT: 200, PASTILLE: 64, BANDE: 216, BANDE_RANG: 24, BADGE: 72, AIR_BANDE: 40, LIB: 34, G1: 12, HERO: 300, G2: 32, STATS: 176, STAT_V: 96, STAT_L: 32,
     COMPACT: { LIB: 30, HERO: 210, STATS: 140, STAT_V: 76, STAT_L: 28, G2: 24 },
   },
   post: {
-    W: 1080, H: 1350, M: 56, HAUT: 48, PASTILLE: 60, BANDE: 152, BANDE_RANG: 32, BADGE: 88, AIR_BANDE: 40, LIB: 30, G1: 10, HERO: 230, G2: 24, STATS: 150, STAT_V: 84, STAT_L: 28,
+    W: 1080, H: 1350, M: 56, HAUT: 48, PASTILLE: 60, BANDE: 124, BANDE_RANG: 26, BADGE: 72, AIR_BANDE: 32, LIB: 30, G1: 10, HERO: 230, G2: 24, STATS: 150, STAT_V: 84, STAT_L: 28,
     COMPACT: { LIB: 28, HERO: 170, STATS: 120, STAT_V: 66, STAT_L: 24, G2: 18 },
   },
 };
+
+/**
+ * La marge de securite du bas : le bas du logo et des badges reste au moins a cette distance du bord.
+ * Story : la barre de reponse d'Instagram (environ 6 % du bas sur un telephone 16:9). 4:5 : rien ne la couvre.
+ */
+export const MARGE_SURE_BAS: Record<FormatMoteur, number> = { story: 120, post: 24 };
+
+/** Le bas du logo et des badges, en pixels depuis le haut */
+export function basDesBadges(f: FormatMoteur): number {
+  const g = GRILLE[f];
+  return g.H - g.BANDE + g.BANDE_RANG + g.BADGE;
+}
 
 /** Jamais moins de 48 px entre la zone protegee (visage, corps) et le texte */
 export const AIR_VISAGE = 48;
