@@ -24,7 +24,7 @@ import { logger } from '@/lib/security/logger';
 import { SPORTS, getSportCategory, getSportName } from '@/lib/sports';
 import { fmtClock, fmtMinutes, fmtNum, hhmm, isoDay, parseNum } from '@/lib/v2/seance/format';
 import { useSauvegardeBrouillon } from '@/lib/v2/seance/useSauvegardeBrouillon';
-import { clearDraft, effacerSaisie, loadDraft } from '@/lib/v2/seance/model';
+import { clearDraft, effacerSaisie, loadDraft, mesurerAbandon } from '@/lib/v2/seance/model';
 import { offrirSaisie } from '@/lib/v2/seance/repriseSaisie';
 import type { CardioDraft, SessionDetails } from '@/lib/v2/seance/model';
 import { detailsFromTraining, loadTrainingForEdit, mesuresMachine, sportLibre, trainingFromDetails } from '@/lib/v2/seance/edit';
@@ -185,7 +185,7 @@ export default function SeanceCardio() {
                         else router.replace({ pathname: draftRoute(existing) as any, params: { resume: '1' } });
                       },
                     },
-                    { text: traduire('Effacer'), style: 'destructive', onPress: async () => { await clearDraft(); setDraft(fresh()); } },
+                    { text: traduire('Effacer'), style: 'destructive', onPress: async () => { mesurerAbandon(existing); await clearDraft(); setDraft(fresh()); } },
                   ], { cancelable: false }),
               },
               {
@@ -252,6 +252,7 @@ export default function SeanceCardio() {
         onPress: async () => {
           finished.current = true;
           setFinishOpen(false);
+          mesurerAbandon(draft);
           await clearDraft();
           router.back();
         },
