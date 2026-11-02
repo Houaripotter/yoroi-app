@@ -36,6 +36,7 @@ const SOURCE_COLORS: Record<XpSource, string> = {
   lune: DOJO.indigo,
   geste: DOJO.indigo,
   coffre: DOJO.gold,
+  programme: DOJO.indigo,
 };
 
 export default function Journal() {
