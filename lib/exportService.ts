@@ -43,6 +43,7 @@ import { rebaseLocalUri } from '@/lib/v2/sauvegarde/chemins';
 import { isFreshPhone } from '@/lib/v2/sauvegarde/telephoneNeuf';
 import { isSafetyFile, restoreSafetyFile, safetyReportText } from '@/lib/v2/sauvegarde/copiesSecurite';
 import { ARMURE_STORAGE_KEYS, requestArmureCatchup, restoreArmureFromStorage } from '@/lib/v2/armure';
+import { CLE_DATE_INSTALLATION, restaurerDateInstallation } from '@/lib/v2/installation';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { illustrer } from '@/components/yoroi/v2/messages/illustrer';
 import { traduire, traduirePluriel, LOCALE } from '@/lib/i18n/tr';
@@ -549,6 +550,8 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
       allTables,
       allStorage,
       allSecure,
+      // 2 novembre 2026 (cartes v10) : la date d'installation de ce telephone (lib/v2/installation.ts)
+      dateInstallation: await AsyncStorage.getItem(CLE_DATE_INSTALLATION).catch(() => null),
     };
 
     // Créer le fichier JSON avec date ET heure pour éviter les écrasements
@@ -1201,6 +1204,8 @@ const HANDLED_STORAGE_KEYS = new Set<string>([
   '@yoroi_benchmarks_v2', '@yoroi_skills_v2', '@yoroi_trash_benchmarks_v2', '@yoroi_trash_skills_v2',
   '@yoroi_personal_records', '@yoroi_training_loads', '@yoroi_health_bonus_history', '@yoroi_source_freshness',
   '@yoroi_home_layout', '@yoroi_selected_logo',
+  // 2 novembre 2026 : reprise a part, en gardant la plus ancienne des deux dates (restaurerDateInstallation)
+  CLE_DATE_INSTALLATION,
 ]);
 const HANDLED_SECURE_KEYS = new Set<string>([
   '@yoroi_user_settings', '@yoroi_measurements', '@yoroi_photos', '@yoroi_body_composition', '@yoroi_hydration_settings', '@yoroi_mood_log',
@@ -1818,6 +1823,11 @@ export const importDataFromBackupObject = async (importedData: any, opts?: { alr
         report.imported += r.added; report.kept += r.kept;
       } catch (e) { fail(traduire('réglages et données de l’app'), e); }
     }
+    // 2 novembre 2026 (cartes v10) : la date d'installation, la plus ancienne des deux (jamais une plus recente)
+    try {
+      const recue = importedData.dateInstallation ?? (importedData.allStorage as Record<string, unknown> | undefined)?.[CLE_DATE_INSTALLATION];
+      if (recue != null) await restaurerDateInstallation(recue);
+    } catch (e) { logger.warn('[importDataFromBackupObject] date d’installation non reprise', e); }
 
     // 19 octobre 2026 : sauvegarde d'avant la 3.0 (formats 1.0 a 5.5) : ses pesees de l'ancien ecran et ses compositions,
     // rangees dans les listes du coffre, deviennent des pesees de la base (deja comptees plus haut dans leur liste)
