@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import WidgetKit
 
 // Vues des complications, par famille : ronde, rectangle (aussi Smart Stack), en ligne, coin.
@@ -60,7 +61,10 @@ struct VuePoidsWidget: View {
       case .accessoryCircular:
         ZStack {
           AccessoryWidgetBackground()
-          VStack(spacing: -1) {
+          VStack(spacing: 0) {
+            Torii(couleur: Teinte.torii)
+              .frame(width: 14, height: 12)
+              .widgetAccentable()
             Text(valeur)
               .font(.chiffre(15))
               .lineLimit(1)
@@ -85,26 +89,44 @@ struct VuePoidsWidget: View {
             Text(ecart.map { "\($0) \(unite)" } ?? unite)
           }
       default:
-        VStack(alignment: .leading, spacing: 1) {
-          HStack(alignment: .firstTextBaseline, spacing: 3) {
-            Text(valeur).font(.chiffre(22))
-            Text(unite).font(.system(size: 12, design: .rounded)).foregroundStyle(Teinte.texteDoux)
-            Spacer(minLength: 2)
-            if let ecart {
-              Text(ecart)
-                .font(.chiffre(14))
+        // 28 octobre 2026, direction B : le torii dans son rond, le poids, et le prochain palier
+        HStack(spacing: 8) {
+          ZStack {
+            Circle().fill(Teinte.torii.opacity(0.22))
+            Torii(couleur: Teinte.torii).padding(9)
+          }
+          .frame(width: 40, height: 40)
+          .widgetAccentable()
+          VStack(alignment: .leading, spacing: 0) {
+            Text(NSLocalizedString("Poids", comment: "").uppercased())
+              .font(.system(size: 11, weight: .heavy, design: .rounded))
+              .tracking(1.2)
+              .foregroundStyle(Teinte.torii)
+              .widgetAccentable()
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+              Text("\(valeur) \(unite)").font(.chiffre(19, .heavy))
+              Spacer(minLength: 2)
+              if let ecart, c.poids.palier != nil {
+                Text(ecart)
+                  .font(.chiffre(12, .bold))
+                  .foregroundStyle(couleur)
+              }
+            }
+            if let p = c.poids.palier {
+              Text(p.dernier
+                ? String(format: NSLocalizedString("Ton cap dans %@", comment: ""), "\(Format.poidsCourt(p.reste, livres: livres)) \(unite)")
+                : String(format: NSLocalizedString("Palier %@ dans %@", comment: ""), Format.poidsCourt(p.kg, livres: livres), "\(Format.poidsCourt(p.reste, livres: livres)) \(unite)"))
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundStyle(Teinte.texteDoux)
+            } else if let ecart {
+              Text("\(ecart) \(unite)")
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundStyle(couleur)
-                .widgetAccentable()
             }
           }
-          if c.poids.serie30.count > 1 {
-            MiniCourbe(serie: c.poids.serie30, ligne: c.poids.ligne30, couleurSerie: Teinte.texte, couleurLigne: Teinte.accent, epaisseur: 1.5)
-              .frame(height: 22)
-          } else if let a = c.poids.arrivee {
-            Text("Arrivée du \(Format.jourCourt(a.du)) au \(Format.jourCourt(a.au))")
-              .font(.system(size: 12, design: .rounded))
-              .foregroundStyle(Teinte.texteDoux)
-          }
+          .lineLimit(1)
+          .minimumScaleFactor(0.7)
+          Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
       }
@@ -343,6 +365,173 @@ struct VueCombatWidget: View {
       }
     } else {
       VideWidget(texte: NSLocalizedString("Aucun combat prévu", comment: ""), ligne: NSLocalizedString("Aucun combat prévu", comment: ""))
+    }
+  }
+}
+
+
+// MARK: Seance du jour (28 octobre 2026)
+
+/// Ton personnage dans un rond (ou le torii tant que l'iPhone ne l'a pas envoye).
+private struct RondPersonnage: View {
+  var image: UIImage?
+  var diametre: CGFloat
+  var bord: Color
+
+  var body: some View {
+    ZStack {
+      Circle().fill(Teinte.carte)
+      if let image {
+        Image(uiImage: image)
+          .resizable()
+          .scaledToFit()
+          .frame(height: diametre * 2.1)
+          .offset(y: diametre * 0.56)
+      } else {
+        Torii(couleur: Teinte.torii).padding(diametre * 0.25)
+      }
+    }
+    .frame(width: diametre, height: diametre)
+    .clipShape(Circle())
+    .overlay(Circle().stroke(bord, lineWidth: 2))
+  }
+}
+
+struct VueCoachWidget: View {
+  let entree: EntreeYoroi
+  @Environment(\.widgetFamily) private var famille
+
+  private func icone(_ co: CoachCtx) -> String {
+    if !co.aujourdhui { return "moon.zzz.fill" }
+    switch co.genre {
+    case "cardio": return "figure.run"
+    case "rounds": return "figure.boxing"
+    default: return "dumbbell.fill"
+    }
+  }
+
+  var body: some View {
+    if let c = entree.contexte, let co = c.coach {
+      let caps = co.aujourdhui ? NSLocalizedString("Séance du jour", comment: "") : NSLocalizedString("Jour de repos", comment: "")
+      let sous = co.aujourdhui || co.ensuite.isEmpty ? co.resume : co.ensuite
+      switch famille {
+      case .accessoryInline:
+        Text(co.aujourdhui ? "\(co.titre), \(co.resume)" : NSLocalizedString("Jour de repos", comment: ""))
+      case .accessoryCircular:
+        ZStack {
+          AccessoryWidgetBackground()
+          VStack(spacing: 0) {
+            Image(systemName: icone(co))
+              .font(.system(size: 15, weight: .bold))
+              .foregroundStyle(Teinte.peche)
+              .widgetAccentable()
+            Text(co.minutes > 0 ? "\(co.minutes)" : "\(co.exos)")
+              .font(.chiffre(15, .heavy))
+            Text(co.minutes > 0 ? "min" : NSLocalizedString("exos", comment: ""))
+              .font(.system(size: 9, weight: .bold, design: .rounded))
+              .foregroundStyle(Teinte.texteDoux)
+          }
+        }
+      case .accessoryCorner:
+        Image(systemName: icone(co))
+          .font(.system(size: 17, weight: .semibold))
+          .foregroundStyle(Teinte.peche)
+          .widgetAccentable()
+          .widgetLabel(co.titre)
+      default:
+        HStack(spacing: 8) {
+          RondPersonnage(image: entree.personnage, diametre: 42, bord: Teinte.peche)
+            .widgetAccentable()
+          VStack(alignment: .leading, spacing: 0) {
+            Text(caps.uppercased())
+              .font(.system(size: 11, weight: .heavy, design: .rounded))
+              .tracking(1.1)
+              .foregroundStyle(Teinte.peche)
+              .widgetAccentable()
+            Text(co.titre)
+              .font(.system(size: 16, weight: .heavy, design: .rounded))
+            Text(sous)
+              .font(.system(size: 12, weight: .semibold, design: .rounded))
+              .foregroundStyle(Teinte.texteDoux)
+          }
+          .lineLimit(1)
+          .minimumScaleFactor(0.7)
+          Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+      }
+    } else {
+      VideWidget(texte: NSLocalizedString("Choisis ton programme dans Yoroi", comment: ""), ligne: NSLocalizedString("Ton Coach", comment: ""))
+    }
+  }
+}
+
+// MARK: Rang et personnage (28 octobre 2026)
+
+struct VueRangWidget: View {
+  let entree: EntreeYoroi
+  @Environment(\.widgetFamily) private var famille
+
+  var body: some View {
+    if let c = entree.contexte, let d = c.dojo {
+      let xp = String(format: NSLocalizedString("%@ XP", comment: ""), Format.entier(Double(d.xp)))
+      switch famille {
+      case .accessoryInline:
+        Text("\(d.rang), \(xp)")
+      case .accessoryCircular:
+        ZStack {
+          AccessoryWidgetBackground()
+          Circle()
+            .trim(from: 0, to: CGFloat(max(0.02, d.part)))
+            .stroke(Teinte.lilas, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+            .rotationEffect(.degrees(-90))
+            .padding(2)
+            .widgetAccentable()
+          RondPersonnage(image: entree.personnage, diametre: 36, bord: Color.clear)
+        }
+      case .accessoryCorner:
+        Text("\(d.rangIndex + 1)")
+          .font(.chiffre(18, .heavy))
+          .widgetLabel {
+            Gauge(value: d.part, in: 0...1) {
+              Text(d.rang)
+            }
+            .tint(Teinte.lilas)
+          }
+      default:
+        HStack(spacing: 8) {
+          ZStack {
+            Circle().stroke(Teinte.piste, lineWidth: 4)
+            Circle()
+              .trim(from: 0, to: CGFloat(max(0.02, d.part)))
+              .stroke(Teinte.lilas, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+              .rotationEffect(.degrees(-90))
+              .widgetAccentable()
+            RondPersonnage(image: entree.personnage, diametre: 34, bord: Color.clear)
+          }
+          .frame(width: 44, height: 44)
+          VStack(alignment: .leading, spacing: 0) {
+            Text(String(format: NSLocalizedString("%@, rang %@", comment: ""), d.rang, "\(d.rangIndex + 1)").uppercased())
+              .font(.system(size: 11, weight: .heavy, design: .rounded))
+              .tracking(1.1)
+              .foregroundStyle(Teinte.lilas)
+              .widgetAccentable()
+            Text(xp)
+              .font(.chiffre(17, .heavy))
+            if let s = d.suivant, let x = d.xpSuivant {
+              Text(String(format: NSLocalizedString("%@ à %@", comment: ""), s, Format.entier(Double(x))))
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundStyle(Teinte.texteDoux)
+            }
+          }
+          .lineLimit(1)
+          .minimumScaleFactor(0.7)
+          Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+      }
+    } else {
+      VideWidget(texte: NSLocalizedString("Ouvre Yoroi sur ton iPhone", comment: ""), ligne: NSLocalizedString("Ton rang", comment: ""))
     }
   }
 }
