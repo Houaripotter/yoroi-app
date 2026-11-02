@@ -33,7 +33,7 @@ import {
 import type { TimerEvent } from '@/lib/v2/seance/combat';
 import { fmtClock, fmtMinutes, hhmm, isoDay } from '@/lib/v2/seance/format';
 import { useSauvegardeBrouillon } from '@/lib/v2/seance/useSauvegardeBrouillon';
-import { clearDraft, effacerSaisie, loadCombatPrefs, loadDraft, saveCombatPrefs } from '@/lib/v2/seance/model';
+import { clearDraft, effacerSaisie, loadCombatPrefs, loadDraft, mesurerAbandon, saveCombatPrefs } from '@/lib/v2/seance/model';
 import { offrirSaisie } from '@/lib/v2/seance/repriseSaisie';
 import type { CombatDraft, CombatSessionType, LiveRound, RoundIntensity, SessionDetails } from '@/lib/v2/seance/model';
 import { detailsFromTraining, loadTrainingForEdit, trainingFromDetails } from '@/lib/v2/seance/edit';
@@ -228,7 +228,7 @@ export default function SeanceCombat() {
                         else router.replace({ pathname: draftRoute(existing) as any, params: { resume: '1' } });
                       },
                     },
-                    { text: traduire('Effacer'), style: 'destructive', onPress: async () => { await clearDraft(); setDraft(fresh()); } },
+                    { text: traduire('Effacer'), style: 'destructive', onPress: async () => { mesurerAbandon(existing); await clearDraft(); setDraft(fresh()); } },
                   ], { cancelable: false }),
               },
               {
@@ -386,6 +386,7 @@ export default function SeanceCombat() {
         onPress: async () => {
           finished.current = true;
           setFinishOpen(false);
+          mesurerAbandon(draft);
           await clearDraft();
           router.back();
         },
