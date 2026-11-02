@@ -19,7 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { logger } from '@/lib/security/logger';
 import { ouvrirFenetreRappels } from '@/components/yoroi/v2/notifications/FenetreRappels';
-import { noter } from './mesure';
+import { noter, noterAutorisation } from './mesure';
 
 export type EcranPermission = 'pesee' | 'seance' | 'timer' | 'sparring' | 'reglages' | 'essai' | 'onboarding' | 'nouveautes' | 'coffre';
 
@@ -103,6 +103,7 @@ export async function demanderPermissionSysteme(ecran: EcranPermission): Promise
     const r = await Notifications.requestPermissionsAsync();
     const ok = r.status === 'granted';
     noter(ok ? 'notif_permission_acceptee' : 'notif_permission_refusee', { ecran });
+    noterAutorisation(ok);
     return ok;
   } catch (err) {
     logger.warn('[Permission notif] demande système impossible', err);
