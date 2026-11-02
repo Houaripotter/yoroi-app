@@ -12,6 +12,7 @@ import { traduire } from '@/lib/i18n/tr';
 import { groupesDoublonsPesees, requeteMiseAJourPesee, requetePeseeExistante } from '@/lib/v2/pesee/miseAJourPesee';
 import { joursDeSuitePesee, poidsDuJour, poidsDuJourDabord } from '@/lib/v2/pesee/poidsDuJour';
 import type { LignePesee, ModifPesee } from '@/lib/v2/pesee/miseAJourPesee';
+import { colonnesSourceKcal, kcalPositives, type SourceKcal } from '@/lib/v2/seance/sourceKcal';
 
 /** 28 octobre 2026 : copie de securite locale avant une suppression groupee. Jamais bloquante. */
 const copieAvantSuppression = async (database: SQLite.SQLiteDatabase, raison: string): Promise<void> => {
@@ -137,12 +138,14 @@ export const initDatabase = async () => {
 };
 
 // Version du schema (information pour le diagnostic : les migrations restent idempotentes et ne dependent pas de ce numero)
-const SCHEMA_VERSION = 30;
+// 31 (2 novembre 2026) : trainings.calories_source, calories_appareil, calories_mesurees.
+// Monter ce numero declenche aussi la copie de securite avant migration, meme sans nouveau numero de version.
+const SCHEMA_VERSION = 31;
 
 const _performInit = async () => {
   const database = await _openReal();
   // Copie de securite de la base et des cles AVANT toute migration (une fois par nouvelle version)
-  await snapshotBeforeMigrations(database).catch(() => null);
+  await snapshotBeforeMigrations(database, SCHEMA_VERSION).catch(() => null);
   try {
     await _runMigrations(database);
   } catch (e) {
@@ -294,6 +297,17 @@ const _runMigrations = async (database: SQLite.SQLiteDatabase) => {
   await safeAddColumn(database, 'trainings', 'what_didnt_work', 'TEXT');
   await safeAddColumn(database, 'trainings', 'session_rating', 'INTEGER');
   await safeAddColumn(database, 'trainings', 'session_mood', 'TEXT');
+
+  // 2 novembre 2026 (cartes v7) : d'ou viennent les kcal d'une seance. Les anciennes seances gardent ces colonnes
+  // VIDES (on ne sait pas d'ou viennent leurs kcal) : aucune ligne existante n'est modifiee.
+  //   calories_source   : 'saisie' | 'sante' | 'appareil' | 'inconnue' | vide
+  //   calories_appareil : 'Apple Watch', 'Garmin', 'Montre YOROI'... ou vide
+  //   calories_mesurees : les kcal telles que recues de l'appareil ou de Sante (garde-fou des cartes), sinon vide
+  // RETOUR ARRIERE : arreter de lire et d'ecrire ces 3 colonnes (kcalPourCarte renvoie de nouveau undefined).
+  // Rien n'est supprime : jamais de DROP, les colonnes restent dans la base, vides ou non, sans effet.
+  await safeAddColumn(database, 'trainings', 'calories_source', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'calories_appareil', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'calories_mesurees', 'INTEGER');
 
   // Table Planning Semaine Type
   await database.execAsync(`
@@ -816,6 +830,10 @@ export interface Training {
   workout_details_json?: string;
   weekly_plan_id?: number;
   created_at?: string;
+  // 2 novembre 2026 : d'ou viennent les kcal (lib/v2/seance/sourceKcal.ts). Vides sur les anciennes seances.
+  calories_source?: SourceKcal | null;
+  calories_appareil?: string | null;
+  calories_mesurees?: number | null;
   // Joined fields
   club_name?: string;
   club_logo?: string;
@@ -1119,6 +1137,19 @@ export const addTraining = async (input: Training): Promise<number> => {
       [data.healthkit_uuid]
     );
     if (existing?.id) {
+      // 2 novembre 2026 : les kcal ne sont completees que si elles etaient vides, leur source suit la meme regle
+      // (avant la mise a jour des kcal ci-dessous : la condition lit encore les anciennes kcal)
+      const src = kcalPositives(data.calories) != null ? colonnesSourceKcal(data) : null;
+      if (src?.calories_source) {
+        try {
+          await database.runAsync(
+            'UPDATE trainings SET calories_source = ?, calories_appareil = ?, calories_mesurees = ? WHERE id = ? AND calories IS NULL',
+            [src.calories_source, src.calories_appareil, src.calories_mesurees, existing.id]
+          );
+        } catch (e) {
+          logger.warn('[DB] Source des kcal non completee', e);
+        }
+      }
       // Compléter les infos manquantes (ex : séance détectée d'abord sans calories ni distance)
       await database.runAsync(
         `UPDATE trainings SET
@@ -1162,6 +1193,7 @@ export const addTraining = async (input: Training): Promise<number> => {
     throw new Error('Failed to insert training record');
   }
   await writeScoreEtCadre(database, result.lastInsertRowId, data);
+  await ecrireSourceKcal(database, result.lastInsertRowId, data as Record<string, unknown>);
   return result.lastInsertRowId;
 };
 
@@ -1206,6 +1238,8 @@ export const updateTraining = async (id: number, input: Partial<Training>): Prom
      data.session_rating ?? null, data.session_mood || null, id]
   );
   await writeScoreEtCadre(database, id, data);
+  // Les kcal sont toujours reecrites ci-dessus (absentes = effacees) : la source suit la meme regle
+  await ecrireSourceKcal(database, id, 'calories' in data ? (data as Record<string, unknown>) : { ...data, calories: null });
   // Theme technique et types de seance : ecrits seulement s'ils sont fournis (pas d'effacement involontaire)
   if ('technical_theme' in data) {
     await database.runAsync('UPDATE trainings SET technical_theme = ? WHERE id = ?', [data.technical_theme || null, id]);
@@ -1238,6 +1272,24 @@ const writeScoreEtCadre = async (database: any, id: number, data: Partial<Traini
   if ('lieu_type' in data) { sets.push('lieu_type = ?'); vals.push(data.lieu_type ?? null); }
   if (!sets.length || !id) return;
   await database.runAsync(`UPDATE trainings SET ${sets.join(', ')} WHERE id = ?`, [...vals, id]);
+};
+
+/**
+ * 2 novembre 2026 : les 3 colonnes de la source des kcal (lib/v2/seance/sourceKcal.ts, colonnesSourceKcal).
+ * Ecrites seulement si elles sont fournies, effacees si les kcal sont effacees, jamais effacees par oubli.
+ * Jamais bloquant : colonnes absentes (migration ratee), la seance est quand meme enregistree.
+ */
+const ecrireSourceKcal = async (database: any, id: number, data: Record<string, unknown>): Promise<void> => {
+  const c = id ? colonnesSourceKcal(data) : null;
+  if (!c) return;
+  try {
+    await database.runAsync(
+      'UPDATE trainings SET calories_source = ?, calories_appareil = ?, calories_mesurees = ? WHERE id = ?',
+      [c.calories_source, c.calories_appareil, c.calories_mesurees, id]
+    );
+  } catch (e) {
+    logger.warn('[DB] Source des kcal non enregistree', e);
+  }
 };
 
 export const updateTrainingDetails = async (id: number, detailsJson: string): Promise<void> => {
