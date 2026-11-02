@@ -29,6 +29,8 @@
  * pinces pour l'agrandir ou le reduire, comme dans une story. « Replacer » le remet a sa place. Le placement est
  * garde par modele et par format le temps de l'edition seulement ; la capture (enregistrer, partager) le garde.
  * Pas pour la carte holographique ni la Retrospective (voir lib/v2/cartes/zoneVisage.ts).
+ * 2 novembre 2026 (cartes v10) : avec l'interrupteur du Studio createur sur « nouveau », les cartes que le nouveau moteur
+ * connait s'ouvrent dans son studio (components/yoroi/v2/cartes/moteur/StudioMoteur.tsx). Ancien moteur par defaut.
  */
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
@@ -42,7 +44,8 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon, RoundButton, type IconName } from '@/components/yoroi/v2/espace/ui';
 import { Interrupteur } from '@/components/yoroi/v2/reglages/kit';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
-import { aClairSombre, CarteApercu, CARTE_W, explicationModele, HAUTEURS, modeleEffectif, modelesPour, sortieTransparente } from '@/components/yoroi/v2/cartes/CarteRendu';
+import { aClairSombre, CarteApercu, CARTE_W, explicationModele, HAUTEURS, modeleEffectif, modelesPour, nouveauMoteurPour, sortieTransparente } from '@/components/yoroi/v2/cartes/CarteRendu';
+import { StudioMoteur } from '@/components/yoroi/v2/cartes/moteur/StudioMoteur';
 import { estAutocollant, estDirection } from '@/lib/v2/cartes/directions';
 import { blocMobile, bornerPlacement, estDeplace, PLACEMENT_DEFAUT } from '@/lib/v2/cartes/zoneVisage';
 import type { Placement } from '@/lib/v2/cartes/zoneVisage';
@@ -395,6 +398,10 @@ export default function CarteEditeur() {
       </View>
     );
   }
+
+  // 2 novembre 2026 (cartes v10) : interrupteur du Studio createur sur « nouveau » : le studio du nouveau moteur.
+  // La carte Avant apres garde cet ecran (choix des photos, flou), dessinee par le nouveau moteur via CarteRendu.
+  if (data && !aa && nouveauMoteurPour(data, k.moteur)) return <StudioMoteur data={data} k={k} onRetour={retour} />;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
