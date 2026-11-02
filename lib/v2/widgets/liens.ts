@@ -4,7 +4,7 @@
  * Un seul format : yoroi://w/<cible>[?params]  (sur le web : /w/<cible>[?params])
  *   w/accueil, w/poids, w/pesee, w/semaine, w/seance, w/seance-faite, w/eau,
  *   w/timer?mode=combat (chrono rounds avec ton dernier reglage), w/chrono-en-cours,
- *   w/combat, w/ajout-combat
+ *   w/combat, w/ajout-combat, et depuis le 28 octobre 2026 w/coach (ta seance du jour) et w/dojo (ton rang)
  * Les anciennes URLs (yoroi://poids-detail, yoroi://timer?mode=combat, yoroi://hydration...) restent comprises.
  *
  * Le lien n'ouvre pas l'ecran tout de suite : il est mis en attente (le dernier gagne), puis
@@ -25,7 +25,9 @@ export type CibleWidget =
   | 'combat'
   | 'ajoutCombat'
   | 'entree'
-  | 'chronoSparring';
+  | 'chronoSparring'
+  | 'coach'
+  | 'dojo';
 
 export type Destination = {
   cible: CibleWidget;
@@ -62,6 +64,9 @@ const ECRANS: Record<CibleWidget, { pathname: string; href?: string; methode: 'p
   // navigation directe : /entry n'est qu'un relais vers /pesee, on ouvre la pesee tout de suite
   entree: { pathname: '/pesee', methode: 'push' },
   chronoSparring: { pathname: '/combat-timer', methode: 'push' },
+  // 28 octobre 2026 : widgets Seance du jour et Ton personnage (direction B)
+  coach: { pathname: '/coach', methode: 'push' },
+  dojo: { pathname: '/dojo', href: '/(tabs)/dojo', methode: 'navigate' },
 };
 
 /** Noms acceptes apres w/ (et anciennes routes sans w/) */
@@ -95,6 +100,10 @@ const ALIAS: Record<string, CibleWidget> = {
   entry: 'entree',
   entree: 'entree',
   'combat-timer': 'chronoSparring',
+  coach: 'coach',
+  'seance-du-jour': 'coach',
+  dojo: 'dojo',
+  rang: 'dojo',
 };
 
 function decoder(s: string): string {
