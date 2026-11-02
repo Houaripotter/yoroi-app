@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Style D (Scenes illustrees, 28 octobre 2026), derive du style A : memes vues et memes id, couleurs pastel -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/yw_graphe" android:layout_width="match_parent" android:layout_height="match_parent">
+  <ImageView android:id="@+id/yw_g_ligne" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:tint="@color/yw_d_tirets" android:importantForAccessibility="no" />
+  <ImageView android:id="@+id/yw_g_courbe" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:tint="@color/yw_d_indigo" android:importantForAccessibility="no" />
+  <ImageView android:id="@+id/yw_g_pt_allure" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:tint="@color/yw_d_titre" android:visibility="gone" android:importantForAccessibility="no" />
+  <ImageView android:id="@+id/yw_g_pt_dessus" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:tint="@color/yw_d_titre" android:visibility="gone" android:importantForAccessibility="no" />
+  <ImageView android:id="@+id/yw_g_pt_vite" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:tint="@color/yw_d_titre" android:visibility="gone" android:importantForAccessibility="no" />
+  <ImageView android:id="@+id/yw_g_pt_aucun" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:tint="@color/yw_d_titre" android:visibility="gone" android:importantForAccessibility="no" />
+</FrameLayout>
