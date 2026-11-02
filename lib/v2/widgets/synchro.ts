@@ -21,10 +21,10 @@ import { ESPACE_CHANGED_EVENT, getEspace } from '@/lib/v2/espace';
 import { construireContexte } from '@/lib/v2/montre/contexte';
 import { lireSourcesContexte } from '@/lib/v2/montre/sources';
 import { appliquerCharges } from '@/lib/v2/montre/actions';
-import { appliquerActionsIle, estActionIle, lireActionIle, transmettreActionsIle } from '@/lib/v2/seance/actionsIle';
+import { estActionIle, lireActionIle } from '@/lib/v2/seance/actionsIle';
 import type { ActionIle } from '@/lib/v2/seance/actionsIle';
-import { ecrireBrouillon, loadDraft } from '@/lib/v2/seance/model';
-import { annulerMinuteurRepos } from './activiteSeance';
+import { appliquerActionsIleApp } from '@/lib/v2/seance/ileApp';
+import { PROGRAMME_CHANGED_EVENT } from '@/lib/v2/programmes/suivi';
 import { CHRONOS_CHANGED_EVENT } from '@/lib/v2/montre/synchro';
 import { personnageImage, sceneForNow } from '@/components/yoroi/v2/accueil/images';
 import { aUnPersonnage } from '@/lib/v2/dojo/personnages';
@@ -38,6 +38,7 @@ import {
   ecrirePersonnageNatif,
   ecrireSceneNatif,
   ecrireStyleNatif,
+  envoyerImagesMontreNatif,
   rechargerWidgetsNatif,
   retirerActionsNatif,
   widgetsDisponibles,
@@ -51,25 +52,31 @@ let dernierInstantane = '';
 let derniereScene = '';
 let dernierPerso = '';
 let styleEnvoye = false;
+/** 28 octobre 2026 : ta scene et ton personnage reduits sont passes a l'Apple Watch au moins une fois depuis le lancement */
+let imagesMontreEnvoyees = false;
 let enCours: Promise<boolean> | null = null;
 let lecture: Promise<void> | null = null;
 let demarree = false;
 
 /** La scene d'Accueil choisie (celle du moment pour le dojo), copiee reduite par le natif si elle a change */
-async function majScene(): Promise<void> {
+async function majScene(): Promise<boolean> {
   try {
     const e = await getEspace();
     const r = Image.resolveAssetSource(sceneForNow(e.scene));
     const uri = r?.uri ?? '';
-    if (!uri || uri === derniereScene) return;
-    if (await ecrireSceneNatif(uri)) derniereScene = uri;
+    if (!uri || uri === derniereScene) return false;
+    if (await ecrireSceneNatif(uri)) {
+      derniereScene = uri;
+      return true;
+    }
   } catch (e) {
     logger.warn('[Widgets] scene non copiee', e);
   }
+  return false;
 }
 
 /** Ton personnage au rang de l'Accueil (style C), copie par le natif s'il a change ; rien si « Sans personnage » */
-async function majPersonnage(): Promise<void> {
+async function majPersonnage(): Promise<boolean> {
   try {
     const e = await getEspace();
     let uri = '';
@@ -79,10 +86,28 @@ async function majPersonnage(): Promise<void> {
       uri = Image.resolveAssetSource(personnageImage(e.personnage, rang))?.uri ?? '';
     }
     const cle = uri || 'aucun';
-    if (cle === dernierPerso) return;
-    if (await ecrirePersonnageNatif(uri)) dernierPerso = cle;
+    if (cle === dernierPerso) return false;
+    if (await ecrirePersonnageNatif(uri)) {
+      dernierPerso = cle;
+      return true;
+    }
   } catch (e) {
     logger.warn('[Widgets] personnage non copie', e);
+  }
+  return false;
+}
+
+/**
+ * 28 octobre 2026 : la montre affiche ton personnage (Accueil, alarme, complications) et ta scene. Le natif
+ * reprend les images deja copiees pour les widgets, les reduit et les passe a la montre jumelee
+ * (WatchConnectivity, rien ne sort de tes appareils). Une fois par lancement, puis a chaque changement.
+ */
+async function majImagesMontre(changees: boolean): Promise<void> {
+  if (imagesMontreEnvoyees && !changees) return;
+  try {
+    if (await envoyerImagesMontreNatif()) imagesMontreEnvoyees = true;
+  } catch (e) {
+    logger.warn('[Widgets] images non passees a la montre', e);
   }
 }
 
@@ -113,7 +138,8 @@ export async function ecrireWidgets(force = false): Promise<boolean> {
   if (enCours) await enCours.catch(() => false);
   enCours = (async () => {
     try {
-      const ctx = construireContexte(await lireSourcesContexte());
+      // 28 octobre 2026 : la seance en cours sert a la montre seule ; les widgets ne sont pas redessines a chaque serie
+      const { seance: _seance, ...ctx } = construireContexte(await lireSourcesContexte());
       const { genere, ...reste } = ctx;
       // le jour compte : l'eau d'un instantane d'hier ne s'affiche pas aujourd'hui
       const empreinte = `${localISO()}|${JSON.stringify(reste)}`;
@@ -125,9 +151,10 @@ export async function ecrireWidgets(force = false): Promise<boolean> {
           await rechargerWidgetsNatif();
         }
       }
-      await majScene();
-      await majPersonnage();
+      const sceneNeuve = await majScene();
+      const persoNeuf = await majPersonnage();
       await majSaison();
+      await majImagesMontre(sceneNeuve || persoNeuf);
       return true;
     } catch (e) {
       logger.warn('[Widgets] instantane non ecrit', e);
@@ -154,19 +181,6 @@ const idDe = (a: unknown): string | null => {
   return typeof id === 'string' && id ? id : null;
 };
 
-/**
- * Appuis de la Dynamic Island : l'écran de la séance ouvert les prend (il garde la séance en mémoire) ;
- * fermé, ils vont au brouillon enregistré, que l'écran relit à son ouverture.
- */
-async function appliquerIle(actions: ActionIle[]): Promise<void> {
-  if (actions.length === 0) return;
-  annulerMinuteurRepos();
-  if (transmettreActionsIle(actions)) return;
-  const d = await loadDraft();
-  if (!d || d.kind !== 'muscu' || d.form || d.editId) return;
-  await ecrireBrouillon(appliquerActionsIle(d, actions));
-}
-
 /** Applique les actions faites depuis un widget, vide la file, puis reecrit l'instantane */
 export function recevoirActionsWidgets(): Promise<void> {
   if (!widgetsDisponibles()) return Promise.resolve();
@@ -180,7 +194,7 @@ export function recevoirActionsWidgets(): Promise<void> {
       // 25 octobre 2026 : les appuis « Série faite » et « +15 s » de la Dynamic Island vont à la séance en cours
       const ile = tout.filter(estActionIle);
       if (ile.length > 0) {
-        await appliquerIle(ile.map(lireActionIle).filter((a): a is ActionIle => !!a));
+        await appliquerActionsIleApp(ile.map(lireActionIle).filter((a): a is ActionIle => !!a));
         await retirerActionsNatif(ile.map(idDe).filter((x): x is string => !!x));
       }
       const liste = tout.filter((a) => !estActionIle(a));
@@ -204,7 +218,7 @@ export function demarrerSynchroWidgets(): () => void {
   if (!widgetsDisponibles() || demarree) return () => undefined;
   demarree = true;
   recevoirActionsWidgets().finally(() => planifierWidgets());
-  const evts = [DATA_CHANGED_EVENT, HYDRATION_AMOUNT_EVENT, HYDRATION_GOAL_EVENT, ESPACE_CHANGED_EVENT, TORII_EVENT, CHRONOS_CHANGED_EVENT, ARMURE_CHANGED_EVENT, DECORATIONS_SAISON_EVENT].map((e) =>
+  const evts = [DATA_CHANGED_EVENT, HYDRATION_AMOUNT_EVENT, HYDRATION_GOAL_EVENT, ESPACE_CHANGED_EVENT, TORII_EVENT, CHRONOS_CHANGED_EVENT, ARMURE_CHANGED_EVENT, DECORATIONS_SAISON_EVENT, PROGRAMME_CHANGED_EVENT].map((e) =>
     DeviceEventEmitter.addListener(e, planifierWidgets),
   );
   const app = AppState.addEventListener('change', (s) => {
