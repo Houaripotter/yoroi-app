@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Style D : triangle de lecture du bouton Commencer -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="12dp" android:height="12dp" android:viewportWidth="24" android:viewportHeight="24">
+  <path android:fillColor="@color/yw_d_sur_indigo" android:pathData="M6,3.5 C6,2.7 6.9,2.2 7.6,2.7 L20.6,11.2 C21.2,11.6 21.2,12.4 20.6,12.8 L7.6,21.3 C6.9,21.8 6,21.3 6,20.5 Z" />
+</vector>
