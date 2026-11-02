@@ -98,7 +98,8 @@ describe('la mise en page de l autocollant, pour chaque sport', () => {
   });
 
   test('proposee pour la seance, le record, la course, le JJB et la marche, jamais pour les autres familles', () => {
-    expect(AVEC_AUTOCOLLANT).toEqual(['muscu', 'record', 'course', 'jjb', 'marche']);
+    // 2 novembre 2026 (studio unique) : et les familles ajoutees (pesee, mois, objectif, exploit, autre sport)
+    expect(AVEC_AUTOCOLLANT).toEqual(['muscu', 'record', 'course', 'jjb', 'marche', 'pesee', 'mois', 'objectif', 'exploit', 'sport']);
     for (const x of DIX_FAMILLES) {
       const l = compositionsPour(x.d, x.famille as FamilleMoteur);
       if (AVEC_AUTOCOLLANT.includes(x.famille as FamilleMoteur)) expect(l).toContain('autocollant');
