@@ -19928,5 +19928,19 @@
 "La séance de chaque jour, mêmes dates": "La sessione di ogni giorno, stesse date",
 "Garder comme mon programme ?": "Tenere come il mio programma?",
 "Ta semaine mixte devient ton programme, sans fin, dans Mes programmes. Tes séances faites et tes charges restent.": "La tua settimana mista diventa il tuo programma, senza fine, in I miei programmi. Le sessioni fatte e i tuoi carichi restano.",
-"Il rejoint Mes programmes, sans fin": "Entra in I miei programmi, senza fine"
+"Il rejoint Mes programmes, sans fin": "Entra in I miei programmi, senza fine",
+"Ton premier programme commencé ou créé": "Il tuo primo programma iniziato o creato",
+"10 records personnels": "10 record personali",
+"25 records personnels": "25 record personali",
+"1 par jour, jusqu’à {0} avec ta série et +{1} au grand coffre tous les 7 jours, les jours de séance, pesée, mensurations ou photo": "1 al giorno, fino a {0} con la tua serie e +{1} nel grande forziere ogni 7 giorni, nei giorni con allenamento, pesata, misure o foto",
+"Séance de ton programme": "Allenamento del tuo programma",
+"Séances de programme": "Allenamenti del programma",
+"1 par jour, en plus de la séance": "1 al giorno, in più dell'allenamento",
+"Ton coffre t’attend dans le Dojo": "Il tuo forziere ti aspetta nel Dojo",
+"Dojo, ton coffre est prêt": "Dojo, il tuo forziere è pronto",
+"Je te préviens quand ton coffre est prêt ?": "Ti avviso quando il tuo forziere è pronto?",
+"Un seul rappel doux le soir, seulement si ton coffre attend encore. Tu le coupes quand tu veux dans le Dojo.": "Un solo promemoria discreto la sera, solo se il tuo forziere ti aspetta ancora. Lo disattivi quando vuoi nel Dojo.",
+"Ta première séance. Elle te rapporte 20 XP et fait avancer ta prochaine récompense. Enregistrer une séance": "Il tuo primo allenamento. Ti fa guadagnare 20 XP e avvicina la tua prossima ricompensa. Registra un allenamento",
+"+20 XP et ta prochaine récompense avance": "+20 XP e la tua prossima ricompensa si avvicina",
+"Musculation, course, combat ou une séance déjà faite : tout compte.": "Pesi, corsa, combattimento o un allenamento già fatto: conta tutto."
 }
