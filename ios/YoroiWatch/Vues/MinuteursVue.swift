@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // Minuteurs de repos : En cours, Epingles, Recents, Tous, rond + pour une duree libre.
 // Un toucher lance tout de suite. Modifier : toucher un rond l'epingle ou le retire.
@@ -7,6 +8,8 @@ struct MinuteursVue: View {
   @State private var moteur = MinuteurMoteur.shared
   @State private var routeur = Routeur.shared
   @State private var edition = false
+  /// Rappel montre une seule fois : les vibrations fortes se reglent dans watchOS, pas dans l'app.
+  @AppStorage("yoroi.astuce.vibrationsProno") private var astuceVue = false
 
   var body: some View {
     // La place reelle sous le titre (zone sure comprise) donne la taille des tuiles :
@@ -17,6 +20,9 @@ struct MinuteursVue: View {
       let colonnes = [GridItem(.flexible(), spacing: TailleTuile.ecart), GridItem(.flexible(), spacing: TailleTuile.ecart)]
       ScrollView {
         VStack(alignment: .leading, spacing: TailleTuile.ecart) {
+          if !astuceVue && !edition {
+            AstuceVibrations { astuceVue = true }
+          }
           if !moteur.actifs.isEmpty && !edition {
             section(NSLocalizedString("En cours", comment: ""))
             ForEach(moteur.actifs) { a in
@@ -87,6 +93,15 @@ struct MinuteursVue: View {
               .font(.system(size: 12, weight: .medium, design: .rounded))
               .foregroundStyle(Teinte.texteDoux)
             // Etat de l'alarme du dernier minuteur, pour les essais (programmee, refusee, sonne).
+            // 29 octobre 2026, pour les essais : seance de maintien et chemin de la derniere sonnerie
+            Text(verbatim: "Maintien : \(moteur.etatMaintien)")
+              .font(.system(size: 11, weight: .medium, design: .rounded))
+              .foregroundStyle(Teinte.texteDoux)
+            if !moteur.derniereSonnerieVia.isEmpty {
+              Text(verbatim: "A sonné par : \(moteur.derniereSonnerieVia)")
+                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .foregroundStyle(Teinte.texteDoux)
+            }
             if !moteur.etatAlarme.isEmpty {
               Text("Alarme : \(moteur.etatAlarme)")
                 .font(.system(size: 11, weight: .medium, design: .rounded))
@@ -113,6 +128,37 @@ struct MinuteursVue: View {
   private func lancer(_ s: Int) {
     let id = moteur.lancer(secondes: s)
     routeur.chemin.append(.minuteur(id))
+  }
+}
+
+/// Rappel unique en haut des minuteurs : watchOS garde pour lui l'intensite des vibrations.
+/// Vibrations prononcees ajoute une vibration d'annonce avant chaque alerte.
+struct AstuceVibrations: View {
+  var fermer: () -> Void
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Text("Alarme plus forte")
+        .font(.system(size: 14, weight: .heavy, design: .rounded))
+        .foregroundStyle(Teinte.texte)
+      Text("Sur ta montre : Réglages, Sons et vibrations, active Vibrations prononcées et monte le volume.")
+        .font(.system(size: 12, weight: .medium, design: .rounded))
+        .foregroundStyle(Teinte.texteDoux)
+        .fixedSize(horizontal: false, vertical: true)
+      Button {
+        fermer()
+        Haptique.cran()
+      } label: {
+        Text("Compris")
+          .font(.system(size: 14, weight: .bold, design: .rounded))
+          .frame(maxWidth: .infinity, minHeight: 36)
+          .background(Teinte.accent, in: Capsule())
+          .foregroundStyle(Color.black)
+      }
+      .buttonStyle(StyleAppui())
+    }
+    .padding(10)
+    .background(Teinte.carte, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
   }
 }
 
@@ -219,67 +265,61 @@ struct MinuteurVue: View {
     }
   }
 
+  /// 28 octobre 2026, direction B : le bord de l'ecran se vide comme un anneau, le temps en tres grand au centre.
   private func contenu(_ a: MinuteurActif) -> some View {
-    VStack(spacing: 6) {
-      GeometryReader { g in
-        let m = MesuresAnneau(place: g.size)
-        ZStack {
-          TimelineView(.periodic(from: .now, by: veille ? 1 : 0.2)) { ctx in
-            AnneauMinuteur(
-              progression: a.progression(ctx.date), epaisseur: m.epaisseur,
-              couleur: Teinte.minuteur(a.dureeS), couleurClaire: Teinte.minuteurClair(a.dureeS)
-            )
-              .opacity(veille ? 0.55 : 1)
-          }
-          VStack(spacing: 0) {
-            if m.libelleHaut {
-              Text(Format.dureeCourte(a.dureeS))
-                .font(.system(size: m.tailleLibelle, weight: .heavy, design: .rounded))
-                .foregroundStyle(Teinte.minuteur(a.dureeS))
-            }
-            temps(a)
-              .font(.chiffre(m.tailleTemps, .bold))
-              .foregroundStyle(a.enPause ? Teinte.texteDoux : Teinte.texte)
-            if m.libelleBas {
-              Text(a.enPause ? NSLocalizedString("En pause", comment: "") : String(format: NSLocalizedString("fin à %@", comment: ""), "\(Format.heure(a.fin ?? Date()))"))
-                .font(.system(size: m.tailleLibelle, weight: .bold, design: .rounded))
-                .foregroundStyle(Teinte.texteDoux)
-            }
-          }
-          .lineLimit(1)
-          .minimumScaleFactor(0.5)
-          .multilineTextAlignment(.center)
-          .frame(width: m.largeurTexte)
-        }
-        .frame(width: m.diametre, height: m.diametre)
-        .position(x: g.size.width / 2, y: g.size.height / 2)
+    let couleur = Teinte.minuteur(a.dureeS)
+    return ZStack {
+      TimelineView(.periodic(from: .now, by: veille ? 1 : 0.2)) { ctx in
+        AnneauBord(progression: a.progression(ctx.date), couleur: couleur, piste: couleur.opacity(0.18), epaisseur: 7)
+          .opacity(veille ? 0.55 : 1)
       }
+      .ignoresSafeArea()
 
-      if !veille {
-        HStack(spacing: 0) {
-          boutonRond(icone: "xmark", fond: Teinte.plateau2, texte: Teinte.texte, largeur: 46) {
-            moteur.annuler(a.id)
+      VStack(spacing: 2) {
+        Capitales(texte: SeanceGuidee.shared.estRepos(a.id) ? NSLocalizedString("Repos", comment: "") : NSLocalizedString("Minuteur", comment: ""), couleur: couleur)
+        Text(Format.dureeCourte(a.dureeS))
+          .font(.system(size: 15, weight: .heavy, design: .rounded))
+          .foregroundStyle(couleur)
+          .lineLimit(1)
+        temps(a)
+          .font(.chiffre(64, .heavy))
+          .foregroundStyle(a.enPause ? Teinte.texteDoux : Teinte.texte)
+          .lineLimit(1)
+          .minimumScaleFactor(0.45)
+        Text(a.enPause ? NSLocalizedString("En pause", comment: "") : String(format: NSLocalizedString("fin à %@", comment: ""), "\(Format.heure(a.fin ?? Date()))"))
+          .font(.system(size: 12, weight: .bold, design: .rounded))
+          .foregroundStyle(Teinte.texteDoux)
+          .lineLimit(1)
+        Spacer(minLength: 2)
+        if !veille {
+          HStack(spacing: 0) {
+            boutonRond(icone: "xmark", fond: Teinte.plateau2, texte: Teinte.texte, largeur: 46) {
+              moteur.annuler(a.id)
+            }
+            .accessibilityLabel("Annuler")
+            Spacer(minLength: 4)
+            boutonRond(icone: a.enPause ? "play.fill" : "pause.fill", fond: couleur, texte: Color.black, largeur: 64) {
+              moteur.basculerPause(a.id)
+            }
+            .accessibilityLabel(a.enPause ? NSLocalizedString("Reprendre", comment: "") : NSLocalizedString("Pause", comment: ""))
+            Spacer(minLength: 4)
+            Button {
+              moteur.ajouter30(a.id)
+            } label: {
+              Text("+30")
+                .font(.system(size: 15, weight: .heavy, design: .rounded))
+                .foregroundStyle(Teinte.texte)
+                .frame(width: 46, height: 46)
+                .background(Teinte.plateau2, in: Capsule())
+            }
+            .buttonStyle(StyleAppui())
+            .accessibilityLabel("Ajouter 30 secondes")
           }
-          .accessibilityLabel("Annuler")
-          Spacer(minLength: 4)
-          boutonRond(icone: a.enPause ? "play.fill" : "pause.fill", fond: Teinte.minuteur(a.dureeS), texte: Color.black, largeur: 64) {
-            moteur.basculerPause(a.id)
-          }
-          .accessibilityLabel(a.enPause ? NSLocalizedString("Reprendre", comment: "") : NSLocalizedString("Pause", comment: ""))
-          Spacer(minLength: 4)
-          Button {
-            moteur.ajouter30(a.id)
-          } label: {
-            Text("+30")
-              .font(.system(size: 15, weight: .heavy, design: .rounded))
-              .foregroundStyle(Teinte.texte)
-              .frame(width: 46, height: 46)
-              .background(Teinte.plateau2, in: Capsule())
-          }
-          .buttonStyle(StyleAppui())
-          .accessibilityLabel("Ajouter 30 secondes")
         }
       }
+      .multilineTextAlignment(.center)
+      .padding(.horizontal, 10)
+      .padding(.top, 4)
     }
   }
 
@@ -308,84 +348,174 @@ struct MinuteurVue: View {
 
 // MARK: Fin du minuteur
 
-/// Ecran Termine, en calque par-dessus toute l'app (voir RacineVue).
-/// Arreter coupe tout du premier toucher ; Repeter relance la meme duree. Sans toucher, ca s'arrete seul au bout de 2 min.
-/// Couleur de la tranche de duree du minuteur (la meme que son rond et son anneau).
+/// Ecran de fin, en calque par-dessus toute l'app (voir RacineVue).
+/// 28 octobre 2026, direction B : plein ecran peche seulement pendant qu'il sonne, ton personnage qui vibre,
+/// 0:00 en grand, Arreter et Repeter tres gros. Arreter coupe tout du premier toucher ; Repeter relance la meme
+/// duree. Sans toucher, ca s'arrete seul au bout de 5 min. Fin d'un repos de la seance guidee : « Repos fini »
+/// et la serie qui vient. En veille (poignet baisse, ecran toujours allume), l'ecran reste la, assombri par watchOS.
 struct AlarmeMinuteurVue: View {
   @State private var moteur = MinuteurMoteur.shared
   @State private var routeur = Routeur.shared
+  @State private var synchro = Synchro.shared
+  @State private var guidee = SeanceGuidee.shared
   @State private var pulsation = false
-  /// Gardee a l'ouverture : la couleur ne change pas pendant que l'ecran s'efface.
-  @State private var couleur: Color = MinuteurMoteur.shared.sonnerie.map { Teinte.minuteur($0.dureeS) } ?? Teinte.accent
+  @Environment(\.isLuminanceReduced) private var veille
+
+  /// Fin du repos de ta seance guidee (et pas d'un minuteur lance a la main).
+  private var finDeRepos: Bool {
+    guard let s = moteur.sonnerie else { return false }
+    return guidee.estRepos(s.id)
+  }
+
+  private var titre: String {
+    finDeRepos ? NSLocalizedString("Repos fini", comment: "") : NSLocalizedString("Temps écoulé", comment: "")
+  }
+
+  private var sousTitre: String {
+    if finDeRepos, let e = guidee.seance?.exoCourant, !e.fini {
+      return String(format: NSLocalizedString("Au boulot, série %@ sur %@", comment: ""), "\(e.faites + 1)", "\(e.total)")
+    }
+    if finDeRepos { return NSLocalizedString("Au boulot", comment: "") }
+    if let s = moteur.sonnerie { return String(format: NSLocalizedString("Minuteur de %@", comment: ""), "\(Format.dureeCourte(s.dureeS))") }
+    return ""
+  }
 
   var body: some View {
     GeometryReader { g in
-      // Place laissee a la cloche une fois poses le titre (27), la ligne du dessous (16),
-      // les boutons (44) et les cinq espaces de 4 pt.
-      let cloche = max(44, min(104, g.size.height - 108, g.size.width * 0.62))
-      VStack(spacing: 4) {
-        Spacer(minLength: 0)
-        ZStack {
-          // Meme squircle que les tuiles et le minuteur en cours.
-          Squircle().fill(couleur.opacity(0.14)).scaleEffect(pulsation ? 1 : 0.86)
-          Squircle().fill(couleur.opacity(0.24)).padding(cloche * 0.09).scaleEffect(pulsation ? 1 : 0.9)
-          Squircle().fill(couleur).padding(cloche * 0.18)
-          Image(systemName: "bell.fill")
-            .font(.system(size: (cloche * 0.27).rounded(), weight: .bold))
-            .foregroundStyle(Color.black)
-        }
-        .frame(width: cloche, height: cloche)
+      let k = min(g.size.width / 185, g.size.height / 225)
+      ZStack {
+        RadialGradient(
+          colors: [Color(hexa: 0xFFE4DA), Teinte.peche, Color(hexa: 0xFF9E82)],
+          center: UnitPoint(x: 0.5, y: 0.38), startRadius: 0, endRadius: max(g.size.width, g.size.height) * 0.75
+        )
+        .opacity(veille ? 0.55 : 1)
+        .ignoresSafeArea()
 
-        Text("Terminé")
-          .font(.system(size: 22, weight: .heavy, design: .rounded))
-          .lineLimit(1)
-        if let s = moteur.sonnerie {
-          Text("Minuteur de \(Format.dureeCourte(s.dureeS))")
-            .font(.system(size: 13, weight: .bold, design: .rounded))
-            .foregroundStyle(Teinte.texteDoux)
+        VStack(spacing: 0) {
+          HStack(spacing: 10 * k) {
+            Vibration(sens: -1, couleur: Teinte.pecheTexte, taille: 20 * k, actif: pulsation)
+            avatar(46 * k)
+            Vibration(sens: 1, couleur: Teinte.pecheTexte, taille: 20 * k, actif: pulsation)
+          }
+          .padding(.top, 2 * k)
+
+          Text("0:00")
+            .font(.chiffre(54 * k, .heavy))
+            .foregroundStyle(Teinte.pecheTexte)
             .lineLimit(1)
-            .minimumScaleFactor(0.8)
-        }
-        Spacer(minLength: 0)
+            .minimumScaleFactor(0.6)
+            .padding(.top, -2 * k)
 
-        HStack(spacing: 8) {
-          Button {
-            moteur.arreterSonnerie()
-          } label: {
-            Text("Arrêter")
-              .font(.system(size: 15, weight: .heavy, design: .rounded))
-              .lineLimit(1)
-              .minimumScaleFactor(0.8)
-              .foregroundStyle(Color.black)
-              .frame(maxWidth: .infinity, minHeight: 44)
-              .background(couleur, in: Capsule())
-              .contentShape(Capsule())
+          Text(titre)
+            .font(.system(size: 17 * k, weight: .heavy, design: .rounded))
+            .foregroundStyle(Teinte.navy)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+          Text(sousTitre)
+            .font(.system(size: 12 * k, weight: .bold, design: .rounded))
+            .foregroundStyle(Teinte.pecheSous)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .padding(.top, 1)
+
+          Spacer(minLength: 4 * k)
+
+          HStack(spacing: 6 * k) {
+            Button {
+              moteur.arreterSonnerie()
+            } label: {
+              Text("Arrêter")
+                .font(.system(size: 17 * k, weight: .heavy, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .foregroundStyle(Color.white)
+                .frame(maxWidth: .infinity, minHeight: max(46, 48 * k))
+                .background(Teinte.navy, in: Capsule())
+                .contentShape(Capsule())
+            }
+            .buttonStyle(StyleAppui())
+            .accessibilityLabel("Arrêter")
+            Button {
+              if let id = moteur.relancer() { routeur.chemin = [.minuteurs, .minuteur(id)] }
+            } label: {
+              Image(systemName: "arrow.clockwise")
+                .font(.system(size: 20 * k, weight: .heavy))
+                .foregroundStyle(Teinte.navy)
+                .frame(width: max(46, 48 * k), height: max(46, 48 * k))
+                .background(Color.white.opacity(0.72), in: Circle())
+                .contentShape(Circle())
+            }
+            .buttonStyle(StyleAppui())
+            .accessibilityLabel("Répéter")
           }
-          .buttonStyle(StyleAppui())
-          Button {
-            if let id = moteur.relancer() { routeur.chemin = [.minuteurs, .minuteur(id)] }
-          } label: {
-            Text("Répéter")
-              .font(.system(size: 14, weight: .heavy, design: .rounded))
-              .lineLimit(1)
-              .minimumScaleFactor(0.8)
-              .foregroundStyle(Teinte.texte)
-              .frame(maxWidth: .infinity, minHeight: 44)
-              .background(Teinte.plateau2, in: Capsule())
-              .contentShape(Capsule())
-          }
-          .buttonStyle(StyleAppui())
         }
+        .padding(.horizontal, 8 * k)
+        .padding(.bottom, 2)
+        .frame(width: g.size.width, height: g.size.height)
       }
-      .frame(width: g.size.width, height: g.size.height)
     }
-    .padding(.horizontal, 6)
-    .background(Teinte.fond.ignoresSafeArea())
     .onAppear {
-      if let s = moteur.sonnerie { couleur = Teinte.minuteur(s.dureeS) }
       guard moteur.sonneEnBoucle else { return }
-      withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { pulsation = true }
+      withAnimation(.easeInOut(duration: 0.45).repeatForever(autoreverses: true)) { pulsation = true }
     }
+  }
+
+  /// Ton personnage dans un rond blanc (ou le torii tant que l'iPhone ne l'a pas envoye).
+  @ViewBuilder private func avatar(_ d: CGFloat) -> some View {
+    ZStack {
+      Circle().fill(Color.white)
+      if let p = synchro.personnageAffiche {
+        Image(uiImage: p)
+          .resizable()
+          .scaledToFill()
+          .frame(width: d * 1.9, height: d * 1.9)
+          .offset(y: d * 0.42)
+          .frame(width: d - 6, height: d - 6)
+          .clipShape(Circle())
+      } else {
+        Torii(couleur: Teinte.torii).padding(d * 0.24)
+      }
+    }
+    .frame(width: d, height: d)
+    .scaleEffect(pulsation ? 1.06 : 1)
+    .accessibilityHidden(true)
+  }
+}
+
+/// Les ondes de la vibration, de part et d'autre du personnage : (( et )).
+struct Vibration: View {
+  /// -1 a gauche, 1 a droite
+  var sens: CGFloat
+  var couleur: Color
+  var taille: CGFloat
+  var actif: Bool
+
+  var body: some View {
+    ZStack {
+      Onde(sens: sens).stroke(couleur, style: StrokeStyle(lineWidth: max(2, taille * 0.1), lineCap: .round))
+        .frame(width: taille * 0.45, height: taille * 0.75)
+        .offset(x: sens * taille * 0.12)
+      Onde(sens: sens).stroke(couleur.opacity(0.7), style: StrokeStyle(lineWidth: max(2, taille * 0.1), lineCap: .round))
+        .frame(width: taille * 0.6, height: taille)
+        .offset(x: sens * taille * 0.32)
+    }
+    .frame(width: taille, height: taille)
+    .opacity(actif ? 1 : 0.55)
+    .accessibilityHidden(true)
+  }
+}
+
+/// Un arc vertical tourne vers l'exterieur.
+struct Onde: Shape {
+  var sens: CGFloat
+
+  func path(in r: CGRect) -> Path {
+    var p = Path()
+    let x0 = sens < 0 ? r.maxX : r.minX
+    let x1 = sens < 0 ? r.minX : r.maxX
+    p.move(to: CGPoint(x: x0, y: r.minY))
+    p.addQuadCurve(to: CGPoint(x: x0, y: r.maxY), control: CGPoint(x: x1, y: r.midY))
+    return p
   }
 }
 
