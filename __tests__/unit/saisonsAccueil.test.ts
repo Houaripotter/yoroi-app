@@ -398,6 +398,10 @@ describe('28 octobre 2026 : accueil plus compact', () => {
     expect(c).toContain("couleurActivite('pas')");
     expect(c).toContain('<Circle cx={12} cy={12} r={12} fill={A.vert} />');
     expect(c).not.toContain('P.moss');
+    // le point du prochain palier en rose, le texte bleu sans reflet vert, le chiffre du rythme en couleur
+    expect(c).toContain('<Circle cx={14} cy={14} r={4.3} fill={A.rose} />');
+    expect(c).toContain('bleuTexte: paletteSombre() ? bleu.anneau : P.indigo,');
+    expect(c).toContain("phrase.ton === 'bleu' ? anneaux.roseTexte");
     expect(c).toContain('etatsLignePaliers(start, goal, last.value, chemin.part, atteint)');
     expect(lire('app/(tabs)/progres.tsx')).toContain('<CheminPierres ');
     expect(c).not.toMatch(/plein: '#/);
