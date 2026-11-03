@@ -61,7 +61,7 @@ const RELAIS: Record<string, string> = {
   '/health-metrics': '/sante',
   '/benchmark': '/records',
   '/performance-detail': '/activity-detail',
-  '/history': '/(tabs)/seances',
+  // 3 novembre 2026 : /history n'est plus un relais, c'est l'historique complet de tes séances (app/history.tsx)
   '/badges': '/dojo/sceaux',
 };
 
