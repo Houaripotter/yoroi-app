@@ -216,6 +216,11 @@ type Props = {
    * cache dans Personnaliser) ; null : aucun jour de pesee choisi.
    */
   pesee?: ReturnType<typeof prochainePesee>;
+  /**
+   * 3 novembre 2026 : un decor est pose au dessus de la pastille de pesee (l'accueil le sait, la carte ne le dessine pas).
+   * Sans decor, la pastille remonte dans sa place (PESEE_CARTE_POIDS.hautSansDecor).
+   */
+  avecDecor?: boolean;
 };
 
 /** 27 octobre 2026 soir : la carte en blanc pur, un voile lilas pastel en haut qui s'efface vers le blanc */
@@ -254,8 +259,10 @@ const HAUT_OBJECTIF = 26;
  * centre (54) un peu au dessus de celui du poids (56) et 9 points au dessus de la ligne « depuis ton début » (80).
  * Le jour et l'heure sur deux lignes (« Vendredi » puis « 7 h 00 ») : elle tient a cote de 112,4 kg sur 375 de large ;
  * l'icone seulement s'il reste au moins 120 points. Memes valeurs que PESEE_CARTE_POIDS du decor (verifie par le test).
+ * 3 novembre 2026 nuit (Houari) : sans decor au dessus d'elle, elle remonte de 9 (de 28 a 62), a hauteur du haut de ton
+ * poids ; avec un decor, elle reste a 37 pour lui laisser sa place.
  */
-const PESEE_CARTE_POIDS = { droite: 80, haut: 37, hauteur: 34, ecartPoids: 8, largeurMin: 70, icone: 120 } as const;
+const PESEE_CARTE_POIDS = { droite: 80, haut: 37, hautSansDecor: 28, hauteur: 34, ecartPoids: 8, largeurMin: 70, icone: 120 } as const;
 
 /** Les petits points de pagination du carrousel */
 function PointsPages({ nb, page, couleur, inactif }: { nb: number; page: number; couleur: string; inactif: string }) {
@@ -332,7 +339,7 @@ function LigneDePaliers({ depart, ligne, accent, sombre }: { depart: number; lig
   );
 }
 
-export function CartePoids({ series: seriesIn, targetWeight, startWeight, today: todayProp, demo, centre = CENTRAGE_POIDS, onPage, pesee }: Props) {
+export function CartePoids({ series: seriesIn, targetWeight, startWeight, today: todayProp, demo, centre = CENTRAGE_POIDS, onPage, pesee, avecDecor = false }: Props) {
   const router = useRouter();
   const largeur = useLargeurEcran();
   // le theme clair ou sombre : la carte se redessine quand il change (P suit le theme)
@@ -872,7 +879,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
   const peseeDuJour = !!pesee && pesee.dans === 0;
   const pastillePesee =
     pesee !== undefined && !exemple && placePesee >= PESEE_CARTE_POIDS.largeurMin ? (
-      <View pointerEvents="box-none" style={{ position: 'absolute', right: PESEE_CARTE_POIDS.droite, top: PESEE_CARTE_POIDS.haut, maxWidth: placePesee }}>
+      <View pointerEvents="box-none" style={{ position: 'absolute', right: PESEE_CARTE_POIDS.droite, top: avecDecor ? PESEE_CARTE_POIDS.haut : PESEE_CARTE_POIDS.hautSansDecor, maxWidth: placePesee }}>
         <Press
           onPress={() => router.push((peseeDuJour ? '/pesee' : '/notifications') as any)}
           haptic="light"
