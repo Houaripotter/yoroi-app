@@ -40,6 +40,7 @@ import { photoMesuree, taillePhoto } from '@/lib/v2/cartes/moteur/analysePhoto';
 import type { AnalysePhoto } from '@/lib/v2/cartes/moteur/analysePhoto';
 import type { Recadrage } from '@/lib/v2/cartes/moteur/protection';
 import { CarteMoteur } from './moteur/CarteMoteur';
+import { ltrSiRTL } from '@/lib/v2/rtl';
 
 export const CARTE_W = 360;
 export const HAUTEURS: Record<FormatId, number> = { story: 640, post: 450, carre: 360 };
@@ -304,7 +305,7 @@ export const CarteRendu = forwardRef<View, Props>(({ data: brut, options, visuel
   if (nouveauMoteurPour(brut, m)) {
     const Hn = HAUTEURS[formatDessine(brut, options, m)];
     return (
-      <View ref={ref} collapsable={false} testID={visuels.exemple ? 'carte-avec-exemple' : undefined} style={{ width: W, height: Hn, overflow: 'hidden' }}>
+      <View ref={ref} collapsable={false} testID={visuels.exemple ? 'carte-avec-exemple' : undefined} style={[{ width: W, height: Hn, overflow: 'hidden' }, ltrSiRTL]}>
         <RenduNouveau data={brut} options={{ ...options, format: formatDessine(brut, options, m) }} visuels={visuels} u={u} W={W} />
       </View>
     );
@@ -312,7 +313,7 @@ export const CarteRendu = forwardRef<View, Props>(({ data: brut, options, visuel
   const H = HAUTEURS[options.format];
   if (data.moment === 'avant_apres') {
     return (
-      <View ref={ref} collapsable={false} style={{ width: W, height: H, overflow: 'hidden', backgroundColor: options.sombre ? '#14161F' : '#F2F1EC' }}>
+      <View ref={ref} collapsable={false} style={[{ width: W, height: H, overflow: 'hidden', backgroundColor: options.sombre ? '#14161F' : '#F2F1EC' }, ltrSiRTL]}>
         <AvantApresVue d={data} o={options} H={H} signature={<Pied ink={options.sombre ? BLANC : ENCRE_PAPIER} compact={options.format !== 'story'} />} />
       </View>
     );
@@ -343,7 +344,7 @@ export const CarteRendu = forwardRef<View, Props>(({ data: brut, options, visuel
     placement: placement ?? null,
   };
   return (
-    <View ref={ref} collapsable={false} style={{ width: W, height: H, overflow: 'hidden', backgroundColor: fondDe(id, c) }}>
+    <View ref={ref} collapsable={false} style={[{ width: W, height: H, overflow: 'hidden', backgroundColor: fondDe(id, c) }, ltrSiRTL]}>
       <Dessin id={id} c={c} />
     </View>
   );
@@ -362,7 +363,7 @@ export const CarteApercu = forwardRef<View, Props & { largeur: number; damier?: 
   const s = largeur / CARTE_W;
   const transparent = !nouveauMoteurPour(p.data, m) && sortieTransparente(p.data, p.options);
   return (
-    <View style={{ width: largeur, height: H * s, borderRadius: 18 * s + 4, overflow: 'hidden', backgroundColor: dessous ? '#C9CBD1' : transparent && damier !== false ? '#C9CBD1' : '#121318' }}>
+    <View style={[{ width: largeur, height: H * s, borderRadius: 18 * s + 4, overflow: 'hidden', backgroundColor: dessous ? '#C9CBD1' : transparent && damier !== false ? '#C9CBD1' : '#121318' }, ltrSiRTL]}>
       {dessous ? <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: largeur, height: H * s }}>{dessous}</View> : null}
       {/* l'autocollant seul : un damier dessous montre la transparence (il n'est pas dans la capture) */}
       {!dessous && transparent && damier !== false ? <Damier w={largeur} h={H * s} /> : null}
