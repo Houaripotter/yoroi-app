@@ -5,6 +5,7 @@ import React from 'react';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
+import { ICONES_SENS, miroirSiRTL } from '@/lib/v2/rtl';
 
 export type IconName =
   | 'back' | 'chevron' | 'chevronLeft' | 'plus' | 'search' | 'trash' | 'edit' | 'share' | 'check' | 'close'
@@ -69,7 +70,7 @@ const PATHS: Record<IconName, string[]> = {
 export function Icon({ name, size = 22, color = '#1D2029', strokeWidth = 2.2, fill, sticker }: { name: IconName; size?: number; color?: string; strokeWidth?: number; fill?: string; sticker?: NomSticker | false }) {
   return (
     <IconeOuSticker nom={name} sticker={sticker} taille={size}>
-      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={ICONES_SENS.has(name) ? miroirSiRTL : undefined}>
         {PATHS[name].map((d, i) => (
           <Path key={i} d={d} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" fill={fill && i === 0 ? fill : 'none'} />
         ))}
