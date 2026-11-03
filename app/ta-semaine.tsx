@@ -328,7 +328,8 @@ export default function TaSemaine() {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <LargeurPage actif={page.grand} largeur={page.largeur}>
         <ScrollView ref={defile} contentContainerStyle={{ paddingHorizontal: page.grand ? page.marge : 16, paddingBottom: insets.bottom + 40, gap: 14 }} showsVerticalScrollIndicator={false}>
-          <EnTete titre={traduire('Ta semaine')} sousTitre={periodeSemaine(vu)} onRetour={() => router.back()} repli="/(tabs)/seances" zoneSure="insets" style={{ marginHorizontal: -16 }} />
+          {/* 3 novembre 2026 (Houari) : la période une seule fois, sous le nom de la semaine, à côté des flèches */}
+          <EnTete titre={traduire('Ta semaine')} onRetour={() => router.back()} repli="/(tabs)/seances" zoneSure="insets" style={{ marginHorizontal: -16 }} />
           {navigation}
           {page.grand ? (
             <Rangee actif espace={24}>
