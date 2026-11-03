@@ -8,6 +8,7 @@ import Svg, { Path, Rect } from 'react-native-svg';
 import { traduire } from '@/lib/i18n/tr';
 import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
+import { ICONES_SENS, miroirSiRTL } from '@/lib/v2/rtl';
 
 export type SanteIconName =
   | 'steps'
@@ -149,7 +150,7 @@ const P: Record<SanteIconName, string> = {
 export function SanteIcon({ name, size = 22, color = '#1D2029', width = 2, sticker }: { name: SanteIconName; size?: number; color?: string; width?: number; sticker?: NomSticker | false }) {
   return (
     <IconeOuSticker nom={name} sticker={sticker} taille={size}>
-      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={ICONES_SENS.has(name) ? miroirSiRTL : undefined}>
         <Path d={P[name]} stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" fill="none" />
       </Svg>
     </IconeOuSticker>
