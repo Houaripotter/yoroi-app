@@ -35,6 +35,7 @@ import {
   boitesCartePastel,
   CARTE_PALIERS,
   PESEE_CARTE_POIDS,
+  LIGNE_DEPUIS_Y,
   hauteurSceneCarte,
   remonteeScene,
   boiteCitrouille,
@@ -203,7 +204,13 @@ describe('27 octobre 2026 : carte « Ton poids » Pastel', () => {
     expect(c).toContain(`<Ink size={40} weight="black" tight numberOfLines={1} color={fg} style={{ fontVariant: ['tabular-nums'], lineHeight: ${CARTE_PALIERS.ligneChiffre}`);
     expect(c).toContain(`style={{ width: ${CARTE_PALIERS.sticker}, height: ${CARTE_PALIERS.sticker}, marginTop: -${CARTE_PALIERS.decaleSticker}, marginRight: -${CARTE_PALIERS.decaleSticker} }}`);
     const p = PESEE_CARTE_POIDS;
-    expect(c).toContain(`const PESEE_CARTE_POIDS = { droite: ${p.droite}, haut: ${p.haut}, hauteur: ${p.hauteur}, ecartPoids: ${p.ecartPoids}, largeurMin: ${p.largeurMin} } as const;`);
+    expect(c).toContain(`const PESEE_CARTE_POIDS = { droite: ${p.droite}, haut: ${p.haut}, hauteur: ${p.hauteur}, ecartPoids: ${p.ecartPoids}, largeurMin: ${p.largeurMin}, icone: ${p.icone} } as const;`);
+    // 3 novembre 2026 soir : la pastille au moins 8 au dessus de la ligne « depuis ton début », centree au plus bas sur le poids
+    expect(LIGNE_DEPUIS_Y - (p.haut + p.hauteur)).toBeGreaterThanOrEqual(8);
+    const centrePoids = CARTE_PALIERS.haut + CARTE_PALIERS.titre + CARTE_PALIERS.ecartTitre + CARTE_PALIERS.ligneChiffre / 2;
+    expect(p.haut + p.hauteur / 2).toBeLessThanOrEqual(centrePoids);
+    // elle commence sous le titre « TON POIDS »
+    expect(p.haut).toBeGreaterThanOrEqual(CARTE_PALIERS.haut + CARTE_PALIERS.titre);
     expect(c).toContain('right: PESEE_CARTE_POIDS.droite, top: PESEE_CARTE_POIDS.haut');
     expect(c).toContain('height: PESEE_CARTE_POIDS.hauteur');
   });
