@@ -345,7 +345,7 @@ function Trace({ c, TX }: { c: ContenuCarte; TX: number }) {
         </G>
       ))}
       <Circle cx={pts[0][0]} cy={pts[0][1]} r={24} fill="#22C55E" stroke={BLANC} strokeWidth={8} />
-      <Tx x={480} y={850} s={30 * TX} c={BLANC} ls={4 / 30} ancre="middle" op={0.85}>{maj(traduire('Tracé GPS de ta montre'))}</Tx>
+      <Tx x={480} y={850} s={30 * TX} c={BLANC} ls={4 / 30} ancre="middle" op={0.85}>{maj(c.traceExemple ? traduire('Parcours d’exemple') : traduire('Tracé GPS de ta montre'))}</Tx>
     </G>
   );
 }
