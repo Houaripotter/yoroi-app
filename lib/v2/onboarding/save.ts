@@ -36,6 +36,7 @@ import { NOUVEAUTES_30_KEY } from './parcours';
 import { peseeAConserver, profilFusionne } from './fusion';
 import { ONBOARDING_VU_VERSION_KEY, VERSION_ONBOARDING } from './retour';
 import { SOURCE_CONNU_KEY } from './sourceConnu';
+import { mesureOnboardingCoupee } from './events';
 import { connecterSante } from '@/lib/v2/sante/connecter';
 import type { IssueConnexion } from '@/lib/v2/sante/connexion';
 
@@ -97,7 +98,8 @@ export async function saveOnboardingWeighIn(args: {
     done = { date: todayIso(), weight: args.weight, origin: 'manual' };
   }
   // mesure : la premiere pesee de l'onboarding (pas celle deja gardee), le fait seulement
-  if (!done.conservee) track('poids_saisi', { methode: 'onboarding' });
+  // 3 novembre 2026 : jamais en mode createur (onboarding de test, lib/v2/creator/onboardingCreateur.ts)
+  if (!done.conservee && !mesureOnboardingCoupee()) track('poids_saisi', { methode: 'onboarding' });
   DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
 
   // deja recompensee une premiere fois : on ne refait pas la fete
@@ -139,6 +141,8 @@ export const healthName = () => (Platform.OS === 'android' ? 'Health Connect' : 
  */
 export async function connecterSanteSuivi(): Promise<IssueConnexion> {
   const issue = await connecterSante();
+  // 3 novembre 2026 : pendant un onboarding en mode createur, la connexion n'est pas mesuree
+  if (mesureOnboardingCoupee()) return issue;
   track('sante_connexion', { plateforme: Platform.OS === 'android' ? 'health_connect' : 'apple_sante', resultat: issue === 'connecte' ? 'ok' : issue === 'abandon' ? 'annule' : issue === 'rien_lu' ? 'rien' : issue === 'erreur' || issue === 'indisponible' ? 'erreur' : 'refuse' });
   setProprietes({ sante_connectee: issue === 'connecte' ? 'oui' : 'non' });
   return issue;
