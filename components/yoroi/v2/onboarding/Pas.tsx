@@ -11,6 +11,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
 import { useColors } from './ui';
 import { traduire } from '@/lib/i18n/tr';
+import { ltrSiRTL } from '@/lib/v2/rtl';
 
 export type PasDef = { delta: number; label: string; a11y: string };
 
@@ -103,7 +104,7 @@ export function Pas({ value, onChange, pas, clamp }: { value: number; onChange: 
     onChange(next);
   };
   return (
-    <View style={{ flexDirection: 'row', gap: 8 }}>
+    <View style={[{ flexDirection: 'row', gap: 8 }, ltrSiRTL]}>
       {pas.map((p, i) => (
         <Bouton key={i} pas={p} fort={i === 0 || i === pas.length - 1} onStep={onStep} />
       ))}
