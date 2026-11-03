@@ -34,6 +34,7 @@ import { BALANCE_FIELD, PHYSIQUE_LABELS } from '@/lib/v2/balance/format';
 import { computeBmi, EXTRA_BALANCE_KEY, EXTRA_KEYS, lastExtras, manualScale } from '@/lib/v2/progres/compoExtras';
 import type { ExtraKey } from '@/lib/v2/progres/compoExtras';
 import { track, trancheUsage } from '@/utils/telemetry';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 type FieldKey = 'weight' | 'fat' | 'muscleKg' | 'water' | 'bone' | 'visceral' | 'metabolicAge' | 'bmr' | ExtraKey;
 type Field = { key: FieldKey; label: string; unit: string; hint?: string; step: number; min: number; max: number; int?: boolean };
@@ -419,7 +420,7 @@ function BodyComposition() {
             <Ink size={15} weight="extraBold" numberOfLines={1}>{traduire("Importer depuis une photo")}</Ink>
             <Ink size={12} color={c.textSecondary} numberOfLines={2}>{traduire("Balance pas connectée : une IA lit l’écran, tu vérifies.")}</Ink>
           </View>
-          <Svg width={16} height={16} viewBox="0 0 24 24"><Path d="M9 6l6 6-6 6" stroke={c.textMuted} strokeWidth={2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" /></Svg>
+          <Svg width={16} height={16} viewBox="0 0 24 24" style={miroirSiRTL}><Path d="M9 6l6 6-6 6" stroke={c.textMuted} strokeWidth={2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" /></Svg>
         </Pressable>
 
         <DateChips value={date} onChange={setDate} style={{ paddingHorizontal: GUTTER, marginTop: 14 }} />
