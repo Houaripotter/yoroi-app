@@ -150,14 +150,19 @@ if (!__DEV__) {
 }
 
 // 3 novembre 2026 : le sens de lecture de la langue (droite a gauche en arabe, gauche a droite partout ailleurs), avant le premier ecran
-if (appliquerSens() === 'relancer_a_la_main') {
-  setTimeout(() => {
-    try {
-      require('react-native').Alert.alert(traduire('Ferme puis rouvre YOROI'), traduire("Pour afficher l'app dans le sens de lecture de ta langue, ferme YOROI puis rouvre la."));
-    } catch {
-      // rien
-    }
-  }, 1500);
+// une erreur ici ne bloque jamais le demarrage : l'app continue de gauche a droite
+try {
+  if (appliquerSens() === 'relancer_a_la_main') {
+    setTimeout(() => {
+      try {
+        require('react-native').Alert.alert(traduire('Ferme puis rouvre YOROI'), traduire("Pour afficher l'app dans le sens de lecture de ta langue, ferme YOROI puis rouvre la."));
+      } catch {
+        // rien
+      }
+    }, 1500);
+  }
+} catch {
+  // rien : sens par defaut, gauche a droite
 }
 
 // ============================================
