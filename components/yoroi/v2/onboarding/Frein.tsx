@@ -1,6 +1,8 @@
 /**
  * Ecran 5 (vague 27) : « Qu'est-ce qui t'a freine jusqu'ici ? ». Choix multiples en grosses cartes
  * illustrees, chacune dans sa couleur d'encre (vague 29), « Rien de tout ca » est exclusif. La reponse choisit l'ecran suivant et les conseils du jour.
+ * 3 novembre 2026 (Houari) : les reponses etaient collees sous le titre, la moitie basse vide ; elles sont centrees
+ * verticalement dans la place libre (Shell centrer), et defilent normalement sur un petit telephone.
  */
 import React from 'react';
 import { View, useWindowDimensions } from 'react-native';
@@ -40,7 +42,7 @@ export function Frein({ nav, value, onToggle, onNext }: { nav: Nav; value: Frein
   const c = useColors();
   const petit = useWindowDimensions().width < 380;
   return (
-    <Shell {...nav} title={traduire("Qu’est ce qui t’a **freiné** jusqu’ici ?")} sub={traduire("Choisis tout ce qui te parle, la suite s’adapte à ta réponse.")} gap={10} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={value.length === 0} />}>
+    <Shell {...nav} title={traduire("Qu’est ce qui t’a **freiné** jusqu’ici ?")} sub={traduire("Choisis tout ce qui te parle, la suite s’adapte à ta réponse.")} gap={10} centrer footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={value.length === 0} />}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 }}>
         {FREINS.map((f) => {
           const on = value.includes(f.id);
