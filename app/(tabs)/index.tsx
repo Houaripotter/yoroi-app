@@ -69,10 +69,8 @@ import {
   TuileSanteJour,
   TuileSanteJourVide,
   TuileAvantApresVide,
-  TuilePeseeVide,
   TuileRecordVide,
   TuileSerieVide,
-  TuilePesee,
   TuileRecord,
   TuileSerie,
   dernierRecord,
@@ -227,6 +225,8 @@ export default function Accueil() {
   // 17 octobre nuit : tes 8 dernieres semaines pour la rangee de la tuile Regularite
   const recentes = useMemo(() => (progresVisible ? semainesRecentes(data.trainings, goal, jour, 8) : []), [progresVisible, data.trainings, goal, jour]);
   const peseePrevue = usePeseePrevue(series.length ? series[series.length - 1].date : null);
+  // le bloc « Ta prochaine pesée » decoche dans Personnaliser : la pastille de la carte Ton poids disparait aussi
+  const peseeCarte = blocs.includes('pesee') ? peseePrevue : undefined;
   const photos = usePhotosAccueil(blocs.includes('photos'));
 
   // chaque bloc donne ses tuiles (pleine largeur ou demi) ; la grille les range deux par deux, sans trou
@@ -265,8 +265,9 @@ export default function Accueil() {
           { cle: 'serie', taille: 'demi', contenu: serie ? <TuileSerie semaines={serie} goal={goal} recentes={recentes} /> : <TuileSerieVide goal={goal} /> },
         ];
       case 'pesee':
-        if (peseePrevue === undefined) return [];
-        return [{ cle: 'pesee', taille: 'pleine', contenu: peseePrevue ? <TuilePesee prevue={peseePrevue} /> : <TuilePeseeVide /> }];
+        // 3 novembre 2026 (Houari : « il y a de la place dans la carte poids ») : ta prochaine pesee vit dans la carte
+        // Ton poids (pastille a cote de ton poids, peseeCarte) ; plus de carte a part en bas de l'accueil
+        return [];
       case 'photos':
         if (!photos.charge) return [];
         return [{ cle: 'photos', taille: 'pleine', contenu: photos.paire ? <TuileAvantApres paire={photos.paire} /> : <TuileAvantApresVide nb={photos.nb} /> }];
@@ -380,7 +381,7 @@ export default function Accueil() {
       contenu: (
         <Enter i={0}>
           <TourAnchor id="accueil.poids" rayon={28}>
-            <CartePoids series={series} targetWeight={data.targetWeight} startWeight={data.startWeight} rankIndex={rankIndex} onPage={setPagePoids} />
+            <CartePoids series={series} targetWeight={data.targetWeight} startWeight={data.startWeight} rankIndex={rankIndex} onPage={setPagePoids} pesee={peseeCarte} />
             {saison && series.length && pagePoids === 0 ? <DecorCarte saison={saison} largeur={page.caseDe(1)} scrollY={scrollY} seuil={hautSceneCarte(insets.top) + hauteurScene + 480} /> : null}
           </TourAnchor>
         </Enter>
@@ -535,7 +536,7 @@ export default function Accueil() {
           {/* Ton poids */}
           <Enter i={0}>
             <TourAnchor id="accueil.poids" rayon={28}>
-              <CartePoids series={series} targetWeight={data.targetWeight} startWeight={data.startWeight} rankIndex={rankIndex} onPage={setPagePoids} />
+              <CartePoids series={series} targetWeight={data.targetWeight} startWeight={data.startWeight} rankIndex={rankIndex} onPage={setPagePoids} pesee={peseeCarte} />
               {/* 18 octobre 2026 v4 : decor de saison pose par dessus la carte (position absolue, aucun calcul touche) : citrouilles ou sapins entre le chiffre et l'anneau, toiles et araignees ou guirlande */}
               {saison && series.length && pagePoids === 0 ? <DecorCarte saison={saison} largeur={largeurCarte} scrollY={scrollY} seuil={hautSceneCarte(insets.top) + hauteurScene + 480} /> : null}
             </TourAnchor>
