@@ -10,6 +10,7 @@
  * séances enregistrées. Données pures plus lecture et écriture des refus, testées dans __tests__/unit/habitudesFin.test.ts.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { movementKey } from '@/constants/exerciseLibrary';
 import { signalerASynchroniser } from '@/lib/v2/synchro/cles';
 import { cardioFait, estCardioEnregistre, retenirHabitudeCardio } from './cardioJour';
 import type { HabitudeCardio } from './cardioJour';
@@ -134,7 +135,9 @@ const EN_SECONDES = /gainage|planche|plank|hollow|chaise/i;
  * séances ou dans tes supersets gardés (enchainements.ts). null : pas d'habitude, la planche et le crunch restent.
  */
 export function abdosHabituels(trainings: readonly SeanceLue[] | null | undefined, maintenant = new Date(), liens: ReadonlyMap<string, string> = new Map()): ExoProgramme[] | null {
-  const parNom = new Map<string, { nom: string; seances: number; places: number[]; series: number[]; reps: number[]; charge: boolean; lie: number }>();
+  // 3 novembre 2026 : un même mouvement sous deux noms (« Cable Crunch », « Crunch Poulie Haute », SAME_MOVEMENT_GROUPS)
+  // compte pour un seul exercice habituel, sous le nom que tu utilises le plus
+  const parNom = new Map<string, { nom: string; seances: number; places: number[]; series: number[]; reps: number[]; charge: boolean; lie: number; noms: Map<string, number> }>();
   for (const t of seancesRecentes(trainings, maintenant)) {
     const exos = exosDe(t);
     const abdos = exos.map((e, i) => ({ e, i })).filter((x) => estAbdos(x.e) && typeof x.e.name === 'string' && x.e.name.trim());
@@ -142,9 +145,12 @@ export function abdosHabituels(trainings: readonly SeanceLue[] | null | undefine
     const vus = new Set<string>();
     abdos.forEach(({ e, i }, k) => {
       const nom = (e.name as string).trim();
-      if (vus.has(nom)) return;
-      vus.add(nom);
-      const x = parNom.get(nom) ?? { nom, seances: 0, places: [], series: [], reps: [], charge: false, lie: 0 };
+      const cle = movementKey(nom);
+      if (vus.has(cle)) return;
+      vus.add(cle);
+      const x = parNom.get(cle) ?? { nom, seances: 0, places: [], series: [], reps: [], charge: false, lie: 0, noms: new Map<string, number>() };
+      x.noms.set(nom, (x.noms.get(nom) ?? 0) + 1);
+      if ((x.noms.get(nom) ?? 0) > (x.noms.get(x.nom) ?? 0)) x.nom = nom;
       x.seances++;
       x.places.push(abdos.length > 1 ? k / (abdos.length - 1) : 0);
       const sd = Array.isArray(e.setsData) ? (e.setsData as { reps?: unknown; weight?: unknown }[]) : [];
@@ -154,7 +160,7 @@ export function abdosHabituels(trainings: readonly SeanceLue[] | null | undefine
       if (sd.some((s) => Number(s.weight) > 0) || Number(e.weight) > 0) x.charge = true;
       const suivant = exos[i + 1];
       if (e.enchaine === true && suivant && estAbdos(suivant)) x.lie++;
-      parNom.set(nom, x);
+      parNom.set(cle, x);
     });
   }
   const gardes = [...parNom.values()].filter((x) => x.seances >= SEUIL_HABITUDE).sort((a, b) => mediane(a.places) - mediane(b.places) || b.seances - a.seances).slice(0, 4);
