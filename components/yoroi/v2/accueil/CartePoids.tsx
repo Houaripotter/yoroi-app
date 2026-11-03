@@ -75,6 +75,7 @@ import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
 import { ecouterPagePoids } from '@/lib/v2/visite/pagePoids';
 import type { QuoiObjectif } from '@/components/yoroi/v2/pesee/ObjectifPoids';
 import { Card, Icon, ombreCarte, P, Press } from './kit';
+import { couleurActivite } from './Visus';
 import { traduire, LANG } from '@/lib/i18n/tr';
 import { useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
 import type { prochainePesee } from '@/lib/v2/accueil/enPlus';
@@ -278,17 +279,39 @@ function PointsPages({ nb, page, couleur, inactif }: { nb: number; page: number;
 
 /**
  * 2 novembre 2026 (proposition A) : la ligne fine des paliers. Ton depart en petit a gauche, puis un rond par palier :
- * atteint (rond plein vert P.moss avec une coche), prochain (anneau de l'accent autour d'un point) ou a venir (rond gris
+ * atteint (rond plein vert avec une coche), prochain (anneau de l'accent autour d'un point) ou a venir (rond gris
  * vide). Le trait est dans l'accent jusqu'au dernier palier atteint, gris ensuite (seuls les ronds atteints sont verts). Le chiffre de chaque palier dessous.
  * 3 novembre 2026 (Houari : « trop fin ») : le trait nettement plus epais (6 au lieu de 2), bouts arrondis, centre sur les ronds, et le trait vers le prochain palier se remplit
  * dans l'accent a mesure que tu avances (ligne.avance : a 86 entre 87,5 et 85, 60 %), en perte comme en prise.
- * 2 novembre 2026 soir (Houari : les paliers atteints en vert) : la coche en P.white sur P.moss, 3,8 a 1 en clair
+ * 2 novembre 2026 soir (Houari : les paliers atteints en vert) : la coche sur le vert, 3,8 a 1 en clair
  * (blanc sur #6E8C3A) et 7,2 a 1 en sombre (encre #1A1E29 sur #93B562), au dessus du seuil de 3 a 1 d'une icone.
  */
 const LIGNE_PALIERS = { hauteur: 52, trait: 6, centre: 13, atteint: 24, prochain: 28, aVenir: 22, depart: 10, chiffres: 34, largeurChiffre: 48, margeG: 8, margeD: 14 } as const;
 const GRIS_ROND = { clair: '#C9CDDB', sombre: '#4D5679' } as const;
-function LigneDePaliers({ depart, ligne, accent, sombre }: { depart: number; ligne: LignePaliers; accent: string; sombre: boolean }) {
+
+/**
+ * 3 novembre 2026 nuit (Houari : « les mêmes couleurs que les anneaux d'Aujourd'hui ») : la ligne de paliers et ses
+ * chiffres cles prennent les couleurs des anneaux Sante (couleurActivite de ./Visus, la meme source que les anneaux) :
+ * le bleu des calories (energie-active) pour le trait rempli et le prochain palier, le vert de l'exercice pour les
+ * paliers atteints et ce que tu as fait depuis ton debut, le rose des pas pour ce qu'il te reste.
+ * Les anneaux restent vifs ; un texte sur blanc prend la teinte la plus sombre du meme anneau (ombre) quand elle existe.
+ */
+function couleursAnneaux() {
+  const bleu = couleurActivite('energie-active');
+  const vert = couleurActivite('exercice');
+  const rose = couleurActivite('pas');
+  return {
+    bleu: bleu.anneau,
+    bleuTexte: bleu.ombre ?? bleu.texte,
+    vert: vert.anneau,
+    vertTexte: vert.ombre ?? vert.texte,
+    roseTexte: rose.ombre ?? rose.texte,
+  };
+}
+function LigneDePaliers({ depart, ligne, sombre }: { depart: number; ligne: LignePaliers; sombre: boolean }) {
   const L = LIGNE_PALIERS;
+  const A = couleursAnneaux();
+  const accent = A.bleu;
   const gris = sombre ? GRIS_ROND.sombre : GRIS_ROND.clair;
   const n = ligne.paliers.length;
   const x = (i: number) => `${(i / n) * 100}%` as const;
@@ -316,8 +339,8 @@ function LigneDePaliers({ depart, ligne, accent, sombre }: { depart: number; lig
           <View key={`r${i}`} style={{ position: 'absolute', left: x(i + 1), top: L.centre - t / 2, width: t, height: t, transform: [{ translateX: -t / 2 }] }}>
             {p.etat === 'atteint' ? (
               <Svg width={t} height={t} viewBox="0 0 24 24">
-                <Circle cx={12} cy={12} r={12} fill={P.moss} />
-                <Path d="M7 12.4l3.2 3.2L17.2 8.6" fill="none" stroke={P.white} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
+                <Circle cx={12} cy={12} r={12} fill={A.vert} />
+                <Path d="M7 12.4l3.2 3.2L17.2 8.6" fill="none" stroke={sombre ? P.white : P.ink} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
             ) : p.etat === 'prochain' ? (
               <Svg width={t} height={t} viewBox="0 0 28 28">
@@ -333,7 +356,7 @@ function LigneDePaliers({ depart, ligne, accent, sombre }: { depart: number; lig
         );
       })}
       {ligne.paliers.map((p, i) =>
-        chiffre(`c${i}`, i + 1, formatKg(p.kg), p.etat === 'atteint' ? P.ink : p.etat === 'prochain' ? accent : P.muted, p.etat === 'prochain' ? 'black' : 'extraBold', 12),
+        chiffre(`c${i}`, i + 1, formatKg(p.kg), p.etat === 'atteint' ? P.ink : p.etat === 'prochain' ? A.bleuTexte : P.muted, p.etat === 'prochain' ? 'black' : 'extraBold', 12),
       )}
     </View>
   );
@@ -759,6 +782,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
   // rythme. Une seule couleur d'accent (P.indigo), plus de voile lilas, d'anneau ni de pierres de couleur.
   // Version d'avant : _archive_ancien_design_2026-10-09/carte_poids_paliers_A_2026-11-02/components/yoroi/v2/accueil/CartePoids.tsx.
   const accent = P.indigo;
+  const anneaux = couleursAnneaux();
   // « depuis ton début » sur la page 1, quelle que soit la periode choisie sur la courbe (la source unique)
   const variation = etat.variation;
   const versDebut = variation != null && goal !== null && mode !== 'maintien' && ((lossGoal && variation < 0) || (!lossGoal && variation > 0));
@@ -767,7 +791,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
       ligneEcart(fg2, accent, accent, fg)
     ) : variation != null && Math.abs(variation) >= 0.05 ? (
       <Ink size={13} weight="bold" color={fg2} numberOfLines={1} style={{ flexShrink: 1 }}>
-        <Ink size={13} weight="black" color={versDebut ? P.mossText : fg} style={{ fontVariant: ['tabular-nums'] }}>
+        <Ink size={13} weight="black" color={versDebut ? anneaux.vertTexte : fg} style={{ fontVariant: ['tabular-nums'] }}>
           {`${variation < 0 ? '−' : '+'}${formatKg(Math.abs(variation))} kg`}
         </Ink>
         {` ${PERIODE_TEXTE[PERIODE_PLAN]}`}
@@ -821,7 +845,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
   ) : ligne.prochain ? (
     (() => {
       const pr = ligne.prochain;
-      // 3 novembre 2026 (Houari) : ce qu'il te reste a perdre ou a prendre, en rouge (P.red, jamais pale)
+      // 3 novembre 2026 (Houari) : ce qu'il te reste a perdre ou a prendre, dans le rose des anneaux (jamais pale)
       const resteTxt = `${formatKg(pr.dernier ? chemin!.reste : pr.encore)} kg`;
       const finBrute = traduire('encore {0} kg', formatKg(pr.dernier ? chemin!.reste : pr.encore));
       const j = finBrute.indexOf(resteTxt);
@@ -831,7 +855,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
         ) : (
           <>
             {finBrute.slice(0, j)}
-            <Ink size={12.5} weight="black" color={P.red} style={{ fontVariant: ['tabular-nums'] }}>
+            <Ink size={12.5} weight="black" color={anneaux.roseTexte} style={{ fontVariant: ['tabular-nums'] }}>
               {resteTxt}
             </Ink>
             {finBrute.slice(j + resteTxt.length)}
@@ -851,7 +875,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
       return (
         <Ink size={12.5} weight="extraBold" color={fg} numberOfLines={2}>
           {i < 0 ? debut : debut.slice(0, i)}
-          {i < 0 ? null : <Ink size={12.5} weight="extraBold" color={accent}>{kgTxt}</Ink>}
+          {i < 0 ? null : <Ink size={12.5} weight="extraBold" color={anneaux.bleuTexte}>{kgTxt}</Ink>}
           {i < 0 ? null : debut.slice(i + kgTxt.length)}
           {fin}
         </Ink>
@@ -957,7 +981,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
         <>
           {/* le lecteur d'ecran dit l'etat de chaque palier (franchi, en cours, a venir) */}
           <Press onPress={openDetail} haptic="none" accessibilityRole="button" accessibilityLabel={goal !== null ? traduire("{0}. Voir le détail", [texteEtatsChemin(start, goal, chemin.part, atteint), arrivee ? `${plan.choisie ? traduire('ta date du cap') : traduire('arrivée prévue')} ${arrivee}` : null].filter(Boolean).join(', ')) : traduire("Voir le détail de ton poids")}>
-            <LigneDePaliers depart={start} ligne={ligne} accent={accent} sombre={sombre} />
+            <LigneDePaliers depart={start} ligne={ligne} sombre={sombre} />
             {legendePaliers ? <View style={{ marginTop: 4 }}>{legendePaliers}</View> : null}
           </Press>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: ligneRythme ? 'space-between' : 'flex-end', gap: 8, marginTop: 10, minHeight: HAUT_OBJECTIF }}>
