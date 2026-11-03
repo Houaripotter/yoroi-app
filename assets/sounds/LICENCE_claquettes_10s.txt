@@ -1,0 +1,3 @@
+claquettes_10s.mp3 : son synthétisé pour YOROI, novembre 2026 (Python, numpy et scipy, aucun enregistrement ni son téléchargé).
+Trois coups de claquettes de bois, 0,18 s d'écart, joués à 10 secondes de la fin d'un round, d'un effort ou d'un repos.
+Libre de droits, propriété de YOROI. Script de création : _propositions/chrono_claquettes_2026-11-03/synth_claquettes.py
