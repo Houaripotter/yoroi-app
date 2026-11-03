@@ -21,6 +21,7 @@ import { paletteSombre } from '@/components/yoroi/livePalette';
 import { POIDS } from './CourbePoids';
 import { ToriiImage } from './ToriiImage';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { ltrSiRTL } from '@/lib/v2/rtl';
 
 export type ModeSentier = 'perte' | 'prise' | 'maintien';
 
@@ -141,6 +142,7 @@ export function SentierTorii(props: Props) {
       accessibilityRole="progressbar"
       accessibilityLabel={traduire("Ton chemin vers ton cap. Départ {0} kilos, cap {1} kilos{2}. {3}. {4}", kg1(depart), kg1(cap), torii && !atteint ? `, arrivée prévue le ${jourCourt(torii)}` : '', pctTxt, texte)}
       accessibilityValue={{ min: 0, max: 100, now: Math.round(pct * 100) }}
+      style={ltrSiRTL}
     >
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
         <Ink size={12} weight="extraBold" color={POIDS.encre} numberOfLines={1} style={{ marginBottom: -2, fontVariant: ['tabular-nums'] }}>
