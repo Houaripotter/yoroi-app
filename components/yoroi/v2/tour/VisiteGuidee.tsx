@@ -40,6 +40,7 @@ import { appliquerVitesse, libelleVitesse, useVitesseVoix, vitesseCourante } fro
 import { traduire } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { etapeVisite, track } from '@/utils/telemetry';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 const ONBOARDING_DONE_KEY = 'yoroi_onboarding_done';
 
@@ -1038,7 +1039,7 @@ export function VisiteGuidee() {
           <View style={s.actions}>
             {!first ? (
               <Pressable onPress={() => go(index - 1)} hitSlop={8} style={[s.prev, { backgroundColor: c.fillSoft }]} accessibilityRole="button" accessibilityLabel={traduire("Étape précédente")}>
-                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}>
                   <Path d="M15 5l-7 7 7 7" stroke={c.ink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
               </Pressable>
