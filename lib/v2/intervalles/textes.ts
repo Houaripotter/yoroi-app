@@ -73,7 +73,8 @@ export function versPhasesChrono(plan: readonly EtapeIntervalle[]): ChronoPhase[
     short: courtEtape(e),
     sub: consigneEtape(e),
     cue: e.type === 'sprint' ? 'go' : e.type === 'retour_calme' ? 'bell' : 'beep',
-    ...(e.type === 'sprint' || e.type === 'recup' ? { step: e.numero, steps: e.total } : {}),
+    // 3 novembre 2026 : claquettes à 10 s de la fin des sprints et des récups de plus de 10 s (lib/v2/carnet/claquettes.ts)
+    ...(e.type === 'sprint' || e.type === 'recup' ? { step: e.numero, steps: e.total, clapEtDecompte: true } : {}),
   }));
 }
 
