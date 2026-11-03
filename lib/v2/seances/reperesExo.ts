@@ -15,14 +15,22 @@ import { cranDe, type Reglages } from './reglagesMachine';
 import { nomBibliotheque, nomFr } from '@/lib/v2/seance/rechercheExo';
 import { libelleUnite, versUnitePoids, type UnitePoids } from '@/lib/v2/unitePoids';
 import { DECIMAL } from '@/lib/i18n/tr';
+import { exerciceEnPlaques, maxPlaques, recordPlaquesBattu } from './plaquesSerie';
 
-export type SerieRepere = { weight: number; reps: number };
+/** `plaques` : un repere en plaques de la pile (3 novembre 2026), jamais converti en kilos */
+export type SerieRepere = { weight: number; reps: number; plaques?: number };
 
 export type ReperesExo = {
   /** charge max de tous les temps (comme la carte de record), ou meilleures repetitions au poids du corps */
   record: SerieRepere | null;
   /** la serie la plus lourde de la derniere seance ou l'exercice a des series de travail */
   derniere: { date: string; max: SerieRepere } | null;
+  /**
+   * 3 novembre 2026 : pour un exercice compte en plaques (lib/v2/seances/plaquesSerie.ts), le record et la derniere
+   * fois en plaques, jamais convertis en kilos. Absents tant que l'exercice n'a jamais ete note en plaques.
+   */
+  recordPlaques?: { plaques: number; reps: number };
+  dernierePlaques?: { date: string; max: { plaques: number; reps: number } };
 };
 
 export type IndexReperes = Map<string, ReperesExo>;
@@ -69,6 +77,20 @@ export function indexReperes(trainings: Training[]): IndexReperes {
     for (const ex of parseExercises(t)) {
       const name = (ex.name ?? '').trim();
       if (!name) continue;
+      // 3 novembre 2026 : en plaques, le max et le record se comptent en plaques ; les series sans kilos ne sont
+      // pas du poids du corps, elles n'ecrasent pas « Dernière fois » en kilos
+      if (exerciceEnPlaques(ex)) {
+        const mp = maxPlaques((ex.setsData ?? []).filter((s) => s && s.type !== 'warmup'));
+        if (mp) {
+          const e = entree(cleRecordExercice(name));
+          e.dernierePlaques = { date: t.date.slice(0, 10), max: mp };
+          const r = e.recordPlaques;
+          if (!r || mp.plaques > r.plaques || (mp.plaques === r.plaques && mp.reps > r.reps)) e.recordPlaques = mp;
+        }
+        const kg = serieMax(workSets(ex));
+        if (kg && kg.weight > 0) entree(cleRecordExercice(name)).derniere = { date: t.date.slice(0, 10), max: kg };
+        continue;
+      }
       const max = serieMax(workSets(ex));
       if (!max) continue;
       entree(cleRecordExercice(name)).derniere = { date: t.date.slice(0, 10), max };
@@ -103,6 +125,12 @@ export function recordBattu(record: SerieRepere | null, sets: { weight: number; 
   const faites = sets.filter((s) => s && s.done && s.type !== 'warmup');
   if (record.weight > 0) return faites.some((s) => (Number(s.reps) || 0) > 0 && (Number(s.weight) || 0) > record.weight + 1e-9);
   return faites.some((s) => !((Number(s.weight) || 0) > 0) && (Number(s.reps) || 0) > record.reps);
+}
+
+/** 3 novembre 2026 : record en plaques battu pendant la seance (series faites hors echauffement) */
+export function recordPlaquesBattuEnSeance(record: { plaques: number; reps: number } | null | undefined, sets: { reps: number; plaques?: number; done?: boolean; type?: string }[]): boolean {
+  if (!record) return false;
+  return sets.some((s) => s && s.done && s.type !== 'warmup' && recordPlaquesBattu(record, [], s));
 }
 
 /** « 81 kg », « 178,57 lb » : la charge seule, comme setLabel */
