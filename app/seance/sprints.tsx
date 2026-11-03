@@ -27,7 +27,8 @@ import { FinishSheet, SettingRow } from '@/components/yoroi/v2/carnet/chrono/par
 import { ChoiceGrid, DOCK_SPACE, HugeButton, SetupBlock, SetupHero, StartDock } from '@/components/yoroi/v2/carnet/chrono/setup';
 import { BoutonCoachVocal } from '@/components/yoroi/v2/seance/CoachVocal';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
-import { PHASE_COLORS } from '@/lib/v2/carnet/chrono';
+import { PHASE_COLORS, loadClapEnabled } from '@/lib/v2/carnet/chrono';
+import { sonDixSecondes, tapsClaquettes } from '@/lib/v2/carnet/claquettes';
 import { useChronoEngine, type ChronoEvent } from '@/lib/v2/carnet/useChronoEngine';
 import { clock, humanSeconds } from '@/lib/v2/carnet/format';
 import {
@@ -111,6 +112,11 @@ export default function SprintsGuides() {
   const enCours = useRef<EnCours | null>(null);
   const finishTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { annoncer, reinitialiser } = useCoachIntervalles();
+  // 3 novembre 2026 : claquettes à 10 s de la fin des sprints et des récups (réglage commun des chronos)
+  const clapOn = useRef(true);
+  useEffect(() => {
+    loadClapEnabled().then((v) => { clapOn.current = v; }).catch(() => {});
+  }, []);
 
   // ton dernier réglage
   useEffect(() => {
@@ -161,6 +167,17 @@ export default function SprintsGuides() {
         sans(() => soundManager.playCountdownTick(10));
         haptic(ImpactFeedbackStyle.Light);
         return;
+      case 'clap': {
+        const son = sonDixSecondes(e.phase, clapOn.current);
+        if (son === 'clap') {
+          sans(() => soundManager.playClap());
+          tapsClaquettes(() => haptic(ImpactFeedbackStyle.Light));
+        } else if (son === 'bip') {
+          sans(() => soundManager.playCountdownTick(10));
+          haptic(ImpactFeedbackStyle.Light);
+        }
+        return;
+      }
       case 'finish': {
         sans(() => backgroundTaskService.end());
         void annulerAlertesSprints();
