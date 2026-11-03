@@ -18,6 +18,7 @@ import { paletteSombre } from '@/components/yoroi/livePalette';
 import { formatKg } from '@/lib/v2/weightStats';
 import { traduire } from '@/lib/i18n/tr';
 import { ToriiImage, TORII_RATIO } from '@/components/yoroi/v2/charts/ToriiImage';
+import { ltrSiRTL } from '@/lib/v2/rtl';
 
 /** Une lanterne de pierre : grise tant que le palier n'est pas franchi, ambre allumee (avec son halo) ensuite */
 export function LanternePalier({ allumee, sombre, id, coche }: { allumee: boolean; sombre: boolean; id: string; coche?: string }) {
@@ -195,7 +196,7 @@ export function CheminPierres({ depart, objectif, part, atteint, fg2, idLanterne
   const pi = iCours >= 0 ? PIERRES_CHEMIN[iCours] : null;
 
   return (
-    <View accessible accessibilityRole="progressbar" accessibilityLabel={texteEtatsChemin(depart, objectif, p, atteint)} accessibilityValue={{ min: 0, max: 100, now: Math.round(p * 100) }}>
+    <View accessible accessibilityRole="progressbar" accessibilityLabel={texteEtatsChemin(depart, objectif, p, atteint)} accessibilityValue={{ min: 0, max: 100, now: Math.round(p * 100) }} style={ltrSiRTL}>
       <View style={{ height: B.hauteur, marginHorizontal: marge }} onLayout={(e) => setW(Math.max(0, e.nativeEvent.layout.width))}>
         {W > 0 ? (
           <Svg width={W} height={B.hauteur} style={{ position: 'absolute', left: 0, top: 0 }}>
