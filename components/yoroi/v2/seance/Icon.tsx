@@ -5,6 +5,7 @@ import React from 'react';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
+import { ICONES_SENS, miroirSiRTL } from '@/lib/v2/rtl';
 
 export type IconName =
   | 'close' | 'check' | 'plus' | 'minus' | 'trash' | 'up' | 'down' | 'clock' | 'pencil' | 'pause' | 'play'
@@ -39,7 +40,7 @@ export function Icon({ name, size = 22, color = '#1D2029', strokeWidth = 2.2, st
   }
   return (
     <IconeOuSticker nom={name} sticker={sticker} taille={size}>
-      <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Svg width={size} height={size} viewBox="0 0 24 24" style={ICONES_SENS.has(name) ? miroirSiRTL : undefined}>
         {body}
       </Svg>
     </IconeOuSticker>
