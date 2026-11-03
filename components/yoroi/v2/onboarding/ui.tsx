@@ -210,6 +210,7 @@ export function Shell({
   titleInk,
   onFin,
   echelle = 1,
+  centrer = false,
 }: {
   progress?: number | null;
   onBack?: () => void;
@@ -231,6 +232,8 @@ export function Shell({
   onFin?: () => void;
   /** 27 octobre 2026 : taille du titre (1 = normale), pour un ecran un peu plus compact */
   echelle?: number;
+  /** 3 novembre 2026 (Houari, ecran 7 « Ce qui te freine ») : les reponses centrees dans la place libre sous le titre */
+  centrer?: boolean;
 }) {
   const c = useColors();
   const insets = useSafeAreaInsets();
@@ -258,7 +261,7 @@ export function Shell({
       {scroll ? (
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingHorizontal: GUTTER, paddingTop: 12, paddingBottom: 24, gap }}
+          contentContainerStyle={{ paddingHorizontal: GUTTER, paddingTop: 12, paddingBottom: 24, gap, ...(centrer ? { flexGrow: 1 } : {}) }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           {...(onFin
@@ -281,7 +284,7 @@ export function Shell({
             : {})}
         >
           {head}
-          {children}
+          {centrer ? <View style={{ flexGrow: 1, justifyContent: 'center' }}>{children}</View> : children}
         </ScrollView>
       ) : (
         <View style={{ flex: 1, paddingHorizontal: GUTTER, paddingTop: 12, gap }}>
