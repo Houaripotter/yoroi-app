@@ -273,7 +273,13 @@ export const CHIFFRE_PALIERS_MAX = 140;
  * « depuis ton début ») : 34 de haut, de 37 a 71, centree un peu au dessus du poids (54 pour 56), 9 points au dessus de
  * la ligne « depuis ton début » (80) ; l'icone seulement a partir de 120 points de place.
  */
-export const PESEE_CARTE_POIDS = { droite: 80, haut: 37, hauteur: 34, ecartPoids: 8, largeurMin: 70, icone: 120 } as const;
+// 3 novembre 2026 nuit : sans decor de saison, la pastille remonte a 28 (de 28 a 62), a hauteur du haut de ton poids ;
+// avec un decor, elle reste a 37 et le decor se pose au dessus (boitesCartePastel ne sert qu'avec un decor)
+export const PESEE_CARTE_POIDS = { droite: 80, haut: 37, hautSansDecor: 28, hauteur: 34, ecartPoids: 8, largeurMin: 70, icone: 120 } as const;
+/** Le haut de la pastille de pesee, avec ou sans decor de saison au dessus d'elle */
+export function hautPesee(avecDecor: boolean): number {
+  return avecDecor ? PESEE_CARTE_POIDS.haut : PESEE_CARTE_POIDS.hautSansDecor;
+}
 /** La ligne « depuis ton début » : 2 sous la ligne du poids (16 + 14 + 4 + 44 + 2 = 80) */
 export const LIGNE_DEPUIS_Y = CARTE_PALIERS.haut + CARTE_PALIERS.titre + CARTE_PALIERS.ecartTitre + CARTE_PALIERS.ligneChiffre + 2;
 /** Le sapin ou la citrouille au dessus de la pastille (22 depuis qu'elle est remontee), 2 au dessus d'elle, 6 avant son bord droit */
