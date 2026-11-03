@@ -22,6 +22,7 @@ import type { PointCourbe } from '@/lib/v2/progres/peseeIsolee';
 import { medianeA } from '@/lib/v2/pesee/ligneDirectrice';
 import type { Ligne } from '@/lib/v2/pesee/ligneDirectrice';
 import { traduire } from '@/lib/i18n/tr';
+import { ltrSiRTL } from '@/lib/v2/rtl';
 
 export type ScrubTendance = { date: string; value: number; trend: number; isolee: boolean };
 
@@ -208,7 +209,7 @@ export function CourbeTendance({
       accessibilityLabel={a11y}
       accessibilityHint={onPress ? traduire('Ouvre le détail de ton poids') : undefined}
       onAccessibilityTap={onPress}
-      style={{ height, opacity: scrub.pressed ? 0.85 : 1 }}
+      style={[{ height, opacity: scrub.pressed ? 0.85 : 1 }, ltrSiRTL]}
     >
       {geo && premier && dernier ? (
         <>
