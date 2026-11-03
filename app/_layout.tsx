@@ -56,6 +56,7 @@ import { OuvertureNotifications } from '@/lib/v2/notifications/OuvertureNotifica
 import { RouvrirDernierePage } from '@/lib/v2/nav/RouvrirDernierePage';
 import { lancerImportDiscret } from '@/lib/v2/sante/importDiscret';
 import { traduire } from '@/lib/i18n/tr';
+import { appliquerSens } from '@/lib/v2/rtl';
 
 // ============================================
 // SECURITY: Notification Data Validation
@@ -146,6 +147,17 @@ if (!__DEV__) {
   console.debug = () => {};
   console.info = () => {};
   // console.error intentionally kept active for production error tracking
+}
+
+// 3 novembre 2026 : le sens de lecture de la langue (droite a gauche en arabe, gauche a droite partout ailleurs), avant le premier ecran
+if (appliquerSens() === 'relancer_a_la_main') {
+  setTimeout(() => {
+    try {
+      require('react-native').Alert.alert(traduire('Ferme puis rouvre YOROI'), traduire("Pour afficher l'app dans le sens de lecture de ta langue, ferme YOROI puis rouvre la."));
+    } catch {
+      // rien
+    }
+  }, 1500);
 }
 
 // ============================================
