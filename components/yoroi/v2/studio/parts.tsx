@@ -22,6 +22,7 @@ import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/sticker
 import { paletteSombre } from '@/components/yoroi/livePalette';
 import { PisteInterrupteur } from '@/components/yoroi/Interrupteur';
 import Svg, { Path } from 'react-native-svg';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 // ===== Contexte du Studio =====
 
@@ -712,7 +713,7 @@ export function LigneOutil({ label, sous, sticker, icon, couleur, on, busy, basc
       ) : (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {on ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: encre }} /> : null}
-          <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+          <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}>
             <Path d="M9 6l6 6-6 6" stroke={b.chevron} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
           </Svg>
         </View>
