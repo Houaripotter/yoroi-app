@@ -19,6 +19,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { P } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 /** Hauteur de la ligne de l'en-tete, hors zone sure */
 export const ENTETE_HAUTEUR = 56;
@@ -57,7 +58,7 @@ export function RetourCompact({ onPress, label = traduire('Retour'), repli = '/(
             transform: [{ scale: pressed ? 0.94 : 1 }],
           }}
         >
-          <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+          <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}>
             <Path d="M15 5l-7 7 7 7" stroke={c.ink} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
           </Svg>
         </View>
