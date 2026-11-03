@@ -37,6 +37,7 @@ import {
   endTime, estimatedMax, familyOf, formatClock, isCombat, longDate, parseExercises, parseRounds, sessionTitle, tileColor, workSets,
 } from '@/lib/v2/seances/sessionData';
 import { cleRecordExercice, computeRecords, formatRecordValue, recordsOfTraining } from '@/lib/v2/seances/records';
+import { libelleSeriePlaques, plaquesDe } from '@/lib/v2/seances/plaquesSerie';
 import { dedupeTrainings } from '@/lib/v2/seances/dedupe';
 import { sportArt } from '@/lib/v2/seances/illustrations';
 import { useSeancesData } from '@/lib/v2/seances/useSeancesData';
@@ -577,17 +578,19 @@ export default function WorkoutDetailScreen() {
                       </View>
                       {isRec ? <Hanko size={22} /> : null}
                     </View>
-                    {!cardioSeance && sets.length > 0 && sets.some((s) => s.weight > 0 || s.reps > 0) ? (
+                    {!cardioSeance && sets.length > 0 && sets.some((s) => s.weight > 0 || s.reps > 0 || (plaquesDe(s) ?? 0) > 0) ? (
                       <View style={{ gap: 6 }}>
                         {sets.map((s, si) => {
                           const m = estimatedMax(s.weight, s.reps);
+                          // 3 novembre 2026 : une serie comptee en plaques de la pile s'affiche en plaques (lib/v2/seances/plaquesSerie.ts)
+                          const pl = plaquesDe(s);
                           return (
                             <View key={si} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                               <View style={{ width: 26, height: 26, borderRadius: 8, backgroundColor: s.type === 'warmup' ? c.goldTint : c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
                                 <Ink size={12} weight="black" color={c.textSecondary}>{s.type === 'warmup' ? traduire('É') : String(si + 1)}</Ink>
                               </View>
                               <Ink size={16} weight="extraBold" style={{ flex: 1 }}>
-                                {s.weight > 0 ? `${formatKg(cv(s.weight))} ${uL} × ${s.reps}` : traduire("{0} répétitions", s.reps)}
+                                {pl !== null && pl > 0 ? libelleSeriePlaques(pl, s.reps) : s.weight > 0 ? `${formatKg(cv(s.weight))} ${uL} × ${s.reps}` : traduire("{0} répétitions", s.reps)}
                                 {s.type === 'dropset' ? <Ink size={12} weight="bold" color={c.textMuted}>{traduire('  dégressive')}</Ink> : s.type === 'superset' ? <Ink size={12} weight="bold" color={c.textMuted}>{'  superset'}</Ink> : null}
                               </Ink>
                               {m > 0 && s.type !== 'warmup' ? <Ink size={12} weight="bold" color={c.textMuted}>{traduire("max estimé {0}", Math.round(cv(m)))}</Ink> : null}
