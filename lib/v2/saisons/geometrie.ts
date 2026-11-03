@@ -268,11 +268,15 @@ export const CARTE_PALIERS = { marge: 18, haut: 16, titre: 14, ecartTitre: 4, li
 /** « 100,0 kg » en 40 (chiffres tabulaires) et son « kg » en 17 : 140 au plus */
 export const CHIFFRE_PALIERS_MAX = 140;
 /**
- * La pastille de ta prochaine pesee : son bord droit a 80 du bord de la carte (8 avant le sticker), 32 de haut, posee
- * en bas de la ligne du poids (de 44 a 76), au moins 8 apres ton poids, et pas plus etroite que 70 (sinon rien).
+ * La pastille de ta prochaine pesee : son bord droit a 80 du bord de la carte (8 avant le sticker), au moins 8 apres ton
+ * poids, et pas plus etroite que 70 (sinon rien). 3 novembre 2026 soir (Houari sur iPhone, elle touchait la ligne
+ * « depuis ton début ») : 34 de haut, de 37 a 71, centree un peu au dessus du poids (54 pour 56), 9 points au dessus de
+ * la ligne « depuis ton début » (80) ; l'icone seulement a partir de 120 points de place.
  */
-export const PESEE_CARTE_POIDS = { droite: 80, haut: 44, hauteur: 32, ecartPoids: 8, largeurMin: 70 } as const;
-/** Le sapin ou la citrouille au dessus de la pastille : 30 au plus, 2 au dessus d'elle, 6 avant le bord droit de la pastille */
+export const PESEE_CARTE_POIDS = { droite: 80, haut: 37, hauteur: 34, ecartPoids: 8, largeurMin: 70, icone: 120 } as const;
+/** La ligne « depuis ton début » : 2 sous la ligne du poids (16 + 14 + 4 + 44 + 2 = 80) */
+export const LIGNE_DEPUIS_Y = CARTE_PALIERS.haut + CARTE_PALIERS.titre + CARTE_PALIERS.ecartTitre + CARTE_PALIERS.ligneChiffre + 2;
+/** Le sapin ou la citrouille au dessus de la pastille (22 depuis qu'elle est remontee), 2 au dessus d'elle, 6 avant son bord droit */
 export const DECOR_PALIERS = { h: 30, ecart: 2, retrait: 6 } as const;
 
 export function boitesCartePastel(largeurCarte: number): { chiffre: Boite; anneau: Boite; titre: Boite; pesee: Boite; cotes: Boite[]; hauteur: number } {
