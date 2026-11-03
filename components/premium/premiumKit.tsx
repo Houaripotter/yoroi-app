@@ -12,6 +12,7 @@ import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Hanko } from '@/components/yoroi/v2/dojo/Hanko';
 import { traduire } from '@/lib/i18n/tr';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 export function premiumTap() {
   try {
@@ -116,7 +117,7 @@ const PERK_PATHS = {
 
 export function PerkIcon({ name, color, size = 20 }: { name: keyof typeof PERK_PATHS; color: string; size?: number }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={name === 'arrow' ? miroirSiRTL : undefined}>
       <Path d={PERK_PATHS[name]} stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
