@@ -14,6 +14,10 @@
  * « Envoyer a mon IA » copie la consigne et ouvre le partage. Un bloc rendu sans date reprend la date de sa photo.
  * Aucune photo n'est gardee : copies de cache effacees a la fin (lib/v2/balance/photoPrep.ts).
  * Analyse : lib/v2/balance/format.ts, fusion : lib/v2/balance/multi.ts, enregistrement : lib/v2/balance/save.ts.
+ * 3 novembre 2026 (refonte, Houari : « des boites blanc gris, delave, aucune couleur ») : le langage des onglets
+ * Seances et Progres pour la liste des dates. Une date enregistree a son rond menthe et sa coche verte, la case
+ * cochee est bleu nuit (plus de coche blanche sur pastel), le bilan de l'import est une carte menthe avec son
+ * sticker, les lignes a verifier une carte creme avec le sien, et les grands boutons gardent leur sticker.
  */
 import { track } from '@/utils/telemetry';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -29,6 +33,10 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { fontStyle } from '@/components/yoroi/fonts';
 import { DatePickerSheet } from '@/components/yoroi/v2/DateChips';
 import { DetailHeader, GhostButton, GlassCard, GUTTER, PrimaryButton } from '@/components/yoroi/v2/progres/ui';
+import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { CarreSticker, Petites, useTeinte } from '@/components/yoroi/v2/seances/kitA';
+import { useIllustrations } from '@/components/yoroi/v2/stickers';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
 import { CORPS } from '@/lib/v2/progres/couleursCorps';
 import { getProfile, getWeights, openDatabase } from '@/lib/database';
 import type { Weight } from '@/lib/database';
@@ -81,6 +89,11 @@ function dayTitle(iso: string): string {
   const [y, m, d] = iso.split('-').map(Number);
   const wd = new Date(y, m - 1, d, 12).getDay();
   return `${JOURS_COURT[wd] ?? ''} ${shortDate(iso)}`;
+}
+
+/** 3 novembre 2026 : un seul point en fin de phrase (« le 1er nov.. » apres une date abregee) */
+function finPhrase(t: string): string {
+  return t.endsWith('.') ? t : `${t}.`;
 }
 
 /** NUIT 14 : « 89,2 kg enregistré le 13 oct. », avec l'ancien poids s'il est remplace */
@@ -485,14 +498,14 @@ export default function BalancePhotoScreen() {
     const done = res.nothingNew
       ? traduire('Déjà à jour, rien de nouveau.')
       : res.weight
-        ? `${savedText(res.weight, res.date, res.replaced?.weight)}${kept}${autresTxt ? `, ${autresTxt}` : ''}.`
+        ? finPhrase(`${savedText(res.weight, res.date, res.replaced?.weight)}${kept}${autresTxt ? `, ${autresTxt}` : ''}`)
         : autresTxt
           ? traduire("Enregistré le {0} : {1}{2}.", shortDate(res.date), autresTxt, kept)
           : had && peseeSans
             ? traduire("Pesée complétée{0}.", kept)
             : traduire("Gardé dans tes mesures le {0}{1}.", shortDate(res.date), kept);
     update(i, (s) => ({ ...s, error: undefined, done, open: false, include: false }));
-    if (res.weight && !res.nothingNew) lastSaved.current = savedText(res.weight, res.date, res.replaced?.weight) + '.';
+    if (res.weight && !res.nothingNew) lastSaved.current = finPhrase(savedText(res.weight, res.date, res.replaced?.weight));
     return res.nothingNew ? 'same' : had && !res.replaced ? 'merged' : 'new';
   };
 
@@ -585,12 +598,30 @@ export default function BalancePhotoScreen() {
   };
 
   const stroke = { stroke: c.ink, strokeWidth: 2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  // 3 novembre 2026 : les teintes des onglets Seances et Progres (enregistre en menthe, a verifier en creme)
+  const menthe = useTeinte('menthe');
+  const creme = useTeinte('creme');
+  const illus = useIllustrations();
+  /** le sticker d'un grand bouton, dans un rond clair (comme « Commencer la séance ») */
+  const rondSticker = (nom: NomSticker) => (
+    <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+      <Image source={illus.img(nom)} style={{ width: 24, height: 24 }} resizeMode="contain" />
+    </View>
+  );
+  /** la coche verte dans son rond menthe (une date enregistree, une date confirmee) */
+  const CocheMenthe = ({ size = 28 }: { size?: number }) => (
+    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: menthe.fond, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={size * 0.6} height={size * 0.6} viewBox="0 0 24 24">
+        <Path d="M5 12.5l4.5 4.5L19 7.5" stroke={menthe.texte} strokeWidth={3.2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+    </View>
+  );
 
   const Check = ({ on, size = 28 }: { on: boolean; size?: number }) => (
-    <View style={{ width: size, height: size, borderRadius: size / 3, borderWidth: 2, borderColor: on ? c.primary : c.border, backgroundColor: on ? c.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: size, height: size, borderRadius: size / 3, borderWidth: 2, borderColor: on ? c.accent : c.border, backgroundColor: on ? c.accent : c.surface, alignItems: 'center', justifyContent: 'center' }}>
       {on ? (
         <Svg width={size * 0.57} height={size * 0.57} viewBox="0 0 24 24">
-          <Path d="M5 12.5l4.5 4.5L19 7.5" stroke={c.onAccent} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <Path d="M5 12.5l4.5 4.5L19 7.5" stroke={c.surface} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
         </Svg>
       ) : null}
     </View>
@@ -699,11 +730,11 @@ export default function BalancePhotoScreen() {
     const label = st.chosen ? traduire('choisie par toi') : proposalLabel(p, b.yearAdded);
     if (st.confirmed && st.date) {
       return (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 14, marginBottom: 12, paddingHorizontal: 12, minHeight: 44, borderRadius: 14, backgroundColor: c.fillSubtle }}>
-          <Svg width={16} height={16} viewBox="0 0 24 24">
-            <Path d="M5 12.5l4.5 4.5L19 7.5" stroke={c.successText} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 14, marginBottom: 12, paddingHorizontal: 10, minHeight: 44, borderRadius: 14, backgroundColor: menthe.fond }}>
+          <Svg width={18} height={18} viewBox="0 0 24 24">
+            <Path d="M5 12.5l4.5 4.5L19 7.5" stroke={menthe.texte} strokeWidth={3.2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
           </Svg>
-          <Ink size={13} weight="bold" style={{ flex: 1 }} numberOfLines={2}>{`${shortDate(st.date)}, ${label}`}</Ink>
+          <Ink size={13} weight="extraBold" color={menthe.texte} style={{ flex: 1 }} numberOfLines={2}>{`${shortDate(st.date)}, ${label}`}</Ink>
           <Pressable onPress={() => setPicker(bi)} accessibilityRole="button" accessibilityLabel={traduire("Changer le jour de cette pesée")} hitSlop={8} style={{ minHeight: 40, justifyContent: 'center' }}>
             <Ink size={13} weight="extraBold" color={c.accent}>{traduire("Changer")}</Ink>
           </Pressable>
@@ -908,11 +939,7 @@ export default function BalancePhotoScreen() {
       <GlassCard key={`b${bi}`} style={{ padding: 0, overflow: 'hidden' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12 }}>
           {st.done ? (
-            <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
-              <Svg width={16} height={16} viewBox="0 0 24 24">
-                <Path d="M5 12.5l4.5 4.5L19 7.5" stroke={c.successText} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
-            </View>
+            <CocheMenthe size={30} />
           ) : (
             <Pressable
               onPress={() => {
@@ -936,7 +963,7 @@ export default function BalancePhotoScreen() {
           >
             <View style={{ flex: 1, gap: 3 }}>
               <Ink size={16} weight="black" color={st.date ? c.ink : c.danger} numberOfLines={1}>{title}</Ink>
-              <Ink size={12} color={c.textSecondary} numberOfLines={2}>{st.done ?? summary}</Ink>
+              <Ink size={12} weight={st.done ? 'bold' : undefined} color={st.done ? menthe.texte : c.textSecondary} numberOfLines={2}>{st.done ?? summary}</Ink>
               {weightClash && !st.done ? (
                 <View style={{ alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: c.accentTint, marginTop: 2 }}>
                   <Ink size={12} weight="bold" color={c.accent} numberOfLines={3}>{traduire("Déjà noté le {0} : {1} kg. La balance : {2} kg.", shortDate(st.date), fmtBalance(ex.values.poids_kg as number, 0.1), fmtBalance(poids as number, 0.1))}</Ink>
@@ -1041,16 +1068,28 @@ export default function BalancePhotoScreen() {
   const nLot = lot?.aValider.length ?? 0;
   const boutonLot = (haut: boolean) =>
     lot && nLot && !allDone ? (
-      <PrimaryButton
+      <BoutonPrincipal
         label={lotProgress ?? (saving ? traduire('Enregistrement en cours') : texteBouton(nLot))}
         onPress={demanderLot}
         disabled={saving}
+        haptique="light"
+        hauteur={60}
+        rayon={30}
+        tailleTexte={17}
+        lignes={1}
+        icone={() => rondSticker('balance')}
         style={haut ? { marginTop: 4 } : undefined}
       />
     ) : null;
   const blocVerif = lot && lot.aVerifier.length ? (
-    <View accessibilityLiveRegion="polite" style={{ padding: 12, borderRadius: 14, backgroundColor: c.goldTint, gap: 8 }}>
-      <Ink size={14} weight="extraBold">{titreAVerifier(lot.aVerifier.length)}</Ink>
+    <View accessibilityLiveRegion="polite" style={{ padding: 14, borderRadius: 22, backgroundColor: creme.fond, gap: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <CarreSticker nom="alerte" teinte="creme" taille={44} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Petites texte={traduire('À vérifier')} teinte="creme" style={{ paddingHorizontal: 0 }} />
+          <Ink size={16} weight="black">{titreAVerifier(lot.aVerifier.length)}</Ink>
+        </View>
+      </View>
       {lot.aVerifier.map((d) => (
         <Pressable
           key={`v${d.ligne.index}`}
@@ -1245,7 +1284,13 @@ export default function BalancePhotoScreen() {
         {blocks.length && states.length === blocks.length ? (
           <View onLayout={(e) => (previewY.current = e.nativeEvent.layout.y)} style={{ marginHorizontal: GUTTER, marginTop: 22, gap: 12 }}>
             <View style={{ gap: 4 }}>
-              <Ink size={20} weight="black" tight>{traduirePluriel(blocks.length, blocks.length > 1, "{0} pesée trouvée", "{0} pesées trouvées", blocks.length)}</Ink>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 2 }}>
+                <CarreSticker nom="scan_ia" teinte="bleu" taille={50} />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Petites texte={traduire('Lu par ton IA')} teinte="bleu" style={{ paddingHorizontal: 0 }} />
+                  <Ink size={22} weight="black" tight>{traduirePluriel(blocks.length, blocks.length > 1, "{0} pesée trouvée", "{0} pesées trouvées", blocks.length)}</Ink>
+                </View>
+              </View>
               {toChoose ? (
                 <Ink size={13} weight="bold" color={c.danger}>{traduirePluriel(toChoose, toChoose > 1, "{0} pesée sans date : choisis son jour avant d’enregistrer.", "{0} pesées sans date : choisis leur jour avant d’enregistrer.", toChoose)}</Ink>
               ) : null}
@@ -1259,12 +1304,13 @@ export default function BalancePhotoScreen() {
             {blocVerif}
             {blocks.map((b, i) => (states[i] ? card(b, states[i], i) : null))}
             {notice ? (
-              <View accessibilityLiveRegion="polite" style={{ padding: 14, borderRadius: 16, backgroundColor: c.fillSubtle, borderWidth: 1.5, borderColor: c.successText, gap: 10 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <Svg width={22} height={22} viewBox="0 0 24 24">
-                    <Path d="M5 12.5l4.5 4.5L19 7.5" stroke={c.successText} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                  </Svg>
-                  <Ink size={15} weight="extraBold" color={c.ink} style={{ flex: 1 }}>{notice}</Ink>
+              <View testID="bilan-import" accessibilityLiveRegion="polite" style={{ padding: 16, borderRadius: 24, backgroundColor: menthe.fond, gap: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <CarreSticker nom="balance" teinte="menthe" taille={52} />
+                  <View style={{ flex: 1, gap: 3 }}>
+                    <Petites texte={allDone ? traduire('C’est enregistré') : traduire('Ton import')} teinte="menthe" style={{ paddingHorizontal: 0 }} />
+                    <Ink size={16} weight="black" color={c.ink}>{notice}</Ink>
+                  </View>
                 </View>
                 {allDone && states.some((s) => s.date) ? (
                   <GhostButton
@@ -1298,7 +1344,13 @@ export default function BalancePhotoScreen() {
                 onPress={() => void saveAll()}
               />
             ) : !allDone ? (
-              <PrimaryButton
+              <BoutonPrincipal
+                haptique="light"
+                hauteur={60}
+                rayon={30}
+                tailleTexte={17}
+                lignes={1}
+                icone={() => rondSticker('balance')}
                 label={
                   saving
                     ? 'Enregistrement en cours'
