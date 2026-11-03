@@ -98,6 +98,8 @@ export type ContenuCarte = {
   heroDansVisuel?: boolean;
   /** dessins : trace GPS (0 a 1), ceinture, pente, zone 2, poids, jours, muscles, annee, barres */
   trace?: { points: [number, number][]; ratio: number } | null;
+  /** 3 novembre 2026 : le parcours d'une carte d'EXEMPLE (dessin invente, jamais un GPS) : son libelle le dit */
+  traceExemple?: boolean;
   distanceKm?: number;
   ceinture?: { libelle: string; couleur: string } | null;
   pente?: number | null;
@@ -379,7 +381,7 @@ function contenuSansAutocollant(d: CarteData, famille: FamilleMoteur, u: UnitePo
       const stats = [km ? dureeStat(s.dureeMin) : null, al ? { ic: 'allure' as IconeId, v: al, u: '/km', l: traduire('Allure') } : null, s.calories > 0 ? { ic: 'kcal' as IconeId, v: nombre(s.calories, 0), u: 'kcal', l: traduire('Kcal mesurées') } : null].filter(Boolean) as Stat[];
       return {
         famille, pal: PALETTES.course, ic: 'course', sport: nomSport || traduire('Course à pied'), lib: km ? traduire('Distance') : traduire('Durée'),
-        hero, stats, visuel: s.trace?.points?.length ? 'trace' : 'piste', corps: true, trace: s.trace ?? null, distanceKm: s.distanceKm,
+        hero, stats, visuel: s.trace?.points?.length ? 'trace' : 'piste', corps: true, trace: s.trace ?? null, traceExemple: !!d.exemple, distanceKm: s.distanceKm,
       };
     }
     case 'jjb': {
