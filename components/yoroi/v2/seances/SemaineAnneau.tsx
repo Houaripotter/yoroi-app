@@ -5,6 +5,8 @@
  * en pointillés. Mêmes données qu'avant (computeWeekPlates, weekCompare) ; seuls la forme et l'ordre changent.
  * 31 octobre 2026 (Houari) : chaque jour fait reçoit le tampon « validé » (TamponValide.tsx), un jour prévu passé
  * sans séance s'efface (discret), un jour sans séance prévue mais avec une séance faite est validé aussi.
+ * 3 novembre 2026 (Houari) : la carte s'ouvre en grand (« Ta semaine », app/ta-semaine.tsx), et un jour de la
+ * petite rangée ouvre « Ta semaine » centré sur ce jour (onOuvrir, onJour).
  */
 import React from 'react';
 import { Image, Pressable, View } from 'react-native';
@@ -19,6 +21,8 @@ import type { DayPlate } from './WeekPlates';
 import { stickerDuSport } from './MonthMarks';
 import { Petites, useCarteA, useTeinte } from './kitA';
 import { TamponValide } from './TamponValide';
+import { Icon } from './Icon';
+import { tap } from './ui';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 function Anneau({ fait, total, taille = 62 }: { fait: number; total: number; taille?: number }) {
@@ -44,7 +48,7 @@ function Anneau({ fait, total, taille = 62 }: { fait: number; total: number; tai
   );
 }
 
-function Jour({ p, sports, lettre, rang }: { p: DayPlate; sports: string[]; lettre: string; rang: number }) {
+function Jour({ p, sports, lettre, rang, onPress }: { p: DayPlate; sports: string[]; lettre: string; rang: number; onPress?: (iso: string) => void }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const illus = useIllustrations();
@@ -62,7 +66,15 @@ function Jour({ p, sports, lettre, rang }: { p: DayPlate; sports: string[]; lett
   else fond = { backgroundColor: theme.isDark ? c.fillSubtle : '#ECEEF5' };
   const etat = fait ? `${traduire('Validé')}, ${traduirePluriel(p.count, p.count > 1, '{0} séance', '{0} séances', p.count)}` : p.state === 'planned' ? traduire('prévu') : p.state === 'missed' ? traduire('manqué') : p.state === 'rest' ? traduire('repos') : traduire('libre');
   return (
-    <View style={{ flex: 1, alignItems: 'center', gap: 5, minWidth: 0 }} accessible accessibilityLabel={`${lettre}, ${etat}${p.isToday ? `, ${traduire('aujourd’hui')}` : ''}`}>
+    <Pressable
+      onPress={onPress ? () => onPress(p.iso) : undefined}
+      disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityHint={onPress ? traduire('Ouvre ta semaine sur ce jour') : undefined}
+      style={({ pressed }) => ({ flex: 1, alignItems: 'center', gap: 5, minWidth: 0, opacity: pressed ? 0.7 : 1 })}
+      accessible
+      accessibilityLabel={`${lettre}, ${etat}${p.isToday ? `, ${traduire('aujourd’hui')}` : ''}`}
+    >
       <View style={[base, fond]}>
         {fait ? (
           illus.stickers && sticker ? <Image source={sticker} style={{ width: 24, height: 24 }} resizeMode="contain" /> : <Ink size={14} weight="black" color={bleu.texte}>{String(Math.max(1, p.count))}</Ink>
@@ -77,16 +89,20 @@ function Jour({ p, sports, lettre, rang }: { p: DayPlate; sports: string[]; lett
         ) : null}
       </View>
       <Ink size={11.5} weight="extraBold" color={p.isToday ? c.accentText : c.textSecondary}>{lettre}</Ink>
-    </View>
+    </Pressable>
   );
 }
 
-export function SemaineAnneau({ week, plates, trainings, weeklyGoal, onChooseGoal }: {
+export function SemaineAnneau({ week, plates, trainings, weeklyGoal, onChooseGoal, onOuvrir, onJour }: {
   week: WeekCompare;
   plates: DayPlate[];
   trainings: Training[];
   weeklyGoal: number;
   onChooseGoal?: () => void;
+  /** 3 novembre 2026 : un appui sur la carte ouvre « Ta semaine » */
+  onOuvrir?: () => void;
+  /** un appui sur un jour ouvre « Ta semaine » centré sur ce jour */
+  onJour?: (iso: string) => void;
 }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
@@ -101,7 +117,13 @@ export function SemaineAnneau({ week, plates, trainings, weeklyGoal, onChooseGoa
   const sportsDuJour = (iso: string) => trainings.filter((t) => t.date.slice(0, 10) === iso).map((t) => t.sport);
 
   return (
-    <View style={carte} accessibilityLabel={traduire('Cette semaine, {0}', week.range)}>
+    <Pressable
+      onPress={onOuvrir ? () => { tap(); onOuvrir(); } : undefined}
+      disabled={!onOuvrir}
+      // les jours et le lien restent des boutons séparés pour VoiceOver : la carte ne les regroupe pas
+      accessible={false}
+      style={({ pressed }) => [carte, { opacity: pressed && onOuvrir ? 0.92 : 1 }]}
+    >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
         <Anneau fait={avecObjectif ? cur.sessions : cur.days} total={avecObjectif ? weeklyGoal : 7} />
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
@@ -121,8 +143,20 @@ export function SemaineAnneau({ week, plates, trainings, weeklyGoal, onChooseGoa
         </View>
       </View>
       <View style={{ marginTop: 12, flexDirection: 'row', gap: 6 }}>
-        {plates.map((p, i) => <Jour key={p.iso} p={p} sports={sportsDuJour(p.iso)} lettre={PLAN_DAYS_SHORT[i]} rang={i} />)}
+        {plates.map((p, i) => <Jour key={p.iso} p={p} sports={sportsDuJour(p.iso)} lettre={PLAN_DAYS_SHORT[i]} rang={i} onPress={onJour ? (iso) => { tap(); onJour(iso); } : undefined} />)}
       </View>
-    </View>
+      {onOuvrir ? (
+        <Pressable
+          onPress={() => { tap(); onOuvrir(); }}
+          accessibilityRole="button"
+          accessibilityLabel={`${traduire('Voir ta semaine')}, ${traduire('Cette semaine, {0}', week.range)}`}
+          hitSlop={6}
+          style={{ marginTop: 6, minHeight: 36, alignSelf: 'flex-end', flexDirection: 'row', alignItems: 'center', gap: 4 }}
+        >
+          <Ink size={12.5} weight="extraBold" color={c.accentText}>{traduire('Voir ta semaine')}</Ink>
+          <Icon name="chevron" size={14} color={c.accentText} />
+        </Pressable>
+      ) : null}
+    </Pressable>
   );
 }

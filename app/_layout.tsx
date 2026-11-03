@@ -440,6 +440,7 @@ function RootLayoutContent() {
         <Stack.Screen name="savoir" options={{ presentation: 'card' }} />
         <Stack.Screen name="sport" options={{ presentation: 'card' }} />
         <Stack.Screen name="history" options={{ presentation: 'card' }} />
+        <Stack.Screen name="ta-semaine" options={{ presentation: 'card' }} />
         <Stack.Screen name="body-status" options={{ presentation: 'card' }} />
         <Stack.Screen name="body-composition" options={{ presentation: 'card' }} />
         <Stack.Screen name="balance-photo" options={{ presentation: 'card' }} />
