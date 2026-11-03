@@ -17,7 +17,8 @@ const SOUND_FILES: { [key: string]: any } = {
   'ring': require('../assets/sounds/ring.mp3'),
   'beep': require('../assets/sounds/beep.mp3'),
   'gong': require('../assets/sounds/gong.mp3'),
-  'clap': require('../assets/sounds/clap10.mp3'),
+  // 3 novembre 2026 : claquettes de bois des 10 dernieres secondes, synthetisees pour YOROI
+  'clap': require('../assets/sounds/claquettes_10s.mp3'),
   'bell': require('../assets/sounds/bell_end.mp3'),
   // 30 octobre 2026 : fin du repos de musculation, le « wizz » demande par Houari
   'wizz': require('../assets/sounds/wizz.mp3'),
