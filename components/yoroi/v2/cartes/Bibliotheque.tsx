@@ -5,6 +5,9 @@
  * qui sont les vraies cartes dessinees avec tes chiffres. Un toucher ouvre l'atelier (carrousel des modeles)
  * sur cette carte. Rubrique vide : une phrase courte et un sticker, jamais une carte inventee.
  * Composant de presentation : les cartes arrivent toutes lues (app/mes-cartes.tsx), il se dessine aussi en web.
+ * 3 novembre 2026 (photos d'exemple) : sans ta photo, les cartes qui ont la composition Ta photo se montrent avec une
+ * photo d'EXEMPLE choisie par famille et par sport (lib/v2/cartes/exemples.ts), avec la pastille « Exemple ».
+ * Tes chiffres restent les tiens. Une vignette n'est jamais capturee : l'exemple ne part dans aucun export.
  */
 import React, { useRef } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
@@ -18,6 +21,9 @@ import { directionEffective } from '@/lib/v2/cartes/directions';
 import type { CarteData, CouleurId, DirectionId, Masque, OptionsCarte } from '@/lib/v2/cartes/types';
 import type { Bibliotheque as BibliothequeDonnees } from '@/lib/v2/cartes/bibliotheque';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { estCarteExemple, exemplePourCarte } from '@/lib/v2/cartes/exemples';
+import type { ExempleId } from '@/lib/v2/cartes/exemples';
+import { visuelsExemple } from './exemples';
 
 export type RubriqueBiblio = {
   id: string;
@@ -61,16 +67,31 @@ export function nomVignette(d: CarteData): string {
   return d.titre;
 }
 
+/**
+ * 3 novembre 2026 (photos d'exemple) : la pastille « Exemple », en haut a droite de la vignette, discrete mais lisible
+ */
+export function PastilleExemple() {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  return (
+    <View testID="pastille-exemple" pointerEvents="none" style={{ position: 'absolute', top: 7, right: 7, paddingHorizontal: 7, height: 19, borderRadius: 10, justifyContent: 'center', backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, opacity: 0.96 }}>
+      <Ink size={10.5} weight="black" color={c.ink} style={{ lineHeight: 13 }}>{traduire('Exemple')}</Ink>
+    </View>
+  );
+}
+
 /** 1er novembre 2026 : exportee pour l'accueil en grand ecran (Tes cartes a partager), largeur au choix */
-export function Vignette({ d, options, visuels, onPress, largeur = VIGNETTE_L }: { d: CarteData; options: OptionsCarte; visuels: VisuelsCarte; onPress: () => void; largeur?: number }) {
+export function Vignette({ d, options, visuels, onPress, largeur = VIGNETTE_L, exemple }: { d: CarteData; options: OptionsCarte; visuels: VisuelsCarte; onPress: () => void; largeur?: number; exemple?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const sous = d.moment === 'seance' ? d.sousTitre : resumeCarte(d, options.masque);
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={traduire('Carte {0}, {1}', nomVignette(d), sous)} style={({ pressed }) => ({ width: largeur, gap: 7, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={exemple ? traduire('Carte {0}, {1}, photo d’exemple', nomVignette(d), sous) : traduire('Carte {0}, {1}', nomVignette(d), sous)} style={({ pressed }) => ({ width: largeur, gap: 7, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
       <View pointerEvents="none" style={{ borderRadius: 18, shadowColor: '#000', shadowOpacity: 0.16, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 4 }}>
-        {/* 2 novembre 2026 (studio unique) : la vignette montre toujours le dessin de la carte (jamais un autocollant transparent) */}
-        <CarteApercu largeur={largeur} data={d} options={{ ...options, compo: 'B' }} visuels={visuels} />
+        {/* 2 novembre 2026 (studio unique) : la vignette montre le dessin de la carte (jamais un autocollant transparent) ;
+            3 novembre 2026 : ou Ta photo avec une photo d'exemple, et sa pastille */}
+        <CarteApercu largeur={largeur} data={d} options={exemple ? options : { ...options, compo: 'B' }} visuels={visuels} />
+        {exemple ? <PastilleExemple /> : null}
       </View>
       <View style={{ gap: 1, paddingHorizontal: 2 }}>
         <Ink size={13.5} weight="extraBold" numberOfLines={1}>{traduire(nomVignette(d))}</Ink>
@@ -85,7 +106,8 @@ export function Bibliotheque({ rubriques, base, visuelsPour, onOuvrir, defiler, 
   /** le style memorise (couleur, masquage) ; la vignette prend le modele de sa rubrique */
   base: OptionsCarte;
   visuelsPour: (d: CarteData) => VisuelsCarte;
-  onOuvrir: (d: CarteData) => void;
+  /** ex : la photo d'exemple de la vignette touchee, pour que le studio montre la meme */
+  onOuvrir: (d: CarteData, ex?: ExempleId | null) => void;
   /** fait defiler l'ecran jusqu'a une rubrique (sommaire) ; absent, pas de sommaire */
   defiler?: (y: number) => void;
   avant?: React.ReactNode;
@@ -121,7 +143,7 @@ export function Bibliotheque({ rubriques, base, visuelsPour, onOuvrir, defiler, 
           </View>
           {r.cartes.length ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -22 }} contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: 4, gap: 12 }}>
-              {r.cartes.map((d) => {
+              {exemplesDeRubrique(r.cartes, visuelsPour).map(({ d, ex }) => {
                 const o: OptionsCarte = {
                   ...base,
                   modele: r.modele ? directionEffective(d, r.modele) : directionEffective(d, base.modele),
@@ -131,9 +153,12 @@ export function Bibliotheque({ rubriques, base, visuelsPour, onOuvrir, defiler, 
                   sortie: 'story',
                   chiffres: d.moment === 'exploit' ? [] : chiffresParDefaut(d, base.masque, 4),
                 };
-                // un exploit sans famille (record de course...) prend celle de son sport : la bonne photo d'ambiance
-                const dv = !d.famille && d.sport ? { ...d, famille: familleDe(getSportCategory(d.sport), d.sport) } : d;
-                return <Vignette key={d.cle} d={dv} options={o} visuels={{ ...visuelsPour(d), ambiance: true }} onPress={() => onOuvrir(d)} />;
+                const dv = avecFamille(d);
+                const v = { ...visuelsPour(d), ambiance: true };
+                // 3 novembre 2026 : sans ta photo, Ta photo avec la photo d'exemple (tes chiffres) ; l'avant apres d'exemple
+                if (ex) return <Vignette key={d.cle} d={dv} options={{ ...o, compo: 'A', fond: 'photo', sansPersonne: false, epure: false }} visuels={visuelsExemple(v, ex)} onPress={() => onOuvrir(d, ex)} exemple />;
+                if (estCarteExemple(d)) return <Vignette key={d.cle} d={dv} options={{ ...o, compo: 'A', masque: 'aucun' }} visuels={{ ...v, exemple: true }} onPress={() => onOuvrir(d)} exemple />;
+                return <Vignette key={d.cle} d={dv} options={o} visuels={v} onPress={() => onOuvrir(d)} />;
               })}
             </ScrollView>
           ) : (
@@ -147,6 +172,24 @@ export function Bibliotheque({ rubriques, base, visuelsPour, onOuvrir, defiler, 
       {apres}
     </View>
   );
+}
+
+/** Un exploit sans famille (record de course...) prend celle de son sport : la bonne photo */
+function avecFamille(d: CarteData): CarteData {
+  return !d.famille && d.sport ? { ...d, famille: familleDe(getSportCategory(d.sport), d.sport) } : d;
+}
+
+/**
+ * 3 novembre 2026 (photos d'exemple) : la photo d'exemple de chaque carte d'une rubrique, ou null (ta photo est la,
+ * ou aucun exemple ne lui va). Musculation : homme et femme en alternance dans la rubrique.
+ */
+export function exemplesDeRubrique(cartes: CarteData[], visuelsPour: (d: CarteData) => VisuelsCarte): { d: CarteData; ex: ExempleId | null }[] {
+  let rang = 0;
+  return cartes.map((d) => {
+    const ex = estCarteExemple(d) ? null : exemplePourCarte(avecFamille(d), rang, !!visuelsPour(d).photo);
+    if (ex === 'muscu_homme' || ex === 'muscu_femme') rang++;
+    return { d, ex };
+  });
 }
 
 /** Les rubriques de la bibliotheque, dans l'ordre de l'ecran */
