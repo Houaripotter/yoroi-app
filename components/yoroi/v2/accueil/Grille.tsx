@@ -340,7 +340,9 @@ const sansLettre = (nom: string, lettre: 'A' | 'B' | null) => (lettre ? nom.repl
 /**
  * Ta prochaine séance, celle de ton programme (1er novembre 2026) : quand (aujourd'hui, demain ou la date), son nom
  * avec sa lettre A ou B, sa durée estimée, ses 3 premiers exercices, et « Commencer la séance ».
- * Même lancement que la carte du jour de l'onglet Séances (routeDuJour) ; le cadre lui-même n'est pas un bouton.
+ * Même lancement que la carte du jour de l'onglet Séances (routeDuJour).
+ * 3 novembre 2026 (Houari) : toute la carte ouvre ton programme, comme « Voir le programme ». Le toucher de la carte
+ * n'est pas un element pour VoiceOver (accessible={false}) : ses deux boutons restent chacun lisibles et touchables.
  */
 function ProchaineDuProgramme({ v, d }: { v: NonNullable<ProgrammeAccueil['prochaine']>; d: NonNullable<ProgrammeAccueil['d']> }) {
   const router = useRouter();
@@ -361,6 +363,7 @@ function ProchaineDuProgramme({ v, d }: { v: NonNullable<ProgrammeAccueil['proch
   };
   const ligne = sombre ? 'rgba(26,30,41,0.18)' : 'rgba(255,255,255,0.22)';
   return (
+    <Press onPress={voir} haptic="light" accessible={false} style={{ flex: 1 }}>
     <Cadre domaine="seances" plein a11y={traduire("Ta prochaine séance : {0}, {1}{2}", quand, nom, v.lettre ? ` ${v.lettre}` : '')} style={{ padding: 16, gap: 6 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 24 }}>
         <Image source={illus.img('calendrier')} style={{ width: 24, height: 24 }} resizeMode="contain" accessibilityIgnoresInvertColors />
@@ -410,6 +413,7 @@ function ProchaineDuProgramme({ v, d }: { v: NonNullable<ProgrammeAccueil['proch
         </Pressable>
       </View>
     </Cadre>
+    </Press>
   );
 }
 
