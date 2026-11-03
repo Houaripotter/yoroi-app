@@ -24,6 +24,7 @@ import { getTrainings, getWeeklyPlanById } from '@/lib/database';
 import type { CombatRound, Training } from '@/lib/database';
 import { logger } from '@/lib/security/logger';
 import { playBeepSound, playBellSound, playClapSound, playGongSound, prepareSounds } from '@/lib/soundManager';
+import { CLAQUETTES_S, tapsClaquettes } from '@/lib/v2/carnet/claquettes';
 import { loadClapEnabled } from '@/lib/v2/carnet/chrono';
 import { COMBAT_SPORTS, getSportName } from '@/lib/sports';
 import {
@@ -297,9 +298,18 @@ export default function SeanceCombat() {
     const key = `${draft.timer.phase}-${draft.timer.index}-${left}`;
     if (key !== beepKey.current) {
       beepKey.current = key;
-      if (draft.timer.phase === 'round' && left === 10 && draft.roundSec > 12) {
-        (clapOn.current ? playClapSound() : playBeepSound()).catch(() => {});
-        impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+      // 3 novembre 2026 : claquettes à 10 s de la fin du round et du repos (10 s avant le round suivant), une vibration par coup
+      if (draft.timer.phase === 'round' && left === 10 && draft.roundSec > CLAQUETTES_S) {
+        if (clapOn.current) {
+          playClapSound().catch(() => {});
+          tapsClaquettes(() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); });
+        } else {
+          playBeepSound().catch(() => {});
+          impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+        }
+      } else if (draft.timer.phase === 'rest' && left === 10 && draft.restSec > CLAQUETTES_S && clapOn.current) {
+        playClapSound().catch(() => {});
+        tapsClaquettes(() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); });
       } else if (draft.timer.phase === 'rest' && left > 0 && left <= 3) {
         playBeepSound().catch(() => {});
         impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
