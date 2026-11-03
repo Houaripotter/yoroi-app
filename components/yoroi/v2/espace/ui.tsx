@@ -20,6 +20,7 @@ import { traduire } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import { IconeOuSticker, stickerDeLIcone } from '@/components/yoroi/v2/ui/StickerIcone';
+import { ICONES_SENS, miroirSiRTL } from '@/lib/v2/rtl';
 
 // ============================================
 // ICONES (traits SVG, pas de dependance externe)
@@ -98,7 +99,7 @@ export function Icon({ name, size = 20, color, stroke = 2.2, sticker }: { name: 
   const col = color ?? theme.colors.ink;
   return (
     <IconeOuSticker nom={name} sticker={sticker} taille={size}>
-      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={ICONES_SENS.has(name) ? miroirSiRTL : undefined}>
         {ICONS[name].map((d) => (
           <Path key={d} d={d} stroke={col} strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
         ))}
