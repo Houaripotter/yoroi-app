@@ -329,6 +329,10 @@ export function JourChoisi({ v, unite, largeur, colonnes = 1, perso, training, p
   const express = !fait && actions.onExpress && v.muscu ? DUREES_EXPRESS.filter((m) => m < duree) : [];
   // la carte : 18 points de marge et 3 points de bord de chaque côté
   const largeurColonne = colonnes === 2 ? Math.floor((largeur - 42 - 12) / 2) : largeur - 42;
+  // 3 novembre 2026 (Houari : « les exercices n'ont pas de nom, seulement une image ») : une colonne qui passe à la
+  // ligne (flexWrap) ne s'étire plus sur la largeur, chaque ligne se réduisait à sa vignette et le nom (flex 1)
+  // tombait à zéro. Une seule colonne : pas de flexWrap. Deux colonnes (grand écran) : des largeurs fixes.
+  const listeExos = colonnes === 2 ? { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 12 } : { flexDirection: 'column' as const, alignSelf: 'stretch' as const, gap: 6 };
   const ligne = (e: ExoVu, k: number) => (
     <View key={`${e.nom}${k}`} style={colonnes === 2 ? { width: largeurColonne } : undefined}>
       <LigneExo e={e} unite={unite} repos={e.reposSec ? libelleRepos(e.reposSec) : undefined} onChanger={changer && actions.onChanger && e.index !== undefined && !e.minutes ? () => actions.onChanger!(e) : undefined} />
@@ -381,7 +385,7 @@ export function JourChoisi({ v, unite, largeur, colonnes = 1, perso, training, p
         <>
           {/* les exercices, dans l'ordre */}
           {v.exos.length ? (
-            <View style={{ flexDirection: colonnes === 2 ? 'row' : 'column', flexWrap: 'wrap', gap: colonnes === 2 ? 12 : 6 }}>
+            <View style={listeExos}>
               {exosMuscu.map(ligne)}
             </View>
           ) : null}
@@ -390,13 +394,16 @@ export function JourChoisi({ v, unite, largeur, colonnes = 1, perso, training, p
           {exosFin.length || v.cardio ? (
             <View style={{ borderRadius: 18, backgroundColor: teintes.creme.fond, padding: 12, gap: 8 }}>
               <Ink size={11} weight="extraBold" color={teintes.creme.texte} style={{ letterSpacing: 1.2 }}>{traduire('Puis, en fin de séance').toLocaleUpperCase()}</Ink>
-              {exosFin.length ? (
-                <View style={{ flexDirection: colonnes === 2 ? 'row' : 'column', flexWrap: 'wrap', gap: colonnes === 2 ? 12 : 6 }}>{exosFin.map(ligne)}</View>
-              ) : null}
+              {/* chaque ligne au même format que le haut de la page : le visuel de l'exercice, son nom, ses séries */}
+              {exosFin.length ? <View style={listeExos}>{exosFin.map(ligne)}</View> : null}
+              {/* le cardio : son visuel, son nom et sa durée (« 30 min de marche inclinée ») */}
               {v.cardio ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
-                  <Image source={illus.img('cardio_zone2')} style={{ width: 40, height: 40 }} resizeMode="contain" accessibilityIgnoresInvertColors />
-                  <Ink size={14.5} weight="black" color={teintes.creme.texte} style={{ flex: 1 }}>{v.cardio}</Ink>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 58 }} accessible accessibilityLabel={v.cardio}>
+                  <CarreSticker nom="cardio_zone2" teinte="menthe" taille={52} rayon={15} />
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Ink size={14} weight="extraBold" numberOfLines={3}>{sansTiret(v.cardio)}</Ink>
+                    <Ink size={12.5} weight="bold" color={c.textSecondary}>{traduire('Cardio, après tes exercices')}</Ink>
+                  </View>
                 </View>
               ) : null}
             </View>
