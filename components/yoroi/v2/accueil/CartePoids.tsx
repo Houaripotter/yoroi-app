@@ -77,6 +77,7 @@ import type { QuoiObjectif } from '@/components/yoroi/v2/pesee/ObjectifPoids';
 import { Card, Icon, ombreCarte, P, Press } from './kit';
 import { traduire, LANG } from '@/lib/i18n/tr';
 import { useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
+import type { prochainePesee } from '@/lib/v2/accueil/enPlus';
 
 const PERIODE_TEXTE: Record<number, string> = { 30: traduire('en 1 mois'), 90: traduire('en 3 mois'), 180: traduire('en 6 mois'), 365: traduire('en 1 an'), [PERIODE_PLAN]: traduire('depuis ton début') };
 
@@ -209,6 +210,12 @@ type Props = {
   centre?: boolean;
   /** 27 octobre 2026 (carrousel) : la page affichee (0 : ton poids et ton objectif, avec les citrouilles et les sapins ; 1 : ta courbe) */
   onPage?: (page: number) => void;
+  /**
+   * 3 novembre 2026 (Houari : « il y a de la place dans la carte ») : ta prochaine pesee, en petite pastille a cote de
+   * ton poids (avant : la carte « Ta prochaine pesée » en bas de l'accueil). undefined : rien (en lecture, ou bloc
+   * cache dans Personnaliser) ; null : aucun jour de pesee choisi.
+   */
+  pesee?: ReturnType<typeof prochainePesee>;
 };
 
 /** 27 octobre 2026 soir : la carte en blanc pur, un voile lilas pastel en haut qui s'efface vers le blanc */
@@ -240,6 +247,13 @@ const TETE = { anneau: 38 } as const;
 /** 28 octobre 2026 : la hauteur de la pastille Objectif, sur la ligne du titre du chemin */
 const HAUT_OBJECTIF = 26;
 
+/**
+ * 3 novembre 2026 : la pastille de ta prochaine pesee, dans la place libre entre ton poids et le sticker balance : son
+ * bord droit a 80 du bord de la carte, 32 de haut, de 44 a 76 (le bas de la ligne du poids), au moins 8 apres ton poids,
+ * pas plus etroite que 70 (sinon rien). Memes valeurs que PESEE_CARTE_POIDS du decor (verifie par le test).
+ */
+const PESEE_CARTE_POIDS = { droite: 80, haut: 44, hauteur: 32, ecartPoids: 8, largeurMin: 70 } as const;
+
 /** Les petits points de pagination du carrousel */
 function PointsPages({ nb, page, couleur, inactif }: { nb: number; page: number; couleur: string; inactif: string }) {
   if (nb < 2) return null;
@@ -256,10 +270,12 @@ function PointsPages({ nb, page, couleur, inactif }: { nb: number; page: number;
  * 2 novembre 2026 (proposition A) : la ligne fine des paliers. Ton depart en petit a gauche, puis un rond par palier :
  * atteint (rond plein vert P.moss avec une coche), prochain (anneau de l'accent autour d'un point) ou a venir (rond gris
  * vide). Le trait est dans l'accent jusqu'au dernier palier atteint, gris ensuite (seuls les ronds atteints sont verts). Le chiffre de chaque palier dessous.
+ * 3 novembre 2026 (Houari) : le trait un peu plus epais (3 au lieu de 2), et le trait vers le prochain palier se remplit
+ * dans l'accent a mesure que tu avances (ligne.avance : a 86 entre 87,5 et 85, 60 %), en perte comme en prise.
  * 2 novembre 2026 soir (Houari : les paliers atteints en vert) : la coche en P.white sur P.moss, 3,8 a 1 en clair
  * (blanc sur #6E8C3A) et 7,2 a 1 en sombre (encre #1A1E29 sur #93B562), au dessus du seuil de 3 a 1 d'une icone.
  */
-const LIGNE_PALIERS = { hauteur: 52, trait: 2, centre: 13, atteint: 24, prochain: 28, aVenir: 22, depart: 10, chiffres: 34, largeurChiffre: 48, margeG: 8, margeD: 14 } as const;
+const LIGNE_PALIERS = { hauteur: 52, trait: 3, centre: 13, atteint: 24, prochain: 28, aVenir: 22, depart: 10, chiffres: 34, largeurChiffre: 48, margeG: 8, margeD: 14 } as const;
 const GRIS_ROND = { clair: '#C9CDDB', sombre: '#4D5679' } as const;
 function LigneDePaliers({ depart, ligne, accent, sombre }: { depart: number; ligne: LignePaliers; accent: string; sombre: boolean }) {
   const L = LIGNE_PALIERS;
@@ -278,6 +294,10 @@ function LigneDePaliers({ depart, ligne, accent, sombre }: { depart: number; lig
       {ligne.paliers.map((_, i) => (
         <View key={`t${i}`} style={{ position: 'absolute', top: L.centre - L.trait / 2, height: L.trait, left: x(i), width: `${100 / n}%`, backgroundColor: i < ligne.atteints ? accent : P.line }} />
       ))}
+      {/* le trait vers le prochain palier, rempli de ce que tu as deja fait depuis le palier d'avant */}
+      {ligne.prochain && ligne.avance > 0 && ligne.atteints < n ? (
+        <View style={{ position: 'absolute', top: L.centre - L.trait / 2, height: L.trait, left: x(ligne.atteints), width: `${(100 / n) * ligne.avance}%`, backgroundColor: accent, borderTopRightRadius: L.trait / 2, borderBottomRightRadius: L.trait / 2 }} />
+      ) : null}
       <View style={{ position: 'absolute', left: x(0), top: L.centre - L.depart / 2, width: L.depart, height: L.depart, borderRadius: L.depart / 2, borderWidth: 2, borderColor: gris, backgroundColor: P.white, transform: [{ translateX: -L.depart / 2 }] }} />
       {chiffre('d', 0, formatKg(depart), P.muted, 'bold', 11)}
       {ligne.paliers.map((p, i) => {
@@ -309,7 +329,7 @@ function LigneDePaliers({ depart, ligne, accent, sombre }: { depart: number; lig
   );
 }
 
-export function CartePoids({ series: seriesIn, targetWeight, startWeight, today: todayProp, demo, centre = CENTRAGE_POIDS, onPage }: Props) {
+export function CartePoids({ series: seriesIn, targetWeight, startWeight, today: todayProp, demo, centre = CENTRAGE_POIDS, onPage, pesee }: Props) {
   const router = useRouter();
   const largeur = useLargeurEcran();
   // le theme clair ou sombre : la carte se redessine quand il change (P suit le theme)
@@ -324,6 +344,8 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
   // 27 octobre 2026 soir : la hauteur mesuree de la page 1, pour caler la courbe de la page 2 dessus
   const [hautPage1, setHautPage1] = useState(0);
   const [chromeCourbe, setChromeCourbe] = useState(CHROME_PAGE_COURBE);
+  // 3 novembre 2026 : la largeur de ton poids (chiffre et kg), pour laisser a la pastille de pesee toute la place a cote
+  const [largeurPoids, setLargeurPoids] = useState(120);
   const pagesRef = useRef<React.ElementRef<typeof PagesScroll>>(null);
   useEffect(() => {
     onPage?.(page);
@@ -735,7 +757,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
       ligneEcart(fg2, accent, accent, fg)
     ) : variation != null && Math.abs(variation) >= 0.05 ? (
       <Ink size={13} weight="bold" color={fg2} numberOfLines={1} style={{ flexShrink: 1 }}>
-        <Ink size={13} weight="black" color={versDebut ? accent : fg} style={{ fontVariant: ['tabular-nums'] }}>
+        <Ink size={13} weight="black" color={versDebut ? P.mossText : fg} style={{ fontVariant: ['tabular-nums'] }}>
           {`${variation < 0 ? '−' : '+'}${formatKg(Math.abs(variation))} kg`}
         </Ink>
         {` ${PERIODE_TEXTE[PERIODE_PLAN]}`}
@@ -789,7 +811,22 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
   ) : ligne.prochain ? (
     (() => {
       const pr = ligne.prochain;
-      const fin = traduire('encore {0} kg', formatKg(pr.dernier ? chemin!.reste : pr.encore));
+      // 3 novembre 2026 (Houari) : ce qu'il te reste a perdre ou a prendre, en rouge (P.red, jamais pale)
+      const resteTxt = `${formatKg(pr.dernier ? chemin!.reste : pr.encore)} kg`;
+      const finBrute = traduire('encore {0} kg', formatKg(pr.dernier ? chemin!.reste : pr.encore));
+      const j = finBrute.indexOf(resteTxt);
+      const fin =
+        j < 0 ? (
+          finBrute
+        ) : (
+          <>
+            {finBrute.slice(0, j)}
+            <Ink size={12.5} weight="black" color={P.red} style={{ fontVariant: ['tabular-nums'] }}>
+              {resteTxt}
+            </Ink>
+            {finBrute.slice(j + resteTxt.length)}
+          </>
+        );
       if (pr.dernier) {
         return (
           <Ink size={12.5} weight="extraBold" color={fg} numberOfLines={2}>
@@ -823,6 +860,37 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
       </Ink>
     </View>
   ) : null;
+  // 3 novembre 2026 (Houari : « ta prochaine pesée » dans la carte, sans l'agrandir) : une petite pastille posee dans la
+  // place libre entre ton poids et le sticker balance (PESEE_CARTE_POIDS, les memes mesures que la geometrie du decor
+  // pose par dessus la carte, verifiees par le test). Memes gestes que l'ancienne carte : tes jours de pesee (Notifications) ; et le jour
+  // de ta pesee, pas encore faite, la pesee elle-meme.
+  const placePesee = W - PESEE_CARTE_POIDS.droite - (18 + largeurPoids + PESEE_CARTE_POIDS.ecartPoids);
+  const quandPesee = pesee ? `${pesee.quand}${pesee.heure ? `, ${pesee.heure}` : ''}` : null;
+  const peseeDuJour = !!pesee && pesee.dans === 0;
+  const pastillePesee =
+    pesee !== undefined && !exemple && placePesee >= PESEE_CARTE_POIDS.largeurMin ? (
+      <View pointerEvents="box-none" style={{ position: 'absolute', right: PESEE_CARTE_POIDS.droite, top: PESEE_CARTE_POIDS.haut, maxWidth: placePesee }}>
+        <Press
+          onPress={() => router.push((peseeDuJour ? '/pesee' : '/notifications') as any)}
+          haptic="light"
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={quandPesee ? (peseeDuJour ? traduire('Ta prochaine pesée : {0}. Touche pour te peser', quandPesee) : traduire('Ta prochaine pesée : {0}. Régler tes jours de pesée', quandPesee)) : traduire('Ta prochaine pesée : choisis tes jours de pesée')}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: PESEE_CARTE_POIDS.hauteur, paddingLeft: 8, paddingRight: 10, borderRadius: 12, borderWidth: 1, borderColor: peseeDuJour ? accent : P.line, backgroundColor: P.white }}>
+            <Icon name="calendar" size={13} color={accent} width={2.4} />
+            <View style={{ flexShrink: 1, minWidth: 0 }}>
+              <Ink size={9.5} weight="bold" color={P.muted} numberOfLines={1} style={{ lineHeight: 11 }}>
+                {traduire('Prochaine pesée')}
+              </Ink>
+              <Ink size={12} weight="black" color={fg} numberOfLines={1} style={{ lineHeight: 15 }}>
+                {quandPesee ?? traduire('À choisir')}
+              </Ink>
+            </View>
+          </View>
+        </Press>
+      </View>
+    ) : null;
   const pageUne = (
     <View
       style={{ width: W, alignSelf: 'flex-start', paddingHorizontal: 18, paddingTop: 16, paddingBottom: chemin ? 4 : 0, gap: 0 }}
@@ -837,7 +905,13 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
             <Ink size={11} weight="black" color={accent} numberOfLines={1} style={{ letterSpacing: 1.4, lineHeight: 14 }}>
               {traduire('Ton poids').toUpperCase()}
             </Ink>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4, marginTop: 4 }}>
+            <View
+              style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4, marginTop: 4, alignSelf: 'flex-start' }}
+              onLayout={(e) => {
+                const w = e.nativeEvent.layout.width;
+                if (w > 0 && Math.abs(w - largeurPoids) > 1) setLargeurPoids(w);
+              }}
+            >
               <Ink size={40} weight="black" tight numberOfLines={1} color={fg} style={{ fontVariant: ['tabular-nums'], lineHeight: 44, letterSpacing: -1 }}>
                 {formatKg(last.value)}
               </Ink>
@@ -863,6 +937,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
           {!follow ? pastilleAlerte : null}
         </View>
       </Press>
+      {pastillePesee}
       {chemin && ligne ? (
         <>
           {/* le lecteur d'ecran dit l'etat de chaque palier (franchi, en cours, a venir) */}
