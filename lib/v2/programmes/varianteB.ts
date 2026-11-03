@@ -12,7 +12,7 @@
  *    celui de la séance A, rien n'est inventé. Le cardio et la mobilité restent tels quels.
  * Données pures, le même résultat à chaque appel. Testé dans __tests__/unit/alternance.test.ts.
  */
-import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
+import { EXERCISE_LIBRARY, movementKey } from '@/constants/exerciseLibrary';
 import { equivalents, familleChange } from '@/lib/v2/seances/changerExo';
 import type { MachinePerso } from '@/lib/v2/seances/machinesPerso';
 import { sansPrise } from '@/lib/v2/seance/prise';
@@ -27,7 +27,10 @@ const tenu = (nom: string): boolean => EXERCISE_LIBRARY.find((e) => e.name === n
 export function equivalentB(e: ExoProgramme, o: { ecartes?: Iterable<string>; perso?: readonly MachinePerso[]; deja?: Iterable<string> } = {}): { nom: string; muscle: string } | null {
   if (typeof e.minutes === 'number' || SANS_VARIANTE.test(e.muscle ?? '')) return null;
   const perso = o.perso ?? [];
-  const liste = equivalents(e.nom, { muscle: e.muscle, perso, ecartes: o.ecartes, deja: o.deja, max: 5 });
+  // 3 novembre 2026 : jamais le même mouvement sous un autre nom (« Crunch Poulie Haute » n'a pas pour version B
+  // « Cable Crunch »), ni un mouvement déjà dans la séance (constants/exerciseLibrary.ts, SAME_MOVEMENT_GROUPS)
+  const exclus = new Set([movementKey(e.nom), ...Array.from(o.deja ?? [], movementKey)]);
+  const liste = equivalents(e.nom, { muscle: e.muscle, perso, ecartes: o.ecartes, deja: o.deja, max: 5 }).filter((x) => !exclus.has(movementKey(x.nom)));
   if (!liste.length) return null;
   const famille = familleChange(sansPrise(e.nom).base, perso);
   const memeCompte = (n: string) => !!e.secondes === tenu(n) || perso.some((m) => m.nom === n);
