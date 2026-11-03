@@ -5,6 +5,10 @@
  * contour blanc, petite ombre, legere inclinaison propre a chaque choix, petit rebond quand on le choisit.
  * Bouche a oreille, salle ou club, IA et autre prennent des stickers de l'app.
  * Seul ecran de l'app ou de vrais noms de marques s'affichent (exception demandee par Houari).
+ * 3 novembre 2026 (Houari : « les logos TikTok et Instagram sont très flous ») : l'autocollant d'une marque est dessine
+ * en entier dans un seul SVG (contour blanc, ombre, tuile, logo), inclinaison comprise. Avant, le SVG etait pose dans
+ * une vue tournee et agrandie a 1,08 au repos : iOS etirait et tournait l'image deja dessinee, d'ou le flou. Au repos,
+ * plus aucune mise a l'echelle ni rotation de vue ; le rebond du choix ne dure que le temps de l'animation.
  */
 import React, { useEffect } from 'react';
 import { Image, Platform, View } from 'react-native';
@@ -13,7 +17,8 @@ import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/sticker
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { ChoiceCard, MainButton, Shell, SkipLink, useColors } from './ui';
 import type { Nav } from './types';
-import { LogoMarque, type MarqueId } from './LogosMarques';
+import Svg, { ClipPath, Defs, G, Rect } from 'react-native-svg';
+import { DefsMarques, DessinMarque, type MarqueId } from './LogosMarques';
 import { sourcesPour, type SourceConnu } from '@/lib/v2/onboarding/sourceConnu';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -65,25 +70,75 @@ export function inclinaison(id: string): number {
 
 const TUILE = 52;
 const BORD = 4;
+/** L'autocollant fait TUILE + 2 BORD ; la toile laisse la place a l'inclinaison et a l'ombre sans changer la mise en page */
+const COTE = TUILE + 2 * BORD;
+const TOILE = COTE + 14;
+/** L'ombre douce : cinq couches translucides de plus en plus larges (pas de flou, net sur tous les ecrans) */
+const OMBRE = [0, 0.8, 1.6, 2.4, 3.2];
+
+/**
+ * L'autocollant d'une marque, tout en vectoriel : ombre douce (trois rectangles translucides), contour blanc,
+ * tuile du logo arrondie, filet discret, le tout incline dans le SVG (net sur tous les ecrans).
+ */
+export function AutocollantMarqueSvg({ id, angle }: { id: MarqueId; angle: number }) {
+  const m = TOILE / 2;
+  const o = m - COTE / 2;
+  const t = m - TUILE / 2;
+  const e = TUILE / 48;
+  const clip = `yoroiClipMarque_${id}`;
+  return (
+    <Svg width={TOILE} height={TOILE} viewBox={`0 0 ${TOILE} ${TOILE}`}>
+      <DefsMarques />
+      <Defs>
+        <ClipPath id={clip}>
+          <Rect x={0} y={0} width={48} height={48} rx={14 / e} />
+        </ClipPath>
+      </Defs>
+      <G rotation={angle} origin={`${m}, ${m}`}>
+        {OMBRE.map((k) => (
+          <Rect key={k} x={o - k} y={o + 1.2 + k * 0.6} width={COTE + 2 * k} height={COTE + 2 * k} rx={14 + BORD + k} fill="#1D2033" opacity={0.024} />
+        ))}
+        <Rect x={o} y={o} width={COTE} height={COTE} rx={14 + BORD} fill="#FFFFFF" />
+        <G transform={`translate(${t} ${t}) scale(${e})`}>
+          <G clipPath={`url(#${clip})`}>
+            <DessinMarque id={id} />
+          </G>
+          <Rect x={0.5 / e} y={0.5 / e} width={48 - 1 / e} height={48 - 1 / e} rx={14 / e} fill="none" stroke="rgba(29,32,51,0.08)" strokeWidth={1 / e} />
+        </G>
+      </G>
+    </Svg>
+  );
+}
 
 /** L'autocollant : contour blanc epais, ombre douce, incline ; il rebondit quand il est choisi */
 function Autocollant({ id, choisi }: { id: SourceConnu; choisi: boolean }) {
   const c = useColors();
   const illus = useIllustrations();
   const angle = inclinaison(id);
-  const s = useSharedValue(choisi ? 1.08 : 1);
-  const r = useSharedValue(angle);
+  const sticker = STICKER_SOURCE[id];
+  // marques : l'inclinaison est dans le SVG, la vue reste droite et a l'echelle 1 au repos
+  const repos = sticker ? angle : 0;
+  const s = useSharedValue(1);
+  const r = useSharedValue(repos);
   useEffect(() => {
     if (choisi) {
-      s.value = withSequence(withTiming(1.2, { duration: 110 }), withSpring(1.08, { damping: 7, stiffness: 260 }));
-      r.value = withSequence(withTiming(-angle, { duration: 110 }), withSpring(angle, { damping: 6, stiffness: 220 }));
+      s.value = withSequence(withTiming(1.16, { duration: 110 }), withSpring(1, { damping: 7, stiffness: 260 }));
+      r.value = withSequence(withTiming(repos - 2 * angle, { duration: 110 }), withSpring(repos, { damping: 6, stiffness: 220 }));
     } else {
       s.value = withSpring(1, { damping: 14, stiffness: 240 });
-      r.value = withTiming(angle, { duration: 160 });
+      r.value = withTiming(repos, { duration: 160 });
     }
-  }, [choisi, angle, s, r]);
+  }, [choisi, angle, repos, s, r]);
   const anim = useAnimatedStyle(() => ({ transform: [{ rotate: `${r.value}deg` }, { scale: s.value }] }));
-  const sticker = STICKER_SOURCE[id];
+  if (!sticker) {
+    return (
+      <Animated.View style={[{ width: COTE, height: COTE, alignItems: 'center', justifyContent: 'center' }, anim]}>
+        <View style={{ position: 'absolute', left: (COTE - TOILE) / 2, top: (COTE - TOILE) / 2 }}>
+          <AutocollantMarqueSvg id={id as MarqueId} angle={angle} />
+        </View>
+      </Animated.View>
+    );
+  }
   return (
     <Animated.View
       style={[
@@ -91,15 +146,9 @@ function Autocollant({ id, choisi }: { id: SourceConnu; choisi: boolean }) {
         anim,
       ]}
     >
-      {sticker ? (
-        <View style={{ width: TUILE, height: TUILE, borderRadius: 14, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-          <Image source={illus.img(sticker)} style={{ width: TUILE - 8, height: TUILE - 8 }} resizeMode="contain" accessibilityIgnoresInvertColors />
-        </View>
-      ) : (
-        <View style={{ width: TUILE, height: TUILE, borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(29,32,51,0.08)' }}>
-          <LogoMarque id={id as MarqueId} taille={TUILE - 2} />
-        </View>
-      )}
+      <View style={{ width: TUILE, height: TUILE, borderRadius: 14, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+        <Image source={illus.img(sticker)} style={{ width: TUILE - 8, height: TUILE - 8 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+      </View>
     </Animated.View>
   );
 }
