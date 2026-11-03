@@ -9,12 +9,14 @@
 import React, { useEffect, useRef } from 'react';
 import { AppState, Image, Pressable, Vibration, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle, notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { playWizzSound } from '@/lib/soundManager';
+import { playClapSound, playWizzSound } from '@/lib/soundManager';
 import { decisionFinRepos } from '@/lib/v2/seances/finRepos';
 import { fmtClock } from '@/lib/v2/seance/format';
-import { PHASE_COLORS } from '@/lib/v2/carnet/chrono';
+import { PHASE_COLORS, loadClapEnabled } from '@/lib/v2/carnet/chrono';
+import { claquettesAuPassage, tapsClaquettes } from '@/lib/v2/carnet/claquettes';
+import { niveauCoach } from '@/lib/v2/coachVocal/reglages';
 import { useAlignedNow } from '@/lib/v2/carnet/useAlignedNow';
 import { blancA } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
@@ -41,7 +43,24 @@ export function RestBar({ endsAt, total, bottom, onAdd, onSkip, onFinish }: Prop
 
   useEffect(() => {
     fired.current = false;
+    clapFait.current = false;
   }, [endsAt]);
+
+  // 3 novembre 2026 : clac clac clac à 10 s de la fin du repos, app sous les yeux (réglage commun des chronos).
+  // Le coach vocal parle déjà à 10 s : avec lui, pas de claquettes par dessus sa voix.
+  const clapOn = useRef(true);
+  const clapFait = useRef(false);
+  useEffect(() => {
+    loadClapEnabled().then((v) => { clapOn.current = v; }).catch(() => {});
+  }, []);
+  useEffect(() => {
+    if (clapFait.current || !clapOn.current || AppState.currentState !== 'active') return;
+    if (!claquettesAuPassage(total, endsAt - Date.now())) return;
+    clapFait.current = true;
+    if (niveauCoach() !== 'off') return;
+    playClapSound().catch(() => {});
+    tapsClaquettes(() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); });
+  }, [now, endsAt, total]);
 
   const left = Math.max(0, Math.ceil((endsAt - now) / 1000 - 1e-6));
   const final = left <= 10;
