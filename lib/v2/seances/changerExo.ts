@@ -301,7 +301,8 @@ export function changerDansSeance(
   const faites = ex.sets.filter((s) => s.done);
   const restantes = ex.sets.filter((s) => !s.done);
   if (faites.length > 0 && restantes.length === 0) return null;
-  const { cran: _c, notes: _n, orig: _o, laisse: _l, cardio: _ca, ajoutBloc: _a, ...garde } = ex;
+  // 3 novembre 2026 : l'unite de charge (kilos ou plaques) ne suit pas non plus, le nouvel exercice reprend la sienne
+  const { cran: _c, notes: _n, orig: _o, laisse: _l, cardio: _ca, ajoutBloc: _a, plaques: _pl, ...garde } = ex;
   const neuf: LiveExercise = {
     ...garde,
     id: faites.length ? nouvelId : ex.id,
