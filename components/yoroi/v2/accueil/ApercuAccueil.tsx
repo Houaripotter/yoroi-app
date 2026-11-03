@@ -22,8 +22,6 @@ import {
   TuileEau,
   TuileMensurations,
   TuileMois,
-  TuilePesee,
-  TuilePeseeVide,
   TuileProchaine,
   TuileRecord,
   TuileRecup,
@@ -130,8 +128,8 @@ function tuilesDuBloc(b: BlocAccueil, d: Donnees): TuileGrille<React.ReactNode>[
         { cle: 'serie', taille: 'demi', contenu: <TuileSerie semaines={d.serie.semaines} goal={d.serie.goal} recentes={d.serie.recentes} /> },
       ];
     case 'pesee':
-      if (d.peseePrevue === undefined) return [];
-      return [{ cle: 'pesee', taille: 'pleine', contenu: d.peseePrevue ? <TuilePesee prevue={d.peseePrevue} /> : <TuilePeseeVide /> }];
+      // 3 novembre 2026 : ta prochaine pesee vit dans la carte Ton poids (pas montree ici, comme le reste du haut)
+      return [];
     case 'photos':
       if (!d.photos.charge) return [];
       return [{ cle: 'photos', taille: 'pleine', contenu: d.photos.paire ? <TuileAvantApres paire={d.photos.paire} /> : <TuileAvantApresVide nb={d.photos.nb} /> }];
