@@ -1270,3 +1270,32 @@ const ALIAS_BY_KEY = new Map(Object.entries(EXERCISE_ALIASES).map(([from, to]) =
 /** Nom actuel d'un exercice, en suivant les anciens noms des doublons retirés */
 export const canonicalExerciseName = (name: string): string => ALIAS_BY_KEY.get(aliasKey(name)) ?? name;
 
+/**
+ * 3 novembre 2026 (Houari : « Cable Crunch et Crunch Poulie Haute dans la même séance, c'est le même exercice ») :
+ * des entrées de la bibliothèque qui sont le même mouvement, une en français et une en anglais. Les deux noms restent
+ * (des séances et un historique sont enregistrés sous chacun), ils sont seulement reliés : le premier nom de chaque
+ * groupe est celui des programmes. Une séance construite par l'app ne contient jamais deux noms d'un même groupe.
+ */
+export const SAME_MOVEMENT_GROUPS: readonly (readonly string[])[] = [
+  ['Crunch Poulie Haute', 'Cable Crunch'],
+  ['Squat Bulgare', 'Fentes Bulgares'],
+  ['Fentes Arrière', 'Reverse Lunges'],
+  ['Kick-back Poulie', 'Cable Kickback'],
+  ['Pull Over Poulie Haute', 'Straight Arm Pulldown'],
+  ['SDT Jambes Tendues', 'Stiff Leg Deadlift'],
+  ['Banc à Lombaires', 'Hyperextensions'],
+];
+const SAME_MOVEMENT_BY_KEY = new Map(SAME_MOVEMENT_GROUPS.flatMap((g) => g.map((n) => [aliasKey(n), g[0]] as const)));
+
+/** Le nom de référence d'un mouvement (le premier de son groupe), en suivant aussi les anciens noms retirés */
+export const sameMovementName = (name: string): string => {
+  const n = canonicalExerciseName(name ?? '');
+  return SAME_MOVEMENT_BY_KEY.get(aliasKey(n)) ?? n;
+};
+
+/** Clé de comparaison d'un mouvement : deux noms du même mouvement ont la même clé (casse et accents ignorés) */
+export const movementKey = (name: string): string => aliasKey(sameMovementName(name));
+
+/** Deux noms désignent le même mouvement (le même nom, un ancien nom, ou un nom relié) */
+export const isSameMovement = (a: string, b: string): boolean => movementKey(a) === movementKey(b);
+
