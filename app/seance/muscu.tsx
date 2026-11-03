@@ -23,6 +23,8 @@ import { RestBar } from '@/components/yoroi/v2/seance/RestBar';
 import { SessionDetailsForm, SportRibbon, dayLabel } from '@/components/yoroi/v2/seance/Details';
 import { ChoiceRow, Sheet } from '@/components/yoroi/v2/seance/Sheet';
 import { Stepper } from '@/components/yoroi/v2/seance/Stepper';
+import { AlerteManquantes, TamponValide } from '@/components/yoroi/v2/seance/EtatExercice';
+import { etatExo, texteManquantes } from '@/lib/v2/seances/etatExo';
 import { getActiveInjuries, getProfile, getTrainingById, getTrainings, getWeeklyPlanById } from '@/lib/database';
 import type { Exercise } from '@/lib/database';
 import { MUSCLES, getSportName } from '@/lib/sports';
@@ -101,7 +103,9 @@ import { encouragement, etatSerie, nouvelleSerie, remettreSerie, sansSerie, seri
 import { chargerMinuteurRepos, enregistrerMinuteurRepos, reposApresSerie } from '@/lib/v2/seances/minuteurRepos';
 import { objectifExo, seriesVisees, texteReps, texteSerie } from '@/lib/v2/seances/objectifExo';
 import { chargerReglages, enregistrerCran, typeReglage, CRAN_MAX } from '@/lib/v2/seances/reglagesMachine';
-import { cranAffiche, cranAvant, indexReperes, libelleCharge, recordBattu, reperesDe, serieDerniereFois } from '@/lib/v2/seances/reperesExo';
+import { cranAffiche, cranAvant, indexReperes, libelleCharge, recordBattu, recordPlaquesBattuEnSeance, reperesDe, serieDerniereFois } from '@/lib/v2/seances/reperesExo';
+import { avecChoix, chargerUnites, enregistrerUnite, modeOuverture, type UnitesCharge } from '@/lib/v2/seances/plaques';
+import { exerciceEnPlaques, kgDePlaques, libelleKgParPlaque, libellePlaques, libelleSeriePlaques, motPlaques, plaquesDe, recordPlaquesBattu, serieEnMode, KG_PAR_PLAQUE_MAX, PLAQUES_MAX, type ModePlaques } from '@/lib/v2/seances/plaquesSerie';
 import { Icon as IconSeances } from '@/components/yoroi/v2/seances/Icon';
 import { useGrandEcran } from '@/lib/v2/nav/useGrandEcran';
 import type { Reglages } from '@/lib/v2/seances/reglagesMachine';
@@ -137,7 +141,8 @@ function param1(v: string | string[] | undefined): string | undefined {
 }
 
 function makeSets(planned: SetValue[], withPrev: boolean): LiveSet[] {
-  return planned.map((s) => ({ id: uid(), weight: s.weight, reps: s.reps, done: false, prevWeight: withPrev ? s.weight : undefined, prevReps: withPrev ? s.reps : undefined }));
+  // 3 novembre 2026 : une serie de la derniere fois en plaques garde ses plaques (lib/v2/seances/plaques.ts)
+  return planned.map((s) => ({ id: uid(), weight: s.weight, reps: s.reps, done: false, prevWeight: withPrev ? s.weight : undefined, prevReps: withPrev ? s.reps : undefined, ...(typeof s.plaques === 'number' ? { plaques: s.plaques, ...(withPrev ? { prevPlaques: s.plaques } : {}) } : {}) }));
 }
 
 function exerciseFrom(name: string, muscle: string | undefined, h: ExerciseHistory | undefined, planned?: SetValue[]): LiveExercise {
@@ -174,12 +179,15 @@ async function cardiosDuJour(exos: LiveExercise[], cle: string, prevu?: ChoixCar
 function exerciseDone(e: Exercise): LiveExercise {
   // le type de serie (echauffement...) est garde : sinon un echauffement compterait dans le tonnage apres modification
   const types = e.setsData && e.setsData.length > 0 ? e.setsData.map((s) => s?.type) : [];
-  const sets = setsOfExercise(e).map((s, i) => ({ id: uid(), weight: s.weight, reps: s.reps, done: true, ...(types[i] ? { type: types[i] } : {}) }));
-  return { id: uid(), name: e.name, muscle: e.muscle_group, sets, notes: e.notes, orig: e };
+  const sets = setsOfExercise(e).map((s, i) => ({ id: uid(), weight: s.weight, reps: s.reps, done: true, ...(types[i] ? { type: types[i] } : {}), ...(typeof s.plaques === 'number' ? { plaques: s.plaques } : {}) }));
+  // 3 novembre 2026 : un exercice enregistre en plaques se rouvre en plaques, avec le poids de plaque qu'il avait
+  const kgP = Number((e as Exercise & { kg_par_plaque?: number }).kg_par_plaque);
+  const plaques = exerciceEnPlaques(e) ? { kgParPlaque: kgP > 0 ? kgP : null } : null;
+  return { id: uid(), name: e.name, muscle: e.muscle_group, sets, notes: e.notes, orig: e, plaques };
 }
 
 function setsOfExercise(e: Exercise): SetValue[] {
-  if (e.setsData && e.setsData.length > 0) return e.setsData.map((s) => ({ weight: Number(s.weight) || 0, reps: Number(s.reps) || 0 }));
+  if (e.setsData && e.setsData.length > 0) return e.setsData.map((s) => { const p = plaquesDe(s); return { weight: Number(s.weight) || 0, reps: Number(s.reps) || 0, ...(p !== null ? { plaques: p } : {}) }; });
   const n = Math.max(1, Math.min(Number(e.sets) || 1, 20));
   return Array.from({ length: n }, () => ({ weight: Number(e.weight) || 0, reps: Number(e.reps) || 0 }));
 }
@@ -530,10 +538,11 @@ export default function SeanceMuscu() {
   const serieBas = useRef<number | null>(null);
   // 31 octobre 2026 : la derniere serie ajoutee, pour la pastille « Serie 5 ajoutee » et l'animation d'entree
   const [serieAjoutee, setSerieAjoutee] = useState<string | null>(null);
+  const [validePop, setValidePop] = useState<string | null>(null);
   const minuteurAjout = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (minuteurAjout.current) clearTimeout(minuteurAjout.current); }, []);
   // 31 octobre 2026 : correction d'une serie deja validee (lib/v2/seances/correctionSerie.ts), a part de la serie en cours
-  const [correction, setCorrection] = useState<{ exId: string; setId: string; weight: number; reps: number } | null>(null);
+  const [correction, setCorrection] = useState<{ exId: string; setId: string; weight: number; reps: number; plaques?: number } | null>(null);
   const [serieCorrigee, setSerieCorrigee] = useState<string | null>(null);
   const minuteurCorrige = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (minuteurCorrige.current) clearTimeout(minuteurCorrige.current); }, []);
@@ -586,6 +595,40 @@ export default function SeanceMuscu() {
     const cran = v > 0 ? v : null;
     updateExercise(ex.id, (e) => ({ ...e, cran }));
     void enregistrerCran(ex.name, cran);
+  };
+
+  /* 3 novembre 2026 (Houari) : la charge en plaques de la pile, au choix par exercice, gardee pour la prochaine fois
+     (lib/v2/seances/plaques.ts). Les plaques ne comptent jamais comme des kilos. */
+  const [unitesCharge, setUnitesCharge] = useState<UnitesCharge | null>(null);
+  const [poidsPlaqueOuvert, setPoidsPlaqueOuvert] = useState<string[]>([]);
+  useEffect(() => {
+    chargerUnites().then(setUnitesCharge, () => setUnitesCharge({}));
+  }, []);
+  // a l'ouverture d'un exercice pas encore decide : ton choix garde, sinon les plaques si ta derniere fois l'etait
+  useEffect(() => {
+    if (!draft || !unitesCharge || !draft.exercises.some((e) => e.plaques === undefined && !e.cardio)) return;
+    update((d) => ({
+      ...d,
+      exercises: d.exercises.map((e) => {
+        if (e.plaques !== undefined || e.cardio) return e;
+        const h = hist.map.get(normName(e.name));
+        const mode = modeOuverture(unitesCharge, e.name, !!h?.lastSets?.some((x) => typeof x.plaques === 'number'));
+        return { ...e, plaques: mode, sets: e.sets.map((s) => (s.done ? s : serieEnMode(s, mode))) };
+      }),
+    }));
+  }, [draft?.exercises, unitesCharge]); // eslint-disable-line react-hooks/exhaustive-deps
+  const changerUniteCharge = (ex: LiveExercise, mode: ModePlaques | null) => {
+    updateExercise(ex.id, (e) => ({ ...e, plaques: mode, sets: e.sets.map((s) => (s.done ? s : serieEnMode(s, mode))) }));
+    setUnitesCharge((u) => avecChoix(u ?? {}, ex.name, mode));
+    void enregistrerUnite(ex.name, mode);
+    impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+  };
+  /** Le poids d'une plaque, seulement si tu le donnes : les series en plaques de l'exercice comptent alors en kilos */
+  const changerKgParPlaque = (ex: LiveExercise, kg: number) => {
+    const mode: ModePlaques = { kgParPlaque: kg > 0 ? kg : null };
+    updateExercise(ex.id, (e) => ({ ...e, plaques: mode, sets: e.sets.map((s) => (typeof s.plaques === 'number' ? { ...s, weight: kgDePlaques(s.plaques, mode.kgParPlaque) } : s)) }));
+    setUnitesCharge((u) => avecChoix(u ?? {}, ex.name, mode));
+    void enregistrerUnite(ex.name, mode);
   };
 
   /* (J) chrono du cardio : heure de depart et temps cumule, il tient en arriere plan (lib/v2/seances/cardioFin.ts) */
@@ -759,11 +802,12 @@ export default function SeanceMuscu() {
     const reps = ex.cible?.repsMin ?? ex.objectifReps ?? ex.sets.find((x) => !x.done)?.reps ?? 10;
     const sets: LiveSet[] = ex.sets.map((_, i) => {
       const last = serieDerniereFois(h, i);
-      return { id: uid(), weight: last?.weight ?? 0, reps: last?.reps ?? reps, done: false, ...(last ? { prevWeight: last.weight, prevReps: last.reps } : {}) };
+      return { id: uid(), weight: last?.weight ?? 0, reps: last?.reps ?? reps, done: false, ...(last ? { prevWeight: last.weight, prevReps: last.reps } : {}), ...(typeof last?.plaques === 'number' ? { plaques: last.plaques, prevPlaques: last.plaques } : {}) };
     });
     const original = sansPrise(ex.name).base;
     updateExercise(ex.id, (e) => {
-      const { cran: _c, ...reste } = e;
+      // le cran et l'unite de charge (kilos ou plaques) suivent le nouvel exercice
+      const { cran: _c, plaques: _pl, ...reste } = e;
       return {
         ...reste,
         name: nom,
@@ -801,7 +845,7 @@ export default function SeanceMuscu() {
     const seriesNeuves = (l: LiveSet[]): LiveSet[] =>
       l.map((_, i) => {
         const last = serieDerniereFois(h, i);
-        return { id: uid(), weight: last?.weight ?? 0, reps: last?.reps ?? reps, done: false, ...(last ? { prevWeight: last.weight, prevReps: last.reps } : {}) };
+        return { id: uid(), weight: last?.weight ?? 0, reps: last?.reps ?? reps, done: false, ...(last ? { prevWeight: last.weight, prevReps: last.reps } : {}), ...(typeof last?.plaques === 'number' ? { plaques: last.plaques, prevPlaques: last.plaques } : {}) };
       });
     const nouvelId = uid();
     update((d) => {
@@ -888,10 +932,12 @@ export default function SeanceMuscu() {
       const bestE = Math.max(h.bestE1rm, ...earlier.map((s) => epley(s.weight, s.reps)));
       record = set.weight > bestW + 0.001 || epley(set.weight, set.reps) > bestE + 0.01;
     }
+    // 3 novembre 2026 : en plaques, le record se compte en plaques (plus de plaques, ou autant et plus de repetitions)
+    if (!record && typeof set.plaques === 'number') record = recordPlaquesBattu(reperesDe(indexRep, ex.name).recordPlaques ?? null, earlier.filter((s) => s.type !== 'warmup'), set);
     const sets = ex.sets.map((s, i) => {
       if (i === index) return { ...s, done: true, record };
       // la serie suivante sans reference reprend les valeurs de celle-ci
-      if (i === index + 1 && !s.done && s.prevWeight === undefined) return { ...s, weight: set.weight, reps: set.reps };
+      if (i === index + 1 && !s.done && s.prevWeight === undefined) return { ...s, weight: set.weight, reps: set.reps, ...(typeof set.plaques === 'number' ? { plaques: set.plaques } : {}) };
       return s;
     });
     update((d) => {
@@ -913,6 +959,8 @@ export default function SeanceMuscu() {
     } else {
       impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
     }
+    // 3 novembre 2026 : la derniere serie prevue validee, le sticker « validé » arrive avec un rebond
+    if (etatExo({ ...ex, sets }).etat === 'valide' && etatExo(ex).etat !== 'valide') setValidePop(ex.id);
   };
 
   /** Enregistre la correction : la serie reste validee, sans repos ni pre-remplissage, la serie en cours ne bouge pas */
@@ -924,10 +972,15 @@ export default function SeanceMuscu() {
     const h = hist.map.get(normName(ex.name));
     const essai = corrigerSerie(ex.sets, correction.setId, correction, h);
     if (!essai) return;
-    const { setId, weight, reps } = correction;
-    updateExercise(ex.id, (e) => ({ ...e, sets: corrigerSerie(e.sets, setId, { weight, reps }, h)?.sets ?? e.sets }));
+    const { setId, weight, reps, plaques } = correction;
+    // 3 novembre 2026 : une serie en plaques se corrige en plaques, son record se compte en plaques
+    const recP = typeof plaques === 'number' ? recordPlaquesBattu(reperesDe(indexRep, ex.name).recordPlaques ?? null, ex.sets.filter((x) => x.done && x.id !== setId && x.type !== 'warmup'), { plaques, reps }) : false;
+    updateExercise(ex.id, (e) => {
+      const l = corrigerSerie(e.sets, setId, { weight, reps }, h)?.sets ?? e.sets;
+      return { ...e, sets: typeof plaques === 'number' ? l.map((x) => (x.id === setId ? { ...x, plaques, record: x.record || recP } : x)) : l };
+    });
     setCorrection(null);
-    if (essai.record && !avant.record) {
+    if ((essai.record || recP) && !avant.record) {
       setFreshRecord(setId);
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
     } else {
@@ -948,7 +1001,11 @@ export default function SeanceMuscu() {
     if (!ref) return;
     const pas = unite === 'lb' ? 2.268 : 2.5;
     const charge = ref.weight > 0 ? Math.max(pas, Math.round((ref.weight * 0.8) / pas) * pas) : 0;
-    const s: LiveSet = { id: uid(), weight: Math.round(charge * 100) / 100, reps: ref.reps, done: false, type: 'dropset' };
+    // en plaques : environ 20 % de plaques en moins, au moins une de moins
+    const pl = typeof ref.plaques === 'number' && ex.plaques ? Math.max(0, Math.min(ref.plaques - 1, Math.round(ref.plaques * 0.8))) : null;
+    const s: LiveSet = pl !== null
+      ? { id: uid(), weight: kgDePlaques(pl, ex.plaques?.kgParPlaque), plaques: pl, reps: ref.reps, done: false, type: 'dropset' }
+      : { id: uid(), weight: Math.round(charge * 100) / 100, reps: ref.reps, done: false, type: 'dropset' };
     updateExercise(ex.id, (e) => {
       const i = e.sets.findIndex((x) => !x.done);
       const sets = [...e.sets];
@@ -963,7 +1020,7 @@ export default function SeanceMuscu() {
   const addSet = (ex: LiveExercise) => {
     const last = ex.sets[ex.sets.length - 1];
     // 30 octobre 2026 (H3) : la serie d'avant, ou les repetitions de l'objectif si elle n'en a pas
-    const s: LiveSet = { id: uid(), ...nouvelleSerie(last, ex.cible?.repsMin ?? ex.objectifReps), done: false };
+    const s: LiveSet = { id: uid(), ...nouvelleSerie(last, ex.cible?.repsMin ?? ex.objectifReps), done: false, ...(ex.plaques ? { plaques: typeof last?.plaques === 'number' ? last.plaques : 0 } : {}) };
     updateExercise(ex.id, (e) => ({ ...e, sets: [...e.sets, s] }));
     impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
     // chaque ajout se voit, meme deux d'affilee : la pastille repart avec la nouvelle serie
@@ -997,6 +1054,7 @@ export default function SeanceMuscu() {
             const bestE = Math.max(h.bestE1rm, ...earlier.map((x) => epley(x.weight, x.reps)));
             record = s.weight > bestW + 0.001 || epley(s.weight, s.reps) > bestE + 0.01;
           }
+          if (!record && typeof s.plaques === 'number') record = recordPlaquesBattu(reperesDe(indexRep, ex.name).recordPlaques ?? null, earlier.filter((x) => x.type !== 'warmup'), s);
           if (record) anyRecord = true;
           sets.push({ ...s, done: true, record });
         }
@@ -1190,18 +1248,31 @@ export default function SeanceMuscu() {
         .map((e) => {
           const done = e.sets.filter((s) => s.done);
           if (done.length === 0) return null;
-          const setsData = done.map((s) => (s.type ? { weight: s.weight, reps: s.reps, type: s.type } : { weight: s.weight, reps: s.reps }));
+          // 3 novembre 2026 : une serie en plaques garde ses plaques ; son weight reste en kilos (0 sans poids de plaque)
+          const setsData = done.map((s) => ({ weight: s.weight, reps: s.reps, ...(s.type ? { type: s.type } : {}), ...(typeof s.plaques === 'number' ? { plaques: s.plaques } : {}) }));
           const best = bestSet(setsData)!;
           const recs = done.filter((s) => s.record);
           if (recs.length > 0) {
             const top = [...recs].sort((a, b) => epley(b.weight, b.reps) - epley(a.weight, a.reps))[0];
             const h = hist.map.get(normName(e.name));
-            records.push({ name: e.name, weight: top.weight, reps: top.reps, kind: h && top.weight > h.bestWeight ? 'charge' : 'max' });
+            const topP = recs.filter((s) => typeof s.plaques === 'number').sort((a, b) => (b.plaques! - a.plaques!) || (b.reps - a.reps))[0];
+            if (topP && !(top.weight > 0)) records.push({ name: e.name, weight: 0, reps: topP.reps, kind: 'charge', plaques: topP.plaques });
+            else records.push({ name: e.name, weight: top.weight, reps: top.reps, kind: h && top.weight > h.bestWeight ? 'charge' : 'max' });
           }
           const out: Exercise = { ...(e.orig ?? {}), name: e.name, muscle_group: e.muscle, weight: best.weight, reps: best.reps, sets: setsData.length, setsData };
           // 1er novembre 2026 : lié au suivant (superset, crunch puis roue), gardé pour que l'app apprenne tes habitudes
           if (e.enchaine) (out as Exercise & { enchaine?: true }).enchaine = true;
           else delete (out as Exercise & { enchaine?: true }).enchaine;
+          // 3 novembre 2026 : l'exercice note en plaques, et le poids d'une plaque seulement si tu l'as donne (plaques.ts)
+          const enP = out as Exercise & { unite_charge?: 'plaques'; kg_par_plaque?: number };
+          if (setsData.some((s) => typeof s.plaques === 'number')) {
+            enP.unite_charge = 'plaques';
+            if (e.plaques?.kgParPlaque) enP.kg_par_plaque = e.plaques.kgParPlaque;
+            else delete enP.kg_par_plaque;
+          } else {
+            delete enP.unite_charge;
+            delete enP.kg_par_plaque;
+          }
           // la note, et pour le cardio la duree reelle (minutes) et la distance (lib/v2/seances/exerciceEnregistre.ts)
           return completerExercice(out, e, done[0]?.reps ?? 0);
         })
@@ -1270,14 +1341,29 @@ export default function SeanceMuscu() {
   const barreOn = !draft.form && !restOn && !cardioActif;
   const bottomSpace = insets.bottom + (restOn ? 110 : barreOn ? 130 : 30);
   const hCurrent = current ? hist.map.get(normName(current.name)) : undefined;
-  const rep = current ? reperesDe(indexRep, current.name) : null;
+  const repTous = current ? reperesDe(indexRep, current.name) : null;
+  // 3 novembre 2026 : exercice en plaques, record et derniere fois en plaques (jamais les kilos d'un autre jour)
+  const enPlaques = !!current?.plaques;
+  const rep = repTous && enPlaques
+    ? {
+        record: repTous.recordPlaques ? { weight: 0, reps: repTous.recordPlaques.reps, plaques: repTous.recordPlaques.plaques } : null,
+        derniere: repTous.dernierePlaques ? { date: repTous.dernierePlaques.date, max: { weight: 0, reps: repTous.dernierePlaques.max.reps, plaques: repTous.dernierePlaques.max.plaques } } : null,
+      }
+    : repTous;
+  const chargeRepere = (r: { weight: number; reps: number; plaques?: number }) => (r.plaques ? libellePlaques(r.plaques) : r.weight > 0 ? libelleCharge(r.weight, unite) : traduire('{0} répétitions', r.reps));
   const cranHaut = current ? cranAffiche(current.cran, cranAvant(cransAvant, current.name)) : null;
-  const recordNeuf = !!rep?.record && !!current && !draft.form && recordBattu(rep.record, current.sets);
+  const recordNeuf = !!rep?.record && !!current && !draft.form && (enPlaques ? recordPlaquesBattuEnSeance(repTous?.recordPlaques, current.sets) : recordBattu(rep.record, current.sets));
   // 30 octobre 2026 (C) : l'objectif de series de l'exercice (lib/v2/seances/objectifExo.ts)
   const objectif = current ? objectifExo(current) : null;
   // objectif atteint en direct : l'exercice est boucle, une serie ajoutee en plus reste possible sans etre poussee
   const enPlus = !draft.form && !!objectif?.atteint && activeIndex >= 0;
   const currentDone = current ? (current.sets.length > 0 && current.sets.every((s) => s.done)) || enPlus : false;
+  // 3 novembre 2026 (Houari) : validé seulement si toutes les series prevues sont faites (lib/v2/seances/etatExo.ts).
+  // Il en manque (serie sautee, ou supprimee sous l'objectif) : avertissement et serie mise en evidence.
+  const etatCourant = current && !current.cardio ? etatExo(current) : null;
+  const derniereFaite = current ? current.sets.reduce((m, s, i) => (s.done ? i : m), -1) : -1;
+  const manqueVisible = !!etatCourant && etatCourant.etat === 'incomplet' && (draft.form || activeIndex < 0 || etatCourant.indexManquants.some((i) => i < derniereFaite));
+  const serieManquante = (i: number) => manqueVisible && !!etatCourant?.indexManquants.includes(i);
   basMasque.current = Math.max(0, bottomSpace - 14);
   // 26 octobre 2026 : un exercice laisse (passe apres au moins une serie) n'est plus repropose
   // 31 octobre 2026 : la regle est dans lib/v2/seances/cardioSeance.ts (testee : abdos en superset, puis le cardio)
@@ -1360,14 +1446,14 @@ export default function SeanceMuscu() {
                         {rep.record ? (
                           <View
                             accessible
-                            accessibilityLabel={recordNeuf ? traduire('Nouveau record sur cet exercice') : traduire('Ton record sur cet exercice : {0}', rep.record.weight > 0 ? libelleCharge(rep.record.weight, unite) : traduire('{0} répétitions', rep.record.reps))}
+                            accessibilityLabel={recordNeuf ? traduire('Nouveau record sur cet exercice') : traduire('Ton record sur cet exercice : {0}', chargeRepere(rep.record))}
                             style={{ flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: grandEcran ? 32 : 28, paddingLeft: 6, paddingRight: 10, borderRadius: 10, backgroundColor: recordNeuf ? c.accent : c.accentTint }}
                           >
                             <IconSeances name="trophy" size={grandEcran ? 18 : 16} color={recordNeuf ? c.onAccent : c.accentText} />
                             <Ink size={grandEcran ? 14 : 13} weight="extraBold" color={recordNeuf ? c.onAccent : c.accentText} numberOfLines={1}>
                               {recordNeuf
                                 ? traduire('Nouveau record')
-                                : traduire('Record {0}', rep.record.weight > 0 ? libelleCharge(rep.record.weight, unite) : traduire('{0} répétitions', rep.record.reps))}
+                                : traduire('Record {0}', chargeRepere(rep.record))}
                             </Ink>
                           </View>
                         ) : null}
@@ -1387,11 +1473,11 @@ export default function SeanceMuscu() {
                       </View>
                     ) : null}
                     {!rep.record && !rep.derniere ? (
-                      <Ink size={14} color={c.textSecondary}>{traduire('Première fois sur cet exercice. Ce que tu fais aujourd’hui devient ta référence.')}</Ink>
+                      <Ink size={14} color={c.textSecondary}>{enPlaques ? traduire('Première fois en plaques sur cet exercice. Ce que tu fais aujourd’hui devient ta référence.') : traduire('Première fois sur cet exercice. Ce que tu fais aujourd’hui devient ta référence.')}</Ink>
                     ) : null}
                   </>
                 )}
-                {libre ? (
+                {libre && !enPlaques ? (
                   <Ink size={13} weight="bold" color={libre.raison === 'monte' ? c.accent : c.textSecondary}>
                     {libre.raison === 'monte'
                       ? lb
@@ -1465,7 +1551,7 @@ export default function SeanceMuscu() {
                     ? traduire('Objectif : {0} répétitions, repos {1}', current.cible.repsMin, libelleRepos(current.cible.reposSec))
                     : traduire('Objectif : {0} à {1} répétitions, repos {2}', current.cible.repsMin, current.cible.repsMax, libelleRepos(current.cible.reposSec))}
                 </Ink>
-                {current.cible.raison === 'monte' && current.cible.nouvelleCharge ? (
+                {current.cible.raison === 'monte' && current.cible.nouvelleCharge && !enPlaques ? (
                   <Ink size={13} color={c.textSecondary}>{lb ? traduire('Haut de la fourchette deux fois de suite : on monte à {0} livres.', fmtNum(saisieDepuisKg(current.cible.nouvelleCharge, unite))) : traduire('Haut de la fourchette deux fois de suite : on monte à {0} kilos.', fmtNum(saisieDepuisKg(current.cible.nouvelleCharge, unite)))}</Ink>
                 ) : current.cible.raison === 'garde' ? (
                   <Ink size={13} color={c.textSecondary}>{traduire('Même charge que la dernière fois, vise une répétition de plus.')}</Ink>
@@ -1509,9 +1595,57 @@ export default function SeanceMuscu() {
                 nom={current.name}
               />
             ) : (<>
+            {/* 3 novembre 2026 (Houari) : sur une machine sans poids ecrit, la charge en plaques de la pile (lib/v2/seances/plaques.ts) */}
+            {current.plaques || typeReglage(current.name) !== 'aucun' || machineDe(machinesEnMemoire(), sansPrise(current.name).base) ? (
+              <View style={[carteBlanche(c.surface, c.divider), { marginHorizontal: 4, paddingVertical: 10, paddingHorizontal: 12, gap: 8 }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <StickerSinon nom="reglage_machine" taille={30} />
+                  <Ink size={15} weight="extraBold" style={{ flex: 1 }} numberOfLines={1}>{traduire('Charge en')}</Ink>
+                  <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', padding: 3, borderRadius: 14, backgroundColor: c.fillSoft, gap: 3 }}>
+                    {([null, 'plaques'] as const).map((u) => {
+                      const actif = u ? !!current.plaques : !current.plaques;
+                      return (
+                        <Pressable
+                          key={u ?? 'kg'}
+                          onPress={() => (actif ? undefined : changerUniteCharge(current, u ? { kgParPlaque: null } : null))}
+                          accessibilityRole="radio"
+                          accessibilityState={{ selected: actif }}
+                          accessibilityLabel={u ? traduire('Compter en plaques de la pile') : lb ? traduire('Compter en livres') : traduire('Compter en kilos')}
+                          style={{ minHeight: 38, minWidth: 64, paddingHorizontal: 12, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? c.primary : 'transparent' }}
+                        >
+                          <Ink size={14} weight="black" color={actif ? c.onPrimary : c.ink}>{u ? traduire('Plaques') : lb ? traduire('LB') : traduire('KG')}</Ink>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+                {current.plaques ? (
+                  current.plaques.kgParPlaque || poidsPlaqueOuvert.includes(current.id) ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Ink size={13} weight="extraBold">{traduire('Poids d’une plaque')}</Ink>
+                        <Ink size={12} weight="bold" color={c.textSecondary}>{current.plaques.kgParPlaque ? traduire('Tes séries comptent aussi en kilos.') : traduire('Facultatif. Sans lui, rien ne compte en kilos.')}</Ink>
+                      </View>
+                      <Stepper value={current.plaques.kgParPlaque ?? 0} step={0.5} min={0} max={KG_PAR_PLAQUE_MAX} decimals unit={traduire('kilos par plaque')} size={18} button={36} format={(v) => (v > 0 ? libelleKgParPlaque(v) : traduire('Inconnu'))} onChange={(v) => changerKgParPlaque(current, v)} />
+                    </View>
+                  ) : (
+                    <Pressable onPress={() => setPoidsPlaqueOuvert((l) => [...l, current.id])} accessibilityRole="button" hitSlop={6} style={{ alignSelf: 'flex-start', minHeight: 32, justifyContent: 'center' }}>
+                      <Ink size={13} weight="extraBold" color={c.accentText}>{traduire('Tu connais le poids d’une plaque ? Ajoute le')}</Ink>
+                    </Pressable>
+                  )
+                ) : null}
+              </View>
+            ) : null}
+            {manqueVisible && etatCourant ? (
+              <AlerteManquantes
+                n={etatCourant.manquantes}
+                detail={etatCourant.indexManquants.length > 0 ? (etatCourant.indexManquants.length === 1 ? traduire('Série {0} pas validée', etatCourant.indexManquants[0] + 1) : traduire('Séries {0} pas validées', etatCourant.indexManquants.map((i) => i + 1).join(', '))) : traduire('Ajoute une série pour atteindre ton objectif.')}
+                style={{ marginHorizontal: 4 }}
+              />
+            ) : null}
             <View style={{ flexDirection: 'row', paddingHorizontal: 8, marginTop: 6 }}>
               <Ink size={12} weight="bold" color={c.textMuted} style={{ width: 44 }}>{traduire("Série")}</Ink>
-              <Ink size={12} weight="bold" color={c.textMuted} style={{ flex: 1, textAlign: 'center' }}>{lb ? traduire('LB') : traduire('KG')}</Ink>
+              <Ink size={12} weight="bold" color={c.textMuted} style={{ flex: 1, textAlign: 'center' }}>{current.plaques ? traduire('PLAQUES') : lb ? traduire('LB') : traduire('KG')}</Ink>
               <Ink size={12} weight="bold" color={c.textMuted} style={{ flex: 1, textAlign: 'center' }}>{traduire("Répétitions")}</Ink>
               <View style={{ width: current.sets.length > 1 ? 82 : 48 }} />
             </View>
@@ -1519,7 +1653,7 @@ export default function SeanceMuscu() {
             {current.sets.map((s, i) => {
               if (i === activeIndex) {
                 return (
-                  <View key={s.id} onLayout={(e) => { serieBas.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height; }} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 2, borderColor: etatSerie(s) === 'moitie' ? intensite(3).text : c.primary, padding: 14, gap: 12, shadowColor: c.shadow, shadowOpacity: 0.07, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 }}>
+                  <View key={s.id} onLayout={(e) => { serieBas.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height; }} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 2, borderColor: serieManquante(i) ? intensite(4).fill : etatSerie(s) === 'moitie' ? intensite(3).text : c.primary, padding: 14, gap: 12, shadowColor: c.shadow, shadowOpacity: 0.07, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 }}>
                       <View style={{ minWidth: 32, height: 32, paddingHorizontal: 8, borderRadius: 12, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
                         <Ink size={15} weight="black" color={c.onPrimary}>{String(i + 1)}</Ink>
@@ -1529,7 +1663,7 @@ export default function SeanceMuscu() {
                         {/* 30 octobre 2026 (C) : les repetitions visees, seulement quand le programme ou ta seance les donne */}
                         {!draft.form && objectif && texteReps(objectif) ? <Ink size={13} weight="extraBold" color={c.accent}>{texteReps(objectif)}</Ink> : null}
                       </View>
-                      {s.prevWeight !== undefined ? <Ink size={12} weight="bold" color={c.textMuted} numberOfLines={1}>{traduire("la dernière fois {0}", setLabel({ weight: s.prevWeight, reps: s.prevReps ?? 0 }, unite))}</Ink> : null}
+                      {s.prevWeight !== undefined ? <Ink size={12} weight="bold" color={c.textMuted} numberOfLines={1}>{traduire("la dernière fois {0}", setLabel({ weight: s.prevWeight, reps: s.prevReps ?? 0, ...(s.prevPlaques !== undefined ? { plaques: s.prevPlaques } : {}) }, unite))}</Ink> : null}
                       {current.sets.length > 1 ? (
                         <Pressable onPress={() => supprimerSerie(current, i)} accessibilityRole="button" accessibilityLabel={traduire('Supprimer la série')} hitSlop={8} style={({ pressed }) => ({ width: 32, height: 32, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : 'transparent' })}>
                           <Icon name="close" size={14} color={c.textMuted} strokeWidth={2.6} />
@@ -1544,7 +1678,7 @@ export default function SeanceMuscu() {
                     ) : null}
                     {/* (H4) la derniere fois au haut de l'objectif : un palier de plus, sans chiffre de kilos */}
                     {(() => {
-                      if (draft.form || i !== 0 || current.sets.some((x) => x.done)) return null;
+                      if (draft.form || i !== 0 || current.sets.some((x) => x.done) || enPlaques) return null;
                       if (current.cible?.raison === 'monte' || current.cible?.raison === 'variante' || libre?.raison === 'monte') return null;
                       const objectifReps = current.cible ? { repsMax: current.cible.repsMax, secondes: current.cible.secondes } : current.objectifReps ? { repsMax: current.objectifReps } : null;
                       const enc = encouragement(hCurrent?.travail ?? hCurrent?.lastSets, objectifReps);
@@ -1558,7 +1692,11 @@ export default function SeanceMuscu() {
                     })()}
                     <View style={{ flexDirection: 'row', gap: 10 }}>
                       <View style={{ flex: 1 }}>
-                        <Stepper layout="stack" value={saisieDepuisKg(s.weight, unite)} step={lb ? 2 : 1} fine={lb ? 1 : 0.5} saut={lb ? 20 : 10} max={lb ? 1100 : 500} decimals unit={lb ? traduire('livres') : traduire('kilos')} size={38} button={50} uniteForte={lb ? traduire('LB') : traduire('KG')} onChange={(v) => setValue(current.id, s.id, { weight: kgDepuisSaisie(v, unite) })} />
+                        {current.plaques ? (
+                          <Stepper layout="stack" value={s.plaques ?? 0} step={1} saut={5} max={PLAQUES_MAX} unit={traduire('plaques')} size={38} button={50} hint={motPlaques(s.plaques ?? 0)} onChange={(v) => setValue(current.id, s.id, { plaques: v, weight: kgDePlaques(v, current.plaques?.kgParPlaque) })} />
+                        ) : (
+                          <Stepper layout="stack" value={saisieDepuisKg(s.weight, unite)} step={lb ? 2 : 1} fine={lb ? 1 : 0.5} saut={lb ? 20 : 10} max={lb ? 1100 : 500} decimals unit={lb ? traduire('livres') : traduire('kilos')} size={38} button={50} uniteForte={lb ? traduire('LB') : traduire('KG')} onChange={(v) => setValue(current.id, s.id, { weight: kgDepuisSaisie(v, unite) })} />
+                        )}
                       </View>
                       <View style={{ width: 1, backgroundColor: c.divider, marginVertical: 6 }} />
                       <View style={{ flex: 1 }}>
@@ -1594,7 +1732,11 @@ export default function SeanceMuscu() {
                     </View>
                     <View style={{ flexDirection: 'row', gap: 10 }}>
                       <View style={{ flex: 1 }}>
-                        <Stepper layout="stack" value={saisieDepuisKg(correction.weight, unite)} step={lb ? 2 : 1} fine={lb ? 1 : 0.5} saut={lb ? 20 : 10} max={lb ? 1100 : 500} decimals unit={lb ? traduire('livres') : traduire('kilos')} size={38} button={50} uniteForte={lb ? traduire('LB') : traduire('KG')} onChange={(v) => setCorrection((x) => (x ? { ...x, weight: kgDepuisSaisie(v, unite) } : x))} />
+                        {typeof correction.plaques === 'number' ? (
+                          <Stepper layout="stack" value={correction.plaques} step={1} saut={5} max={PLAQUES_MAX} unit={traduire('plaques')} size={38} button={50} hint={motPlaques(correction.plaques)} onChange={(v) => setCorrection((x) => (x ? { ...x, plaques: v, weight: kgDePlaques(v, current.plaques?.kgParPlaque) } : x))} />
+                        ) : (
+                          <Stepper layout="stack" value={saisieDepuisKg(correction.weight, unite)} step={lb ? 2 : 1} fine={lb ? 1 : 0.5} saut={lb ? 20 : 10} max={lb ? 1100 : 500} decimals unit={lb ? traduire('livres') : traduire('kilos')} size={38} button={50} uniteForte={lb ? traduire('LB') : traduire('KG')} onChange={(v) => setCorrection((x) => (x ? { ...x, weight: kgDepuisSaisie(v, unite) } : x))} />
+                        )}
                       </View>
                       <View style={{ width: 1, backgroundColor: c.divider, marginVertical: 6 }} />
                       <View style={{ flex: 1 }}>
@@ -1625,7 +1767,7 @@ export default function SeanceMuscu() {
               // 31 octobre 2026 : les series prevues apres celle en cours se voient toutes, en petit, sous la carte
               // (avant : une phrase grise « Puis encore 3 series prevues ») ; celle qu'on vient d'ajouter arrive animee
               if (pending && !draft.form) {
-                const detail = s.weight > 0 ? `${fmtNum(saisieDepuisKg(s.weight, unite))} ${lb ? traduire('LB') : traduire('KG')} × ${s.reps}` : s.reps > 0 ? traduire('{0} répétitions', s.reps) : undefined;
+                const detail = typeof s.plaques === 'number' && s.plaques > 0 ? libelleSeriePlaques(s.plaques, s.reps) : s.weight > 0 ? `${fmtNum(saisieDepuisKg(s.weight, unite))} ${lb ? traduire('LB') : traduire('KG')} × ${s.reps}` : s.reps > 0 ? traduire('{0} répétitions', s.reps) : undefined;
                 return (
                   <SeriePrevue
                     key={s.id}
@@ -1633,6 +1775,7 @@ export default function SeanceMuscu() {
                     titre={traduire('Série {0}', i + 1)}
                     detail={detail}
                     nouvelle={serieAjoutee === s.id}
+                    alerte={serieManquante(i)}
                     accessibilityLabel={traduire('Série {0} prévue, {1}', i + 1, setLabel(s, unite))}
                     onLongPress={() => askSetAction(current, i)}
                   />
@@ -1644,16 +1787,20 @@ export default function SeanceMuscu() {
                   onPress={() => {
                     // 31 octobre 2026 : plus de « devalidation » (la serie redevenait celle en cours et, pendant le repos,
                     // plus aucun bouton pour la revalider) : elle s'ouvre en correction, la serie en cours ne bouge pas
-                    if (s.done) setCorrection({ exId: current.id, setId: s.id, weight: s.weight, reps: s.reps });
+                    if (s.done) setCorrection({ exId: current.id, setId: s.id, weight: s.weight, reps: s.reps, ...(typeof s.plaques === 'number' ? { plaques: s.plaques } : {}) });
                   }}
                   onLongPress={() => askSetAction(current, i)}
                   accessibilityRole="button"
                   accessibilityLabel={s.done ? traduire("Série {0} validée, {1}. Toucher pour la modifier", i + 1, setLabel(s, unite)) : traduire("Série {0} prévue, {1}", i + 1, setLabel(s, unite))}
-                  style={[pending ? { backgroundColor: c.fillSoft, borderRadius: 18 } : { backgroundColor: ton('menthe').fond }, { flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 8, borderRadius: 18 }]}
+                  style={[pending ? (serieManquante(i) ? { backgroundColor: intensite(4).tint, borderWidth: 2, borderColor: intensite(4).fill } : { backgroundColor: c.fillSoft }) : { backgroundColor: ton('menthe').fond }, { flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 8, borderRadius: 18 }]}
                 >
                   <Ink size={16} weight="extraBold" color={c.textSecondary} style={{ width: 44, textAlign: 'center' }}>{i + 1}</Ink>
                   {/* 30 octobre 2026 (F) : l'unite en gros, aux deux tiers du chiffre */}
-                  <Ink size={20} weight={pending ? 'bold' : 'black'} color={pending ? c.textMuted : c.ink} style={{ flex: 1, textAlign: 'center' }}>{fmtNum(saisieDepuisKg(s.weight, unite))}<Ink size={14} weight="black" color={pending ? c.textMuted : c.ink}>{` ${lb ? traduire('LB') : traduire('KG')}`}</Ink></Ink>
+                  {typeof s.plaques === 'number' ? (
+                    <Ink size={20} weight={pending ? 'bold' : 'black'} color={pending ? c.textMuted : c.ink} style={{ flex: 1, textAlign: 'center' }}>{s.plaques}<Ink size={14} weight="black" color={pending ? c.textMuted : c.ink}>{` ${motPlaques(s.plaques)}`}</Ink></Ink>
+                  ) : (
+                    <Ink size={20} weight={pending ? 'bold' : 'black'} color={pending ? c.textMuted : c.ink} style={{ flex: 1, textAlign: 'center' }}>{fmtNum(saisieDepuisKg(s.weight, unite))}<Ink size={14} weight="black" color={pending ? c.textMuted : c.ink}>{` ${lb ? traduire('LB') : traduire('KG')}`}</Ink></Ink>
+                  )}
                   <Ink size={20} weight={pending ? 'bold' : 'black'} color={pending ? c.textMuted : c.ink} style={{ flex: 1, textAlign: 'center' }}>{s.reps}</Ink>
                   <View style={{ width: 48, alignItems: 'center' }}>
                     {s.done ? (
@@ -1714,8 +1861,14 @@ export default function SeanceMuscu() {
 
 
             {currentDone ? (
-              <View style={{ marginTop: 6, padding: 16, borderRadius: 22, backgroundColor: ton('menthe').fond, gap: 12 }}>
-                <Ink size={17} weight="black" color={ton('menthe').encre}>{traduire("Exercice bouclé.")}</Ink>
+              <View style={{ marginTop: 6, padding: 16, borderRadius: 22, backgroundColor: manqueVisible ? intensite(4).tint : ton('menthe').fond, gap: 12 }}>
+                {/* 3 novembre 2026 : le grand sticker « validé » au milieu, seulement si toutes les series prevues sont faites */}
+                {etatCourant?.etat === 'valide' ? <TamponValide taille={104} anime={validePop === current.id} style={{ alignSelf: 'center' }} /> : null}
+                {manqueVisible && etatCourant ? (
+                  <Ink size={17} weight="black" color={intensite(4).text}>{texteManquantes(etatCourant.manquantes)}</Ink>
+                ) : (
+                  <Ink size={17} weight="black" color={ton('menthe').encre} style={etatCourant?.etat === 'valide' ? { textAlign: 'center' } : undefined}>{traduire("Exercice bouclé.")}</Ink>
+                )}
                 {nextEx ? (
                   <Pressable onPress={() => update((d) => allerAExercice(d, nextEx.id))} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 52, borderRadius: 18, backgroundColor: pressed ? blancA(0.7) : c.surface, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 14 })}>
                     <Ink size={15} weight="black" color={ton('menthe').encre} numberOfLines={1} style={{ flexShrink: 1 }}>{traduire("Suivant : {0}", nextEx.name)}</Ink>
@@ -1737,7 +1890,11 @@ export default function SeanceMuscu() {
                 {draft.exercises.map((e, i) => {
                   if (e.id === current.id) return null;
                   const doneCount = e.sets.filter((s) => s.done).length;
-                  const all = (doneCount === e.sets.length || (!!e.laisse && doneCount > 0)) && e.sets.length > 0;
+                  // 3 novembre 2026 : « fait » seulement si toutes les series prevues sont faites ; laisse en route, il
+                  // n'est plus grise comme fini, il dit combien de series manquent et lesquelles (lib/v2/seances/etatExo.ts)
+                  const et = e.cardio ? null : etatExo(e);
+                  const all = et ? et.etat === 'valide' : doneCount === e.sets.length && e.sets.length > 0;
+                  const manque = !!et && et.etat === 'incomplet';
                   return (
                     <Pressable key={e.id} onPress={() => update((d) => allerAExercice(d, e.id))} accessibilityRole="button" style={({ pressed }) => [carteBlanche(c.surface, c.divider), { minHeight: 70, flexDirection: 'row', alignItems: 'center', padding: 12, gap: 12, opacity: all ? 0.6 : pressed ? 0.85 : 1 }]}>
                       <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: tonDuRang(i).fond, alignItems: 'center', justifyContent: 'center' }}>
@@ -1746,9 +1903,19 @@ export default function SeanceMuscu() {
                       <View style={{ flex: 1, gap: 3 }}>
                         <Ink size={15.5} weight="black" tight color={all ? c.textMuted : c.ink} numberOfLines={2}>{sansTiret(traduire(e.name))}</Ink>
                         <PastilleGroupe exercises={draft.exercises} id={e.id} />
+                        {manque && et ? (
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 4 }}>
+                            <AlerteManquantes n={et.manquantes} compact />
+                            {e.sets.map((s, k) => (s.type === 'warmup' || s.type === 'dropset' ? null : (
+                              <View key={s.id} style={{ minWidth: 22, height: 22, paddingHorizontal: 4, borderRadius: 7, alignItems: 'center', justifyContent: 'center', backgroundColor: s.done ? ton('menthe').fond : intensite(4).tint, borderWidth: s.done ? 0 : 2, borderColor: intensite(4).fill }}>
+                                <Ink size={11} weight="black" color={s.done ? ton('menthe').encre : intensite(4).text}>{String(k + 1)}</Ink>
+                              </View>
+                            )))}
+                          </View>
+                        ) : null}
                       </View>
                       <ExoDemo nom={sansPrise(e.name).base} taille={44} arrondi={12} />
-                      <Ink size={13} weight="bold" color={all ? c.successText : c.textMuted}>{all ? (e.laisse ? traduire("{0} faites", doneCount) : traduire('fait')) : doneCount > 0 ? traduire("{0} sur {1}", doneCount, e.sets.length) : traduire("{0} séries", e.sets.length)}</Ink>
+                      {manque ? null : <Ink size={13} weight="bold" color={all ? c.successText : c.textMuted}>{all ? traduire('fait') : doneCount > 0 ? traduire("{0} sur {1}", doneCount, e.sets.length) : traduire("{0} séries", e.sets.length)}</Ink>}
                     </Pressable>
                   );
                 })}
@@ -2036,6 +2203,17 @@ export default function SeanceMuscu() {
               {summary.pending === 1 ? traduire('Elle ne comptera pas tant que tu ne la valides pas.') : traduire('Elles ne comptent pas tant que tu ne les valides pas.')}
               {summary.pendingValid < summary.pending ? traduire(' Celles à 0 répétition restent de côté.') : ''}
             </Ink>
+            {/* 3 novembre 2026 : exercice par exercice, combien de series manquent (lib/v2/seances/etatExo.ts) */}
+            {draft.exercises.map((e) => {
+              const et = e.cardio ? null : etatExo(e);
+              if (!et || et.etat !== 'incomplet') return null;
+              return (
+                <View key={e.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ink size={14} weight="extraBold" style={{ flex: 1 }} numberOfLines={1}>{sansTiret(traduire(nomFr(e.name)))}</Ink>
+                  <AlerteManquantes n={et.manquantes} compact />
+                </View>
+              );
+            })}
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {summary.pendingValid > 0 ? (
                 <BoutonPrincipal onPress={validateAll} haptique="light" accessibilityLabel={summary.pendingValid === 1 ? traduire('Valider la série restante') : traduire("Valider les {0} séries restantes", summary.pendingValid)} label={traduire("Tout valider")} hauteur={46} rayon={14} tailleTexte={14} lignes={1} compact style={{ flex: 1 }} />
