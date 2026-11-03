@@ -5,7 +5,7 @@
  */
 import type { CarteData, Famille, Masque, StatKey, StatValue } from './types';
 import { exploitVisible } from './exploits';
-import { DECIMAL, LANG, traduire } from '@/lib/i18n/tr';
+import { DECIMAL, LANG, LOCALE, MILLIERS, traduire } from '@/lib/i18n/tr';
 
 export const MIN_CHIFFRES = 2;
 export const MAX_CHIFFRES = 4;
@@ -21,7 +21,7 @@ export function nombre(n: number, decimales = 1): string {
   const r = Math.round(Math.abs(n) * f) / f;
   const [ent, dec] = String(r).split('.');
   // séparateurs de la langue de l'app (inchangés en français : espace insécable et virgule)
-  const groupes = ent.replace(/\B(?=(\d{3})+(?!\d))/g, LANG === 'en' ? ',' : NBSP);
+  const groupes = ent.replace(/\B(?=(\d{3})+(?!\d))/g, MILLIERS);
   return `${n < 0 && r !== 0 ? MOINS : ''}${groupes}${dec ? `${DECIMAL}${dec}` : ''}`;
 }
 
@@ -114,9 +114,9 @@ function kgSigne(d: number): string {
  */
 export function meilleurDe(s: { records?: { nom: string; poids?: number; reps?: number }[]; meilleures?: { nom: string; poids: number; reps: number }[] | null }): StatValue | null {
   const r = (s.records ?? []).find((x) => (x.poids ?? 0) > 0 && (x.reps ?? 0) > 0);
-  if (r) return { key: 'meilleur', label: traduire('record, {0}', LANG === 'de' ? r.nom : r.nom.toLowerCase()), value: nombre(r.poids!, 1), unit: `kg × ${r.reps}` };
+  if (r) return { key: 'meilleur', label: traduire('record, {0}', LANG === 'de' ? r.nom : r.nom.toLocaleLowerCase(LOCALE)), value: nombre(r.poids!, 1), unit: `kg × ${r.reps}` };
   const m = (s.meilleures ?? []).find((x) => x.poids > 0 && x.reps > 0);
-  return m ? { key: 'meilleur', label: LANG === 'de' ? m.nom : m.nom.toLowerCase(), value: nombre(m.poids, 1), unit: `kg × ${m.reps}` } : null;
+  return m ? { key: 'meilleur', label: LANG === 'de' ? m.nom : m.nom.toLocaleLowerCase(LOCALE), value: nombre(m.poids, 1), unit: `kg × ${m.reps}` } : null;
 }
 
 /**
@@ -253,7 +253,7 @@ export function chiffresDisponibles(d: CarteData, masque: Masque = 'aucun'): Sta
           : null,
       rounds: p.rounds > 0 ? { key: 'rounds', label: p.rounds > 1 ? 'rounds' : 'round', value: nombre(p.rounds, 0) } : null,
       jours_actifs: p.joursActifs > 0 ? { key: 'jours_actifs', label: p.joursActifs > 1 ? traduire('jours actifs') : traduire('jour actif'), value: String(p.joursActifs) } : null,
-      sport_top: top ? { key: 'sport_top', label: traduire('en {0}', LANG === 'de' ? top.nom : top.nom.toLowerCase()), value: String(top.n) } : null,
+      sport_top: top ? { key: 'sport_top', label: traduire('en {0}', LANG === 'de' ? top.nom : top.nom.toLocaleLowerCase(LOCALE)), value: String(top.n) } : null,
       serie_semaines: serieStat,
     };
     const fam = d.famille ?? 'autre';

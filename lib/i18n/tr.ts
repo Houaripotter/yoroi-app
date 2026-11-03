@@ -7,24 +7,35 @@
 // ============================================
 
 
-export type Lang = 'fr' | 'en' | 'de' | 'nl' | 'es' | 'pt' | 'it';
+/**
+ * LES LANGUES DE YOROI : une ligne par langue, c'est le seul endroit à remplir pour en ajouter une.
+ * Puis : python3 scripts/i18n/langues.py ajouter <code> (dictionnaire, montre, widgets, Android, réglages).
+ * Le test __tests__/unit/languesCompletes.test.ts dit ce qui manque encore.
+ * nom, drapeau, code : choix de la langue dans l'app. locale : dates et nombres. systeme : code iOS et Android.
+ * decimal et milliers : séparateurs des nombres. jours : lettres des jours, lundi en premier.
+ * unSingulier : 0 et 1 au singulier (comme le français), sinon singulier pour 1 seulement.
+ */
+const NBSP = '\u00A0';
+const REGISTRE = {
+  fr: { nom: 'Français', drapeau: '🇫🇷', code: 'FR', locale: 'fr-FR', systeme: 'fr', decimal: ',', milliers: NBSP, jours: ['L', 'M', 'M', 'J', 'V', 'S', 'D'], unSingulier: true, dict: () => ({}) },
+  en: { nom: 'English', drapeau: '🇬🇧', code: 'EN', locale: 'en-US', systeme: 'en', decimal: '.', milliers: ',', jours: ['M', 'T', 'W', 'T', 'F', 'S', 'S'], unSingulier: false, dict: () => require('./dict/en.json') },
+  de: { nom: 'Deutsch', drapeau: '🇩🇪', code: 'DE', locale: 'de-DE', systeme: 'de', decimal: ',', milliers: NBSP, jours: ['M', 'D', 'M', 'D', 'F', 'S', 'S'], unSingulier: false, dict: () => require('./dict/de.json') },
+  nl: { nom: 'Nederlands', drapeau: '🇳🇱', code: 'NL', locale: 'nl-NL', systeme: 'nl', decimal: ',', milliers: NBSP, jours: ['M', 'D', 'W', 'D', 'V', 'Z', 'Z'], unSingulier: false, dict: () => require('./dict/nl.json') },
+  es: { nom: 'Español', drapeau: '🇪🇸', code: 'ES', locale: 'es-ES', systeme: 'es', decimal: ',', milliers: NBSP, jours: ['L', 'M', 'X', 'J', 'V', 'S', 'D'], unSingulier: false, dict: () => require('./dict/es.json') },
+  pt: { nom: 'Português', drapeau: '🇧🇷', code: 'PT', locale: 'pt-BR', systeme: 'pt-BR', decimal: ',', milliers: NBSP, jours: ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'], unSingulier: true, dict: () => require('./dict/pt.json') },
+  it: { nom: 'Italiano', drapeau: '🇮🇹', code: 'IT', locale: 'it-IT', systeme: 'it', decimal: ',', milliers: NBSP, jours: ['L', 'M', 'M', 'G', 'V', 'S', 'D'], unSingulier: false, dict: () => require('./dict/it.json') },
+} as const;
 
-/** Langues proposées. Une langue absente de cette liste retombe sur l'anglais. */
-export const LANGUES_ACTIVES: readonly Lang[] = ['fr', 'en', 'de', 'nl', 'es', 'pt', 'it'];
+export type Lang = keyof typeof REGISTRE;
+
+/** Langues proposées, dans l'ordre du registre. Une langue absente retombe sur l'anglais. */
+export const LANGUES_ACTIVES: readonly Lang[] = Object.keys(REGISTRE) as Lang[];
 
 /** Lancement en français seul : mettre à true pour forcer le français partout. */
 const FRANCAIS_FORCE = false;
 
-/** Nom, drapeau et code de chaque langue, pour le choix de la langue dans l'app. */
-export const LANGUES_INFO: Record<Lang, { nom: string; drapeau: string; code: string }> = {
-  fr: { nom: 'Français', drapeau: '🇫🇷', code: 'FR' },
-  en: { nom: 'English', drapeau: '🇬🇧', code: 'EN' },
-  de: { nom: 'Deutsch', drapeau: '🇩🇪', code: 'DE' },
-  nl: { nom: 'Nederlands', drapeau: '🇳🇱', code: 'NL' },
-  es: { nom: 'Español', drapeau: '🇪🇸', code: 'ES' },
-  pt: { nom: 'Português', drapeau: '🇧🇷', code: 'PT' },
-  it: { nom: 'Italiano', drapeau: '🇮🇹', code: 'IT' },
-};
+/** Nom, drapeau, code et réglages de chaque langue (le registre ci dessus). */
+export const LANGUES_INFO: Record<Lang, { nom: string; drapeau: string; code: string; locale: string; systeme: string; decimal: string; milliers: string; jours: readonly string[]; unSingulier: boolean }> = REGISTRE;
 
 /** iPhone : la langue de l'app dans les réglages iOS (AppleLanguages), si c'est une langue de YOROI. */
 function langueIOS(): Lang | null {
@@ -92,7 +103,7 @@ export async function choisirLangue(l: Lang): Promise<void> {
   // iPhone : la même langue pour les textes du système (autorisations, Siri) au prochain lancement
   try {
     const { Platform, Settings } = require('react-native');
-    if (Platform.OS === 'ios') Settings.set({ AppleLanguages: [l === 'pt' ? 'pt-BR' : l] });
+    if (Platform.OS === 'ios') Settings.set({ AppleLanguages: [REGISTRE[l].systeme] });
   } catch {
     // sans effet : seule l'app change de langue
   }
@@ -104,23 +115,22 @@ export async function choisirLangue(l: Lang): Promise<void> {
   }
 }
 
-let dict: Record<string, string> | null = null;
-function load(): Record<string, string> {
-  if (dict) return dict;
+/** Dictionnaire d'une langue (lecture seule), chargé une seule fois. Vide en français. */
+const dicts: Partial<Record<Lang, Record<string, string>>> = {};
+export function dictionnaire(l: Lang): Record<string, string> {
+  const deja = dicts[l];
+  if (deja) return deja;
+  let d: Record<string, string> = {};
   try {
-    switch (LANG) {
-      case 'en': dict = require('./dict/en.json'); break;
-      case 'de': dict = require('./dict/de.json'); break;
-      case 'nl': dict = require('./dict/nl.json'); break;
-      case 'es': dict = require('./dict/es.json'); break;
-      case 'pt': dict = require('./dict/pt.json'); break;
-      case 'it': dict = require('./dict/it.json'); break;
-      default: dict = {};
-    }
+    d = REGISTRE[l].dict() as Record<string, string>;
   } catch {
-    dict = {};
+    d = {};
   }
-  return dict as Record<string, string>;
+  dicts[l] = d;
+  return d;
+}
+function load(): Record<string, string> {
+  return dictionnaire(LANG);
 }
 
 const BORDS = /^(\s*)([\s\S]*?)(\s*)$/;
@@ -161,18 +171,22 @@ export function traduireSens(sens: string, fr: string, ...valeurs: unknown[]): s
   });
 }
 
+/** Règle de pluriel d'une langue autre que le français (unSingulier du registre). */
+export function plurielDe(l: Lang, n: number): boolean {
+  return REGISTRE[l].unSingulier ? Math.abs(Number(n)) >= 2 : Number(n) !== 1;
+}
+
 /**
  * Pluriel. plurielFr garde exactement la règle d'origine du code pour le français.
  * Les autres langues suivent leur règle : singulier pour 1 seulement.
  */
 export function traduirePluriel(n: number, plurielFr: boolean, un: string, plusieurs: string, ...valeurs: unknown[]): string {
-  // Portugais : singulier pour 0 et 1, comme le français. Autres langues : singulier pour 1 seulement.
-  const pluriel = LANG === 'fr' ? plurielFr : LANG === 'pt' ? Math.abs(Number(n)) >= 2 : Number(n) !== 1;
+  const pluriel = LANG === 'fr' ? plurielFr : plurielDe(LANG, n);
   return traduire(pluriel ? plusieurs : un, ...valeurs);
 }
 
 /** Locale pour les dates et les nombres (toLocaleDateString, Intl). */
-export const LOCALE: string = ({ fr: 'fr-FR', en: 'en-US', de: 'de-DE', nl: 'nl-NL', es: 'es-ES', pt: 'pt-BR', it: 'it-IT' } as const)[LANG];
+export const LOCALE: string = REGISTRE[LANG].locale;
 
 /**
  * Hors français : jour et mois dans l'ordre de la langue (« Nov 3 », « 3. Nov. », « 3 nov »).
@@ -193,18 +207,13 @@ export function plageJours(a: Date, b: Date, cle = 'du {0} au {1}', suffixe = ''
 }
 
 /** Séparateur décimal de la langue : virgule en français, allemand, néerlandais ; point en anglais. */
-export const DECIMAL: string = LANG === 'en' ? '.' : ',';
+export const DECIMAL: string = REGISTRE[LANG].decimal;
+
+/** Séparateur des milliers de la langue : espace insécable en français, virgule en anglais. */
+export const MILLIERS: string = REGISTRE[LANG].milliers;
 
 /**
  * Lettres des jours, lundi en premier, dans la langue de l'app (« L M M J V S D » en français, inchangé).
  * Même table que lib/v2/sante/anneauxJours.ts, sans rien importer.
  */
-export const JOURS_LETTRES: string[] = ({
-  fr: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
-  en: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
-  de: ['M', 'D', 'M', 'D', 'F', 'S', 'S'],
-  nl: ['M', 'D', 'W', 'D', 'V', 'Z', 'Z'],
-  es: ['L', 'M', 'X', 'J', 'V', 'S', 'D'],
-  pt: ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'],
-  it: ['L', 'M', 'M', 'G', 'V', 'S', 'D'],
-} as Record<Lang, string[]>)[LANG];
+export const JOURS_LETTRES: string[] = [...REGISTRE[LANG].jours];

@@ -9,7 +9,7 @@
 // Fichier pur (aucun module natif), lit les dictionnaires sans jamais les modifier.
 // ============================================
 
-import { LANG, type Lang } from '@/lib/i18n/tr';
+import { LANG, LANGUES_ACTIVES, dictionnaire, plurielDe, type Lang } from '@/lib/i18n/tr';
 import { contientValeurSante } from '@/lib/v2/notifications/texte';
 
 /** Une valeur {0} : un nombre, un texte gardé tel quel, ou une phrase à traduire elle aussi. */
@@ -35,8 +35,7 @@ export interface SourceNotif {
 
 export const CLE_DATA_I18N = '__i18n';
 
-const LANGUES_DICO: readonly Exclude<Lang, 'fr'>[] = ['en', 'de', 'nl', 'es', 'pt', 'it'];
-const LANGUES: readonly Lang[] = ['fr', ...LANGUES_DICO];
+const LANGUES: readonly Lang[] = LANGUES_ACTIVES;
 
 // ─── Construction (côté programmation des notifications) ─────────────────────
 
@@ -57,29 +56,8 @@ export function sourceNotif(titre?: SourceTexte | null, texte?: SourceTexte | nu
 
 // ─── Dictionnaires (lecture seule) ───────────────────────────────────────────
 
-const dicos: Partial<Record<Lang, Record<string, string>>> = {};
-
 function dico(l: Lang): Record<string, string> {
-  if (l === 'fr') return {};
-  const deja = dicos[l];
-  if (deja) return deja;
-  let d: Record<string, string> = {};
-  try {
-    /* eslint-disable @typescript-eslint/no-require-imports */
-    switch (l) {
-      case 'en': d = require('./i18n/dict/en.json'); break;
-      case 'de': d = require('./i18n/dict/de.json'); break;
-      case 'nl': d = require('./i18n/dict/nl.json'); break;
-      case 'es': d = require('./i18n/dict/es.json'); break;
-      case 'pt': d = require('./i18n/dict/pt.json'); break;
-      case 'it': d = require('./i18n/dict/it.json'); break;
-    }
-    /* eslint-enable @typescript-eslint/no-require-imports */
-  } catch {
-    d = {};
-  }
-  dicos[l] = d;
-  return d;
+  return l === 'fr' ? {} : dictionnaire(l);
 }
 
 const aCle = (d: Record<string, string>, k: string) => Object.prototype.hasOwnProperty.call(d, k);
@@ -111,7 +89,7 @@ export function rendre(s: SourceTexte, l: Lang): string {
   let fr = s.fr;
   if (s.pl) {
     const n = Number(s.pl.n);
-    const pluriel = l === 'fr' ? s.pl.frPluriel : l === 'pt' ? Math.abs(n) >= 2 : n !== 1;
+    const pluriel = l === 'fr' ? s.pl.frPluriel : plurielDe(l, n);
     if (pluriel) fr = s.pl.plusieurs;
   }
   return traduireDans(l, fr, s.v ?? []);

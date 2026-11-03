@@ -12,7 +12,7 @@ import { DeviceEventEmitter } from 'react-native';
 import type { Exercise } from '@/lib/database';
 import { niceGroup } from './format';
 import { normName } from './history';
-import { LANG, traduire } from '@/lib/i18n/tr';
+import { LANG, LOCALE, traduire } from '@/lib/i18n/tr';
 
 const CLE = 'yoroi_mes_seances_v1';
 export const MES_SEANCES_EVENT = 'YOROI_MES_SEANCES_CHANGED';
@@ -90,7 +90,7 @@ export function nomParDefaut(exos: ExoSeance[], dejaPris: string[] = []): string
   }
   const top = [...compte.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2).map(([m]) => traduire(m));
   // le second en minuscule (« Pectoraux et triceps »), sauf en allemand où les noms gardent leur majuscule
-  const second = top[1] && LANG !== 'de' ? top[1].toLocaleLowerCase() : top[1];
+  const second = top[1] && LANG !== 'de' ? top[1].toLocaleLowerCase(LOCALE) : top[1];
   const base = top.length === 2 ? traduire('{0} et {1}', top[0], second) : top.length === 1 ? top[0] : traduire('Ma séance');
   return nomLibre(base, dejaPris);
 }

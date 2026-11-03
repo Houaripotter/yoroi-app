@@ -190,8 +190,10 @@ export default function MesDonnees() {
   // ZONE SENSIBLE
   // ============================================
 
+  // le mot affiché dans la langue de l'app marche aussi (turc « SİL » tapé « sil », japonais, coréen)
+  const sansAccent = (x: string) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const confirmWord = resetText.trim().toUpperCase();
-  const resetOk = ['SUPPRIMER', 'SUPRIMER', 'EFFACER', 'OUI', 'YES', 'DELETE', 'LÖSCHEN', 'LOESCHEN', 'LOSCHEN', 'JA', 'VERWIJDEREN', 'WISSEN', 'ELIMINAR', 'BORRAR', 'EXCLUIR', 'APAGAR', 'ELIMINA', 'CANCELLA'].includes(confirmWord);
+  const resetOk = ['SUPPRIMER', 'SUPRIMER', 'EFFACER', 'OUI', 'YES', 'DELETE', 'LÖSCHEN', 'LOESCHEN', 'LOSCHEN', 'JA', 'VERWIJDEREN', 'WISSEN', 'ELIMINAR', 'BORRAR', 'EXCLUIR', 'APAGAR', 'ELIMINA', 'CANCELLA'].includes(confirmWord) || sansAccent(confirmWord) === sansAccent(traduire('SUPPRIMER').toUpperCase());
 
   const handleResetAll = () => {
     showPopup(traduire('Sauvegarde conseillée'), traduire('Avant de tout effacer, garde une copie de tes données.'), [

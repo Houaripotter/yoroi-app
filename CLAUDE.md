@@ -17,6 +17,12 @@ Résumé rapide :
 
 ---
 
+## Langues (textes affichés)
+
+- Tout texte affiché s'écrit en français dans `traduire("...")` (lib/i18n/tr.ts). Le français est la seule source.
+- Une phrase nouvelle ou modifiée doit être traduite dans toutes les langues du registre : `python3 scripts/i18n/langues.py etat` dit ce qui manque, le test `__tests__/unit/languesCompletes.test.ts` devient rouge sinon.
+- Mode d'emploi complet : scripts/i18n/LISEZMOI.md.
+
 ## Convention d'affichage des historiques horizontaux
 
 ### Ordre des données dans les ScrollView horizontaux
