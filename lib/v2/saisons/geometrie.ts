@@ -258,23 +258,37 @@ export const ALERTE_PASTEL = 24;
 /** Une citrouille ou un sapin de chaque cote du poids : 34 au plus, 22 au moins, sinon rien (a 375 la place manque : aucun) */
 export const DECOR_PASTEL = { w: 34, h: 34, min: 22, ecart: 3 };
 
-export function boitesCartePastel(largeurCarte: number): { chiffre: Boite; anneau: Boite; titre: Boite; cotes: Boite[]; hauteur: number } {
-  const c = CARTE_PASTEL;
+// ── 3 novembre 2026 : carte Ton poids « ligne de paliers » (proposition A du 2 novembre) ─────────────────────
+// La carte a change depuis le poids au centre : « TON POIDS » et ton poids a gauche, le sticker balance a droite
+// (components/yoroi/v2/accueil/CartePoids.tsx). Le sapin ou la citrouille etait encore calcule pour le poids au
+// centre et touchait le chiffre. Mesures de la page 1 : marge 18, haut 16, petit titre de 14, 4, le poids en 40
+// (ligne de 44) ; le sticker de 60, remonte de 6 et pousse de 6 vers le bord droit. Entre ton poids et le sticker,
+// la pastille « Prochaine pesée » (PESEE_CARTE_POIDS), et le sapin ou la citrouille pose juste au dessus d'elle.
+export const CARTE_PALIERS = { marge: 18, haut: 16, titre: 14, ecartTitre: 4, ligneChiffre: 44, titreLargeur: 96, sticker: 60, decaleSticker: 6 } as const;
+/** « 100,0 kg » en 40 (chiffres tabulaires) et son « kg » en 17 : 140 au plus */
+export const CHIFFRE_PALIERS_MAX = 140;
+/**
+ * La pastille de ta prochaine pesee : son bord droit a 80 du bord de la carte (8 avant le sticker), 32 de haut, posee
+ * en bas de la ligne du poids (de 44 a 76), au moins 8 apres ton poids, et pas plus etroite que 70 (sinon rien).
+ */
+export const PESEE_CARTE_POIDS = { droite: 80, haut: 44, hauteur: 32, ecartPoids: 8, largeurMin: 70 } as const;
+/** Le sapin ou la citrouille au dessus de la pastille : 30 au plus, 2 au dessus d'elle, 6 avant le bord droit de la pastille */
+export const DECOR_PALIERS = { h: 30, ecart: 2, retrait: 6 } as const;
+
+export function boitesCartePastel(largeurCarte: number): { chiffre: Boite; anneau: Boite; titre: Boite; pesee: Boite; cotes: Boite[]; hauteur: number } {
+  const c = CARTE_PALIERS;
   const W = largeurCarte;
-  const chiffre: Boite = { x: (W - CHIFFRE_PASTEL_MAX) / 2, y: c.haut + (c.anneau - c.ligneChiffre) / 2, w: CHIFFRE_PASTEL_MAX, h: c.ligneChiffre };
-  const anneau: Boite = { x: W - c.marge - c.anneau, y: c.haut, w: c.anneau, h: c.anneau };
-  const titre: Boite = { x: c.marge, y: c.haut, w: c.titre, h: c.anneau };
-  // a gauche : entre le titre et le poids ; a droite : entre le poids (et son eventuelle alerte) et le pourcentage
-  const zones = [
-    { debut: titre.x + titre.w, fin: chiffre.x },
-    { debut: chiffre.x + chiffre.w + ALERTE_PASTEL, fin: anneau.x - c.ecartAnneau - c.pct },
-  ];
-  const cotes: Boite[] = [];
-  for (const z of zones) {
-    const place = z.fin - z.debut - 2 * DECOR_PASTEL.ecart;
-    const d = Math.min(DECOR_PASTEL.w, place);
-    if (d < DECOR_PASTEL.min) continue;
-    cotes.push({ x: z.debut + (z.fin - z.debut - d) / 2, y: anneau.y + anneau.h - d, w: d, h: d });
-  }
-  return { chiffre, anneau, titre, cotes, hauteur: anneau.y + anneau.h + 2 };
+  const titre: Boite = { x: c.marge, y: c.haut, w: c.titreLargeur, h: c.titre };
+  const chiffre: Boite = { x: c.marge, y: c.haut + c.titre + c.ecartTitre, w: CHIFFRE_PALIERS_MAX, h: c.ligneChiffre };
+  // « anneau » garde son nom pour le decor : c'est maintenant le sticker balance
+  const anneau: Boite = { x: W - c.marge + c.decaleSticker - c.sticker, y: c.haut - c.decaleSticker, w: c.sticker, h: c.sticker };
+  const p = PESEE_CARTE_POIDS;
+  const peseeDroite = W - p.droite;
+  const peseeGauche = chiffre.x + chiffre.w + p.ecartPoids;
+  const pesee: Boite = { x: peseeGauche, y: p.haut, w: Math.max(0, peseeDroite - peseeGauche), h: p.hauteur };
+  // le decor : au dessus de la pastille, sous la guirlande, a droite du titre et du poids le plus large
+  const h = Math.min(DECOR_PALIERS.h, p.haut - DECOR_PALIERS.ecart - (GUIRLANDE_CARTE.bas + 1));
+  const d: Boite = { x: peseeDroite - DECOR_PALIERS.retrait - h, y: p.haut - DECOR_PALIERS.ecart - h, w: h, h };
+  const libre = d.x >= Math.max(titre.x + titre.w, chiffre.x + chiffre.w) + DECOR_PASTEL.ecart && d.x + d.w <= anneau.x - DECOR_PASTEL.ecart && h >= DECOR_PASTEL.min;
+  return { chiffre, anneau, titre, pesee, cotes: libre ? [d] : [], hauteur: chiffre.y + chiffre.h + 2 };
 }
