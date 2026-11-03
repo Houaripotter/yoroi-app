@@ -24,6 +24,7 @@ import { TamponValide } from './TamponValide';
 import { Icon } from './Icon';
 import { tap } from './ui';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { ltrSiRTL } from '@/lib/v2/rtl';
 
 function Anneau({ fait, total, taille = 62 }: { fait: number; total: number; taille?: number }) {
   const { theme } = useYoroiTheme();
@@ -40,7 +41,7 @@ function Anneau({ fait, total, taille = 62 }: { fait: number; total: number; tai
           <Circle cx={taille / 2} cy={taille / 2} r={r} stroke={theme.isDark ? '#9DB1FF' : '#4256C9'} strokeWidth={8} fill="none" strokeLinecap="round" strokeDasharray={`${tour * part} ${tour}`} transform={`rotate(-90 ${taille / 2} ${taille / 2})`} />
         ) : null}
       </Svg>
-      <View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' }}>
+      <View style={[{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' }, ltrSiRTL]}>
         <Ink size={Math.round(taille * 0.3)} weight="black" tight>{String(fait)}</Ink>
         <Ink size={Math.round(taille * 0.18)} weight="extraBold" color={c.textSecondary}>{`/${total}`}</Ink>
       </View>
