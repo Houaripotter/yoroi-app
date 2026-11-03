@@ -11,6 +11,7 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { traduire } from '@/lib/i18n/tr';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 export interface Zone {
   id: string;
@@ -163,7 +164,7 @@ export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({ visible,
                 <Ink size={17} weight="extraBold" style={{ flex: 1 }}>
                   {traduire(zone.name)}
                 </Ink>
-                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}>
                   <Path d="M9 5l7 7-7 7" stroke={c.textMuted} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
               </Pressable>
