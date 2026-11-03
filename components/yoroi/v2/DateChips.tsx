@@ -15,6 +15,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Sheet } from '@/components/yoroi/v2/seance/Sheet';
 import { traduire, LOCALE, LANG } from '@/lib/i18n/tr';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 const DAYS_SHORT = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
 const DAYS_LONG = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
@@ -90,7 +91,7 @@ function CalendarIcon({ color, size = 18 }: { color: string; size?: number }) {
 
 function Chevron({ dir, color }: { dir: 'left' | 'right'; color: string }) {
   return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}>
       <Path d={dir === 'left' ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7'} stroke={color} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
