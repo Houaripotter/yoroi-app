@@ -12,7 +12,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.houari.yoroi",
-      "buildNumber": "40",
+      "buildNumber": "41",
       "infoPlist": {
         "NSHealthShareUsageDescription": "YOROI lit dans Apple Santé ton poids et ta composition corporelle, ton activité, ton cœur, ton sommeil, tes séances (tracés, effort, foulée, puissance, zones) et ce que tu bois et manges, pour afficher tes progrès et ta préparation du jour. Les mesures avancées (marche, alertes du cœur, sons, nutriments) seulement si tu les actives. Rien n'est envoyé à un serveur de YOROI.",
         "NSHealthUpdateUsageDescription": "YOROI enregistre dans Apple Santé tes pesées et ta masse grasse, les séances que tu notes, ton eau et le sommeil que tu saisis à la main. Rien n'est envoyé à un serveur de YOROI.",
@@ -332,7 +332,7 @@
         "android.permission.health.WRITE_SLEEP",
         "android.permission.health.WRITE_EXERCISE"
       ],
-      "versionCode": 59,
+      "versionCode": 60,
       "allowBackup": true
     },
     "extra": {
