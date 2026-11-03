@@ -84,6 +84,13 @@ export type VisuelsCarte = {
   enveloppeBloc?: (bloc: React.ReactNode) => React.ReactNode;
   /** 2 novembre 2026 (nouveau moteur) : la vue de l'autocollant seul, capturee pour Copier et Enregistrer */
   refAutocollant?: React.RefObject<View | null>;
+  /** 3 novembre 2026 (photos d'exemple) : la taille de la photo quand elle est deja connue (exemples), sans la lire */
+  taillePhoto?: { w: number; h: number } | null;
+  /**
+   * 3 novembre 2026 (photos d'exemple) : la photo est une photo d'EXEMPLE (lib/v2/cartes/exemples.ts), pour les
+   * apercus seulement. Jamais dans un export : visuelsSansExemple() la retire avant toute capture.
+   */
+  exemple?: boolean;
 };
 
 type Props = {
@@ -272,7 +279,9 @@ export function planNouveauMoteur(data: CarteData, o: OptionsCarte, v: VisuelsCa
 
 function RenduNouveau({ data, options, visuels, u, W }: { data: CarteData; options: OptionsCarte; visuels: VisuelsCarte; u: ReturnType<typeof useUnitePoids>; W: number }) {
   const photo = optionsDessinees(options, visuels).photo;
-  const taille = useTaillePhoto(photo);
+  // une photo d'exemple donne sa taille : rien a lire
+  const lue = useTaillePhoto(visuels.taillePhoto ? null : photo);
+  const taille = (photo && visuels.taillePhoto) || lue;
   const r = useMemo(() => planNouveauMoteur(data, options, visuels, u, taille), [data, options, visuels, u, taille]);
   if (!r) return null;
   const aa = data.avantApres;
@@ -295,7 +304,7 @@ export const CarteRendu = forwardRef<View, Props>(({ data: brut, options, visuel
   if (nouveauMoteurPour(brut, m)) {
     const Hn = HAUTEURS[formatDessine(brut, options, m)];
     return (
-      <View ref={ref} collapsable={false} style={{ width: W, height: Hn, overflow: 'hidden' }}>
+      <View ref={ref} collapsable={false} testID={visuels.exemple ? 'carte-avec-exemple' : undefined} style={{ width: W, height: Hn, overflow: 'hidden' }}>
         <RenduNouveau data={brut} options={{ ...options, format: formatDessine(brut, options, m) }} visuels={visuels} u={u} W={W} />
       </View>
     );
