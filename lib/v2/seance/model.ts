@@ -55,6 +55,9 @@ export type LiveSet = {
   prevReps?: number;
   /** type d'une serie enregistree (echauffement...), garde a la modification pour le tonnage */
   type?: 'normal' | 'warmup' | 'dropset' | 'superset';
+  /** 3 novembre 2026 : charge comptee en plaques de la pile ; weight reste en kilos (0 sans poids de plaque connu) */
+  plaques?: number;
+  prevPlaques?: number;
 };
 
 export type LiveExercise = {
@@ -79,6 +82,11 @@ export type LiveExercise = {
   objectifReps?: number;
   /** cran de la machine ou de la poulie note pendant la seance (lib/v2/seances/reglagesMachine.ts) */
   cran?: number | null;
+  /**
+   * 3 novembre 2026 : charge notee en plaques (lib/v2/seances/plaques.ts) ; null, en kilos ; undefined, pas encore
+   * decide (le choix garde pour cet exercice s'applique a l'ouverture)
+   */
+  plaques?: { kgParPlaque: number | null } | null;
   /** case du programme d'ou vient l'exercice (jour, index dans le jour adapte), pour retenir un remplacement */
   caseProg?: { jourId: string; index: number };
   /** nom de l'exercice prevu, quand tu l'as remplace pendant la seance */
