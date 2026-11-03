@@ -390,7 +390,14 @@ describe('28 octobre 2026 : accueil plus compact', () => {
     const ch = lire('components/yoroi/v2/charts/CheminPierres.tsx');
     // l'accueil et Progres dessinent le chemin avec le meme composant, les couleurs ont une seule source
     // 2 novembre 2026 (proposition A) : l'accueil dessine sa ligne de paliers, Progres garde le chemin de pierres
-    expect(c).toContain('<LigneDePaliers depart={start} ligne={ligne} accent={accent} sombre={sombre} />');
+    expect(c).toContain('<LigneDePaliers depart={start} ligne={ligne} sombre={sombre} />');
+    // 3 novembre 2026 nuit : les couleurs des anneaux d'Aujourd'hui, prises a leur source (couleurActivite), aucun hex recopie
+    expect(c).toContain("import { couleurActivite } from './Visus';");
+    expect(c).toContain("couleurActivite('energie-active')");
+    expect(c).toContain("couleurActivite('exercice')");
+    expect(c).toContain("couleurActivite('pas')");
+    expect(c).toContain('<Circle cx={12} cy={12} r={12} fill={A.vert} />');
+    expect(c).not.toContain('P.moss');
     expect(c).toContain('etatsLignePaliers(start, goal, last.value, chemin.part, atteint)');
     expect(lire('app/(tabs)/progres.tsx')).toContain('<CheminPierres ');
     expect(c).not.toMatch(/plein: '#/);
