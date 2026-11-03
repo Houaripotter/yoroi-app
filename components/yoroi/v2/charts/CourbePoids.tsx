@@ -45,6 +45,7 @@ import { paletteSombre } from '@/components/yoroi/livePalette';
 import { echelleCourbe } from '@/lib/v2/pesee/cadrageCourbe';
 import { MIN_PESEES_TENDANCE, filtrerTendance } from '@/lib/v2/pesee/tendance';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { ltrSiRTL } from '@/lib/v2/rtl';
 
 /**
  * Vague 45 : la couleur du trait choisie dans Reglages, Tes courbes (degrade par defaut, indigo, encre).
@@ -813,7 +814,7 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
       <View
         collapsable={false}
         onLayout={(e) => setWidth(Math.round(e.nativeEvent.layout.width))}
-        style={{ height: height + 6 }}
+        style={[{ height: height + 6 }, ltrSiRTL]}
         accessible
         accessibilityRole="adjustable"
         accessibilityLabel={a11y}
