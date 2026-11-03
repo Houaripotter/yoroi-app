@@ -74,6 +74,7 @@ import { MESSAGE_PENDANT_LA_VUE, useNouvelUtilisateur, vueNouvelUtilisateurActiv
 import { EVENEMENT_VUE } from '@/lib/v2/creator/nouvelUtilisateur';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire } from '@/lib/i18n/tr';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 export default function CreatorModeScreen() {
   return (
@@ -461,7 +462,7 @@ function Studio() {
                     hitSlop={4}
                     style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: liste.carte, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.94 : 1 }], shadowColor: '#1B2A44', shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 2 })}
                   >
-                    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}>
                       <Path d="M15 6l-6 6 6 6" stroke={liste.texte} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
                     </Svg>
                   </Pressable>
@@ -563,7 +564,7 @@ function EnTetePage({ titre, sous, onRetour }: { titre: string; sous: string; on
         hitSlop={6}
         style={({ pressed }) => ({ width: 46, height: 46, borderRadius: 23, backgroundColor: pal.carte, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.94 : 1 }], shadowColor: pal.indigo, shadowOpacity: 0.07, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 2 })}
       >
-        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}>
           <Path d="M15 5l-7 7 7 7" stroke={pal.texte} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
         </Svg>
       </Pressable>
