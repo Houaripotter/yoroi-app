@@ -6,6 +6,8 @@
  *    jour est faite (résumé et « Partager » vers l'atelier des cartes), ou la carte repos avec la prochaine séance.
  * Tous les chiffres viennent de la vraie séance ou du vrai programme : une donnée absente, une ligne absente.
  * Stickers seulement (trophee et etincelles pour la fête, sommeil pour le repos, carnet pour le programme).
+ * 3 novembre 2026 (Houari) : la carte « Bravo » et la carte repos s'ouvrent d'un appui n'importe où, vers la même
+ * page que leur lien du bas (la séance faite, le programme). Le bouton et les liens gardent leur propre action.
  */
 import React, { useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
@@ -184,7 +186,12 @@ export function CarteBravo({ t, nombre, ensuite, onPartager, onVoir }: {
   const teintes: TeinteA[] = ['creme', 'bleu', 'peche'];
   const sombre = theme.isDark;
   return (
-    <View style={{ borderRadius: 30, shadowColor: '#1C6B45', shadowOpacity: sombre ? 0 : 0.12, shadowRadius: 28, shadowOffset: { width: 0, height: 12 }, elevation: 3 }}>
+    <Pressable
+      onPress={() => { tap(); onVoir(); }}
+      // le bouton Partager et le lien restent des boutons séparés pour VoiceOver : la carte ne les regroupe pas
+      accessible={false}
+      style={({ pressed }) => ({ borderRadius: 30, shadowColor: '#1C6B45', shadowOpacity: sombre ? 0 : 0.12, shadowRadius: 28, shadowOffset: { width: 0, height: 12 }, elevation: 3, opacity: pressed ? 0.92 : 1 })}
+    >
       <LinearGradient colors={sombre ? ['#1F2B24', '#1E2538'] : ['#DFF5E8', '#E9F0FB']} locations={[0, 0.7]} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={{ borderRadius: 30, overflow: 'hidden', padding: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <View style={{ width: 84, height: 84, alignItems: 'center', justifyContent: 'center' }}>
@@ -228,7 +235,7 @@ export function CarteBravo({ t, nombre, ensuite, onPartager, onVoir }: {
           {ensuite ? <Ink size={12.5} weight="bold" color={c.textSecondary} style={{ flexShrink: 1, paddingVertical: 4 }}>{sansTiret(ensuite)}</Ink> : null}
         </View>
       </LinearGradient>
-    </View>
+    </Pressable>
   );
 }
 
@@ -254,7 +261,12 @@ export function CarteRepos({ titre, quand, texte, onFaire, onProgramme }: {
   const bleu = useTeinte('bleu');
   const illus = useIllustrations();
   return (
-    <View style={[carte, { padding: 16 }]}>
+    <Pressable
+      onPress={onProgramme ? () => { tap(); onProgramme(); } : undefined}
+      disabled={!onProgramme}
+      accessible={false}
+      style={({ pressed }) => [carte, { padding: 16, opacity: pressed && onProgramme ? 0.92 : 1 }]}
+    >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View style={{ width: 64, height: 64, borderRadius: 22, backgroundColor: lilas.fond, alignItems: 'center', justifyContent: 'center' }}>
           <Image source={illus.img('sommeil')} style={{ width: 48, height: 48 }} resizeMode="contain" accessibilityIgnoresInvertColors />
@@ -284,6 +296,6 @@ export function CarteRepos({ titre, quand, texte, onFaire, onProgramme }: {
           </Pressable>
         ) : null}
       </View>
-    </View>
+    </Pressable>
   );
 }
