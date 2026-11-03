@@ -17,6 +17,10 @@
  * dessin : components/yoroi/v2/cartes/Bibliotheque.tsx. ?demo=1 : la bibliotheque pleine de demonstration.
  * 3 novembre 2026 (photos d'exemple) : sans tes deux photos de corps, la rubrique montre un avant apres d'EXEMPLE
  * (photos et chiffre d'exemple, pastille « Exemple ») ; le toucher ouvre la carte Avant apres, qui explique quoi ajouter.
+ * 3 novembre 2026 (refonte, Houari : « c'est moche ») : le langage des onglets Seances et Progres (cartes blanches douces,
+ * carres pastel et stickers), l'avant apres en tete et en grand, puis records, compteurs et course ; semaine et mois en
+ * bas. Une rubrique vide montre des cartes d'EXEMPLE marquees (lib/v2/cartes/exemplesRubriques.ts) ; leur toucher
+ * n'ouvre jamais le studio sur l'exemple (lienExemple), rien d'exemple ne part dans un export.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
@@ -42,6 +46,8 @@ import { traduire } from '@/lib/i18n/tr';
 import { avantApresExemple } from '@/components/yoroi/v2/cartes/exemples';
 import { avantApresOuExemple } from '@/lib/v2/cartes/exemples';
 import type { ExempleId } from '@/lib/v2/cartes/exemples';
+import { lienExemple } from '@/lib/v2/cartes/exemplesRubriques';
+import { CarreSticker, useCarteA } from '@/components/yoroi/v2/seances/kitA';
 
 function PlancheAvantApres({ photos }: { photos: (string | undefined)[] }) {
   const { width } = useWindowDimensions();
@@ -178,6 +184,7 @@ export default function MesCartes() {
   const defilement = useRef<ScrollView>(null);
   // le style memorise (couleur, masquage du poids, modele des seances) et le personnage pour les vignettes
   const k = useCarte(null);
+  const carteA = useCarteA();
 
   useEffect(() => {
     let alive = true;
@@ -194,8 +201,9 @@ export default function MesCartes() {
   const ouvrir = (d: CarteData, ex?: ExempleId | null) => {
     // la photo d'exemple de la vignette : le studio montre la meme
     const qx = ex ? `&exemple=${ex}` : '';
-    // l'avant apres d'exemple : la carte Avant apres, qui dit d'ajouter tes deux photos
-    if (d.exemple) router.push('/carte?moment=avant_apres' as never);
+    // une carte d'exemple : jamais le studio sur l'exemple. L'avant apres dit d'ajouter tes deux photos, les autres
+    // ouvrent la carte du moment sans donnees, qui renvoie vers tes vraies cartes
+    if (d.exemple) router.push(lienExemple(d) as never);
     else if (demo && d.moment === 'avant_apres') {
       const q = [p.photo ? `&photo=${encodeURIComponent(p.photo)}` : '', p.photo2 ? `&photo2=${encodeURIComponent(p.photo2)}` : ''].join('');
       router.push(`/carte?demo=1&moment=avant_apres${q}` as never);
@@ -206,7 +214,8 @@ export default function MesCartes() {
   };
 
   const planche = demo && ['1', '2', '3', '4'].includes(p.planche ?? '');
-  const pad = p.planche === '1' || p.planche === '3' || p.planche === '4' ? 16 : 22;
+  // 3 novembre 2026 : la marge des onglets Seances et Progres (16)
+  const pad = 16;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
@@ -245,8 +254,9 @@ export default function MesCartes() {
                   }}
                   accessibilityRole="switch"
                   accessibilityState={{ checked: auto }}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16 }}
+                  style={[carteA, { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }]}
                 >
+                  <CarreSticker nom="rappels" teinte="bleu" taille={46} />
                   <View style={{ flex: 1, gap: 2 }}>
                     <Ink size={15} weight="extraBold">{traduire("Me proposer une carte")}</Ink>
                     <Ink size={13} color={c.textSecondary}>{traduire("Après une séance, un record, un palier, une pesée qui progresse, le dimanche soir pour ta semaine et en début de mois pour ton bilan. Une seule fois par moment.")}</Ink>
