@@ -52,6 +52,7 @@ import { TourAnchor, registerTourScroller } from '@/components/yoroi/v2/tour/Tou
 import { ecouterOngletPlus } from '@/lib/v2/visite/ongletPlus';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
 import { traduire, traduirePluriel, LANG, LOCALE } from '@/lib/i18n/tr';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 /** Hors français : l'heure « HH:MM » au format de la langue (« 6:30 PM », « 18:30 ») */
 const heureLocale = (t: string) => new Date(2026, 0, 1, parseInt(t, 10) || 0, parseInt(t.split(':')[1] ?? '0', 10) || 0).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
@@ -482,7 +483,7 @@ const MARGE = 18;
 
 function Chevron() {
   return (
-    <Svg width={16} height={16} viewBox="0 0 24 24">
+    <Svg width={16} height={16} viewBox="0 0 24 24" style={miroirSiRTL}>
       <Path d="M9 6l6 6-6 6" stroke={P.chevron} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </Svg>
   );
