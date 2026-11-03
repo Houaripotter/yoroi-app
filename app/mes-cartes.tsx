@@ -15,8 +15,10 @@
  * mon mois, mon annee, compteurs, pesees et avant apres), chaque rubrique en vignettes qui sont les vraies cartes.
  * Un sommaire en pastilles en haut ; un toucher ouvre l'atelier sur la carte. Lecture : lib/v2/cartes/bibliotheque.ts,
  * dessin : components/yoroi/v2/cartes/Bibliotheque.tsx. ?demo=1 : la bibliotheque pleine de demonstration.
+ * 3 novembre 2026 (photos d'exemple) : sans tes deux photos de corps, la rubrique montre un avant apres d'EXEMPLE
+ * (photos et chiffre d'exemple, pastille « Exemple ») ; le toucher ouvre la carte Avant apres, qui explique quoi ajouter.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
 import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -37,6 +39,9 @@ import { bibliothequeDemo, DEMO_ANNEE_2025, DEMO_EXPLOITS, DEMO_MOIS_SEPT, DEMO_
 import { lireJournal, setPropositionsAuto } from '@/lib/v2/cartes/store';
 import type { CarteData, FondId, FormatId, ModeleId, OptionsCarte } from '@/lib/v2/cartes/types';
 import { traduire } from '@/lib/i18n/tr';
+import { avantApresExemple } from '@/components/yoroi/v2/cartes/exemples';
+import { avantApresOuExemple } from '@/lib/v2/cartes/exemples';
+import type { ExempleId } from '@/lib/v2/cartes/exemples';
 
 function PlancheAvantApres({ photos }: { photos: (string | undefined)[] }) {
   const { width } = useWindowDimensions();
@@ -167,6 +172,7 @@ export default function MesCartes() {
   const [auto, setAuto] = useState(true);
   // ton avant apres : seulement avec au moins 2 photos de corps
   const [avantApres, setAvantApres] = useState<CarteData | null>(null);
+  const exempleAA = useMemo(() => avantApresExemple(), []);
   // controle visuel de la feuille du bas (demo seulement)
   const [feuille, setFeuille] = useState(demo && p.feuille === '1');
   const defilement = useRef<ScrollView>(null);
@@ -185,14 +191,18 @@ export default function MesCartes() {
     };
   }, [demo]);
 
-  const ouvrir = (d: CarteData) => {
-    if (demo && d.moment === 'avant_apres') {
+  const ouvrir = (d: CarteData, ex?: ExempleId | null) => {
+    // la photo d'exemple de la vignette : le studio montre la meme
+    const qx = ex ? `&exemple=${ex}` : '';
+    // l'avant apres d'exemple : la carte Avant apres, qui dit d'ajouter tes deux photos
+    if (d.exemple) router.push('/carte?moment=avant_apres' as never);
+    else if (demo && d.moment === 'avant_apres') {
       const q = [p.photo ? `&photo=${encodeURIComponent(p.photo)}` : '', p.photo2 ? `&photo2=${encodeURIComponent(p.photo2)}` : ''].join('');
       router.push(`/carte?demo=1&moment=avant_apres${q}` as never);
     } else if (demo) {
       const sport = d === DEMO_SEANCE_COMBAT || d === DEMO_MOIS_SEPT || d === DEMO_ANNEE_2025 ? 'combat' : d === DEMO_SEANCE_COURSE ? 'course' : '';
-      router.push(`/carte?demo=1&moment=${d.moment}${sport ? `&sport=${sport}` : ''}${d.exploit ? `&type=${d.exploit.type}&cle=${encodeURIComponent(d.cle)}` : ''}` as never);
-    } else router.push(lienEditeur(d) as never);
+      router.push(`/carte?demo=1&moment=${d.moment}${sport ? `&sport=${sport}` : ''}${d.exploit ? `&type=${d.exploit.type}&cle=${encodeURIComponent(d.cle)}` : ''}${qx}` as never);
+    } else router.push(`${lienEditeur(d)}${qx}` as never);
   };
 
   const planche = demo && ['1', '2', '3', '4'].includes(p.planche ?? '');
@@ -221,7 +231,7 @@ export default function MesCartes() {
         ) : (
           <View style={{ marginTop: 6 }}>
             <Bibliotheque
-              rubriques={rubriquesDe(biblio, avantApres)}
+              rubriques={rubriquesDe(biblio, avantApresOuExemple(avantApres, exempleAA))}
               base={k.options}
               visuelsPour={k.visuelsPour}
               onOuvrir={ouvrir}
