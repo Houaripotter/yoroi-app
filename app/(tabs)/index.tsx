@@ -227,6 +227,8 @@ export default function Accueil() {
   const peseePrevue = usePeseePrevue(series.length ? series[series.length - 1].date : null);
   // le bloc « Ta prochaine pesée » decoche dans Personnaliser : la pastille de la carte Ton poids disparait aussi
   const peseeCarte = blocs.includes('pesee') ? peseePrevue : undefined;
+  // la pastille de pesee de la carte Ton poids remonte quand aucun decor de saison n'est pose au dessus d'elle :
+  // avecDecor suit la meme saison (useSaison) que DecorCarte
   const photos = usePhotosAccueil(blocs.includes('photos'));
 
   // chaque bloc donne ses tuiles (pleine largeur ou demi) ; la grille les range deux par deux, sans trou
@@ -381,7 +383,7 @@ export default function Accueil() {
       contenu: (
         <Enter i={0}>
           <TourAnchor id="accueil.poids" rayon={28}>
-            <CartePoids series={series} targetWeight={data.targetWeight} startWeight={data.startWeight} rankIndex={rankIndex} onPage={setPagePoids} pesee={peseeCarte} />
+            <CartePoids series={series} targetWeight={data.targetWeight} startWeight={data.startWeight} rankIndex={rankIndex} onPage={setPagePoids} pesee={peseeCarte} avecDecor={!!saison} />
             {saison && series.length && pagePoids === 0 ? <DecorCarte saison={saison} largeur={page.caseDe(1)} scrollY={scrollY} seuil={hautSceneCarte(insets.top) + hauteurScene + 480} /> : null}
           </TourAnchor>
         </Enter>
@@ -536,7 +538,7 @@ export default function Accueil() {
           {/* Ton poids */}
           <Enter i={0}>
             <TourAnchor id="accueil.poids" rayon={28}>
-              <CartePoids series={series} targetWeight={data.targetWeight} startWeight={data.startWeight} rankIndex={rankIndex} onPage={setPagePoids} pesee={peseeCarte} />
+              <CartePoids series={series} targetWeight={data.targetWeight} startWeight={data.startWeight} rankIndex={rankIndex} onPage={setPagePoids} pesee={peseeCarte} avecDecor={!!saison} />
               {/* 18 octobre 2026 v4 : decor de saison pose par dessus la carte (position absolue, aucun calcul touche) : citrouilles ou sapins entre le chiffre et l'anneau, toiles et araignees ou guirlande */}
               {saison && series.length && pagePoids === 0 ? <DecorCarte saison={saison} largeur={largeurCarte} scrollY={scrollY} seuil={hautSceneCarte(insets.top) + hauteurScene + 480} /> : null}
             </TourAnchor>
