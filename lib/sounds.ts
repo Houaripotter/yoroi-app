@@ -21,8 +21,8 @@ const SOUND_FILES: Record<string, number> = {
   ring: require('@/assets/sounds/ring.mp3'),
   recovery: require('@/assets/sounds/recovery.mp3'),
   fanfare: require('@/assets/sounds/fanfare-badge.mp3'),
-  // Claquettes de bois des 10 dernieres secondes (son cree pour YOROI, libre de droits)
-  clap: require('@/assets/sounds/clap10.mp3'),
+  // Claquettes de bois des 10 dernieres secondes : 3 coups secs, 0,18 s d'ecart (3 novembre 2026, son synthetise pour YOROI)
+  clap: require('@/assets/sounds/claquettes_10s.mp3'),
   // Cloche de ring de fin de round, ding ding ding (son cree pour YOROI, libre de droits)
   bell: require('@/assets/sounds/bell_end.mp3'),
 };
