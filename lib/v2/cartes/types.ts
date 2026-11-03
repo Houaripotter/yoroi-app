@@ -247,6 +247,8 @@ export type CarteData = {
   semaine?: DonneesSemaine;
   /** carte Avant apres : tes deux photos de corps (17 octobre 2026) */
   avantApres?: DonneesAvantApres;
+  /** 3 novembre 2026 (photos d'exemple) : carte d'EXEMPLE (avant apres sans tes photos), jamais tes donnees */
+  exemple?: boolean;
   /** 31 octobre 2026 (bibliotheque) : ton mois ou ton annee */
   periode?: DonneesPeriode;
   /** semaines d'affilee avec l'objectif tenu (moteur de l'armure) */
