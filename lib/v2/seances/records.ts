@@ -15,6 +15,7 @@ import { libelleUnite, versUnitePoids, type UnitePoids } from '@/lib/v2/unitePoi
 import { estimatedMax, familyOf, firstSport, parseExercises, parseRounds, workSets } from './sessionData';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
 import { nomBibliotheque } from '@/lib/v2/seance/rechercheExo';
+import { exerciceEnPlaques } from './plaquesSerie';
 
 export type RecordKind = 'force' | 'reps' | 'distance' | 'allure' | 'rounds' | 'duree';
 
@@ -99,6 +100,9 @@ export function computeRecords(trainings: Training[]): RecordsResult {
       const name = (ex.name ?? '').trim();
       if (!name) continue;
       const sets = workSets(ex);
+      // 3 novembre 2026 : un exercice compte en plaques n'a pas de record au poids du corps (ses series sans kilos
+      // sont des plaques) ; ses records en plaques sont dans lib/v2/seances/reperesExo.ts
+      const enPlaques = exerciceEnPlaques(ex);
       let bestMax = 0;
       let bestSet: { weight: number; reps: number } | undefined;
       let bestReps = 0;
@@ -110,7 +114,7 @@ export function computeRecords(trainings: Training[]): RecordsResult {
           bestMax = m;
           bestSet = { weight: s.weight, reps: s.reps };
         }
-        if (!(s.weight > 0) && s.reps > bestReps) bestReps = s.reps;
+        if (!enPlaques && !(s.weight > 0) && s.reps > bestReps) bestReps = s.reps;
       }
       const key = cleRecordExercice(name);
       if (bestMax > 0 && bestSet) {
