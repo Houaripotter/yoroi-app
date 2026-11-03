@@ -3,7 +3,8 @@
  * Reglage clair (une phase par ligne, resume de la seance), puis ecran plein lisible de loin :
  * phase en clair, temps restant en tres gros, phase suivante, une couleur par phase.
  * Moteur de temps a horodatage (lib/v2/carnet/useChronoEngine) : regulier a la seconde pres,
- * juste au retour de l'arriere-plan. Claquettes de bois a 10 s de la fin de chaque round.
+ * juste au retour de l'arriere-plan. Claquettes de bois a 10 s de la fin de chaque round, repos et effort
+ * de plus de 10 s (3 novembre 2026, lib/v2/carnet/claquettes.ts).
  * Parametre facultatif : mode (musculation, combat, tabata, emom, amrap, fortime).
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -26,6 +27,7 @@ import {
 } from '@/lib/v2/carnet/chrono';
 import type { CombatPreset, TimerMode } from '@/lib/v2/carnet/chrono';
 import { useChronoEngine, totalSeconds } from '@/lib/v2/carnet/useChronoEngine';
+import { sonDixSecondes, tapsClaquettes } from '@/lib/v2/carnet/claquettes';
 import type { ChronoEvent, ChronoPhase } from '@/lib/v2/carnet/useChronoEngine';
 import { clock, humanSeconds } from '@/lib/v2/carnet/format';
 import { soundManager } from '@/lib/sounds';
@@ -215,11 +217,18 @@ export default function TimerScreen() {
         }
         return;
       }
-      case 'clap':
-        if (!clapRef.current) return;
-        safe(() => soundManager.playClap());
-        haptic('light');
+      case 'clap': {
+        // 3 novembre 2026 : clac clac clac, une petite vibration par coup ; coupees, le bip des 10 s d'avant
+        const son = sonDixSecondes(e.phase, clapRef.current);
+        if (son === 'clap') {
+          safe(() => soundManager.playClap());
+          tapsClaquettes(() => haptic('light'));
+        } else if (son === 'bip') {
+          safe(() => soundManager.playCountdownTick(10));
+          haptic('light');
+        }
         return;
+      }
       case 'countdown':
         safe(() => soundManager.playFinalCountdown(e.n));
         haptic('heavy');
@@ -858,6 +867,8 @@ export default function TimerScreen() {
     <SettingRow label={traduire("Préparation")} hint={traduire("avant le départ")} dot={PHASE_COLORS.prepa.main} value={prepa === 0 ? traduire('Aucune') : `${prepa} s`} onMinus={() => setPrepa((v) => Math.max(0, v - 5))} onPlus={() => setPrepa((v) => Math.min(30, v + 5))} />
   ) : null;
   const plural = (n: number, w: string) => `${n} ${w}${n > 1 ? 's' : ''}`;
+  // 3 novembre 2026 : le meme reglage dans chaque chrono qui descend (le contre la montre monte : rien)
+  const clapRow = (hint: string) => <ToggleRow label={traduire("Claquettes à 10 secondes")} hint={hint} value={clapOn} onChange={toggleClap} />;
 
   return (
     <View style={{ flex: 1, backgroundColor: P.paper }}>
@@ -874,6 +885,8 @@ export default function TimerScreen() {
               <SeriesCard count={seriesCount} history={seriesHistory} onReset={resetSeriesCount} />
               <SetupBlock>
                 <ToggleRow label={traduire("Noter reps et charge")} hint={traduire("À la fin de chaque repos, tu notes tes répétitions et ta charge en deux touches.")} value={trackRepsWeight} onChange={(v) => { setTrackRepsWeight(v); haptic('light'); }} />
+                <View style={{ height: 1, backgroundColor: P.line2 }} />
+                {clapRow(traduire("Clac clac clac à 10 s de la fin du repos : ta série arrive"))}
               </SetupBlock>
               <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', paddingHorizontal: 6 }}>
                 <CIcon name="sound" size={18} color={P.muted} />
@@ -897,7 +910,7 @@ export default function TimerScreen() {
                   {prepaRow}
                 </View>
                 <View style={{ height: 1, backgroundColor: P.line2 }} />
-                <ToggleRow label={traduire("Claquettes à 10 s")} hint={traduire("Clac clac clac à 10 s de la fin de chaque round, comme en compétition")} value={clapOn} onChange={toggleClap} />
+                {clapRow(traduire("Clac clac clac à 10 s de la fin de chaque round et de chaque repos, comme à la salle"))}
                 <Ink size={13} weight="medium" color={P.muted}>{traduire("Gong au début et à la fin de chaque round. Les 10 dernières secondes passent en rouge. Tes réglages sont gardés.")}</Ink>
               </SetupBlock>
               <ModeCard mode="sparring" dark title={traduire("Sparring, round par round")} text={traduire("Tu notes chaque round : victoire, défaite ou nul.")} onPress={() => router.push('/combat-timer' as any)} />
@@ -919,6 +932,8 @@ export default function TimerScreen() {
                   {tabataSets > 1 ? <SettingRow label={traduire("Pause")} hint={traduire("entre deux blocs")} dot={PHASE_COLORS.repos.main} value={humanSeconds(tabataRestBetweenSets)} onMinus={() => setTabataRestBetweenSets((r) => Math.max(15, r - 15))} onPlus={() => setTabataRestBetweenSets((r) => Math.min(180, r + 15))} accent={PHASE_COLORS.repos.deep} /> : null}
                   {prepaRow}
                 </View>
+                <View style={{ height: 1, backgroundColor: P.line2 }} />
+                {clapRow(traduire("Clac clac clac à 10 s de la fin des efforts et des repos de plus de 10 s"))}
               </SetupBlock>
             </>
           ) : null}
@@ -932,6 +947,8 @@ export default function TimerScreen() {
                   <SettingRow label={traduire("Sur mesure")} hint={traduire("à la minute près")} dot={PHASE_COLORS.effort.main} value={`${emomDuration} min`} onMinus={() => setEmomDuration((m) => Math.max(1, m - 1))} onPlus={() => setEmomDuration((m) => Math.min(60, m + 1))} />
                   {prepaRow}
                 </View>
+                <View style={{ height: 1, backgroundColor: P.line2 }} />
+                {clapRow(traduire("Clac clac clac à 10 s de la fin de chaque minute"))}
               </SetupBlock>
               <ExerciseList title={traduire("Exercices, un par minute")} hint={traduire("Ils tournent dans l’ordre, minute après minute.")} items={emomExercises} onEdit={() => { setEditText(emomExercises.join('\n')); setEditList('emom'); }} />
             </>
@@ -946,6 +963,8 @@ export default function TimerScreen() {
                   <SettingRow label={traduire("Sur mesure")} hint={traduire("à la minute près")} dot={PHASE_COLORS.effort.main} value={humanSeconds(amrapDuration)} onMinus={() => setAmrapDuration((d) => Math.max(60, d - 60))} onPlus={() => setAmrapDuration((d) => Math.min(3600, d + 60))} />
                   {prepaRow}
                 </View>
+                <View style={{ height: 1, backgroundColor: P.line2 }} />
+                {clapRow(traduire("Clac clac clac à 10 s de la fin du temps donné"))}
                 <Ink size={13} weight="medium" color={P.muted}>{traduire("Pendant le chrono, touche « Tour terminé » à chaque fin de circuit : YOROI compte tes tours.")}</Ink>
               </SetupBlock>
               <ExerciseList title={traduire("Ton circuit")} hint={traduire("Un tour, c’est tout le circuit une fois.")} items={amrapExercises} numbered onEdit={() => { setEditText(amrapExercises.join('\n')); setEditList('amrap'); }} />
