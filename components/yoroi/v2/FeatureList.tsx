@@ -9,6 +9,7 @@ import { useYoroiTheme } from '../YoroiThemeProvider';
 import { Ink } from './Ink';
 import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
 import { traduire } from '@/lib/i18n/tr';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 export type Feature = { label: string; sub?: string; href: string };
 
@@ -33,7 +34,7 @@ export function FeatureList({ title, items }: { title: string; items: Feature[] 
               <Ink size={15} weight="bold">{traduire(it.label)}</Ink>
               {it.sub ? <Ink size={12} color={c.textMuted}>{traduire(it.sub)}</Ink> : null}
             </View>
-            <Svg width={16} height={16} viewBox="0 0 24 24" fill="none"><Path d="M9 5l7 7-7 7" stroke={c.textMuted} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" /></Svg>
+            <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}><Path d="M9 5l7 7-7 7" stroke={c.textMuted} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" /></Svg>
           </Pressable>
         ))}
       </View>
