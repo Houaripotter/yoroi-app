@@ -64,6 +64,7 @@ import { todayIso } from '@/lib/v2/progres/format';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { logger } from '@/lib/security/logger';
 import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 const GROUPS: { id: BalanceGroup; title: string }[] = [
   { id: 'principal', title: traduire('Poids et composition') },
@@ -1407,7 +1408,7 @@ function StepTitle({ n, title }: { n: number; title: string }) {
 
 function ChevronIcon({ color }: { color: string }) {
   return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}>
       <Path d="M9 5l7 7-7 7" stroke={color} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
