@@ -32,6 +32,10 @@
  * (lib/v2/cartes/exemples.ts) avec le bandeau « Exemple, ajoute ta photo » et son bouton. Tes chiffres restent les
  * tiens. Enregistrer, Partager et Copier ne prennent JAMAIS l'exemple : la carte repasse sur le dessin le temps de la
  * capture (visuelsSansExemple), puis l'exemple revient.
+ * 3 novembre 2026 (refonte, Houari : « des boites blanc gris, delave, aucune couleur ») : le langage des onglets
+ * Seances et Progres. Chaque section est une carte blanche douce avec son carre pastel et son sticker ; un choix
+ * coche prend la teinte de sa section (fond pastel, bord et texte fonces, pastille cochee) ; Enregistrer et Partager
+ * ont leur couleur (menthe et ciel) ; le grand bouton garde le degrade bleu nuit avec son sticker dans un rond.
  */
 import React, { useLayoutEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
@@ -43,6 +47,9 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon, RoundButton } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { CarreSticker, useCarteA, useTeinte } from '@/components/yoroi/v2/seances/kitA';
+import type { TeinteA } from '@/components/yoroi/v2/seances/kitA';
+import type { NomSticker } from '@/components/yoroi/v2/stickers';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { traduire } from '@/lib/i18n/tr';
 import { lightHaptic } from '@/lib/haptics';
@@ -91,8 +98,11 @@ const MASQUES: { id: Masque; nom: string }[] = [
   { id: 'pourcentage', nom: 'En pourcentage' },
 ];
 
-/** Une pastille de choix : cochee quand elle est choisie */
-function Choix({ c, on, label, onPress, icon, testID, desactive }: { c: Couleurs; on: boolean; label: string; onPress: () => void; icon?: IconName; testID?: string; desactive?: boolean }) {
+/** La teinte d'une section : fond pastel et ecriture foncee (choix coche, carre du sticker) */
+type Teinte = { fond: string; texte: string };
+
+/** Une pastille de choix : cochee, elle prend la teinte de sa section */
+function Choix({ c, t, on, label, onPress, icon, testID, desactive }: { c: Couleurs; t: Teinte; on: boolean; label: string; onPress: () => void; icon?: IconName; testID?: string; desactive?: boolean }) {
   return (
     <Pressable
       testID={testID}
@@ -101,16 +111,16 @@ function Choix({ c, on, label, onPress, icon, testID, desactive }: { c: Couleurs
       accessibilityRole="button"
       accessibilityState={{ selected: on, disabled: !!desactive }}
       accessibilityLabel={label}
-      style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 22, justifyContent: 'center', backgroundColor: on ? c.primary : pressed ? c.fillSubtle : c.background, borderWidth: 1, borderColor: on ? c.primary : c.border, flexDirection: 'row', alignItems: 'center', gap: 7, opacity: desactive ? 0.5 : 1 })}
+      style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 22, justifyContent: 'center', backgroundColor: on ? t.fond : pressed ? t.fond : c.surface, borderWidth: on ? 2 : 1.5, borderColor: on ? t.texte : c.divider, flexDirection: 'row', alignItems: 'center', gap: 7, opacity: desactive ? 0.5 : 1 })}
     >
-      {on ? <Icon name="check" size={15} color={c.onPrimary} stroke={2.6} /> : icon ? <Icon name={icon} size={16} color={c.ink} /> : null}
-      <Ink size={14} weight="extraBold" color={on ? c.onPrimary : c.ink} numberOfLines={1}>{label}</Ink>
+      {on ? <Icon name="check" size={15} color={t.texte} stroke={2.8} sticker={false} /> : icon ? <Icon name={icon} size={18} color={c.ink} /> : null}
+      <Ink size={14} weight="extraBold" color={on ? t.texte : c.ink} numberOfLines={1}>{label}</Ink>
     </Pressable>
   );
 }
 
-/** Une tuile : l'icone au-dessus du libelle, sur une ou deux lignes ; cochee quand elle est choisie (composition, photo) */
-function Tuile({ c, on, label, onPress, icon, testID, desactive, indice }: { c: Couleurs; on: boolean; label: string; onPress: () => void; icon: IconName; testID?: string; desactive?: boolean; indice?: string }) {
+/** Une tuile : le sticker au-dessus du libelle ; cochee, elle prend la teinte de sa section et sa pastille cochee */
+function Tuile({ c, t, on, label, onPress, icon, testID, desactive, indice }: { c: Couleurs; t: Teinte; on: boolean; label: string; onPress: () => void; icon: IconName; testID?: string; desactive?: boolean; indice?: string }) {
   return (
     <Pressable
       testID={testID}
@@ -120,21 +130,30 @@ function Tuile({ c, on, label, onPress, icon, testID, desactive, indice }: { c: 
       accessibilityState={{ selected: on, disabled: !!desactive }}
       accessibilityLabel={label}
       accessibilityHint={indice}
-      style={({ pressed }) => ({ flex: 1, minHeight: 56, paddingHorizontal: 3, paddingVertical: 6, borderRadius: 16, alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: on ? c.primary : pressed ? c.fillSubtle : c.background, borderWidth: 1, borderColor: on ? c.primary : c.border, opacity: desactive ? 0.5 : 1 })}
+      style={({ pressed }) => ({ flex: 1, minHeight: 74, paddingHorizontal: 1, paddingVertical: 8, borderRadius: 18, alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: on || pressed ? t.fond : c.surface, borderWidth: on ? 2 : 1.5, borderColor: on ? t.texte : c.divider, opacity: desactive ? 0.5 : 1 })}
     >
-      <Icon name={on ? 'check' : icon} size={18} color={on ? c.onPrimary : c.ink} stroke={on ? 2.6 : 2.2} />
-      <Ink size={11.5} weight="extraBold" color={on ? c.onPrimary : c.ink} numberOfLines={2} style={{ textAlign: 'center', lineHeight: 14 }}>{label}</Ink>
+      <Icon name={icon} size={30} color={on ? t.texte : c.ink} />
+      <Ink size={11.5} weight="extraBold" color={on ? t.texte : c.ink} numberOfLines={2} style={{ textAlign: 'center', lineHeight: 14, letterSpacing: -0.2 }}>{label}</Ink>
+      {on ? (
+        <View pointerEvents="none" style={{ position: 'absolute', top: 5, right: 5, width: 20, height: 20, borderRadius: 10, backgroundColor: t.texte, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="check" size={12} color={c.surface} stroke={3} sticker={false} />
+        </View>
+      ) : null}
     </Pressable>
   );
 }
 
-/** Une section des reglages : carte arrondie, son titre, ses pastilles en lignes qui passent a la ligne */
-function Section({ c, titre, sous, children, testID }: { c: Couleurs; titre: string; sous?: string; children: React.ReactNode; testID?: string }) {
+/** Une section des reglages : carte blanche douce, son carre pastel et son sticker, son titre, ses choix */
+function Section({ c, titre, sous, children, testID, sticker, teinte }: { c: Couleurs; titre: string; sous?: string; children: React.ReactNode; testID?: string; sticker: NomSticker; teinte: TeinteA }) {
+  const carte = useCarteA();
   return (
-    <View testID={testID} style={{ backgroundColor: c.surface, borderRadius: 22, borderWidth: 1, borderColor: c.border, paddingHorizontal: 12, paddingVertical: 10, gap: 8 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', paddingHorizontal: 2 }}>
-        <Ink size={15} weight="black" accessibilityRole="header">{titre}</Ink>
-        {sous ? <Ink size={12.5} color={c.textSecondary} style={{ flexShrink: 1 }}>{sous}</Ink> : null}
+    <View testID={testID} style={[carte, { paddingHorizontal: 12, paddingVertical: 12, gap: 10 }]}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 2 }}>
+        <CarreSticker nom={sticker} teinte={teinte} taille={36} />
+        <View style={{ flex: 1, gap: 1 }}>
+          <Ink size={16} weight="black" accessibilityRole="header">{titre}</Ink>
+          {sous ? <Ink size={12.5} color={c.textSecondary} numberOfLines={2}>{sous}</Ink> : null}
+        </View>
       </View>
       {children}
     </View>
@@ -156,12 +175,13 @@ function PastilleApercu({ c }: { c: Couleurs }) {
 
 /** 3 novembre 2026 : le bandeau de l'exemple, juste sous l'apercu, avec le bouton d'ajout */
 function BandeauExemple({ c, onAjouter, desactive, largeur }: { c: Couleurs; onAjouter: () => void; desactive?: boolean; largeur: number }) {
+  const t = useTeinte('peche');
   return (
-    <View testID="bandeau-exemple" style={{ width: largeur, marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 12, paddingRight: 5, paddingVertical: 5, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
-      <Icon name="image" size={16} color={c.ink} />
-      <Ink size={13.5} weight="extraBold" color={c.ink} numberOfLines={1} style={{ flex: 1 }}>{traduire('Exemple, ajoute ta photo')}</Ink>
-      <Pressable testID="exemple-ajouter" onPress={onAjouter} disabled={desactive} accessibilityRole="button" accessibilityLabel={traduire('Ajouter ta photo')} hitSlop={6} style={({ pressed }) => ({ minHeight: 34, paddingHorizontal: 12, borderRadius: 17, justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.primary, opacity: desactive ? 0.5 : 1 })}>
-        <Ink size={13} weight="extraBold" color={c.onPrimary} numberOfLines={1}>{traduire('Ajouter')}</Ink>
+    <View testID="bandeau-exemple" style={{ width: largeur, marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 6, paddingRight: 5, paddingVertical: 5, borderRadius: 22, backgroundColor: t.fond }}>
+      <Icon name="camera" size={26} color={t.texte} />
+      <Ink size={13.5} weight="extraBold" color={t.texte} numberOfLines={1} style={{ flex: 1 }}>{traduire('Exemple, ajoute ta photo')}</Ink>
+      <Pressable testID="exemple-ajouter" onPress={onAjouter} disabled={desactive} accessibilityRole="button" accessibilityLabel={traduire('Ajouter ta photo')} hitSlop={6} style={({ pressed }) => ({ minHeight: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: 'center', backgroundColor: c.accent, opacity: desactive ? 0.5 : pressed ? 0.85 : 1 })}>
+        <Ink size={13} weight="extraBold" color={c.surface} numberOfLines={1}>{traduire('Ajouter')}</Ink>
       </Pressable>
     </View>
   );
@@ -208,6 +228,14 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
   const { width, height } = useWindowDimensions();
   const u = useUnitePoids();
   const large = width >= 768;
+  // 3 novembre 2026 : une teinte par section, comme les onglets Seances et Progres
+  const tCompo = useTeinte('lilas');
+  const tPhoto = useTeinte('peche');
+  const tStyle = useTeinte('creme');
+  const tFormat = useTeinte('bleu');
+  const tChiffres = useTeinte('menthe');
+  const tEnr = useTeinte('menthe');
+  const tPart = useTeinte('bleu');
   // les chiffres caches, le temps de cette edition seulement
   const [cache, setCache] = useState<string[]>([]);
   const o: OptionsCarte = { ...k.options, ...optionsEnPlus, cacheMoteur: cache };
@@ -234,7 +262,7 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
   const sections = sectionPhotos ? [...sections0.slice(0, 2), 'photos', ...sections0.slice(2)] : sections0;
 
   // la taille de l'apercu : la place libre, en gardant au moins 240 points pour les reglages
-  const barre = 12 + 56 + 10 + 52 + 14 + insets.bottom;
+  const barre = 12 + 58 + 10 + 54 + 14 + insets.bottom;
   // le bandeau de l'exemple sous l'apercu prend sa place (3 novembre 2026)
   const libre = height - insets.top - 52 - barre - (montrerExemple && !large ? 54 : 0);
   const dispoH = large ? height - insets.top - 52 - 40 : Math.max(230, Math.min(libre * 0.5, libre - 290));
@@ -449,52 +477,52 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
   );
 
   const sectionComposition = (
-    <Section key="composition" testID="studio-composition" c={c} titre={traduire('Composition')} sous={traduire(NOMS_COMPOS[compo].court)}>
+    <Section key="composition" testID="studio-composition" c={c} sticker="galerie" teinte="lilas" titre={traduire('Composition')} sous={traduire(NOMS_COMPOS[compo].court)}>
       {familles.length > 1 ? (
-        <View accessibilityLabel={traduire('Ce que montre ta carte')} style={{ flexDirection: 'row', gap: 4, padding: 4, borderRadius: 16, backgroundColor: c.background, borderWidth: 1, borderColor: c.border }}>
+        <View accessibilityLabel={traduire('Ce que montre ta carte')} style={{ flexDirection: 'row', gap: 4, padding: 4, borderRadius: 16, backgroundColor: tCompo.fond }}>
           {familles.map((f) => {
             const on = f === famille;
             return (
-              <Pressable key={f} testID={`famille-${f}`} onPress={() => k.setStyle({ familleMoteur: f })} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={traduire(NOMS_FAMILLES[f])} style={({ pressed }) => ({ flex: 1, minHeight: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.primary : pressed ? c.fillSubtle : 'transparent' })}>
-                <Ink size={13.5} weight="extraBold" color={on ? c.onPrimary : c.ink} numberOfLines={1}>{traduire(NOMS_FAMILLES[f])}</Ink>
+              <Pressable key={f} testID={`famille-${f}`} onPress={() => k.setStyle({ familleMoteur: f })} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={traduire(NOMS_FAMILLES[f])} style={({ pressed }) => ({ flex: 1, minHeight: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.surface : pressed ? c.surface : 'transparent', shadowColor: '#1D2033', shadowOpacity: on ? 0.08 : 0, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } })}>
+                <Ink size={13.5} weight="extraBold" color={on ? tCompo.texte : c.textSecondary} numberOfLines={1}>{traduire(NOMS_FAMILLES[f])}</Ink>
               </Pressable>
             );
           })}
         </View>
       ) : null}
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        {compos.map((x) => <Tuile key={x} testID={`compo-${x}`} c={c} on={x === compo} icon={NOMS_COMPOS[x].icone} label={traduire(NOMS_COMPOS[x].nom)} indice={traduire(NOMS_COMPOS[x].sous)} onPress={() => choisirCompo(x)} />)}
+        {compos.map((x) => <Tuile t={tCompo} key={x} testID={`compo-${x}`} c={c} on={x === compo} icon={NOMS_COMPOS[x].icone} label={traduire(NOMS_COMPOS[x].nom)} indice={traduire(NOMS_COMPOS[x].sous)} onPress={() => choisirCompo(x)} />)}
       </View>
     </Section>
   );
 
   const sectionPhoto = (
-    <Section key="photo" testID="studio-photo" c={c} titre={traduire('Ta photo')} sous={k.photoEnCours ? traduire('Photo en préparation') : recadrable ? traduire('Pince et glisse sur l’aperçu. Glisse tes chiffres pour les déplacer.') : deplacable ? traduire('Sous l’autocollant, dans l’aperçu seulement. Glisse tes chiffres pour les placer.') : estAuto ? traduire('Sous l’autocollant, dans l’aperçu seulement.') : !k.photo ? traduire('Elle n’est jamais gardée quand tu quittes la carte.') : undefined}>
+    <Section key="photo" testID="studio-photo" c={c} sticker="appareil_photo" teinte="peche" titre={traduire('Ta photo')} sous={k.photoEnCours ? traduire('Photo en préparation') : recadrable ? traduire('Pince et glisse sur l’aperçu. Glisse tes chiffres pour les déplacer.') : deplacable ? traduire('Sous l’autocollant, dans l’aperçu seulement. Glisse tes chiffres pour les placer.') : estAuto ? traduire('Sous l’autocollant, dans l’aperçu seulement.') : !k.photo ? traduire('Elle n’est jamais gardée quand tu quittes la carte.') : undefined}>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {k.photo ? (
           <>
-            <Tuile testID="photo-changer" c={c} on={false} icon="image" label={traduire('Changer de photo')} onPress={() => void ajouterPhoto('gallery')} desactive={k.photoEnCours} />
-            <Tuile testID="photo-prendre" c={c} on={false} icon="camera" label={traduire('Prendre une photo')} onPress={() => void ajouterPhoto('camera')} desactive={k.photoEnCours} />
-            <Tuile testID="photo-enlever" c={c} on={false} icon="trash" label={traduire('Enlever ma photo')} onPress={k.enleverPhoto} desactive={k.photoEnCours} />
+            <Tuile t={tPhoto} testID="photo-changer" c={c} on={false} icon="image" label={traduire('Changer de photo')} onPress={() => void ajouterPhoto('gallery')} desactive={k.photoEnCours} />
+            <Tuile t={tPhoto} testID="photo-prendre" c={c} on={false} icon="camera" label={traduire('Prendre une photo')} onPress={() => void ajouterPhoto('camera')} desactive={k.photoEnCours} />
+            <Tuile t={tPhoto} testID="photo-enlever" c={c} on={false} icon="trash" label={traduire('Enlever ma photo')} onPress={k.enleverPhoto} desactive={k.photoEnCours} />
           </>
         ) : (
           <>
-            <Tuile testID="photo-galerie" c={c} on={false} icon="image" label={traduire('Galerie')} onPress={() => void ajouterPhoto('gallery')} desactive={k.photoEnCours} />
-            <Tuile testID="photo-prendre" c={c} on={false} icon="camera" label={traduire('Prendre une photo')} onPress={() => void ajouterPhoto('camera')} desactive={k.photoEnCours} />
+            <Tuile t={tPhoto} testID="photo-galerie" c={c} on={false} icon="image" label={traduire('Galerie')} onPress={() => void ajouterPhoto('gallery')} desactive={k.photoEnCours} />
+            <Tuile t={tPhoto} testID="photo-prendre" c={c} on={false} icon="camera" label={traduire('Prendre une photo')} onPress={() => void ajouterPhoto('camera')} desactive={k.photoEnCours} />
           </>
         )}
       </View>
-      {recadrable && (k.recadrage || maPlace) ? <Choix testID="photo-auto" c={c} on={false} icon="restore" label={traduire('Recadrer automatiquement')} onPress={auto} /> : null}
+      {recadrable && (k.recadrage || maPlace) ? <Choix t={tPhoto} testID="photo-auto" c={c} on={false} icon="restore" label={traduire('Recadrer automatiquement')} onPress={auto} /> : null}
       {deplacable ? (
         <Pastilles>
-          <Choix testID="bloc-deplacer" c={c} on={menuPlace} icon="grid" label={traduire('Déplacer les chiffres')} onPress={() => setMenuPlace((x) => !x)} />
-          {maPlace ? <Choix testID="bloc-replacer" c={c} on={false} icon="restore" label={traduire('Replacer les chiffres')} onPress={() => poserPlace(null)} /> : null}
+          <Choix t={tPhoto} testID="bloc-deplacer" c={c} on={menuPlace} icon="grid" label={traduire('Déplacer les chiffres')} onPress={() => setMenuPlace((x) => !x)} />
+          {maPlace ? <Choix t={tPhoto} testID="bloc-replacer" c={c} on={false} icon="restore" label={traduire('Replacer les chiffres')} onPress={() => poserPlace(null)} /> : null}
         </Pastilles>
       ) : null}
       {deplacable && menuPlace ? (
         <View accessibilityLabel={traduire('Place de tes chiffres')} style={{ flexDirection: 'row', gap: 8 }}>
           {NOMS_POSITIONS.map((x) => (
-            <Choix key={x.id} testID={`bloc-${x.id}`} c={c} on={nomPosition(maPlace) === x.id} label={traduire(x.nom)} onPress={() => poserPlace(POSITIONS_BLOC[x.id])} />
+            <Choix t={tPhoto} key={x.id} testID={`bloc-${x.id}`} c={c} on={nomPosition(maPlace) === x.id} label={traduire(x.nom)} onPress={() => poserPlace(POSITIONS_BLOC[x.id])} />
           ))}
         </View>
       ) : null}
@@ -502,34 +530,34 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
   );
 
   const sectionStyle = (
-    <Section key="style" testID="studio-style" c={c} titre={traduire('Style')}>
+    <Section key="style" testID="studio-style" c={c} sticker="etincelles" teinte="creme" titre={traduire('Style')}>
       <Pastilles>
-        {NOMS_STYLES.map((s) => <Choix key={s.id} testID={`style-${s.id}`} c={c} on={(o.styleCarte ?? 'color') === s.id} label={s.nom} onPress={() => k.setStyle({ styleCarte: s.id })} />)}
+        {NOMS_STYLES.map((s) => <Choix t={tStyle} key={s.id} testID={`style-${s.id}`} c={c} on={(o.styleCarte ?? 'color') === s.id} label={s.nom} onPress={() => k.setStyle({ styleCarte: s.id })} />)}
       </Pastilles>
     </Section>
   );
 
   const sectionFormat = (
-    <Section key="format" testID="studio-format" c={c} titre={traduire('Format')}>
+    <Section key="format" testID="studio-format" c={c} sticker="telephone" teinte="bleu" titre={traduire('Format')}>
       <Pastilles>
-        <Choix testID="format-story" c={c} on={o.format === 'story'} label={traduire('Story')} onPress={() => k.setStyle({ format: 'story' })} />
-        <Choix testID="format-post" c={c} on={o.format !== 'story'} label={traduire('Publication 4:5')} onPress={() => k.setStyle({ format: 'post' })} />
+        <Choix t={tFormat} testID="format-story" c={c} on={o.format === 'story'} label={traduire('Story')} onPress={() => k.setStyle({ format: 'story' })} />
+        <Choix t={tFormat} testID="format-post" c={c} on={o.format !== 'story'} label={traduire('Publication 4:5')} onPress={() => k.setStyle({ format: 'post' })} />
       </Pastilles>
     </Section>
   );
 
   const sectionChiffres = (
-    <Section key="chiffres" testID="studio-chiffres" c={c} titre={traduire('Chiffres à afficher')} sous={tousChiffres.length > 1 ? traduire('Touche un chiffre pour le cacher ou le remettre.') : undefined}>
+    <Section key="chiffres" testID="studio-chiffres" c={c} sticker="pourcentage" teinte="menthe" titre={traduire('Chiffres à afficher')} sous={tousChiffres.length > 1 ? traduire('Touche un chiffre pour le cacher ou le remettre.') : undefined}>
       {tousChiffres.length > 1 ? (
         <Pastilles>
-          {tousChiffres.map((s) => <Choix key={s.l} testID={`chiffre-${s.l}`} c={c} on={!cache.includes(s.l)} label={s.l} onPress={() => basculerChiffre(s.l)} />)}
+          {tousChiffres.map((s) => <Choix t={tChiffres} key={s.l} testID={`chiffre-${s.l}`} c={c} on={!cache.includes(s.l)} label={s.l} onPress={() => basculerChiffre(s.l)} />)}
         </Pastilles>
       ) : null}
       {poids ? (
         <View style={{ gap: 8 }}>
           <Ink size={12.5} weight="extraBold" color={c.textSecondary}>{traduire('Ton poids sur la carte')}</Ink>
           <Pastilles>
-            {MASQUES.map((m) => <Choix key={m.id} testID={`masque-${m.id}`} c={c} on={o.masque === m.id} label={traduire(m.nom)} onPress={() => k.setStyle({ masque: m.id })} />)}
+            {MASQUES.map((m) => <Choix t={tChiffres} key={m.id} testID={`masque-${m.id}`} c={c} on={o.masque === m.id} label={traduire(m.nom)} onPress={() => k.setStyle({ masque: m.id })} />)}
           </Pastilles>
         </View>
       ) : null}
@@ -537,33 +565,40 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
   );
 
   const photosAA = sectionPhotos ? (
-    <Section key="photos" testID="studio-photos-aa" c={c} titre={traduire('Tes photos')}>{sectionPhotos}</Section>
+    <Section key="photos" testID="studio-photos-aa" c={c} sticker="selfie_miroir_b" teinte="peche" titre={traduire('Tes photos')}>{sectionPhotos}</Section>
   ) : null;
   const parSection: Record<string, React.ReactNode> = { composition: sectionComposition, photo: sectionPhoto, photos: photosAA, style: sectionStyle, format: sectionFormat, chiffres: sectionChiffres };
   const reglages = <View style={{ gap: 12 }}>{sections.filter((x) => parSection[x]).map((x) => parSection[x])}</View>;
 
+  // 3 novembre 2026 : le sticker du grand bouton, dans un rond clair (comme « Commencer la séance » des Seances)
+  const rond = (n: React.ReactNode) => (
+    <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>{n}</View>
+  );
+  // un bouton secondaire en couleur (Enregistrer menthe, Partager ciel) : fond pastel, ecriture foncee, sticker
+  const secondaire = (t: Teinte, flex: boolean) => ({ pressed }: { pressed: boolean }) => ({ flex: flex ? 1 : undefined, height: 54, borderRadius: 18, flexDirection: 'row' as const, gap: 8, alignItems: 'center' as const, justifyContent: 'center' as const, backgroundColor: t.fond, opacity: pressed ? 0.8 : 1 });
+
   // l'autocollant : Copier (a coller dans ta story Instagram) et Enregistrer (pour TikTok, ou si Coller manque sur Android)
   const boutonsAuto = (
     <View style={{ gap: 10 }}>
-      <BoutonPrincipal onPress={() => sansExemple(() => k.copierAutocollantSeul())} haptique="none" disabled={!!k.busy} accessibilityLabel={traduire('Copier l’autocollant')} accessibilityHint={traduire('Dans ta story Instagram, appuie longtemps puis Coller')} label={k.busy === 'copie' ? traduire('Un instant') : k.copie ? traduire('Autocollant copié') : traduire('Copier l’autocollant')} tailleTexte={16} lignes={1} hauteur={56} icone={(col) => <Icon name={k.copie ? 'check' : 'doc'} size={19} color={col} />} />
-      <Pressable onPress={() => sansExemple(() => k.enregistrerAutocollantSeul())} disabled={!!k.busy} accessibilityRole="button" accessibilityLabel={traduire('Enregistrer l’autocollant dans la pellicule')} style={({ pressed }) => ({ height: 52, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
-        <Icon name={k.saved ? 'check' : 'download'} size={19} color={k.saved ? c.successText : c.ink} />
-        <Ink size={15} weight="extraBold" color={k.saved ? c.successText : c.ink}>{k.busy === 'save' ? traduire('Un instant') : k.saved ? traduire('Enregistré') : traduire('Enregistrer')}</Ink>
+      <BoutonPrincipal onPress={() => sansExemple(() => k.copierAutocollantSeul())} haptique="none" disabled={!!k.busy} accessibilityLabel={traduire('Copier l’autocollant')} accessibilityHint={traduire('Dans ta story Instagram, appuie longtemps puis Coller')} label={k.busy === 'copie' ? traduire('Un instant') : k.copie ? traduire('Autocollant copié') : traduire('Copier l’autocollant')} tailleTexte={16} lignes={1} hauteur={58} rayon={29} icone={(col) => rond(<Icon name={k.copie ? 'check' : 'doc'} size={22} color={col} />)} />
+      <Pressable onPress={() => sansExemple(() => k.enregistrerAutocollantSeul())} disabled={!!k.busy} accessibilityRole="button" accessibilityLabel={traduire('Enregistrer l’autocollant dans la pellicule')} style={secondaire(tEnr, false)}>
+        <Icon name={k.saved ? 'check' : 'download'} size={24} color={tEnr.texte} />
+        <Ink size={15} weight="extraBold" color={tEnr.texte}>{k.busy === 'save' ? traduire('Un instant') : k.saved ? traduire('Enregistré') : traduire('Enregistrer')}</Ink>
       </Pressable>
     </View>
   );
 
   const boutons = estAuto ? boutonsAuto : (
     <View style={{ gap: 10 }}>
-      <BoutonPrincipal onPress={() => garde(() => sansExemple(() => k.partagerEnStory()))} haptique="none" disabled={!!k.busy} accessibilityLabel={traduire('Partager en story')} accessibilityHint={traduire('Ouvre le partage de ton téléphone : choisis Instagram, puis Story')} label={k.busy === 'story' ? traduire('Un instant') : traduire('Partager en story')} tailleTexte={16} lignes={1} hauteur={56} icone={(col) => <Icon name="share" size={19} color={col} />} />
+      <BoutonPrincipal onPress={() => garde(() => sansExemple(() => k.partagerEnStory()))} haptique="none" disabled={!!k.busy} accessibilityLabel={traduire('Partager en story')} accessibilityHint={traduire('Ouvre le partage de ton téléphone : choisis Instagram, puis Story')} label={k.busy === 'story' ? traduire('Un instant') : traduire('Partager en story')} tailleTexte={16} lignes={1} hauteur={58} rayon={29} icone={(col) => rond(<Icon name="share" size={22} color={col} />)} />
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Pressable onPress={() => garde(() => sansExemple(() => k.enregistrer()))} disabled={!!k.busy} accessibilityRole="button" accessibilityLabel={traduire('Enregistrer dans la pellicule')} style={({ pressed }) => ({ flex: 1, height: 52, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
-          <Icon name={k.saved ? 'check' : 'download'} size={19} color={k.saved ? c.successText : c.ink} />
-          <Ink size={15} weight="extraBold" color={k.saved ? c.successText : c.ink}>{k.busy === 'save' ? traduire('Un instant') : k.saved ? traduire('Enregistrée') : traduire('Enregistrer')}</Ink>
+        <Pressable onPress={() => garde(() => sansExemple(() => k.enregistrer()))} disabled={!!k.busy} accessibilityRole="button" accessibilityLabel={traduire('Enregistrer dans la pellicule')} style={secondaire(tEnr, true)}>
+          <Icon name={k.saved ? 'check' : 'download'} size={24} color={tEnr.texte} />
+          <Ink size={15} weight="extraBold" color={tEnr.texte}>{k.busy === 'save' ? traduire('Un instant') : k.saved ? traduire('Enregistrée') : traduire('Enregistrer')}</Ink>
         </Pressable>
-        <Pressable onPress={() => garde(() => sansExemple(() => k.partager()))} disabled={!!k.busy} accessibilityRole="button" accessibilityLabel={traduire('Partager la carte')} style={({ pressed }) => ({ flex: 1, height: 52, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
-          <Icon name="share" size={19} color={c.ink} />
-          <Ink size={15} weight="extraBold" color={c.ink}>{k.busy === 'share' ? traduire('Un instant') : traduire('Partager')}</Ink>
+        <Pressable onPress={() => garde(() => sansExemple(() => k.partager()))} disabled={!!k.busy} accessibilityRole="button" accessibilityLabel={traduire('Partager la carte')} style={secondaire(tPart, true)}>
+          <Icon name="share" size={24} color={tPart.texte} />
+          <Ink size={15} weight="extraBold" color={tPart.texte}>{k.busy === 'share' ? traduire('Un instant') : traduire('Partager')}</Ink>
         </Pressable>
       </View>
     </View>
@@ -599,7 +634,7 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
       <ScrollView testID="studio-reglages" style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 2, paddingBottom: 32, gap: 12 }} showsVerticalScrollIndicator={false}>
         {reglages}
       </ScrollView>
-      <View style={{ paddingTop: 12, paddingBottom: insets.bottom + 14, paddingHorizontal: 22, borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.background }}>{boutons}</View>
+      <View style={{ paddingTop: 12, paddingBottom: insets.bottom + 14, paddingHorizontal: 16, backgroundColor: c.surface, borderTopLeftRadius: 26, borderTopRightRadius: 26, shadowColor: '#1D2033', shadowOpacity: theme.isDark ? 0 : 0.07, shadowRadius: 16, shadowOffset: { width: 0, height: -4 }, elevation: 8 }}>{boutons}</View>
     </View>
   );
 }
