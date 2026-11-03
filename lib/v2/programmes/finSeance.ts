@@ -23,6 +23,7 @@
  * Donnees pures, testees dans __tests__/unit/finSeance.test.ts.
  */
 import { programmeParId } from './catalogue';
+import { movementKey } from '@/constants/exerciseLibrary';
 import type { CardioProgramme, ExoProgramme, JourProgramme, Materiel, Programme } from './types';
 import type { ModuleId } from './modules';
 import { cardioPrevu, estType, retenirTypeProgramme } from '@/lib/v2/seances/cardioJour';
@@ -333,6 +334,29 @@ export function cardioFinChoisi(c: ChoixCardio): CardioProgramme {
 /** Marque d'un exercice ajoute par la fin de seance */
 export type ExoFin = { fin?: true };
 
+/**
+ * 3 novembre 2026 : la fin de seance ne repete jamais un exercice de la seance. Un exercice ajoute (`fin`) qui est le
+ * meme mouvement qu'un autre exercice du jour (meme nom ou nom relie, SAME_MOVEMENT_GROUPS) tombe ; les exercices du
+ * programme restent tous, a leur place (les remplacements par case gardent leur index). Rien a retirer : le meme tableau.
+ * Sert apres le materiel, les douleurs et tes changements (perso.ts, jourPourToi), qui peuvent renommer un exercice.
+ */
+export function sansFinEnDouble<E extends { nom: string; fin?: true }>(exos: readonly E[]): E[] {
+  if (!exos.some((e) => e.fin)) return exos as E[];
+  const vus = new Set(exos.filter((e) => !e.fin).map((e) => movementKey(e.nom)));
+  let retire = false;
+  const out = exos.filter((e) => {
+    if (!e.fin) return true;
+    const k = movementKey(e.nom);
+    if (vus.has(k)) {
+      retire = true;
+      return false;
+    }
+    vus.add(k);
+    return true;
+  });
+  return retire ? out : (exos as E[]);
+}
+
 /** Le jour avec sa fin de seance : `finCardio` (bloc apres la musculation), `finFaite` (deja calcule) */
 export type AvecFin = { finCardio?: CardioProgramme; finCardioType?: TypeCardio; finFaite?: true };
 
@@ -355,9 +379,17 @@ export function avecFinSeance<J extends JourProgramme>(jour: J, ctx: ContexteFin
   if (!f || f.choix === 'rien' || !estJourMuscu(jour)) return j;
   let exos = jour.exos as (ExoProgramme & ExoFin)[];
   // pas d'abdos si la seance en a deja, jamais deux fois le meme exercice
+  // 3 novembre 2026 : ni deux fois le meme mouvement sous deux noms (« Cable Crunch » et « Crunch Poulie Haute »,
+  // constants/exerciseLibrary.ts, SAME_MOVEMENT_GROUPS), ni dans la seance ni entre deux abdos habituels
   if (avecAbdos(f) && !jour.exos.some((e) => e.muscle === 'ABDOS')) {
-    const deja = new Set(jour.exos.map((e) => e.nom));
-    exos = [...exos, ...abdosDeFin(ctx!.materiel).filter((e) => !deja.has(e.nom))];
+    const deja = new Set(jour.exos.map((e) => movementKey(e.nom)));
+    const ajoutes = abdosDeFin(ctx!.materiel).filter((e) => {
+      const k = movementKey(e.nom);
+      if (deja.has(k)) return false;
+      deja.add(k);
+      return true;
+    });
+    exos = [...exos, ...ajoutes];
   }
   const ajout: AvecFin = { finFaite: true };
   if (avecCardio(f) && !jour.cardio) {
