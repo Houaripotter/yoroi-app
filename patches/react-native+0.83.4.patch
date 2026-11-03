@@ -38,9 +38,9 @@ index 2fc48a1..58dc431 100644
  
 +const path = require('path');
 +
-+// Resolve @react-native/codegen from the app root (5 levels up) to avoid
++// Resolve @react-native/codegen from the app root (4 levels up: codegen, scripts, react-native, node_modules) to avoid
 +// picking up the nested/older version in react-native/node_modules/
-+const appRoot = path.resolve(__dirname, '..', '..', '..', '..', '..');
++const appRoot = path.resolve(__dirname, '..', '..', '..', '..');
 +
  /**
   * Wrapper required to abstract away from the actual codegen.
