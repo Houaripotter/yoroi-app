@@ -6,9 +6,19 @@
  * les couleurs sont les couleurs officielles. Le G de Google est le G quatre couleurs de Google ; Google Play est son
  * triangle d'origine, chaque piece de sa couleur. Le cote kawaii vient du traitement autocollant autour (Source.tsx),
  * jamais du logo lui-meme.
+ * 3 novembre 2026 (Houari : « TikTok et Instagram sont très flous ») : le glyphe TikTok etait petit (45 % de la tuile)
+ * avec des echos cyan et rose decales de moins d'un point, ce qui se lisait comme un flou ; il est plus grand, echos
+ * decales comme sur le logo officiel. Instagram : glyphe plus grand, degrade officiel actuel. App Store et X un peu
+ * plus grands. DessinMarque et DefsMarques permettent de dessiner l'autocollant entier dans un seul SVG (Source.tsx) :
+ * l'inclinaison est faite en vectoriel, plus aucune image n'est agrandie ni tournee apres coup.
  */
 import React from 'react';
 import Svg, { Defs, G, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+
+/** Echelles des glyphes dans la tuile de 48 (3 novembre 2026 : TikTok, Instagram, App Store et X agrandis) */
+export const ECHELLE_GLYPHE = { tiktok: 1.36, instagram: 1.26, youtube: 1.4, facebook: 1.4, app_store: 1.26, google_play: 1.25, snapchat: 1.12, x: 1.08 } as const;
+/** Decalage des echos cyan et rose du logo TikTok, en unites du glyphe (environ 4 % de sa hauteur, comme l'officiel) */
+export const ECHO_TIKTOK = 1.0;
 
 export type MarqueId = 'tiktok' | 'instagram' | 'youtube' | 'facebook' | 'google' | 'app_store' | 'google_play' | 'snapchat' | 'x';
 
@@ -57,38 +67,63 @@ function Glyphe({ e = 1.1, children }: { e?: number; children: React.ReactNode }
   return <G transform={`translate(${o} ${o}) scale(${e})`}>{children}</G>;
 }
 
-/** Une tuile arrondie de logo, dessinee en vectoriel (net a toutes les tailles) */
-export function LogoMarque({ id, taille }: { id: MarqueId; taille: number }) {
-  const fond = <Rect x={0} y={0} width={48} height={48} rx={12} fill={FOND_MARQUE[id]} />;
+/** Les degrades des logos : a mettre une fois dans chaque <Svg> qui dessine une marque */
+export function DefsMarques() {
+  return (
+    <Defs>
+      {/* degrade officiel actuel d'Instagram (jaune en bas a gauche, orange, rose, violet, bleu en haut a droite) */}
+      <RadialGradient id="yoroiInsta" cx="0.28" cy="1.08" r="1.35" fx="0.28" fy="1.08" gradientUnits="objectBoundingBox">
+        <Stop offset="0" stopColor="#FEDA75" />
+        <Stop offset="0.12" stopColor="#FEDA75" />
+        <Stop offset="0.32" stopColor="#FA7E1E" />
+        <Stop offset="0.55" stopColor="#D62976" />
+        <Stop offset="0.75" stopColor="#962FBF" />
+        <Stop offset="1" stopColor="#4F5BD5" />
+      </RadialGradient>
+      {/* bleu de l'App Store, plus clair en haut */}
+      <LinearGradient id="yoroiAppStore" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+        <Stop offset="0" stopColor="#18BFFB" />
+        <Stop offset="1" stopColor="#2072F3" />
+      </LinearGradient>
+    </Defs>
+  );
+}
+
+/** La tuile de logo (fond et glyphe) dans un carre de 48 unites, a placer dans un <Svg> qui contient DefsMarques */
+export function DessinMarque({ id }: { id: MarqueId }) {
+  const fond =
+    id === 'instagram' ? <Rect x={0} y={0} width={48} height={48} rx={12} fill="url(#yoroiInsta)" />
+    : id === 'app_store' ? <Rect x={0} y={0} width={48} height={48} rx={12} fill="url(#yoroiAppStore)" />
+    : <Rect x={0} y={0} width={48} height={48} rx={12} fill={FOND_MARQUE[id]} />;
   let dessin: React.ReactNode = null;
   switch (id) {
     case 'tiktok':
-      // le logo officiel : la note blanche, ses echos cyan et rose decales
+      // le logo officiel : la note blanche, ses echos cyan (en haut a gauche) et rose (en bas a droite)
       dessin = (
-        <Glyphe e={1.05}>
-          <Path d={D.tiktok} fill="#25F4EE" transform="translate(-0.75 -0.75)" />
-          <Path d={D.tiktok} fill="#FE2C55" transform="translate(0.75 0.75)" />
+        <Glyphe e={ECHELLE_GLYPHE.tiktok}>
+          <Path d={D.tiktok} fill="#25F4EE" transform={`translate(${-ECHO_TIKTOK} ${-ECHO_TIKTOK})`} />
+          <Path d={D.tiktok} fill="#FE2C55" transform={`translate(${ECHO_TIKTOK} ${ECHO_TIKTOK})`} />
           <Path d={D.tiktok} fill="#FFFFFF" />
         </Glyphe>
       );
       break;
     case 'instagram':
       dessin = (
-        <Glyphe e={1.08}>
+        <Glyphe e={ECHELLE_GLYPHE.instagram}>
           <Path d={D.instagram} fill="#FFFFFF" />
         </Glyphe>
       );
       break;
     case 'youtube':
       dessin = (
-        <Glyphe e={1.4}>
+        <Glyphe e={ECHELLE_GLYPHE.youtube}>
           <Path d={D.youtube} fill="#FF0000" />
         </Glyphe>
       );
       break;
     case 'facebook':
       dessin = (
-        <Glyphe e={1.4}>
+        <Glyphe e={ECHELLE_GLYPHE.facebook}>
           <Path d={D.facebook} fill="#0866FF" />
         </Glyphe>
       );
@@ -105,14 +140,14 @@ export function LogoMarque({ id, taille }: { id: MarqueId; taille: number }) {
       break;
     case 'app_store':
       dessin = (
-        <Glyphe e={1.1}>
+        <Glyphe e={ECHELLE_GLYPHE.app_store}>
           <Path d={D.appstore} fill="#FFFFFF" />
         </Glyphe>
       );
       break;
     case 'google_play':
       dessin = (
-        <Glyphe e={1.25}>
+        <Glyphe e={ECHELLE_GLYPHE.google_play}>
           <Path d={PLAY.bleu} fill="#00A0FF" />
           <Path d={PLAY.vert} fill="#00D46A" />
           <Path d={PLAY.jaune} fill="#FFC400" />
@@ -123,37 +158,32 @@ export function LogoMarque({ id, taille }: { id: MarqueId; taille: number }) {
     case 'snapchat':
       // le fantome blanc cerne de noir, sur le jaune officiel
       dessin = (
-        <Glyphe e={1.12}>
+        <Glyphe e={ECHELLE_GLYPHE.snapchat}>
           <Path d={D.snapchat} fill="#FFFFFF" stroke="#000000" strokeWidth={1.1} strokeLinejoin="round" />
         </Glyphe>
       );
       break;
     default:
       dessin = (
-        <Glyphe e={0.95}>
+        <Glyphe e={ECHELLE_GLYPHE.x}>
           <Path d={D.x} fill="#FFFFFF" />
         </Glyphe>
       );
   }
   return (
-    <Svg width={taille} height={taille} viewBox="0 0 48 48">
-      <Defs>
-        {/* degrade officiel d'Instagram (jaune en bas a gauche, violet bleu en haut) */}
-        <RadialGradient id="yoroiInsta" cx="0.3" cy="1.07" r="1.3" fx="0.3" fy="1.07" gradientUnits="objectBoundingBox">
-          <Stop offset="0" stopColor="#FDF497" />
-          <Stop offset="0.05" stopColor="#FDF497" />
-          <Stop offset="0.45" stopColor="#FD5949" />
-          <Stop offset="0.6" stopColor="#D6249F" />
-          <Stop offset="0.9" stopColor="#285AEB" />
-        </RadialGradient>
-        {/* bleu de l'App Store, plus clair en haut */}
-        <LinearGradient id="yoroiAppStore" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
-          <Stop offset="0" stopColor="#18BFFB" />
-          <Stop offset="1" stopColor="#2072F3" />
-        </LinearGradient>
-      </Defs>
-      {id === 'instagram' ? <Rect x={0} y={0} width={48} height={48} rx={12} fill="url(#yoroiInsta)" /> : id === 'app_store' ? <Rect x={0} y={0} width={48} height={48} rx={12} fill="url(#yoroiAppStore)" /> : fond}
+    <G>
+      {fond}
       {dessin}
+    </G>
+  );
+}
+
+/** Une tuile arrondie de logo, dessinee en vectoriel (net a toutes les tailles) */
+export function LogoMarque({ id, taille }: { id: MarqueId; taille: number }) {
+  return (
+    <Svg width={taille} height={taille} viewBox="0 0 48 48">
+      <DefsMarques />
+      <DessinMarque id={id} />
     </Svg>
   );
 }
