@@ -13,7 +13,7 @@ import type { ExoProtege, Region } from './blessures';
 import type { Equipement, MachinesSalle } from './materiel';
 import { faisable, remplacantsDe, remplacerPar } from './materiel';
 import { ecartesEnMemoire } from '@/lib/v2/seances/exercicesEcartes';
-import { completerContexte, contexteFinPour } from './finSeance';
+import { completerContexte, contexteFinPour, sansFinEnDouble } from './finSeance';
 import type { ContexteFin } from './finSeance';
 import { avecModules } from './modules';
 import type { AvecModules, ExoModule } from './modules';
@@ -138,7 +138,11 @@ export function jourPourToi<J extends JourProgramme>(
   const protege = protegerJour(complet, dispo, regions, machines) as Omit<J, 'exos'> & AvecModules & { id: string; exos: ExoProtege[] };
   const perso = appliquerRemplacements(protege, remplacements, muscleBiblio) as Omit<J, 'exos'> & AvecModules & { exos: (ExoProtege & ExoPerso & ExoModule)[] };
   // 30 octobre 2026 : tes exercices ecartes (« Pas dans ma salle », « Ça me fait mal ») ne reviennent plus
-  return eviterEcartes(perso, ecartesEnMemoire(), dispo, machines);
+  const final = eviterEcartes(perso, ecartesEnMemoire(), dispo, machines);
+  // 3 novembre 2026 : apres le materiel, les douleurs et tes changements, un exercice de fin de seance qui est devenu
+  // le meme mouvement qu'un autre exercice du jour tombe (jamais « Cable Crunch » puis « Crunch Poulie Haute »)
+  const exos = sansFinEnDouble(final.exos);
+  return exos === final.exos ? final : { ...final, exos };
 }
 
 /**
