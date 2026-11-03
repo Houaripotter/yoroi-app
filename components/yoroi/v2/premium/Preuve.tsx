@@ -216,7 +216,7 @@ export function NoteLauriers({ compact = false }: { compact?: boolean }) {
       <View style={{ alignItems: 'center', gap: compact ? 1 : 3, paddingHorizontal: 2 }}>
         <Ink size={compact ? 22 : 28} weight="black" tight style={{ lineHeight: compact ? 26 : 32 }}>{r.note}</Ink>
         <Etoiles size={compact ? 12 : 14} />
-        <Ink size={compact ? 11 : 12} weight="bold" color={c.textSecondary} numberOfLines={1}>{`${r.total} notes, ${r.stores}`}</Ink>
+        <Ink size={compact ? 11 : 12} weight="bold" color={c.textSecondary} numberOfLines={1}>{traduire('{0} notes, {1}', r.total, r.stores)}</Ink>
       </View>
       <Laurier height={h} mirrored />
     </View>

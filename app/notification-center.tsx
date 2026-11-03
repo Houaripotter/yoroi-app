@@ -20,7 +20,7 @@ import { localiserNotification } from '@/lib/notificationLangue';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { cheminDirect } from '@/lib/v2/nav/direct';
 import { cibleDeNotification, deposerCible } from '@/lib/v2/notifications/toucher';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, LANG, LOCALE } from '@/lib/i18n/tr';
 
 const NB = ' ';
 const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
@@ -86,6 +86,7 @@ function dayLabel(ts: number): string {
 function clock(ts: number): string {
   const d = new Date(ts);
   const m = d.getMinutes();
+  if (LANG !== 'fr') return d.toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
   return m === 0 ? `${d.getHours()}${NB}h` : `${d.getHours()}${NB}h${NB}${String(m).padStart(2, '0')}`;
 }
 
@@ -324,7 +325,7 @@ export default function CentreNotifications() {
                     onPress={() => open(n)}
                     onLongPress={() => actions(n)}
                     accessibilityRole="button"
-                    accessibilityLabel={`${n.read ? '' : traduire('Non lue. ')}${l.label}, ${clock(n.timestamp)}. ${n.title}. ${n.body}`}
+                    accessibilityLabel={`${n.read ? '' : traduire('Non lue. ')}${traduire(l.label)}, ${clock(n.timestamp)}. ${n.title}. ${n.body}`}
                     accessibilityHint={traduire("Appui long pour partager ou supprimer")}
                     style={({ pressed }) => ({
                       flexDirection: 'row',

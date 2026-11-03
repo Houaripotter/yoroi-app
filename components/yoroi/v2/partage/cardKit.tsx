@@ -12,6 +12,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
 import { personnageImage } from '@/components/yoroi/v2/espace/assets';
 import { SignatureCarte } from './SignatureCarte';
+import { traduire } from '@/lib/i18n/tr';
 
 export type CardVariant = 'papier' | 'laque' | 'photo';
 
@@ -316,7 +317,7 @@ export function fmtDuration(min: number): string {
   const h = Math.floor(m / 60);
   const r = m % 60;
   if (h === 0) return `${r} min`;
-  return r > 0 ? `${h} h ${String(r).padStart(2, '0')}` : `${h} h`;
+  return r > 0 ? traduire('{0} h {1}', h, String(r).padStart(2, '0')) : traduire('{0} h', h);
 }
 
 /** Largeur par defaut d'une carte : l'ecran moins les marges, 400 points au plus */

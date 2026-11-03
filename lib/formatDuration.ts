@@ -1,3 +1,5 @@
+import { traduire, LANG } from '@/lib/i18n/tr';
+
 /**
  * Format minutes into a clean "Xh", "XhMM", or "Xmin" string.
  * Examples:
@@ -14,6 +16,7 @@ export function formatDurationHM(minutes: number): string {
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
   if (h === 0) return `${m}min`;
+  if (LANG !== 'fr') return m === 0 ? traduire('{0} h', h) : traduire('{0} h {1}', h, m.toString().padStart(2, '0'));
   if (m === 0) return `${h}h`;
   return `${h}h${m.toString().padStart(2, '0')}`;
 }
@@ -31,6 +34,7 @@ export function formatHoursHM(hours: number): string {
   const totalMin = Math.round(hours * 60);
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
+  if (LANG !== 'fr') return m === 0 ? traduire('{0} h', h) : traduire('{0} h {1}', h, m.toString().padStart(2, '0'));
   if (m === 0) return `${h}h`;
   return `${h}h${m.toString().padStart(2, '0')}`;
 }

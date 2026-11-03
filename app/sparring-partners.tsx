@@ -205,7 +205,7 @@ export default function SparringPartnersScreen() {
               { k: 'favorables', l: 'Favorables' },
               { k: 'revoir', l: 'À revoir' },
             ] as const).map((f) => (
-              <Chip key={f.k} label={f.l} on={filter === f.k} onPress={() => setFilter(f.k)} />
+              <Chip key={f.k} label={traduire(f.l)} on={filter === f.k} onPress={() => setFilter(f.k)} />
             ))}
           </ChipScroll>
         ) : null}
@@ -263,7 +263,7 @@ export default function SparringPartnersScreen() {
                       .map((x) => (
                         <View key={x.l} style={{ paddingHorizontal: 10, height: 26, borderRadius: 13, justifyContent: 'center', backgroundColor: P.paper }}>
                           <Ink size={12} weight="bold" color={P.ink2}>
-                            {`${x.n} ${x.l}`}
+                            {`${x.n} ${traduire(x.l)}`}
                           </Ink>
                         </View>
                       ))}

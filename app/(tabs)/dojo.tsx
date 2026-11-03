@@ -58,7 +58,7 @@ import { useArmure } from '@/lib/v2/dojo/useArmure';
 import { PACKS, THEMES, THEME_IMAGES, aUnPersonnage, parsePersonnage, personnageImage, personnageName } from '@/lib/v2/dojo/personnages';
 import type { Gender } from '@/lib/v2/dojo/personnages';
 import { carteBlanche, ton } from '@/components/yoroi/v2/seance/pastel';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, LANG, jourMois } from '@/lib/i18n/tr';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { usePageLarge } from '@/lib/v2/nav/useGrandEcran';
 import { BentoEnfants, Case, LargeurPage } from '@/components/yoroi/v2/PageLarge';
@@ -67,6 +67,7 @@ const NB = ' ';
 const SHORT_MONTHS = [traduire('janv.'), traduire('févr.'), traduire('mars'), traduire('avr.'), traduire('mai'), traduire('juin'), traduire('juil.'), traduire('août'), traduire('sept.'), traduire('oct.'), traduire('nov.'), traduire('déc.')];
 const shortDay = (iso: string) => {
   const d = new Date(iso + 'T12:00:00');
+  if (LANG !== 'fr') return jourMois(d);
   return `${d.getDate()} ${SHORT_MONTHS[d.getMonth()]}`;
 };
 

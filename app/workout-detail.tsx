@@ -594,7 +594,7 @@ export default function WorkoutDetailScreen() {
                             </View>
                           );
                         })}
-                        {vol > 0 && sets.length > 1 ? <Ink size={12} weight="bold" color={c.textSecondary}>{`Volume : ${Math.round(cv(vol))} ${uL}`}</Ink> : null}
+                        {vol > 0 && sets.length > 1 ? <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('Volume : {0} {1}', Math.round(cv(vol)), uL)}</Ink> : null}
                       </View>
                     ) : null}
                     {(ex.distance ?? 0) > 0 || (ex.duration ?? 0) > 0 || ex.pace || (ex.calories ?? 0) > 0 || (ex.stairs ?? 0) > 0 ? (
@@ -658,7 +658,7 @@ export default function WorkoutDetailScreen() {
                   const w = rounds.filter((r) => r.result === 'win').length;
                   const l = rounds.filter((r) => r.result === 'loss').length;
                   const d = rounds.filter((r) => r.result === 'draw').length;
-                  return [w ? `${w} gagné${w > 1 ? 's' : ''}` : '', l ? `${l} perdu${l > 1 ? 's' : ''}` : '', d ? `${d} nul${d > 1 ? 's' : ''}` : ''].filter(Boolean).join(', ');
+                  return [w ? traduirePluriel(w, w > 1, '{0} gagné', '{0} gagnés', w) : '', l ? traduirePluriel(l, l > 1, '{0} perdu', '{0} perdus', l) : '', d ? traduirePluriel(d, d > 1, '{0} nul', '{0} nuls', d) : ''].filter(Boolean).join(', ');
                 })()}
               />
               {rounds.map((r, i) => {
@@ -691,7 +691,7 @@ export default function WorkoutDetailScreen() {
                         {[(r.submissionsGiven ?? 0) > 0 ? traduirePluriel(r.submissionsGiven ?? 0, (r.submissionsGiven ?? 0) > 1, "{0} soumission placée", "{0} soumissions placées", r.submissionsGiven) : '', (r.submissionsTaken ?? 0) > 0 ? traduirePluriel(r.submissionsTaken ?? 0, (r.submissionsTaken ?? 0) > 1, "{0} subie", "{0} subies", r.submissionsTaken) : ''].filter(Boolean).join(', ')}
                       </Ink>
                     ) : null}
-                    {r.method && !r.methodsGiven?.length && !r.methodsTaken?.length ? <Ink size={14}>{`Finition : ${getMethodDisplayName(r.method)}`}</Ink> : null}
+                    {r.method && !r.methodsGiven?.length && !r.methodsTaken?.length ? <Ink size={14}>{traduire('Finition : {0}', getMethodDisplayName(r.method))}</Ink> : null}
                     {r.methodsGiven?.length ? (
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                         {r.methodsGiven.map((m, k) => (

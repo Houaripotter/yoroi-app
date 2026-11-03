@@ -105,7 +105,7 @@ export function SleepBars({ points, labels, height = 210, onSelect, label }: { p
             <G key={t}>
               <Line x1={PAD_L} x2={s.width} y1={y(t)} y2={y(t)} stroke={CHART.grid} strokeWidth={1} />
               <SvgText x={0} y={y(t) + 4} fontSize={11} fontFamily={CHART.axisFamily} fill={CHART.axisInk}>
-                {`${Math.round(t / 60)} h`}
+                {traduire('{0} h', Math.round(t / 60))}
               </SvgText>
             </G>
           ))}

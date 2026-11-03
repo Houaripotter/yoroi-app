@@ -7,6 +7,10 @@
 
 /** Les heures proposees en un tap */
 export const HEURES_RAPPEL = ['07:00', '12:00', '18:00', '19:30'];
+import { LANG, LOCALE } from '@/lib/i18n/tr';
+
+/** Hors français : l'heure « HH:MM » au format de la langue (« 6:30 PM », « 18:30 ») */
+const heureLocale = (t: string) => new Date(2026, 0, 1, parseInt(t, 10) || 0, parseInt(t.split(':')[1] ?? '0', 10) || 0).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
 
 const HHMM = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
@@ -15,6 +19,7 @@ export const heureRappelValide = (h: string | null | undefined): h is string => 
 /** « 18 h », « 19 h 30 », « 7 h 05 » */
 export function libelleHeureRappel(h: string): string {
   if (!heureRappelValide(h)) return h;
+  if (LANG !== 'fr') return heureLocale(h);
   const heures = Number(h.slice(0, 2));
   return h.endsWith(':00') ? `${heures} h` : `${heures} h ${h.slice(3, 5)}`;
 }

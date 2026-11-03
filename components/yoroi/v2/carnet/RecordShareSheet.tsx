@@ -105,7 +105,7 @@ function Card({ data, fond, photo, format, width, name }: { data: ShareRecord; f
             </Ink>
             {data.previous ? (
               <Ink size={3.6 * u} weight="medium" color={ink2} numberOfLines={1}>
-                {`Ancien record : ${data.previous}`}
+                {traduire('Ancien record : {0}', data.previous)}
               </Ink>
             ) : null}
           </View>

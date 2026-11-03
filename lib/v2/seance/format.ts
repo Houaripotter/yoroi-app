@@ -26,7 +26,7 @@ export function fmtMinutes(min: number): string {
   const h = Math.floor(m / 60);
   const r = m % 60;
   if (h === 0) return `${r} min`;
-  return r === 0 ? `${h} h` : `${h} h ${String(r).padStart(2, '0')}`;
+  return r === 0 ? traduire('{0} h', h) : traduire('{0} h {1}', h, String(r).padStart(2, '0'));
 }
 
 export function pad2(n: number): string {

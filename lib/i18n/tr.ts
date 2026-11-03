@@ -174,6 +174,24 @@ export function traduirePluriel(n: number, plurielFr: boolean, un: string, plusi
 /** Locale pour les dates et les nombres (toLocaleDateString, Intl). */
 export const LOCALE: string = ({ fr: 'fr-FR', en: 'en-US', de: 'de-DE', nl: 'nl-NL', es: 'es-ES', pt: 'pt-BR', it: 'it-IT' } as const)[LANG];
 
+/**
+ * Hors français : jour et mois dans l'ordre de la langue (« Nov 3 », « 3. Nov. », « 3 nov »).
+ * Le français garde ses propres textes (« 3 nov. », « 1er »), cette fonction n'est appelée que si LANG !== 'fr'.
+ */
+export function jourMois(d: Date, avecAnnee = false, mois: 'short' | 'long' = 'short'): string {
+  return d.toLocaleDateString(LOCALE, avecAnnee ? { day: 'numeric', month: mois, year: 'numeric' } : { day: 'numeric', month: mois });
+}
+
+/**
+ * Hors français : une plage de jours (« from Nov 2 to 8 », « vom 2. Nov. bis 8. Nov. »), par la clé « du {0} au {1} ».
+ * suffixe : l'année ajoutée à la fin (« 2025 »), vide sinon.
+ */
+export function plageJours(a: Date, b: Date, cle = 'du {0} au {1}', suffixe = ''): string {
+  const memeMois = a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+  const fin = (LANG === 'en' && memeMois ? String(b.getDate()) : jourMois(b)) + (suffixe ? (LANG === 'en' ? ',' : '') + ' ' + suffixe.trim() : '');
+  return traduire(cle, jourMois(a), fin);
+}
+
 /** Séparateur décimal de la langue : virgule en français, allemand, néerlandais ; point en anglais. */
 export const DECIMAL: string = LANG === 'en' ? '.' : ',';
 

@@ -76,7 +76,7 @@ export const FighterCardView = forwardRef<View, { data: FighterData; id: CardIde
             </View>
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <Mini p={p} onPanel value={`${data.totalTrainings}`} label={traduire("Séances")} />
-              <Mini p={p} onPanel value={`${hours} h`} label={traduire("D’entraînement")} />
+              <Mini p={p} onPanel value={traduire('{0} h', hours)} label={traduire("D’entraînement")} />
               <Mini p={p} onPanel value={`${id.sealsCount}`} label={traduire("Sceaux")} accent={p.gold === '#A8832F' ? '#A8832F' : undefined} />
             </View>
             {data.goals && data.goals.target > 0 ? (

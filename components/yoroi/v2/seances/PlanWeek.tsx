@@ -24,7 +24,7 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG, plageJours } from '@/lib/i18n/tr';
 
 type Props = {
   plan: WeeklyPlan[];
@@ -93,7 +93,7 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
   const md = dateOf(monday);
   const sd = dateOf(sunday);
   const title = offset === 0 ? traduire('Cette semaine') : offset === -1 ? traduire('Semaine dernière') : offset === 1 ? traduire('Semaine prochaine') : traduire("Semaine du {0} {1}", md.getDate(), MONTHS[md.getMonth()]);
-  const range = traduire("du {0} {1}au {2} {3}", md.getDate(), md.getMonth() !== sd.getMonth() ? MONTHS_SHORT[md.getMonth()] + ' ' : '', sd.getDate(), MONTHS_SHORT[sd.getMonth()]);
+  const range = LANG !== 'fr' ? plageJours(md, sd) : traduire("du {0} {1}au {2} {3}", md.getDate(), md.getMonth() !== sd.getMonth() ? MONTHS_SHORT[md.getMonth()] + ' ' : '', sd.getDate(), MONTHS_SHORT[sd.getMonth()]);
 
   const statusOf = (s: SlotView): { label: string; tone: string; state: 'done' | 'planned' | 'missed' | 'cancelled' } => {
     if (s.occ?.status === 'validated') return { label: traduire('fait'), tone: c.successText, state: 'done' };

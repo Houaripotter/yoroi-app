@@ -16,12 +16,15 @@ import type { CreneauxProgramme } from '@/lib/v2/programmes/agenda';
 import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, joursConseilles, joursDuProgramme } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Programme } from '@/lib/v2/programmes/types';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG, LOCALE } from '@/lib/i18n/tr';
+
+/** Hors français : l'heure « HH:MM » au format de la langue (« 6:30 PM », « 18:30 ») */
+const heureLocale = (t: string) => new Date(2026, 0, 1, parseInt(t, 10) || 0, parseInt(t.split(':')[1] ?? '0', 10) || 0).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
 
 const JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 const HEURES = ['07:00', '12:00', '18:00', '19:30'];
 /** « 18 h », « 19 h 30 » */
-const libelleHeure = (h: string) => (h.endsWith(':00') ? `${Number(h.slice(0, 2))} h` : `${Number(h.slice(0, 2))} h ${h.slice(3, 5)}`);
+const libelleHeure = (h: string) => (LANG !== 'fr' ? heureLocale(h) : h.endsWith(':00') ? `${Number(h.slice(0, 2))} h` : `${Number(h.slice(0, 2))} h ${h.slice(3, 5)}`);
 
 /** nu : sans carte autour, pour se ranger dans le bloc de réglages (BlocReglages, Habillage.tsx) */
 export function PlanningProgramme({ programme, nu }: { programme: Programme; nu?: boolean }) {

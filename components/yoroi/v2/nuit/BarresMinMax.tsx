@@ -10,7 +10,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { P } from '@/components/yoroi/livePalette';
 import type { TrancheFC } from '@/lib/v2/sante/nuit';
 import { MARGE_DROITE, domaineHeures, heure } from './outils';
-import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, DECIMAL, LANG, LOCALE } from '@/lib/i18n/tr';
 
 const H = 112;
 const AXE = 22;
@@ -98,7 +98,7 @@ export function BarresMinMax({ tranches, debut, fin, couleur, unite, decimales =
         {w > 0
           ? ticks.map((t) => (
               <Ink key={`h${t}`} size={11} weight="bold" color={P.muted} style={{ position: 'absolute', top: H + 5, left: Math.round(sx(t)) - 20, width: 40, textAlign: 'center' }}>
-                {`${new Date(t).getHours()} h`}
+                {LANG !== 'fr' ? new Date(t).toLocaleTimeString(LOCALE, { hour: 'numeric' }) : `${new Date(t).getHours()} h`}
               </Ink>
             ))
           : null}

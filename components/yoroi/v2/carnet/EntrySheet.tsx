@@ -203,7 +203,7 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
           </View>
         </View>
       ) : null}
-      {isWeight ? <Ink size={13} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>{`Volume : ${Math.round(weight * reps)} ${unit === 'lbs' ? 'lbs' : 'kg'}`}</Ink> : null}
+      {isWeight ? <Ink size={13} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>{traduire('Volume : {0} {1}', Math.round(weight * reps), unit === 'lbs' ? 'lbs' : 'kg')}</Ink> : null}
 
       {isBody ? (
         <View style={{ alignItems: 'center', gap: 6, padding: 12, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
@@ -230,7 +230,7 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
                   </View>
                 ))}
               </View>
-              {paceText ? <Ink size={14} weight="extraBold" color={P.indigo} style={{ paddingHorizontal: 4 }}>{`Allure : ${paceText}`}</Ink> : null}
+              {paceText ? <Ink size={14} weight="extraBold" color={P.indigo} style={{ paddingHorizontal: 4 }}>{traduire('Allure : {0}', paceText)}</Ink> : null}
             </>
           ) : null}
           <Field label={traduire("Dénivelé en mètres, si tu veux")} value={incline} onChangeText={setIncline} keyboardType="number-pad" placeholder="150" />
@@ -282,7 +282,7 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
         </View>
       </View>
 
-      <Field value={notes} onChangeText={setNotes} placeholder={traduire("Une note : sensations, matériel, conditions")} multiline accessibilityLabel="Note" />
+      <Field value={notes} onChangeText={setNotes} placeholder={traduire("Une note : sensations, matériel, conditions")} multiline accessibilityLabel={traduire("Note")} />
 
       <BigButton label={busy ? 'Enregistrement...' : traduire('Enregistrer')} icon="check" disabled={busy} onPress={submit} />
     </Sheet>

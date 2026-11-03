@@ -389,7 +389,7 @@ export function TaleOfTape({ ins, name }: { ins: PartnerInsights; name: string }
                   {String(x.v)}
                 </Ink>
                 <Ink size={11} weight="bold" color={x.c}>
-                  {x.k}
+                  {traduire(x.k)}
                 </Ink>
               </View>
             ))}
@@ -827,12 +827,12 @@ function SessionRow({ entry }: { entry: SessionEntry }) {
                 </View>
                 {r.methodsGiven && r.methodsGiven.length > 0 ? (
                   <Ink size={13} weight="bold" color={V}>
-                    {`Finitions : ${r.methodsGiven.map(getMethodDisplayName).join(', ')}`}
+                    {traduire('Finitions : {0}', r.methodsGiven.map(getMethodDisplayName).join(', '))}
                   </Ink>
                 ) : null}
                 {r.methodsTaken && r.methodsTaken.length > 0 ? (
                   <Ink size={13} weight="bold" color={D}>
-                    {`Subies : ${r.methodsTaken.map(getMethodDisplayName).join(', ')}`}
+                    {traduire('Subies : {0}', r.methodsTaken.map(getMethodDisplayName).join(', '))}
                   </Ink>
                 ) : null}
                 {r.notes ? (
@@ -843,7 +843,7 @@ function SessionRow({ entry }: { entry: SessionEntry }) {
                 {items.map((x) => (
                   <View key={x.k} style={{ flexDirection: 'row', gap: 8 }}>
                     <Ink size={12} weight="extraBold" color={x.c} style={{ width: 96 }}>
-                      {x.k}
+                      {traduire(x.k)}
                     </Ink>
                     <Ink size={13} style={{ flex: 1 }}>
                       {x.v}

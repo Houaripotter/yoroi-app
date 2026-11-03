@@ -51,7 +51,10 @@ import { P } from '@/components/yoroi/livePalette';
 import { TourAnchor, registerTourScroller } from '@/components/yoroi/v2/tour/TourAnchor';
 import { ecouterOngletPlus } from '@/lib/v2/visite/ongletPlus';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, LANG, LOCALE } from '@/lib/i18n/tr';
+
+/** Hors français : l'heure « HH:MM » au format de la langue (« 6:30 PM », « 18:30 ») */
+const heureLocale = (t: string) => new Date(2026, 0, 1, parseInt(t, 10) || 0, parseInt(t.split(':')[1] ?? '0', 10) || 0).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
 import { chargerProgrammeActif, joursDuProgramme, prochainJour, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import { routeDuCreneau } from '@/lib/v2/programmes/agenda';
 import { resumeDuJour, routeDuJour } from '@/lib/v2/programmes/lancer';
@@ -285,7 +288,7 @@ export default function Ajouter() {
   // défaut, et « Sans personnage » ne montre aucune figure ; le texte prend alors la largeur.
   const perso = persoUtilisateur;
   const slotTitle = slot ? slot.slot.label || getSportName(slot.slot.sport) : '';
-  const slotTime = slot?.slot.time ? traduire(" à {0}", slot.slot.time.slice(0, 5).replace(':', ' h ')) : '';
+  const slotTime = slot?.slot.time ? traduire(" à {0}", LANG === 'fr' ? slot.slot.time.slice(0, 5).replace(':', ' h ') : heureLocale(slot.slot.time)) : '';
   const pastilles = favs.slice(0, 3);
 
   // la grande carte du haut : ton programme, sinon le creneau prevu aujourd'hui, sinon choisir un programme

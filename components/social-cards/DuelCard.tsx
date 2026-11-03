@@ -9,7 +9,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { getSportName } from '@/lib/sports';
 import { useCardIdentity } from '@/lib/v2/partage/identity';
 import { CardFoot, CardFrame, CardTop, Panel, Plate, Stamp, figureFor, paletteOf, toVariant } from '@/components/yoroi/v2/partage/cardKit';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG } from '@/lib/i18n/tr';
 
 const BELT_COLORS: Record<string, string> = {
   blanche: '#FFFFFF', bleue: '#2C4A84', violette: '#6B3FA0', marron: '#7A4A22', noire: '#1D2029',
@@ -65,7 +65,7 @@ export const DuelCard = React.memo(
                 <View style={{ width: 34, height: 8, borderRadius: 2, backgroundColor: bc, borderWidth: bc === '#FFFFFF' ? 1 : 0, borderColor: p.line }}>
                   <View style={{ position: 'absolute', right: 5, top: 0, bottom: 0, width: 7, backgroundColor: bc === '#1D2029' ? p.accent : '#1D2029' }} />
                 </View>
-                <Ink size={10} weight="bold" color={p.muted}>{traduire("Ceinture {0}", belt)}</Ink>
+                <Ink size={10} weight="bold" color={p.muted}>{LANG === 'fr' ? traduire("Ceinture {0}", belt) : traduire(`Ceinture ${String(belt).toLowerCase().trim()}`)}</Ink>
               </View>
             ) : null}
           </View>

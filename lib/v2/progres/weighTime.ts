@@ -3,12 +3,13 @@
  * Lit l'heure dans la date (AAAA-MM-JJTHH:MM) ou, a defaut, dans created_at (seulement s'il tombe ce jour-la).
  */
 import type { Weight } from '@/lib/database';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG, LOCALE } from '@/lib/i18n/tr';
 import { heurePesee } from '@/lib/v2/pesee/poidsDuJour';
 
 /** 28 octobre 2026 : meme lecture de l'heure que le poids du jour (lib/v2/pesee/poidsDuJour.ts) */
 export function weighTime(w: Weight): string | null {
   const t = heurePesee(w);
+  if (t && LANG !== 'fr') return new Date(2026, 0, 1, t.h, t.m).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
   return t ? `${t.h} h ${String(t.m).padStart(2, '0')}` : null;
 }
 

@@ -224,7 +224,7 @@ export function TrainingGoalsTab({ gender }: { gender: Gender }) {
           <View style={{ gap: 14 }}>
             {Object.entries(byCategory).map(([cat, list]) => (
               <View key={cat} style={{ gap: 8 }}>
-                <Label>{CATEGORY_LABELS[cat] ?? cat}</Label>
+                <Label>{traduire(CATEGORY_LABELS[cat] ?? cat)}</Label>
                 <ChipScroll>
                   {list.map((s) => (
                     <Chip key={s.id} label={traduire(s.name)} onPress={() => setPicked(s)} />

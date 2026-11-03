@@ -187,7 +187,7 @@ export function PartnerSheet({ partner, onClose }: { partner: PartnerStats | nul
             {topSubs.map((s) => (
               <View key={s.name} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: s.given > s.taken ? P.mossSoft : s.taken > s.given ? P.dangerSoft : '#F5F6FB' }}>
                 <Ink size={13} weight="extraBold">{traduire(s.name)}</Ink>
-                <Ink size={11} weight="bold" color={P.ink2}>{[s.given > 0 ? `${s.given} donnée${s.given > 1 ? 's' : ''}` : '', s.taken > 0 ? `${s.taken} subie${s.taken > 1 ? 's' : ''}` : ''].filter(Boolean).join(', ')}</Ink>
+                <Ink size={11} weight="bold" color={P.ink2}>{[s.given > 0 ? traduirePluriel(s.given, s.given > 1, '{0} donnée', '{0} données', s.given) : '', s.taken > 0 ? traduirePluriel(s.taken, s.taken > 1, '{0} subie', '{0} subies', s.taken) : ''].filter(Boolean).join(', ')}</Ink>
               </View>
             ))}
           </View>

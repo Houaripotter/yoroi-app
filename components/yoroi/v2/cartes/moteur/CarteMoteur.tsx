@@ -13,7 +13,7 @@ import { Image, PixelRatio, View } from 'react-native';
 import type { ImageSourcePropType, View as VueRN } from 'react-native';
 import Svg, { Circle, Defs, Ellipse, G, Line, LinearGradient, Mask, Path, Pattern, RadialGradient, Rect, Stop, Text as SvgText, TSpan, Image as SvgImage } from 'react-native-svg';
 import { fontFamilies, policesCartes } from '@/components/yoroi/fonts';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG } from '@/lib/i18n/tr';
 import { COULEUR_SPORT, OR } from '@/lib/v2/cartes/moteur/familles';
 import type { ContenuCarte, IconeId, JourCarte, Palette, Stat } from '@/lib/v2/cartes/moteur/familles';
 import type { StyleMoteur } from '@/lib/v2/cartes/moteur/degrade';
@@ -521,7 +521,7 @@ function Annee({ c, r, uid }: { c: ContenuCarte; r: { x: number; y: number; w: n
   );
 }
 
-const hm = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}` : `${m} min`);
+const hm = (m: number) => (m >= 60 ? (LANG !== 'fr' ? traduire('{0} h {1}', Math.floor(m / 60), String(m % 60).padStart(2, '0')) : `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`) : `${m} min`);
 const NOMS_JOURS = () => traduire('L,M,M,J,V,S,D').split(',');
 
 /** Les 7 jours : seance (barre a la duree), repos (hachure et le mot repos), inconnu (un trait gris) */

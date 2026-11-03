@@ -534,7 +534,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
 
           {cardio.hours > 0 || cardio.kcal > 0 || cardio.avgHR !== null ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {cardio.hours > 0 ? <RecordTile label={traduire("Temps total")} value={`${cardio.hours >= 100 ? Math.round(cardio.hours) : cardio.hours.toFixed(1).replace('.', DECIMAL)} h`} sub={traduire("sur le tatami")} tone="indigo" /> : null}
+              {cardio.hours > 0 ? <RecordTile label={traduire("Temps total")} value={traduire('{0} h', cardio.hours >= 100 ? Math.round(cardio.hours) : cardio.hours.toFixed(1).replace('.', DECIMAL))} sub={traduire("sur le tatami")} tone="indigo" /> : null}
               {cardio.kcal > 0 ? <RecordTile label={traduire("Calories")} value={compact(cardio.kcal)} sub={traduire("brûlées au total")} tone="gold" /> : null}
               {cardio.avgHR !== null ? <RecordTile label={traduire("Cœur moyen")} value={`${cardio.avgHR} bpm`} sub={traduire("sur {0} séances", cardio.hrCount)} tone="red" /> : null}
               {cardio.maxHR ? <RecordTile label={traduire("Cœur au plus haut")} value={`${Math.round(cardio.maxHR)} bpm`} sub={traduire("ton record")} tone="red" /> : null}

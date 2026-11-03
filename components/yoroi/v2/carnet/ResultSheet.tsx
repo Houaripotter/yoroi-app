@@ -85,7 +85,7 @@ export function ResultSheet({ result, onShare, onClose }: { result: ResultInfo |
                     <Ink size={13} weight="extraBold" color={P.mossText}>{traduire("{0} sur ton ancien record", result.gain)}</Ink>
                   </View>
                 ) : null}
-                {result.isPR && result.recordText && !result.gain ? <Ink size={13} weight="medium" color={P.ink2}>{`Ancien record : ${result.recordText}`}</Ink> : null}
+                {result.isPR && result.recordText && !result.gain ? <Ink size={13} weight="medium" color={P.ink2}>{traduire('Ancien record : {0}', result.recordText)}</Ink> : null}
                 {result.isPR && result.first ? <Ink size={13} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>{traduire("C’est ta référence. Chaque fois que tu la bats, un tampon rouge se pose.")}</Ink> : null}
                 {!result.isPR && result.recordText ? (
                   <Ink size={13} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>{traduire("Ton record reste {0}. Ce sera pour la prochaine fois.", result.recordText)}</Ink>

@@ -59,7 +59,10 @@ import { ligneProgression, semainesDAffilee } from '@/lib/v2/seances/carteDuJour
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { chargeTexte } from '@/lib/v2/unitePoids';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, LANG, LOCALE } from '@/lib/i18n/tr';
+
+/** Hors français : l'heure « HH:MM » au format de la langue (« 6:30 PM », « 18:30 ») */
+const heureLocale = (t: string) => new Date(2026, 0, 1, parseInt(t, 10) || 0, parseInt(t.split(':')[1] ?? '0', 10) || 0).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
 import { usePersonnageUtilisateur } from '@/components/yoroi/v2/perso/usePersonnageUtilisateur';
 import { CarteBravo, CarteProgramme, CarteRepos } from './EnTeteSeance';
 import { faitsCetteSemaine } from '@/lib/v2/programmes/suivi';
@@ -410,7 +413,7 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach, dispo
   if (next && next.dayOffset === 0) {
     const s = next.slot;
     const titre = sansTiret(s.label || getSportName(s.sport));
-    const sous = [s.time ? traduire('à {0}', s.time.slice(0, 5).replace(':', ' h ')) : '', s.duration_minutes ? formatDuration(s.duration_minutes) : '', s.club_name].filter(Boolean).join(', ');
+    const sous = [s.time ? traduire('à {0}', LANG === 'fr' ? s.time.slice(0, 5).replace(':', ' h ') : heureLocale(s.time)) : '', s.duration_minutes ? formatDuration(s.duration_minutes) : '', s.club_name].filter(Boolean).join(', ');
     const sousPropre = sansTiret(sous);
     const lancer = () => {
       // même lancement que « Prévu aujourd'hui » dans le bouton + (app/ajouter.tsx)

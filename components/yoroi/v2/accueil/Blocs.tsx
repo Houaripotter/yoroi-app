@@ -275,7 +275,7 @@ export function BlocSommeil({ entries, goal, hideEmpty }: { entries: SleepEntry[
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 14 }}>
               <View style={{ flex: 1 }}>
                 <Ink size={30} weight="black" tight color={P.indigo}>
-                  7 h 30
+                  {traduire('{0} h {1}', 7, '30')}
                 </Ink>
                 <Ink size={13} weight="bold" color={P.ink2}>
                   {traduire("ta nuit, en un coup d’œil")}</Ink>

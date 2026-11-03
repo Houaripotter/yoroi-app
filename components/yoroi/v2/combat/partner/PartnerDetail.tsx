@@ -292,7 +292,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
             </Card>
             <Card style={{ gap: 10 }}>
               <Ink size={18} weight="black" tight>
-                Ses points forts
+                {traduire("Ses points forts")}
               </Ink>
               <Ink size={13} color={P.ink2}>
                 {traduire("Ce dont tu dois te méfier")}</Ink>
@@ -300,7 +300,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
             </Card>
             <Card style={{ gap: 10 }}>
               <Ink size={18} weight="black" tight>
-                Ses points faibles
+                {traduire("Ses points faibles")}
               </Ink>
               <Ink size={13} color={P.ink2}>
                 {traduire("Tes ouvertures")}</Ink>
@@ -311,7 +311,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
                 {traduire("Ce qui marche contre lui")}</Ink>
               <TagEditor items={p.whatWorks} color={V} onChange={(next) => update({ whatWorks: next })} />
             </Card>
-            <Section title="Carte combattant" />
+            <Section title={traduire("Carte combattant")} />
             <FighterProfile p={p} ins={ins} onChange={(patch) => update(patch)} />
           </>
         ) : null}
@@ -321,7 +321,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
             <Card style={{ gap: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Ink size={18} weight="black" tight>
-                  Notes tactiques
+                  {traduire("Notes tactiques")}
                 </Ink>
                 <IconBtn icon="plus" label={traduire("Ajouter une note")} tone="ink" onPress={() => { setNoteDraft(''); setNoteOpen(true); }} />
               </View>
@@ -386,7 +386,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
       </ScrollView>
 
       <View style={{ position: 'absolute', right: 16, bottom: insets.bottom + 18 }}>
-        <Press onPress={() => { setNoteDraft(''); setNoteOpen(true); }} haptic="medium" accessibilityRole="button" accessibilityLabel="Note rapide">
+        <Press onPress={() => { setNoteDraft(''); setNoteOpen(true); }} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Note rapide")}>
           <View style={{ width: 60, height: 60, borderRadius: 22, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center', shadowColor: P.ink, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
             <CIcon name="edit" size={24} color={P.accentText} />
           </View>

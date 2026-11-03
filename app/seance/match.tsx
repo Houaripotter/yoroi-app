@@ -220,7 +220,7 @@ export default function SeanceMatch() {
           <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire("Déjà rempli avec ta dernière pesée. Touche un chiffre pour le taper.")}</Ink>
         </Section>
 
-        <TextInput value={notes} onChangeText={setNotes} placeholder={traduire("Ce que tu retiens de ce combat")} placeholderTextColor={c.textMuted} multiline accessibilityLabel="Notes" style={[fontStyle('medium'), { minHeight: 90, fontSize: 15, color: c.ink, padding: 14, borderRadius: 18, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border, textAlignVertical: 'top' }]} />
+        <TextInput value={notes} onChangeText={setNotes} placeholder={traduire("Ce que tu retiens de ce combat")} placeholderTextColor={c.textMuted} multiline accessibilityLabel={traduire("Notes")} style={[fontStyle('medium'), { minHeight: 90, fontSize: 15, color: c.ink, padding: 14, borderRadius: 18, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border, textAlignVertical: 'top' }]} />
       </ScrollView>
 
       <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 18 }}>

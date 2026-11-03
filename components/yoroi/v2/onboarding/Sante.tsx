@@ -43,11 +43,11 @@ function Bloc({ icon, nom, titre, texte, ink, fond }: { icon: IconName; nom: Nom
 export function texteEtape(e: EtatSante, nom: string): string | null {
   switch (e.connexion) {
     case 'fenetre':
-      return `Fenêtre d’${nom === 'Apple Santé' ? 'Apple Santé' : 'Health Connect'} ouverte. Choisis, puis touche Autoriser.`;
+      return traduire('Fenêtre d’{0} ouverte. Choisis, puis touche Autoriser.', nom === 'Apple Santé' ? 'Apple Santé' : 'Health Connect');
     case 'verification':
-      return 'Vérification de l’accès…';
+      return traduire('Vérification de l’accès…');
     case 'import':
-      return `C’est relié. ${texteImport(true, e.compte)}`;
+      return traduire('C’est relié. {0}', texteImport(true, e.compte));
     default:
       return null;
   }

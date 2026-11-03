@@ -37,7 +37,7 @@ import {
   type CloudFolder,
 } from '@/lib/cloudFolderService';
 import { ChargementBloc } from '@/components/yoroi/v2/chargement/Chargement';
-import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, DECIMAL, LANG, LOCALE } from '@/lib/i18n/tr';
 import { StickerSinon } from '@/components/yoroi/v2/ui/StickerSinon';
 
 interface BackupFile {
@@ -78,6 +78,7 @@ function formatLong(ts: number): string {
 }
 function formatTime(ts: number): string {
   const d = new Date(ts);
+  if (LANG !== 'fr') return d.toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
   return `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`;
 }
 function dateFromFileName(name: string): number {

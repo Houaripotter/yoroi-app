@@ -6,7 +6,10 @@ import type { Competition, Training, WeeklyPlan } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
 import { localISO } from './hydration';
 import { devNow } from '@/lib/v2/creator/devClock';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG, LOCALE } from '@/lib/i18n/tr';
+
+/** Hors français : l'heure « HH:MM » au format de la langue (« 6:30 PM », « 18:30 ») */
+const heureLocale = (t: string) => new Date(2026, 0, 1, parseInt(t, 10) || 0, parseInt(t.split(':')[1] ?? '0', 10) || 0).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
 
 const WEEKDAYS = [traduire('Lundi'), traduire('Mardi'), traduire('Mercredi'), traduire('Jeudi'), traduire('Vendredi'), traduire('Samedi'), traduire('Dimanche')];
 const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
@@ -17,6 +20,7 @@ export function formatHour(time?: string): string | undefined {
   if (!time) return undefined;
   const [h, m] = time.split(':');
   if (h === undefined) return undefined;
+  if (LANG !== 'fr') return heureLocale(time);
   const hh = String(parseInt(h, 10));
   return m && m !== '00' ? `${hh} h ${m}` : `${hh} h`;
 }

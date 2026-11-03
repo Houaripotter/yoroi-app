@@ -11,7 +11,7 @@ import { P } from '@/components/yoroi/livePalette';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import type { PhaseNuit, SegmentNuit } from '@/lib/v2/sante/nuit';
 import { MARGE_DROITE, NOM_LIGNE, ORDRE_LIGNES, couleursPhases, domaineHeures, heure } from './outils';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG, LOCALE } from '@/lib/i18n/tr';
 
 const LIGNE = 50;
 const BLOC_Y = 21;
@@ -152,7 +152,7 @@ export function Hypnogramme({ segments, debut, fin }: { segments: SegmentNuit[];
         {w > 0
           ? ticks.map((t) => (
               <Ink key={`h${t}`} size={11} weight="bold" color={P.muted} style={{ position: 'absolute', top: H + 5, left: Math.round(sx(t)) - 20, width: 40, textAlign: 'center' }}>
-                {`${new Date(t).getHours()} h`}
+                {LANG !== 'fr' ? new Date(t).toLocaleTimeString(LOCALE, { hour: 'numeric' }) : `${new Date(t).getHours()} h`}
               </Ink>
             ))
           : null}

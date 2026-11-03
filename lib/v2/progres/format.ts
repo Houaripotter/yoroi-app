@@ -2,7 +2,7 @@
  * Petits formats partages par les ecrans Progres (refonte v2).
  */
 
-import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, DECIMAL, LANG, jourMois } from '@/lib/i18n/tr';
 const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 const MONTHS_SHORT = [traduire('janv.'), traduire('févr.'), traduire('mars'), traduire('avr.'), traduire('mai'), traduire('juin'), traduire('juil.'), traduire('août'), traduire('sept.'), traduire('oct.'), traduire('nov.'), traduire('déc.')];
 const DAYS = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
@@ -63,6 +63,7 @@ export function dayLong(iso: string): string {
 /** « 7 oct. 2026 » */
 export function dayShort(iso: string, withYear = false): string {
   const d = dateOf(iso);
+  if (LANG !== 'fr') return jourMois(d, withYear);
   return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}${withYear ? ` ${d.getFullYear()}` : ''}`;
 }
 

@@ -19,7 +19,7 @@ import { Hanko, tap } from './ui';
 import { P } from '@/components/yoroi/livePalette';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
-import { traduire, LANG } from '@/lib/i18n/tr';
+import { traduire, LANG, jourMois } from '@/lib/i18n/tr';
 
 const FACT_ICON: Record<KeyFact['kind'], IconName> = {
   duree: 'clock',
@@ -36,7 +36,7 @@ export function HistoryCard({ t, femme, stamps = 0, showMonth }: { t: Training; 
   const c = theme.colors;
   const router = useRouter();
   const d = dateOf(t.date);
-  const day = `${DOW_SHORT[d.getDay()]} ${d.getDate()}${showMonth ? ` ${MONTHS_SHORT[d.getMonth()]}` : ''}`;
+  const day = LANG !== 'fr' ? `${DOW_SHORT[d.getDay()]} ${showMonth ? jourMois(d) : d.getDate()}` : `${DOW_SHORT[d.getDay()]} ${d.getDate()}${showMonth ? ` ${MONTHS_SHORT[d.getMonth()]}` : ''}`;
   const time = t.start_time ? (LANG === 'fr' ? t.start_time.slice(0, 5).replace(':', ' h ') : t.start_time.slice(0, 5)) : '';
   const when = sansTiret([day, time ? traduire('à {0}', time) : '', t.club_name].filter(Boolean).join(', '));
   const facts = keyFacts(t, useUnitePoids());

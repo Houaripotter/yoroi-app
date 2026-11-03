@@ -164,7 +164,7 @@ function minutesTexte(m: number): string {
   if (r < 60) return `${r} min`;
   const h = Math.floor(r / 60);
   const mm = r % 60;
-  return mm ? `${h} h ${String(mm).padStart(2, '0')}` : `${h} h`;
+  return mm ? traduire('{0} h {1}', h, String(mm).padStart(2, '0')) : traduire('{0} h', h);
 }
 
 // ============================================

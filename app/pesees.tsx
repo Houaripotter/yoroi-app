@@ -25,7 +25,10 @@ import { describeSource } from '@/lib/v2/pesee/health';
 import { sourceOf } from '@/lib/v2/seance/corps';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, LANG, LOCALE } from '@/lib/i18n/tr';
+
+/** Hors français : l'heure « HH:MM » au format de la langue (« 6:30 PM », « 18:30 ») */
+const heureLocale = (t: string) => new Date(2026, 0, 1, parseInt(t, 10) || 0, parseInt(t.split(':')[1] ?? '0', 10) || 0).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
 import { contexteDePesee, lireContextesPesees } from '@/lib/v2/mesures/contextePesee';
 import type { ContextePesee } from '@/lib/v2/mesures/contextePesee';
 import { EVENEMENT_CORPS } from '@/lib/v2/mesures/listeStockee';
@@ -167,14 +170,14 @@ export default function Pesees() {
         )}
         renderItem={({ item }) => {
           const d = item.delta;
-                    const deltaText = d === null ? '' : Math.abs(d) < 0.05 ? 'stable' : `${d < 0 ? '−' : '+'} ${formatKg(Math.abs(d))} kg`;
+                    const deltaText = d === null ? '' : Math.abs(d) < 0.05 ? traduire('stable') : `${d < 0 ? '−' : '+'} ${formatKg(Math.abs(d))} kg`;
           const w0 = item.w;
           const src = w0.source && w0.source !== 'manual' && w0.source !== 'csv' ? describeSource(w0.source, '').label ?? traduire('importée') : '';
           const compo = w0.fat_percent || w0.muscle_percent || w0.water_percent || w0.bone_mass || w0.visceral_fat || w0.bmr || w0.metabolic_age ? traduire('avec composition') : '';
           const base = [src, compo].filter(Boolean).join(', ');
           const ctx = contexteDePesee(w0, contextes);
           const h = ctx?.heure ?? heurePesee(w0)?.texte ?? null;
-          const when = h ? traduire("à {0}", h.replace(':', ' h ')) : several.has(item.w.date.slice(0, 10)) ? sameDayTag(item.w, raw) : '';
+          const when = h ? traduire("à {0}", LANG === 'fr' ? h.replace(':', ' h ') : heureLocale(h)) : several.has(item.w.date.slice(0, 10)) ? sameDayTag(item.w, raw) : '';
           const moment = ctx?.moment ? traduire(LABEL_MOMENT[ctx.moment].label).toLowerCase() : '';
           const extra = [when, moment, ...(ctx?.appareil ? [ctx.appareil, compo] : [base])].filter(Boolean).join(', ');
           return (

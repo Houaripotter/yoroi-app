@@ -2,7 +2,7 @@
 import React from 'react';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { P } from '@/components/yoroi/livePalette';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG } from '@/lib/i18n/tr';
 
 export function GrandeDuree({ min, size = 68 }: { min: number; size?: number }) {
   const h = Math.floor(min / 60);
@@ -12,6 +12,15 @@ export function GrandeDuree({ min, size = 68 }: { min: number; size?: number }) 
       {u}
     </Ink>
   );
+  // hors français : le modèle traduit (« {0}h {1}m », « {0} Std. {1} Min. »), chiffres en grand, unités en petit
+  if (LANG !== 'fr' && h > 0) {
+    const morceaux = traduire('{0} h {1}').split(/(\{[01]\})/).filter(Boolean);
+    return (
+      <Ink size={size} weight="black" tight accessibilityLabel={traduire("{0} heures {1} minutes", h, m)}>
+        {morceaux.map((x, i) => (x === '{0}' ? <React.Fragment key={i}>{String(h)}</React.Fragment> : x === '{1}' ? <React.Fragment key={i}>{String(m).padStart(2, '0')}</React.Fragment> : <React.Fragment key={i}>{unite(x)}</React.Fragment>))}
+      </Ink>
+    );
+  }
   return (
     <Ink size={size} weight="black" tight accessibilityLabel={h > 0 ? traduire("{0} heures {1} minutes", h, m) : traduire("{0} minutes", m)}>
       {h > 0 ? String(h) : String(m)}

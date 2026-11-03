@@ -32,7 +32,7 @@ export function humanMinutes(min: number): string {
   if (m < 60) return `${m} min`;
   const h = Math.floor(m / 60);
   const r = m % 60;
-  return r > 0 ? `${h} h ${pad2(r)}` : `${h} h`;
+  return r > 0 ? traduire('{0} h {1}', h, pad2(r)) : traduire('{0} h', h);
 }
 
 /** allure en secondes par km -> 5:12 */

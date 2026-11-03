@@ -340,7 +340,7 @@ export function rehydration(deltaKg: number, hours: number) {
     const min = i * 20;
     const h = Math.floor(min / 60);
     const m = min % 60;
-    return { minuteOffset: min, label: h > 0 ? `+${h} h${m > 0 ? ` ${m.toString().padStart(2, '0')}` : ''}` : `+${m} min`, ml: mlPerSlot };
+    return { minuteOffset: min, label: h > 0 ? `+${m > 0 ? traduire('{0} h {1}', h, m.toString().padStart(2, '0')) : traduire('{0} h', h)}` : `+${m} min`, ml: mlPerSlot };
   });
   return { totalMl, slots, mlPerSlot, steps, totalHours: hours };
 }
@@ -490,5 +490,5 @@ export function durationBetween(start: string, end: string): string {
   if (d < 0) d += 24 * 60;
   const h = Math.floor(d / 60);
   const mi = d % 60;
-  return `${h} h${mi > 0 ? ` ${mi.toString().padStart(2, '0')}` : ''}`;
+  return mi > 0 ? traduire('{0} h {1}', h, mi.toString().padStart(2, '0')) : traduire('{0} h', h);
 }

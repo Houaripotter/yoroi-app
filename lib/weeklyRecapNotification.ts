@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getTrainings } from './database';
 import { differenceInDays, parseISO } from 'date-fns';
 import { logger } from './security/logger';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, LANG } from '@/lib/i18n/tr';
 
 const NOTIF_ID_KEY = '@yoroi_weekly_recap_id';
 const ENABLED_KEY = '@yoroi_weekly_recap_enabled';
@@ -34,7 +34,7 @@ const buildRecapContent = async (): Promise<{ title: string; body: string } | nu
     }
     const h = Math.floor(totalMin / 60);
     const m = totalMin % 60;
-    const durStr = h > 0 ? `${h}h${m.toString().padStart(2, '0')}` : `${m}min`;
+    const durStr = h > 0 ? (LANG !== 'fr' ? traduire('{0} h {1}', h, m.toString().padStart(2, '0')) : `${h}h${m.toString().padStart(2, '0')}`) : `${m}min`;
     const msg = sessions.length >= 5
       ? traduire("{0} séances, {1}. Quelle semaine.", sessions.length, durStr)
       : sessions.length >= 3

@@ -6,6 +6,7 @@ import type { Training } from '@/lib/database';
 import { mondayOf } from '@/lib/v2/trainingWeek';
 import { isoOf, shiftDays } from './format';
 import { shortMonth } from '@/lib/v2/weightStats';
+import { traduire } from '@/lib/i18n/tr';
 
 export type WeekBucket = {
   /** lundi de la semaine, AAAA-MM-JJ */
@@ -81,9 +82,9 @@ export function weekLabels(weeks: string[]): string[] {
 /** « 115 h 24 », « 45 min » */
 export function hoursText(minutes: number): string {
   const m = Math.round(minutes);
-  if (m <= 0) return '0 h';
+  if (m <= 0) return traduire('{0} h', 0);
   const h = Math.floor(m / 60);
   const r = m % 60;
   if (h === 0) return `${r} min`;
-  return r === 0 ? `${h} h` : `${h} h ${String(r).padStart(2, '0')}`;
+  return r === 0 ? traduire('{0} h', h) : traduire('{0} h {1}', h, String(r).padStart(2, '0'));
 }

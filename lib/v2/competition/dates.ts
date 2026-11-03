@@ -1,7 +1,7 @@
 /**
  * Dates des competitions et objectifs : lecture en heure locale, ecarts en jours, libelles francais.
  */
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG, jourMois } from '@/lib/i18n/tr';
 const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 const MONTHS_SHORT = [traduire('janv.'), traduire('févr.'), traduire('mars'), traduire('avr.'), traduire('mai'), traduire('juin'), traduire('juil.'), traduire('août'), traduire('sept.'), traduire('oct.'), traduire('nov.'), traduire('déc.')];
 const DAYS = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
@@ -44,11 +44,13 @@ export function longDate(d: Date, withYear = true): string {
 
 export function mediumDate(d: Date, withYear = true): string {
   if (isNaN(d.getTime())) return '';
+  if (LANG !== 'fr') return jourMois(d, withYear, 'long');
   return `${d.getDate()} ${MONTHS[d.getMonth()]}${withYear ? ` ${d.getFullYear()}` : ''}`;
 }
 
 export function shortDate(d: Date): string {
   if (isNaN(d.getTime())) return '';
+  if (LANG !== 'fr') return jourMois(d);
   return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
 }
 

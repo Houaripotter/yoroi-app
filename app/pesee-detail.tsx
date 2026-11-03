@@ -19,7 +19,10 @@ import { contexteDePesee, enregistrerContextes, MOMENTS_PESEE, peseesDuJourAvecC
 import type { MomentPesee } from '@/lib/v2/mesures/contextePesee';
 import { heurePesee } from '@/lib/v2/pesee/poidsDuJour';
 import { formatLongDate } from '@/lib/v2/weightStats';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG, LOCALE } from '@/lib/i18n/tr';
+
+/** Hors français : l'heure « HH:MM » au format de la langue (« 6:30 PM », « 18:30 ») */
+const heureLocale = (t: string) => new Date(2026, 0, 1, parseInt(t, 10) || 0, parseInt(t.split(':')[1] ?? '0', 10) || 0).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
 import { LABEL_MOMENT } from '@/components/yoroi/v2/corps/libelles';
 
 export default function PeseeDetail() {
@@ -53,7 +56,7 @@ export default function PeseeDetail() {
           <Ink size={17} weight="bold" color={c.textSecondary}>kg</Ink>
         </View>
         <View style={{ gap: 4 }}>
-          <Ink size={14} weight="bold">{heure ? traduire('Pesée à {0}', heure.replace(':', ' h ')) : traduire('Heure inconnue')}</Ink>
+          <Ink size={14} weight="bold">{heure ? traduire('Pesée à {0}', LANG === 'fr' ? heure.replace(':', ' h ') : heureLocale(heure)) : traduire('Heure inconnue')}</Ink>
           <Ink size={14} weight="bold" color={c.textSecondary}>{appareil ? traduire('Appareil : {0}', appareil) : traduire('Notée à la main')}</Ink>
         </View>
       </Carte>
@@ -77,7 +80,7 @@ export default function PeseeDetail() {
           <TitreCarte sticker="balance" titre={traduire('Tes pesées de ce jour')} sous={traduire('Toutes gardées, avec leur moment.')} />
           {duJour.map((p, i) => (
             <View key={`${p.heure ?? 'x'}_${p.poids}_${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 40, borderTopWidth: i ? 1 : 0, borderColor: c.divider }}>
-              <Ink size={14} weight="bold" style={{ width: 60 }}>{p.heure ? p.heure.replace(':', ' h ') : '…'}</Ink>
+              <Ink size={14} weight="bold" style={{ width: 60 }}>{p.heure ? (LANG === 'fr' ? p.heure.replace(':', ' h ') : heureLocale(p.heure)) : '…'}</Ink>
               <Ink size={13} color={c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>
                 {[p.moment ? traduire(LABEL_MOMENT[p.moment].label) : null, p.appareil, p.seule ? traduire('pesée de séance') : null].filter(Boolean).join(', ')}
               </Ink>

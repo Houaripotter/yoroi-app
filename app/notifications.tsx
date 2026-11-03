@@ -48,10 +48,12 @@ import { RappelsDiscipline } from '@/components/yoroi/v2/notifications/RappelsDi
 import { choixDepuisServices } from '@/lib/v2/notifications/discipline';
 import type { ChoixRappels } from '@/lib/v2/notifications/discipline';
 import { appliquerChoixRappels } from '@/lib/v2/notifications/rappels';
-import { LANG, traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { LANG, traduire, traduirePluriel, LOCALE } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const NB = ' ';
+/** Hors français : une heure pile au format de la langue (« 6 PM », « 18 Uhr ») */
+const heurePile = (h: number) => new Date(2026, 0, 1, h).toLocaleTimeString(LOCALE, { hour: 'numeric' });
 
 /** Jours reellement utilises par la programmation quand la liste est vide. */
 const eff = (days: number[] | undefined, fallback: number[]) => (days && days.length ? days : fallback);
@@ -459,7 +461,7 @@ export default function TesNotifications() {
         summary={traduire('Le vendredi à 18{0}h, seulement s’il manque un muscle', NB)}
         on={rappelDeuxFoisActif(settings)}
         onToggle={(v) => patch('deuxFois', { enabled: v })}
-        preview={{ title: traduire('Chaque muscle 2 fois'), body: traduire('Tu n’as pas travaillé {0} 2 fois cette semaine. Il te reste le week end.', traduire('tes jambes')), when: `ven. 18${NB}h` }}
+        preview={{ title: traduire('Chaque muscle 2 fois'), body: traduire('Tu n’as pas travaillé {0} 2 fois cette semaine. Il te reste le week end.', traduire('tes jambes')), when: LANG === 'fr' ? `ven. 18${NB}h` : `${traduire('ven.')} ${heurePile(18)}` }}
       />
 
       <NotifCard
@@ -470,7 +472,7 @@ export default function TesNotifications() {
         summary={traduire("Le dimanche à 19{0}h", NB)}
         on={recap}
         onToggle={toggleRecap}
-        preview={{ title: traduire('Récap de ta semaine'), body: traduire('Découvre ton bilan sportif des 7 derniers jours dans YOROI'), when: `dim. 19${NB}h` }}
+        preview={{ title: traduire('Récap de ta semaine'), body: traduire('Découvre ton bilan sportif des 7 derniers jours dans YOROI'), when: LANG === 'fr' ? `dim. 19${NB}h` : `${traduire('dim.')} ${heurePile(19)}` }}
       />
 
       <NotifCard
@@ -505,7 +507,7 @@ export default function TesNotifications() {
         summary={`${sayTime(briefing.time)}, ${sayDays(briefDays)}`}
         on={briefing.enabled}
         onToggle={(v) => patch('briefing', { enabled: v })}
-        preview={{ title: `Bonjour${NB}!`, body: traduire('Ta série, ton dernier poids et ce qui est prévu aujourd’hui.'), when: sayTime(briefing.time) }}
+        preview={{ title: LANG === 'fr' ? `Bonjour${NB}!` : traduire('Bonjour !'), body: traduire('Ta série, ton dernier poids et ce qui est prévu aujourd’hui.'), when: sayTime(briefing.time) }}
         test={{ label: traduire('M’envoyer le briefing'), run: () => sendTest('briefing') }}
       >
         <TimeField label={traduire("Heure du briefing")} value={briefing.time} onChange={(v) => patch('briefing', { time: v })} />
@@ -548,15 +550,15 @@ export default function TesNotifications() {
           label={traduire("Un rappel toutes les")}
           value={hyd.interval >= 24 ? 24 : hyd.interval}
           options={[
-            { value: 2, label: `2${NB}h` },
-            { value: 3, label: `3${NB}h` },
-            { value: 4, label: `4${NB}h` },
+            { value: 2, label: LANG === 'fr' ? `2${NB}h` : traduire('{0} h', 2) },
+            { value: 3, label: LANG === 'fr' ? `3${NB}h` : traduire('{0} h', 3) },
+            { value: 4, label: LANG === 'fr' ? `4${NB}h` : traduire('{0} h', 4) },
             { value: 24, label: traduire('Une fois') },
           ]}
           onChange={(v) => patch('hydration', { interval: v })}
         />
         <Ink size={12} color={c.textMuted}>
-          {hydHours.length ? traduire("Tu les recevras à {0}.", hydHours.map((h) => `${h}${NB}h`).join(', ')) : traduire('Aucun horaire valide.')}
+          {hydHours.length ? traduire("Tu les recevras à {0}.", hydHours.map((h) => (LANG === 'fr' ? `${h}${NB}h` : heurePile(h))).join(', ')) : traduire('Aucun horaire valide.')}
         </Ink>
       </NotifCard>
 

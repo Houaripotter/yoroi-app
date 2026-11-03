@@ -376,7 +376,7 @@ export function BJJBodyMap({
                 ref={inputMeRef}
                 value={searchMe}
                 onChangeText={setSearchMe}
-                placeholder="Rechercher..."
+                placeholder={traduire("Rechercher...")}
                 placeholderTextColor={mutedColor}
                 style={[styles.searchInput, { color: textColor }]}
                 returnKeyType="search"
@@ -439,7 +439,7 @@ export function BJJBodyMap({
                 ref={inputOppRef}
                 value={searchOpp}
                 onChangeText={setSearchOpp}
-                placeholder="Rechercher..."
+                placeholder={traduire("Rechercher...")}
                 placeholderTextColor={mutedColor}
                 style={[styles.searchInput, { color: textColor }]}
                 returnKeyType="search"

@@ -300,9 +300,9 @@ export default function InjuryDetailScreen() {
 
         <Enter i={2}>
           <Card style={{ paddingVertical: 6 }}>
-            <KV label="Zone" value={zoneName} />
+            <KV label={traduire("Zone")} value={zoneName} />
             <KV label={traduire("Type de douleur")} value={pain} />
-            <KV label="Cause" value={cause} last={!injury.notes} />
+            <KV label={traduire("Cause")} value={cause} last={!injury.notes} />
             {injury.notes ? (
               <View style={{ paddingVertical: 11, gap: 4 }}>
                 <Ink size={14} weight="medium" color={P.ink2}>
@@ -321,7 +321,7 @@ export default function InjuryDetailScreen() {
           <H2 sub={traduire("Comment ça va aujourd’hui ?")}>{traduire("Mettre à jour ta douleur")}</H2>
           <Card style={{ marginTop: 10, gap: 14 }}>
             <PainScale value={newEva} onChange={setNewEva} />
-            <TextField value={evaNote} onChange={setEvaNote} placeholder="Note (facultatif)" multiline />
+            <TextField value={evaNote} onChange={setEvaNote} placeholder={traduire("Note (facultatif)")} multiline />
             {newEva !== null && newEva !== injury.eva_score ? <BigButton label={traduire("Enregistrer {0} sur 10", newEva)} onPress={updateEva} icon="check" /> : null}
           </Card>
         </Enter>
@@ -368,7 +368,7 @@ export default function InjuryDetailScreen() {
           {treatments.length > 0 ? (
             <Card style={{ marginTop: 10, paddingVertical: 6 }}>
               <Ink size={13} weight="extraBold" color={P.ink2} style={{ paddingTop: 8 }}>
-                Derniers soins
+                {traduire("Derniers soins")}
               </Ink>
               {treatments.slice(0, 3).map((t, i, arr) => (
                 <View key={t.id ?? `${t.date}-${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: i === arr.length - 1 ? 0 : 1, borderBottomColor: P.line2 }}>
@@ -504,11 +504,11 @@ export default function InjuryDetailScreen() {
         {creator ? (
           <Enter i={9}>
             <Card style={{ gap: 12, borderColor: P.indigo, borderWidth: 2 }}>
-              <Press onPress={() => setSurgeonOpen((v) => !v)} accessibilityRole="button" accessibilityState={{ expanded: surgeonOpen }} accessibilityLabel="Mode chirurgien">
+              <Press onPress={() => setSurgeonOpen((v) => !v)} accessibilityRole="button" accessibilityState={{ expanded: surgeonOpen }} accessibilityLabel={traduire("Mode chirurgien")}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
                   <NIcon name="steth" size={20} color={P.indigo} />
                   <Ink size={16} weight="black" color={P.indigo} style={{ flex: 1 }}>
-                    Mode chirurgien
+                    {traduire("Mode chirurgien")}
                   </Ink>
                   <NIcon name={surgeonOpen ? 'minus' : 'plus'} size={18} color={P.ink2} />
                 </View>

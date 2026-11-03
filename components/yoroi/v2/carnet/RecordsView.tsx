@@ -156,7 +156,7 @@ export function RecordsView({ benchmarks, pratique, isPremium, refreshKey, onOpe
             ]}
           >
             {lb ? (
-              <Press onPress={() => onOpen(lb.b)} accessibilityRole="button" accessibilityLabel={`Dernier record battu : ${lb.b.name}`}>
+              <Press onPress={() => onOpen(lb.b)} accessibilityRole="button" accessibilityLabel={traduire('Dernier record battu : {0}', traduire(lb.b.name))}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: P.redSoft }}>
                   <Hanko size={38} rotate={-8} />
                   <View style={{ flex: 1, gap: 1 }}>

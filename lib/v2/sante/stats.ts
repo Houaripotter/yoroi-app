@@ -116,7 +116,7 @@ export function hoursMinutes(min: number): string {
   const h = Math.floor(min / 60);
   const mm = Math.round(min % 60);
   if (h === 0) return `${mm} min`;
-  return `${h} h ${String(mm).padStart(2, '0')}`;
+  return traduire('{0} h {1}', h, String(mm).padStart(2, '0'));
 }
 
 export function unitFor(m: MetricDef): string {

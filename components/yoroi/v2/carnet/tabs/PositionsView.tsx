@@ -76,9 +76,9 @@ export function PositionsView({ refreshKey }: { refreshKey: number }) {
         <BigStats
           items={[
             { value: String(trainings.length), label: traduire('séances') },
-            { value: `${hours} h`, label: traduire('sur le tatami'), color: P.indigo },
+            { value: traduire('{0} h', hours), label: traduire('sur le tatami'), color: P.indigo },
             { value: String(themes.length), label: traduire('thèmes') },
-            { value: String(families.length), label: 'familles', color: P.accent },
+            { value: String(families.length), label: traduire('familles'), color: P.accent },
           ]}
         />
       </Sheet2>

@@ -27,7 +27,7 @@ import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 const formatDuration = (mins: number) => {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  return h > 0 ? `${h} h${m > 0 ? ` ${String(m).padStart(2, '0')}` : ''}` : `${m} min`;
+  return h > 0 ? (m > 0 ? traduire('{0} h {1}', h, String(m).padStart(2, '0')) : traduire('{0} h', h)) : `${m} min`;
 };
 
 const plural = (n: number, one: string, many: string) => `${n} ${n > 1 ? many : one}`;
@@ -188,7 +188,7 @@ export default function ImportWorkoutsScreen() {
               </Press>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, rowGap: 8 }}>
                 <MiniStat value={formatDuration(a.durationMinutes)} label={traduire("Durée")} />
-                {a.distanceKm != null ? <MiniStat value={`${String(a.distanceKm).replace('.', DECIMAL)} km`} label="Distance" /> : null}
+                {a.distanceKm != null ? <MiniStat value={`${String(a.distanceKm).replace('.', DECIMAL)} km`} label={traduire("Distance")} /> : null}
                 {a.avgHeartRate != null ? <MiniStat value={`${a.avgHeartRate}`} label={traduire("Cœur moyen")} /> : null}
                 {a.calories != null ? <MiniStat value={`${a.calories}`} label={traduire("Calories")} /> : null}
               </View>

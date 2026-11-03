@@ -638,11 +638,11 @@ export default function BalancePhotoScreen() {
             maxLength={7}
             placeholder={p.placeholder}
             placeholderTextColor={c.textMuted}
-            accessibilityLabel={`${p.label}${p.unit ? ` en ${p.unit}` : ''}`}
+            accessibilityLabel={p.unit ? traduire('{0} en {1}', p.label, traduire(p.unit)) : p.label}
             style={[fontStyle('black'), { width: 76, height: 44, borderRadius: 12, borderWidth: 1, borderColor: p.off ? c.danger : c.border, backgroundColor: c.surface, color: c.ink, fontSize: 18, textAlign: 'right', paddingHorizontal: 10, paddingVertical: 0, includeFontPadding: false }]}
           />
           <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2} style={{ width: p.unit.length <= 3 ? 26 : 42 }}>
-            {p.unit}
+            {traduire(p.unit)}
           </Ink>
         </View>
       </View>

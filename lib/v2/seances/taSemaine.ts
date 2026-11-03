@@ -13,7 +13,7 @@
 import type { Training, WeeklyPlan } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
 import { mondayOf } from '@/lib/v2/trainingWeek';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, LANG, plageJours } from '@/lib/i18n/tr';
 import { MONTHS_SHORT, addDaysISO, dateOf, daysFrom } from './sessionData';
 import { weekCompare } from './weekCompare';
 import type { WeekCompare } from './weekCompare';
@@ -157,6 +157,7 @@ export function periodeSemaine(lundi: string): string {
   const l = mondayOf(lundi);
   const md = dateOf(l);
   const sd = dateOf(addDaysISO(l, 6));
+  if (LANG !== 'fr') return plageJours(md, sd);
   return md.getMonth() === sd.getMonth()
     ? traduire('du {0} au {1} {2}', md.getDate(), sd.getDate(), MONTHS_SHORT[sd.getMonth()])
     : traduire('du {0} {1} au {2} {3}', md.getDate(), MONTHS_SHORT[md.getMonth()], sd.getDate(), MONTHS_SHORT[sd.getMonth()]);

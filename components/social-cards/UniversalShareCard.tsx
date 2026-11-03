@@ -11,7 +11,7 @@ import { View, Text, Image, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Training } from '@/lib/database';
 import { CombatRoundData } from '@/components/social-cards/SessionCard';
-import { traduire, LOCALE } from '@/lib/i18n/tr';
+import { traduire, LOCALE, LANG } from '@/lib/i18n/tr';
 
 const GOLD  = '#D4AF37';
 const WHITE = '#FFFFFF';
@@ -71,6 +71,7 @@ function getCfg(sport?: string) {
 function fmtDur(min?: number) {
   if (!min) return '';
   const h = Math.floor(min / 60), m = min % 60;
+  if (LANG !== 'fr' && h > 0) return m === 0 ? traduire('{0} h', h) : traduire('{0} h {1}', h, String(m).padStart(2, '0'));
   return h === 0 ? `${m}min` : m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, '0')}`;
 }
 function fmtDist(km?: number) {

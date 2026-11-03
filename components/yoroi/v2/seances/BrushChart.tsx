@@ -8,7 +8,7 @@ import { View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { MONTHS_SHORT, dateOf } from '@/lib/v2/seances/sessionData';
 import { areaOf, AxisLabel, barPath, brushPath, CHART, CHART_COLORS, ChartCursor, ChartGrid, ChartTooltip, displayPoints, EndDot, nearestIndex, niceTicks, Reveal, SealMark, SeriesLine, tint, useChartInk, useChartScrub } from '../charts/core';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG, jourMois } from '@/lib/i18n/tr';
 
 export type BrushPoint = { date: string; value: number; seal?: boolean; label?: string };
 
@@ -114,7 +114,7 @@ export function BrushChart({ points, width, height = 190, color = CHART_COLORS.b
         {cur ? <ChartCursor x={cur.x} top={padT - 6} bottom={base} cy={bars ? null : cur.y} color={color} /> : null}
       </Svg>
       {cur ? (
-        <ChartTooltip x={cur.x} width={width} value={cur.p.label ?? format(cur.p.value)} caption={`${dateOf(cur.p.date).getDate()} ${MONTHS_SHORT[dateOf(cur.p.date).getMonth()]}`} record={!!cur.p.seal} />
+        <ChartTooltip x={cur.x} width={width} value={cur.p.label ?? format(cur.p.value)} caption={LANG !== 'fr' ? jourMois(dateOf(cur.p.date)) : `${dateOf(cur.p.date).getDate()} ${MONTHS_SHORT[dateOf(cur.p.date).getMonth()]}`} record={!!cur.p.seal} />
       ) : null}
     </View>
   );

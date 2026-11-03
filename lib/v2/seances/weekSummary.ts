@@ -51,7 +51,7 @@ export function formatHours(min: number): { value: string; unit: string } {
   if (min < 60) return { value: String(Math.round(min)), unit: 'min' };
   const h = Math.floor(min / 60);
   const m = Math.round(min % 60);
-  return { value: m ? `${h} h ${String(m).padStart(2, '0')}` : String(h), unit: m ? '' : 'h' };
+  return { value: m ? traduire('{0} h {1}', h, String(m).padStart(2, '0')) : String(h), unit: m ? '' : traduire('{0} h', '').trim() };
 }
 
 export type { MuscleLoad, BilanMuscles } from './musclesExercices';

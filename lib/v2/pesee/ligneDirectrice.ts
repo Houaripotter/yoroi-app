@@ -20,7 +20,7 @@
 import { IMC_BAS, PERTE_MAX, PERTE_MIN, PRISE_MAX, PRISE_MIN, estimerArrivee, imcDe } from './estimation';
 import { projection } from '@/lib/v2/accueil/projection';
 import type { DayWeight } from '@/lib/v2/weightStats';
-import { traduire, DECIMAL, LANG } from '@/lib/i18n/tr';
+import { traduire, DECIMAL, LANG, jourMois } from '@/lib/i18n/tr';
 
 /**
  * Tolerance autour de la bande, en kg : l'eau, le sel et le dernier repas font bouger la balance
@@ -390,6 +390,7 @@ export function jourLong(iso: string, today: string): string {
 /** « 18 oct. » : la date en or sous le torii */
 export function jourCourt(iso: string): string {
   const d = new Date(`${iso.slice(0, 10)}T12:00:00`);
+  if (LANG !== 'fr') return jourMois(d);
   return `${num(d)} ${MOIS_COURT[d.getMonth()]}`;
 }
 

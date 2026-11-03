@@ -5,7 +5,7 @@
  * les phases claires ont toujours leur nom ecrit a cote (lignes du graphique et liste).
  */
 import type { PhaseNuit } from '@/lib/v2/sante/nuit';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG, LOCALE } from '@/lib/i18n/tr';
 
 export const PHASES_CLAIR: Record<PhaseNuit, string> = {
   eveil: '#C9963A',
@@ -43,12 +43,13 @@ export const ORDRE_LIGNES: PhaseNuit[] = ['eveil', 'endormi', 'paradoxal', 'lege
 export function duree(min: number): string {
   const m = Math.max(0, Math.round(min));
   if (m < 60) return `${m} min`;
-  return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`;
+  return traduire('{0} h {1}', Math.floor(m / 60), String(m % 60).padStart(2, '0'));
 }
 
 /** 2 h 19 */
 export function heure(ms: number): string {
   const d = new Date(ms);
+  if (LANG !== 'fr') return d.toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
   return `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`;
 }
 

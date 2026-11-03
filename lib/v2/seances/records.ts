@@ -351,7 +351,7 @@ export function formatRecordValue(line: RecordLine, value?: number, unite: Unite
       const r = Math.round(v);
       const h = Math.floor(r / 60);
       const m = r % 60;
-      return { main: h ? `${h} h ${String(m).padStart(2, '0')}` : `${m} min`, sub: traduire('en une séance') };
+      return { main: h ? traduire('{0} h {1}', h, String(m).padStart(2, '0')) : `${m} min`, sub: traduire('en une séance') };
     }
   }
 }

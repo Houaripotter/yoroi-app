@@ -220,7 +220,7 @@ export default function CombatTimerScreen() {
       <>
         <ActiveChrono
           engine={engine}
-          name={config.partnerName.trim() ? `Sparring contre ${config.partnerName.trim()}` : 'Sparring'}
+          name={config.partnerName.trim() ? traduire('Sparring contre {0}', config.partnerName.trim()) : traduire('Sparring')}
           focusMode={false}
           onStop={handleStop}
           confirmStop

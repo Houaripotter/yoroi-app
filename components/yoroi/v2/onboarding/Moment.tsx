@@ -29,7 +29,10 @@ import { ENCRES_THEME as ENCRES } from './couleurs';
 import type { Encre } from './couleurs';
 import { MainButton, Riche, Shell, useColors } from './ui';
 import type { Nav } from './types';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, LANG, LOCALE } from '@/lib/i18n/tr';
+
+/** Hors français : l'heure « HH:MM » au format de la langue (« 6:30 PM », « 18:30 ») */
+const heureLocale = (t: string) => new Date(2026, 0, 1, parseInt(t, 10) || 0, parseInt(t.split(':')[1] ?? '0', 10) || 0).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
 import { illustration, tamponPour, type NomSticker } from '@/components/yoroi/v2/stickers';
 
 const CHRONO = require('@/assets/avatars/app/ornements/chrono.webp');
@@ -51,6 +54,7 @@ const ITEM = 44;
 
 /** « 7 h 30 » */
 function dire(hhmm: string): string {
+  if (LANG !== 'fr') return heureLocale(hhmm);
   const [h, m] = hhmm.split(':');
   return m === '00' ? `${Number(h)}${NB}h` : `${Number(h)}${NB}h${NB}${m}`;
 }

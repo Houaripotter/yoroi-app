@@ -168,7 +168,7 @@ export function Historique({ entries, fin, periode }: { entries: SleepEntry[]; f
           {w > 0
             ? grads.map((g) => (
                 <Ink key={`g${g}`} size={11} weight="bold" color={P.muted} style={{ position: 'absolute', right: 0, top: sy(g) - 8, width: DROITE - 4, textAlign: 'right' }}>
-                  {`${g / 60} h`}
+                  {traduire('{0} h', g / 60)}
                 </Ink>
               ))
             : null}

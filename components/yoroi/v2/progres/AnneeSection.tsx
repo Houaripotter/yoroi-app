@@ -119,9 +119,9 @@ export function AnneeSection() {
       <StatStrip
         style={{ marginHorizontal: GUTTER, marginTop: 26 }}
         items={[
-          { value: formatDuration(totals.minutes) || '0 h', label: traduire("d’entraînement en {0}", year) },
+          { value: formatDuration(totals.minutes) || traduire('{0} h', 0), label: traduire("d’entraînement en {0}", year) },
           { value: String(totals.days), label: traduire('jours actifs') },
-          { value: totals.topSport ? sportShortName(totals.topSport) : 'à venir', label: totals.topSport ? traduire("ton sport, {0} fois", totals.topCount) : traduire('ton sport favori') },
+          { value: totals.topSport ? sportShortName(totals.topSport) : traduire('à venir'), label: totals.topSport ? traduire("ton sport, {0} fois", totals.topCount) : traduire('ton sport favori') },
         ]}
       />
 

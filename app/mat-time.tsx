@@ -33,13 +33,13 @@ function isMat(t: Training & { activity_type?: string }): boolean {
 const minutesOf = (t: Training) => t.duration || t.duration_minutes || 0;
 
 function hm(min: number): string {
-  if (!min || min <= 0) return '0 h';
+  if (!min || min <= 0) return traduire('{0} h', 0);
   const m = Math.round(min);
   const h = Math.floor(m / 60);
   const r = m % 60;
   if (h === 0) return `${r} min`;
-  if (r === 0) return `${h} h`;
-  return `${h} h ${String(r).padStart(2, '0')}`;
+  if (r === 0) return traduire('{0} h', h);
+  return traduire('{0} h {1}', h, String(r).padStart(2, '0'));
 }
 
 export default function MatTimeScreen() {

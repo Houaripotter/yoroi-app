@@ -550,7 +550,7 @@ export default function DicteSeance() {
               </View>
             ) : null}
 
-            <Field label="Sport" src={src('sport')} empty={!form.sport ? traduire('pas reconnu, à choisir') : undefined}>
+            <Field label={traduire("Sport")} src={src('sport')} empty={!form.sport ? traduire('pas reconnu, à choisir') : undefined}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {sportChips.map((s) => {
                   const on = s === form.sport;
@@ -588,7 +588,7 @@ export default function DicteSeance() {
               {form.duration !== null ? <Stepper value={form.duration} step={5} min={5} max={600} unit={traduire("minutes")} size={22} button={34} format={(v) => fmtMinutes(v)} onChange={(v) => set({ duration: v, durationFrom: undefined, durationSec: undefined })} /> : null}
             </Field>
 
-            <Field label="Ressenti" src={src('ressenti')} empty={form.mood === null ? traduire('pas dit') : undefined}>
+            <Field label={traduire("Ressenti")} src={src('ressenti')} empty={form.mood === null ? traduire('pas dit') : undefined}>
               <ChoiceRow options={MOODS.map((m) => ({ value: m.value, label: m.label }))} value={form.mood} onChange={(v) => set({ mood: v, rating: v ? MOODS.find((m) => m.value === v)?.rating ?? null : null })} />
             </Field>
 
@@ -597,7 +597,7 @@ export default function DicteSeance() {
             </Field>
 
             {kind === 'combat' ? (
-              <Field label="Techniques" src={src('appris')} empty={form.learned.length === 0 ? traduire('aucune citée') : undefined} note={form.learned.length ? traduire('ce que tu as appris ou travaillé, pas les finitions de sparring') : undefined}>
+              <Field label={traduire("Techniques")} src={src('appris')} empty={form.learned.length === 0 ? traduire('aucune citée') : undefined} note={form.learned.length ? traduire('ce que tu as appris ou travaillé, pas les finitions de sparring') : undefined}>
                 {(['appris', 'drill', 'travaille', 'reussi'] as const).map((mode) => {
                   const list = form.learned.filter((l) => l.mode === mode);
                   if (!list.length) return null;
@@ -621,7 +621,7 @@ export default function DicteSeance() {
             ) : null}
 
             {kind === 'combat' && (form.grade || form.gradeEvent || form.club || form.coach) ? (
-              <Field label="Contexte" src={src('grade', 'club', 'prof')} note={form.gradeEvent ? traduire('passage de grade, bravo') : undefined}>
+              <Field label={traduire("Contexte")} src={src('grade', 'club', 'prof')} note={form.gradeEvent ? traduire('passage de grade, bravo') : undefined}>
                 <View style={{ gap: 8 }}>
                   {([['grade', 'Grade', 'Ceinture bleue...'], ['coach', 'Professeur', 'Nom du prof'], ['club', 'Club', 'Nom du club']] as const).map(([k, label, ph]) =>
                     form[k] || (k === 'grade' && form.gradeEvent) ? (
@@ -644,7 +644,7 @@ export default function DicteSeance() {
 
             {kind === 'combat' || form.rounds !== null ? (
               <Field
-                label="Rounds"
+                label={traduire("Rounds")}
                 src={src('rounds', 'blocs')}
                 empty={form.rounds === null ? traduire('pas dits') : form.roundMin ? traduire("de {0} min", form.roundMin) : undefined}
                 onAdd={form.rounds === null ? () => set({ rounds: 5 }) : undefined}
@@ -706,7 +706,7 @@ export default function DicteSeance() {
 
             {(kind === 'cardio' && !team) || form.distance !== null ? (
               <Field
-                label="Distance"
+                label={traduire("Distance")}
                 src={src('distance')}
                 note={pace ? `allure ${form.paceSaid ? '' : traduire('calculée ')}${pace}` : undefined}
                 empty={form.distance === null ? traduire('pas dite') : undefined}
@@ -718,7 +718,7 @@ export default function DicteSeance() {
             ) : null}
 
             {form.heartRate !== null || form.calories !== null ? (
-              <Field label="Cardio" src={src('fc', 'calories')}>
+              <Field label={traduire("Cardio")} src={src('fc', 'calories')}>
                 <View style={{ gap: 10 }}>
                   {form.heartRate !== null ? <Stepper value={form.heartRate} step={1} min={40} max={230} unit={traduire("battements par minute")} size={20} button={32} format={(v) => traduire("{0} bpm de moyenne", v)} onChange={(v) => set({ heartRate: v })} /> : null}
                   {form.calories !== null ? <Stepper value={form.calories} step={10} min={0} max={6000} unit="calories" size={20} button={32} format={(v) => `${v} kcal`} onChange={(v) => set({ calories: v })} /> : null}
@@ -774,9 +774,9 @@ export default function DicteSeance() {
                     <TextInput
                       value={form.team?.position ?? ''}
                       onChangeText={(t) => set({ team: { ...(form.team ?? {}), position: t || undefined } })}
-                      placeholder="Ailier, milieu, gardien..."
+                      placeholder={traduire("Ailier, milieu, gardien...")}
                       placeholderTextColor={P.muted}
-                      accessibilityLabel="Poste"
+                      accessibilityLabel={traduire("Poste")}
                       style={[fontStyle('bold'), { minHeight: 44, fontSize: 15, color: P.ink, paddingHorizontal: 12, borderRadius: 12, backgroundColor: P.paper }]}
                     />
                   </View>
@@ -784,7 +784,7 @@ export default function DicteSeance() {
               </Field>
             ) : null}
 
-            <Field label="Note" note={noteLines(form).length ? traduire("ajouté en tête : {0}", noteLines(form).join(' ; ')) : undefined}>
+            <Field label={traduire("Note")} note={noteLines(form).length ? traduire("ajouté en tête : {0}", noteLines(form).join(' ; ')) : undefined}>
               <TextInput
                 value={form.notes}
                 onChangeText={(t) => set({ notes: t })}
@@ -1046,7 +1046,7 @@ function TwinCard({ twin, linked, open, onLink, onNew, onUndo }: { twin: Trainin
   const bits = [
     twin.distance ? `${fmtNum(Math.round(twin.distance * 100) / 100)} km` : '',
     twin.duration_minutes ? fmtMinutes(twin.duration_minutes) : '',
-    twin.start_time ? `à ${String(twin.start_time).slice(0, 5)}` : '',
+    twin.start_time ? traduire('à {0}', String(twin.start_time).slice(0, 5)) : '',
   ].filter(Boolean);
   const what = getSportName(twin.sport).toLowerCase();
   if (!open && !linked) return null;
@@ -1070,7 +1070,7 @@ function TwinCard({ twin, linked, open, onLink, onNew, onUndo }: { twin: Trainin
         </Pressable>
       ) : (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          <BoutonPrincipal onPress={onLink} haptique="light" accessibilityLabel={traduire("Relier à cette séance")} label="Relier" hauteur={44} rayon={14} tailleTexte={14} lignes={1} compact styleBouton={{ paddingHorizontal: 16, gap: 6 }} icone={(col) => <Icon name="check" size={16} color={col} />} />
+          <BoutonPrincipal onPress={onLink} haptique="light" accessibilityLabel={traduire("Relier à cette séance")} label={traduire("Relier")} hauteur={44} rayon={14} tailleTexte={14} lignes={1} compact styleBouton={{ paddingHorizontal: 16, gap: 6 }} icone={(col) => <Icon name="check" size={16} color={col} />} />
           <Pressable onPress={onNew} accessibilityRole="button" accessibilityLabel={traduire("Créer une autre séance")} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: P.line2, backgroundColor: P.paper, justifyContent: 'center' }}>
             <Ink size={14} weight="bold">{traduire("C’est une autre séance")}</Ink>
           </Pressable>

@@ -111,7 +111,7 @@ export function HeroCardio({ trainings, today }: { trainings: Training[]; today:
       <Capitales texte={traduire('Ton endurance')} couleur={menthe.encre} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Gros valeur={m.minutes > 0 ? formatDuration(m.minutes) : '0 h'} sous={sous} />
+          <Gros valeur={m.minutes > 0 ? formatDuration(m.minutes) : traduire('{0} h', 0)} sous={sous} />
         </View>
         <Image source={illus.img('chaussure')} style={{ width: 46, height: 46 }} resizeMode="contain" accessibilityIgnoresInvertColors />
       </View>

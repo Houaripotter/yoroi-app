@@ -8,7 +8,7 @@ import { sessionTonnage } from '@/lib/v2/progres/strength';
 import { durationOf, formatTonnage, mondayOf, setsCount } from '@/lib/v2/trainingWeek';
 import type { UnitePoids } from '@/lib/v2/unitePoids';
 import { MONTHS, MONTHS_SHORT, addDaysISO, daysFrom, firstSport, parseRounds, workSets, parseExercises } from './sessionData';
-import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, DECIMAL, LANG, plageJours } from '@/lib/i18n/tr';
 
 /** Effort retenu quand la seance n'a pas d'effort note, comme l'ecran Charge (lib/v2/chargeReelle) */
 const DEFAULT_RPE = 5;
@@ -108,7 +108,7 @@ export function weekCompare(trainings: Training[], today: string): WeekCompare {
   const dayIndex = daysFrom(monday, today) + 1;
   const md = new Date(monday + 'T12:00:00');
   const sd = new Date(sunday + 'T12:00:00');
-  const range = md.getMonth() === sd.getMonth()
+  const range = LANG !== 'fr' ? plageJours(md, sd) : md.getMonth() === sd.getMonth()
     ? traduire("du {0} au {1} {2}", md.getDate(), sd.getDate(), MONTHS_SHORT[sd.getMonth()])
     : traduire("du {0} {1} au {2} {3}", md.getDate(), MONTHS_SHORT[md.getMonth()], sd.getDate(), MONTHS_SHORT[sd.getMonth()]);
   return {
@@ -185,6 +185,8 @@ export function groupHistory(trainings: Training[], today: string, mode: 'semain
         ? traduire('Cette semaine')
         : k === lastMonday
           ? traduire('Semaine dernière')
+          : LANG !== 'fr'
+            ? plageJours(md, sd, 'Du {0} au {1}', k.slice(0, 4) !== year ? k.slice(0, 4) : '')
           : md.getMonth() === sd.getMonth()
             ? traduire("Du {0} au {1} {2}{3}", md.getDate(), sd.getDate(), MONTHS_SHORT[sd.getMonth()], k.slice(0, 4) !== year ? ` ${k.slice(0, 4)}` : '')
             : traduire("Du {0} {1} au {2} {3}{4}", md.getDate(), MONTHS_SHORT[md.getMonth()], sd.getDate(), MONTHS_SHORT[sd.getMonth()], k.slice(0, 4) !== year ? ` ${k.slice(0, 4)}` : '');
@@ -216,7 +218,7 @@ export function keyFacts(t: Training, unite: UnitePoids = 'kg'): KeyFact[] {
   if (min > 0) {
     const h = Math.floor(min / 60);
     const m = Math.round(min % 60);
-    out.push({ kind: 'duree', text: h === 0 ? `${m} min` : m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, '0')}` });
+    out.push({ kind: 'duree', text: h === 0 ? `${m} min` : m === 0 ? traduire('{0} h', h) : traduire('{0} h {1}', h, String(m).padStart(2, '0')) });
   }
   const tonnage = sessionTonnage(t);
   // format unique du tonnage (lib/v2/trainingWeek)

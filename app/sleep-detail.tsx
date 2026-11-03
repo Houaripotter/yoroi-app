@@ -28,7 +28,10 @@ import { Historique, OngletsPeriode } from '@/components/yoroi/v2/nuit/Periodes'
 import type { Periode } from '@/components/yoroi/v2/nuit/Periodes';
 import { couleursPhases, duree, heure } from '@/components/yoroi/v2/nuit/outils';
 import { GrandeDuree } from '@/components/yoroi/v2/nuit/GrandeDuree';
-import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, DECIMAL, LANG, LOCALE } from '@/lib/i18n/tr';
+
+/** Hors français : l'heure « HH:MM » au format de la langue (« 6:30 PM », « 18:30 ») */
+const heureLocale = (t: string) => new Date(2026, 0, 1, parseInt(t, 10) || 0, parseInt(t.split(':')[1] ?? '0', 10) || 0).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
 import { jourLocalIso } from '@/lib/v2/dateLocale';
 
 type Detail = { nuit: NuitCalculee; coeur: MesureNuit | null; respiration: MesureNuit | null; temperature: MesureNuit | null };
@@ -58,6 +61,7 @@ function computeQuality(dur: number, deep: number, rem: number, awake: number): 
 /** « 23:05 » vers « 23 h 05 » */
 function clockTxt(t?: string): string {
   if (!t) return '';
+  if (LANG !== 'fr') return heureLocale(t);
   const [h, m] = t.split(':');
   return `${parseInt(h, 10)} h ${m ?? '00'}`;
 }
@@ -70,7 +74,7 @@ function SleepExample() {
           <Ink size={13} weight="bold" color="#C9D3EA">
             {traduire("Ta dernière nuit")}</Ink>
           <Ink size={60} weight="black" tight color={P.white}>
-            7 h 30
+            {traduire('{0} h {1}', 7, '30')}
           </Ink>
           <Ink size={15} weight="bold" color="#E4E9F3">
             {traduire("23 h 10 à 6 h 40")}</Ink>

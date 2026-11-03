@@ -16,10 +16,10 @@ const DAYS_LONG = [traduire('Dimanche'), traduire('Lundi'), traduire('Mardi'), t
 const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
 export function hm(min: number): string {
-  if (min <= 0) return '0 h';
+  if (min <= 0) return traduire('{0} h', 0);
   const h = Math.floor(min / 60);
   const m = Math.round(min % 60);
-  return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, '0')}`;
+  return m === 0 ? traduire('{0} h', h) : traduire('{0} h {1}', h, String(m).padStart(2, '0'));
 }
 
 export function clock(t?: string): string {

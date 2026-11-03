@@ -16,7 +16,10 @@ import { Icon } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { Sheet } from '@/components/yoroi/v2/seance/Sheet';
 import { P, blancA } from '@/components/yoroi/livePalette';
-import { traduire, LOCALE } from '@/lib/i18n/tr';
+import { traduire, LOCALE, LANG } from '@/lib/i18n/tr';
+
+/** Hors français : l'heure « HH:MM » au format de la langue (« 6:30 PM », « 18:30 ») */
+const heureLocale = (t: string) => new Date(2026, 0, 1, parseInt(t, 10) || 0, parseInt(t.split(':')[1] ?? '0', 10) || 0).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const NBSP = ' ';
@@ -41,6 +44,7 @@ export function sayTime(hhmm?: string | null): string {
   const [h, m] = hhmm.split(':');
   const hh = parseInt(h, 10);
   if (!Number.isFinite(hh)) return hhmm;
+  if (LANG !== 'fr') return heureLocale(hhmm);
   return !m || m === '00' ? `${hh}${NBSP}h` : `${hh}${NBSP}h${NBSP}${m}`;
 }
 

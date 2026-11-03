@@ -31,6 +31,7 @@ export function duree(min: number): { value: string; unit?: string } {
   if (m < 60) return { value: String(m), unit: 'min' };
   const h = Math.floor(m / 60);
   const r = m % 60;
+  if (LANG !== 'fr') return { value: r ? traduire('{0} h {1}', h, String(r).padStart(2, '0')) : traduire('{0} h', h) };
   return { value: r ? `${h}h${String(r).padStart(2, '0')}` : `${h}h` };
 }
 

@@ -100,7 +100,7 @@ function Barres({ jours }: { jours: JourRepas[] }) {
             </Ink>
             <View style={{ width: '100%', maxWidth: 30, height: h, borderRadius: 6, backgroundColor: v > 0 ? accent : P.line, opacity: v > 0 && !auj ? 0.55 : 1 }} />
             <Ink size={11} weight={auj ? 'extraBold' : 'medium'} color={auj ? P.ink : P.muted}>
-              {auj ? 'auj.' : jourCourt(j.date)}
+              {auj ? traduire('auj.') : jourCourt(j.date)}
             </Ink>
           </View>
         );

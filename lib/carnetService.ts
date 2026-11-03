@@ -8,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { lireListePourEcriture } from '@/lib/v2/sauvegarde/lectureSure';
 import { logger } from '@/lib/security/logger';
 import { intensite, niveauRpe } from './v2/intensite';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG } from '@/lib/i18n/tr';
 
 // ============================================
 // TYPES
@@ -649,6 +649,7 @@ export const formatDuration = (minutes: number): string => {
   }
   const hours = Math.floor(minutes / 60);
   const mins = Math.round(minutes % 60);
+  if (LANG !== 'fr') return mins > 0 ? traduire('{0} h {1}', hours, mins) : traduire('{0} h', hours);
   if (mins > 0) {
     return `${hours}h ${mins}min`;
   }

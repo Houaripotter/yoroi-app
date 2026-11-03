@@ -70,7 +70,7 @@ export function FastPhases({ elapsedHours, markers, color }: { elapsedHours: num
                   {traduire(m.label)}
                 </Ink>
                 <Ink size={12} weight="bold" color={P.ink2}>
-                  {m.hour === 0 ? traduire('dès le début') : `vers ${m.hour} h`}
+                  {m.hour === 0 ? traduire('dès le début') : traduire('vers {0} h', m.hour)}
                 </Ink>
               </View>
               {on ? (

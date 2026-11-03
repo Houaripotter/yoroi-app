@@ -57,7 +57,7 @@ export default function MeasurementsDetailScreen() {
             })
             .filter(Boolean)
         : [];
-      return { ...p, caption: others.length ? `aussi : ${others.join(', ')}` : undefined };
+      return { ...p, caption: others.length ? traduire('aussi : {0}', others.join(', ')) : undefined };
     });
   }, [active, points]);
 

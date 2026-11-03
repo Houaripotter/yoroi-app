@@ -33,7 +33,10 @@ import { useAnneauxHistorique } from '@/lib/v2/sante/useAnneauxHistorique';
 import { CarrouselSemaines } from './AnneauxSemaine';
 import type { SemaineRangee } from './AnneauxSemaine';
 import type { StyleValeurs } from '@/lib/v2/accueil/proposition';
-import { traduire, LOCALE } from '@/lib/i18n/tr';
+import { traduire, LOCALE, LANG } from '@/lib/i18n/tr';
+
+/** Hors français : l'heure « HH:MM » au format de la langue (« 6:30 PM », « 18:30 ») */
+const heureLocale = (t: string) => new Date(2026, 0, 1, parseInt(t, 10) || 0, parseInt(t.split(':')[1] ?? '0', 10) || 0).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
 import { useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
 
 export function TitreSection({ titre, sous }: { titre: string; sous?: string }) {
@@ -460,7 +463,7 @@ function MiniSommeil({ sleep, sleepGoal, jour = null }: { sleep: SleepEntry[]; s
       </CadreMini>
     );
   }
-  const heures = nuit.bedTime && nuit.wakeTime ? traduire("{0} à {1}", nuit.bedTime.replace(':', ' h '), nuit.wakeTime.replace(':', ' h ')) : null;
+  const heures = nuit.bedTime && nuit.wakeTime ? (LANG === 'fr' ? traduire("{0} à {1}", nuit.bedTime.replace(':', ' h '), nuit.wakeTime.replace(':', ' h ')) : traduire("{0} à {1}", heureLocale(nuit.bedTime), heureLocale(nuit.wakeTime))) : null;
   return (
     <CadreMini onPress={() => router.push('/sleep' as any)} a11y={traduire("Sommeil : {0}{1}", formatMinutes(nuit.duration), heures ? traduire(", de {0}", heures) : '')} titre={traduire("Sommeil")} couleur={t.texte}>
       <ChiffreAnime valeur={nuit.duration} format={(x) => formatMinutes(Math.round(x))} cle={jour ? `mini:sommeil:${jour}` : 'mini:sommeil'} taille={18} />

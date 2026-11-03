@@ -700,7 +700,7 @@ function Simulator({ defaultCurrent, defaultTarget, defaultDays }: { defaultCurr
                       </View>
                       <View style={{ flex: 1 }}>
                         <Ink size={13} weight="extraBold">
-                          {`Sel : ${d.sodium.toLowerCase()}`}
+                          {traduire('Sel : {0}', traduire(d.sodium).toLowerCase())}
                         </Ink>
                         <Ink size={12} weight="medium" color={P.ink2}>
                           {d.notes}

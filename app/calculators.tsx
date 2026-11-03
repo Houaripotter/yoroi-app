@@ -213,7 +213,7 @@ export default function CalculatorsScreen() {
           <CalcCard icon="drop" tone="indigo" title={traduire("Eau du jour")} sub={exerciseHours > 0 ? traduire("Avec {0} h d’exercice", fmt(exerciseHours)) : traduire('Au repos')} value={vWater ? fmt(exerciseHours > 0 ? vWater.withExercise : vWater.base) : null} unit="litres" empty={traduire("Entre ton poids")} onDetail={() => setDetail('water')}>
             <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
               {[0, 0.5, 1, 1.5, 2].map((x) => (
-                <Chip key={x} label={x === 0 ? traduire('Repos') : `${fmt(x)} h`} active={exerciseHours === x} onPress={() => setExerciseHours(x)} accent={SERIES.blue} />
+                <Chip key={x} label={x === 0 ? traduire('Repos') : traduire('{0} h', fmt(x))} active={exerciseHours === x} onPress={() => setExerciseHours(x)} accent={SERIES.blue} />
               ))}
             </View>
           </CalcCard>
@@ -358,9 +358,9 @@ export default function CalculatorsScreen() {
                 {traduire("Repères indicatifs, {0} (fois ton poids de corps)", EXERCISES[exercise].name.toLowerCase())}
               </Ink>
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <StdBox label="Débutant" value={EXERCISES[exercise].standards.beginner} color={P.ink2} />
-                <StdBox label="Intermédiaire" value={EXERCISES[exercise].standards.intermediate} color={P.indigo} />
-                <StdBox label="Avancé" value={EXERCISES[exercise].standards.advanced} color={P.mossText} />
+                <StdBox label={traduire("Débutant")} value={EXERCISES[exercise].standards.beginner} color={P.ink2} />
+                <StdBox label={traduire("Intermédiaire")} value={EXERCISES[exercise].standards.intermediate} color={P.indigo} />
+                <StdBox label={traduire("Avancé")} value={EXERCISES[exercise].standards.advanced} color={P.mossText} />
                 <StdBox label={traduire("Élite")} value={EXERCISES[exercise].standards.elite} color={P.goldDark} />
               </View>
             </Card>

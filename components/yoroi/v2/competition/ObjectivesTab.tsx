@@ -20,7 +20,7 @@ import { addDays, isoLocal, mediumDate, parseLocalDate, startOfToday } from '@/l
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { logger } from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
-import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, DECIMAL, traduirePluriel } from '@/lib/i18n/tr';
 
 export const TYPE_V2: Record<ObjectiveType, { label: string; glyph: GlyphKind; color: string; soft: string; text: string }> = {
   competition: { label: traduire('Compétition'), glyph: 'eventail', color: P.accent, soft: P.accentSoft, text: traduire('Un tournoi, un championnat') },
@@ -41,7 +41,8 @@ function Countdown({ c, color }: { c: CountdownInfo; color: string }) {
   }
   const frac = c.hours + c.minutes + c.seconds > 0;
   const days = frac ? c.daysRemaining - 1 : c.daysRemaining;
-  const blocks = days > 0 ? [[String(days), days > 1 ? 'jours' : 'jour'], [pad(c.hours), 'h'], [pad(c.minutes), 'min']] : [[pad(c.hours), 'h'], [pad(c.minutes), 'min'], [pad(c.seconds), 's']];
+  const uh = traduire('{0} h', '').trim();
+  const blocks = days > 0 ? [[String(days), traduirePluriel(days, days > 1, 'jour', 'jours')], [pad(c.hours), uh], [pad(c.minutes), 'min']] : [[pad(c.hours), uh], [pad(c.minutes), 'min'], [pad(c.seconds), 's']];
   return (
     <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 14 }}>
       {blocks.map(([v, u], i) => (
@@ -347,7 +348,7 @@ export function ObjectivesTab() {
             ) : null}
             {type === 'competition' || type === 'travel' ? <Field label={traduire("Lieu")} value={location} onChangeText={setLocation} placeholder={type === 'travel' ? 'Ex : Tokyo, Japon' : 'Ville, pays'} icon="flag" maxLength={80} /> : null}
             {type === 'weight' ? <Field label={traduire("Poids visé")} value={targetWeight} onChangeText={setTargetWeight} placeholder={traduire("Ex : 75")} keyboardType="decimal-pad" suffix="kg" icon="scale" /> : null}
-            <Field label="Notes" value={description} onChangeText={setDescription} placeholder={traduire("Détails, motivation")} multiline maxLength={300} />
+            <Field label={traduire("Notes")} value={description} onChangeText={setDescription} placeholder={traduire("Détails, motivation")} multiline maxLength={300} />
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <View style={{ flex: 1 }}>
                 <BigButton label={traduire("Retour")} tone="light" onPress={() => setType(null)} />

@@ -17,7 +17,7 @@
  * 134,6 et 147,2 tronques). Apple ne publie pas sa formule exacte ni sa FC max : c'est une reproduction.
  */
 import type { LowerBounds } from '@/lib/v2/seances/workoutMath';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG, LOCALE } from '@/lib/i18n/tr';
 
 /** Debut des zones 2, 3, 4 et 5, en part de la reserve cardiaque */
 export const RESERVE_APPLE = [0.6, 0.7, 0.8, 0.9] as const;
@@ -164,7 +164,7 @@ export function dateImport(iso: string | null | undefined, now: Date = new Date(
   if (!isFinite(d.getTime())) return null;
   const jour = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const ecart = Math.round((jour(now) - jour(d)) / 86400000);
-  const heure = `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`;
+  const heure = LANG !== 'fr' ? d.toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' }) : `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`;
   if (ecart === 0) return traduire('aujourd’hui à {0}', heure);
   if (ecart === 1) return traduire('hier à {0}', heure);
   const mois = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];

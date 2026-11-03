@@ -14,7 +14,7 @@ import Svg, { Circle, Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { Ink } from '../Ink';
 import { MARGE_STABLE, jourCourt } from '@/lib/v2/pesee/ligneDirectrice';
 import { POIDS, ToriiIcone } from './CourbePoids';
-import { DECIMAL } from '@/lib/i18n/tr';
+import { DECIMAL, LANG, traduire } from '@/lib/i18n/tr';
 
 const PISTE = '#EEEDF4';
 const BAR_H = 10;
@@ -39,8 +39,60 @@ type Props = {
 
 let seq = 0;
 
+type Morceau = { t: string; k?: 'kg' | 'date' | 'ok' };
+
+/** Hors français : une seule phrase traduite, les valeurs gardent leur couleur ({0} → valeurs[0]) */
+function phraseTraduite(fr: string, valeurs: Morceau[]): Morceau[] {
+  const out: Morceau[] = [];
+  for (const x of traduire(fr).split(/(\{\d\})/)) {
+    if (!x) continue;
+    const m = /^\{(\d)\}$/.exec(x);
+    if (m && valeurs[Number(m[1])]) out.push(valeurs[Number(m[1])]);
+    else out.push({ t: x });
+  }
+  // une date abrégée finit déjà par un point (« 3. Nov. ») : jamais deux points de suite
+  const der = out[out.length - 1];
+  if (der && der.t.endsWith('..')) der.t = der.t.slice(0, -1);
+  if (out.length > 1 && out[out.length - 1].t === '.' && out[out.length - 2].t.endsWith('.')) out.pop();
+  return out;
+}
+
+/** Hors français : la phrase du chemin en une clé par cas */
+function phraseCheminTraduite({ depart, cap, actuel, mode, torii, atteint }: Props): Morceau[] {
+  if (mode === 'maintien') {
+    const ecart = actuel - cap;
+    const marge = cap * MARGE_STABLE;
+    if (Math.abs(ecart) <= marge) return phraseTraduite('Dans ta zone de forme, à {0} kg de ton cap de {1} kg.', [{ t: kg1(Math.abs(ecart)) }, { t: kg1(cap) }]);
+    return phraseTraduite(ecart > 0 ? '{0} kg au-dessus de ton cap de {1} kg, ta zone va de {2} à {3} kg.' : '{0} kg en dessous de ton cap de {1} kg, ta zone va de {2} à {3} kg.', [{ t: kg1(Math.abs(ecart)), k: 'kg' }, { t: kg1(cap) }, { t: kg1(cap - marge) }, { t: kg1(cap + marge) }]);
+  }
+  const perte = mode === 'perte';
+  const fait = perte ? depart - actuel : actuel - depart;
+  const reste = Math.max(0, perte ? actuel - cap : cap - actuel);
+  if (atteint) {
+    const kgFait = { t: kg1(Math.abs(fait)), k: 'kg' as const };
+    if (torii) return phraseTraduite(perte ? 'Cap atteint le {0} : {1} kg perdus depuis ton départ. Garde ce cap.' : 'Cap atteint le {0} : {1} kg pris depuis ton départ. Garde ce cap.', [{ t: jourCourt(torii), k: 'ok' }, kgFait]);
+    return phraseTraduite(perte ? 'Cap atteint : {0} kg perdus depuis ton départ. Garde ce cap.' : 'Cap atteint : {0} kg pris depuis ton départ. Garde ce cap.', [kgFait]);
+  }
+  const debut = Math.abs(fait) < 0.05 ? 'debut' : fait > 0 ? 'avance' : 'recul';
+  const enAvance = perte ? 'perdus' : 'pris';
+  const cle =
+    debut === 'debut' ? 'Ton chemin commence, plus que {1} kg avant ton torii'
+    : debut === 'avance' ? `{0} kg ${enAvance}, plus que {1} kg avant ton torii`
+    : `{0} kg ${perte ? 'pris' : 'perdus'} depuis ton départ, plus que {1} kg avant ton torii`;
+  const valeurs: Morceau[] = [{ t: kg1(Math.abs(fait)), k: 'kg' }, { t: kg1(reste), k: 'kg' }];
+  if (torii) valeurs.push({ t: jourCourt(torii), k: 'date' });
+  return phraseTraduite(torii ? `${cle}, arrivée prévue le {2}.` : `${cle}.`, valeurs);
+}
+
 /** Le texte du chemin, pour l'accessibilite et la phrase */
 export function phraseChemin({ depart, cap, actuel, mode, torii, atteint }: Props): { pct: number | null; parts: { t: string; k?: 'kg' | 'date' | 'ok' }[] } {
+  if (LANG !== 'fr') {
+    const p = phraseCheminTraduite({ depart, cap, actuel, mode, torii, atteint });
+    if (mode === 'maintien') return { pct: null, parts: p };
+    const span = Math.abs(depart - cap);
+    const fait = mode === 'perte' ? depart - actuel : actuel - depart;
+    return { pct: atteint ? 1 : span < 0.05 ? 0 : Math.max(0, Math.min(1, fait / span)), parts: p };
+  }
   if (mode === 'maintien') {
     const ecart = actuel - cap;
     const marge = cap * MARGE_STABLE;
@@ -96,21 +148,21 @@ export function CheminTorii(props: Props) {
     markX = X(actuel);
   } else markX = (pct ?? 0) * trackW;
 
-  const toiTxt = `Toi ${kg1(actuel)} kg`;
+  const toiTxt = traduire('Toi {0} kg', kg1(actuel));
   const toiW = Math.round(toiTxt.length * 6.6 + 18);
   const toiLeft = Math.min(Math.max(markX - toiW / 2, 0), Math.max(0, trackW - toiW));
   const label = parts.map((p) => p.t).join('');
-  const titre = maintien ? 'Ta zone de forme' : 'Ton chemin vers le torii';
+  const titre = maintien ? traduire('Ta zone de forme') : traduire('Ton chemin vers le torii');
 
   return (
-    <View accessible accessibilityRole="progressbar" accessibilityLabel={`${titre}. ${maintien ? '' : `Départ ${kg1(depart)} kilos, cap ${kg1(cap)} kilos, toi ${kg1(actuel)} kilos. `}${label}`} accessibilityValue={pct != null ? { min: 0, max: 100, now: Math.round(pct * 100) } : undefined}>
+    <View accessible accessibilityRole="progressbar" accessibilityLabel={`${titre}. ${maintien ? '' : traduire('Départ {0} kilos, cap {1} kilos, toi {2} kilos. ', kg1(depart), kg1(cap), kg1(actuel))}${label}`} accessibilityValue={pct != null ? { min: 0, max: 100, now: Math.round(pct * 100) } : undefined}>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
         <Ink size={12.5} weight="extraBold" color={POIDS.axe} numberOfLines={1} style={{ flexShrink: 1 }}>
           {titre}
         </Ink>
         {pct != null ? (
           <Ink size={12.5} weight="bold" color={POIDS.axe} numberOfLines={1}>
-            {atteint ? '100 %' : `${Math.round(pct * 100)} % du chemin`}
+            {atteint ? traduire('{0} %', 100) : traduire('{0} % du chemin', Math.round(pct * 100))}
           </Ink>
         ) : null}
       </View>
@@ -154,7 +206,7 @@ export function CheminTorii(props: Props) {
       {/* depart a gauche, cap a droite */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, gap: 10 }}>
         <Ink size={12.5} weight="bold" color={POIDS.axe} numberOfLines={1}>
-          {maintien ? `${kg1(cap * (1 - MARGE_STABLE))} kg` : 'Départ '}
+          {maintien ? `${kg1(cap * (1 - MARGE_STABLE))} kg` : `${traduire('Départ')} `}
           {maintien ? null : (
             <Ink size={12.5} weight="extraBold" color={POIDS.encre}>
               {`${kg1(depart)} kg`}
@@ -162,7 +214,7 @@ export function CheminTorii(props: Props) {
           )}
         </Ink>
         <Ink size={12.5} weight="bold" color={POIDS.axe} numberOfLines={1}>
-          {maintien ? `${kg1(cap * (1 + MARGE_STABLE))} kg` : 'Cap '}
+          {maintien ? `${kg1(cap * (1 + MARGE_STABLE))} kg` : `${traduire('Cap')} `}
           {maintien ? null : (
             <Ink size={12.5} weight="extraBold" color={POIDS.capText}>
               {`${kg1(cap)} kg`}

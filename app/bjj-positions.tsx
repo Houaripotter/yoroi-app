@@ -153,7 +153,7 @@ export default function BJJPositionsScreen() {
           <Stat value={String(g.a)} label={traduire("tentatives")} color={N} />
           <Stat value={String(g.s)} label={traduire("finitions")} color={V} />
           <Stat value={`${g.rate} %`} label={traduire("réussite")} color={D} />
-          <Stat value={g.t >= 60 ? `${Math.floor(g.t / 60)} h` : `${g.t} min`} label={traduire("en position")} />
+          <Stat value={g.t >= 60 ? traduire('{0} h', Math.floor(g.t / 60)) : `${g.t} min`} label={traduire("en position")} />
         </Glass>
       </Enter>
 

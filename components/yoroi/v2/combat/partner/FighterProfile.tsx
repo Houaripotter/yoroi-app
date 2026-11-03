@@ -162,8 +162,8 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
           <Ink size={13} color={P.ink2}>
             {traduire("Écart par rapport à toi : plus, il est plus lourd ou plus grand")}</Ink>
         </View>
-        <Physical label="Poids" unit="kg" value={p.weightDeltaKg} onChange={(v) => onChange({ weightDeltaKg: v })} />
-        <Physical label="Taille" unit="cm" value={p.heightDeltaCm} onChange={(v) => onChange({ heightDeltaCm: v })} />
+        <Physical label={traduire("Poids")} unit="kg" value={p.weightDeltaKg} onChange={(v) => onChange({ weightDeltaKg: v })} />
+        <Physical label={traduire("Taille")} unit="cm" value={p.heightDeltaCm} onChange={(v) => onChange({ heightDeltaCm: v })} />
         <Physical label={traduire("Allonge")} unit="cm" value={p.reachDeltaCm} onChange={(v) => onChange({ reachDeltaCm: v })} />
       </Card>
 

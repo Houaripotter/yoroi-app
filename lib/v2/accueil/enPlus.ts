@@ -14,7 +14,7 @@ import type { Training } from '@/lib/database';
 import { computeRecords, formatRecordValue, recordShortTitle } from '@/lib/v2/seances/records';
 import type { UnitePoids } from '@/lib/v2/unitePoids';
 import { dedupeTrainings } from '@/lib/v2/seances/dedupe';
-import { traduire, LOCALE, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, LOCALE, DECIMAL, LANG } from '@/lib/i18n/tr';
 
 type Point = { date: string; value: number };
 
@@ -136,7 +136,7 @@ export function prochainePesee(jours: number[] | null | undefined, heure: [numbe
     if (!js.includes(d.getDay())) continue;
     if (i === 0 && peseAujourdhui) continue;
     const quand = i === 0 ? traduire('Aujourd’hui') : i === 1 ? traduire('Demain') : JOURS[d.getDay()].charAt(0).toUpperCase() + JOURS[d.getDay()].slice(1);
-    const h = heure ? `${heure[0]} h ${p2(heure[1])}` : null;
+    const h = heure ? (LANG !== 'fr' ? new Date(2026, 0, 1, heure[0], heure[1]).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' }) : `${heure[0]} h ${p2(heure[1])}`) : null;
     return { quand, dans: i, heure: h };
   }
   return null;
@@ -238,7 +238,7 @@ export function texteMesureSante(m: MesureSanteJour): { valeur: string; unite: s
     case 'sommeil': {
       const h = Math.floor(Math.round(m.valeur) / 60);
       const mm = Math.round(m.valeur) % 60;
-      return h > 0 ? { valeur: `${h} h ${p2(mm)}`, unite: '' } : { valeur: String(mm), unite: 'min' };
+      return h > 0 ? { valeur: traduire('{0} h {1}', h, p2(mm)), unite: '' } : { valeur: String(mm), unite: 'min' };
     }
     case 'debout':
       return { valeur: entier(m.valeur), unite: 'h' };

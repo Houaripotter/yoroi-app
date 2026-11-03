@@ -26,7 +26,7 @@ import { tap } from './ui';
 import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
 import { P, paletteSombre } from '@/components/yoroi/livePalette';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, LANG } from '@/lib/i18n/tr';
 import { aideKilos, libelleKilos } from '@/lib/v2/seances/kilosSouleves';
 
 const NB = ' ';
@@ -36,6 +36,7 @@ function fmtMin(min: number): string {
   if (m < 60) return `${m}${NB}min`;
   const h = Math.floor(m / 60);
   const r = m % 60;
+  if (LANG !== 'fr') return r ? traduire('{0} h {1}', h, String(r).padStart(2, '0')) : traduire('{0} h', h);
   return r ? `${h}${NB}h${NB}${String(r).padStart(2, '0')}` : `${h}${NB}h`;
 }
 

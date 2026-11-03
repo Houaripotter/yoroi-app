@@ -63,13 +63,13 @@ export default function NotFoundScreen() {
 
         <Animated.View entering={ENTREE} style={[styles.glass, { shadowColor: c.shadow }]}>
           <Ink size={14} weight="bold" color={c.accent}>
-            Page introuvable
+            {traduire("Page introuvable")}
           </Ink>
           <Ink size={30} weight="black" tight>
-            Tu t’es égaré, ronin
+            {traduire("Tu t’es égaré, ronin")}
           </Ink>
           <Ink size={15} weight="medium" color={c.textSecondary} style={{ lineHeight: 22 }}>
-            Le lien que tu as suivi mène à un écran qui a été déplacé ou supprimé. Reviens à l’accueil pour continuer.
+            {traduire("Le lien que tu as suivi mène à un écran qui a été déplacé ou supprimé. Reviens à l’accueil pour continuer.")}
           </Ink>
         </Animated.View>
 
@@ -77,19 +77,19 @@ export default function NotFoundScreen() {
           <Pressable
             onPress={goHome}
             accessibilityRole="button"
-            accessibilityLabel="Retour à l'accueil"
+            accessibilityLabel={traduire("Retour à l'accueil")}
             style={({ pressed }) => [styles.primary, { backgroundColor: pressed ? c.primaryPressed : c.primary, shadowColor: '#1B2A44' }]}
           >
             <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
               <Path d="M4 11l8-7 8 7M6 9.5V20h12V9.5" stroke={c.onAccent} strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
             <Ink size={17} weight="extraBold" color={c.onPrimary}>
-              Retour à l’accueil
+              {traduire("Retour à l’accueil")}
             </Ink>
           </Pressable>
           <Pressable onPress={goBack} accessibilityRole="button" style={[styles.secondary, { borderColor: c.border, backgroundColor: c.surface }]}>
             <Ink size={16} weight="bold" color={c.textSecondary}>
-              Revenir en arrière
+              {traduire("Revenir en arrière")}
             </Ink>
           </Pressable>
         </View>

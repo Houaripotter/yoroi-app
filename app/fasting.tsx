@@ -474,7 +474,7 @@ export default function FastingScreen() {
           {traduire("Durée du jeûne")}</Ink>
         <HRow>
           {['12', '14', '16', '18', '20', '24'].map((h) => (
-            <Chip key={h} label={`${h} h`} active={customDuration === h} onPress={() => setCustomDuration(h)} />
+            <Chip key={h} label={traduire('{0} h', h)} active={customDuration === h} onPress={() => setCustomDuration(h)} />
           ))}
         </HRow>
         <TextField value={customDuration} onChange={(v) => setCustomDuration(v.replace(/[^0-9]/g, ''))} placeholder="16" />
@@ -507,7 +507,7 @@ export default function FastingScreen() {
         subtitle={traduire("Entre les heures de prière de ta ville")}
         footer={<BigButton label={saving ? traduire('Démarrage') : traduire('Commencer le jeûne')} onPress={saveRamadan} disabled={saving} icon="moon" />}
       >
-        <TextField label="Ville" value={city} onChange={setCity} placeholder={traduire("Paris")} />
+        <TextField label={traduire("Ville")} value={city} onChange={setCity} placeholder={traduire("Paris")} />
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <View style={{ flex: 1 }}>
             <TextField label={traduire("Fajr (aube)")} value={fajr} onChange={setFajr} placeholder="05:30" />

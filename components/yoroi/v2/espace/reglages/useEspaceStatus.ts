@@ -13,7 +13,7 @@ import { getSanteSource } from '@/lib/v2/sante/data';
 import type { SanteSource } from '@/lib/v2/sante/data';
 import { logger } from '@/lib/security/logger';
 import { getLastOffPhoneBackupDate } from '@/lib/v2/sauvegarde/rappel';
-import { traduire, DECIMAL, LOCALE } from '@/lib/i18n/tr';
+import { traduire, DECIMAL, LOCALE, LANG } from '@/lib/i18n/tr';
 
 export type EspaceStatus = {
   /** undefined : en cours de lecture ; null : jamais sauvegarde */
@@ -117,9 +117,10 @@ export function useEspaceStatus() {
   return { status, reload };
 }
 
-const MOIS = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
+const MOIS = [traduire('janv.'), traduire('févr.'), traduire('mars'), traduire('avr.'), traduire('mai'), traduire('juin'), traduire('juil.'), traduire('août'), traduire('sept.'), traduire('oct.'), traduire('nov.'), traduire('déc.')];
 
 function hour(d: Date): string {
+  if (LANG !== 'fr') return d.toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
   const m = d.getMinutes();
   return m === 0 ? `${d.getHours()} h` : `${d.getHours()} h ${String(m).padStart(2, '0')}`;
 }

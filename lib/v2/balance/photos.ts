@@ -8,7 +8,7 @@
  */
 import { BALANCE_PROMPT, readPhotoRefs } from './format';
 import type { DateSource } from './format';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG, LOCALE } from '@/lib/i18n/tr';
 
 export { readPhotoRefs };
 
@@ -136,6 +136,7 @@ export function frenchDateTime(at: number): string {
 /** « 8 h 12 » */
 export function frenchTime(at: number): string {
   const d = new Date(at);
+  if (LANG !== 'fr') return d.toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
   return `${d.getHours()} h ${pad2(d.getMinutes())}`;
 }
 

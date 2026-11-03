@@ -46,7 +46,7 @@ function SleepExample() {
           <Ink size={13} weight="bold" color="#C9D3EA">
             {traduire("Ta dernière nuit")}</Ink>
           <Ink size={60} weight="black" tight color={P.white}>
-            7 h 30
+            {traduire('{0} h {1}', 7, '30')}
           </Ink>
           <Ink size={15} weight="bold" color="#E4E9F3">
             {traduire("23 h 10 à 6 h 40")}</Ink>
