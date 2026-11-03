@@ -6,6 +6,7 @@ import Svg, { Path } from 'react-native-svg';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { Ink } from '@/components/yoroi/v2/Ink';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 // ============================================
 // En-tete d'ecran (refonte v2) : bouton rond, grand titre a gauche.
@@ -21,6 +22,9 @@ interface HeaderProps {
   rightElement?: React.ReactNode;
   transparent?: boolean; // conserve pour compatibilite
 }
+
+/** Le chevron retour (retourne en arabe) */
+const RETOUR = 'M15 5l-7 7 7 7';
 
 function RoundIcon({ d, onPress, label }: { d: string; onPress: () => void; label: string }) {
   const { theme } = useYoroiTheme();
@@ -43,7 +47,7 @@ function RoundIcon({ d, onPress, label }: { d: string; onPress: () => void; labe
         { backgroundColor: 'rgba(255,255,255,0.92)', borderColor: c.divider, shadowColor: c.shadow, transform: [{ scale: pressed ? 0.94 : 1 }] },
       ]}
     >
-      <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={d === RETOUR ? miroirSiRTL : undefined}>
         <Path d={d} stroke={c.ink} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
       </Svg>
     </Pressable>
@@ -88,7 +92,7 @@ export function Header({
       {hasButtons ? (
         <View style={styles.row}>
           <View style={styles.left}>
-            {showBack ? <RoundIcon d="M15 5l-7 7 7 7" onPress={handleBack} label="Retour" /> : null}
+            {showBack ? <RoundIcon d={RETOUR} onPress={handleBack} label="Retour" /> : null}
             {showClose ? <RoundIcon d="M6 6l12 12M18 6L6 18" onPress={handleClose} label="Fermer" /> : null}
           </View>
           <View style={styles.right}>{rightElement}</View>
