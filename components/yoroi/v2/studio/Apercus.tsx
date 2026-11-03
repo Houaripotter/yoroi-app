@@ -17,6 +17,7 @@ import { PAYWALL_VARIANTS, setPaywallVariant, type PaywallVariant } from '@/lib/
 import { FREE_LIMITS } from '@/lib/v2/premium/limits';
 import { VISITE_TITRES } from '@/components/yoroi/v2/tour/VisiteGuidee';
 import { ONBOARDING_SCREEN_LABELS } from './PreviewBar';
+import { ecranAPosition } from '@/lib/v2/onboarding/ordreEcrans';
 import { Chip, ChipWrap, KV, Note, SmallAction, StudioSection, SubTitle, useStudio } from './parts';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire } from '@/lib/i18n/tr';
@@ -40,7 +41,8 @@ export function openPresentation(router: Router, step = 0) {
   router.push(`/onboarding-tour?preview=1&step=${step}` as never);
 }
 
-const PAYWALL_PAGE = ONBOARDING_SCREEN_LABELS.length - 1;
+// 3 novembre 2026 : les puces suivent l'ordre reel du parcours ; l'ecran ouvert est son numero interne (lib/v2/onboarding/ordreEcrans.ts)
+const PAYWALL_PAGE = ecranAPosition(ONBOARDING_SCREEN_LABELS.length - 1);
 
 export function Apercus() {
   const { theme } = useYoroiTheme();
@@ -87,7 +89,7 @@ export function Apercus() {
         <Ink size={15} weight="extraBold">{traduire("Onboarding, écran par écran")}</Ink>
         <ChipWrap>
           {ONBOARDING_SCREEN_LABELS.map((label, i) => (
-            <Chip key={label} label={`${i + 1}. ${label}`} accessibilityLabel={traduire("Ouvrir l’écran {0}, {1}", i + 1, label)} onPress={() => openOnboardingPreview(router, i)} />
+            <Chip key={label} label={`${i + 1}. ${label}`} accessibilityLabel={traduire("Ouvrir l’écran {0}, {1}", i + 1, label)} onPress={() => openOnboardingPreview(router, ecranAPosition(i))} />
           ))}
         </ChipWrap>
         <Note>{traduire("Une barre en bas te fait passer d’un écran à l’autre, la croix ferme. Aucune réponse, pesée ou achat n’est enregistré.")}</Note>
