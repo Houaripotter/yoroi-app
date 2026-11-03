@@ -16,6 +16,7 @@ import type { Source } from '@/lib/v2/nutrition/formulas';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
 import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
+import { ICONES_SENS, miroirSiRTL } from '@/lib/v2/rtl';
 
 export { P, tap };
 
@@ -109,7 +110,7 @@ export type NIconName = keyof typeof PATHS;
 export function NIcon({ name, size = 22, color = P.ink, width = 2.2, sticker }: { name: NIconName; size?: number; color?: string; width?: number; sticker?: NomSticker | false }) {
   return (
     <IconeOuSticker nom={name} sticker={sticker} taille={size}>
-      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={ICONES_SENS.has(name) ? miroirSiRTL : undefined}>
         <Path d={PATHS[name]} stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" fill="none" />
       </Svg>
     </IconeOuSticker>
