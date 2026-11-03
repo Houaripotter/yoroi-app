@@ -6,11 +6,17 @@
 import React from 'react';
 import { Image, Pressable, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { useYoroiTheme } from '@/components/yoroi';
+// 3 novembre 2026 : le theme lu a sa source et le petit retour haptique ici, pour que les briques servent aussi
+// hors de l'onglet (Mes cartes, studio des cartes, import des pesees) sans tirer tout le kit de l'onglet
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
-import { tap } from './ui';
+
+const tap = () => {
+  impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+};
 
 export type TeinteA = 'creme' | 'bleu' | 'lilas' | 'menthe' | 'peche';
 
