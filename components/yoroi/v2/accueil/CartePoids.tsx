@@ -79,6 +79,7 @@ import { couleurActivite } from './Visus';
 import { traduire, LANG } from '@/lib/i18n/tr';
 import { useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
 import type { prochainePesee } from '@/lib/v2/accueil/enPlus';
+import { ltrSiRTL } from '@/lib/v2/rtl';
 
 const PERIODE_TEXTE: Record<number, string> = { 30: traduire('en 1 mois'), 90: traduire('en 3 mois'), 180: traduire('en 6 mois'), 365: traduire('en 1 an'), [PERIODE_PLAN]: traduire('depuis ton début') };
 
@@ -326,7 +327,7 @@ function LigneDePaliers({ depart, ligne, sombre }: { depart: number; ligne: Lign
     </View>
   );
   return (
-    <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ height: L.hauteur, marginTop: 18, marginLeft: L.margeG, marginRight: L.margeD }}>
+    <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={[{ height: L.hauteur, marginTop: 18, marginLeft: L.margeG, marginRight: L.margeD }, ltrSiRTL]}>
       {ligne.paliers.map((_, i) => (
         <View key={`t${i}`} style={{ position: 'absolute', top: L.centre - L.trait / 2, height: L.trait, left: x(i), width: `${100 / n}%`, borderRadius: L.trait / 2, backgroundColor: i < ligne.atteints ? accent : P.line }} />
       ))}
@@ -975,7 +976,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
               {traduire('Ton poids').toUpperCase()}
             </Ink>
             <View
-              style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4, marginTop: 4, alignSelf: 'flex-start' }}
+              style={[{ flexDirection: 'row', alignItems: 'baseline', gap: 4, marginTop: 4, alignSelf: 'flex-start' }, ltrSiRTL]}
               onLayout={(e) => {
                 const w = e.nativeEvent.layout.width;
                 if (w > 0 && Math.abs(w - largeurPoids) > 1) setLargeurPoids(w);
