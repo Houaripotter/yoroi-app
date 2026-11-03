@@ -20,6 +20,7 @@ import { P } from '@/components/yoroi/livePalette';
 import { carteBlanche, OMBRE_CARTE } from '@/components/yoroi/v2/seance/pastel';
 import { traduire } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 // 27 octobre 2026 (maquettes Pastel) : 16 points des bords, comme l'accueil
 export const GUTTER = 16;
@@ -34,7 +35,7 @@ export function tapSelect() {
 
 export function Chevron({ color, size = 16, dir = 'right' }: { color: string; size?: number; dir?: 'right' | 'left' }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}>
       <Path d={dir === 'right' ? 'M9 5l7 7-7 7' : 'M15 5l-7 7 7 7'} stroke={color} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
