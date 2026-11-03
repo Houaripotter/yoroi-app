@@ -27,6 +27,11 @@
  * reste dans la zone sure (deplacement.ts). Ta place est gardee par carte et par format (store.ts), en relatif ;
  * « Recadrer automatiquement » et « Replacer les chiffres » rendent la place automatique. « Deplacer les chiffres »
  * propose Haut, Milieu et Bas, pour qui ne peut pas glisser.
+ *
+ * 3 novembre 2026 (photos d'exemple) : en composition Ta photo sans ta photo, l'apercu montre une photo d'EXEMPLE
+ * (lib/v2/cartes/exemples.ts) avec le bandeau « Exemple, ajoute ta photo » et son bouton. Tes chiffres restent les
+ * tiens. Enregistrer, Partager et Copier ne prennent JAMAIS l'exemple : la carte repasse sur le dessin le temps de la
+ * capture (visuelsSansExemple), puis l'exemple revient.
  */
 import React, { useLayoutEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
@@ -50,6 +55,8 @@ import type { Recadrage } from '@/lib/v2/cartes/moteur/protection';
 import type { CarteData, CompositionId, FamilleMoteur, Masque, OptionsCarte, StyleCarte } from '@/lib/v2/cartes/types';
 import { CarteApercu, CARTE_W, Damier, HAUTEURS, optionsDessinees, planNouveauMoteur, useTaillePhoto } from '../CarteRendu';
 import type { useCarte } from '../useCarte';
+import { exemplePourCarte, rangStudio, visuelsSansExemple } from '@/lib/v2/cartes/exemples';
+import { visuelsExemple } from '../exemples';
 
 type Couleurs = ReturnType<typeof useYoroiTheme>['theme']['colors'];
 
@@ -138,6 +145,28 @@ function Pastilles({ children }: { children: React.ReactNode }) {
   return <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{children}</View>;
 }
 
+/** 3 novembre 2026 : la pastille « Exemple » posee sur l'apercu, en haut a droite (jamais dans la capture) */
+function PastilleApercu({ c }: { c: Couleurs }) {
+  return (
+    <View testID="pastille-exemple-studio" pointerEvents="none" style={{ position: 'absolute', top: 8, right: 8, paddingHorizontal: 8, height: 21, borderRadius: 11, justifyContent: 'center', backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
+      <Ink size={11} weight="black" color={c.ink} style={{ lineHeight: 14 }}>{traduire('Exemple')}</Ink>
+    </View>
+  );
+}
+
+/** 3 novembre 2026 : le bandeau de l'exemple, juste sous l'apercu, avec le bouton d'ajout */
+function BandeauExemple({ c, onAjouter, desactive, largeur }: { c: Couleurs; onAjouter: () => void; desactive?: boolean; largeur: number }) {
+  return (
+    <View testID="bandeau-exemple" style={{ width: largeur, marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 12, paddingRight: 5, paddingVertical: 5, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
+      <Icon name="image" size={16} color={c.ink} />
+      <Ink size={13.5} weight="extraBold" color={c.ink} numberOfLines={1} style={{ flex: 1 }}>{traduire('Exemple, ajoute ta photo')}</Ink>
+      <Pressable testID="exemple-ajouter" onPress={onAjouter} disabled={desactive} accessibilityRole="button" accessibilityLabel={traduire('Ajouter ta photo')} hitSlop={6} style={({ pressed }) => ({ minHeight: 34, paddingHorizontal: 12, borderRadius: 17, justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.primary, opacity: desactive ? 0.5 : 1 })}>
+        <Ink size={13} weight="extraBold" color={c.onPrimary} numberOfLines={1}>{traduire('Ajouter')}</Ink>
+      </Pressable>
+    </View>
+  );
+}
+
 /** Vrai si la carte montre un poids (pour proposer de le masquer) */
 export function cartePeutMasquerPoids(d: CarteData): boolean {
   return d.moment === 'pesee' || (d.moment === 'semaine' && !!d.semaine?.poidsFin) || (!!d.exploit && exploitAvecPoids(d.exploit));
@@ -168,9 +197,11 @@ export type PropsStudio = {
   optionsEnPlus?: Partial<OptionsCarte>;
   /** garde avant un partage (Avant apres : la phrase de prudence la premiere fois) */
   avantPartage?: (partir: () => void) => void;
+  /** 3 novembre 2026 : la photo d'exemple de la vignette touchee (&exemple=), pour montrer la meme */
+  exempleVoulu?: string | null;
 };
 
-export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, avantPartage }: PropsStudio) {
+export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, avantPartage, exempleVoulu }: PropsStudio) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const insets = useSafeAreaInsets();
@@ -185,7 +216,12 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
   const famille = o.familleMoteur && familles.includes(o.familleMoteur) ? o.familleMoteur : familles[0];
   const compos = compositionsPour(data, famille).filter((x) => x !== 'Aplus');
   const photo = optionsDessinees(o, k.visuels).photo;
-  const compo = compositionEffective(data, famille, o.compo ?? (photo ? 'A' : null), !!photo);
+  const voulue = o.compo ?? (photo ? 'A' : null);
+  // 3 novembre 2026 : Ta photo sans ta photo, l'apercu montre l'exemple de la carte ; jamais pendant une capture
+  const [capture, setCapture] = useState(false);
+  const exId = !k.photo && voulue === 'A' ? exemplePourCarte(data, rangStudio(data.cle, exempleVoulu), false, famille) : null;
+  const montrerExemple = !!exId && !capture;
+  const compo = compositionEffective(data, famille, voulue, !!photo || montrerExemple);
   const recadrable = compo === 'A' && !!photo && famille !== 'transfo';
   const estAuto = compo === 'autocollant';
   const H = HAUTEURS[o.format];
@@ -199,7 +235,8 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
 
   // la taille de l'apercu : la place libre, en gardant au moins 240 points pour les reglages
   const barre = 12 + 56 + 10 + 52 + 14 + insets.bottom;
-  const libre = height - insets.top - 52 - barre;
+  // le bandeau de l'exemple sous l'apercu prend sa place (3 novembre 2026)
+  const libre = height - insets.top - 52 - barre - (montrerExemple && !large ? 54 : 0);
   const dispoH = large ? height - insets.top - 52 - 40 : Math.max(230, Math.min(libre * 0.5, libre - 290));
   const dispoW = large ? width * 0.55 - 40 : width - 48;
   const largeur = Math.floor(Math.min(dispoW, ((dispoH - 16) * CARTE_W) / H));
@@ -211,7 +248,9 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
   const fmt = formatMoteur(o.format);
   const taille = useTaillePhoto(photo);
   // le meme calcul que la carte dessinee (pur et leger), refait a chaque rendu
-  const planS = planNouveauMoteur(data, o, k.visuels, u, taille)?.plan ?? null;
+  const oApercu: OptionsCarte = montrerExemple ? { ...o, fond: 'photo', sansPersonne: false, epure: false } : o;
+  const visuelsBase = montrerExemple && exId ? visuelsExemple(k.visuels, exId) : visuelsSansExemple(k.visuels);
+  const planS = planNouveauMoteur(data, oApercu, visuelsBase, u, visuelsBase.taillePhoto ?? taille)?.plan ?? null;
   const dep = planS?.deplacement ?? null;
   const deplacable = !!dep && ((planS?.type === 'photo' && recadrable) || (planS?.type === 'autocollant' && !!k.photo));
   const cle = cleBloc(famille, compo, fmt);
@@ -344,7 +383,22 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
   // la fine ligne du guide accroche, pendant le geste (en points de l'apercu)
   const styleGuideX = useAnimatedStyle(() => ({ opacity: guideX.value >= 0 ? 0.95 : 0, left: Math.max(0, guideX.value) / versCarte - 0.75 }));
   const styleGuideY = useAnimatedStyle(() => ({ opacity: guideY.value >= 0 ? 0.95 : 0, top: Math.max(0, guideY.value) / versCarte - 0.75 }));
-  const visuels = { ...k.visuels, enveloppePhoto, ...(deplacable ? { enveloppeBloc } : null) };
+  const visuels = { ...visuelsBase, enveloppePhoto, ...(deplacable ? { enveloppeBloc } : null) };
+  /**
+   * 3 novembre 2026 : un export ne contient JAMAIS l'exemple. Avec l'exemple a l'apercu, la carte repasse d'abord sur
+   * le dessin (deux images dessinees), la capture part, puis l'exemple revient.
+   */
+  const sansExemple = (f: () => unknown) => {
+    if (!montrerExemple) {
+      void f();
+      return;
+    }
+    setCapture(true);
+    const fin = () => setCapture(false);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      Promise.resolve().then(f).then(fin, fin);
+    }));
+  };
 
   // --- la photo : ajouter, changer, prendre, enlever ; une photo ajoutee depuis Dessin ou Donnees passe en Ta photo ---
   const ajouterPhoto = async (src: 'gallery' | 'camera') => {
@@ -377,10 +431,11 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
             ref={k.ref}
             largeur={largeur}
             data={data}
-            options={o}
+            options={oApercu}
             visuels={visuels}
             dessous={estAuto ? (k.photo ? <Image source={{ uri: k.photo }} resizeMode="cover" style={{ width: '100%', height: '100%' }} /> : <Damier w={largeur} h={(largeur * H) / CARTE_W} />) : undefined}
           />
+          {montrerExemple ? <PastilleApercu c={c} /> : null}
           {deplacable ? (
             <>
               <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 0, bottom: 0, width: 1.5, backgroundColor: COULEUR_GUIDE }, styleGuideX]} />
@@ -389,6 +444,7 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
           ) : null}
         </View>
       </GestureDetector>
+      {montrerExemple ? <BandeauExemple c={c} largeur={Math.min(width - 32, Math.max(largeur, 300))} onAjouter={() => void ajouterPhoto('gallery')} desactive={k.photoEnCours} /> : null}
     </View>
   );
 
@@ -489,8 +545,8 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
   // l'autocollant : Copier (a coller dans ta story Instagram) et Enregistrer (pour TikTok, ou si Coller manque sur Android)
   const boutonsAuto = (
     <View style={{ gap: 10 }}>
-      <BoutonPrincipal onPress={() => void k.copierAutocollantSeul()} haptique="none" disabled={!!k.busy} accessibilityLabel={traduire('Copier l’autocollant')} accessibilityHint={traduire('Dans ta story Instagram, appuie longtemps puis Coller')} label={k.busy === 'copie' ? traduire('Un instant') : k.copie ? traduire('Autocollant copié') : traduire('Copier l’autocollant')} tailleTexte={16} lignes={1} hauteur={56} icone={(col) => <Icon name={k.copie ? 'check' : 'doc'} size={19} color={col} />} />
-      <Pressable onPress={() => void k.enregistrerAutocollantSeul()} disabled={!!k.busy} accessibilityRole="button" accessibilityLabel={traduire('Enregistrer l’autocollant dans la pellicule')} style={({ pressed }) => ({ height: 52, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
+      <BoutonPrincipal onPress={() => sansExemple(() => k.copierAutocollantSeul())} haptique="none" disabled={!!k.busy} accessibilityLabel={traduire('Copier l’autocollant')} accessibilityHint={traduire('Dans ta story Instagram, appuie longtemps puis Coller')} label={k.busy === 'copie' ? traduire('Un instant') : k.copie ? traduire('Autocollant copié') : traduire('Copier l’autocollant')} tailleTexte={16} lignes={1} hauteur={56} icone={(col) => <Icon name={k.copie ? 'check' : 'doc'} size={19} color={col} />} />
+      <Pressable onPress={() => sansExemple(() => k.enregistrerAutocollantSeul())} disabled={!!k.busy} accessibilityRole="button" accessibilityLabel={traduire('Enregistrer l’autocollant dans la pellicule')} style={({ pressed }) => ({ height: 52, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
         <Icon name={k.saved ? 'check' : 'download'} size={19} color={k.saved ? c.successText : c.ink} />
         <Ink size={15} weight="extraBold" color={k.saved ? c.successText : c.ink}>{k.busy === 'save' ? traduire('Un instant') : k.saved ? traduire('Enregistré') : traduire('Enregistrer')}</Ink>
       </Pressable>
@@ -499,13 +555,13 @@ export function StudioMoteur({ data, k, onRetour, sectionPhotos, optionsEnPlus, 
 
   const boutons = estAuto ? boutonsAuto : (
     <View style={{ gap: 10 }}>
-      <BoutonPrincipal onPress={() => garde(() => void k.partagerEnStory())} haptique="none" disabled={!!k.busy} accessibilityLabel={traduire('Partager en story')} accessibilityHint={traduire('Ouvre le partage de ton téléphone : choisis Instagram, puis Story')} label={k.busy === 'story' ? traduire('Un instant') : traduire('Partager en story')} tailleTexte={16} lignes={1} hauteur={56} icone={(col) => <Icon name="share" size={19} color={col} />} />
+      <BoutonPrincipal onPress={() => garde(() => sansExemple(() => k.partagerEnStory()))} haptique="none" disabled={!!k.busy} accessibilityLabel={traduire('Partager en story')} accessibilityHint={traduire('Ouvre le partage de ton téléphone : choisis Instagram, puis Story')} label={k.busy === 'story' ? traduire('Un instant') : traduire('Partager en story')} tailleTexte={16} lignes={1} hauteur={56} icone={(col) => <Icon name="share" size={19} color={col} />} />
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Pressable onPress={() => garde(() => void k.enregistrer())} disabled={!!k.busy} accessibilityRole="button" accessibilityLabel={traduire('Enregistrer dans la pellicule')} style={({ pressed }) => ({ flex: 1, height: 52, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
+        <Pressable onPress={() => garde(() => sansExemple(() => k.enregistrer()))} disabled={!!k.busy} accessibilityRole="button" accessibilityLabel={traduire('Enregistrer dans la pellicule')} style={({ pressed }) => ({ flex: 1, height: 52, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
           <Icon name={k.saved ? 'check' : 'download'} size={19} color={k.saved ? c.successText : c.ink} />
           <Ink size={15} weight="extraBold" color={k.saved ? c.successText : c.ink}>{k.busy === 'save' ? traduire('Un instant') : k.saved ? traduire('Enregistrée') : traduire('Enregistrer')}</Ink>
         </Pressable>
-        <Pressable onPress={() => garde(() => void k.partager())} disabled={!!k.busy} accessibilityRole="button" accessibilityLabel={traduire('Partager la carte')} style={({ pressed }) => ({ flex: 1, height: 52, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
+        <Pressable onPress={() => garde(() => sansExemple(() => k.partager()))} disabled={!!k.busy} accessibilityRole="button" accessibilityLabel={traduire('Partager la carte')} style={({ pressed }) => ({ flex: 1, height: 52, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
           <Icon name="share" size={19} color={c.ink} />
           <Ink size={15} weight="extraBold" color={c.ink}>{k.busy === 'share' ? traduire('Un instant') : traduire('Partager')}</Ink>
         </Pressable>
