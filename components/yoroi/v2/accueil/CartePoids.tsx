@@ -295,6 +295,8 @@ const GRIS_ROND = { clair: '#C9CDDB', sombre: '#4D5679' } as const;
  * le bleu des calories (energie-active) pour le trait rempli et le prochain palier, le vert de l'exercice pour les
  * paliers atteints et ce que tu as fait depuis ton debut, le rose des pas pour ce qu'il te reste.
  * Les anneaux restent vifs ; un texte sur blanc prend la teinte la plus sombre du meme anneau (ombre) quand elle existe.
+ * 3 novembre 2026 nuit (Houari : « ce cyan fonce fait un vert bizarre ») : le texte bleu en clair est le vrai bleu de
+ * l'app (P.indigo, 6 a 1 sur blanc, sans reflet vert) ; en sombre, le cyan de l'anneau. Le point du prochain palier en rose.
  */
 function couleursAnneaux() {
   const bleu = couleurActivite('energie-active');
@@ -302,7 +304,8 @@ function couleursAnneaux() {
   const rose = couleurActivite('pas');
   return {
     bleu: bleu.anneau,
-    bleuTexte: bleu.ombre ?? bleu.texte,
+    bleuTexte: paletteSombre() ? bleu.anneau : P.indigo,
+    rose: rose.anneau,
     vert: vert.anneau,
     vertTexte: vert.ombre ?? vert.texte,
     roseTexte: rose.ombre ?? rose.texte,
@@ -345,7 +348,7 @@ function LigneDePaliers({ depart, ligne, sombre }: { depart: number; ligne: Lign
             ) : p.etat === 'prochain' ? (
               <Svg width={t} height={t} viewBox="0 0 28 28">
                 <Circle cx={14} cy={14} r={13} fill={P.indigoSoft} stroke={accent} strokeWidth={2} />
-                <Circle cx={14} cy={14} r={4.3} fill={accent} />
+                <Circle cx={14} cy={14} r={4.3} fill={A.rose} />
               </Svg>
             ) : (
               <Svg width={t} height={t} viewBox="0 0 22 22">
@@ -839,7 +842,17 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
     <Ink size={12.5} weight="extraBold" color={fg} numberOfLines={2}>
       {traduire('Torii atteint')}
       <Ink size={12.5} weight="bold" color={P.muted}>
-        {traduire(', les {0} paliers franchis', ligne.paliers.length)}
+        {(() => {
+          const t = traduire(', les {0} paliers franchis', ligne.paliers.length);
+          const k = t.indexOf(String(ligne.paliers.length));
+          return k < 0 ? t : (
+            <>
+              {t.slice(0, k)}
+              <Ink size={12.5} weight="black" color={anneaux.vertTexte}>{String(ligne.paliers.length)}</Ink>
+              {t.slice(k + String(ligne.paliers.length).length)}
+            </>
+          );
+        })()}
       </Ink>
     </Ink>
   ) : ligne.prochain ? (
@@ -882,6 +895,23 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
       );
     })()
   ) : null;
+  // 3 novembre 2026 nuit (Houari : des chiffres en couleur) : dans la phrase du rythme, seul le chiffre en kg prend la
+  // couleur : rose des anneaux quand tu es en retard sur ton rythme prevu (au dessus en perte, en dessous en prise, ton
+  // 'bleu'), vert des anneaux quand tu es dessus ou en avance ; le reste de la phrase reste gris
+  const couleurRythme = phrase ? (phrase.ton === 'bleu' ? anneaux.roseTexte : phrase.ton === 'vert' || phrase.ton === 'orange' ? anneaux.vertTexte : null) : null;
+  const mRythme = texteStatut ? /[−+-]?\s?\d[\d\s,.]*\s?kg/.exec(texteStatut) : null;
+  const texteStatutColore =
+    texteStatut && mRythme && couleurRythme ? (
+      <>
+        {texteStatut.slice(0, mRythme.index)}
+        <Ink size={12.5} weight="black" color={couleurRythme} style={{ fontVariant: ['tabular-nums'] }}>
+          {mRythme[0]}
+        </Ink>
+        {texteStatut.slice(mRythme.index + mRythme[0].length)}
+      </>
+    ) : (
+      texteStatut
+    );
   const ligneRythme = texteStatut ? (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, minWidth: 0 }}>
       <Svg width={15} height={15} viewBox="0 0 24 24" fill="none">
@@ -890,7 +920,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
         <Circle cx={12} cy={16} r={1.6} fill={P.muted} />
       </Svg>
       <Ink size={12.5} weight="bold" color={fg2} numberOfLines={2} style={{ flexShrink: 1, lineHeight: 16 }}>
-        {texteStatut}
+        {texteStatutColore}
       </Ink>
     </View>
   ) : null;
