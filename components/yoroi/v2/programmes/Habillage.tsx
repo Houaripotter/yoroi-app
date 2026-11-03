@@ -33,6 +33,7 @@ import type { SemaineLibre } from '@/lib/v2/programmes/semaineLibre';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Programme } from '@/lib/v2/programmes/types';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 /** La grande carte indigo, comme « Note ta séance » : texte à gauche, personnage à droite. onPress : l'appelant fait le retour haptique. */
 export function CarteIllustree({ surtitre, titre, texte, puces, image, children, onPress, label, style }: {
@@ -613,7 +614,7 @@ export function EnTeteRond({ titre, salut, droite, repli = '/(tabs)' }: { titre:
         accessibilityLabel={traduire('Retour')}
         style={({ pressed }) => [{ width: 46, height: 46, borderRadius: 23, backgroundColor: pal.carte, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.94 : 1 }] }, ombreDouce(pal.indigo)]}
       >
-        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}>
           <Path d="M15 5l-7 7 7 7" stroke={pal.texte} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
         </Svg>
       </Pressable>
