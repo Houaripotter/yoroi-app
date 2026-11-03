@@ -12,6 +12,7 @@ import Svg, { Path } from 'react-native-svg';
 import type { Insight } from '@/lib/statsInsights';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { Ink } from '@/components/yoroi/v2/Ink';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 const ICON_PATHS: Record<string, string> = {
   'trending-up': 'M4 16l5-5 4 4 7-7M15 8h5v5',
@@ -53,7 +54,7 @@ const InsightCard: React.FC<{ insight: Insight }> = React.memo(({ insight }) => 
         {insight.text}
       </Ink>
       {insight.href ? (
-        <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+        <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}>
           <Path d="M9 5l7 7-7 7" stroke={c.textMuted} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
         </Svg>
       ) : null}
