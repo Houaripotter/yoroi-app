@@ -18,7 +18,7 @@ import { traduire, DECIMAL } from '@/lib/i18n/tr';
 type Son = { id: string; nom: string; fichier: string; ou: string; src: number };
 
 const SONS: Son[] = [
-  { id: 'clap', nom: 'Claquettes', fichier: 'clap10.mp3', ou: traduire('Les 10 dernières secondes d’un round (chrono, combat)'), src: require('@/assets/sounds/clap10.mp3') },
+  { id: 'clap', nom: 'Claquettes', fichier: 'claquettes_10s.mp3', ou: traduire('Les 10 dernières secondes d’un round (chrono, combat)'), src: require('@/assets/sounds/claquettes_10s.mp3') },
   { id: 'bell', nom: traduire('Cloche de fin de round'), fichier: 'bell_end.mp3', ou: traduire('Fin d’un round (chrono, combat)'), src: require('@/assets/sounds/bell_end.mp3') },
   { id: 'gong', nom: 'Gong', fichier: 'gong.mp3', ou: traduire('Chronos, séance de combat, premier lancement'), src: require('@/assets/sounds/gong.mp3') },
   { id: 'beep', nom: 'Bip', fichier: 'beep.mp3', ou: traduire('Décompte des chronos et fin du repos muscu'), src: require('@/assets/sounds/beep.mp3') },
@@ -146,7 +146,7 @@ function SequenceFinDeRound({ stopAll }: { stopAll: number }) {
   };
 
   const pas = [
-    { k: 'claquettes', label: 'Claquettes', sub: 'clap10.mp3' },
+    { k: 'claquettes', label: 'Claquettes', sub: 'claquettes_10s.mp3' },
     { k: 'cloche', label: 'Cloche', sub: traduire("bell_end.mp3, {0} s plus tard", delai) },
   ] as const;
 
