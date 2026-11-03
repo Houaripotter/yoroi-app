@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { Easing, cancelAnimation, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
+import { claquettesPrevues, decompteGarde } from './claquettes';
 
 export type ChronoKind = 'prepa' | 'effort' | 'repos';
 export type ChronoCue = 'gong' | 'go' | 'beep' | 'bell' | 'none';
@@ -28,8 +29,10 @@ export type ChronoPhase = {
   sub?: string;
   /** le chrono monte (au temps) au lieu de descendre */
   countUp?: boolean;
-  /** claquettes de bois a 10 s de la fin (rounds de combat) */
+  /** claquettes de bois a 10 s de la fin, a la place du decompte 3 2 1 (rounds de combat) */
   clap?: boolean;
+  /** 3 novembre 2026 : claquettes a 10 s de la fin, decompte 3 2 1 garde (repos, Tabata, chaque minute...) (lib/v2/carnet/claquettes.ts) */
+  clapEtDecompte?: boolean;
   /** a la fin, le chrono s'arrete et attend advance() (resultat du round au sparring) */
   hold?: boolean;
   /** son joue a l'entree dans la phase */
@@ -219,13 +222,14 @@ export function useChronoEngine(onEvent: (e: ChronoEvent) => void): ChronoEngine
     if (!p) return;
     const remMs = startAtRef.current + p.duration * 1000 - now;
     if (!p.countUp) {
-      if (p.clap && p.duration > 12) {
-        if (remMs <= 10000 && remMs > 10000 - LIVE_WINDOW && once(`clap:${i}`)) emit({ type: 'clap', index: i, phase: p });
-      } else {
+      // claquettes a 10 s (elles remplacent le bip des 10 s) ; le 3 2 1 reste, sauf dans un round de combat
+      const clapIci = claquettesPrevues(p);
+      if (clapIci && remMs <= 10000 && remMs > 10000 - LIVE_WINDOW && once(`clap:${i}`)) emit({ type: 'clap', index: i, phase: p });
+      if (decompteGarde(p)) {
         for (const n of [3, 2, 1]) {
           if (p.duration > n && remMs <= n * 1000 && remMs > n * 1000 - 600 && once(`cd:${i}:${n}`)) emit({ type: 'countdown', index: i, phase: p, n });
         }
-        if (p.duration > 30 && remMs <= 10000 && remMs > 10000 - 600 && once(`warn:${i}`)) emit({ type: 'warn', index: i, phase: p });
+        if (!clapIci && p.duration > 30 && remMs <= 10000 && remMs > 10000 - 600 && once(`warn:${i}`)) emit({ type: 'warn', index: i, phase: p });
       }
     }
 
