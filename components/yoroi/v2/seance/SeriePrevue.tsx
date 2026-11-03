@@ -13,6 +13,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from './Icon';
 import { ton } from './pastel';
+import { intensite } from '@/lib/v2/intensite';
 
 export const DUREE_PASTILLE_MS = 1800;
 
@@ -24,9 +25,12 @@ type SerieProps = {
   nouvelle?: boolean;
   accessibilityLabel: string;
   onLongPress?: () => void;
+  /** 3 novembre 2026 : serie prevue qui manque (lib/v2/seances/etatExo.ts), mise en evidence en orange */
+  alerte?: boolean;
 };
 
-export function SeriePrevue({ numero, titre, detail, nouvelle = false, accessibilityLabel, onLongPress }: SerieProps) {
+export function SeriePrevue({ numero, titre, detail, nouvelle = false, accessibilityLabel, onLongPress, alerte = false }: SerieProps) {
+  const orange = intensite(4);
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const entree = useRef(new Animated.Value(nouvelle ? 0 : 1)).current;
@@ -59,14 +63,14 @@ export function SeriePrevue({ numero, titre, detail, nouvelle = false, accessibi
           paddingHorizontal: 10,
           borderRadius: 14,
           borderWidth: 1.5,
-          borderColor: nouvelle ? c.accent : 'transparent',
-          backgroundColor: pressed ? c.fillSubtle : c.fillSoft,
+          borderColor: alerte ? orange.fill : nouvelle ? c.accent : 'transparent',
+          backgroundColor: pressed ? c.fillSubtle : alerte ? orange.tint : c.fillSoft,
         })}
       >
         <View style={{ minWidth: 24, height: 24, paddingHorizontal: 6, borderRadius: 8, borderWidth: 1.5, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
           <Ink size={12} weight="black" color={c.textSecondary}>{String(numero)}</Ink>
         </View>
-        <Ink size={14} weight="bold" color={c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>{titre}</Ink>
+        <Ink size={14} weight={alerte ? 'black' : 'bold'} color={alerte ? orange.text : c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>{titre}</Ink>
         {detail ? <Ink size={14} weight="extraBold" color={c.textMuted} numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }}>{detail}</Ink> : null}
       </Pressable>
     </Animated.View>
