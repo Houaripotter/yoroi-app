@@ -14,11 +14,20 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
 import { traduire } from '@/lib/i18n/tr';
+import { ORDRE_ONBOARDING, compteurEcran, ecranPrecedent, ecranSuivant, positionEcran } from '@/lib/v2/onboarding/ordreEcrans';
 
 // Vague 45 : « Ton univers » apres Toi
-export const ONBOARDING_SCREEN_LABELS = ['Accroche', traduire('Prénom'), traduire('Toi'), traduire('Tranche d’âge'), traduire('Ton univers'), traduire('Objectif'), traduire('Ce qui te freine'), 'Affirmation', traduire('Sports'), 'Apple Santé', traduire('Poids du jour'), 'Taille', 'Cap', traduire('Rythme'), traduire('Moment de la pesée'), traduire('Démonstration'), traduire('Tout au même endroit'), traduire('Préparation'), traduire('Ton plan'), traduire('Premium')];
-const COUNT = ONBOARDING_SCREEN_LABELS.length;
-const LAST = COUNT - 1;
+// 3 novembre 2026 : libelles par numero interne de app/onboarding.tsx, affiches dans l'ordre reel du parcours
+// (lib/v2/onboarding/ordreEcrans.ts). Avant, la liste suivait les numeros internes : Ta scene (20) et Ou as-tu connu
+// YOROI (22) manquaient, et le compteur affichait 21/20 et 23/20.
+const LIBELLE_PAR_ECRAN: Record<number, string> = {
+  0: 'Accroche', 1: traduire('Prénom'), 2: traduire('Toi'), 3: traduire('Tranche d’âge'), 4: traduire('Ton univers'), 5: traduire('Objectif'),
+  6: traduire('Ce qui te freine'), 7: 'Affirmation', 8: traduire('Sports'), 9: 'Apple Santé', 10: traduire('Poids du jour'), 11: 'Taille', 12: 'Cap',
+  13: traduire('Rythme'), 14: traduire('Moment de la pesée'), 15: traduire('Démonstration'), 16: traduire('Tout au même endroit'), 17: traduire('Préparation'),
+  18: traduire('Ton plan'), 19: traduire('Premium'), 20: traduire('Ta scène'), 22: traduire('Où as-tu connu YOROI'),
+};
+/** Les libelles dans l'ordre reel du parcours (position 0 a TOTAL - 1) */
+export const ONBOARDING_SCREEN_LABELS = ORDRE_ONBOARDING.map((n) => LIBELLE_PAR_ECRAN[n] ?? '');
 const GLASS = 'rgba(29,32,41,0.86)';
 
 type Apercu = {
@@ -49,16 +58,20 @@ function Pastille({ a, compact, withClose }: { a: Apercu; compact?: boolean; wit
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const btn = { width: compact ? 28 : 32, height: compact ? 30 : 32, borderRadius: 16, alignItems: 'center' as const, justifyContent: 'center' as const };
-  const label = `${a.page + 1}/${COUNT} ${ONBOARDING_SCREEN_LABELS[a.page] ?? ''}`;
+  // 3 novembre 2026 : la position dans le parcours reel, jamais au dela du total (avant : numero interne + 1, 23/20)
+  const { position, total } = compteurEcran(a.page);
+  const premier = positionEcran(a.page) <= 0;
+  const dernier = positionEcran(a.page) >= total - 1;
+  const label = `${position}/${total} ${LIBELLE_PAR_ECRAN[a.page] ?? ''}`;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 3, height: compact ? 36 : 40, borderRadius: 20, backgroundColor: GLASS, maxWidth: '100%', flexShrink: 1 }}>
-      <Pressable onPress={tapIt(() => a.onGo(Math.max(0, a.page - 1)))} disabled={a.page === 0} accessibilityRole="button" accessibilityLabel={traduire("Écran précédent")} style={[btn, { opacity: a.page === 0 ? 0.35 : 1 }]}>
+      <Pressable onPress={tapIt(() => a.onGo(ecranPrecedent(a.page)))} disabled={premier} accessibilityRole="button" accessibilityLabel={traduire("Écran précédent")} style={[btn, { opacity: premier ? 0.35 : 1 }]}>
         <Icon name="back" size={14} color={c.onDark} />
       </Pressable>
       <Pressable onPress={tapIt(a.openGrid)} accessibilityRole="button" accessibilityLabel={traduire("Aperçu, choisir un écran, {0}", label)} style={{ paddingHorizontal: 2, height: 32, justifyContent: 'center', flexShrink: 1 }}>
         <Ink size={compact ? 11 : 12} weight="extraBold" color={c.onDark} numberOfLines={1}>{label}</Ink>
       </Pressable>
-      <Pressable onPress={tapIt(() => a.onGo(Math.min(LAST, a.page + 1)))} disabled={a.page === LAST} accessibilityRole="button" accessibilityLabel={traduire("Écran suivant")} style={[btn, { opacity: a.page === LAST ? 0.35 : 1 }]}>
+      <Pressable onPress={tapIt(() => a.onGo(ecranSuivant(a.page)))} disabled={dernier} accessibilityRole="button" accessibilityLabel={traduire("Écran suivant")} style={[btn, { opacity: dernier ? 0.35 : 1 }]}>
         <Icon name="chevron" size={14} color={c.onDark} />
       </Pressable>
       <View style={{ width: 1, height: 16, backgroundColor: 'rgba(255,255,255,0.25)', marginHorizontal: 1 }} />
@@ -145,14 +158,15 @@ export function PreviewBar({ enabled = true, page, onGo, onClose, children }: { 
               </Pressable>
             </View>
             <ScrollView contentContainerStyle={{ gap: 6 }}>
-              {ONBOARDING_SCREEN_LABELS.map((label, i) => {
-                const on = i === page;
+              {ORDRE_ONBOARDING.map((ecran, i) => {
+                const label = LIBELLE_PAR_ECRAN[ecran] ?? '';
+                const on = ecran === page;
                 return (
                   <Pressable
-                    key={label}
+                    key={ecran}
                     onPress={tapIt(() => {
                       setGrid(false);
-                      onGo(i);
+                      onGo(ecran);
                     })}
                     accessibilityRole="button"
                     accessibilityState={{ selected: on }}
