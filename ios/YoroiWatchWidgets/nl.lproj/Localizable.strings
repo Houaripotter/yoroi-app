@@ -150,3 +150,7 @@
 "Peser" = "Wegen";
 "Préparation" = "Voorbereiding";
 "Touche pour pause" = "Tik om te pauzeren";
+
+/* Langues : textes de la montre et des widgets repérés le 3 novembre */
+"%@ %@, %@ à %@" = "%@ %@, %@ tot %@";
+"%@ %@ à %@" = "%@ %@ om %@";

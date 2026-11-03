@@ -149,3 +149,8 @@
 "%@ à %@" = "%@ a %@";
 "Touche pour pause" = "Toca para pausar";
 "Ouvre Yoroi sur ton iPhone" = "Abre Yoroi en tu iPhone";
+
+/* Langues : textes de la montre et des widgets repérés le 3 novembre */
+"%lld jours avec une séance cette semaine" = "%lld días con una sesión esta semana";
+"%lld lanternes allumées cette semaine" = "%lld faroles encendidos esta semana";
+"Écart au rythme prévu %@ %@" = "Desviación del ritmo previsto %@ %@";

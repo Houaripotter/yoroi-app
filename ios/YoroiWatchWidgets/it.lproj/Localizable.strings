@@ -150,3 +150,7 @@
 "Peser" = "Pesa";
 "Préparation" = "Preparazione";
 "Touche pour pause" = "Tocca per mettere in pausa";
+
+/* Langues : textes de la montre et des widgets repérés le 3 novembre */
+"%@ %@, %@ à %@" = "%@ %@, da %@ a %@";
+"%@ %@ à %@" = "%@ %@ alle %@";

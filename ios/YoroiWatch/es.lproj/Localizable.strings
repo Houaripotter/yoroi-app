@@ -217,3 +217,9 @@
 "Scènes illustrées" = "Escenas ilustradas";
 "J" = "D";
 "Ouvre Yoroi sur ton iPhone" = "Abre Yoroi en tu iPhone";
+
+/* Langues : textes de la montre et des widgets repérés le 3 novembre */
+"Round précédent" = "Round anterior";
+"Round suivant" = "Siguiente round";
+"%lld jours avec séance cette semaine" = "%lld días con sesión esta semana";
+"Autre durée" = "Otra duración";

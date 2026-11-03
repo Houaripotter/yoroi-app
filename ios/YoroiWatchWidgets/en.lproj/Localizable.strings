@@ -150,3 +150,7 @@
 "Peser" = "Weigh in";
 "Préparation" = "Prep";
 "Touche pour pause" = "Tap to pause";
+
+/* Langues : textes de la montre et des widgets repérés le 3 novembre */
+"%@ %@, %@ à %@" = "%@ %@, %@ to %@";
+"%@ %@ à %@" = "%@ %@ at %@";
