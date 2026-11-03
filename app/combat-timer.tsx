@@ -18,6 +18,7 @@ import { SettingRow, ToggleRow } from '@/components/yoroi/v2/carnet/chrono/parts
 import { DOCK_SPACE, HugeButton, SetupBlock, SetupHero, StartDock } from '@/components/yoroi/v2/carnet/chrono/setup';
 import { PHASE_COLORS, PREPA_SECONDS, SAVE_SPORTS_COMBAT, loadClapEnabled, roundPhases, roundsSummary, saveClapEnabled } from '@/lib/v2/carnet/chrono';
 import { useChronoEngine, totalSeconds } from '@/lib/v2/carnet/useChronoEngine';
+import { sonDixSecondes, tapsClaquettes } from '@/lib/v2/carnet/claquettes';
 import type { ChronoEvent } from '@/lib/v2/carnet/useChronoEngine';
 import { humanSeconds } from '@/lib/v2/carnet/format';
 import { soundManager } from '@/lib/sounds';
@@ -100,9 +101,10 @@ export default function CombatTimerScreen() {
         impactAsync(e.first ? ImpactFeedbackStyle.Medium : ImpactFeedbackStyle.Heavy).catch(() => {});
         return;
       case 'clap':
-        if (!clapRef.current) return;
+        // 3 novembre 2026 : aussi 10 s avant le round suivant ; une petite vibration par coup
+        if (sonDixSecondes(e.phase, clapRef.current) !== 'clap') return;
         safe(() => soundManager.playClap());
-        impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+        tapsClaquettes(() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); });
         return;
       case 'countdown':
         safe(() => soundManager.playFinalCountdown(e.n));
@@ -341,7 +343,7 @@ export default function CombatTimerScreen() {
               <SettingRow label={traduire("Préparation")} hint={traduire("avant le premier gong")} dot={PHASE_COLORS.prepa.main} value={config.prepaSeconds === 0 ? traduire('Aucune') : `${config.prepaSeconds} s`} onMinus={() => step('prepaSeconds', -5, 0, 30)} onPlus={() => step('prepaSeconds', 5, 0, 30)} />
             </View>
             <View style={{ height: 1, backgroundColor: P.line2 }} />
-            <ToggleRow label={traduire("Claquettes à 10 s")} hint={traduire("Clac clac clac à 10 s de la fin de chaque round, comme en compétition")} value={clapOn} onChange={toggleClap} />
+            <ToggleRow label={traduire("Claquettes à 10 secondes")} hint={traduire("Clac clac clac à 10 s de la fin de chaque round et de chaque repos, comme à la salle")} value={clapOn} onChange={toggleClap} />
           </SetupBlock>
           <SetupBlock title={traduire("Ton partenaire")} hint={traduire("Facultatif, pour le retrouver dans ton historique")}>
             <Field value={config.partnerName} onChangeText={(v) => setConfig((p) => ({ ...p, partnerName: v }))} placeholder={traduire("Nom de ton partenaire")} returnKeyType="done" onSubmitEditing={Keyboard.dismiss} accessibilityLabel={traduire("Nom de ton partenaire")} />
