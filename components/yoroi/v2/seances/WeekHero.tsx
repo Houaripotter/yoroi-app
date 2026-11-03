@@ -27,7 +27,7 @@ import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
 import { P, paletteSombre } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel, LANG } from '@/lib/i18n/tr';
-import { aideKilos, libelleKilos } from '@/lib/v2/seances/kilosSouleves';
+import { aideKilos, kilosEnEntier, libelleKilos } from '@/lib/v2/seances/kilosSouleves';
 
 const NB = ' ';
 
@@ -46,12 +46,12 @@ function fmtKg(kg: number, unite: UnitePoids = 'kg'): string {
   return `${p.value}${NB}${p.unit}`;
 }
 
-type Volume = { label: string; value: string; delta: number; fmt: (n: number) => string; aide?: string };
+type Volume = { label: string; value: string; delta: number; fmt: (n: number) => string; aide?: string; /** « 16 000 kg » à côté des tonnes */ complement?: string };
 
 /** Volume adapte a ta pratique : tonnage en musculation, sinon rounds, sinon distance, sinon series */
 function volumeOf(cur: PeriodStats, prev: PeriodStats, unite: UnitePoids = 'kg'): Volume {
   // 31 octobre 2026 : « Kilos soulevés » au lieu de « tonnage » (Houari ne comprenait pas le mot), avec son aide au toucher
-  if (cur.tonnageKg > 0 || prev.tonnageKg > 0) return { label: libelleKilos(), value: fmtKg(cur.tonnageKg, unite), delta: cur.tonnageKg - prev.tonnageKg, fmt: (n) => fmtKg(n, unite), aide: aideKilos('semaine') };
+  if (cur.tonnageKg > 0 || prev.tonnageKg > 0) return { label: libelleKilos(), value: fmtKg(cur.tonnageKg, unite), delta: cur.tonnageKg - prev.tonnageKg, fmt: (n) => fmtKg(n, unite), aide: aideKilos('semaine'), complement: kilosEnEntier(cur.tonnageKg, unite) ?? undefined };
   if (cur.rounds > 0 || prev.rounds > 0) return { label: 'rounds', value: String(cur.rounds), delta: cur.rounds - prev.rounds, fmt: (n) => String(Math.abs(Math.round(n))) };
   if (cur.distanceKm > 0 || prev.distanceKm > 0) return { label: 'distance', value: `${fr1(cur.distanceKm)}${NB}km`, delta: cur.distanceKm - prev.distanceKm, fmt: (n) => `${fr1(Math.abs(n))}${NB}km` };
   return { label: traduire('séries'), value: String(cur.sets), delta: cur.sets - prev.sets, fmt: (n) => String(Math.abs(Math.round(n))) };
@@ -90,7 +90,42 @@ export function couleursTuile(t: TeinteTuile): { fond: string; texte: string } {
 /** 31 octobre 2026 (grand ecran) : les 4 tuiles de la semaine en 4 carres alignes */
 const TuilesEnLigne = React.createContext(false);
 
-function Tile({ label, value, children, onPress, a11y, teinte, sticker, aide }: { label: string; value: string; children: React.ReactNode; onPress?: () => void; a11y?: string; teinte: TeinteTuile; sticker?: NomSticker; aide?: string }) {
+/**
+ * 3 novembre 2026 (Houari) : la valeur de la tuile, et son complément à côté (« 16,0 t · 16 000 kg ») seulement s'il
+ * tient sur la ligne. Une copie invisible mesure la ligne entière ; sur un petit écran, seule la valeur reste.
+ */
+function ValeurTuile({ value, complement, couleur, chevron }: { value: string; complement?: string; couleur: string; chevron: boolean }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const [place, setPlace] = useState(0);
+  const [besoin, setBesoin] = useState(0);
+  const tient = !!complement && place > 0 && besoin > 0 && besoin <= place;
+  const valeur = (lignes: 1 | undefined) => (
+    <Ink size={23} weight="black" tight color={c.ink} numberOfLines={lignes} adjustsFontSizeToFit={lignes === 1} minimumFontScale={0.7} style={{ letterSpacing: -0.4, flexShrink: lignes === 1 ? 1 : 0 }}>{value}</Ink>
+  );
+  const ajout = <Ink size={13} weight="extraBold" color={couleur} style={{ flexShrink: 0 }}>{`\u00B7\u00A0${complement ?? ''}`}</Ink>;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }} onLayout={complement ? (e) => setPlace(e.nativeEvent.layout.width) : undefined}>
+      {valeur(1)}
+      {tient ? <View style={{ marginLeft: 2, alignSelf: 'flex-end', marginBottom: 4 }}>{ajout}</View> : null}
+      {chevron ? <Icon name="chevron" size={15} color={couleur} strokeWidth={2.6} /> : null}
+      {complement ? (
+        // la mesure : la ligne entière, hors de la mise en page, jamais lue par VoiceOver
+        <View pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ position: 'absolute', left: 0, top: 0, width: 0, height: 0, overflow: 'hidden', opacity: 0 }}>
+          <View style={{ width: 1000, alignItems: 'flex-start' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }} onLayout={(e) => setBesoin(e.nativeEvent.layout.width)}>
+            {valeur(undefined)}
+            <View style={{ marginLeft: 2 }}>{ajout}</View>
+            {chevron ? <View style={{ width: 15 }} /> : null}
+          </View>
+          </View>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function Tile({ label, value, complement, children, onPress, a11y, teinte, sticker, aide }: { label: string; value: string; complement?: string; children: React.ReactNode; onPress?: () => void; a11y?: string; teinte: TeinteTuile; sticker?: NomSticker; aide?: string }) {
   const [aideOuverte, setAideOuverte] = useState(false);
   const enLigne = useContext(TuilesEnLigne);
   const { theme } = useYoroiTheme();
@@ -107,10 +142,7 @@ function Tile({ label, value, children, onPress, a11y, teinte, sticker, aide }: 
         </View>
         {sticker ? <Image source={illus.img(sticker)} style={{ width: 26, height: 26 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}>
-        <Ink size={23} weight="black" tight color={c.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ letterSpacing: -0.4, flexShrink: 1 }}>{value}</Ink>
-        {onPress ? <Icon name="chevron" size={15} color={t.texte} strokeWidth={2.6} /> : null}
-      </View>
+      <ValeurTuile value={value} complement={complement} couleur={t.texte} chevron={!!onPress} />
       {children}
       {aide && aideOuverte ? <Ink size={11} weight="bold" color={c.textSecondary} style={{ marginTop: 4, lineHeight: 14 }}>{aide}</Ink> : null}
     </>
@@ -121,7 +153,7 @@ function Tile({ label, value, children, onPress, a11y, teinte, sticker, aide }: 
   // une aide au toucher (kilos soulevés) : le toucher l'ouvre et la referme
   if (!onPress && aide) {
     return (
-      <Pressable onPress={() => { tap(); setAideOuverte((o) => !o); }} accessibilityRole="button" accessibilityLabel={`${label}, ${value}`} accessibilityHint={aide} style={style}>
+      <Pressable onPress={() => { tap(); setAideOuverte((o) => !o); }} accessibilityRole="button" accessibilityLabel={`${label}, ${value}${complement ? `, ${complement}` : ''}`} accessibilityHint={aide} style={style}>
         {body}
       </Pressable>
     );
@@ -155,7 +187,7 @@ export function WeekTiles({ week, onOpenCharge, enLigne = false }: { week: WeekC
         <Tile teinte="creme" sticker="sablier" label={traduire("durée")} value={cur.minutes ? fmtMin(cur.minutes) : `0${NB}min`}>
           <Trend couleur={couleursTuile('creme').texte} delta={cur.minutes - prev.minutes} text={fmtMin(cur.minutes - prev.minutes)} hasPrev={hasPrev} />
         </Tile>
-        <Tile teinte="bleu" sticker="musculation" label={traduire(vol.label)} value={vol.value} aide={vol.aide}>
+        <Tile teinte="bleu" sticker="musculation" label={traduire(vol.label)} value={vol.value} complement={vol.complement} aide={vol.aide}>
           <Trend couleur={couleursTuile('bleu').texte} delta={vol.delta} text={vol.fmt(vol.delta)} hasPrev={hasPrev} />
         </Tile>
         <Tile teinte="peche" sticker="force_eclair" label={traduire('charge')} value={`${formatPoints(cur.load)}${NB}pts`} onPress={onOpenCharge} a11y={traduire("Ta charge d’entraînement, voir le détail")}>
