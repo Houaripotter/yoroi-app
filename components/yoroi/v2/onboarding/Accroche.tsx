@@ -51,7 +51,6 @@ import { ApercuDansBarre, useApercuVisible } from '@/components/yoroi/v2/studio/
 import { P } from '@/components/yoroi/livePalette';
 import { LiensLegaux } from '@/components/yoroi/v2/premium/LiensLegaux';
 import { traduire, LOCALE, DECIMAL, JOURS_LETTRES } from '@/lib/i18n/tr';
-import { BoutonLangue } from '@/components/yoroi/v2/langue/ChoixLangue';
 import { illustration, useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import Animated, { FadeIn, FadeOut, useReducedMotion } from 'react-native-reanimated';
 import { SceneAnimee } from '@/components/yoroi/v2/scenes/SceneAnimee';
@@ -908,8 +907,8 @@ export function Accroche({
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} alwaysBounceVertical={false} directionalLockEnabled>
       {/* Marque, sauvegarde, fermer (apercu) */}
       <View style={{ paddingTop: insets.top + 6, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        {/* 23 octobre 2026 : le choix de la langue, en haut à gauche, dès la première page */}
-        <BoutonLangue />
+        {/* 3 novembre 2026 (Houari) : plus de choix de la langue ici. L'app prend la langue du téléphone toute seule
+            (lib/i18n/tr.ts, expo-localization) ; on la change ensuite dans Réglages, Langue, ou Profil, Langue. */}
         {/* vague 30 : en apercu du Studio, la pastille se loge ici, jamais sur le titre */}
         {apercu ? <ApercuDansBarre /> : <Ink size={14} weight="black" color={c.ink} style={{ letterSpacing: 3.2, flex: 1 }}>YOROI</Ink>}
         <Pressable
