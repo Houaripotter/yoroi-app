@@ -31,6 +31,7 @@ import { P, blancA, paperA } from '@/components/yoroi/livePalette';
 import { CheckMark, GoldVein, PerkIcon, PerkRow, PremiumBadge, PremiumButton, PremiumSeal, premiumTap } from './premiumKit';
 import { traduire } from '@/lib/i18n/tr';
 import { useFondTaScene } from '@/components/yoroi/v2/espace/apercuScene';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 // 31 octobre 2026 (Houari) : plus de guerrier Shogun par défaut ; ton personnage, ou seulement ta scène
 
@@ -182,7 +183,7 @@ export function PremiumPreview({ children, source, compteur = null, apercu = 'ec
           hitSlop={6}
           style={({ pressed }) => [styles.round, { backgroundColor: blancA(0.92), borderColor: P.tuileBord, shadowColor: c.ink, transform: [{ scale: pressed ? 0.96 : 1 }] }]}
         >
-          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}>
             <Path d="M15 5l-7 7 7 7" stroke={c.ink} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
           </Svg>
         </Pressable>
@@ -228,7 +229,7 @@ export function PremiumLockScreen({ featureTitle, source }: { featureTitle?: str
             hitSlop={6}
             style={({ pressed }) => [styles.round, { backgroundColor: blancA(0.86), borderColor: P.tuileBord, shadowColor: c.ink, transform: [{ scale: pressed ? 0.96 : 1 }] }]}
           >
-            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}>
               <Path d="M15 5l-7 7 7 7" stroke={c.ink} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
           </Pressable>
