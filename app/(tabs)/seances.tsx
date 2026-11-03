@@ -306,7 +306,7 @@ export default function Seances() {
                       cle: 'semaine',
                       contenu: (
                         <TourAnchor id="seances.semaine" rayon={24}>
-                          <SemaineAnneau week={week} plates={plates} trainings={trainings} weeklyGoal={weeklyGoal} onChooseGoal={() => router.push('/settings?objectif=1' as any)} />
+                          <SemaineAnneau week={week} plates={plates} trainings={trainings} weeklyGoal={weeklyGoal} onChooseGoal={() => router.push('/settings?objectif=1' as any)} onOuvrir={() => router.push('/ta-semaine' as any)} onJour={(iso) => router.push({ pathname: '/ta-semaine', params: { jour: iso } } as any)} />
                         </TourAnchor>
                       ),
                     },
@@ -344,7 +344,7 @@ export default function Seances() {
         {/* Ta semaine : l'anneau de ton objectif et les jours de L a D */}
         <Colonne actif={grand} largeur={cote}>
         <TourAnchor id="seances.semaine" rayon={24}>
-          <SemaineAnneau week={week} plates={plates} trainings={trainings} weeklyGoal={weeklyGoal} onChooseGoal={() => router.push('/settings?objectif=1' as any)} />
+          <SemaineAnneau week={week} plates={plates} trainings={trainings} weeklyGoal={weeklyGoal} onChooseGoal={() => router.push('/settings?objectif=1' as any)} onOuvrir={() => router.push('/ta-semaine' as any)} onJour={(iso) => router.push({ pathname: '/ta-semaine', params: { jour: iso } } as any)} />
         </TourAnchor>
         </Colonne>
         </Rangee>
@@ -397,6 +397,17 @@ export default function Seances() {
                 onBasculer={() => sections.basculer('derniere')}
               >
                 <LastSessionBody vm={lastVM} onOpen={() => router.push({ pathname: '/workout-detail', params: { id: String(last.id) } } as any)} />
+                {/* 3 novembre 2026 (Houari) : toutes tes séances passées, groupées par jour (app/history.tsx) */}
+                <Pressable
+                  onPress={() => { tap(); router.push('/history' as any); }}
+                  accessibilityRole="button"
+                  accessibilityLabel={traduire('Voir tout ton historique')}
+                  hitSlop={6}
+                  style={{ marginTop: 8, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}
+                >
+                  <Ink size={13} weight="extraBold" color={c.accentText}>{traduire('Voir tout ton historique')}</Ink>
+                  <Icon name="chevron" size={15} color={c.accentText} />
+                </Pressable>
               </SectionRepliable>
             </TourAnchor>
             </Case>
@@ -516,7 +527,7 @@ export default function Seances() {
           onLayout={(e) => { historyY.current = e.nativeEvent.layout.y; }}
           style={{ marginTop: 14, gap: 4 }}
         >
-          <Petites texte={traduire('Historique')} teinte="bleu" />
+          <Petites texte={traduire('Historique')} teinte="bleu" action={trainings.length > 0 ? traduire('Tout voir') : undefined} onAction={trainings.length > 0 ? () => { tap(); router.push('/history' as any); } : undefined} />
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingHorizontal: 2, minHeight: 44 }}>
             <Ink size={13} weight="bold" color={c.textSecondary} style={{ flex: 1 }}>
               {trainings.length > 0
