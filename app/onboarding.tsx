@@ -26,6 +26,8 @@
  *   « Plus tard » en haut de chaque ecran, Sante seulement si jamais demandee, Premium seulement s'il n'est pas abonne.
  * 31 octobre 2026 : « Où as-tu entendu parler de YOROI ? » (facultatif, vrais logos) juste apres Ta tranche d'age,
  *   numero SOURCE a la fin pour ne decaler aucun ecran ; jamais en mode retour (components/yoroi/v2/onboarding/Source.tsx).
+ * 3 novembre 2026 : en mode createur, rien ne compte (lib/v2/creator/onboardingCreateur.ts) : aucune mesure, et hors vue
+ *   « Nouvel utilisateur » (deja un bac a sable) aucune ecriture, comme l'apercu. L'ordre du Studio : lib/v2/onboarding/ordreEcrans.ts.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, BackHandler, Platform, StyleSheet, View } from 'react-native';
@@ -51,6 +53,8 @@ import { askExtendedAccess, getSanteSource } from '@/lib/v2/sante/data';
 import { PreviewBar } from '@/components/yoroi/v2/studio/PreviewBar';
 import { useCreatorMode } from '@/lib/v2/creator/CreatorModeContext';
 import { holdPurchasePreview } from '@/lib/v2/creator/purchasePreview';
+import { regleOnboarding, vueNouvelUtilisateurActive } from '@/lib/v2/creator/onboardingCreateur';
+import { CLE_VUE_NOUVEL_UTILISATEUR } from '@/lib/v2/creator/nouvelUtilisateur';
 import type { HealthDay } from '@/lib/v2/pesee/health';
 import { EMPTY_DRAFT, clearDraft, loadDraft, saveDraft } from '@/lib/v2/onboarding/draft';
 import { genreDeCalcul } from '@/lib/v2/onboarding/draft';
@@ -59,6 +63,7 @@ import { toggleFrein } from '@/lib/v2/onboarding/freins';
 import { objectifPrincipal, objectifsDuBrouillon, sensDe } from '@/lib/v2/onboarding/objectifs';
 import { ouvrirPresentation } from '@/lib/v2/silhouette';
 import { progressOf } from '@/lib/v2/onboarding/plan';
+import { ecranApercuDemande } from '@/lib/v2/onboarding/ordreEcrans';
 import { planifierRappelPesee } from '@/lib/v2/pesee/rappelHabitude';
 import { preparerProposition } from '@/lib/v2/onboarding/propositionCoach';
 import { choixOnboarding, onboardingEvent, setApercuOnboarding } from '@/lib/v2/onboarding/events';
@@ -144,7 +149,6 @@ const PREMIUM = 19;
 // PREMIUM reste le dernier ecran du parcours
 // 27 octobre 2026 (Houari) : Ta scene, juste apres Ton univers ; numero a la fin pour ne pas decaler les autres ecrans
 const SCENE = 20;
-const DERNIER_NUMERO = SCENE;
 // 28 octobre 2026 : l'accueil du mode retour de la 3.0, en tete (hors apercu du Studio)
 const ACCUEIL_RETOUR = 21;
 // 31 octobre 2026 : ou tu as entendu parler de YOROI, juste apres Ta tranche d'age (numero a la fin, rien n'est decale)
@@ -163,11 +167,33 @@ export default function OnboardingScreen() {
   // 28 octobre 2026 : mode retour de la 3.0 (jamais en apercu)
   const retour = params.mode === 'retour' && !isPreview;
   const { isPremium } = usePremium();
-  setApercuOnboarding(isPreview);
-  const { isCreator } = useCreatorMode();
+  const { isCreator, ready: createurPret } = useCreatorMode();
+  // 3 novembre 2026 : mode createur, la vue « Nouvel utilisateur » est un bac a sable (tes donnees sont remises au retour)
+  const [vueNouvel, setVueNouvel] = useState<boolean | null>(isPreview ? false : null);
+  useEffect(() => {
+    if (isPreview || !createurPret) return;
+    if (!isCreator) {
+      setVueNouvel(false);
+      return;
+    }
+    let alive = true;
+    AsyncStorage.getItem(CLE_VUE_NOUVEL_UTILISATEUR)
+      .then((v) => alive && setVueNouvel(vueNouvelUtilisateurActive(v)))
+      .catch(() => alive && setVueNouvel(false));
+    return () => {
+      alive = false;
+    };
+  }, [isPreview, isCreator, createurPret]);
+  const regle = regleOnboarding({ apercu: isPreview, createur: isCreator, vueNouvelUtilisateur: !!vueNouvel });
+  // tant que le mode n'est pas connu, rien n'est mesure ni ecrit (l'ecran reste vide une fraction de seconde)
+  const regleConnue = isPreview || (createurPret && vueNouvel !== null);
+  const sansEcriture = !regleConnue || !regle.ecritures;
+  setApercuOnboarding(!regleConnue || !regle.mesure);
+  useEffect(() => () => setApercuOnboarding(false), []);
   // en apercu, aucun achat ni restauration ne passe, quel que soit l'ecran
   useEffect(() => (isPreview ? holdPurchasePreview() : undefined), [isPreview]);
-  const startPage = Math.max(0, Math.min(DERNIER_NUMERO, parseInt(params.page ?? '0', 10) || 0));
+  // 3 novembre 2026 : tout ecran du parcours s'ouvre en apercu, Ou as-tu connu YOROI (22) compris (avant : borne a 20)
+  const startPage = ecranApercuDemande(parseInt(params.page ?? '0', 10) || 0);
 
   const [loaded, setLoaded] = useState(isPreview);
   const [page, setPage] = useState(isPreview ? startPage : OUVERTURE);
@@ -209,11 +235,11 @@ export default function OnboardingScreen() {
   const persist = useCallback(
     (next: Draft) => {
       // mode retour : aucun brouillon (il est refait a partir de tes vraies donnees a chaque ouverture)
-      if (isPreview || retour || finished.current) return;
+      if (sansEcriture || retour || finished.current) return;
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => void saveDraft(next), 250);
     },
-    [isPreview, retour],
+    [sansEcriture, retour],
   );
 
   const patch = useCallback(
@@ -288,9 +314,9 @@ export default function OnboardingScreen() {
 
   // ecran affiche
   useEffect(() => {
-    if (!loaded) return;
+    if (!loaded || !regleConnue) return;
     onboardingEvent('ecran', { ecran: NAMES[page], numero: page + 1 });
-  }, [page, loaded]);
+  }, [page, loaded, regleConnue]);
 
   // abandon : l'app passe en arriere-plan avant la fin
   useEffect(() => {
@@ -383,6 +409,10 @@ export default function OnboardingScreen() {
     finished.current = true;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     onboardingEvent('passer', { ecran: NAMES[draftRef.current.page] });
+    if (sansEcriture) {
+      router.replace('/(tabs)');
+      return;
+    }
     void marquerRetourVu({ setItem: (k, v) => AsyncStorage.setItem(k, v) }).finally(() => router.replace('/(tabs)'));
   };
 
@@ -410,7 +440,7 @@ export default function OnboardingScreen() {
 
   // ===== Ouverture =====
   const start = async () => {
-    if (!isPreview) await AsyncStorage.setItem(LEGAL_ACCEPTED_KEY, 'true').catch(() => {});
+    if (!sansEcriture) await AsyncStorage.setItem(LEGAL_ACCEPTED_KEY, 'true').catch(() => {});
     onboardingEvent('reponse', { ecran: 'ouverture', question: 'commencer' });
     goTo(PRENOM);
   };
@@ -528,6 +558,11 @@ export default function OnboardingScreen() {
     try {
       const src = await getSanteSource();
       if (src.mode !== 'live') {
+        // 3 novembre 2026 : mode createur sans bac a sable, pas de nouvelle connexion (elle importerait dans tes donnees)
+        if (sansEcriture) {
+          setNotice(traduire('Mode créateur : rien n’est relié ni enregistré.'));
+          return;
+        }
         const ok = await connectHealth();
         if (!ok) {
           appAlert(traduire('Autorisation requise'), traduire("Autorise {0} pour reprendre tes pesées. Tu peux aussi régler ton poids à la main.", healthName()));
@@ -554,8 +589,9 @@ export default function OnboardingScreen() {
   // ===== Sante : la fenetre du systeme, apres l'explication =====
   const connecterSante = async (avance = false) => {
     onboardingEvent('reponse', { ecran: 'sante', question: 'autoriser' });
-    if (isPreview) {
-      goTo(PREMIUM);
+    // apercu et mode createur : aucune demande au systeme, rien n'est note
+    if (sansEcriture) {
+      versPremium();
       return;
     }
     setSanteBusy(true);
@@ -588,7 +624,8 @@ export default function OnboardingScreen() {
     const w = round1(cur.weight ?? weight);
     if (cur.weight == null) patch({ weight: w });
     onboardingEvent('reponse', { ecran: 'poids', question: 'poids' });
-    if (isPreview) {
+    // apercu et mode createur : aucune pesee enregistree
+    if (sansEcriture) {
       afterWeight();
       return;
     }
@@ -627,8 +664,13 @@ export default function OnboardingScreen() {
 
   // ===== Preparation : l'enregistrement final =====
   const runFinal = async () => {
-    if (isPreview) {
+    // apercu et mode createur : ni profil, ni reglages, ni espace, ni rappels, ni brouillon
+    if (sansEcriture) {
       await new Promise((r) => setTimeout(r, 200));
+      if (!isPreview) {
+        finished.current = true;
+        setForged(true);
+      }
       return;
     }
     if (retour && departRef.current) {
@@ -690,6 +732,11 @@ export default function OnboardingScreen() {
     onboardingEvent('fin', { par: how });
     if (isPreview) {
       closePreview();
+      return;
+    }
+    // mode createur hors bac a sable : aucun rappel ni proposition du coach, retour a l'accueil
+    if (sansEcriture) {
+      router.replace('/(tabs)');
       return;
     }
     // rappel doux de la pesee : programme seulement si les notifications sont deja autorisees
@@ -860,7 +907,7 @@ export default function OnboardingScreen() {
             onConnect={(avance) => void connecterSante(avance)}
             onLater={() => {
               onboardingEvent('passer', { ecran: 'sante' });
-              if (!isPreview) void passerAccesSante();
+              if (!sansEcriture) void passerAccesSante();
               versPremium();
             }}
           />
@@ -1019,7 +1066,7 @@ export default function OnboardingScreen() {
     }
   };
 
-  if (!loaded) return <View style={{ flex: 1, backgroundColor: theme.colors.background }} />;
+  if (!loaded || !regleConnue) return <View style={{ flex: 1, backgroundColor: theme.colors.background }} />;
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
