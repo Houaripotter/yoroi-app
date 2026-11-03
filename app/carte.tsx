@@ -41,6 +41,8 @@
  * _archive_ancien_design_2026-10-09/ancien_partage_2026-11-02/app/carte_ancien_atelier.tsx.txt.
  * Avant apres garde le choix de tes deux photos, le flou et la phrase de prudence, dans le meme studio.
  * La reouverture (lib/v2/nav/RouvrirDernierePage.tsx) reste : &avaitPhoto=1 propose « Ajouter ta photo ».
+ * 3 novembre 2026 (photos d'exemple) : &exemple= (muscu_homme, muscu_femme...) donne la photo d'exemple de la vignette
+ * touchee dans Mes cartes, pour que le studio montre la meme. Jamais dans un export.
  */
 import React, { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
@@ -138,7 +140,7 @@ export default function CarteEditeur() {
   const c = theme.colors;
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const p = useLocalSearchParams<{ moment?: string; id?: string; date?: string; debut?: string; demo?: string; sport?: string; type?: string; src?: string; ref?: string; cle?: string; onglet?: string; chiffres?: string; avaitPhoto?: string; avant?: string; apres?: string; flou?: string; photo?: string; photo2?: string; photo3?: string; photo4?: string }>();
+  const p = useLocalSearchParams<{ moment?: string; id?: string; date?: string; debut?: string; demo?: string; sport?: string; type?: string; src?: string; ref?: string; cle?: string; onglet?: string; chiffres?: string; avaitPhoto?: string; avant?: string; apres?: string; flou?: string; photo?: string; photo2?: string; photo3?: string; photo4?: string; exemple?: string }>();
   const [data, setData] = useState<CarteData | null>(null);
   const [vide, setVide] = useState(false);
   const aa = p.moment === 'avant_apres';
@@ -256,6 +258,7 @@ export default function CarteEditeur() {
         sectionPhotos={sectionPhotosAA}
         optionsEnPlus={aa ? { fond: 'uni', personnage: false, sansPersonne: true, epure: false, flou } : undefined}
         avantPartage={aa ? prudence : undefined}
+        exempleVoulu={p.exemple}
       />
       {bandeauPhoto}
     </View>
