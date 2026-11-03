@@ -270,12 +270,12 @@ function PointsPages({ nb, page, couleur, inactif }: { nb: number; page: number;
  * 2 novembre 2026 (proposition A) : la ligne fine des paliers. Ton depart en petit a gauche, puis un rond par palier :
  * atteint (rond plein vert P.moss avec une coche), prochain (anneau de l'accent autour d'un point) ou a venir (rond gris
  * vide). Le trait est dans l'accent jusqu'au dernier palier atteint, gris ensuite (seuls les ronds atteints sont verts). Le chiffre de chaque palier dessous.
- * 3 novembre 2026 (Houari) : le trait un peu plus epais (3 au lieu de 2), et le trait vers le prochain palier se remplit
+ * 3 novembre 2026 (Houari : « trop fin ») : le trait nettement plus epais (6 au lieu de 2), bouts arrondis, centre sur les ronds, et le trait vers le prochain palier se remplit
  * dans l'accent a mesure que tu avances (ligne.avance : a 86 entre 87,5 et 85, 60 %), en perte comme en prise.
  * 2 novembre 2026 soir (Houari : les paliers atteints en vert) : la coche en P.white sur P.moss, 3,8 a 1 en clair
  * (blanc sur #6E8C3A) et 7,2 a 1 en sombre (encre #1A1E29 sur #93B562), au dessus du seuil de 3 a 1 d'une icone.
  */
-const LIGNE_PALIERS = { hauteur: 52, trait: 3, centre: 13, atteint: 24, prochain: 28, aVenir: 22, depart: 10, chiffres: 34, largeurChiffre: 48, margeG: 8, margeD: 14 } as const;
+const LIGNE_PALIERS = { hauteur: 52, trait: 6, centre: 13, atteint: 24, prochain: 28, aVenir: 22, depart: 10, chiffres: 34, largeurChiffre: 48, margeG: 8, margeD: 14 } as const;
 const GRIS_ROND = { clair: '#C9CDDB', sombre: '#4D5679' } as const;
 function LigneDePaliers({ depart, ligne, accent, sombre }: { depart: number; ligne: LignePaliers; accent: string; sombre: boolean }) {
   const L = LIGNE_PALIERS;
@@ -292,11 +292,11 @@ function LigneDePaliers({ depart, ligne, accent, sombre }: { depart: number; lig
   return (
     <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ height: L.hauteur, marginTop: 18, marginLeft: L.margeG, marginRight: L.margeD }}>
       {ligne.paliers.map((_, i) => (
-        <View key={`t${i}`} style={{ position: 'absolute', top: L.centre - L.trait / 2, height: L.trait, left: x(i), width: `${100 / n}%`, backgroundColor: i < ligne.atteints ? accent : P.line }} />
+        <View key={`t${i}`} style={{ position: 'absolute', top: L.centre - L.trait / 2, height: L.trait, left: x(i), width: `${100 / n}%`, borderRadius: L.trait / 2, backgroundColor: i < ligne.atteints ? accent : P.line }} />
       ))}
       {/* le trait vers le prochain palier, rempli de ce que tu as deja fait depuis le palier d'avant */}
       {ligne.prochain && ligne.avance > 0 && ligne.atteints < n ? (
-        <View style={{ position: 'absolute', top: L.centre - L.trait / 2, height: L.trait, left: x(ligne.atteints), width: `${(100 / n) * ligne.avance}%`, backgroundColor: accent, borderTopRightRadius: L.trait / 2, borderBottomRightRadius: L.trait / 2 }} />
+        <View style={{ position: 'absolute', top: L.centre - L.trait / 2, height: L.trait, left: x(ligne.atteints), width: `${(100 / n) * ligne.avance}%`, backgroundColor: accent, borderRadius: L.trait / 2 }} />
       ) : null}
       <View style={{ position: 'absolute', left: x(0), top: L.centre - L.depart / 2, width: L.depart, height: L.depart, borderRadius: L.depart / 2, borderWidth: 2, borderColor: gris, backgroundColor: P.white, transform: [{ translateX: -L.depart / 2 }] }} />
       {chiffre('d', 0, formatKg(depart), P.muted, 'bold', 11)}
