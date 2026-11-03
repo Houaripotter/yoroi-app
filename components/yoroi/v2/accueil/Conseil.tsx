@@ -17,6 +17,7 @@ import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { devNow } from '@/lib/v2/creator/devClock';
 import { traduire } from '@/lib/i18n/tr';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 /** 27 octobre 2026 : le sticker le plus proche de chaque picto du conseil, pose sans carre colore */
 const STICKER_PICTO: Record<string, NomSticker> = {
@@ -81,7 +82,7 @@ export function ConseilDuJour({ trainings, lastWeighIso, goal, freins }: { train
             <Ink size={14} weight="extraBold" color={tone.ink}>
               {c.action}
             </Ink>
-            <Svg width={12} height={12} viewBox="0 0 24 24"><Path d="M9 5l7 7-7 7" stroke={tone.ink} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" /></Svg>
+            <Svg width={12} height={12} viewBox="0 0 24 24" style={miroirSiRTL}><Path d="M9 5l7 7-7 7" stroke={tone.ink} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" /></Svg>
           </View>
         ) : null}
       </View>
