@@ -25,6 +25,7 @@ import type { PeriodOption } from '../charts/PeriodSwitch';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
 import type { Phrase, Victoire } from '@/lib/v2/progres/phrasesProgres';
 import { traduire } from '@/lib/i18n/tr';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 export type TeinteProgres = 'creme' | 'bleu' | 'menthe' | 'lilas' | 'peche';
 
@@ -79,7 +80,7 @@ export function LienDetail({ texte, onPress, couleur }: { texte: string; onPress
       <Ink size={13} weight="extraBold" color={col} numberOfLines={1}>
         {texte}
       </Ink>
-      <Svg width={14} height={14} viewBox="0 0 24 24">
+      <Svg width={14} height={14} viewBox="0 0 24 24" style={miroirSiRTL}>
         <Path d="M9 6l6 6-6 6" stroke={col} strokeWidth={2.6} fill="none" strokeLinecap="round" />
       </Svg>
     </Pressable>
@@ -100,7 +101,7 @@ export function Pastille({ texte, t = 'menthe', style }: { texte: string; t?: Te
 
 export function Chevron({ couleur, taille = 16 }: { couleur: string; taille?: number }) {
   return (
-    <Svg width={taille} height={taille} viewBox="0 0 24 24">
+    <Svg width={taille} height={taille} viewBox="0 0 24 24" style={miroirSiRTL}>
       <Path d="M9 6l6 6-6 6" stroke={couleur} strokeWidth={2.4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
