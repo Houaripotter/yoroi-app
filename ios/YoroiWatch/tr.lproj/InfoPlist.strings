@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en tr. */
+"CFBundleDisplayName" = "Yoroi";
+"NSHealthShareUsageDescription" = "YOROI, canlı nabzını, antrenman özetini ve Kalp, Oksijen, Dinlenme ve Solunum komplikasyonlarını göstermek için Apple Sağlık'tan nabzını, kan oksijenini, dinlenme nabzını, HRV değerini, solunum hızını, kalorilerini, kilonu ve doğum tarihini (nabız bölgelerin için) okur.";
+"NSHealthUpdateUsageDescription" = "YOROI, her şey tek yerde kalsın diye antrenmanlarını nabız ve kalorileriyle birlikte, tartılarını ve içtiğin bardak suları Apple Sağlık'a kaydeder.";
+"NSUserNotificationUsageDescription" = "Ekran kapalıyken YOROI seni her round sonunda ve zamanlayıcıların bittiğinde uyarır.";

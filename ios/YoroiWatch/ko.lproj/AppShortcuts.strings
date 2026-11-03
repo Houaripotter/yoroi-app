@@ -1,0 +1,12 @@
+/* Phrases Siri des raccourcis Yoroi (montre) */
+"Démarrer le chrono ${applicationName}" = "${applicationName} 타이머 시작";
+"Lance le chrono ${applicationName}" = "${applicationName} 타이머 켜 줘";
+"Lance un minuteur ${applicationName}" = "${applicationName} 타이머 시작해 줘";
+"Lance un minuteur de ${duree} dans ${applicationName}" = "${applicationName}에서 ${duree} 타이머 시작해 줘";
+"Mes minuteurs ${applicationName}" = "내 ${applicationName} 타이머";
+"Minuteur de ${duree} ${applicationName}" = "${applicationName} ${duree} 타이머";
+"Noter mon poids dans ${applicationName}" = "${applicationName}에 체중 기록";
+"Noter un verre d'eau dans ${applicationName}" = "${applicationName}에 물 한 잔 기록";
+"Ouvre les minuteurs ${applicationName}" = "${applicationName} 타이머 열어 줘";
+"Pesée ${applicationName}" = "${applicationName} 체중 측정";
+"Un verre d'eau ${applicationName}" = "${applicationName} 물 한 잔";

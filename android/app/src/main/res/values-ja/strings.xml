@@ -1,0 +1,6 @@
+<resources>
+  <!-- Widgets -->
+  <string name="widget_dashboard_desc">主要な統計をひと目で</string>
+  <string name="widget_hydration_desc">毎日の水分補給を記録</string>
+  <string name="widget_streak_desc">トレーニングの連続記録</string>
+</resources>

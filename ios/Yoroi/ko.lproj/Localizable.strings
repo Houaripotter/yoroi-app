@@ -1,0 +1,9 @@
+/* YOROI Yoroi : textes en ko. Clé = texte français du code Swift. */
+"Chrono" = "타이머";
+"Démarrer un sparring" = "스파링 시작";
+"Démarrer une séance" = "세션 시작";
+"Démarrer une séance Yoroi" = "Yoroi 세션 시작";
+"Logger ma pesée" = "체중 기록";
+"Ouvre Yoroi sur l'écran d'ajout de pesée." = "Yoroi의 체중 측정 추가 화면을 열어요.";
+"Ouvre Yoroi sur le timer pour démarrer une séance." = "세션을 시작할 수 있게 Yoroi 타이머를 열어요.";
+"Ouvre le timer combat BJJ/MMA." = "주짓수/MMA 시합 타이머를 열어요.";

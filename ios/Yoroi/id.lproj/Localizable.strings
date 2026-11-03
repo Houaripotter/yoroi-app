@@ -1,0 +1,9 @@
+/* YOROI Yoroi : textes en id. Clé = texte français du code Swift. */
+"Chrono" = "Timer";
+"Démarrer un sparring" = "Mulai sparring";
+"Démarrer une séance" = "Mulai sesi";
+"Démarrer une séance Yoroi" = "Mulai sesi Yoroi";
+"Logger ma pesée" = "Catat penimbanganku";
+"Ouvre Yoroi sur l'écran d'ajout de pesée." = "Membuka Yoroi di layar tambah penimbangan.";
+"Ouvre Yoroi sur le timer pour démarrer une séance." = "Membuka Yoroi di timer untuk memulai sesi.";
+"Ouvre le timer combat BJJ/MMA." = "Membuka timer tarung BJJ/MMA.";

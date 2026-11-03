@@ -1,0 +1,15 @@
+/* YOROI : textes système en zh-Hans. Source : Info.plist (français). */
+"CFBundleDisplayName" = "Yoroi";
+"NSCalendarsFullAccessUsageDescription" = "在你需要时，YOROI 会把比赛添加到你的日历中，例如你的下一场赛事，并在前一天提醒你。事件保存前由你亲自确认。";
+"NSCalendarsUsageDescription" = "在你需要时，YOROI 会把比赛添加到你的日历中，例如你的下一场赛事，并在前一天提醒你。事件保存前由你亲自确认。";
+"NSCameraUsageDescription" = "YOROI 仅在你选择时使用相机：拍摄你的头像、进步照片、分享卡片的照片、你的俱乐部标志，或为训练日志拍摄技术视频。例如每月拍一张正面照，看看身形的变化。不会向 YOROI 服务器发送任何内容。";
+"NSFaceIDUsageDescription" = "仅当你开启 App 锁时，YOROI 才会使用面容 ID，确保别人无法打开你的日志和称重记录。";
+"NSHealthShareUsageDescription" = "YOROI 从 Apple 健康读取你的体重和身体成分、活动、心脏、睡眠、训练（路线、强度、步频、功率、区间）以及你的饮食和饮水数据，用于显示你的进步和当天的状态。高级数据（步行、心脏提醒、声音、营养素）仅在你开启后读取。不会向 YOROI 服务器发送任何内容。";
+"NSHealthUpdateUsageDescription" = "YOROI 会把你的称重和体脂率、你记录的训练、饮水以及你手动输入的睡眠写入 Apple 健康。不会向 YOROI 服务器发送任何内容。";
+"NSLocalNetworkUsageDescription" = "App 打开时，YOROI 使用本地网络，在通过配对码配对的设备（iPhone、iPad、Mac）之间直接同步你的数据。数据不经过互联网，也不经过 YOROI 服务器。";
+"NSLocationWhenInUseUsageDescription" = "YOROI 仅在你于训练中主动请求时使用你的位置，用来记录地点名称，例如你的健身房和城市。从不在后台使用，也不会向 YOROI 服务器发送任何内容。";
+"NSMicrophoneUsageDescription" = "YOROI 使用麦克风录制你在训练日志中拍摄的视频声音，以及实战对练伙伴资料中的语音备注。例如拍摄一个技术动作，同时录下教练的讲解。不会向 YOROI 服务器发送任何内容。";
+"NSPhotoLibraryAddUsageDescription" = "仅在你需要时，YOROI 才会把你制作的分享卡片存入你的照片图库。例如你的纪录卡片或前后对比图。不会向 YOROI 服务器发送任何内容。";
+"NSPhotoLibraryUsageDescription" = "YOROI 仅在你选择图片或视频时打开你的照片图库：你的头像、进步照片、智能秤的照片、日志视频、伙伴的照片或你的俱乐部标志。例如导入你上一次实战对练的视频。不会向 YOROI 服务器发送任何内容。";
+"NSRemindersFullAccessUsageDescription" = "YOROI 不会读取或在你的“提醒事项”App 中创建提醒，也不会向你请求此权限。你的提醒（例如睡前提醒）会以 YOROI 通知的形式送达。";
+"NSRemindersUsageDescription" = "YOROI 不会读取或在你的“提醒事项”App 中创建提醒，也不会向你请求此权限。你的提醒（例如睡前提醒）会以 YOROI 通知的形式送达。";

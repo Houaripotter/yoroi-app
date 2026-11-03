@@ -100,7 +100,9 @@ def lire_android(p):
 
 
 def dossier_android(systeme):
-    return f'android/app/src/main/res/values-{systeme.split("-")[0]}'
+    # Android garde les anciens codes pour l'indonésien (in) et l'hébreu (iw)
+    c = systeme.split('-')[0]
+    return f'android/app/src/main/res/values-{ {"id": "in", "he": "iw"}.get(c, c)}'
 
 
 def ecrire_android(p, d):
@@ -257,11 +259,27 @@ def verifier_branchement():
             for f in os.listdir(f'{c}/fr.lproj'):
                 if f.endswith('.strings') and not os.path.exists(f'{c}/{s}.lproj/{f}'):
                     out.append(f'{l} : {c}/{s}.lproj/{f}')
-                elif f.endswith('.strings') and not re.search(rf'path = "?(Yoroi/)?{re.escape(s)}\.lproj/{re.escape(f)}"?;', pbx):
-                    out.append(f'{l} : Xcode, {c}/{s}.lproj/{f}')
+        for ide, langs in groupes_variantes(pbx).items():
+            if s not in langs:
+                out.append(f'{l} : Xcode, groupe {ide} sans {s}')
         if l != 'en' and not os.path.exists(dossier_android(s) + '/strings.xml'):
             out.append(f'{l} : {dossier_android(s)}/strings.xml')
     return out
+
+
+def groupes_variantes(pbx):
+    """Groupes de fichiers traduits du projet Xcode : {id de l'anglais: liste des langues présentes}."""
+    out = {}
+    for g in re.finditer(r'isa = PBXVariantGroup;\s*children = \((.*?)\);', pbx, re.S):
+        enfants = re.findall(r'([0-9A-Z]{24}) /\* ([^*]+?) \*/', g.group(1))
+        en = [i for i, n in enfants if n == 'en']
+        if en:
+            out[en[0]] = [n for _, n in enfants]
+    return out
+
+
+def groupe_a(pbx, ide_en, s):
+    return s in groupes_variantes(pbx).get(ide_en, [])
 
 
 def nouvel_id(pbx):
@@ -322,7 +340,7 @@ def ajouter(l):
             pbx[:m.start(1)] + m.group(1).rstrip() + f'\n\t\t\t\t{q},\n\t\t\t' + pbx[m.end(1):]
     lignes = re.findall(r'^\t\t([0-9A-Z]{24}) /\* en \*/ = \{isa = PBXFileReference; [^\n]*name = en; path = ([^;]*?)en\.lproj/([^;]+?); [^\n]*\n', pbx, re.M)
     for (ide, pref, f) in lignes:
-        if re.search(rf'path = "?{re.escape(pref + s)}\.lproj/{re.escape(f)}"?;', pbx):
+        if groupe_a(pbx, ide, s):
             continue
         ligne = re.search(rf'^\t\t{ide} /\* en \*/ = [^\n]*\n', pbx, re.M).group(0)
         nid = nouvel_id(pbx)

@@ -43,7 +43,13 @@
           "nl",
           "es",
           "pt-BR",
-          "it"
+          "it",
+          "tr",
+          "ja",
+          "ko",
+          "zh-Hans",
+          "th",
+          "id"
         ]
       },
       "entitlements": {
@@ -147,7 +153,13 @@
               "nl",
               "es",
               "pt-BR",
-              "it"
+              "it",
+              "tr",
+              "ja",
+              "ko",
+              "zh-Hans",
+              "th",
+              "id"
             ],
             "android": [
               "fr",
@@ -156,7 +168,13 @@
               "nl",
               "es",
               "pt-BR",
-              "it"
+              "it",
+              "tr",
+              "ja",
+              "ko",
+              "zh-Hans",
+              "th",
+              "id"
             ]
           }
         }

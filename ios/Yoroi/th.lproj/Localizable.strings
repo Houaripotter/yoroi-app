@@ -1,0 +1,9 @@
+/* YOROI Yoroi : textes en th. Clé = texte français du code Swift. */
+"Chrono" = "ตัวจับเวลา";
+"Démarrer un sparring" = "เริ่มสปาร์ริ่ง";
+"Démarrer une séance" = "เริ่มเซสชัน";
+"Démarrer une séance Yoroi" = "เริ่มเซสชัน Yoroi";
+"Logger ma pesée" = "บันทึกการชั่งน้ำหนัก";
+"Ouvre Yoroi sur l'écran d'ajout de pesée." = "เปิด Yoroi ที่หน้าเพิ่มการชั่งน้ำหนัก";
+"Ouvre Yoroi sur le timer pour démarrer une séance." = "เปิด Yoroi ที่ตัวจับเวลาเพื่อเริ่มเซสชัน";
+"Ouvre le timer combat BJJ/MMA." = "เปิดตัวจับเวลาไฟต์ BJJ/MMA";

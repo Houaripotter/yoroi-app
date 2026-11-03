@@ -6,7 +6,13 @@
     "nl": "26 oktober 2026",
     "es": "26 de octubre de 2026",
     "pt": "26 de outubro de 2026",
-    "it": "26 ottobre 2026"
+    "it": "26 ottobre 2026",
+    "tr": "26 Ekim 2026",
+    "ja": "2026年10月26日",
+    "ko": "2026년 10월 26일",
+    "zh": "2026年10月26日",
+    "th": "26 ตุลาคม 2026",
+    "id": "26 Oktober 2026"
   },
   "fr": [
     {
@@ -845,6 +851,726 @@
       "icone": "eye",
       "lignes": [
         "Questa informativa può cambiare. La data in alto viene aggiornata, e ogni modifica importante viene segnalata nell’app."
+      ]
+    }
+  ],
+  "tr": [
+    {
+      "titre": "YOROI'yi kim yayınlıyor",
+      "icone": "shield",
+      "lignes": [
+        "YOROI, kilo, vücut ve spor antrenmanı takibi için bir uygulamadır. Uygulamayı, sermayesi 1.000 avro olan SASU şirketi KABUTO yayınlar: SIREN 109 094 649, RCS Marseille, 55 rue Grignan, 13006 Marseille, Fransa.",
+        "Verilerinle ilgili her soru için iletişim: yoroiapp@hotmail.com",
+        "İlke şu: sağlık verilerin telefonunda kalır. YOROI'nin bu verileri alan hiçbir sunucusu yoktur."
+      ]
+    },
+    {
+      "titre": "YOROI'nin telefonunda sakladıkları",
+      "icone": "save",
+      "lignes": [
+        "Yalnızca telefonunda, uygulamanın belleğinde:",
+        "• Kilo, vücut kompozisyonu, vücut ölçüleri, boy, hedefler",
+        "• Antrenmanlar, egzersizler, ağırlıklar, rekorlar, kronometre, müsabakalar, maçlar",
+        "• Uyku, su tüketimi, günlük form, oruç, beslenme, sakatlıklar",
+        "• İlerleme fotoğrafları ve videolar, eklersen",
+        "• Kaydettiğin antrenman partnerleri: ad, notlar, sesli notlar, fotoğraf",
+        "• Antrenmanın yeri, yalnızca \"Konumum\" seçeneğine dokunursan: yerin adı ve koordinatları antrenmanla birlikte saklanır",
+        "• Adın, cinsiyetin ve karşılama ekranındaki cevapların, ayarlar, karakter ve tema",
+        "Bu veriler sen silene kadar kalır. Telefonunun şifrelemesiyle korunurlar."
+      ]
+    },
+    {
+      "titre": "Telefonundan çıkabilecekler",
+      "icone": "upload",
+      "lignes": [
+        "Hiçbir şey YOROI sunucusuna gitmez, çünkü böyle bir sunucu yok. Dışarı çıkabilecek her şey ve ne zaman çıktığı:",
+        "• Apple Sağlık (iPhone) veya Health Connect (Android): yalnızca izin verirsen. YOROI oradan verilerini (kilo, adım, nabız, uyku, antrenmanlar) okur ve oraya tartılarını, antrenmanlarını, su tüketimini ve uykunu yazar. Bu veriler daha sonra Apple veya Google tarafından yönetilir.",
+        "• Saatin (Apple Watch, Wear OS): kullanırsan YOROI ona ekranında gösterdiklerini gönderir.",
+        "• Widget'lar: ana ekranında göstermeyi seçtiklerin telefonunda görünür kalır.",
+        "• Bir yerin adı: \"Konumum\" seçeneğine dokunduğunda telefonun, harita hizmetinden (Apple veya Google) o yerin adını ister.",
+        "• Hava kalitesi: Apple Sağlık'tan içe aktarılan bir açık hava antrenmanı için YOROI, yaklaşık 1 km'ye yuvarlanmış başlangıç konumunu ve tarihi Open-Meteo'ya (open-meteo.com) gönderir. Hiçbir tanımlayıcı gönderilmez.",
+        "• Abonelik: RevenueCat (revenuecat.com) tarafından yönetilir; RevenueCat anonim bir tanımlayıcı, uygulama sürümü, platform ve satın alma durumunu alır. Ödeme App Store veya Google Play üzerinden yapılır, YOROI hiçbir banka verisini görmez.",
+        "• Yedeklerin, dışa aktarmaların ve paylaşımların: yalnızca sen karar verdiğinde (aşağıya bak).",
+        "Hiçbir sağlık verisi asla satılmaz ve reklam için kullanılmaz."
+      ]
+    },
+    {
+      "titre": "Kullanım ölçümü ve çökme raporları",
+      "icone": "eye",
+      "lignes": [
+        "Hangi ekranların işe yaradığını anlamak ve çökmeleri düzeltmek için YOROI, Google Analytics for Firebase ve Sentry kullanır. Bu özellik varsayılan olarak açıktır ve istediğin zaman Ayarlar, Gizlilik bölümünden kapatabilirsin. Kapatmak, çökmeler dahil her türlü gönderimi hemen durdurur.",
+        "Gönderilenler: değer içermeyen kullanım bilgileri. Örneğin \"bir tartı girildi\", \"bir ağırlık antrenmanı kaydedildi\", \"İlerleme ekranı açıldı\", karşılama ekranında seçilen hedef (kilo vermek, kilo almak, maç, korumak), beyan edilen cinsiyet (erkek, kadın veya diğer), beyan edilen yaş aralığı (örneğin 25 ile 34 yaş arası, asla tam yaş veya doğum tarihi değil), spor ailesi, ücretsiz veya abone durumu.",
+        "ASLA gönderilmeyenler: hiçbir kilo, hiçbir vücut ölçüsü, hiçbir kalori, hiçbir nabız, hiçbir antrenman süresi veya ağırlığı, Apple Sağlık veya Health Connect'ten hiçbir veri, yazdığın hiçbir metin, hiçbir ad, hiçbir yer, hiçbir fotoğraf.",
+        "Google Analytics uygulamaya rastgele bir kurulum tanımlayıcısı atar ve bağlantının yaklaşık ülkesini çıkarabilir. Reklam tanımlayıcısı toplanmaz. Sentry, bir çökmenin teknik raporunu IP adresi ve cihaz tanımlayıcısı olmadan alır.",
+        "Saklama süresi: kullanım ölçümü için en fazla 14 ay, çökmeler için en fazla 90 gün.",
+        "Ayarlar, Gizlilik bölümünde görünen yerel bir sayaç, kaç olayın kaydedildiğini sana gösterir. Bu sayaç telefonundan çıkmaz."
+      ],
+      "siMesure": true
+    },
+    {
+      "titre": "Yedekler ve senkronizasyon",
+      "icone": "archive",
+      "lignes": [
+        "• Otomatik yedek: YOROI her gün verilerinin bir kopyasını telefonuna kaydeder. Bunu kapatabilirsin.",
+        "• Bulut klasörü: bir klasör seçersen (iCloud Drive, Google Drive, Dropbox, OneDrive), her yedek oraya da kopyalanır. Yedek bu durumda o hizmet tarafından, kendi kurallarına göre saklanır. Varsayılan olarak şifreli değildir: parola olmadan okunamaz olmasını istiyorsan yedekleme ayarlarında parolayla şifrelemeyi aç.",
+        "• Bulut üzerinden cihazların arasında: aynı klasörü okuyan başka bir cihaz, en son yedeği geri yüklemeyi sana önerebilir.",
+        "• Yakındaki iPhone'un ve iPad'in arasında: yalnızca 6 haneli bir kodla eşleştirdiğin bir cihazla ve yalnızca senkronizasyon ekranı açıkken. Veri alışverişi internet olmadan Bluetooth veya doğrudan wifi üzerinden yapılır ve cihazlarına özel bir anahtarla şifrelenir. Tanımadığın bir telefon hiçbir şey almaz.",
+        "• Dışa aktarmalar ve paylaşımlar: bir dışa aktarma (dosya, PDF, tablo) veya paylaşılan bir görsel yalnızca düğmeye dokunduğunda gider ve neyin gönderileceğini önceden görürsün."
+      ]
+    },
+    {
+      "titre": "İstenen izinler",
+      "icone": "lock",
+      "lignes": [
+        "Her izin isteğe bağlıdır ve yalnızca gerektiği anda istenir:",
+        "• Apple Sağlık veya Health Connect: sağlık verilerini okumak ve yazmak",
+        "• Bildirimler: hatırlatıcıların. Kilit ekranında hiçbir sağlık rakamı görünmez",
+        "• Konum: yalnızca bir antrenmanda \"Konumum\" seçeneğine dokunduğunda",
+        "• Kamera ve fotoğraflar: profil ve ilerleme fotoğrafları, kartlarının kaydedilmesi",
+        "• Mikrofon: bir partner hakkında sesli notlar",
+        "• Takvim: onayından sonra takvimine bir müsabaka eklemek",
+        "• Face ID: etkinleştirirsen uygulamayı kilitlemek",
+        "• Yerel ağ: eşleştirilmiş iPad'inle senkronizasyon"
+      ]
+    },
+    {
+      "titre": "Verilerini silmek",
+      "icone": "trash",
+      "lignes": [
+        "• Ayarlar, Verilerim, Her şeyi sil: YOROI'nin bu telefonda sakladığı her şeyi, tartılar, vücut ölçüleri, antrenmanlar, fotoğraflar, yedekler, ayarlar ve hatırlatıcılar dahil siler. Uygulama sıfırdan başlar.",
+        "• YOROI'nin dışında kalanlar, bunları kendin silebilirsin: Apple Sağlık veya Health Connect'e yazılanlar, bulut klasörüne kopyalanan yedekler ve galerine kaydedilen görseller.",
+        "• Ayarlar, Verilerim, Gizlilik bölümünden tek bir veri kategorisini de silebilir, önce tüm verilerini dışa aktarabilirsin.",
+        "• Uygulamayı kaldırmak verilerinin çoğunu siler, ancak iOS bazı ayarları güvenli anahtar zincirinde tutabilir ve Apple Sağlık, Health Connect veya bulut klasöründe hiçbir şey silinmez. Her şeyi silmek için uygulamayı kaldırmadan önce Her şeyi sil'i kullan.",
+        "• Kullanım ölçümü: anahtarı kapatmak gönderimi durdurur. Daha önce gönderilenleri sildirmek için yoroiapp@hotmail.com adresine yaz."
+      ]
+    },
+    {
+      "titre": "Hakların",
+      "icone": "shield",
+      "lignes": [
+        "Verilerin üzerinde erişim, düzeltme, silme, itiraz ve taşınabilirlik hakkına sahipsin. Veriler telefonunda olduğu için bu hakları doğrudan uygulamada kullanırsın. Geri kalan her şey için yoroiapp@hotmail.com adresine yaz.",
+        "Fransız veri koruma otoritesi CNIL'e (cnil.fr) de başvurabilirsin."
+      ]
+    },
+    {
+      "titre": "Asgari yaş",
+      "icone": "shield",
+      "lignes": [
+        "YOROI, 15 yaş ve üzerindeki kişiler içindir."
+      ]
+    },
+    {
+      "titre": "Avrupa Birliği dışına aktarımlar",
+      "icone": "archive",
+      "lignes": [
+        "Apple, Google, RevenueCat ve Sentry verileri kendi politikalarına ve Genel Veri Koruma Tüzüğü'nün (GDPR) öngördüğü güvencelere göre Amerika Birleşik Devletleri'nde işleyebilir. YOROI bu şirketlere hiçbir sağlık verisi göndermez."
+      ]
+    },
+    {
+      "titre": "Değişiklikler",
+      "icone": "eye",
+      "lignes": [
+        "Bu politika değişebilir. En üstteki tarih güncellenir ve önemli bir değişiklik uygulamada duyurulur."
+      ]
+    }
+  ],
+  "ja": [
+    {
+      "titre": "YOROIの運営者",
+      "icone": "shield",
+      "lignes": [
+        "YOROIは、体重、体、スポーツのセッションを記録するアプリです。運営者はKABUTO（SASU、資本金1,000ユーロ、SIREN 109 094 649、RCS Marseille、55 rue Grignan, 13006 Marseille, France）です。",
+        "データに関するお問い合わせ先：yoroiapp@hotmail.com",
+        "基本方針：健康データはスマホの中に残ります。YOROIには、そのデータを受け取るサーバーが一切ありません。"
+      ]
+    },
+    {
+      "titre": "YOROIがスマホに保存するもの",
+      "icone": "save",
+      "lignes": [
+        "スマホの中、アプリのストレージにのみ保存されます：",
+        "• 体重、体組成、ボディサイズ、身長、目標",
+        "• セッション、種目、重量、自己ベスト、タイマー、試合、対戦",
+        "• 睡眠、水分補給、今日のコンディション、ファスティング、栄養、ケガ",
+        "• 変化の写真と動画（追加した場合）",
+        "• 登録した練習パートナー：名前、メモ、ボイスメモ、写真",
+        "• セッションの場所（「現在地」をタップした場合のみ）：場所の名前と座標がセッションとともに保存されます",
+        "• 名前、性別、初回設定での回答、設定、キャラクター、テーマ",
+        "これらのデータは、自分で削除するまで残ります。スマホの暗号化によって保護されています。"
+      ]
+    },
+    {
+      "titre": "スマホの外に出る可能性があるもの",
+      "icone": "upload",
+      "lignes": [
+        "YOROIのサーバーには何も送信されません。そもそもサーバーが存在しません。外に出る可能性があるものと、そのタイミングはこれですべてです：",
+        "• Appleヘルスケア（iPhone）またはヘルスコネクト（Android）：許可した場合のみ。YOROIはそこからデータ（体重、歩数、心拍数、睡眠、セッション）を読み取り、計量、セッション、水分補給、睡眠を書き込みます。その後、これらのデータはAppleまたはGoogleが管理します。",
+        "• ウォッチ（Apple Watch、Wear OS）：使用している場合、YOROIはウォッチに表示する内容を送信します。",
+        "• ウィジェット：ホーム画面に表示すると選んだ内容は、スマホ上で見える状態になります。",
+        "• 場所の名前：「現在地」をタップすると、スマホが地図サービス（AppleまたはGoogle）に場所の名前を問い合わせます。",
+        "• 大気質：Appleヘルスケアから読み込んだ屋外セッションについて、YOROIはOpen-Meteo（open-meteo.com）に、約1 kmに丸めた開始位置と日付を送信します。識別子は一切送信されません。",
+        "• サブスクリプション：RevenueCat（revenuecat.com）が管理し、匿名の識別子、アプリのバージョン、プラットフォーム、購入状況を受け取ります。支払いはApp StoreまたはGoogle Playで行われ、YOROIが銀行情報を見ることは一切ありません。",
+        "• バックアップ、エクスポート、共有：自分で決めたときだけです（下記参照）。",
+        "健康データが販売されたり、広告に使われたりすることは決してありません。"
+      ]
+    },
+    {
+      "titre": "利用状況の計測とクラッシュレポート",
+      "icone": "eye",
+      "lignes": [
+        "よく使われる画面を把握し、クラッシュを修正するために、YOROIはGoogle Analytics for FirebaseとSentryを使用しています。これは初期設定でオンになっており、「設定」、「プライバシー」でいつでもオフにできます。オフにすると、クラッシュを含むすべての送信が直ちに停止します。",
+        "送信されるもの：数値を含まない利用の事実です。例えば「計量が入力された」「筋トレのセッションが記録された」「進捗画面が開かれた」、初回設定で選んだ目標（減量、増量、試合、維持）、申告した性別（男性、女性、その他）、申告した年齢層（例えば25〜34歳。正確な年齢や生年月日は決して送信されません）、スポーツの種類、無料かPremium会員かの状態です。",
+        "決して送信されないもの：体重、ボディサイズ、カロリー、心拍数、セッションの時間や重量、Appleヘルスケアやヘルスコネクトのデータ、自分で書いたテキスト、名前、場所、写真は一切送信されません。",
+        "Google Analyticsはアプリにランダムなインストール識別子を割り当て、接続元のおおよその国を推定することがあります。広告識別子は収集されません。Sentryはクラッシュの技術レポートを受け取りますが、IPアドレスやデバイス識別子は含まれません。",
+        "保存期間：利用状況の計測は最長14か月、クラッシュは最長90日です。",
+        "「設定」、「プライバシー」で見られるローカルのカウンターに、記録されたイベントの数が表示されます。このカウンターがスマホの外に出ることはありません。"
+      ],
+      "siMesure": true
+    },
+    {
+      "titre": "バックアップと同期",
+      "icone": "archive",
+      "lignes": [
+        "• 自動バックアップ：YOROIは毎日、データのコピーをスマホに保存します。オフにすることもできます。",
+        "• クラウドフォルダ：フォルダ（iCloud Drive、Google Drive、Dropbox、OneDrive）を選んだ場合、各バックアップはそこにもコピーされます。その場合、バックアップはそのサービスが独自のルールに従って保管します。初期設定では暗号化されていません。パスワードがないと読めないようにしたい場合は、バックアップの設定でパスワードによる暗号化をオンにしてください。",
+        "• クラウド経由でのデバイス間：同じフォルダを読む別のデバイスが、最新のバックアップの復元を提案することがあります。",
+        "• 近くにあるiPhoneとiPadの間：6桁のコードでペアリングしたデバイスとだけ、同期画面を開いている間だけ行われます。やり取りはインターネットを使わずBluetoothまたはWi-Fiダイレクトで行われ、自分のデバイス専用の鍵で暗号化されます。知らないスマホには何も届きません。",
+        "• エクスポートと共有：エクスポート（ファイル、PDF、表計算）や共有する画像は、ボタンをタップしたときだけ送られ、送信内容を事前に確認できます。"
+      ]
+    },
+    {
+      "titre": "求める許可",
+      "icone": "lock",
+      "lignes": [
+        "許可はどれも任意で、必要になったときに求められます：",
+        "• Appleヘルスケアまたはヘルスコネクト：健康データの読み取りと書き込み",
+        "• 通知：リマインダー。ロック画面に健康の数値が表示されることはありません",
+        "• 位置情報：セッションで「現在地」をタップしたときだけ",
+        "• カメラと写真：プロフィール写真と変化の写真、カードの保存",
+        "• マイク：パートナーについてのボイスメモ",
+        "• カレンダー：確認したうえで、試合をカレンダーに追加",
+        "• Face ID：オンにした場合、アプリをロック",
+        "• ローカルネットワーク：ペアリングしたiPadとの同期"
+      ]
+    },
+    {
+      "titre": "データの削除",
+      "icone": "trash",
+      "lignes": [
+        "• 「設定」、「マイデータ」、「すべて削除」：計量、ボディサイズ、セッション、写真、バックアップ、設定、リマインダーを含め、YOROIがこのスマホに保存しているものをすべて削除します。アプリは新品の状態に戻ります。",
+        "• YOROIの外に残り、自分で削除できるもの：Appleヘルスケアまたはヘルスコネクトに書き込まれたデータ、クラウドフォルダにコピーされたバックアップ、写真ライブラリに保存した画像。",
+        "• 「設定」、「マイデータ」、「プライバシー」で、特定のカテゴリのデータだけを削除することもできます。その前にすべてのデータをエクスポートすることもできます。",
+        "• アプリをアンインストールするとほとんどのデータが削除されますが、iOSはいくつかの設定を安全なキーチェーンに残すことがあり、Appleヘルスケア、ヘルスコネクト、クラウドフォルダでは何も削除されません。すべてを削除するには、アンインストールの前に「すべて削除」を使ってください。",
+        "• 利用状況の計測：スイッチをオフにすると送信が止まります。すでに送信されたものの削除を求めるには、yoroiapp@hotmail.comまでご連絡ください。"
+      ]
+    },
+    {
+      "titre": "ユーザーの権利",
+      "icone": "shield",
+      "lignes": [
+        "自分のデータについて、アクセス、訂正、削除、異議、データポータビリティの権利があります。データはスマホの中にあるので、これらの権利はアプリ内で直接行使できます。それ以外については、yoroiapp@hotmail.comまでご連絡ください。",
+        "CNIL（フランスのデータ保護機関、cnil.fr）に申し立てることもできます。"
+      ]
+    },
+    {
+      "titre": "最低年齢",
+      "icone": "shield",
+      "lignes": [
+        "YOROIは15歳以上の方を対象としています。"
+      ]
+    },
+    {
+      "titre": "EU域外への移転",
+      "icone": "archive",
+      "lignes": [
+        "Apple、Google、RevenueCat、Sentryは、各社のポリシーとEU一般データ保護規則（GDPR）が定める保護措置に従い、米国でデータを処理することがあります。YOROIがこれらの企業に健康データを送信することはありません。"
+      ]
+    },
+    {
+      "titre": "変更",
+      "icone": "eye",
+      "lignes": [
+        "このポリシーは変更されることがあります。上部の日付が更新され、重要な変更はアプリ内でお知らせします。"
+      ]
+    }
+  ],
+  "ko": [
+    {
+      "titre": "YOROI 운영자",
+      "icone": "shield",
+      "lignes": [
+        "YOROI는 체중, 신체, 운동 세션을 기록하는 애플리케이션이에요. 운영자는 KABUTO(SASU, 자본금 1 000유로, SIREN 109 094 649, RCS Marseille, 55 rue Grignan, 13006 Marseille, France)예요.",
+        "데이터에 관한 모든 문의: yoroiapp@hotmail.com",
+        "원칙: 건강 데이터는 휴대폰에 남아요. YOROI에는 이 데이터를 받는 서버가 전혀 없어요."
+      ]
+    },
+    {
+      "titre": "YOROI가 휴대폰에 보관하는 것",
+      "icone": "save",
+      "lignes": [
+        "휴대폰의 앱 저장 공간에만 보관해요:",
+        "• 체중, 체성분, 신체 치수, 키, 목표",
+        "• 세션, 운동, 중량, 개인 기록, 타이머, 대회, 시합",
+        "• 수면, 수분 섭취, 오늘의 컨디션, 단식, 영양, 부상",
+        "• 변화 사진과 영상(추가한 경우)",
+        "• 저장한 훈련 파트너: 이름, 메모, 음성 메모, 사진",
+        "• 세션 장소(「내 위치」를 누른 경우에만): 장소 이름과 좌표가 세션과 함께 저장돼요",
+        "• 이름, 성별, 온보딩 답변, 설정, 캐릭터, 테마",
+        "이 데이터는 직접 삭제할 때까지 남아 있어요. 휴대폰의 암호화로 보호돼요."
+      ]
+    },
+    {
+      "titre": "휴대폰 밖으로 나갈 수 있는 것",
+      "icone": "upload",
+      "lignes": [
+        "YOROI 서버로는 아무것도 전송되지 않아요. 서버 자체가 없어요. 밖으로 나갈 수 있는 모든 것과 그 시점은 다음과 같아요:",
+        "• Apple 건강(iPhone) 또는 헬스 커넥트(Android): 허용한 경우에만. YOROI는 여기서 데이터(체중, 걸음 수, 심박수, 수면, 세션)를 읽고, 체중 측정, 세션, 수분 섭취, 수면을 기록해요. 이 데이터는 이후 Apple 또는 Google이 관리해요.",
+        "• 워치(Apple Watch, Wear OS): 사용하는 경우, YOROI는 워치에 표시할 내용을 보내요.",
+        "• 위젯: 홈 화면에 표시하기로 선택한 내용은 휴대폰에서 보이는 상태로 남아요.",
+        "• 장소 이름: 「내 위치」를 누르면 휴대폰이 지도 서비스(Apple 또는 Google)에 그 장소의 이름을 요청해요.",
+        "• 대기 질: Apple 건강에서 가져온 야외 세션의 경우, YOROI는 약 1 km 단위로 반올림한 출발 위치와 날짜를 Open-Meteo(open-meteo.com)에 보내요. 식별자는 전혀 보내지 않아요.",
+        "• 구독: RevenueCat(revenuecat.com)이 관리하며, 익명 식별자, 앱 버전, 플랫폼, 구매 상태를 받아요. 결제는 App Store 또는 Google Play에서 이루어지고, YOROI는 금융 정보를 전혀 볼 수 없어요.",
+        "• 백업, 내보내기, 공유: 직접 결정한 경우에만(아래 참고).",
+        "건강 데이터는 절대 판매되지 않으며, 광고에도 사용되지 않아요."
+      ]
+    },
+    {
+      "titre": "이용 통계 및 오류 보고서",
+      "icone": "eye",
+      "siMesure": true,
+      "lignes": [
+        "어떤 화면이 쓰이는지 알고 앱 오류를 고치기 위해 YOROI는 Google Analytics for Firebase와 Sentry를 사용해요. 기본적으로 켜져 있으며, 언제든지 설정, 개인정보 보호에서 끌 수 있어요. 끄면 오류 보고서를 포함한 모든 전송이 즉시 중단돼요.",
+        "전송되는 것: 수치가 없는 사용 기록이에요. 예를 들어 「체중 측정을 입력함」, 「웨이트 트레이닝 세션을 저장함」, 「성장 화면을 엶」, 온보딩에서 선택한 목표(감량, 증량, 시합, 유지), 입력한 성별(남성, 여성, 기타), 입력한 연령대(예: 25~34세, 정확한 나이나 생년월일은 절대 보내지 않음), 종목 분류, 무료 또는 구독 상태예요.",
+        "절대 전송되지 않는 것: 체중, 신체 치수, 칼로리, 심박수, 세션 시간이나 중량, Apple 건강 또는 헬스 커넥트의 데이터, 직접 작성한 텍스트, 이름, 장소, 사진은 전혀 전송되지 않아요.",
+        "Google Analytics는 앱에 무작위 설치 식별자를 부여하고, 접속한 대략적인 국가를 추정할 수 있어요. 광고 식별자는 수집하지 않아요. Sentry는 IP 주소나 기기 식별자 없이 앱 오류의 기술 보고서를 받아요.",
+        "보관 기간: 이용 통계는 최대 14개월, 오류 보고서는 최대 90일이에요.",
+        "설정, 개인정보 보호에서 볼 수 있는 기기 내 카운터가 기록된 이벤트 수를 보여 줘요. 이 카운터는 휴대폰 밖으로 나가지 않아요."
+      ]
+    },
+    {
+      "titre": "백업 및 동기화",
+      "icone": "archive",
+      "lignes": [
+        "• 자동 백업: YOROI는 매일 데이터 사본을 휴대폰에 저장해요. 끌 수 있어요.",
+        "• 클라우드 폴더: 폴더(iCloud Drive, Google Drive, Dropbox, OneDrive)를 선택하면 각 백업이 그곳에도 복사돼요. 이 경우 백업은 해당 서비스가 자체 규정에 따라 보관해요. 기본적으로 암호화되지 않아요. 비밀번호 없이 읽을 수 없게 하려면 백업 설정에서 비밀번호 암호화를 켜세요.",
+        "• 클라우드를 통한 내 기기 간 이동: 같은 폴더를 읽는 다른 기기에서 가장 최근 백업을 가져오도록 제안할 수 있어요.",
+        "• 가까이 있는 iPhone과 iPad 사이: 6자리 코드로 페어링한 기기와만, 그리고 동기화 화면이 열려 있는 동안에만 이루어져요. 데이터는 인터넷 없이 Bluetooth 또는 Wi-Fi 다이렉트로 주고받으며, 내 기기 전용 키로 암호화돼요. 모르는 휴대폰은 아무것도 받지 않아요.",
+        "• 내보내기 및 공유: 내보내기(파일, PDF, 스프레드시트)나 공유 이미지는 버튼을 눌렀을 때만 전송되며, 보내기 전에 전송될 내용을 확인할 수 있어요."
+      ]
+    },
+    {
+      "titre": "요청하는 권한",
+      "icone": "lock",
+      "lignes": [
+        "모든 권한은 선택 사항이며, 필요한 순간에 요청해요:",
+        "• Apple 건강 또는 헬스 커넥트: 건강 데이터 읽기 및 쓰기",
+        "• 알림: 리마인더. 잠금 화면에는 건강 수치가 전혀 표시되지 않아요",
+        "• 위치: 세션에서 「내 위치」를 누를 때만",
+        "• 카메라 및 사진: 프로필 사진과 변화 사진, 카드 저장",
+        "• 마이크: 파트너에 대한 음성 메모",
+        "• 캘린더: 확인 후 대회를 캘린더에 추가",
+        "• Face ID: 켠 경우 앱 잠금",
+        "• 로컬 네트워크: 페어링한 iPad와 동기화"
+      ]
+    },
+    {
+      "titre": "데이터 삭제",
+      "icone": "trash",
+      "lignes": [
+        "• 설정, 내 데이터, 모두 삭제: YOROI가 이 휴대폰에 보관하는 모든 것을 삭제해요. 체중 측정, 신체 치수, 세션, 사진, 백업, 설정, 리마인더도 포함돼요. 앱이 처음 상태로 돌아가요.",
+        "• YOROI 밖에 남아 있어 직접 삭제할 수 있는 것: Apple 건강 또는 헬스 커넥트에 기록된 데이터, 클라우드 폴더에 복사된 백업, 갤러리에 저장된 이미지.",
+        "• 설정, 내 데이터, 개인정보 보호에서 데이터 카테고리 하나만 삭제할 수도 있고, 그 전에 모든 데이터를 내보낼 수도 있어요.",
+        "• 앱을 삭제하면 대부분의 데이터가 지워지지만, iOS가 일부 설정을 보안 키체인에 남겨 둘 수 있고, Apple 건강, 헬스 커넥트, 클라우드 폴더의 데이터는 전혀 삭제되지 않아요. 모두 지우려면 앱을 삭제하기 전에 모두 삭제를 사용하세요.",
+        "• 이용 통계: 스위치를 끄면 전송이 중단돼요. 이미 전송된 데이터의 삭제를 요청하려면 yoroiapp@hotmail.com으로 연락하세요."
+      ]
+    },
+    {
+      "titre": "이용자의 권리",
+      "icone": "shield",
+      "lignes": [
+        "데이터에 대해 열람, 정정, 삭제, 처리 반대, 이동에 관한 권리가 있어요. 데이터가 휴대폰에 있으므로 앱에서 직접 행사할 수 있어요. 그 밖의 사항은 yoroiapp@hotmail.com으로 연락하세요.",
+        "CNIL(프랑스 개인정보 보호 감독기관, cnil.fr)에 민원을 제기할 수도 있어요."
+      ]
+    },
+    {
+      "titre": "최소 연령",
+      "icone": "shield",
+      "lignes": [
+        "YOROI는 만 15세 이상을 대상으로 해요."
+      ]
+    },
+    {
+      "titre": "유럽연합 외부로의 이전",
+      "icone": "archive",
+      "lignes": [
+        "Apple, Google, RevenueCat, Sentry는 각사의 정책과 EU 일반개인정보보호법(GDPR)에 규정된 보호 조치에 따라 미국에서 데이터를 처리할 수 있어요. YOROI는 이들에게 건강 데이터를 전혀 보내지 않아요."
+      ]
+    },
+    {
+      "titre": "변경 사항",
+      "icone": "eye",
+      "lignes": [
+        "이 방침은 변경될 수 있어요. 변경 시 상단의 날짜가 업데이트되며, 중요한 변경 사항은 앱에서 알려 드려요."
+      ]
+    }
+  ],
+  "zh": [
+    {
+      "titre": "谁是 YOROI 的发布者",
+      "icone": "shield",
+      "lignes": [
+        "YOROI 是一款记录体重、身体状况和运动训练的应用。其发布者为 KABUTO，一人简化股份有限公司（SASU），注册资本 1 000 欧元，SIREN 109 094 649，RCS Marseille，地址：55 rue Grignan, 13006 Marseille, France。",
+        "关于你的数据的任何问题，请联系：yoroiapp@hotmail.com",
+        "原则：你的健康数据保留在你的手机上。YOROI 没有任何接收这些数据的服务器。"
+      ]
+    },
+    {
+      "titre": "YOROI 在你的手机上保存的内容",
+      "icone": "save",
+      "lignes": [
+        "仅保存在你的手机上，位于 App 的存储空间中：",
+        "• 体重、身体成分、围度、身高、目标",
+        "• 训练、动作、负重、纪录、计时、比赛、对战",
+        "• 睡眠、饮水、当日状态、断食、营养、伤病",
+        "• 进步照片和视频（如果你添加）",
+        "• 你保存的训练伙伴：姓名、备注、语音备注、照片",
+        "• 训练地点，仅当你点按「我的位置」时：地点名称及其坐标会随训练一起保存",
+        "• 名字、性别和引导页中的回答、设置、角色和主题",
+        "这些数据会一直保留，直到你将其删除。它们受你手机加密功能的保护。"
+      ]
+    },
+    {
+      "titre": "可能离开你手机的内容",
+      "icone": "upload",
+      "lignes": [
+        "没有任何数据会发送到 YOROI 的服务器，因为根本不存在这样的服务器。以下是可能离开你手机的全部内容及其时机：",
+        "• Apple 健康（iPhone）或 Health Connect（Android）：仅在你授权时。YOROI 从中读取你的数据（体重、步数、心率、睡眠、训练），并写入你的称重、训练、饮水和睡眠数据。这些数据随后由 Apple 或 Google 管理。",
+        "• 你的手表（Apple Watch、Wear OS）：如果你使用手表，YOROI 会向其发送需要显示的内容。",
+        "• 小组件：你选择在主屏幕上显示的内容，在你的手机上可见。",
+        "• 地点名称：当你点按「我的位置」时，你的手机会向其地图服务（Apple 或 Google）查询该地点的名称。",
+        "• 空气质量：对于从 Apple 健康导入的户外训练，YOROI 会向 Open-Meteo（open-meteo.com）发送精确到约 1 km 的起点位置和日期。不会发送任何标识符。",
+        "• 订阅：由 RevenueCat（revenuecat.com）管理，它会收到一个匿名标识符、App 版本、平台和购买状态。付款通过 App Store 或 Google Play 完成，YOROI 看不到任何银行数据。",
+        "• 你的备份、导出和分享：仅在你决定时（见下文）。",
+        "任何健康数据都绝不会被出售，也不会用于广告。"
+      ]
+    },
+    {
+      "titre": "使用统计和崩溃报告",
+      "icone": "eye",
+      "lignes": [
+        "为了解哪些页面被使用并修复崩溃，YOROI 使用 Google Analytics for Firebase 和 Sentry。此功能默认开启，你可以随时在“设置”中的“隐私”里关闭。关闭后会立即停止一切发送，包括崩溃报告。",
+        "发送的内容：使用行为本身，不含具体数值。例如“记录了一次称重”、“保存了一次力量训练”、“打开了进步页面”、引导页中选择的目标（减重、增重、比赛、保持）、填写的性别（男、女或其他）、填写的年龄段（例如 25 至 34 岁，绝不包括确切年龄或出生日期）、运动类别、免费或订阅状态。",
+        "绝不会发送的内容：任何体重、围度、热量、心率、训练时长或负重，任何来自 Apple 健康或 Health Connect 的数据，任何你写下的文字，任何姓名、地点或照片。",
+        "Google Analytics 会为 App 分配一个随机的安装标识符，并可能推断出连接所在的大致国家。不会收集广告标识符。Sentry 会收到崩溃的技术报告，不含 IP 地址或设备标识符。",
+        "保留期限：使用统计最长 14 个月，崩溃报告最长 90 天。",
+        "“设置”中的“隐私”里有一个本地计数器，显示已记录了多少个事件。它不会离开你的手机。"
+      ],
+      "siMesure": true
+    },
+    {
+      "titre": "备份和同步",
+      "icone": "archive",
+      "lignes": [
+        "• 自动备份：YOROI 每天会在你的手机上保存一份数据副本。你可以将其关闭。",
+        "• 云端文件夹：如果你选择了一个文件夹（iCloud 云盘、Google Drive、Dropbox、OneDrive），每份备份也会复制到其中。备份随后由该服务按其自身规则存储。默认情况下备份不加密：如果你希望没有密码就无法读取备份，请在备份设置中开启密码加密。",
+        "• 通过云端在你的设备之间同步：读取同一文件夹的另一台设备可以提示你恢复最新的备份。",
+        "• 在你附近的 iPhone 和 iPad 之间同步：仅限你通过 6 位数字代码配对的设备，且仅在同步页面打开期间进行。数据通过蓝牙或 Wi-Fi 直连传输，不经过互联网，并使用你的设备专属的密钥加密。陌生手机不会收到任何内容。",
+        "• 导出和分享：导出（文件、PDF、电子表格）或分享图片仅在你点按按钮时发送，发送前你可以看到将要发送的内容。"
+      ]
+    },
+    {
+      "titre": "请求的权限",
+      "icone": "lock",
+      "lignes": [
+        "每项权限都是可选的，并在需要使用时才请求：",
+        "• Apple 健康或 Health Connect：读取和写入你的健康数据",
+        "• 通知：你的提醒。锁定屏幕上不会显示任何健康数值",
+        "• 位置：仅在你于训练中点按「我的位置」时",
+        "• 相机和照片：头像和进步照片，保存你的卡片",
+        "• 麦克风：训练伙伴的语音备注",
+        "• 日历：在你确认后，将比赛添加到你的日历",
+        "• 面容 ID：如果你开启，用于锁定 App",
+        "• 本地网络：与你已配对的 iPad 同步"
+      ]
+    },
+    {
+      "titre": "删除你的数据",
+      "icone": "trash",
+      "lignes": [
+        "• 设置、我的数据、全部清除：删除 YOROI 在这台手机上保存的所有内容，包括称重、围度、训练、照片、备份、设置和提醒。App 将恢复到全新状态。",
+        "• 以下内容位于 YOROI 之外，你可以自行删除：已写入 Apple 健康或 Health Connect 的内容、复制到你云端文件夹的备份，以及保存到你相册中的图片。",
+        "• 你也可以在“设置”、“我的数据”、“隐私”中只删除某一类数据，并可事先导出你的全部数据。",
+        "• 卸载 App 会删除其大部分数据，但 iOS 可能会在其安全钥匙串中保留少量设置，并且 Apple 健康、Health Connect 或你的云端文件夹中的内容不会被删除。如需全部删除，请在卸载前使用“全部清除”。",
+        "• 使用统计：关闭开关即可停止发送。如需删除已发送的内容，请发邮件至 yoroiapp@hotmail.com。"
+      ]
+    },
+    {
+      "titre": "你的权利",
+      "icone": "shield",
+      "lignes": [
+        "你对自己的数据享有访问权、更正权、删除权、反对权和可携带权。由于数据保存在你的手机上，你可以直接在 App 中行使这些权利。其他事项请发邮件至 yoroiapp@hotmail.com。",
+        "你也可以向 CNIL（法国国家信息与自由委员会，cnil.fr）提出申诉。"
+      ]
+    },
+    {
+      "titre": "最低年龄",
+      "icone": "shield",
+      "lignes": [
+        "YOROI 面向 15 岁及以上的用户。"
+      ]
+    },
+    {
+      "titre": "向欧盟以外的数据传输",
+      "icone": "archive",
+      "lignes": [
+        "Apple、Google、RevenueCat 和 Sentry 可能会在美国处理数据，遵循其各自的政策以及欧盟《通用数据保护条例》（GDPR）规定的保障措施。YOROI 不会向它们发送任何健康数据。"
+      ]
+    },
+    {
+      "titre": "政策变更",
+      "icone": "eye",
+      "lignes": [
+        "本政策可能会变更。顶部的日期会随之更新，重大变更会在 App 内告知。"
+      ]
+    }
+  ],
+  "th": [
+    {
+      "titre": "ผู้เผยแพร่ YOROI",
+      "icone": "shield",
+      "lignes": [
+        "YOROI เป็นแอปพลิเคชันสำหรับติดตามน้ำหนัก ร่างกาย และเซสชันการออกกำลังกาย เผยแพร่โดย KABUTO, SASU ทุนจดทะเบียน 1 000 ยูโร, SIREN 109 094 649, RCS Marseille, 55 rue Grignan, 13006 Marseille, France",
+        "ติดต่อสอบถามเกี่ยวกับข้อมูลของคุณได้ที่: yoroiapp@hotmail.com",
+        "หลักการ: ข้อมูลสุขภาพของคุณอยู่บนโทรศัพท์ของคุณ YOROI ไม่มีเซิร์ฟเวอร์ใดที่รับข้อมูลเหล่านี้"
+      ]
+    },
+    {
+      "titre": "สิ่งที่ YOROI เก็บไว้บนโทรศัพท์ของคุณ",
+      "icone": "save",
+      "lignes": [
+        "เก็บไว้บนโทรศัพท์ของคุณเท่านั้น ในหน่วยความจำของแอป:",
+        "• น้ำหนัก องค์ประกอบร่างกาย สัดส่วนร่างกาย ส่วนสูง เป้าหมาย",
+        "• เซสชัน ท่าออกกำลังกาย น้ำหนักที่ใช้ สถิติส่วนตัว ตัวจับเวลา การแข่งขัน ไฟต์",
+        "• การนอน การดื่มน้ำ ความพร้อมของวัน การอดอาหาร โภชนาการ อาการบาดเจ็บ",
+        "• รูปความก้าวหน้าและวิดีโอ หากคุณเพิ่มไว้",
+        "• คู่ซ้อมที่คุณบันทึกไว้: ชื่อ โน้ต โน้ตเสียง รูป",
+        "• สถานที่ของเซสชัน เฉพาะเมื่อคุณแตะ « ตำแหน่งของฉัน »: ชื่อสถานที่และพิกัดจะถูกเก็บไว้พร้อมกับเซสชัน",
+        "• ชื่อ เพศ และคำตอบในขั้นตอนเริ่มต้นใช้งาน การตั้งค่า ตัวละคร และธีม",
+        "ข้อมูลเหล่านี้จะอยู่จนกว่าคุณจะลบ และได้รับการปกป้องด้วยการเข้ารหัสของโทรศัพท์ของคุณ"
+      ]
+    },
+    {
+      "titre": "สิ่งที่อาจออกจากโทรศัพท์ของคุณ",
+      "icone": "upload",
+      "lignes": [
+        "ไม่มีข้อมูลใดถูกส่งไปยังเซิร์ฟเวอร์ของ YOROI เพราะไม่มีเซิร์ฟเวอร์ ต่อไปนี้คือทุกสิ่งที่อาจออกไปได้ และเมื่อใด:",
+        "• Apple Health (iPhone) หรือ Health Connect (Android): เฉพาะเมื่อคุณอนุญาต YOROI อ่านข้อมูลของคุณจากที่นั่น (น้ำหนัก ก้าว อัตราการเต้นหัวใจ การนอน เซสชัน) และเขียนการชั่งน้ำหนัก เซสชัน การดื่มน้ำ และการนอนลงไป จากนั้นข้อมูลเหล่านี้จะอยู่ในการดูแลของ Apple หรือ Google",
+        "• นาฬิกาของคุณ (Apple Watch, Wear OS): หากคุณใช้งาน YOROI จะส่งสิ่งที่นาฬิกาแสดงไปให้",
+        "• วิดเจ็ต: สิ่งที่คุณเลือกแสดงบนหน้าจอโฮมจะมองเห็นได้บนโทรศัพท์ของคุณ",
+        "• ชื่อสถานที่: เมื่อคุณแตะ « ตำแหน่งของฉัน » โทรศัพท์ของคุณจะขอชื่อสถานที่จากบริการแผนที่ของโทรศัพท์ (Apple หรือ Google)",
+        "• คุณภาพอากาศ: สำหรับเซสชันกลางแจ้งที่นำเข้าจาก Apple Health นั้น YOROI จะส่งตำแหน่งเริ่มต้นที่ปัดเศษไว้ประมาณ 1 km และวันที่ไปยัง Open-Meteo (open-meteo.com) โดยไม่ส่งตัวระบุใดๆ",
+        "• การสมัครสมาชิก: ดูแลโดย RevenueCat (revenuecat.com) ซึ่งได้รับตัวระบุแบบไม่ระบุตัวตน เวอร์ชันของแอป แพลตฟอร์ม และสถานะการซื้อ การชำระเงินทำผ่าน App Store หรือ Google Play โดย YOROI ไม่เห็นข้อมูลทางการเงินใดๆ",
+        "• ข้อมูลสำรอง การส่งออก และการแชร์ของคุณ: เฉพาะเมื่อคุณตัดสินใจเท่านั้น (ดูด้านล่าง)",
+        "ข้อมูลสุขภาพจะไม่ถูกขายหรือนำไปใช้เพื่อการโฆษณาไม่ว่ากรณีใด"
+      ]
+    },
+    {
+      "titre": "การวัดการใช้งานและรายงานแอปขัดข้อง",
+      "icone": "eye",
+      "siMesure": true,
+      "lignes": [
+        "เพื่อให้รู้ว่าหน้าจอใดถูกใช้งานและเพื่อแก้ไขปัญหาแอปขัดข้อง YOROI ใช้ Google Analytics for Firebase และ Sentry ซึ่งเปิดไว้เป็นค่าเริ่มต้น และคุณปิดได้ทุกเมื่อใน การตั้งค่า, ความเป็นส่วนตัว การปิดจะหยุดการส่งทั้งหมดทันที รวมถึงรายงานแอปขัดข้อง",
+        "สิ่งที่ถูกส่ง: ข้อเท็จจริงการใช้งานโดยไม่มีค่าตัวเลข เช่น « มีการบันทึกการชั่งน้ำหนัก », « มีการบันทึกเซสชันเวทเทรนนิ่ง », « มีการเปิดหน้าจอความก้าวหน้า », เป้าหมายที่เลือกตอนเริ่มต้นใช้งาน (ลด เพิ่ม การต่อสู้ รักษา), เพศที่ระบุ (ชาย หญิง หรืออื่นๆ), ช่วงอายุที่ระบุ (เช่น 25 ถึง 34 ปี ไม่ใช่อายุจริงหรือวันเกิด), กลุ่มกีฬา, สถานะใช้ฟรีหรือสมาชิก",
+        "สิ่งที่ไม่ถูกส่งเด็ดขาด: ไม่มีน้ำหนัก ไม่มีสัดส่วนร่างกาย ไม่มีแคลอรี่ ไม่มีอัตราการเต้นหัวใจ ไม่มีระยะเวลาหรือน้ำหนักที่ใช้ในเซสชัน ไม่มีข้อมูลจาก Apple Health หรือ Health Connect ไม่มีข้อความที่คุณเขียน ไม่มีชื่อ ไม่มีสถานที่ ไม่มีรูป",
+        "Google Analytics กำหนดตัวระบุการติดตั้งแบบสุ่มให้กับแอป และอาจอนุมานประเทศโดยประมาณจากการเชื่อมต่อได้ ไม่มีการเก็บตัวระบุสำหรับโฆษณา Sentry ได้รับรายงานทางเทคนิคเมื่อแอปขัดข้อง โดยไม่มีที่อยู่ IP หรือตัวระบุอุปกรณ์",
+        "ระยะเวลาเก็บ: ไม่เกิน 14 เดือนสำหรับการวัดการใช้งาน และไม่เกิน 90 วันสำหรับรายงานแอปขัดข้อง",
+        "ตัวนับในเครื่องซึ่งดูได้ใน การตั้งค่า, ความเป็นส่วนตัว จะแสดงว่ามีการบันทึกเหตุการณ์ไปแล้วกี่รายการ ตัวนับนี้ไม่ออกจากโทรศัพท์ของคุณ"
+      ]
+    },
+    {
+      "titre": "ข้อมูลสำรองและการซิงค์",
+      "icone": "archive",
+      "lignes": [
+        "• สำรองข้อมูลอัตโนมัติ: ทุกวัน YOROI จะบันทึกสำเนาข้อมูลของคุณไว้บนโทรศัพท์ คุณปิดได้",
+        "• โฟลเดอร์คลาวด์: หากคุณเลือกโฟลเดอร์ (iCloud Drive, Google Drive, Dropbox, OneDrive) ข้อมูลสำรองแต่ละครั้งจะถูกคัดลอกไปที่นั่นด้วย และจะถูกจัดเก็บโดยบริการนั้นตามกฎของบริการเอง โดยค่าเริ่มต้นข้อมูลสำรองไม่ได้เข้ารหัส เปิดการเข้ารหัสด้วยรหัสผ่านในการตั้งค่าข้อมูลสำรองหากต้องการให้อ่านไม่ได้หากไม่มีรหัสผ่าน",
+        "• ระหว่างอุปกรณ์ผ่านคลาวด์: อุปกรณ์อื่นที่อ่านโฟลเดอร์เดียวกันอาจเสนอให้คุณกู้คืนข้อมูลสำรองล่าสุด",
+        "• ระหว่าง iPhone และ iPad ที่อยู่ใกล้กัน: เฉพาะกับอุปกรณ์ที่คุณจับคู่ด้วยรหัส 6 หลัก และเฉพาะขณะที่หน้าจอซิงค์เปิดอยู่ การรับส่งข้อมูลผ่าน Bluetooth หรือ wifi โดยตรง ไม่ผ่านอินเทอร์เน็ต และเข้ารหัสด้วยกุญแจเฉพาะของอุปกรณ์ของคุณ โทรศัพท์ที่ไม่รู้จักจะไม่ได้รับข้อมูลใดๆ",
+        "• การส่งออกและการแชร์: การส่งออก (ไฟล์, PDF, สเปรดชีต) หรือรูปที่แชร์จะถูกส่งเฉพาะเมื่อคุณแตะปุ่ม และคุณจะเห็นสิ่งที่จะถูกส่งก่อน"
+      ]
+    },
+    {
+      "titre": "สิทธิ์ที่ขอ",
+      "icone": "lock",
+      "lignes": [
+        "สิทธิ์แต่ละรายการเป็นทางเลือก และจะขอในตอนที่ต้องใช้:",
+        "• Apple Health หรือ Health Connect: อ่านและเขียนข้อมูลสุขภาพของคุณ",
+        "• การแจ้งเตือน: การเตือนของคุณ ไม่มีตัวเลขสุขภาพปรากฏบนหน้าจอล็อก",
+        "• ตำแหน่ง: เฉพาะเมื่อคุณแตะ « ตำแหน่งของฉัน » ในเซสชัน",
+        "• กล้องและรูปภาพ: รูปโปรไฟล์และรูปความก้าวหน้า การบันทึกการ์ดของคุณ",
+        "• ไมโครโฟน: โน้ตเสียงเกี่ยวกับคู่ซ้อม",
+        "• ปฏิทิน: เพิ่มการแข่งขันลงในปฏิทินของคุณหลังจากคุณยืนยัน",
+        "• Face ID: ล็อกแอปหากคุณเปิดใช้",
+        "• เครือข่ายภายใน: การซิงค์กับ iPad ที่จับคู่ไว้"
+      ]
+    },
+    {
+      "titre": "การลบข้อมูลของคุณ",
+      "icone": "trash",
+      "lignes": [
+        "• การตั้งค่า, ข้อมูลของฉัน, ลบทั้งหมด: ลบทุกสิ่งที่ YOROI เก็บไว้บนโทรศัพท์เครื่องนี้ รวมถึงการชั่งน้ำหนัก สัดส่วนร่างกาย เซสชัน รูป ข้อมูลสำรอง การตั้งค่า และการเตือน แอปจะกลับเป็นเหมือนใหม่",
+        "• สิ่งที่อยู่นอก YOROI และคุณลบเองได้: สิ่งที่ถูกเขียนลงใน Apple Health หรือ Health Connect, ข้อมูลสำรองที่คัดลอกไปยังโฟลเดอร์คลาวด์ของคุณ และรูปที่บันทึกไว้ในคลังรูปภาพ",
+        "• คุณยังลบข้อมูลเฉพาะหมวดหมู่เดียวได้ใน การตั้งค่า, ข้อมูลของฉัน, ความเป็นส่วนตัว และส่งออกข้อมูลทั้งหมดก่อนได้",
+        "• การถอนการติดตั้งแอปจะลบข้อมูลส่วนใหญ่ของแอป แต่ iOS อาจเก็บการตั้งค่าบางอย่างไว้ในพวงกุญแจที่ปลอดภัย และจะไม่มีอะไรถูกลบใน Apple Health, Health Connect หรือโฟลเดอร์คลาวด์ของคุณ หากต้องการลบทั้งหมด ให้ใช้ ลบทั้งหมด ก่อนถอนการติดตั้ง",
+        "• การวัดการใช้งาน: การปิดสวิตช์จะหยุดการส่ง หากต้องการให้ลบสิ่งที่ส่งไปแล้ว เขียนถึง yoroiapp@hotmail.com"
+      ]
+    },
+    {
+      "titre": "สิทธิ์ของคุณ",
+      "icone": "shield",
+      "lignes": [
+        "คุณมีสิทธิ์เข้าถึง แก้ไข ลบ คัดค้าน และขอโอนย้ายข้อมูลของคุณ เนื่องจากข้อมูลอยู่บนโทรศัพท์ของคุณ คุณใช้สิทธิ์เหล่านี้ได้โดยตรงในแอป สำหรับเรื่องอื่นๆ เขียนถึง yoroiapp@hotmail.com",
+        "คุณยังสามารถร้องเรียนต่อ CNIL (หน่วยงานคุ้มครองข้อมูลของฝรั่งเศส, cnil.fr) ได้"
+      ]
+    },
+    {
+      "titre": "อายุขั้นต่ำ",
+      "icone": "shield",
+      "lignes": [
+        "YOROI มีไว้สำหรับผู้ที่มีอายุ 15 ปีขึ้นไป"
+      ]
+    },
+    {
+      "titre": "การโอนข้อมูลออกนอกสหภาพยุโรป",
+      "icone": "archive",
+      "lignes": [
+        "Apple, Google, RevenueCat และ Sentry อาจประมวลผลข้อมูลในสหรัฐอเมริกา ตามนโยบายของแต่ละบริษัทและมาตรการคุ้มครองที่กำหนดไว้ใน GDPR ของสหภาพยุโรป YOROI ไม่ส่งข้อมูลสุขภาพใดๆ ไปให้บริษัทเหล่านี้"
+      ]
+    },
+    {
+      "titre": "การเปลี่ยนแปลง",
+      "icone": "eye",
+      "lignes": [
+        "นโยบายนี้อาจมีการเปลี่ยนแปลง วันที่ด้านบนจะได้รับการอัปเดต และการเปลี่ยนแปลงที่สำคัญจะแจ้งให้ทราบในแอป"
+      ]
+    }
+  ],
+  "id": [
+    {
+      "titre": "Siapa penerbit YOROI",
+      "icone": "shield",
+      "lignes": [
+        "YOROI adalah aplikasi untuk memantau berat badan, tubuh, dan sesi olahraga. Aplikasi ini diterbitkan oleh KABUTO, SASU dengan modal 1 000 euro, SIREN 109 094 649, RCS Marseille, 55 rue Grignan, 13006 Marseille, Prancis.",
+        "Kontak untuk pertanyaan apa pun tentang datamu: yoroiapp@hotmail.com",
+        "Prinsipnya: data kesehatanmu tetap di ponselmu. YOROI tidak punya server yang menerimanya."
+      ]
+    },
+    {
+      "titre": "Yang disimpan YOROI di ponselmu",
+      "icone": "save",
+      "lignes": [
+        "Hanya di ponselmu, di memori aplikasi:",
+        "• Berat badan, komposisi tubuh, ukuran tubuh, tinggi badan, tujuan",
+        "• Sesi, gerakan, beban, PR, timer, kompetisi, pertandingan",
+        "• Tidur, hidrasi, kondisi hari ini, puasa, nutrisi, cedera",
+        "• Foto progres dan video, jika kamu menambahkannya",
+        "• Partner latihan yang kamu simpan: nama, catatan, catatan suara, foto",
+        "• Lokasi sesi, hanya jika kamu mengetuk “Lokasiku”: nama tempat dan koordinatnya disimpan bersama sesi itu",
+        "• Nama depan, gender, dan jawaban saat pengenalan awal, pengaturan, karakter, dan tema",
+        "Data ini tetap ada sampai kamu menghapusnya. Data ini dilindungi oleh enkripsi ponselmu."
+      ]
+    },
+    {
+      "titre": "Yang bisa keluar dari ponselmu",
+      "icone": "upload",
+      "lignes": [
+        "Tidak ada yang dikirim ke server YOROI, karena memang tidak ada. Inilah semua yang bisa keluar, dan kapan:",
+        "• Apple Health (iPhone) atau Health Connect (Android): hanya jika kamu mengizinkannya. YOROI membaca datamu di sana (berat badan, langkah, detak jantung, tidur, sesi) dan menulis penimbangan, sesi, hidrasi, dan tidurmu. Data ini kemudian dikelola oleh Apple atau Google.",
+        "• Jam tanganmu (Apple Watch, Wear OS): jika kamu memakainya, YOROI mengirimkan apa yang ditampilkannya.",
+        "• Widget: apa yang kamu pilih untuk ditampilkan di layar utama tetap terlihat di ponselmu.",
+        "• Nama tempat: saat kamu mengetuk “Lokasiku”, ponselmu meminta nama tempat itu ke layanan petanya (Apple atau Google).",
+        "• Kualitas udara: untuk sesi luar ruangan yang diimpor dari Apple Health, YOROI mengirim ke Open-Meteo (open-meteo.com) posisi awal yang dibulatkan sampai sekitar 1 km dan tanggalnya. Tidak ada pengenal yang dikirim.",
+        "• Langganan: dikelola oleh RevenueCat (revenuecat.com), yang menerima pengenal anonim, versi aplikasi, platform, dan status pembelian. Pembayaran dilakukan lewat App Store atau Google Play, YOROI tidak melihat data perbankan apa pun.",
+        "• Cadangan, ekspor, dan berbagi: hanya saat kamu memutuskannya (lihat di bawah).",
+        "Data kesehatan tidak pernah dijual, dan tidak pernah dipakai untuk iklan."
+      ]
+    },
+    {
+      "titre": "Pengukuran pemakaian dan laporan crash",
+      "icone": "eye",
+      "lignes": [
+        "Untuk mengetahui layar mana yang dipakai dan memperbaiki crash, YOROI memakai Google Analytics for Firebase dan Sentry. Fitur ini aktif secara bawaan, dan kamu bisa mematikannya kapan saja di Pengaturan, Privasi. Mematikannya langsung menghentikan semua pengiriman, termasuk laporan crash.",
+        "Yang dikirim: fakta pemakaian, tanpa nilai. Misalnya “penimbangan telah dimasukkan”, “sesi angkat beban telah disimpan”, “layar Progres telah dibuka”, tujuan yang dipilih saat pengenalan awal (menurunkan berat, menaikkan berat, tarung, mempertahankan berat), gender yang dinyatakan (pria, wanita, atau lainnya), kelompok usia yang dinyatakan (misalnya 25 sampai 34 tahun, tidak pernah usia persis maupun tanggal lahir), kelompok olahraga, status gratis atau berlangganan.",
+        "Yang TIDAK PERNAH dikirim: tidak ada berat badan, tidak ada ukuran tubuh, tidak ada kalori, tidak ada detak jantung, tidak ada durasi maupun beban sesi, tidak ada data dari Apple Health atau Health Connect, tidak ada teks yang kamu tulis, tidak ada nama, tidak ada lokasi, tidak ada foto.",
+        "Google Analytics memberi aplikasi sebuah pengenal instalasi acak dan bisa memperkirakan negara asal koneksi. Pengenal iklan tidak dikumpulkan. Sentry menerima laporan teknis crash, tanpa alamat IP maupun pengenal perangkat.",
+        "Durasi: paling lama 14 bulan untuk pengukuran pemakaian, paling lama 90 hari untuk laporan crash.",
+        "Penghitung lokal, yang terlihat di Pengaturan, Privasi, menunjukkan berapa banyak peristiwa yang telah dicatat. Penghitung ini tidak keluar dari ponselmu."
+      ],
+      "siMesure": true
+    },
+    {
+      "titre": "Cadangan dan sinkronisasi",
+      "icone": "archive",
+      "lignes": [
+        "• Cadangan otomatis: setiap hari, YOROI menyimpan salinan datamu di ponselmu. Kamu bisa mematikannya.",
+        "• Folder cloud: jika kamu memilih folder (iCloud Drive, Google Drive, Dropbox, OneDrive), setiap cadangan juga disalin ke sana. Cadangan itu kemudian disimpan oleh layanan tersebut, sesuai aturannya sendiri. Secara bawaan cadangan itu tidak dienkripsi: aktifkan enkripsi dengan kata sandi di pengaturan cadangan jika kamu ingin cadangan itu tidak bisa dibaca tanpa kata sandi.",
+        "• Antar perangkatmu lewat cloud: perangkat lain yang membaca folder yang sama bisa menawarkan untuk memulihkan cadangan terbaru.",
+        "• Antara iPhone dan iPad-mu yang berdekatan: hanya dengan perangkat yang telah kamu pasangkan memakai kode 6 digit, dan hanya selama layar sinkronisasi terbuka. Pertukaran data berlangsung lewat Bluetooth atau wifi langsung, tanpa internet, dan dienkripsi dengan kunci khusus untuk perangkatmu. Ponsel yang tidak dikenal tidak menerima apa pun.",
+        "• Ekspor dan berbagi: ekspor (file, PDF, spreadsheet) atau gambar yang dibagikan hanya dikirim saat kamu mengetuk tombolnya, dan kamu melihat apa yang akan dikirim sebelumnya."
+      ]
+    },
+    {
+      "titre": "Izin yang diminta",
+      "icone": "lock",
+      "lignes": [
+        "Setiap izin bersifat opsional dan diminta saat dibutuhkan:",
+        "• Apple Health atau Health Connect: membaca dan menulis data kesehatanmu",
+        "• Notifikasi: pengingatmu. Tidak ada angka kesehatan yang muncul di layar terkunci",
+        "• Lokasi: hanya saat kamu mengetuk “Lokasiku” pada sebuah sesi",
+        "• Kamera dan foto: foto profil dan foto progres, penyimpanan kartu-kartumu",
+        "• Mikrofon: catatan suara tentang partner",
+        "• Kalender: menambahkan kompetisi ke kalendermu, setelah kamu mengonfirmasinya",
+        "• Face ID: mengunci aplikasi jika kamu mengaktifkannya",
+        "• Jaringan lokal: sinkronisasi dengan iPad-mu yang sudah dipasangkan"
+      ]
+    },
+    {
+      "titre": "Menghapus datamu",
+      "icone": "trash",
+      "lignes": [
+        "• Pengaturan, Dataku, Hapus semua: menghapus semua yang disimpan YOROI di ponsel ini, termasuk penimbangan, ukuran tubuh, sesi, foto, cadangan, pengaturan, dan pengingat. Aplikasi kembali seperti baru.",
+        "• Yang tetap berada di luar YOROI, dan bisa kamu hapus sendiri: apa yang telah ditulis ke Apple Health atau Health Connect, cadangan yang disalin ke folder cloud-mu, dan gambar yang disimpan di galerimu.",
+        "• Kamu juga bisa menghapus satu kategori data saja di Pengaturan, Dataku, Privasi, dan mengekspor semua datamu sebelumnya.",
+        "• Mencopot aplikasi menghapus sebagian besar datanya, tetapi iOS bisa menyimpan beberapa pengaturan di keychain amannya, dan tidak ada yang dihapus di Apple Health, Health Connect, atau folder cloud-mu. Untuk menghapus semuanya, gunakan Hapus semua sebelum mencopot aplikasi.",
+        "• Pengukuran pemakaian: mematikan tombolnya menghentikan pengiriman. Untuk meminta penghapusan data yang sudah terkirim, tulis ke yoroiapp@hotmail.com."
+      ]
+    },
+    {
+      "titre": "Hak-hakmu",
+      "icone": "shield",
+      "lignes": [
+        "Kamu punya hak akses, perbaikan, penghapusan, keberatan, dan portabilitas atas datamu. Karena data itu ada di ponselmu, kamu menjalankan hak tersebut langsung di aplikasi. Untuk hal lainnya, tulis ke yoroiapp@hotmail.com.",
+        "Kamu juga bisa mengajukan pengaduan ke CNIL (otoritas perlindungan data Prancis, cnil.fr)."
+      ]
+    },
+    {
+      "titre": "Usia minimum",
+      "icone": "shield",
+      "lignes": [
+        "YOROI ditujukan untuk orang berusia 15 tahun ke atas."
+      ]
+    },
+    {
+      "titre": "Transfer ke luar Uni Eropa",
+      "icone": "archive",
+      "lignes": [
+        "Apple, Google, RevenueCat, dan Sentry bisa memproses data di Amerika Serikat, sesuai kebijakan mereka sendiri dan jaminan yang diatur oleh GDPR Uni Eropa. Tidak ada data kesehatan yang dikirim YOROI kepada mereka."
+      ]
+    },
+    {
+      "titre": "Perubahan",
+      "icone": "eye",
+      "lignes": [
+        "Kebijakan ini bisa berubah. Tanggal di bagian atas akan diperbarui, dan perubahan penting akan diberitahukan di aplikasi."
       ]
     }
   ]

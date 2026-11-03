@@ -1,0 +1,9 @@
+/* YOROI Yoroi : textes en zh-Hans. Clé = texte français du code Swift. */
+"Chrono" = "计时器";
+"Démarrer un sparring" = "开始实战对练";
+"Démarrer une séance" = "开始训练";
+"Démarrer une séance Yoroi" = "开始 Yoroi 训练";
+"Logger ma pesée" = "记录我的称重";
+"Ouvre Yoroi sur l'écran d'ajout de pesée." = "打开 Yoroi 的添加称重页面。";
+"Ouvre Yoroi sur le timer pour démarrer une séance." = "打开 Yoroi 计时器，开始训练。";
+"Ouvre le timer combat BJJ/MMA." = "打开 BJJ/MMA 格斗计时器。";

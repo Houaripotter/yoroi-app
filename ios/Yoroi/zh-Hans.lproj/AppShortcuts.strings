@@ -1,0 +1,10 @@
+/* YOROI : phrases Siri en zh-Hans. Clé = phrase du code Swift. */
+"Ajouter ma pesée ${applicationName}" = "在 ${applicationName} 添加称重";
+"Démarrer un sparring ${applicationName}" = "开始 ${applicationName} 实战对练";
+"Démarrer une séance avec ${applicationName}" = "用 ${applicationName} 开始训练";
+"Lance un sparring ${applicationName}" = "用 ${applicationName} 开始实战对练";
+"Lance une séance ${applicationName}" = "开始 ${applicationName} 训练";
+"Log weight in ${applicationName}" = "Log weight in ${applicationName}";
+"Logger ma pesée dans ${applicationName}" = "在 ${applicationName} 记录我的体重";
+"Start session with ${applicationName}" = "Start session with ${applicationName}";
+"Start sparring with ${applicationName}" = "Start sparring with ${applicationName}";

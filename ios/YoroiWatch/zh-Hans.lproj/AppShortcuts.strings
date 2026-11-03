@@ -1,0 +1,12 @@
+/* Phrases Siri des raccourcis Yoroi (montre) */
+"Démarrer le chrono ${applicationName}" = "开始 ${applicationName} 计时器";
+"Lance le chrono ${applicationName}" = "启动 ${applicationName} 计时器";
+"Lance un minuteur ${applicationName}" = "开始 ${applicationName} 倒计时";
+"Lance un minuteur de ${duree} dans ${applicationName}" = "在 ${applicationName} 开始 ${duree} 倒计时";
+"Mes minuteurs ${applicationName}" = "我的 ${applicationName} 倒计时";
+"Minuteur de ${duree} ${applicationName}" = "${applicationName} ${duree} 倒计时";
+"Noter mon poids dans ${applicationName}" = "在 ${applicationName} 记录我的体重";
+"Noter un verre d'eau dans ${applicationName}" = "在 ${applicationName} 记录一杯水";
+"Ouvre les minuteurs ${applicationName}" = "打开 ${applicationName} 倒计时";
+"Pesée ${applicationName}" = "${applicationName} 称重";
+"Un verre d'eau ${applicationName}" = "${applicationName} 喝一杯水";

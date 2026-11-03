@@ -1,0 +1,15 @@
+/* YOROI : textes système en ja. Source : Info.plist (français). */
+"CFBundleDisplayName" = "Yoroi";
+"NSCalendarsFullAccessUsageDescription" = "YOROIは、頼んだときに試合をカレンダーに追加します。例えば、次の大会と前日のリマインダーです。イベントは保存される前に自分で確認します。";
+"NSCalendarsUsageDescription" = "YOROIは、頼んだときに試合をカレンダーに追加します。例えば、次の大会と前日のリマインダーです。イベントは保存される前に自分で確認します。";
+"NSCameraUsageDescription" = "YOROIがカメラを使うのは、自分で選んだときだけです：プロフィール写真、変化の写真、シェアカードの写真、クラブのロゴ、記録帳に残す技の動画。例えば、毎月正面から1枚撮って体の変化を見ることができます。YOROIのサーバーには何も送信されません。";
+"NSFaceIDUsageDescription" = "YOROIがFace IDを使うのは、アプリのロックをオンにした場合だけです。ほかの人に記録帳や計量を見られないようにするためです。";
+"NSHealthShareUsageDescription" = "YOROIはAppleヘルスケアから、体重と体組成、アクティビティ、心臓、睡眠、ワークアウト（ルート、運動強度、ケイデンス、パワー、ゾーン）、飲んだものと食べたものを読み取り、進捗と今日のコンディションを表示します。詳細な測定値（歩行、心臓の通知、環境音、栄養素）はオンにした場合だけです。YOROIのサーバーには何も送信されません。";
+"NSHealthUpdateUsageDescription" = "YOROIはAppleヘルスケアに、計量と体脂肪率、記録したセッション、水分、手動で入力した睡眠を保存します。YOROIのサーバーには何も送信されません。";
+"NSLocalNetworkUsageDescription" = "YOROIはローカルネットワークを使い、コードでペアリングしたデバイス（iPhone、iPad、Mac）の間でデータを直接同期します。アプリを開いているときだけです。インターネットやYOROIのサーバーは一切経由しません。";
+"NSLocationWhenInUseUsageDescription" = "YOROIが位置情報を使うのは、セッションで場所の名前（例えば、ジムと街）を記録したいときだけです。バックグラウンドでは使わず、YOROIのサーバーには何も送信されません。";
+"NSMicrophoneUsageDescription" = "YOROIがマイクを使うのは、トレーニング記録帳で撮る動画の音声と、スパーリングパートナーのページのボイスメモのためです。例えば、コーチの説明付きで技を撮影できます。YOROIのサーバーには何も送信されません。";
+"NSPhotoLibraryAddUsageDescription" = "YOROIは、作成したシェアカードを写真ライブラリに保存します。頼んだときだけです。例えば、自己ベストのカードやビフォーアフターの比較です。YOROIのサーバーには何も送信されません。";
+"NSPhotoLibraryUsageDescription" = "YOROIが写真ライブラリを開くのは、画像や動画を選ぶときだけです：プロフィール写真、変化の写真、体重計の写真、記録帳の動画、パートナーの写真、クラブのロゴ。例えば、前回のスパーリングの動画を読み込めます。YOROIのサーバーには何も送信されません。";
+"NSRemindersFullAccessUsageDescription" = "YOROIはリマインダーAppのリマインダーを読み取ったり作成したりせず、このアクセスも求めません。就寝のリマインダーなどは、YOROIの通知として届きます。";
+"NSRemindersUsageDescription" = "YOROIはリマインダーAppのリマインダーを読み取ったり作成したりせず、このアクセスも求めません。就寝のリマインダーなどは、YOROIの通知として届きます。";

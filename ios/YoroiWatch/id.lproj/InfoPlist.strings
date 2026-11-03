@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en id. */
+"CFBundleDisplayName" = "Yoroi";
+"NSHealthShareUsageDescription" = "YOROI membaca dari app Kesehatan detak jantung, saturasi oksigen, detak jantung saat istirahat, variabilitas detak jantung, laju pernapasan, kalori, berat badan, dan tanggal lahirmu (untuk zona detak jantungmu), untuk menampilkan HR langsung, ringkasan sesi, serta komplikasi Jantung, Oksigen, Istirahat, dan Pernapasan.";
+"NSHealthUpdateUsageDescription" = "YOROI menyimpan ke app Kesehatan sesimu beserta detak jantung dan kalorinya, penimbanganmu, dan gelas airmu, agar semuanya tetap di satu tempat.";
+"NSUserNotificationUsageDescription" = "YOROI memberitahumu di setiap akhir ronde dan saat timermu selesai ketika layar mati.";

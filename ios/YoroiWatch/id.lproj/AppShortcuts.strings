@@ -1,0 +1,12 @@
+/* Phrases Siri des raccourcis Yoroi (montre) */
+"Démarrer le chrono ${applicationName}" = "Mulai timer ${applicationName}";
+"Lance le chrono ${applicationName}" = "Jalankan timer ${applicationName}";
+"Lance un minuteur ${applicationName}" = "Pasang timer ${applicationName}";
+"Lance un minuteur de ${duree} dans ${applicationName}" = "Pasang timer ${duree} di ${applicationName}";
+"Mes minuteurs ${applicationName}" = "Timerku di ${applicationName}";
+"Minuteur de ${duree} ${applicationName}" = "Timer ${duree} ${applicationName}";
+"Noter mon poids dans ${applicationName}" = "Catat berat badanku di ${applicationName}";
+"Noter un verre d'eau dans ${applicationName}" = "Catat segelas air di ${applicationName}";
+"Ouvre les minuteurs ${applicationName}" = "Buka timer ${applicationName}";
+"Pesée ${applicationName}" = "Penimbangan ${applicationName}";
+"Un verre d'eau ${applicationName}" = "Segelas air ${applicationName}";

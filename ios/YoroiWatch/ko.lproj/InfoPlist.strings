@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en ko. */
+"CFBundleDisplayName" = "Yoroi";
+"NSHealthShareUsageDescription" = "YOROI는 Apple 건강에서 심박수, 혈중 산소, 안정 시 심박수, 심박 변이도, 호흡수, 칼로리, 체중, 생년월일(심박수 영역 계산용)을 읽어 실시간 심박수, 세션 요약, 심장, 산소, 휴식, 호흡 컴플리케이션을 보여 줘요.";
+"NSHealthUpdateUsageDescription" = "YOROI는 심박수와 칼로리가 포함된 세션, 체중 측정, 마신 물을 Apple 건강에 저장해 모든 기록을 한곳에 모아요.";
+"NSUserNotificationUsageDescription" = "YOROI는 화면이 꺼져 있을 때도 매 라운드 종료와 타이머 종료를 알려 줘요.";

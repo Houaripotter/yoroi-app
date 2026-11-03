@@ -1,0 +1,6 @@
+<resources>
+  <!-- Widgets -->
+  <string name="widget_dashboard_desc">关键数据一目了然</string>
+  <string name="widget_hydration_desc">记录你每天的饮水量</string>
+  <string name="widget_streak_desc">你的连续训练打卡</string>
+</resources>

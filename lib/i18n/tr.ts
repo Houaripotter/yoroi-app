@@ -24,6 +24,12 @@ const REGISTRE = {
   es: { nom: 'Español', drapeau: '🇪🇸', code: 'ES', locale: 'es-ES', systeme: 'es', decimal: ',', milliers: NBSP, jours: ['L', 'M', 'X', 'J', 'V', 'S', 'D'], unSingulier: false, dict: () => require('./dict/es.json') },
   pt: { nom: 'Português', drapeau: '🇧🇷', code: 'PT', locale: 'pt-BR', systeme: 'pt-BR', decimal: ',', milliers: NBSP, jours: ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'], unSingulier: true, dict: () => require('./dict/pt.json') },
   it: { nom: 'Italiano', drapeau: '🇮🇹', code: 'IT', locale: 'it-IT', systeme: 'it', decimal: ',', milliers: NBSP, jours: ['L', 'M', 'M', 'G', 'V', 'S', 'D'], unSingulier: false, dict: () => require('./dict/it.json') },
+  tr: { nom: 'Türkçe', drapeau: '🇹🇷', code: 'TR', locale: 'tr-TR', systeme: 'tr', decimal: ',', milliers: '.', jours: ['P', 'S', 'Ç', 'P', 'C', 'C', 'P'], unSingulier: false, dict: () => require('./dict/tr.json') },
+  ja: { nom: '日本語', drapeau: '🇯🇵', code: 'JA', locale: 'ja-JP', systeme: 'ja', decimal: '.', milliers: ',', jours: ['月', '火', '水', '木', '金', '土', '日'], unSingulier: false, dict: () => require('./dict/ja.json') },
+  ko: { nom: '한국어', drapeau: '🇰🇷', code: 'KO', locale: 'ko-KR', systeme: 'ko', decimal: '.', milliers: ',', jours: ['월', '화', '수', '목', '금', '토', '일'], unSingulier: false, dict: () => require('./dict/ko.json') },
+  zh: { nom: '简体中文', drapeau: '🇨🇳', code: 'ZH', locale: 'zh-CN', systeme: 'zh-Hans', decimal: '.', milliers: ',', jours: ['一', '二', '三', '四', '五', '六', '日'], unSingulier: false, dict: () => require('./dict/zh.json') },
+  th: { nom: 'ไทย', drapeau: '🇹🇭', code: 'TH', locale: 'th-TH', systeme: 'th', decimal: '.', milliers: ',', jours: ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'], unSingulier: false, dict: () => require('./dict/th.json') },
+  id: { nom: 'Bahasa Indonesia', drapeau: '🇮🇩', code: 'ID', locale: 'id-ID', systeme: 'id', decimal: ',', milliers: '.', jours: ['S', 'S', 'R', 'K', 'J', 'S', 'M'], unSingulier: false, dict: () => require('./dict/id.json') },
 } as const;
 
 export type Lang = keyof typeof REGISTRE;

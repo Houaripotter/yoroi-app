@@ -1,0 +1,10 @@
+/* YOROI : phrases Siri en ko. Clé = phrase du code Swift. */
+"Ajouter ma pesée ${applicationName}" = "${applicationName}에 체중 측정 추가";
+"Démarrer un sparring ${applicationName}" = "${applicationName} 스파링 시작";
+"Démarrer une séance avec ${applicationName}" = "${applicationName}에서 세션 시작";
+"Lance un sparring ${applicationName}" = "${applicationName}에서 스파링 시작해 줘";
+"Lance une séance ${applicationName}" = "${applicationName} 세션 시작해 줘";
+"Log weight in ${applicationName}" = "Log weight in ${applicationName}";
+"Logger ma pesée dans ${applicationName}" = "${applicationName}에 체중 기록";
+"Start session with ${applicationName}" = "Start session with ${applicationName}";
+"Start sparring with ${applicationName}" = "Start sparring with ${applicationName}";

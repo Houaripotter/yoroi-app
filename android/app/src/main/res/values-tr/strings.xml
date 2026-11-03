@@ -1,0 +1,6 @@
+<resources>
+  <!-- Widgets -->
+  <string name="widget_dashboard_desc">Önemli istatistiklerin tek bakışta</string>
+  <string name="widget_hydration_desc">Günlük su tüketimini takip et</string>
+  <string name="widget_streak_desc">Art arda antrenman serin</string>
+</resources>

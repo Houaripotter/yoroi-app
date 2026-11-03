@@ -40,6 +40,12 @@ const LETTRES_SECOURS: Record<string, string[]> = {
   es: ['L', 'M', 'X', 'J', 'V', 'S', 'D'],
   pt: ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'],
   it: ['L', 'M', 'M', 'G', 'V', 'S', 'D'],
+  tr: ['P', 'S', 'Ç', 'P', 'C', 'C', 'P'],
+  ja: ['月', '火', '水', '木', '金', '土', '日'],
+  ko: ['월', '화', '수', '목', '금', '토', '일'],
+  zh: ['一', '二', '三', '四', '五', '六', '日'],
+  th: ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'],
+  id: ['S', 'S', 'R', 'K', 'J', 'S', 'M'],
 };
 
 /** Les 7 lettres des jours (lundi a dimanche) dans la langue d'une locale (« pt-BR » donne S T Q Q S S D) */

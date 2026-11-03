@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en ja. */
+"CFBundleDisplayName" = "Yoroi";
+"NSHealthShareUsageDescription" = "YOROIはAppleヘルスケアから、心拍数、血中酸素、安静時心拍数、心拍変動、呼吸数、カロリー、体重、生年月日（心拍ゾーンの計算用）を読み取り、リアルタイムの心拍数、セッションのまとめ、心臓・酸素・安静・呼吸のコンプリケーションを表示します。";
+"NSHealthUpdateUsageDescription" = "YOROIはAppleヘルスケアに、セッション（心拍数とカロリーを含む）、計量、飲んだ水を保存し、すべてを1か所にまとめます。";
+"NSUserNotificationUsageDescription" = "画面がオフのときも、YOROIは各ラウンドの終わりとタイマーの終了をお知らせします。";

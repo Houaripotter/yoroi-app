@@ -17,6 +17,12 @@
 		<string>es</string>
 		<string>pt-BR</string>
 		<string>it</string>
+		<string>tr</string>
+		<string>ja</string>
+		<string>ko</string>
+		<string>zh-Hans</string>
+		<string>th</string>
+		<string>id</string>
 	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Yoroi</string>

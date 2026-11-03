@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en zh-Hans. */
+"CFBundleDisplayName" = "Yoroi";
+"NSHealthShareUsageDescription" = "YOROI 从 Apple 健康读取你的心率、血氧、静息心率、心率变异性、呼吸频率、热量、体重和出生日期（用于计算心率区间），以显示实时心率、训练总结，以及心脏、血氧、静息和呼吸复杂功能。";
+"NSHealthUpdateUsageDescription" = "YOROI 会把你的训练（含心率和热量）、称重和饮水记录写入 Apple 健康，让所有数据集中在一处。";
+"NSUserNotificationUsageDescription" = "屏幕熄灭时，YOROI 会在每个回合结束和倒计时结束时提醒你。";
