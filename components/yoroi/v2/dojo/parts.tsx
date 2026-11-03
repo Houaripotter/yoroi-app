@@ -14,6 +14,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
 import { P, paletteSombre } from '@/components/yoroi/livePalette';
 import { traduire, LOCALE } from '@/lib/i18n/tr';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 /** Palette du Dojo : lue dans la palette vivante a chaque rendu (vague 35, clair ou sombre) */
 export const DOJO = {
@@ -160,7 +161,7 @@ export function LockIcon({ size = 20, color = DOJO.muted }: { size?: number; col
 
 export function ChevronIcon({ size = 16, color = DOJO.muted }: { size?: number; color?: string }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}>
       <Path d="M9 5l7 7-7 7" stroke={color} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
