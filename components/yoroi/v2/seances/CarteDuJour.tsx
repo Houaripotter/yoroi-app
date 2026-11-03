@@ -17,6 +17,10 @@
  *    la carte « Bravo ».
  *  - plus de personnage dessiné par défaut : seulement ton personnage (usePersonnageUtilisateur), sinon rien, et
  *    le texte reprend toute la largeur. Version d'avant : _archive_ancien_design_2026-10-09/personnage_partout_2026-10-31.
+ *
+ * 3 novembre 2026 (Houari) : toute la carte s'ouvre d'un appui, vers la même page que son lien du bas (le programme,
+ * le planning, la séance faite). Le bouton et les liens gardent leur propre action ; la carte du Coach, sans lien
+ * unique, ne change pas.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { DeviceEventEmitter, Image, Pressable, View } from 'react-native';
@@ -94,12 +98,20 @@ function seanceDuJourFaite(trainings: Training[], aujourdhui: string, lieeId?: n
 
 type Contexte = { materiel: Equipement[] | null; machines: string[] | null; regions: Region[] };
 
-/** Le cadre pastel de la carte (dégradé lilas vers bleu, comme la maquette) */
-function Cadre({ children }: { children: React.ReactNode }) {
+/**
+ * Le cadre pastel de la carte (dégradé lilas vers bleu, comme la maquette). onPress : toute la carte s'ouvre (les
+ * boutons et liens dedans restent des boutons séparés pour VoiceOver : la carte ne les regroupe pas).
+ */
+function Cadre({ children, onPress }: { children: React.ReactNode; onPress?: () => void }) {
   const { theme } = useYoroiTheme();
   const sombre = theme.isDark;
   return (
-    <View style={{ borderRadius: 30, shadowColor: '#23358F', shadowOpacity: sombre ? 0 : 0.1, shadowRadius: 28, shadowOffset: { width: 0, height: 12 }, elevation: 3 }}>
+    <Pressable
+      onPress={onPress ? () => { tap(); onPress(); } : undefined}
+      disabled={!onPress}
+      accessible={false}
+      style={({ pressed }) => ({ borderRadius: 30, shadowColor: '#23358F', shadowOpacity: sombre ? 0 : 0.1, shadowRadius: 28, shadowOffset: { width: 0, height: 12 }, elevation: 3, opacity: pressed && onPress ? 0.92 : 1 })}
+    >
       <LinearGradient
         colors={sombre ? ['#2A2433', '#1E2538'] : ['#EFE6F3', '#E6ECF8']}
         locations={[0, 0.62]}
@@ -109,7 +121,7 @@ function Cadre({ children }: { children: React.ReactNode }) {
       >
         {children}
       </LinearGradient>
-    </View>
+    </Pressable>
   );
 }
 
@@ -365,9 +377,10 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach, dispo
     const nSeries = jour.exos.reduce((n, e) => n + e.series, 0);
     const commencer = commencerJour;
     const note = message.seanceDuJour ? hero.ensuite : message.ensuite;
+    const voirProgramme = () => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } });
     return poser(
       carteProgramme,
-      <Cadre>
+      <Cadre onPress={voirProgramme}>
         <EnTete kicker={kicker} titre={sansTiret(avecVersion(traduire(jour.titre), jour))} sous={sansTiret(sous)} serie={serie} art={perso} />
         <View style={{ marginTop: 10, marginRight: marge, flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
           {muscu ? (
@@ -399,7 +412,7 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach, dispo
           </View>
         )}
         <Commencer label={traduire('Commencer la séance')} onPress={commencer} />
-        <Pied lien={traduire('Voir le programme')} onLien={() => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } })} note={sansTiret(note) || traduire('Ton coach a tout prévu')} />
+        <Pied lien={traduire('Voir le programme')} onLien={voirProgramme} note={sansTiret(note) || traduire('Ton coach a tout prévu')} />
       </Cadre>,
     );
   }
@@ -430,7 +443,7 @@ export function CarteDuJour({ trainings, weeklyGoal, femme, next, onCoach, dispo
     };
     return poser(
       null,
-      <Cadre>
+      <Cadre onPress={() => router.push('/planning' as any)}>
         <EnTete kicker={traduire('Aujourd’hui, dans ton planning')} titre={titre} sous={sousPropre} serie={serie} art={perso} />
         <View style={{ height: perso ? 96 : 14 }} />
         <Commencer label={traduire('Commencer la séance')} onPress={lancer} />
