@@ -249,10 +249,13 @@ const HAUT_OBJECTIF = 26;
 
 /**
  * 3 novembre 2026 : la pastille de ta prochaine pesee, dans la place libre entre ton poids et le sticker balance : son
- * bord droit a 80 du bord de la carte, 32 de haut, de 44 a 76 (le bas de la ligne du poids), au moins 8 apres ton poids,
- * pas plus etroite que 70 (sinon rien). Memes valeurs que PESEE_CARTE_POIDS du decor (verifie par le test).
+ * bord droit a 80 du bord de la carte (8 avant le sticker), au moins 8 apres ton poids, pas plus etroite que 70 (sinon rien).
+ * 3 novembre 2026 soir (Houari sur iPhone : « elle touche la ligne depuis ton début ») : 34 de haut, de 37 a 71, son
+ * centre (54) un peu au dessus de celui du poids (56) et 9 points au dessus de la ligne « depuis ton début » (80).
+ * Le jour et l'heure sur deux lignes (« Vendredi » puis « 7 h 00 ») : elle tient a cote de 112,4 kg sur 375 de large ;
+ * l'icone seulement s'il reste au moins 120 points. Memes valeurs que PESEE_CARTE_POIDS du decor (verifie par le test).
  */
-const PESEE_CARTE_POIDS = { droite: 80, haut: 44, hauteur: 32, ecartPoids: 8, largeurMin: 70 } as const;
+const PESEE_CARTE_POIDS = { droite: 80, haut: 37, hauteur: 34, ecartPoids: 8, largeurMin: 70, icone: 120 } as const;
 
 /** Les petits points de pagination du carrousel */
 function PointsPages({ nb, page, couleur, inactif }: { nb: number; page: number; couleur: string; inactif: string }) {
@@ -877,15 +880,20 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
           accessibilityRole="button"
           accessibilityLabel={quandPesee ? (peseeDuJour ? traduire('Ta prochaine pesée : {0}. Touche pour te peser', quandPesee) : traduire('Ta prochaine pesée : {0}. Régler tes jours de pesée', quandPesee)) : traduire('Ta prochaine pesée : choisis tes jours de pesée')}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: PESEE_CARTE_POIDS.hauteur, paddingLeft: 8, paddingRight: 10, borderRadius: 12, borderWidth: 1, borderColor: peseeDuJour ? accent : P.line, backgroundColor: P.white }}>
-            <Icon name="calendar" size={13} color={accent} width={2.4} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: PESEE_CARTE_POIDS.hauteur, paddingHorizontal: 8, borderRadius: 12, borderWidth: 1, borderColor: peseeDuJour ? accent : P.line, backgroundColor: P.white }}>
+            {placePesee >= PESEE_CARTE_POIDS.icone ? <Icon name="calendar" size={13} color={accent} width={2.4} /> : null}
             <View style={{ flexShrink: 1, minWidth: 0 }}>
-              <Ink size={9.5} weight="bold" color={P.muted} numberOfLines={1} style={{ lineHeight: 11 }}>
+              <Ink size={9} weight="bold" color={P.muted} numberOfLines={1} style={{ lineHeight: 10 }}>
                 {traduire('Prochaine pesée')}
               </Ink>
-              <Ink size={12} weight="black" color={fg} numberOfLines={1} style={{ lineHeight: 15 }}>
-                {quandPesee ?? traduire('À choisir')}
+              <Ink size={pesee?.heure ? 11.5 : 12} weight="black" color={fg} numberOfLines={1} style={{ lineHeight: pesee?.heure ? 12 : 16 }}>
+                {pesee ? pesee.quand : traduire('À choisir')}
               </Ink>
+              {pesee?.heure ? (
+                <Ink size={9.5} weight="bold" color={fg2} numberOfLines={1} style={{ lineHeight: 10, fontVariant: ['tabular-nums'] }}>
+                  {pesee.heure}
+                </Ink>
+              ) : null}
             </View>
           </View>
         </Press>
