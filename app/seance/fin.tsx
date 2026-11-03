@@ -246,7 +246,10 @@ export default function SeanceFin() {
     ...localRecords.map((r) => ({
       cle: `${r.name}-${r.weight}-${r.reps}`,
       titre: r.kind === 'charge' ? traduire('Nouveau record de charge') : traduire('Nouveau record'),
-      detail: unite === 'lb'
+      // 3 novembre 2026 : un record en plaques de la pile se dit en plaques, jamais en kilos (lib/v2/seances/plaquesSerie.ts)
+      detail: r.plaques
+        ? traduirePluriel(r.reps, r.reps > 1, "{0}, {1} pour {2} répétition", "{0}, {1} pour {2} répétitions", r.name, traduirePluriel(r.plaques, r.plaques > 1, '{0} plaque', '{0} plaques', r.plaques), r.reps)
+        : unite === 'lb'
         ? traduirePluriel(r.reps, r.reps > 1, "{0}, {1} livres pour {2} répétition", "{0}, {1} livres pour {2} répétitions", r.name, fmtNum(versUnitePoids(r.weight, unite), 1), r.reps)
         : traduirePluriel(r.reps, r.reps > 1, "{0}, {1} kilos pour {2} répétition", "{0}, {1} kilos pour {2} répétitions", r.name, fmtNum(versUnitePoids(r.weight, unite), 2), r.reps),
     })),
