@@ -46,10 +46,18 @@ const OBJECTIFS: Record<string, 'perdre' | 'prendre' | 'combat' | 'maintenir'> =
   maintain: 'maintenir',
 };
 
-/** En apercu du Studio, rien ne compte */
+/**
+ * En apercu du Studio, rien ne compte. 3 novembre 2026 : aussi en mode createur (lib/v2/creator/onboardingCreateur.ts),
+ * app/onboarding.tsx passe ici « mesure coupee » et remet false en quittant l'onboarding.
+ */
 let apercu = false;
 export function setApercuOnboarding(v: boolean): void {
   apercu = v;
+}
+
+/** Vrai tant que l'onboarding en cours ne doit rien mesurer (apercu du Studio ou mode createur) */
+export function mesureOnboardingCoupee(): boolean {
+  return apercu;
 }
 
 /** Point d'accroche historique de app/onboarding.tsx */
