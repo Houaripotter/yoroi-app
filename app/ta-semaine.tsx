@@ -46,6 +46,7 @@ import { durationOf, formatDuration, mondayOf } from '@/lib/v2/trainingWeek';
 import { todayISO } from '@/lib/v2/weightStats';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 import { LANG, traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { ltrSiRTL, miroirSiRTL } from '@/lib/v2/rtl';
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -74,7 +75,7 @@ function Anneau({ fait, total, taille = 84 }: { fait: number; total: number; tai
           <Circle cx={taille / 2} cy={taille / 2} r={r} stroke={theme.isDark ? '#9DB1FF' : '#4256C9'} strokeWidth={10} fill="none" strokeLinecap="round" strokeDasharray={`${tour * part} ${tour}`} transform={`rotate(-90 ${taille / 2} ${taille / 2})`} />
         ) : null}
       </Svg>
-      <View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' }}>
+      <View style={[{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' }, ltrSiRTL]}>
         <Ink size={Math.round(taille * 0.3)} weight="black" tight>{String(fait)}</Ink>
         <Ink size={Math.round(taille * 0.17)} weight="extraBold" color={c.textSecondary}>{`/${total}`}</Ink>
       </View>
@@ -96,7 +97,7 @@ function Fleche({ sens, actif, onPress, label }: { sens: 'avant' | 'apres'; acti
       hitSlop={6}
       style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSoft : c.surface, opacity: actif ? 1 : 0.35 })}
     >
-      <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}>
         <Path d={sens === 'avant' ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7'} stroke={c.ink} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
       </Svg>
     </Pressable>
