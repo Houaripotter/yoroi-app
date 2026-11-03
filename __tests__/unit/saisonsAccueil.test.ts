@@ -36,6 +36,7 @@ import {
   CARTE_PALIERS,
   PESEE_CARTE_POIDS,
   LIGNE_DEPUIS_Y,
+  hautPesee,
   hauteurSceneCarte,
   remonteeScene,
   boiteCitrouille,
@@ -204,14 +205,35 @@ describe('27 octobre 2026 : carte « Ton poids » Pastel', () => {
     expect(c).toContain(`<Ink size={40} weight="black" tight numberOfLines={1} color={fg} style={{ fontVariant: ['tabular-nums'], lineHeight: ${CARTE_PALIERS.ligneChiffre}`);
     expect(c).toContain(`style={{ width: ${CARTE_PALIERS.sticker}, height: ${CARTE_PALIERS.sticker}, marginTop: -${CARTE_PALIERS.decaleSticker}, marginRight: -${CARTE_PALIERS.decaleSticker} }}`);
     const p = PESEE_CARTE_POIDS;
-    expect(c).toContain(`const PESEE_CARTE_POIDS = { droite: ${p.droite}, haut: ${p.haut}, hauteur: ${p.hauteur}, ecartPoids: ${p.ecartPoids}, largeurMin: ${p.largeurMin}, icone: ${p.icone} } as const;`);
+    expect(c).toContain(`const PESEE_CARTE_POIDS = { droite: ${p.droite}, haut: ${p.haut}, hautSansDecor: ${p.hautSansDecor}, hauteur: ${p.hauteur}, ecartPoids: ${p.ecartPoids}, largeurMin: ${p.largeurMin}, icone: ${p.icone} } as const;`);
+    expect(c).toContain('top: avecDecor ? PESEE_CARTE_POIDS.haut : PESEE_CARTE_POIDS.hautSansDecor');
+    // avec un decor : la pastille reste a 37, le decor tient au dessus ; sans decor : elle remonte de 8 a 12 points
+    expect(hautPesee(true)).toBe(37);
+    expect(hautPesee(false)).toBe(28);
+    expect(hautPesee(true) - hautPesee(false)).toBeGreaterThanOrEqual(8);
+    expect(hautPesee(true) - hautPesee(false)).toBeLessThanOrEqual(12);
+    // sans decor, a hauteur du haut de ton poids (sa ligne commence a 34), sans monter au dessus du bas du titre
+    const hautPoids = CARTE_PALIERS.haut + CARTE_PALIERS.titre + CARTE_PALIERS.ecartTitre;
+    expect(Math.abs(hautPesee(false) - hautPoids)).toBeLessThanOrEqual(6);
+    expect(LIGNE_DEPUIS_Y - (hautPesee(false) + p.hauteur)).toBeGreaterThanOrEqual(8);
+    // a cote du titre et du sticker sans les toucher, sur toutes les largeurs
+    for (const L of [320, 375, 393, 430]) {
+      const b = boitesCartePastel(L - 2 * ACCUEIL_PASTEL.marge);
+      for (const haut of [hautPesee(true), hautPesee(false)]) {
+        const pil = { ...b.pesee, y: haut };
+        expect(pil.x).toBeGreaterThanOrEqual(b.titre.x + b.titre.w);
+        expect(pil.x + pil.w).toBeLessThanOrEqual(b.anneau.x);
+      }
+      // le decor (seulement avec la pastille a 37) finit au dessus d'elle
+      for (const d of b.cotes) expect(d.y + d.h).toBeLessThanOrEqual(hautPesee(true));
+    }
     // 3 novembre 2026 soir : la pastille au moins 8 au dessus de la ligne « depuis ton début », centree au plus bas sur le poids
     expect(LIGNE_DEPUIS_Y - (p.haut + p.hauteur)).toBeGreaterThanOrEqual(8);
     const centrePoids = CARTE_PALIERS.haut + CARTE_PALIERS.titre + CARTE_PALIERS.ecartTitre + CARTE_PALIERS.ligneChiffre / 2;
     expect(p.haut + p.hauteur / 2).toBeLessThanOrEqual(centrePoids);
     // elle commence sous le titre « TON POIDS »
     expect(p.haut).toBeGreaterThanOrEqual(CARTE_PALIERS.haut + CARTE_PALIERS.titre);
-    expect(c).toContain('right: PESEE_CARTE_POIDS.droite, top: PESEE_CARTE_POIDS.haut');
+    expect(c).toContain('right: PESEE_CARTE_POIDS.droite, top: avecDecor ? PESEE_CARTE_POIDS.haut : PESEE_CARTE_POIDS.hautSansDecor');
     expect(c).toContain('height: PESEE_CARTE_POIDS.hauteur');
   });
   for (const L of [320, 375, 390, 393, 430, 768]) {
@@ -255,7 +277,7 @@ describe('27 octobre 2026 : carte « Ton poids » Pastel', () => {
   it('le decor de la carte est pose par dessus, sans toucher a CartePoids', () => {
     const i = lire('app/(tabs)/index.tsx');
     // 27 octobre 2026 (carrousel) : le decor ne se pose que sur la page 1 (ton poids et ton objectif), jamais sur la courbe
-    expect(i).toMatch(/<CartePoids series=\{series\} targetWeight=\{data.targetWeight\} startWeight=\{data.startWeight\} rankIndex=\{rankIndex\} onPage=\{setPagePoids\} pesee=\{peseeCarte\} \/>\n\s*\{\/\*[^\n]*\*\/\}\n\s*\{saison && series.length && pagePoids === 0 \? <DecorCarte/);
+    expect(i).toMatch(/<CartePoids series=\{series\} targetWeight=\{data.targetWeight\} startWeight=\{data.startWeight\} rankIndex=\{rankIndex\} onPage=\{setPagePoids\} pesee=\{peseeCarte\} avecDecor=\{!!saison\} \/>\n\s*\{\/\*[^\n]*\*\/\}\n\s*\{saison && series.length && pagePoids === 0 \? <DecorCarte/);
     expect(lire('components/yoroi/v2/accueil/CartePoids.tsx')).not.toMatch(/saison|DecorCarte/i);
     // la page 1 porte ton poids en tete puis ton objectif ; la courbe est la page 2 ; deux pages au plus
     const c = lire('components/yoroi/v2/accueil/CartePoids.tsx');
