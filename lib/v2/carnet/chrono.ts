@@ -130,14 +130,15 @@ const prepa = (seconds: number, cue: ChronoPhase['cue'] = 'beep'): ChronoPhase[]
   seconds > 0 ? [{ kind: 'prepa', duration: seconds, title: traduire('Préparation'), short: traduire('Préparation'), cue }] : [];
 
 export function musculationPhases(rest: number, series: number): ChronoPhase[] {
-  return [{ kind: 'repos', duration: rest, title: traduire("Repos après la série {0}", series), short: traduire("Série {0}", series + 1), cue: 'beep' }];
+  return [{ kind: 'repos', duration: rest, title: traduire("Repos après la série {0}", series), short: traduire("Série {0}", series + 1), cue: 'beep', clapEtDecompte: true }];
 }
 
 export function roundPhases(o: { rounds: number; round: number; rest: number; prepa: number; clap: boolean; hold?: boolean }): ChronoPhase[] {
   const list: ChronoPhase[] = prepa(o.prepa, 'beep');
   for (let r = 1; r <= o.rounds; r++) {
     list.push({ kind: 'effort', duration: o.round, title: traduire("Round {0} sur {1}", r, o.rounds), short: traduire("Round {0}", r), cue: 'gong', clap: o.clap, hold: o.hold, step: r, steps: o.rounds });
-    if (r < o.rounds && o.rest > 0) list.push({ kind: 'repos', duration: o.rest, title: traduire('Repos'), short: traduire("Repos {0}", humanSeconds(o.rest)), cue: 'gong', step: r, steps: o.rounds });
+    // 3 novembre 2026 : claquettes aussi 10 s avant le round suivant, comme la minuterie d'une salle
+    if (r < o.rounds && o.rest > 0) list.push({ kind: 'repos', duration: o.rest, title: traduire('Repos'), short: traduire("Repos {0}", humanSeconds(o.rest)), cue: 'gong', clapEtDecompte: o.clap, step: r, steps: o.rounds });
   }
   return list;
 }
@@ -147,11 +148,11 @@ export function tabataPhases(o: { rounds: number; work: number; rest: number; se
   for (let s = 1; s <= o.sets; s++) {
     for (let r = 1; r <= o.rounds; r++) {
       const setTxt = o.sets > 1 ? `, set ${s}` : '';
-      list.push({ kind: 'effort', duration: o.work, title: traduire("Effort {0} sur {1}{2}", r, o.rounds, setTxt), short: `Effort ${o.work} s`, cue: 'go', step: r, steps: o.rounds });
+      list.push({ kind: 'effort', duration: o.work, title: traduire("Effort {0} sur {1}{2}", r, o.rounds, setTxt), short: `Effort ${o.work} s`, cue: 'go', clapEtDecompte: true, step: r, steps: o.rounds });
       const last = r === o.rounds;
-      if (!last) list.push({ kind: 'repos', duration: o.rest, title: traduire("Repos {0} sur {1}{2}", r, o.rounds, setTxt), short: traduire("Repos {0} s", o.rest), cue: 'beep', step: r, steps: o.rounds });
+      if (!last) list.push({ kind: 'repos', duration: o.rest, title: traduire("Repos {0} sur {1}{2}", r, o.rounds, setTxt), short: traduire("Repos {0} s", o.rest), cue: 'beep', clapEtDecompte: true, step: r, steps: o.rounds });
     }
-    if (s < o.sets && o.setRest > 0) list.push({ kind: 'repos', duration: o.setRest, title: traduire("Repos avant le set {0}", s + 1), short: traduire("Repos {0}", humanSeconds(o.setRest)), cue: 'beep', step: o.rounds, steps: o.rounds });
+    if (s < o.sets && o.setRest > 0) list.push({ kind: 'repos', duration: o.setRest, title: traduire("Repos avant le set {0}", s + 1), short: traduire("Repos {0}", humanSeconds(o.setRest)), cue: 'beep', clapEtDecompte: true, step: o.rounds, steps: o.rounds });
   }
   return list;
 }
@@ -160,13 +161,13 @@ export function emomPhases(o: { minutes: number; exercises: string[]; prepa: num
   const list: ChronoPhase[] = prepa(o.prepa);
   for (let m = 1; m <= o.minutes; m++) {
     const ex = o.exercises.length > 0 ? o.exercises[(m - 1) % o.exercises.length] : undefined;
-    list.push({ kind: 'effort', duration: 60, title: traduire("Minute {0} sur {1}", m, o.minutes), short: ex ? traduire("Minute {0}, {1}", m, ex) : traduire("Minute {0}", m), sub: ex, cue: 'go', step: m, steps: o.minutes });
+    list.push({ kind: 'effort', duration: 60, title: traduire("Minute {0} sur {1}", m, o.minutes), short: ex ? traduire("Minute {0}, {1}", m, ex) : traduire("Minute {0}", m), sub: ex, cue: 'go', clapEtDecompte: true, step: m, steps: o.minutes });
   }
   return list;
 }
 
 export function amrapPhases(o: { duration: number; prepa: number }): ChronoPhase[] {
-  return [...prepa(o.prepa), { kind: 'effort', duration: o.duration, title: traduire('Enchaîne les tours'), short: traduire('Maximum de tours'), cue: 'go' }];
+  return [...prepa(o.prepa), { kind: 'effort', duration: o.duration, title: traduire('Enchaîne les tours'), short: traduire('Maximum de tours'), cue: 'go', clapEtDecompte: true }];
 }
 
 export function forTimePhases(o: { cap: number; prepa: number }): ChronoPhase[] {
