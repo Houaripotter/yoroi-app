@@ -21,6 +21,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { SignatureCarte } from '@/components/yoroi/v2/partage/SignatureCarte';
 import { signaturePartage } from '@/constants/partage';
 import { noterPartage } from '@/lib/v2/partage/mesure';
+import { miroirSiRTL } from '@/lib/v2/rtl';
 
 interface ShareStat {
   label: string;
@@ -205,7 +206,7 @@ const ShareStatsButtonInner: React.FC<ShareStatsButtonProps> = ({ title = 'Mes s
         <Ink size={16} weight="extraBold" style={{ flex: 1 }}>
           Voir et partager mes stats
         </Ink>
-        <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+        <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" style={miroirSiRTL}>
           <Path d="M9 5l7 7-7 7" stroke={c.textMuted} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
         </Svg>
       </Pressable>
