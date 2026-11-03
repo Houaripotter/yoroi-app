@@ -174,7 +174,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
 const TRAINING_MESSAGES = [
   { title: traduire('C’est l’heure de ta séance'), body: traduire('Ton créneau est arrivé. Même une séance courte compte.') },
   { title: traduire('Ta séance t’attend'), body: traduire('Un échauffement, et le reste suivra.') },
-  { title: 'On y va ?', body: traduire('C’est le moment que tu avais prévu pour t’entraîner.') },
+  { title: traduire('On y va ?'), body: traduire('C’est le moment que tu avais prévu pour t’entraîner.') },
   { title: traduire('Ton créneau du jour'), body: traduire('Une séance de plus sur ton chemin.') },
   { title: traduire('Prêt pour ta séance ?'), body: traduire('Prends ton sac, ta séance est prévue maintenant.') },
 ];
@@ -234,7 +234,7 @@ const BRIEFING_MOTIVATIONS = [
 
 // Messages pour rappels intelligents (UNIVERSELS)
 const SMART_MISSED_TRAINING_MESSAGES = [
-  { title: 'C’est {day}', body: traduire('D’habitude tu t’entraînes ce jour. Une séance aujourd’hui ?') },
+  { title: traduire('C’est {day}'), body: traduire('D’habitude tu t’entraînes ce jour. Une séance aujourd’hui ?') },
   { title: traduire('Ton jour d’entraînement'), body: traduire('Tu t’entraînes souvent le {day}. Toujours partant ?') },
   { title: traduire('Une séance ce {day} ?'), body: traduire('C’est souvent ton jour. Même une séance courte compte.') },
 ];
@@ -248,7 +248,7 @@ const SMART_REST_SUGGESTION_MESSAGES = [
 const SMART_FREQUENCY_ALERT_MESSAGES = [
   { title: traduire('Une semaine plus calme'), body: traduire('Tu fais d’habitude {usual} séances par semaine, {current} cette semaine. Tout va bien ?') },
   { title: traduire('Petit coup de pouce'), body: traduire('Ton rythme a un peu baissé. Une séance courte pour reprendre ?') },
-  { title: 'On reprend ?', body: traduire('Moins de séances que d’habitude cette semaine. Ton objectif t’attend.') },
+  { title: traduire('On reprend ?'), body: traduire('Moins de séances que d’habitude cette semaine. Ton objectif t’attend.') },
 ];
 
 const DAY_NAMES = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
@@ -836,7 +836,7 @@ class NotificationService {
 
       // Streak
       if (streak > 0) {
-        parts.push(`${streak}j streak`);
+        parts.push(traduire("{0}j streak", streak));
       }
 
       // Rang
@@ -871,7 +871,7 @@ class NotificationService {
         } catch {}
 
         const slotsDesc = activeSlots
-          .map(p => `${getSportName(p.sport)}${p.time ? ` ${p.time}` : ''}`)
+          .map(p => `${traduire(getSportName(p.sport))}${p.time ? ` ${p.time}` : ''}`)
           .join(', ');
 
         if (pendingCount > 0) {
@@ -1177,7 +1177,7 @@ class NotificationService {
     const messages = [
       // Aucune durée ni calorie : seulement le sport et un encouragement
       { title: traduire('Séance notée'), body: traduire("{0} : c’est fait. Ta carte de séance est prête si tu veux la partager.", sport) },
-      { title: 'Beau travail', body: traduire("Ta séance de {0} est dans ton carnet.", sport) },
+      { title: traduire('Beau travail'), body: traduire("Ta séance de {0} est dans ton carnet.", sport) },
       { title: traduire("{0}, c’est fait", sport), body: traduire('Bel effort. Ta carte de séance t’attend.') },
     ];
     const msg = messages[Math.floor(Math.random() * messages.length)];

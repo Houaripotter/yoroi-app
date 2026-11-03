@@ -598,7 +598,7 @@ function Simulator({ defaultCurrent, defaultTarget, defaultDays }: { defaultCurr
           <NumField label={traduire("Poids cible")} value={tgt} onChange={setTgt} unit="kg" placeholder="77" />
         </View>
         <View style={{ marginTop: 10, flexDirection: 'row' }}>
-          <NumField label={traduire("Jours avant la pesée")} value={days} onChange={setDays} unit="jours" placeholder="7" integer maxLength={3} />
+          <NumField label={traduire("Jours avant la pesée")} value={days} onChange={setDays} unit={traduire("jours")} placeholder="7" integer maxLength={3} />
         </View>
       </Enter>
 
@@ -630,7 +630,7 @@ function Simulator({ defaultCurrent, defaultTarget, defaultDays }: { defaultCurr
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <MiniStat label={traduire("Par jour")} value={fmt(plan.dailyCut, 2)} unit="kg" />
               <MiniStat label={traduire("Part d’eau")} value={fmt(plan.waterCutPossible)} unit={traduire("kg au plus")} />
-              <MiniStat label={traduire("Délai")} value={String(plan.daysAvailable)} unit="jours" />
+              <MiniStat label={traduire("Délai")} value={String(plan.daysAvailable)} unit={traduire("jours")} />
             </View>
           </Enter>
 

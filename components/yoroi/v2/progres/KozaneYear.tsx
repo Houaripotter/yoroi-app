@@ -100,14 +100,14 @@ export function KozaneLegend() {
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
       <View style={{ width: 11, height: 11, borderRadius: 6, borderWidth: 1.2, borderColor: c.border }} />
       <Ink size={12} weight="bold" color={c.textSecondary}>
-        rien
+        {traduire('rien')}
       </Ink>
       <View style={{ width: 11, height: 11, borderRadius: 6, backgroundColor: c.detail, marginLeft: 10 }} />
       <Ink size={12} weight="bold" color={c.textSecondary}>
         {traduire("séance")}</Ink>
       <View style={{ width: 11, height: 11, borderRadius: 6, borderWidth: 1.6, borderColor: c.gold, marginLeft: 10 }} />
       <Ink size={12} weight="bold" color={c.textSecondary}>
-        reprise
+        {traduire('reprise')}
       </Ink>
     </View>
   );

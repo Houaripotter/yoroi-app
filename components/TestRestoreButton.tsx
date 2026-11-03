@@ -52,7 +52,7 @@ const TestRestoreButtonInner: React.FC = () => {
         showResult(true, traduire('Backup chiffré détecté'),
           traduire('Le fichier est un backup chiffré valide.\n\n') +
           traduire("Taille : {0}\n", formatSize(size)) +
-          `Algorithme : ${parsed.yoroi_encrypted === '2.0' ? 'AES-256 + HMAC' : 'AES-256 (legacy)'}\n\n` +
+          traduire("Algorithme : {0}\n\n", parsed.yoroi_encrypted === '2.0' ? 'AES-256 + HMAC' : 'AES-256 (legacy)') +
           traduire('Pour voir le contenu, il faudrait le mot de passe, mais le chiffrement est valide et le fichier n\'a pas été altéré.'), size);
         return;
       }
@@ -60,7 +60,7 @@ const TestRestoreButtonInner: React.FC = () => {
       // Validation structure
       const validation = validateBackup(parsed);
       if (!validation.valid) {
-        showResult(false, 'Backup invalide', validation.errors.join('\n'), size);
+        showResult(false, traduire('Backup invalide'), validation.errors.join('\n'), size);
         return;
       }
 
@@ -84,8 +84,8 @@ const TestRestoreButtonInner: React.FC = () => {
 
       showResult(true, traduire('Backup valide et lisible'),
         traduire("Taille : {0}\n", formatSize(size)) +
-        `Version : ${parsed.version ?? 'inconnue'}\n` +
-        `Checksum : ${checksumStatus}\n\n` +
+        traduire("Version : {0}\n", parsed.version ?? traduire('inconnue')) +
+        traduire("Checksum : {0}\n\n", checksumStatus) +
         traduire("Si tu le restaures maintenant :\n{0}\n\n", formatDiffMessage(diff)) +
         traduire(`Aucune donnée modifiée, c'était juste un test.`), size);
     } catch (e) {

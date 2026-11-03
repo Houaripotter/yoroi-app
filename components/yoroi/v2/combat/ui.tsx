@@ -338,7 +338,7 @@ export function Stepper({ value, onChange, step = 1, min = 0, max = 9999, format
       <Ink size={22} weight="black" tight color={color} style={{ minWidth: 70, textAlign: 'center' }}>
         {format ? format(value) : String(value)}
       </Ink>
-      <Press onPress={() => onChange(Math.min(max, value + step))} accessibilityRole="button" accessibilityLabel="Plus">
+      <Press onPress={() => onChange(Math.min(max, value + step))} accessibilityRole="button" accessibilityLabel={traduire("Plus")}>
         <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: '#E6E4DD', alignItems: 'center', justifyContent: 'center' }}>
           <CIcon name="plus" size={18} color={P.ink} width={2.8} />
         </View>

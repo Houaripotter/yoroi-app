@@ -196,7 +196,7 @@ const LUNDI = (() => {
 /** Exemple de seance avec record (modele Record) */
 const CARTE_RECORD: CarteData = {
   moment: 'seance',
-  titre: 'Musculation',
+  titre: traduire('Musculation'),
   sousTitre: traduire('Exemple'),
   sport: 'musculation',
   famille: 'muscu',
@@ -239,7 +239,7 @@ const BASE_CARTE: OptionsCarte = { modele: 'affiche', format: 'story', fond: 'un
 const FORMATS: { format: FormatId; nom: string; usage: string; data: CarteData; modele: ModeleId; sombre: boolean }[] = [
   { format: 'story', nom: 'Story', usage: traduire('plein écran'), data: CARTE_RECORD, modele: 'record', sombre: true },
   { format: 'post', nom: 'Publication', usage: traduire('dans le fil'), data: CARTE_SEMAINE, modele: 'semaine', sombre: false },
-  { format: 'carre', nom: traduire('Carré'), usage: 'partout', data: CARTE_MINIMAL, modele: 'minimal', sombre: false },
+  { format: 'carre', nom: traduire('Carré'), usage: traduire('partout'), data: CARTE_MINIMAL, modele: 'minimal', sombre: false },
 ];
 
 export const MODELES_NOUVEAUX = [traduire('Record'), traduire('Semaine'), 'Minimal', traduire('Avant après')];

@@ -5,7 +5,7 @@
  */
 import type { CarteData, Famille, Masque, StatKey, StatValue } from './types';
 import { exploitVisible } from './exploits';
-import { traduire } from '@/lib/i18n/tr';
+import { DECIMAL, LANG, traduire } from '@/lib/i18n/tr';
 
 export const MIN_CHIFFRES = 2;
 export const MAX_CHIFFRES = 4;
@@ -20,8 +20,9 @@ export function nombre(n: number, decimales = 1): string {
   const f = 10 ** decimales;
   const r = Math.round(Math.abs(n) * f) / f;
   const [ent, dec] = String(r).split('.');
-  const groupes = ent.replace(/\B(?=(\d{3})+(?!\d))/g, NBSP);
-  return `${n < 0 && r !== 0 ? MOINS : ''}${groupes}${dec ? `,${dec}` : ''}`;
+  // séparateurs de la langue de l'app (inchangés en français : espace insécable et virgule)
+  const groupes = ent.replace(/\B(?=(\d{3})+(?!\d))/g, LANG === 'en' ? ',' : NBSP);
+  return `${n < 0 && r !== 0 ? MOINS : ''}${groupes}${dec ? `${DECIMAL}${dec}` : ''}`;
 }
 
 /** minutes -> { value, unit } : 53 -> 53 min ; 65 -> 1h05 */

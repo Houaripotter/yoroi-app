@@ -559,7 +559,8 @@ export function isPackUnlocked(pack: PackDef, owned: string[], rankIndex: number
 
 /** Nom du personnage selon le genre (monde : Ninja ou Kunoichi...) */
 export function packDisplayName(pack: PackDef, gender: Gender): string {
-  return pack.names ? pack.names[gender] : pack.name;
+  // affichage seul : le nom dans la langue de l'app
+  return traduire(pack.names ? pack.names[gender] : pack.name);
 }
 
 export function packDisplayKanji(pack: PackDef, gender: Gender): string {

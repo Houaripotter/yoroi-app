@@ -30,13 +30,13 @@ export function isUnivers(v: unknown): v is Univers {
 /** Noms des 5 rangs dans chaque univers, du premier au dernier */
 export const RANG_NOMS: Record<Univers, [string, string, string, string, string]> = {
   japon: ['Ashigaru', 'Bushi', traduire('Samouraï'), 'Rōnin', 'Shōgun'],
-  classique: ['Débutant', traduire('Régulier'), traduire('Confirmé'), 'Expert', 'Champion'],
+  classique: [traduire('Débutant'), traduire('Régulier'), traduire('Confirmé'), 'Expert', 'Champion'],
 };
 
 /** Ce que porte le personnage a chaque rang */
 export const RANG_TENUES: Record<Univers, [string, string, string, string, string]> = {
   japon: [traduire('Tenue d’entraînement et bandeau'), traduire('Kimono indigo et plastron'), traduire('Armure complète'), traduire('Cape et chapeau de paille'), traduire('Armure d’apparat noir et or')],
-  classique: [traduire('Tee shirt et short'), traduire('Veste d’entraînement'), 'Tenue technique', traduire('Coupe vent et sac de sport'), traduire('Tenue de champion bleu nuit et or')],
+  classique: [traduire('Tee shirt et short'), traduire('Veste d’entraînement'), traduire('Tenue technique'), traduire('Coupe vent et sac de sport'), traduire('Tenue de champion bleu nuit et or')],
 };
 
 /** Nom du rang affiche (0 a 4), dans l'univers donne ou l'univers actif */
@@ -54,7 +54,7 @@ export function rangTenue(index: number, u: Univers = courant): string {
 export function rangTitre(index: number, dan = 0, u: Univers = courant): string {
   const nom = rangNom(index, u);
   if (!dan) return nom;
-  return `${nom}, ${dan === 1 ? '1er' : `${dan}e`} dan`;
+  return `${nom}, ${dan === 1 ? traduire('1er dan') : traduire('{0}e dan', dan)}`;
 }
 
 /** Ce que construit le personnage entre deux rangs : « Ton armure se construit » ou « Ta tenue se construit » */

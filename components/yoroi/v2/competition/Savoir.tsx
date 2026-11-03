@@ -228,10 +228,10 @@ export function ProtocolChecklist({ protocol }: { protocol: LabProtocol }) {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={12} weight="extraBold" color={m.color}>
-            {sentenceCase(protocol.category)}
+            {traduire(sentenceCase(protocol.category))}
           </Ink>
           <Ink size={17} weight="black" tight>
-            {sentenceCase(protocol.title)}
+            {traduire(sentenceCase(protocol.title))}
           </Ink>
         </View>
         {all ? <Hanko size={40} /> : (
@@ -250,7 +250,7 @@ export function ProtocolChecklist({ protocol }: { protocol: LabProtocol }) {
               </Ink>
               {it.source ? (
                 <Ink size={11} weight="medium" color={P.muted}>
-                  {`Source : ${it.source}`}
+                  {traduire('Source : {0}', it.source)}
                 </Ink>
               ) : null}
             </View>

@@ -619,7 +619,7 @@ export async function shareCSVTemplate(): Promise<boolean> {
 
     await Sharing.shareAsync(path, {
       mimeType: 'text/csv',
-      dialogTitle: 'Modele CSV Yoroi',
+      dialogTitle: traduire('Modele CSV Yoroi'),
       UTI: 'public.comma-separated-values-text',
     });
 

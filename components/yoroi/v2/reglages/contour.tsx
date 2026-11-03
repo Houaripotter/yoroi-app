@@ -27,7 +27,7 @@ import type { Espace } from '@/lib/v2/espace';
 import { useYoroiTheme } from '@/components/yoroi';
 import { P } from '@/components/yoroi/livePalette';
 import { useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduireSens } from '@/lib/i18n/tr';
 
 export type ContourRond = NonNullable<Espace['contourRond']>;
 export type FormeRond = NonNullable<Espace['formeRond']>;
@@ -35,37 +35,37 @@ export type EpaisseurRond = NonNullable<Espace['epaisseurRond']>;
 
 export const CONTOURS: { id: ContourRond; nom: string; sub: string }[] = [
   { id: 'aucun', nom: traduire('Aucun'), sub: traduire('Ta photo seule') },
-  { id: 'fin', nom: 'Fin', sub: traduire('Un cercle blanc discret') },
-  { id: 'or', nom: 'Or', sub: traduire('Un cercle doré') },
-  { id: 'indigo', nom: 'Indigo', sub: traduire('Un cercle bleu nuit') },
-  { id: 'noir', nom: 'Noir', sub: traduire('Un cercle noir, cerné de clair la nuit') },
-  { id: 'blanc', nom: 'Blanc', sub: traduire('Un cercle blanc franc') },
-  { id: 'rouge', nom: 'Rouge', sub: traduire('Un cercle rouge brique') },
-  { id: 'vert', nom: 'Vert', sub: traduire('Un cercle vert forêt') },
-  { id: 'ciel', nom: 'Bleu ciel', sub: traduire('Un cercle bleu ciel') },
-  { id: 'violet', nom: 'Violet', sub: traduire('Un cercle violet') },
-  { id: 'rose', nom: 'Rose', sub: traduire('Un cercle rose framboise') },
-  { id: 'orange', nom: 'Orange', sub: traduire('Un cercle orange cuivré') },
+  { id: 'fin', nom: traduire('Fin'), sub: traduire('Un cercle blanc discret') },
+  { id: 'or', nom: traduire('Or'), sub: traduire('Un cercle doré') },
+  { id: 'indigo', nom: traduire('Indigo'), sub: traduire('Un cercle bleu nuit') },
+  { id: 'noir', nom: traduire('Noir'), sub: traduire('Un cercle noir, cerné de clair la nuit') },
+  { id: 'blanc', nom: traduire('Blanc'), sub: traduire('Un cercle blanc franc') },
+  { id: 'rouge', nom: traduire('Rouge'), sub: traduire('Un cercle rouge brique') },
+  { id: 'vert', nom: traduire('Vert'), sub: traduire('Un cercle vert forêt') },
+  { id: 'ciel', nom: traduire('Bleu ciel'), sub: traduire('Un cercle bleu ciel') },
+  { id: 'violet', nom: traduire('Violet'), sub: traduire('Un cercle violet') },
+  { id: 'rose', nom: traduire('Rose'), sub: traduire('Un cercle rose framboise') },
+  { id: 'orange', nom: traduire('Orange'), sub: traduire('Un cercle orange cuivré') },
   // 28 octobre 2026 : les pastels du theme et deux degrades doux
-  { id: 'lilas', nom: 'Lilas', sub: traduire('Un contour lilas pastel') },
-  { id: 'peche', nom: traduire('Pêche'), sub: traduire('Un contour pêche pastel') },
-  { id: 'menthe', nom: 'Menthe', sub: traduire('Un contour menthe pastel') },
-  { id: 'azur', nom: 'Azur', sub: traduire('Un contour bleu pastel') },
-  { id: 'sable', nom: 'Sable', sub: traduire('Un contour sable pastel') },
-  { id: 'aurore', nom: 'Aurore', sub: traduire('Un dégradé lilas et pêche') },
-  { id: 'lagon', nom: 'Lagon', sub: traduire('Un dégradé menthe et bleu') },
+  { id: 'lilas', nom: traduire('Lilas'), sub: traduire('Un contour lilas pastel') },
+  { id: 'peche', nom: traduireSens('couleur', 'Pêche'), sub: traduire('Un contour pêche pastel') },
+  { id: 'menthe', nom: traduire('Menthe'), sub: traduire('Un contour menthe pastel') },
+  { id: 'azur', nom: traduire('Azur'), sub: traduire('Un contour bleu pastel') },
+  { id: 'sable', nom: traduire('Sable'), sub: traduire('Un contour sable pastel') },
+  { id: 'aurore', nom: traduire('Aurore'), sub: traduire('Un dégradé lilas et pêche') },
+  { id: 'lagon', nom: traduire('Lagon'), sub: traduire('Un dégradé menthe et bleu') },
 ];
 
 /** 28 octobre 2026 : les formes du rond. Aucune ne coupe le visage, centre et haut restent entiers. */
 export const FORMES: { id: FormeRond; nom: string }[] = [
-  { id: 'rond', nom: 'Rond' },
+  { id: 'rond', nom: traduire('Rond') },
   { id: 'carre', nom: traduire('Carré arrondi') },
-  { id: 'hexagone', nom: 'Hexagone' },
+  { id: 'hexagone', nom: traduire('Hexagone') },
   { id: 'ecusson', nom: traduire('Écusson') },
 ];
 
 export const EPAISSEURS: { id: EpaisseurRond; nom: string }[] = [
-  { id: 'fine', nom: 'Fine' },
+  { id: 'fine', nom: traduire('Fine') },
   { id: 'epaisse', nom: traduire('Épaisse') },
 ];
 
@@ -73,11 +73,11 @@ export type FamilleBadge = 'sport' | 'energie' | 'recompenses' | 'nature' | 'jap
 
 /** 28 octobre 2026 : les familles de badges (Houari : « des utilisateurs de partout, pas seulement le Japon ») */
 export const FAMILLES_BADGE: { id: FamilleBadge; nom: string }[] = [
-  { id: 'sport', nom: 'Sport' },
+  { id: 'sport', nom: traduire('Sport') },
   { id: 'energie', nom: traduire('Énergie') },
   { id: 'recompenses', nom: traduire('Récompenses') },
-  { id: 'nature', nom: 'Nature' },
-  { id: 'japon', nom: 'Japon' },
+  { id: 'nature', nom: traduireSens('plein air', 'Nature') },
+  { id: 'japon', nom: traduire('Japon') },
 ];
 
 /**
@@ -87,48 +87,48 @@ export const FAMILLES_BADGE: { id: FamilleBadge; nom: string }[] = [
  */
 export const BADGES: { id: NomSticker; nom: string; famille: FamilleBadge }[] = [
   { id: 'musculation', nom: traduire('Haltère'), famille: 'sport' },
-  { id: 'kettlebell', nom: 'Kettlebell', famille: 'sport' },
-  { id: 'gants', nom: 'Gants', famille: 'sport' },
-  { id: 'jjb', nom: 'Kimono', famille: 'sport' },
-  { id: 'course', nom: 'Course', famille: 'sport' },
-  { id: 'sport_football', nom: 'Football', famille: 'sport' },
-  { id: 'sport_ballon', nom: 'Basket', famille: 'sport' },
-  { id: 'sport_volley', nom: 'Volley', famille: 'sport' },
-  { id: 'sport_raquette', nom: 'Tennis', famille: 'sport' },
+  { id: 'kettlebell', nom: traduire('Kettlebell'), famille: 'sport' },
+  { id: 'gants', nom: traduire('Gants'), famille: 'sport' },
+  { id: 'jjb', nom: traduire('Kimono'), famille: 'sport' },
+  { id: 'course', nom: traduire('Course'), famille: 'sport' },
+  { id: 'sport_football', nom: traduire('Football'), famille: 'sport' },
+  { id: 'sport_ballon', nom: traduire('Basket'), famille: 'sport' },
+  { id: 'sport_volley', nom: traduire('Volley'), famille: 'sport' },
+  { id: 'sport_raquette', nom: traduire('Tennis'), famille: 'sport' },
   { id: 'sport_velo', nom: traduire('Vélo'), famille: 'sport' },
-  { id: 'sport_nage', nom: 'Natation', famille: 'sport' },
-  { id: 'sport_danse', nom: 'Danse', famille: 'sport' },
-  { id: 'sport_neige', nom: 'Ski', famille: 'sport' },
+  { id: 'sport_nage', nom: traduire('Natation'), famille: 'sport' },
+  { id: 'sport_danse', nom: traduire('Danse'), famille: 'sport' },
+  { id: 'sport_neige', nom: traduire('Ski'), famille: 'sport' },
   { id: 'coeur', nom: traduire('Cœur'), famille: 'energie' },
-  { id: 'flamme', nom: 'Flamme', famille: 'energie' },
+  { id: 'flamme', nom: traduire('Flamme'), famille: 'energie' },
   { id: 'force_eclair', nom: traduire('Éclair'), famille: 'energie' },
-  { id: 'muscle', nom: 'Muscle', famille: 'energie' },
-  { id: 'poing', nom: 'Poing', famille: 'energie' },
+  { id: 'muscle', nom: traduire('Muscle'), famille: 'energie' },
+  { id: 'poing', nom: traduire('Poing'), famille: 'energie' },
   { id: 'energie', nom: traduire('Fusée'), famille: 'energie' },
-  { id: 'chrono', nom: 'Chrono', famille: 'energie' },
+  { id: 'chrono', nom: traduire('Chrono'), famille: 'energie' },
   { id: 'medaille_or', nom: traduire('Médaille'), famille: 'recompenses' },
-  { id: 'medaille_argent', nom: 'Argent', famille: 'recompenses' },
+  { id: 'medaille_argent', nom: traduire('Argent'), famille: 'recompenses' },
   { id: 'trophee', nom: traduire('Trophée'), famille: 'recompenses' },
-  { id: 'objectifs', nom: 'Cible', famille: 'recompenses' },
-  { id: 'montagne_drapeau', nom: 'Sommet', famille: 'recompenses' },
-  { id: 'ceinture_nouee', nom: 'Ceinture', famille: 'recompenses' },
-  { id: 'couronne', nom: 'Couronne', famille: 'recompenses' },
+  { id: 'objectifs', nom: traduire('Cible'), famille: 'recompenses' },
+  { id: 'montagne_drapeau', nom: traduire('Sommet'), famille: 'recompenses' },
+  { id: 'ceinture_nouee', nom: traduire('Ceinture'), famille: 'recompenses' },
+  { id: 'couronne', nom: traduire('Couronne'), famille: 'recompenses' },
   { id: 'etoile', nom: traduire('Étoile'), famille: 'recompenses' },
-  { id: 'diamant', nom: 'Diamant', famille: 'recompenses' },
-  { id: 'erable', nom: 'Feuille', famille: 'nature' },
-  { id: 'vague', nom: 'Vague', famille: 'nature' },
-  { id: 'sentier', nom: 'Chemin', famille: 'nature' },
-  { id: 'sport_nature', nom: 'Camping', famille: 'nature' },
-  { id: 'rocher', nom: 'Rocher', famille: 'nature' },
-  { id: 'soleil', nom: 'Soleil', famille: 'nature' },
-  { id: 'fleur', nom: 'Fleur', famille: 'nature' },
-  { id: 'arc_en_ciel', nom: 'Arc en ciel', famille: 'nature' },
-  { id: 'torii', nom: 'Torii', famille: 'japon' },
-  { id: 'sakura', nom: 'Sakura', famille: 'japon' },
-  { id: 'kabuto', nom: 'Kabuto', famille: 'japon' },
-  { id: 'koi', nom: 'Koi', famille: 'japon' },
-  { id: 'fuji', nom: 'Fuji', famille: 'japon' },
-  { id: 'lune_soleil', nom: 'Lune', famille: 'japon' },
+  { id: 'diamant', nom: traduire('Diamant'), famille: 'recompenses' },
+  { id: 'erable', nom: traduire('Feuille'), famille: 'nature' },
+  { id: 'vague', nom: traduire('Vague'), famille: 'nature' },
+  { id: 'sentier', nom: traduire('Chemin'), famille: 'nature' },
+  { id: 'sport_nature', nom: traduire('Camping'), famille: 'nature' },
+  { id: 'rocher', nom: traduire('Rocher'), famille: 'nature' },
+  { id: 'soleil', nom: traduire('Soleil'), famille: 'nature' },
+  { id: 'fleur', nom: traduire('Fleur'), famille: 'nature' },
+  { id: 'arc_en_ciel', nom: traduire('Arc en ciel'), famille: 'nature' },
+  { id: 'torii', nom: traduire('Torii'), famille: 'japon' },
+  { id: 'sakura', nom: traduire('Sakura'), famille: 'japon' },
+  { id: 'kabuto', nom: traduire('Kabuto'), famille: 'japon' },
+  { id: 'koi', nom: traduire('Koi'), famille: 'japon' },
+  { id: 'fuji', nom: traduire('Fuji'), famille: 'japon' },
+  { id: 'lune_soleil', nom: traduire('Lune'), famille: 'japon' },
   { id: 'bonsai', nom: traduire('Bonsaï'), famille: 'japon' },
 ];
 
@@ -419,10 +419,10 @@ function Cadre({ size, contour: contourBrut, forme: formeBrute, epaisseur, fond,
 
 /** Les contours ranges par famille, pour les pastilles de l'editeur */
 export const FAMILLES_CONTOUR: { id: string; nom: string; ids: ContourRond[] }[] = [
-  { id: 'pastels', nom: 'Pastels', ids: ['lilas', 'peche', 'menthe', 'azur', 'sable'] },
+  { id: 'pastels', nom: traduire('Pastels'), ids: ['lilas', 'peche', 'menthe', 'azur', 'sable'] },
   { id: 'degrades', nom: traduire('Dégradés'), ids: ['aurore', 'lagon'] },
-  { id: 'vives', nom: 'Couleurs', ids: ['or', 'indigo', 'rouge', 'vert', 'ciel', 'violet', 'rose', 'orange', 'noir', 'blanc'] },
-  { id: 'discrets', nom: 'Discrets', ids: ['fin', 'aucun'] },
+  { id: 'vives', nom: traduire('Couleurs'), ids: ['or', 'indigo', 'rouge', 'vert', 'ciel', 'violet', 'rose', 'orange', 'noir', 'blanc'] },
+  { id: 'discrets', nom: traduire('Discrets'), ids: ['fin', 'aucun'] },
 ];
 
 /** La teinte d'une pastille de contour (sur le papier clair) : une couleur, un degrade, ou rien pour Aucun */

@@ -52,7 +52,7 @@ export function JoursPicker({ value, onToggle, label = traduire('Jour'), couleur
             }}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: on }}
-            accessibilityLabel={`${label} : ${JOURS_NOMS[j]}`}
+            accessibilityLabel={traduire('{0} : {1}', label, JOURS_NOMS[j])}
             style={{ flex: 1 }}
           >
             {({ pressed }) => (

@@ -48,7 +48,7 @@ import { RappelsDiscipline } from '@/components/yoroi/v2/notifications/RappelsDi
 import { choixDepuisServices } from '@/lib/v2/notifications/discipline';
 import type { ChoixRappels } from '@/lib/v2/notifications/discipline';
 import { appliquerChoixRappels } from '@/lib/v2/notifications/rappels';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { LANG, traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 const NB = ' ';
@@ -333,7 +333,7 @@ export default function TesNotifications() {
             <Icon sticker="rappels" name="lock" size={22} color={c.goldDeep} />
             <View style={{ flex: 1, gap: 2 }}>
               <Ink size={16} weight="extraBold">{traduire("Les notifications sont bloquées")}</Ink>
-              <Ink size={13} color={c.textSecondary}>{traduire("Tant qu’elles le sont, aucun rappel ne peut arriver{0}: il suffit de les autoriser une fois.", NB)}</Ink>
+              <Ink size={13} color={c.textSecondary}>{traduire("Tant qu’elles le sont, aucun rappel ne peut arriver{0}: il suffit de les autoriser une fois.", LANG === 'fr' ? NB : '')}</Ink>
             </View>
           </View>
           <BoutonPrincipal

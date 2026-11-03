@@ -56,7 +56,7 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
     // Créer le canal de notification pour Android
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync(CITATION_CHANNEL_ID, {
-        name: 'Citations Motivantes',
+        name: traduire('Citations Motivantes'),
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#2C4A84',

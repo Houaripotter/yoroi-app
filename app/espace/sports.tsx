@@ -109,11 +109,11 @@ export default function TesSports() {
                 key={id}
                 onPress={() => (i === 0 ? toggle(id) : toFront(id))}
                 accessibilityRole="button"
-                accessibilityLabel={i === 0 ? traduire("{0}, sport principal, appuie pour retirer", getSportName(id)) : traduire("{0}, appuie pour le mettre en premier", getSportName(id))}
+                accessibilityLabel={i === 0 ? traduire("{0}, sport principal, appuie pour retirer", traduire(getSportName(id))) : traduire("{0}, appuie pour le mettre en premier", traduire(getSportName(id)))}
                 style={{ minHeight: 40, borderRadius: 999, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: i === 0 ? c.ink : c.fillSoft }}
               >
                 {i === 0 ? <Icon name="star" size={13} color={c.goldLight} stroke={2.4} /> : null}
-                <Ink size={13} weight="extraBold" color={i === 0 ? c.background : c.ink}>{getSportName(id)}</Ink>
+                <Ink size={13} weight="extraBold" color={i === 0 ? c.background : c.ink}>{traduire(getSportName(id))}</Ink>
               </Pressable>
             ))}
           </View>

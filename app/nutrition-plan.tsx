@@ -221,7 +221,7 @@ export default function NutritionPlanScreen() {
             <H2>{traduire("Sources scientifiques")}</H2>
             <View style={{ marginTop: 10 }}>
               <SourcesCard
-                sources={Object.values(SCIENTIFIC_SOURCES).map((s) => ({ label: s.name === 'ISSN Position Stand on Protein' ? traduire('Position officielle de l’ISSN sur les protéines') : s.name === 'ANSES Apports Nutritionnels' ? traduire('ANSES, apports nutritionnels') : s.name, ref: traduire(s.source), url: s.url }))}
+                sources={Object.values(SCIENTIFIC_SOURCES).map((s) => ({ label: s.name === 'ISSN Position Stand on Protein' ? traduire('Position officielle de l’ISSN sur les protéines') : s.name === 'ANSES Apports Nutritionnels' ? traduire('ANSES, apports nutritionnels') : traduire(s.name), ref: traduire(s.source), url: s.url }))}
                 note={traduire("Ces chiffres sont des estimations. Ajuste après deux à trois semaines selon ta balance et ton énergie.")}
               />
             </View>

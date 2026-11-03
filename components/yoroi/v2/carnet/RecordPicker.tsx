@@ -96,7 +96,7 @@ export function RecordPicker({ visible, onClose, busy, onPickTemplate, onCreateC
     else setStep('sport');
   };
 
-  const title = step === 'sport' ? traduire('Nouveau record') : step === 'muscle' ? 'Groupe musculaire' : step === 'custom' ? traduire('Suivi sur mesure') : (MUSCLES.find((m) => m.group === group)?.label ?? group ?? traduire('Exercices'));
+  const title = step === 'sport' ? traduire('Nouveau record') : step === 'muscle' ? traduire('Groupe musculaire') : step === 'custom' ? traduire('Suivi sur mesure') : traduire(MUSCLES.find((m) => m.group === group)?.label ?? group ?? traduire('Exercices'));
 
   return (
     <Sheet visible={visible} onClose={onClose} scroll>
@@ -134,7 +134,7 @@ export function RecordPicker({ visible, onClose, busy, onPickTemplate, onCreateC
                           }
                         }}
                         accessibilityRole="button"
-                        accessibilityLabel={n > 0 ? traduire("{0}, {1} exercices", s.label, n) : s.label}
+                        accessibilityLabel={n > 0 ? traduire("{0}, {1} exercices", traduire(s.label), n) : traduire(s.label)}
                       >
                         <View style={{ height: 138, borderRadius: 22, backgroundColor: s.tint, padding: 12, justifyContent: 'flex-end', overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)' }}>
                           <Illus name={s.illus} size={78} style={{ position: 'absolute', right: 6, top: 6 }} />

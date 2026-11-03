@@ -49,7 +49,7 @@ installerGestionnaireNotifications();
 // Canal Android haute priorité (crée une fois au démarrage)
 if (Platform.OS === 'android') {
   Notifications.setNotificationChannelAsync('timer_alarm', {
-    name: 'Alarme Timer YOROI',
+    name: traduire('Alarme Timer YOROI'),
     importance: Notifications.AndroidImportance.MAX,
     sound: 'default',
     vibrationPattern: [0, 400, 200, 400, 200, 400],
@@ -242,7 +242,7 @@ class TimerNotificationsService {
       await this.scheduleTimerFinishedNotification(traduire('Repos terminé'), traduire('À toi pour la série suivante.'), targetTimestampMs);
     } else {
       if (!this.settings.roundFinished) return;
-      await this.scheduleTimerFinishedNotification(traduire('Minuteur terminé'), 'Beau travail.', targetTimestampMs);
+      await this.scheduleTimerFinishedNotification(traduire('Minuteur terminé'), traduire('Beau travail.'), targetTimestampMs);
     }
   }
 

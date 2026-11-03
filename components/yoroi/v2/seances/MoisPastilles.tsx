@@ -77,7 +77,7 @@ export function useMois(trainings: Training[]) {
       const sports = [...parFamille.get(f)!];
       return { f, nom: sports.length === 1 ? sportShortName(sports[0]) : traduire(NOMS_FAMILLE[f]) };
     });
-    return { y, mo, today, nom, resume: `${nom} : ${chiffres}`, byDay, legende, nombre: inMonth.length };
+    return { y, mo, today, nom, resume: traduire('{0} : {1}', nom, chiffres), byDay, legende, nombre: inMonth.length };
   }, [trainings, y, mo, today]);
 }
 

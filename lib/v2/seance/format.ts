@@ -67,7 +67,8 @@ export function longDay(iso: string): string {
 export function niceGroup(g?: string): string {
   if (!g) return '';
   const low = g.toLocaleLowerCase(LOCALE);
-  return low.charAt(0).toLocaleUpperCase(LOCALE) + low.slice(1);
+  // affichage seul : le groupe dans la langue de l'app
+  return traduire(low.charAt(0).toLocaleUpperCase(LOCALE) + low.slice(1));
 }
 
 /** Lecture tolerante d'un nombre saisi ("72,5") */

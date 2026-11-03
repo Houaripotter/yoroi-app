@@ -67,7 +67,7 @@ import { HEURES_RAPPEL, estAutreHeure, libelleHeureRappel } from '@/lib/v2/progr
 import { chargerProgrammeActif, enFileProgramme, suivreProgrammePerso, supprimerProgrammePerso } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { ExoProgramme, JourProgramme } from '@/lib/v2/programmes/types';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { LANG, traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { useConfirmerSortie } from '@/lib/v2/saisie/useConfirmerSortie';
 import { logger } from '@/lib/security/logger';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
@@ -528,7 +528,7 @@ export default function CoachConstruire() {
                 onPress={() => partirDuModele(m)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: choisi }}
-                accessibilityLabel={`${traduire('Partir d’un modèle')} : ${traduire(m.titre)}, ${joursTexte(joursDuModele(m))}`}
+                accessibilityLabel={`${traduire('Partir d’un modèle')}${LANG === 'fr' ? ' : ' : ': '}${traduire(m.titre)}, ${joursTexte(joursDuModele(m))}`}
                 style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 62, paddingLeft: 8, paddingRight: 14, paddingVertical: 9, borderRadius: 20, backgroundColor: choisi ? pa.choisi : pressed ? pa.choisi : pa.carte, borderWidth: 2, borderColor: choisi ? pa.coche : 'transparent' }, ombrePastel(pa.ombre)]}
               >
                 {illus.stickers ? <Image source={illus.img(m.sticker)} style={{ width: 42, height: 42 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}

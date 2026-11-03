@@ -243,7 +243,7 @@ export default function TonProfil() {
     const sw = num(startW);
     const tw = num(targetW);
     if ((sw !== undefined && (sw < 20 || sw > 350)) || (tw !== undefined && (tw < 20 || tw > 350))) {
-      showPopup('Poids', traduire('Indique un poids en kilos, entre 20 et 350.'));
+      showPopup(traduire('Poids'), traduire('Indique un poids en kilos, entre 20 et 350.'));
       return;
     }
     setSaving(true);
@@ -403,7 +403,7 @@ export default function TonProfil() {
     try {
       const { status } = await requestMediaLibraryPermissionsAsync();
       if (status !== 'granted' && (status as string) !== 'limited') {
-        showPopup('Photos', traduire('Autorise l’accès aux photos dans les réglages du téléphone.'), [
+        showPopup(traduire('Photos'), traduire('Autorise l’accès aux photos dans les réglages du téléphone.'), [
           { text: traduire('Ouvrir les réglages'), style: 'primary', onPress: () => Linking.openSettings() },
           { text: traduire('Annuler'), style: 'cancel' },
         ]);

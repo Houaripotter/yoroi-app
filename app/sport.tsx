@@ -325,7 +325,7 @@ export default function SportScreen() {
           <View style={{ gap: 14 }}>
             <Label>{traduire("Heure")}</Label>
             <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-              <Stepper value={String(hour).padStart(2, '0')} suffix="heure" label="heure" onMinus={() => setHour((hour + 23) % 24)} onPlus={() => setHour((hour + 1) % 24)} />
+              <Stepper value={String(hour).padStart(2, '0')} suffix={traduire("heure")} label={traduire("heure")} onMinus={() => setHour((hour + 23) % 24)} onPlus={() => setHour((hour + 1) % 24)} />
               <Stepper value={String(minute).padStart(2, '0')} suffix={traduire("minutes")} label={traduire("minutes")} onMinus={() => setMinute((minute + 45) % 60)} onPlus={() => setMinute((minute + 15) % 60)} />
             </View>
             <Label>{traduire("Club ou activité")}</Label>

@@ -77,7 +77,7 @@ export async function exportPartnerPDF(
     if (can) {
       await Sharing.shareAsync(uri, {
         mimeType: 'application/pdf',
-        dialogTitle: `Fiche partenaire ${partner.name}`,
+        dialogTitle: traduire("Fiche partenaire {0}", partner.name),
         UTI: 'com.adobe.pdf',
       });
     }

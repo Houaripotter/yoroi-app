@@ -152,7 +152,7 @@ export const ETAPES_REGLAGES_IOS = [
 ];
 
 export const ETAPES_REGLAGES_ANDROID = [
-  'Ouvre Health Connect.',
+  traduire('Ouvre Health Connect.'),
   traduire('Touche Autorisations des applications, puis YOROI.'),
   traduire('Touche Tout autoriser.'),
   traduire('Reviens dans YOROI.'),
@@ -162,7 +162,7 @@ export type MessageConnexion = { titre: string; texte: string; reglages: boolean
 
 export function messageConnexion(issue: IssueConnexion, plateforme: string): MessageConnexion {
   const android = plateforme === 'android';
-  const nom = android ? 'Health Connect' : 'Apple Santé';
+  const nom = android ? 'Health Connect' : traduire('Apple Santé');
   const etapes = (android ? ETAPES_REGLAGES_ANDROID : ETAPES_REGLAGES_IOS).map((e, i) => `${i + 1}. ${e}`).join('\n');
   switch (issue) {
     case 'connecte':
@@ -184,7 +184,7 @@ export function messageConnexion(issue: IssueConnexion, plateforme: string): Mes
         reglages: true,
       };
     case 'indisponible':
-      return { titre: `${nom} indisponible`, texte: android ? traduire('Installe Health Connect depuis le Play Store, puis réessaie.') : traduire('L’app Santé n’existe pas sur cet appareil.'), reglages: false };
+      return { titre: traduire("{0} indisponible", nom), texte: android ? traduire('Installe Health Connect depuis le Play Store, puis réessaie.') : traduire('L’app Santé n’existe pas sur cet appareil.'), reglages: false };
     default:
       return { titre: traduire('Connexion impossible'), texte: traduire("Réessaie dans un instant. Si ça recommence :\n{0}", etapes), reglages: true };
   }

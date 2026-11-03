@@ -150,7 +150,7 @@ export default function ModifierMaSeance() {
     } catch (err) {
       enCours.current = false;
       logger.error('Séance non enregistrée', err);
-      appAlert('Oups', traduire('La séance n’a pas pu être enregistrée, réessaie.'));
+      appAlert(traduire('Oups'), traduire('La séance n’a pas pu être enregistrée, réessaie.'));
     }
   };
 

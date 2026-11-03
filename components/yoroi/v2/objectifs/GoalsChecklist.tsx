@@ -22,7 +22,7 @@ const GOALS_STORAGE_KEY = '@yoroi_user_goals';
 
 type Goal = { id: string; title: string; description?: string; target?: string; deadline?: string; completed: boolean; createdAt: string; completedAt?: string };
 
-const SUGGESTIONS = [traduire('3 séances par semaine'), traduire('Passer sous les 80 kg'), 'Courir 10 km', traduire('Ma première compétition')];
+const SUGGESTIONS = [traduire('3 séances par semaine'), traduire('Passer sous les 80 kg'), traduire('Courir 10 km'), traduire('Ma première compétition')];
 
 /** Liste d'objectifs a cocher, sans en-tete : s'affiche dans l'onglet « À cocher » de Tes objectifs. */
 export function GoalsChecklist() {

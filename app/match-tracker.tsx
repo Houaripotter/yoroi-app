@@ -247,13 +247,13 @@ export default function MatchTrackerScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: P.paper }}>
         <View style={{ paddingTop: insets.top + 6, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <IconBtn icon="close" label={traduire("Quitter le match")} onPress={() => appAlert(traduire('Quitter le match ?'), traduire('Les actions notées seront perdues.'), [{ text: 'Rester', style: 'cancel' }, { text: 'Quitter', style: 'destructive', onPress: back }])} />
+          <IconBtn icon="close" label={traduire("Quitter le match")} onPress={() => appAlert(traduire('Quitter le match ?'), traduire('Les actions notées seront perdues.'), [{ text: traduire('Rester'), style: 'cancel' }, { text: traduire('Quitter'), style: 'destructive', onPress: back }])} />
           <BoutonPrincipal onPress={end} accessibilityLabel={traduire("Terminer le match")} label={traduire("Terminer")} hauteur={44} rayon={14} tailleTexte={15} lignes={1} compact />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, paddingTop: 8 }}>
           <View style={{ alignItems: 'center', flex: 1 }}>
             <Ink size={14} weight="extraBold" color={V}>
-              Moi
+              {traduire('Moi')}
             </Ink>
             <Ink size={72} weight="black" tight color={V}>
               {String(me)}
@@ -266,13 +266,13 @@ export default function MatchTrackerScreen() {
                 {start ? fmt(sec) : traduire('Après')}
               </Ink>
               <Ink size={11} weight="bold" color={P.muted}>
-                {start ? 'chrono' : traduire('le match')}
+                {start ? traduire('chrono') : traduire('le match')}
               </Ink>
             </View>
           </View>
           <View style={{ alignItems: 'center', flex: 1 }}>
             <Ink size={14} weight="extraBold" color={D}>
-              Adversaire
+              {traduire('Adversaire')}
             </Ink>
             <Ink size={72} weight="black" tight color={D}>
               {String(opp)}
@@ -288,7 +288,7 @@ export default function MatchTrackerScreen() {
             ))}
           </View>
           <Ink size={14} weight="extraBold" color={D} style={{ marginTop: 6 }}>
-            Actions adverses
+            {traduire('Actions adverses')}
           </Ink>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {OPP.map((a) => (

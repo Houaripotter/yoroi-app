@@ -30,7 +30,7 @@ import { logger } from '@/lib/security/logger';
 import { calculateNutritionPlan } from '@/lib/nutrition';
 import { loadBodyData } from '@/lib/v2/nutrition/body';
 import { blancA } from '@/components/yoroi/livePalette';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 /** value : un vrai chiffre. cta : l'action quand rien n'est encore note. sub : une phrase. spark : petite courbe des derniers jours (vague 26). */
 type Spark = { values: number[]; kind: 'line' | 'bars'; color: string; label: string };
@@ -172,7 +172,7 @@ function SanteCard({ steps7 }: { steps7?: number[] }) {
           <Ink size={20} weight="black" tight>
             {traduire("Ta montre")}</Ink>
           <Ink size={13} color={c.textSecondary}>
-            {traduire("Pas, cœur, calories et sommeil arrivent tout seuls depuis {0}.", st.provider || traduire('ton téléphone'))}
+            {traduire("Pas, cœur, calories et sommeil arrivent tout seuls depuis {0}.", traduire(st.provider) || traduire('ton téléphone'))}
           </Ink>
         </View>
       </View>
@@ -271,7 +271,7 @@ export function HealthNutritionCards() {
     if (out.zones?.value && restPts.length >= 3) out.zones.spark = { values: restPts, kind: 'line', color: FAMILY.coeur.color, label: traduire("Ton cœur au repos, {0} jours", restPts.length) };
     if (out.sleep?.value && sleepPts.length >= 2) out.sleep.spark = { values: sleepPts, kind: 'bars', color: FAMILY.sommeil.color, label: traduire("Tes {0} dernières nuits", sleepPts.length) };
     const n = injuries?.length ?? 0;
-    out.infirmary = n > 0 ? { value: `${n} blessure${n > 1 ? 's' : ''}`, sub: traduire('En cours. Suis tes soins jour après jour.') } : { value: 'En forme', sub: traduire('Aucune blessure en cours.') };
+    out.infirmary = n > 0 ? { value: traduirePluriel(n, n > 1, '{0} blessure', '{0} blessures', n), sub: traduire('En cours. Suis tes soins jour après jour.') } : { value: traduire('En forme'), sub: traduire('Aucune blessure en cours.') };
     out.fasting = fasting?.isActive && fasting.startTime
       ? { value: `${formatDuration(Math.max(1, Math.round((Date.now() - new Date(fasting.startTime).getTime()) / 60000)))}`, sub: traduire('Jeûne en cours.') }
       : { cta: traduire('Lancer un jeûne'), sub: traduire('16/8, 18/6 ou Ramadan.') };

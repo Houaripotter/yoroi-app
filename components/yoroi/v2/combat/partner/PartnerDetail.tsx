@@ -25,7 +25,7 @@ import { AudioNotes, FaceoffShare, MediaGallery } from './MediaAudio';
 import { Briefing } from './Briefing';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
-import { traduire } from '@/lib/i18n/tr';
+import { LANG, traduire } from '@/lib/i18n/tr';
 
 type Tab = 'fiche' | 'bilan' | 'profil' | 'carnet';
 const TABS: { key: Tab; label: string }[] = [
@@ -139,7 +139,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
     appAlert(traduire("Photo de {0}", p.name), traduire('Choisis une source'), [
       { text: traduire('Annuler'), style: 'cancel' },
       { text: traduire('Caméra'), onPress: () => pickPhoto('camera') },
-      { text: 'Galerie', onPress: () => pickPhoto('library') },
+      { text: traduire('Galerie'), onPress: () => pickPhoto('library') },
       ...(p.photoUri ? [{ text: traduire('Retirer la photo'), style: 'destructive' as const, onPress: () => update({ photoUri: undefined }, true) }] : []),
     ]);
   };
@@ -269,7 +269,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
                 {BELTS.map((b) => {
                   const on = (p.belt ?? '').toLowerCase() === b.key;
                   return (
-                    <Press key={b.key} onPress={() => update({ belt: on ? undefined : b.key })} accessibilityRole="button" accessibilityLabel={traduire("Ceinture {0}", b.label)} accessibilityState={{ selected: on }}>
+                    <Press key={b.key} onPress={() => update({ belt: on ? undefined : b.key })} accessibilityRole="button" accessibilityLabel={LANG === 'fr' ? traduire("Ceinture {0}", b.label) : traduire(`Ceinture ${b.key}`)} accessibilityState={{ selected: on }}>
                       <View style={{ minHeight: 44, paddingHorizontal: 12, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: on ? P.ink : P.white, borderWidth: 1, borderColor: on ? P.ink : P.line2 }}>
                         <View style={{ width: 22, height: 9, borderRadius: 3, backgroundColor: b.color, borderWidth: 1, borderColor: b.edge }} />
                         <Ink size={14} weight="bold" color={on ? P.white : P.ink2}>

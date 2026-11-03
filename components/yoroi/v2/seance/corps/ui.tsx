@@ -89,10 +89,10 @@ export function ValueSheet({
           keyboardType="decimal-pad"
           placeholder="0"
           placeholderTextColor={c.textMuted}
-          accessibilityLabel={`${title} en ${unit}`}
+          accessibilityLabel={traduire("{0} en {1}", title, traduire(unit))}
           style={[fontStyle('black'), { flex: 1, fontSize: 48, color: c.ink, paddingVertical: 0, borderBottomWidth: 2, borderColor: c.accent }]}
         />
-        <Ink size={20} weight="bold" color={c.textSecondary} style={{ paddingBottom: 8 }}>{unit}</Ink>
+        <Ink size={20} weight="bold" color={c.textSecondary} style={{ paddingBottom: 8 }}>{traduire(unit)}</Ink>
       </View>
       <View style={{ gap: 6 }}>
         <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Jour")}</Ink>

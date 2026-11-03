@@ -156,7 +156,7 @@ export default function CombatTimerScreen() {
     endedAtRef.current = null;
     engine.start(phasesFor(config));
     startLiveActivity({
-      sportName: config.partnerName ? `Sparring contre ${config.partnerName}` : 'Sparring',
+      sportName: config.partnerName ? traduire("Sparring contre {0}", config.partnerName) : traduire('Sparring'),
       sportIcon: 'figure.martial.arts',
       sportColorHex: '2C4A84',
     }).catch(() => {});

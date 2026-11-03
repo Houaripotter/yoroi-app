@@ -262,7 +262,7 @@ export function VignetteScene({ width, source, nom, etat, onPress, label }: { wi
       <View style={{ paddingHorizontal: 3, paddingTop: 4, paddingBottom: 6 }}>
         <Ink size={13} weight="extraBold" numberOfLines={1}>{nom}</Ink>
         {etat.equipe || etat.note ? (
-          <Ink size={11.5} weight="bold" color={etat.equipe ? c.accent : c.textMuted} numberOfLines={1}>{etat.equipe ? 'Choisie' : etat.note}</Ink>
+          <Ink size={11.5} weight="bold" color={etat.equipe ? c.accent : c.textMuted} numberOfLines={1}>{etat.equipe ? traduire('Choisie') : etat.note}</Ink>
         ) : null}
       </View>
     </Pressable>

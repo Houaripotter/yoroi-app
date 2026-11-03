@@ -66,7 +66,7 @@ export type MessageImport = { titre: string; texte: string; action: 'reglages' |
 
 /** Le message affiche apres le bouton Importer */
 export function messageImport(issue: IssueConnexion, platform: string, compte: CompteImportAccueil | null): MessageImport {
-  const nom = nomSantePlateforme(platform);
+  const nom = traduire(nomSantePlateforme(platform));
   if (issue === 'connecte') {
     const t = compte ? texteResultatImport(compte) : null;
     return t

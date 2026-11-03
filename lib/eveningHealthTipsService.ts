@@ -162,7 +162,7 @@ export const HEALTH_TIPS: HealthTip[] = [
   // === EXERCICE ===
   {
     id: "e1",
-    title: "Musculation",
+    title: traduire("Musculation"),
     content: traduire("La musculation entretient ton muscle et ta force. Elle reste utile quand ton objectif est de perdre du poids."),
     category: 'exercise',
   },
@@ -250,7 +250,7 @@ export const HEALTH_TIPS: HealthTip[] = [
   },
   {
     id: "m5",
-    title: "Motivation",
+    title: traduire("Motivation"),
     content: traduire("La motivation va et vient, les habitudes restent. Mise sur une routine simple plutôt que sur l'envie du moment."),
     category: 'mental',
   },
@@ -354,7 +354,7 @@ export const scheduleHealthTipNotifications = async (): Promise<boolean> => {
     // Créer le canal Android
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
-        name: 'Conseils du soir',
+        name: traduire('Conseils du soir'),
         importance: Notifications.AndroidImportance.DEFAULT,
         description: traduire('Conseils santé du soir'),
       });

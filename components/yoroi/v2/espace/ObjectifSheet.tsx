@@ -73,7 +73,7 @@ export function ObjectifSheet({ visible, onClose, espace, onSave }: {
               ordre.current = next;
               onSave({ joursSemaine: joursTries(next) });
             }}
-            label="Entraînement"
+            label={traduire("Entraînement")}
           />
           <Ink size={13} color={c.textMuted} style={{ lineHeight: 18 }}>
             {jours.length ? traduire("Prévu : {0}. Ton planning, s’il a des créneaux, passe avant.", joursTexte(jours)) : traduire('Aucun jour imposé. Touche tes jours pour les voir marqués sur Ta semaine.')}

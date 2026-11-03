@@ -38,7 +38,7 @@ const ensureAndroidChannel = async (): Promise<void> => {
   if (Platform.OS !== 'android') return;
   try {
     await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNEL_ID, {
-      name: 'Rappels sparring',
+      name: traduire('Rappels sparring'),
       importance: Notifications.AndroidImportance.DEFAULT,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#2C4A84',

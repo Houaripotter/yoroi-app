@@ -530,7 +530,7 @@ export default function OnboardingScreen() {
       if (src.mode !== 'live') {
         const ok = await connectHealth();
         if (!ok) {
-          appAlert('Autorisation requise', traduire("Autorise {0} pour reprendre tes pesées. Tu peux aussi régler ton poids à la main.", healthName()));
+          appAlert(traduire('Autorisation requise'), traduire("Autorise {0} pour reprendre tes pesées. Tu peux aussi régler ton poids à la main.", healthName()));
           return;
         }
       }

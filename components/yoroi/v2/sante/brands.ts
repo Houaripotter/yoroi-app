@@ -24,9 +24,9 @@ export interface BrandConfig {
 
 function intro(w: Watch, android: boolean): string {
   const p = android ? w.android : w.ios;
-  const provider = android ? 'Health Connect' : 'Apple Santé';
+  const provider = android ? 'Health Connect' : traduire('Apple Santé');
   if (!p.ok) return p.note ?? traduire("{0} ne partage pas avec {1}.", w.name, provider);
-  const base = traduire("{0} écrit ses mesures dans {1} depuis l’app {2}, et YOROI les lit là.", w.name.split(',')[0], provider, p.app);
+  const base = traduire("{0} écrit ses mesures dans {1} depuis l’app {2}, et YOROI les lit là.", w.name.split(',')[0], provider, traduire(p.app));
   return p.note ? `${base} ${p.note}` : base;
 }
 
@@ -52,10 +52,10 @@ function toConfig(w: Watch): BrandConfig {
 
 const SCALES: BrandConfig = {
   key: 'scales',
-  name: 'Balances connectées',
+  name: traduire('Balances connectées'),
   color: '#6E5A8C',
   emoji: 'B',
-  types: ['Poids', 'Masse grasse', traduire('Masse maigre')],
+  types: [traduire('Poids'), traduire('Masse grasse'), traduire('Masse maigre')],
   introIOS: traduire('Ta balance écrit dans l’app Santé de ton téléphone depuis son app (Renpho, Eufy, Omron, Xiaomi), et YOROI les lit là.'),
   introAndroid: traduire('Ta balance écrit dans Health Connect depuis son app (Renpho, Eufy, Omron), et YOROI les lit là.'),
   stepsIOS: [traduire('Ouvre l’app de ta balance.'), traduire('Cherche Santé ou Apple Santé dans ses réglages.'), traduire('Active le partage du poids et de la composition corporelle.'), traduire('Monte sur ta balance, puis tire vers le bas dans YOROI.')],
@@ -64,7 +64,7 @@ const SCALES: BrandConfig = {
 
 const OTHERS: BrandConfig = {
   key: 'others',
-  name: 'Suunto et autres marques',
+  name: traduire('Suunto et autres marques'),
   color: '#454A58',
   emoji: '+',
   types: [traduire('Selon la marque')],
@@ -84,7 +84,7 @@ export const EXTRA_BRANDS: BrandConfig[] = [
   byKey('apple_watch'),
   byKey('samsung'),
   byKey('huawei'),
-  { ...byKey('fitbit'), key: 'pixel', name: 'Pixel Watch et Fitbit Air', emoji: 'Px' },
+  { ...byKey('fitbit'), key: 'pixel', name: traduire('Pixel Watch et Fitbit Air'), emoji: 'Px' },
   byKey('oura'),
   byKey('coros'),
   byKey('xiaomi'),

@@ -140,7 +140,7 @@ export function Univers({ nav, genre, genreConnu = true, value, onPick, onNext }
   return (
     <Shell {...nav} title={traduire("Ton **univers**")} sub={traduire("Le décor et le personnage qui t’accompagnent. Tu pourras changer dans Réglages, Personnaliser.")} gap={14} footer={<MainButton label={traduire("Continuer")} onPress={onNext} />}>
       {UNIVERS_CHOIX.map((u) => (
-        <Carte key={u.id} choix={u.id} nom={u.nom} phrase={u.phrase} genre={genre} genreConnu={genreConnu} index={u.id === 'japon' ? idx.japon : u.id === 'classique' ? idx.classique : 0} selected={value === u.id} onPress={() => onPick(u.id)} height={cardH} />
+        <Carte key={u.id} choix={u.id} nom={traduire(u.nom)} phrase={u.phrase} genre={genre} genreConnu={genreConnu} index={u.id === 'japon' ? idx.japon : u.id === 'classique' ? idx.classique : 0} selected={value === u.id} onPress={() => onPick(u.id)} height={cardH} />
       ))}
     </Shell>
   );

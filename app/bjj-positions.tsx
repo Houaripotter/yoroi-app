@@ -239,7 +239,7 @@ export default function BJJPositionsScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View>
               <Ink size={12} weight="extraBold" color={ROLE[selected.id]?.color ?? selected.color}>
-                {ROLE[selected.id]?.role ?? 'Position'}
+                {traduire(ROLE[selected.id]?.role ?? 'Position')}
               </Ink>
               <Ink size={24} weight="black" tight>
                 {traduireSens('garde', selected.name)}

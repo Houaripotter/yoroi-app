@@ -183,7 +183,7 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
         if (!silent) {
           appAlert(
             traduire('Plus assez de place'),
-            traduire("Il te reste {0} Mo sur ce téléphone. Une sauvegarde {1} a besoin d’au moins {2} Mo.\n\nLibère de l'espace (supprime des apps ou photos) puis réessaie.", Math.round(freeDiskBytes / 1024 / 1024), includePhotos ? 'complète' : 'légère', Math.round(minRequired / 1024 / 1024))
+            traduire("Il te reste {0} Mo sur ce téléphone. Une sauvegarde {1} a besoin d’au moins {2} Mo.\n\nLibère de l'espace (supprime des apps ou photos) puis réessaie.", Math.round(freeDiskBytes / 1024 / 1024), includePhotos ? traduire('complète') : traduire('légère'), Math.round(minRequired / 1024 / 1024))
           );
         }
         return false;
@@ -726,7 +726,7 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
   } catch (error) {
     logger.error('Erreur export JSON:', error);
     if (!silent) {
-      appAlert('Oups', traduire('L’export n’a pas abouti. Réessaie.'));
+      appAlert(traduire('Oups'), traduire('L’export n’a pas abouti. Réessaie.'));
     }
     return false;
   }
@@ -776,7 +776,7 @@ export const exportDataToCSV = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     logger.error('Erreur export CSV:', error);
-    appAlert('Oups', traduire('L’export n’a pas abouti. Réessaie.'));
+    appAlert(traduire('Oups'), traduire('L’export n’a pas abouti. Réessaie.'));
     return false;
   }
 };
@@ -809,7 +809,7 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
     try {
       importedData = JSON.parse(fileContent);
     } catch (parseError) {
-      appAlert('Fichier illisible', traduire('Ce fichier est abîmé ou n’est pas une sauvegarde YOROI.'));
+      appAlert(traduire('Fichier illisible'), traduire('Ce fichier est abîmé ou n’est pas une sauvegarde YOROI.'));
       return false;
     }
 
@@ -819,7 +819,7 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
       const password = await requestPassword({
         title: traduire('Sauvegarde protégée'),
         message: traduire('Cette sauvegarde est protégée par un mot de passe. Tape ce mot de passe pour continuer.'),
-        confirmLabel: 'Ouvrir',
+        confirmLabel: traduire('Ouvrir'),
       });
       if (!password) return false;
 
@@ -834,19 +834,19 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
           switch (e.code) {
             case 'WRONG_PASSWORD':
               title = traduire('Mot de passe incorrect');
-              msg = "Vérifie ton mot de passe. Si le fichier a été modifié pendant le transfert, il peut aussi être corrompu.";
+              msg = traduire("Vérifie ton mot de passe. Si le fichier a été modifié pendant le transfert, il peut aussi être corrompu.");
               break;
             case 'TAMPERED':
               title = traduire('Fichier altéré');
-              msg = "Le fichier a été modifié après chiffrement. La restauration est refusée pour protéger tes données.";
+              msg = traduire("Le fichier a été modifié après chiffrement. La restauration est refusée pour protéger tes données.");
               break;
             case 'JSON_INVALID':
-              title = 'Données corrompues';
-              msg = "Le déchiffrement a réussi mais les données internes sont corrompues.";
+              title = traduire('Données corrompues');
+              msg = traduire("Le déchiffrement a réussi mais les données internes sont corrompues.");
               break;
             case 'INVALID_FORMAT':
-              title = 'Format invalide';
-              msg = "Ce fichier n’est pas une sauvegarde YOROI protégée valide.";
+              title = traduire('Format invalide');
+              msg = traduire("Ce fichier n’est pas une sauvegarde YOROI protégée valide.");
               break;
           }
         }
@@ -861,28 +861,28 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
       const goOn = await new Promise<boolean>((resolve) => {
         appAlert(
           traduire('Remettre cette copie ?'),
-          traduire("C’est une copie de sécurité automatique{0}. Ce qui manque sur ce téléphone est ajouté. Rien n’est effacé, rien n’est remplacé, et ce qui est déjà là n’est pas recopié deux fois.", when ? ` du ${when}` : ''),
+          traduire("C’est une copie de sécurité automatique{0}. Ce qui manque sur ce téléphone est ajouté. Rien n’est effacé, rien n’est remplacé, et ce qui est déjà là n’est pas recopié deux fois.", when ? traduire(" du {0}", when) : ''),
           [
             { text: traduire('Annuler'), style: 'cancel', onPress: () => resolve(false) },
-            { text: 'Remettre', onPress: () => resolve(true) },
+            { text: traduire('Remettre'), onPress: () => resolve(true) },
           ]
         );
       });
       if (!goOn) return false;
       const rep = await restoreSafetyFile(importedData);
       if (!rep) {
-        appAlert('Oups', traduire('La copie n’a pas pu être remise. Rien n’a été effacé sur ce téléphone.'));
+        appAlert(traduire('Oups'), traduire('La copie n’a pas pu être remise. Rien n’a été effacé sur ce téléphone.'));
         return false;
       }
       const illustration = await illustrer('copieFaite');
-      appAlert('Copie remise', safetyReportText(rep), undefined, illustration ? { illustration } : undefined);
+      appAlert(traduire('Copie remise'), safetyReportText(rep), undefined, illustration ? { illustration } : undefined);
       return true;
     }
 
     // Valider que c'est bien un fichier Yoroi
     const validation = validateBackup(importedData);
     if (!validation.valid) {
-      appAlert('Fichier invalide', validation.errors.join('\n'));
+      appAlert(traduire('Fichier invalide'), validation.errors.join('\n'));
       return false;
     }
 
@@ -924,7 +924,7 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
       logger.info(`[Import] Backup migré vers v${importedData.version}`);
     } catch (migrationError) {
       logger.error('[Import] Erreur lors de la migration du backup:', migrationError);
-      appAlert('Fichier illisible', traduire('Ce fichier de sauvegarde ne peut pas être lu.'));
+      appAlert(traduire('Fichier illisible'), traduire('Ce fichier de sauvegarde ne peut pas être lu.'));
       return false;
     }
 
@@ -951,16 +951,16 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
     // Demander confirmation
     const confirmed = await new Promise<boolean>((resolve) => {
       const summary = [
-        `• ${importedData.weights?.length || 0} pesées`,
-        `• ${importedData.trainings?.length || 0} séances`,
-        `• ${importedData.measurements?.length || 0} mensurations`,
-        `• ${importedData.photos?.length || 0} photos${photosWithImages.length > 0 ? ` (${photosWithImages.length} images)` : ''}`,
-        importedData.clubs?.length ? `• ${importedData.clubs.length} clubs${clubsWithLogos.length > 0 ? ` (${clubsWithLogos.length} logos)` : ''}` : null,
-        importedData.competitions?.length ? `• ${importedData.competitions.length} compétitions` : null,
-        importedData.sleepEntries?.length > 0 ? `• ${importedData.sleepEntries.length} nuits de sommeil` : null,
-        importedData.hydrationEntries?.length > 0 ? `• ${importedData.hydrationEntries.length} prises d’eau` : null,
-        hasProfilePhoto ? '• Photo de profil' : null,
-        importedData.allStorage ? '• Dojo, carnet, réglages et le reste de l’app' : null,
+        traduire("• {0} pesées", importedData.weights?.length || 0),
+        traduire("• {0} séances", importedData.trainings?.length || 0),
+        traduire("• {0} mensurations", importedData.measurements?.length || 0),
+        traduire("• {0} photos{1}", importedData.photos?.length || 0, photosWithImages.length > 0 ? traduire(" ({0} images)", photosWithImages.length) : ''),
+        importedData.clubs?.length ? traduire("• {0} clubs{1}", importedData.clubs.length, clubsWithLogos.length > 0 ? traduire(" ({0} logos)", clubsWithLogos.length) : '') : null,
+        importedData.competitions?.length ? traduire("• {0} compétitions", importedData.competitions.length) : null,
+        importedData.sleepEntries?.length > 0 ? traduire("• {0} nuits de sommeil", importedData.sleepEntries.length) : null,
+        importedData.hydrationEntries?.length > 0 ? traduire("• {0} prises d’eau", importedData.hydrationEntries.length) : null,
+        hasProfilePhoto ? traduire('• Photo de profil') : null,
+        importedData.allStorage ? traduire('• Dojo, carnet, réglages et le reste de l’app') : null,
       ].filter(Boolean).join('\n');
 
       appAlert(
@@ -989,22 +989,22 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
     const done = await importDataFromBackupObject(importedData, { alreadyChecked: true });
     const rep = getLastImportReport();
     if (!done || !rep) {
-      appAlert('Oups', traduire('L’import n’a pas abouti. Rien n’a été effacé sur ce téléphone. Réessaie.'));
+      appAlert(traduire('Oups'), traduire('L’import n’a pas abouti. Rien n’a été effacé sur ce téléphone. Réessaie.'));
       return false;
     }
     const lines = [
-      rep.imported > 0 ? `${rep.imported} élément(s) ajouté(s).` : 'Rien de nouveau : tout était déjà sur ce téléphone.',
-      rep.skippedDuplicates > 0 ? `${rep.skippedDuplicates} déjà présent(s), pas recopié(s).` : null,
-      rep.kept > 0 ? `${rep.kept} réglage(s) différent(s) gardé(s) tel(s) que sur ce téléphone.` : null,
-      rep.images > 0 ? `${rep.images} image(s) remise(s).` : null,
-      rep.failed > 0 ? `${rep.failed} élément(s) n’ont pas pu être lus.` : null,
+      rep.imported > 0 ? traduire("{0} élément(s) ajouté(s).", rep.imported) : traduire('Rien de nouveau : tout était déjà sur ce téléphone.'),
+      rep.skippedDuplicates > 0 ? traduire("{0} déjà présent(s), pas recopié(s).", rep.skippedDuplicates) : null,
+      rep.kept > 0 ? traduire("{0} réglage(s) différent(s) gardé(s) tel(s) que sur ce téléphone.", rep.kept) : null,
+      rep.images > 0 ? traduire("{0} image(s) remise(s).", rep.images) : null,
+      rep.failed > 0 ? traduire("{0} élément(s) n’ont pas pu être lus.", rep.failed) : null,
     ].filter(Boolean).join('\n');
     appAlert(traduire('Import terminé'), lines);
 
     return true;
   } catch (error) {
     logger.error('Erreur import JSON:', error);
-    appAlert('Oups', traduire('L’import n’a pas abouti. Réessaie.'));
+    appAlert(traduire('Oups'), traduire('L’import n’a pas abouti. Réessaie.'));
     return false;
   }
 };
@@ -1030,12 +1030,12 @@ export const shareImage = async (viewRef: any, fileName: string = 'yoroi_card'):
       });
       return true;
     } else {
-      appAlert('Partage indisponible', traduire('Le partage n’est pas disponible sur ce téléphone.'));
+      appAlert(traduire('Partage indisponible'), traduire('Le partage n’est pas disponible sur ce téléphone.'));
       return false;
     }
   } catch (error) {
     logger.error('Erreur partage image:', error);
-    appAlert('Oups', traduire('L’image n’a pas pu être partagée.'));
+    appAlert(traduire('Oups'), traduire('L’image n’a pas pu être partagée.'));
     return false;
   }
 };
@@ -1059,7 +1059,7 @@ export const generateShareText = async (): Promise<string> => {
     let text = traduire(`Mon parcours Yoroi\n\n`);
 
     if (weightDiff > 0) {
-      text += `${weightDiff.toFixed(1)}kg perdus !\n`;
+      text += traduire("{0}kg perdus !\n", weightDiff.toFixed(1));
     } else if (weightDiff < 0) {
       text += traduire("{0}kg gagnés !\n", Math.abs(weightDiff).toFixed(1));
     }
@@ -1099,7 +1099,7 @@ export const shareProgress = async (): Promise<boolean> => {
     }
   } catch (error) {
     logger.error('Erreur partage progression:', error);
-    appAlert('Oups', traduire('Ta progression n’a pas pu être partagée.'));
+    appAlert(traduire('Oups'), traduire('Ta progression n’a pas pu être partagée.'));
     return false;
   }
 };
@@ -1127,12 +1127,12 @@ export const shareStoryCard = async (viewRef: any, platform: 'instagram' | 'snap
       });
       return true;
     } else {
-      appAlert('Partage indisponible', traduire('Le partage n’est pas disponible sur ce téléphone.'));
+      appAlert(traduire('Partage indisponible'), traduire('Le partage n’est pas disponible sur ce téléphone.'));
       return false;
     }
   } catch (error) {
     logger.error('Erreur partage story:', error);
-    appAlert('Oups', traduire('La story n’a pas pu être partagée.'));
+    appAlert(traduire('Oups'), traduire('La story n’a pas pu être partagée.'));
     return false;
   }
 };
@@ -1165,7 +1165,7 @@ export const saveStoryToGallery = async (viewRef: any): Promise<boolean> => {
     return true;
   } catch (error) {
     logger.error('Erreur sauvegarde galerie:', error);
-    appAlert('Oups', traduire('L’image n’a pas pu être enregistrée.'));
+    appAlert(traduire('Oups'), traduire('L’image n’a pas pu être enregistrée.'));
     return false;
   }
 };
@@ -1872,7 +1872,7 @@ export const importAllData = async (
     try {
       data = JSON.parse(content);
     } catch {
-      appAlert('Fichier illisible', traduire('Ce fichier est abîmé ou n’est pas une sauvegarde YOROI.'));
+      appAlert(traduire('Fichier illisible'), traduire('Ce fichier est abîmé ou n’est pas une sauvegarde YOROI.'));
       return false;
     }
 
@@ -1888,7 +1888,7 @@ export const importAllData = async (
     return true;
   } catch (error) {
     logger.error('Erreur import:', error);
-    appAlert('Oups', traduire('L’import n’a pas abouti. Vérifie le fichier et réessaie.'));
+    appAlert(traduire('Oups'), traduire('L’import n’a pas abouti. Vérifie le fichier et réessaie.'));
     return false;
   }
 };
@@ -2029,7 +2029,7 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
   } catch (error) {
     logger.error('Erreur export séances CSV:', error);
     appAlert(
-      'Oups',
+      traduire('Oups'),
       traduire('L’export des séances n’a pas abouti. Réessaie.')
     );
     return false;
@@ -2142,7 +2142,7 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
   } catch (error) {
     logger.error('Erreur export Excel CSV:', error);
     appAlert(
-      'Oups',
+      traduire('Oups'),
       traduire('L’export pour Excel n’a pas abouti. Réessaie.')
     );
     return false;
@@ -2284,7 +2284,7 @@ export const exportEditableCSV = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     logger.error('Erreur export éditable:', error);
-    appAlert('Oups', traduire('Le fichier modifiable n’a pas pu être créé.'));
+    appAlert(traduire('Oups'), traduire('Le fichier modifiable n’a pas pu être créé.'));
     return false;
   }
 };
@@ -2469,7 +2469,7 @@ export const importEditableCSV = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     logger.error('Erreur import éditable:', error);
-    appAlert('Oups', traduire('Ce fichier n’a pas pu être importé.'));
+    appAlert(traduire('Oups'), traduire('Ce fichier n’a pas pu être importé.'));
     return false;
   }
 };
@@ -2546,7 +2546,7 @@ nom;sport;couleur;adresse
     if (canShare) {
       await shareAsync(fileUri, {
         mimeType: 'application/json',
-        dialogTitle: 'Template Yoroi',
+        dialogTitle: traduire('Template Yoroi'),
         UTI: 'public.json',
       });
 
@@ -2559,7 +2559,7 @@ nom;sport;couleur;adresse
     return true;
   } catch (error) {
     logger.error('Erreur création template:', error);
-    appAlert('Oups', traduire('Le modèle n’a pas pu être créé.'));
+    appAlert(traduire('Oups'), traduire('Le modèle n’a pas pu être créé.'));
     return false;
   }
 };

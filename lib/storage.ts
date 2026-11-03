@@ -797,7 +797,7 @@ export const savePhotoToStorage = async (
     return newPhoto;
   } catch (error: unknown) {
     logger.error('Erreur sauvegarde photo:', error);
-    appAlert('Oups', traduire('La photo n’a pas pu être enregistrée. Réessaie.'));
+    appAlert(traduire('Oups'), traduire('La photo n’a pas pu être enregistrée. Réessaie.'));
     return null;
   }
 };
@@ -1265,7 +1265,7 @@ export const exportData = async (): Promise<boolean> => {
     if (!baseDirectory) {
       // Fallback : copier dans le presse-papier ou afficher les données
       appAlert(
-        'Export alternatif',
+        traduire('Export alternatif'),
         traduire("Données exportées :\n- {0} mesures\n- {1} entraînements\n- {2} photos\n\nL’enregistrement de fichiers n’est pas disponible sur cet appareil.", stats.measurements, stats.workouts, stats.photos),
         [{ text: 'OK' }]
       );
@@ -1292,7 +1292,7 @@ export const exportData = async (): Promise<boolean> => {
     return true;
   } catch (error: unknown) {
     logger.error('Erreur export:', error);
-    appAlert('Oups', traduire('L’export n’a pas abouti. Réessaie.'));
+    appAlert(traduire('Oups'), traduire('L’export n’a pas abouti. Réessaie.'));
     return false;
   }
 };
@@ -1330,19 +1330,19 @@ export const importData = async (): Promise<boolean> => {
       backup = JSON.parse(fileContent);
     } catch (parseError) {
       logger.error('JSON parse error in importData:', parseError);
-      appAlert('Fichier illisible', traduire('Ce fichier de sauvegarde ne peut pas être lu.'));
+      appAlert(traduire('Fichier illisible'), traduire('Ce fichier de sauvegarde ne peut pas être lu.'));
       return false;
     }
 
     if (!backup || backup.version !== 1) {
-      appAlert('Fichier illisible', traduire('Ce fichier de sauvegarde est abîmé ou incomplet.'));
+      appAlert(traduire('Fichier illisible'), traduire('Ce fichier de sauvegarde est abîmé ou incomplet.'));
       return false;
     }
 
     // Validate array contents
     if (!Array.isArray(backup.measurements) || !Array.isArray(backup.workouts) ||
         !Array.isArray(backup.photos) || !Array.isArray(backup.badges)) {
-      appAlert('Fichier illisible', traduire('Ce fichier contient des données que YOROI ne reconnaît pas.'));
+      appAlert(traduire('Fichier illisible'), traduire('Ce fichier contient des données que YOROI ne reconnaît pas.'));
       return false;
     }
 
@@ -1352,7 +1352,7 @@ export const importData = async (): Promise<boolean> => {
         traduire("Toutes tes données actuelles seront remplacées.\n\nLe fichier contient :\n- {0} mesures\n- {1} entraînements\n- {2} photos\n\nContinuer ?", backup.stats.measurements, backup.stats.workouts, backup.stats.photos),
         [
           { text: traduire('Annuler'), style: 'cancel', onPress: () => resolve(false) },
-          { text: 'Confirmer', style: 'destructive', onPress: () => resolve(true) },
+          { text: traduire('Confirmer'), style: 'destructive', onPress: () => resolve(true) },
         ]
       );
     });
@@ -1372,7 +1372,7 @@ export const importData = async (): Promise<boolean> => {
     return true;
   } catch (error: unknown) {
     logger.error('Erreur importation:', error);
-    appAlert('Oups', traduire('L’import n’a pas abouti. Vérifie le fichier et réessaie.'));
+    appAlert(traduire('Oups'), traduire('L’import n’a pas abouti. Vérifie le fichier et réessaie.'));
     return false;
   }
 };

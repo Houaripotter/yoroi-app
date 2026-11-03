@@ -421,7 +421,7 @@ export default function DicteSeance() {
       router.replace({ pathname: '/seance/fin' as any, params: { id: String(result.id) } });
     } catch (err) {
       logger.error('Enregistrement de la séance dictée impossible', err);
-      appAlert('Oups', traduire('La séance n’a pas pu être enregistrée. Réessaie.'));
+      appAlert(traduire('Oups'), traduire('La séance n’a pas pu être enregistrée. Réessaie.'));
       savingRef.current = false;
       setSaving(false);
     }
@@ -488,7 +488,7 @@ export default function DicteSeance() {
                 ) : null}
                 {text.length > 0 ? (
                   <Pressable onPress={() => { setText(''); input.current?.focus(); }} accessibilityRole="button" accessibilityLabel={traduire("Effacer la phrase")} style={{ alignSelf: 'flex-end', minHeight: 44, paddingHorizontal: 8, justifyContent: 'center' }}>
-                    <Ink size={13} weight="bold" color={P.ink2}>Effacer</Ink>
+                    <Ink size={13} weight="bold" color={P.ink2}>{traduire('Effacer')}</Ink>
                   </Pressable>
                 ) : null}
               </Card>

@@ -81,7 +81,7 @@ export default function ImportCSVScreen() {
       if (content == null) return;
       const parsed = parseUnifiedCSV(content);
       if (parsed.rows.length === 0) {
-        errorPopup('Fichier vide', traduire('Aucune donnée trouvée. Vérifie le format du fichier.'));
+        errorPopup(traduire('Fichier vide'), traduire('Aucune donnée trouvée. Vérifie le format du fichier.'));
         return;
       }
       setParseResult(parsed);
@@ -110,7 +110,7 @@ export default function ImportCSVScreen() {
       await notificationAsync(NotificationFeedbackType.Success);
     } catch (error: any) {
       logger.error('CSV import error:', error);
-      errorPopup('Import interrompu', traduire('L’import n’a pas pu aller au bout. Réessaie.'));
+      errorPopup(traduire('Import interrompu'), traduire('L’import n’a pas pu aller au bout. Réessaie.'));
     } finally {
       setIsImporting(false);
     }
@@ -129,7 +129,7 @@ export default function ImportCSVScreen() {
       if (content == null) return;
       const parsed = parseCSVContent(content);
       if (parsed.rows.length === 0) {
-        errorPopup('Fichier vide', traduire('Aucune donnée trouvée.'));
+        errorPopup(traduire('Fichier vide'), traduire('Aucune donnée trouvée.'));
         return;
       }
       setAdvParseResult(parsed);
@@ -157,7 +157,7 @@ export default function ImportCSVScreen() {
       await notificationAsync(NotificationFeedbackType.Success);
     } catch (error: any) {
       logger.error('CSV import error:', error);
-      errorPopup('Import interrompu', traduire('L’import n’a pas pu aller au bout. Réessaie.'));
+      errorPopup(traduire('Import interrompu'), traduire('L’import n’a pas pu aller au bout. Réessaie.'));
     } finally {
       setIsImporting(false);
     }

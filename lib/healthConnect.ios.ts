@@ -6463,15 +6463,15 @@ class HealthConnectService {
 
       // Titre personnalise selon le sport
       const titres: Record<string, string> = {
-        'Course': 'Belle course',
-        'Trail': 'Beau trail',
-        'Marche': 'Belle marche',
+        'Course': traduire('Belle course'),
+        'Trail': traduire('Beau trail'),
+        'Marche': traduire('Belle marche'),
         'Musculation': traduire('Belle séance de muscu'),
         'HYROX': traduire('Séance HYROX terminée'),
-        'JJB': 'Beau roulage',
+        'JJB': traduire('Beau roulage'),
         'Boxe': traduire('Belle séance de boxe'),
         'Velo': traduire('Belle sortie à vélo'),
-        'Natation': 'Belle nage',
+        'Natation': traduire('Belle nage'),
         'Yoga': traduire('Belle séance de yoga'),
         'Football': traduire('Beau match de foot'),
         'Basketball': traduire('Beau match de basket'),
@@ -6480,14 +6480,14 @@ class HealthConnectService {
         'Danse': traduire('Belle séance de danse'),
         'CrossFit': traduire('WOD terminé'),
         'Pilates': traduire('Belle séance de Pilates'),
-        'Escalade': 'Belle grimpe',
-        'Ski': 'Belle descente',
+        'Escalade': traduire('Belle grimpe'),
+        'Ski': traduire('Belle descente'),
         'Ski de fond': traduire('Belle session de fond'),
         'Rugby': traduire('Beau match de rugby'),
         'Handball': traduire('Beau match de hand'),
         'Golf': traduire('Belle partie de golf'),
         'Surf': traduire('Belle session de surf'),
-        'Aviron': 'Belle sortie d’aviron',
+        'Aviron': traduire('Belle sortie d’aviron'),
       };
 
       const title = titres[sportLabel] || traduire("Belle séance de {0}", traduire(sportLabel).toLowerCase());

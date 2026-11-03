@@ -98,7 +98,7 @@ export default function Pack() {
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 120, gap: 14 }} showsVerticalScrollIndicator={false}>
         <BackHeader
           title={monde || vie ? packDisplayName(pack, gender) : traduire(pack.name)}
-          subtitle={pack.kind === 'sport' ? traduire('Pack sport') : monde ? traduire('Monde samouraï') : vie ? traduire("Pack {0}, vie réelle", pack.name) : traduire('Légende')}
+          subtitle={pack.kind === 'sport' ? traduire('Pack sport') : monde ? traduire('Monde samouraï') : vie ? traduire("Pack {0}, vie réelle", traduire(pack.name)) : traduire('Légende')}
           right={
             pack.kind === 'sport' || monde || vie ? (
               <View style={{ flexDirection: 'row', backgroundColor: c.fillSubtle, borderRadius: 14, padding: 3 }}>

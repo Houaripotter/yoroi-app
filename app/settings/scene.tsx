@@ -63,7 +63,7 @@ import {
   vignetteQuiJoue,
   type FiltreGalerie,
 } from '@/lib/v2/espace/presentation';
-import { traduire } from '@/lib/i18n/tr';
+import { LANG, traduire } from '@/lib/i18n/tr';
 
 const MARGE = 22;
 const ECART = 12;
@@ -80,7 +80,7 @@ function conditionCourte(id: SceneId): string {
 type ChoixRotation = 'fixe' | SceneRotation;
 const ROTATIONS: { key: ChoixRotation; label: string; sub: string }[] = [
   { key: 'fixe', label: traduire('Non'), sub: traduire('Ta scène reste en place') },
-  { key: 'classique', label: 'Classique', sub: traduire('Salle, parc, ville, mer et désert') },
+  { key: 'classique', label: traduire('Classique'), sub: traduire('Salle, parc, ville, mer et désert') },
   { key: 'nature', label: traduire('Nature et ville'), sub: traduire('Plage, forêt, désert et buildings') },
   { key: 'voyages', label: traduire('Pack Voyages'), sub: traduire('Tokyo, Paris, désert, neige et étoiles, animées') },
   { key: 'samourai', label: traduire('Samouraï'), sub: traduire('Katanas, armures et châteaux') },
@@ -442,7 +442,7 @@ export default function TaScene() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 14, backgroundColor: c.fillSoft }}>
                 <Icon name="check" size={16} color={c.accent} stroke={2.6} />
                 <Ink size={13} weight="bold" color={c.ink} style={{ flex: 1 }}>
-                  {traduire("Actif. En ce moment : {0}. La prochaine sera différente.", ficheScene(espace.scene).nom)}
+                  {traduire("Actif. En ce moment : {0}. La prochaine sera différente.", traduire(ficheScene(espace.scene).nom))}
                 </Ink>
               </View>
             ) : null}
@@ -467,7 +467,7 @@ export default function TaScene() {
           <Pressable
             onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
             accessibilityRole="button"
-            accessibilityLabel={traduire("Aperçu de ton accueil avec la scène {0}. Toucher pour le revoir en grand", fiche.nom)}
+            accessibilityLabel={traduire("Aperçu de ton accueil avec la scène {0}. Toucher pour le revoir en grand", traduire(fiche.nom))}
             style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}
           >
             <ApercuCompact largeur={apercuW} scene={focus} prenom={prenom} personnage={espace.personnage} rankIndex={rankIndex} photo={photo} />
@@ -517,7 +517,7 @@ function MiniTelephone({ ecran, scene, prenom, personnage, rankIndex, photo }: {
   const interieur = 112 - 8 - 12;
   const s = interieur / ecran;
   return (
-    <View style={{ width: 112, height: 188, borderRadius: 22, backgroundColor: P.cadre, padding: 4, shadowColor: '#1D2033', shadowOpacity: 0.18, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 6 }} accessible accessibilityLabel={traduire("Aperçu de ton accueil avec la scène {0}", ficheScene(scene).nom)}>
+    <View style={{ width: 112, height: 188, borderRadius: 22, backgroundColor: P.cadre, padding: 4, shadowColor: '#1D2033', shadowOpacity: 0.18, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 6 }} accessible accessibilityLabel={traduire("Aperçu de ton accueil avec la scène {0}", traduire(ficheScene(scene).nom))}>
       <View style={{ flex: 1, borderRadius: 18, overflow: 'hidden', backgroundColor: P.paper, paddingTop: 10, paddingHorizontal: 6, gap: 4 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: P.primary }} />
@@ -702,14 +702,14 @@ function LignePack({ r, on, choisie, enCours, onPress }: { r: { key: ChoixRotati
   const c = theme.colors;
   const scenes = r.key === 'fixe' ? [choisie] : scenesQuiTournent(r.key);
   const apercu = scenes.slice(0, 3);
-  const sub = r.key === 'fixe' ? `${r.sub} : ${ficheScene(choisie).nom}` : traduire("{0} scènes. {1}", scenes.length, r.sub);
+  const sub = r.key === 'fixe' ? `${r.sub}${LANG === 'fr' ? ' : ' : ': '}${traduire(ficheScene(choisie).nom)}` : traduire("{0} scènes. {1}", scenes.length, r.sub);
   return (
     <View style={{ borderRadius: 16, borderWidth: on ? 2 : 1, borderColor: on ? c.accent : c.border, backgroundColor: c.surface, overflow: 'hidden' }}>
       <Pressable
         onPress={onPress}
         accessibilityRole="radio"
         accessibilityState={{ selected: on }}
-        accessibilityLabel={`${r.key === 'fixe' ? traduire('Toujours ta scène') : `Pack ${r.label}`}, ${sub}`}
+        accessibilityLabel={`${r.key === 'fixe' ? traduire('Toujours ta scène') : traduire('Pack {0}', r.label)}, ${sub}`}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, backgroundColor: pressed ? c.fillSoft : 'transparent' })}
       >
         <View style={{ width: 76, height: 46 }}>
@@ -809,7 +809,7 @@ function AmbianceSonore({ scene, sansTitre = false }: { scene: SceneId; sansTitr
   const conseil = sonConseille(scene).ambiance;
   const bruitages: { cle: string; id: string; nom: string; sous?: string; ecoutable: boolean }[] = [
     { cle: 'amb:aucune', id: 'aucune', nom: traduire('Sans son'), ecoutable: false },
-    { cle: 'amb:scene', id: 'scene', nom: traduire('Selon la scène'), sous: conseil ? conseil.nom : traduire('Rien pour cette scène'), ecoutable: !!conseil },
+    { cle: 'amb:scene', id: 'scene', nom: traduire('Selon la scène'), sous: conseil ? traduire(conseil.nom) : traduire('Rien pour cette scène'), ecoutable: !!conseil },
     ...AMBIANCES.map((a) => ({ cle: `amb:${a.id}`, id: a.id, nom: a.nom, ecoutable: true })),
   ];
   const musiques: { cle: string; id: string; nom: string; sous?: string; ecoutable: boolean }[] = [
@@ -890,8 +890,8 @@ function AmbianceSonore({ scene, sansTitre = false }: { scene: SceneId; sansTitr
           {son ? traduire('Joue sur ton accueil, sans couper ta musique. Touche le rond pour écouter.') : traduire('Choisis un son pour ton accueil. Touche le rond pour écouter.')}
         </Ink>
       </View>
-      {rangee('Bruitage', bruitages, r.ambiance, (v) => set({ ambiance: v, coupe: false }))}
-      {rangee('Musique', musiques, r.musique, (v) => set({ musique: v, coupe: false }))}
+      {rangee(traduire('Bruitage'), bruitages, r.ambiance, (v) => set({ ambiance: v, coupe: false }))}
+      {rangee(traduire('Musique'), musiques, r.musique, (v) => set({ musique: v, coupe: false }))}
       {son ? (
         <View style={{ gap: 6 }}>
           <Ink size={12} weight="extraBold" color={c.textMuted} style={{ paddingHorizontal: 2, letterSpacing: 0.5 }}>

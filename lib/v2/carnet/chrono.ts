@@ -37,11 +37,11 @@ export const MODES: { id: TimerMode; label: string; short: string; tag?: string;
 ];
 
 export const MUSCU_PRESETS = [
-  { seconds: 30, label: '30 s', sub: 'Endurance' },
+  { seconds: 30, label: '30 s', sub: traduire('Endurance') },
   { seconds: 60, label: traduire('1 min'), sub: traduire('Volume') },
   { seconds: 90, label: traduire('1 min 30'), sub: traduire('Volume') },
-  { seconds: 120, label: traduire('2 min'), sub: 'Force' },
-  { seconds: 180, label: traduire('3 min'), sub: 'Lourd' },
+  { seconds: 120, label: traduire('2 min'), sub: traduire('Force') },
+  { seconds: 180, label: traduire('3 min'), sub: traduire('Lourd') },
   { seconds: 300, label: traduire('5 min'), sub: traduire('Très lourd') },
 ];
 

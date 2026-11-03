@@ -1157,15 +1157,15 @@ export default function SeanceMuscu() {
   const abandon = () => {
     if (draft?.form) {
       appAlert(draft.editId ? traduire('Quitter sans enregistrer ?') : traduire('Annuler cette saisie ?'), traduire('Tes changements ne seront pas gardés.'), [
-        { text: 'Rester', style: 'cancel' },
-        { text: 'Quitter', style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); void effacerSaisie(draft); router.back(); } },
+        { text: traduire('Rester'), style: 'cancel' },
+        { text: traduire('Quitter'), style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); void effacerSaisie(draft); router.back(); } },
       ]);
       return;
     }
     appAlert(traduire('Abandonner la séance ?'), traduire('Rien ne sera enregistré.'), [
       { text: traduire('Continuer la séance'), style: 'cancel' },
       {
-        text: 'Abandonner',
+        text: traduire('Abandonner'),
         style: 'destructive',
         onPress: async () => {
           finished.current = true;
@@ -1244,7 +1244,7 @@ export default function SeanceMuscu() {
     } catch (err) {
       finished.current = false;
       logger.error('Enregistrement de la seance impossible', err);
-      appAlert('Oups', traduire('La séance n’a pas pu être enregistrée. Elle reste en cours, réessaie.'));
+      appAlert(traduire('Oups'), traduire('La séance n’a pas pu être enregistrée. Elle reste en cours, réessaie.'));
       savingRef.current = false;
       setSaving(false);
     }

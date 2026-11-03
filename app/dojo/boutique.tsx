@@ -349,10 +349,10 @@ export default function Boutique() {
         key={t.id}
         width={col2}
         source={THEME_IMAGES[t.id]}
-        nom={t.name}
+        nom={traduire(t.name)}
         etat={{ equipe, regarde, verrou, note }}
         onPress={() => essayerScene(t.id)}
-        label={equipe ? traduire("Scène {0}, choisie", t.name) : verrou ? traduire("Scène {0}, {1}, touche pour l’essayer", t.name, (themeCondition(t) ?? traduire('avec Premium')).toLowerCase()) : traduire("Scène {0}, touche pour l’essayer", t.name)}
+        label={equipe ? traduire("Scène {0}, choisie", traduire(t.name)) : verrou ? traduire("Scène {0}, {1}, touche pour l’essayer", traduire(t.name), (themeCondition(t) ?? traduire('avec Premium')).toLowerCase()) : traduire("Scène {0}, touche pour l’essayer", traduire(t.name))}
       />
     );
   };
@@ -415,7 +415,7 @@ export default function Boutique() {
                   onPress={basculerSceneAssortie}
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked: avecSceneAssortie }}
-                  accessibilityLabel={traduire("Avec sa scène, {0}", themeById(sceneAssortie).name)}
+                  accessibilityLabel={traduire("Avec sa scène, {0}", traduire(themeById(sceneAssortie).name))}
                   style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 34, paddingHorizontal: 10, borderRadius: 999, backgroundColor: blancA(0.9), borderWidth: 1, borderColor: P.white, transform: [{ scale: pressed ? 0.97 : 1 }] })}
                 >
                   <View style={{ width: 18, height: 18, borderRadius: 6, borderWidth: 1.5, borderColor: avecSceneAssortie ? c.primary : c.textMuted, backgroundColor: avecSceneAssortie ? c.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
@@ -512,7 +512,7 @@ export default function Boutique() {
           accessibilityRole="button"
           style={({ pressed }) => ({ alignSelf: 'center', minHeight: 44, paddingHorizontal: 16, justifyContent: 'center', opacity: pressed || restoring ? 0.6 : 1 })}
         >
-          <Ink size={14} weight="bold" color={c.textSecondary}>{restoring ? 'Restauration en cours' : traduire('Restaurer mes achats')}</Ink>
+          <Ink size={14} weight="bold" color={c.textSecondary}>{restoring ? traduire('Restauration en cours') : traduire('Restaurer mes achats')}</Ink>
         </Pressable>
       </ScrollView>
     </View>

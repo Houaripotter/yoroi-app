@@ -193,7 +193,7 @@ export function WaitingList({ defs, onOpen }: { defs: MetricDef[]; onOpen: (k: M
             {isOpen ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingBottom: 12 }}>
                 {list.map((d) => (
-                  <Press key={d.key} onPress={() => onOpen(d.key)} accessibilityRole="button" accessibilityLabel={`${d.label}, en attente`}>
+                  <Press key={d.key} onPress={() => onOpen(d.key)} accessibilityRole="button" accessibilityLabel={traduire('{0}, en attente', d.label)}>
                     <View style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 6, paddingRight: 12, borderRadius: 22, backgroundColor: '#F7F5F0', borderWidth: 1, borderColor: S.line2 }}>
                       <IconDot name={METRIC_ICON[d.key] ?? 'pulse'} color={fam.color} tint={fam.tint} size={30} />
                       <Ink size={13} weight="bold" color={S.ink2}>

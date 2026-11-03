@@ -153,7 +153,7 @@ export default function InjuryDetailScreen() {
     appAlert(traduire('Marquer comme guérie ?'), traduire('Cette blessure sera archivée.'), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Confirmer',
+        text: traduire('Confirmer'),
         onPress: async () => {
           setBusy(true);
           try {
@@ -199,7 +199,7 @@ export default function InjuryDetailScreen() {
     appAlert(label, traduire('Le noter comme fait aujourd’hui ?'), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Confirmer',
+        text: traduire('Confirmer'),
         onPress: async () => {
           try {
             await recordTreatment({ injury_id: injuryId, treatment_type: type });
@@ -236,7 +236,7 @@ export default function InjuryDetailScreen() {
     appAlert(title, msg, [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Confirmer',
+        text: traduire('Confirmer'),
         onPress: async () => {
           await updateInjuryEva(injuryId, value, note);
           tap('success');

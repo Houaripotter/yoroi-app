@@ -27,7 +27,7 @@ import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { ChargementBloc } from '@/components/yoroi/v2/chargement/Chargement';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduireSens } from '@/lib/i18n/tr';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 type Row = { date: string; weight?: Weight; measurement?: Measurement; composition?: BodyComposition };
@@ -43,6 +43,9 @@ const COLUMNS: { key: string; label: string; unit: string; width: number }[] = [
   { key: 'left_arm', label: 'Bras G', unit: 'cm', width: 74 },
   { key: 'right_arm', label: 'Bras D', unit: 'cm', width: 74 },
 ];
+
+/** affichage seul : le nom de la colonne dans la langue de l'app (« Taille » ici, c'est le tour de taille) */
+const nomColonne = (col: { key: string; label: string }) => (col.key === 'waist' ? traduireSens('tour', col.label) : traduire(col.label));
 
 /** Colonnes de la pesee (visibles d'emblee) : un jour de mensurations seules y affiche une mention au lieu d'une ligne vide */
 const COMPO_COLS = COLUMNS.slice(0, 4);
@@ -244,7 +247,7 @@ export default function TableauCorps() {
                   <View style={{ flexDirection: 'row', height: HEAD_H, alignItems: 'center', backgroundColor: c.fillSoft }}>
                     {COLUMNS.map((col) => (
                       <View key={col.key} style={{ width: col.width, alignItems: 'flex-end', paddingRight: 12 }}>
-                        <Ink size={12} weight="extraBold" color={c.textSecondary} numberOfLines={1}>{traduire(col.label)}</Ink>
+                        <Ink size={12} weight="extraBold" color={c.textSecondary} numberOfLines={1}>{nomColonne(col)}</Ink>
                         <Ink size={10} color={c.textMuted}>{col.unit}</Ink>
                       </View>
                     ))}
@@ -335,8 +338,8 @@ function AddRowSheet({ visible, onClose, onSave }: { visible: boolean; onClose: 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {COLUMNS.map((col) => (
           <View key={col.key} style={{ width: '31%', flexGrow: 1, gap: 4 }}>
-            <Ink size={12} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire(col.label)}, {col.unit}</Ink>
-            <TextInput value={vals[col.key] ?? ''} onChangeText={(v) => setVals((p) => ({ ...p, [col.key]: v }))} keyboardType="decimal-pad" placeholder="0" placeholderTextColor={c.textMuted} accessibilityLabel={`${col.label} en ${col.unit}`} style={field} />
+            <Ink size={12} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{nomColonne(col)}, {col.unit}</Ink>
+            <TextInput value={vals[col.key] ?? ''} onChangeText={(v) => setVals((p) => ({ ...p, [col.key]: v }))} keyboardType="decimal-pad" placeholder="0" placeholderTextColor={c.textMuted} accessibilityLabel={traduire('{0} en {1}', nomColonne(col), col.unit)} style={field} />
           </View>
         ))}
       </View>

@@ -473,7 +473,7 @@ export function CarteGratuit() {
   const t = p.ton('menthe');
   const textes = GRATUIT.map((g) => traduire(g.texte));
   return (
-    <View accessible accessibilityLabel={`${traduire('Gratuit pour toujours, sans limite')} : ${textes.join(', ')}`} style={{ borderRadius: 24, backgroundColor: t.fond, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 14, gap: 8 }}>
+    <View accessible accessibilityLabel={traduire('{0} : {1}', traduire('Gratuit pour toujours, sans limite'), textes.join(', '))} style={{ borderRadius: 24, backgroundColor: t.fond, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 14, gap: 8 }}>
       <Capitales texte={traduire('Gratuit pour toujours, sans limite')} couleur={t.encre} taille={10.5} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
         {GRATUIT.map((g, i) => (

@@ -231,7 +231,7 @@ export default function MetriqueScreen() {
   })();
   const periodEvents = (eventsCache[days] ?? []).filter((e) => eventDay(e.date) >= periodFrom);
   const eventCount = isEvent ? periodEvents.reduce((s2, e) => s2 + (key === 'chutes' ? e.value ?? 1 : 1), 0) : 0;
-  const PERIOD_WORD: Record<Period, string> = { jour: "aujourd'hui", semaine: traduire('sur 7 jours'), mois: traduire('sur 30 jours'), an: traduire('sur un an') };
+  const PERIOD_WORD: Record<Period, string> = { jour: traduire("aujourd'hui"), semaine: traduire('sur 7 jours'), mois: traduire('sur 30 jours'), an: traduire('sur un an') };
   if (isEvent && sel === null) {
     readTitle = traduire("Total {0}", PERIOD_WORD[period]);
     readValue = countLabel(eventCount, m.unit);
@@ -258,7 +258,7 @@ export default function MetriqueScreen() {
           events={periodEvents}
           color={color}
           tint={fam.tint}
-          emptyText={notHere ? traduire(`Cette mesure n'arrive pas sur ce téléphone.`) : `Rien ${PERIOD_WORD[period]}. ${source?.mode === 'live' ? traduire('Tout ce que ta montre enregistre apparaîtra ici, avec la date et l’heure.') : traduire('Connecte ta montre pour voir ici chaque événement daté.')}`}
+          emptyText={notHere ? traduire(`Cette mesure n'arrive pas sur ce téléphone.`) : `${traduire('Rien {0}.', PERIOD_WORD[period])} ${source?.mode === 'live' ? traduire('Tout ce que ta montre enregistre apparaîtra ici, avec la date et l’heure.') : traduire('Connecte ta montre pour voir ici chaque événement daté.')}`}
         />
       );
     }
@@ -582,7 +582,7 @@ export default function MetriqueScreen() {
           </View>
         ) : !notHere ? (
           <Ink size={12} weight="bold" color={S.muted}>
-            {`Appareils courants : ${m.devices}.`}
+            {traduire('Appareils courants : {0}.', m.devices)}
           </Ink>
         ) : null}
         {sourceNames.length > 0 ? (

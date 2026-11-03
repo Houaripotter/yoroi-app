@@ -281,7 +281,7 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
               <Pressable
                 onPress={() => pick(item.name, item.muscle)}
                 accessibilityRole="button"
-                accessibilityLabel={traduire("Ajouter {0}", item.name)}
+                accessibilityLabel={traduire("Ajouter {0}", sansTiret(traduire(item.name)))}
                 style={({ pressed }) => ({ minHeight: 64, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : c.surface, ...OMBRE_CARTE })}
               >
                 <View style={{ flex: 1, gap: 2 }}>

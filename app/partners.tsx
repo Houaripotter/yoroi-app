@@ -22,7 +22,7 @@ const isCoach = (x: Item): x is Coach => 'specialties' in x;
 const openInstagram = (h: string) => safeOpenURL(`https://instagram.com/${h.replace('@', '')}`);
 const openYoutube = (c: string) => safeOpenURL(`https://youtube.com/@${c}`);
 const openPhone = (n: string) => safeOpenURL(`tel:${n.replace(/\s/g, '').replace(/\./g, '')}`);
-const openEmail = (e?: string) => (e ? safeOpenURL(`mailto:${e}?subject=${encodeURIComponent('Contact via YOROI')}`) : safeOpenURL('https://www.instagram.com/yoroiapp'));
+const openEmail = (e?: string) => (e ? safeOpenURL(`mailto:${e}?subject=${encodeURIComponent(traduire('Contact via YOROI'))}`) : safeOpenURL('https://www.instagram.com/yoroiapp'));
 const openFacebook = (h: string) => safeOpenURL(`https://facebook.com/${h.replace('@', '').replace('/', '')}`);
 const openMap = (address: string) => {
   const q = encodeURIComponent(address);
@@ -176,7 +176,7 @@ export default function PartnersScreen() {
                 {selected.bio ? (
                   <Card>
                     <Ink size={15} style={{ lineHeight: 22 }}>
-                      {selected.bio}
+                      {traduire(selected.bio)}
                     </Ink>
                   </Card>
                 ) : null}

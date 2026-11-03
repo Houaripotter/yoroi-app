@@ -16,7 +16,7 @@ import { agoText, BELTS, daysAgo, makeId, plural } from '@/lib/v2/combat/rounds'
 import { BeltBar, BigButton, Card, Chip, ChipScroll, CIcon, D, DetailScreen, Enter, Field, FormSheet, Glass, IconBtn, P, Press, RecordBars, Seal, Section, sportLabel, Stat, V } from '@/components/yoroi/v2/combat/ui';
 import { PartnerDetail } from '@/components/yoroi/v2/combat/partner/PartnerDetail';
 import { useCombatArt } from '@/components/yoroi/v2/combat/images';
-import { traduire } from '@/lib/i18n/tr';
+import { LANG, traduire } from '@/lib/i18n/tr';
 
 type Filter = 'tous' | 'noires' | 'favorables' | 'revoir';
 
@@ -284,7 +284,7 @@ export default function SparringPartnersScreen() {
             {BELTS.map((b) => {
               const on = newBelt === b.key;
               return (
-                <Press key={b.key} onPress={() => setNewBelt(on ? undefined : b.key)} accessibilityRole="button" accessibilityLabel={traduire("Ceinture {0}", b.label)} accessibilityState={{ selected: on }}>
+                <Press key={b.key} onPress={() => setNewBelt(on ? undefined : b.key)} accessibilityRole="button" accessibilityLabel={LANG === 'fr' ? traduire("Ceinture {0}", b.label) : traduire(`Ceinture ${b.key}`)} accessibilityState={{ selected: on }}>
                   <View style={{ minHeight: 44, paddingHorizontal: 12, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: on ? P.ink : P.white, borderWidth: 1, borderColor: on ? P.ink : P.line2 }}>
                     <View style={{ width: 22, height: 9, borderRadius: 3, backgroundColor: b.color, borderWidth: 1, borderColor: b.edge }} />
                     <Ink size={14} weight="bold" color={on ? P.white : P.ink2}>

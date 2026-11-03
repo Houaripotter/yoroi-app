@@ -248,7 +248,7 @@ export function phraseBilanRepas(m: ResumeRepas['moyenne'] | null | undefined, a
   const quoi = ligneMange({ kcal: m.kcal, proteines: m.proteines });
   if (!quoi) return null;
   const jours = m.jours === 1 ? traduire('1 jour noté') : traduire("{0} jours notés", m.jours);
-  return traduire("Côté repas, {0}tu as mangé en moyenne {1} par jour sur les 7 derniers jours ({2}).", app ? `d’après ${app}, ` : '', quoi, jours);
+  return traduire("Côté repas, {0}tu as mangé en moyenne {1} par jour sur les 7 derniers jours ({2}).", app ? traduire('d’après {0}, ', app) : '', quoi, jours);
 }
 
 /** Comment l'activer, selon la plateforme */

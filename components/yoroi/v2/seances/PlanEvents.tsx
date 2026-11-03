@@ -20,7 +20,7 @@ import { BigButton, Chip, ChipRow, EmptyState, SectionTitle, tap } from './ui';
 import { ChargementBloc } from '@/components/yoroi/v2/chargement/Chargement';
 import { P } from '@/components/yoroi/livePalette';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, traduireSens } from '@/lib/i18n/tr';
 
 const SAVED_EVENTS_KEY = 'my_saved_events';
 const EUROPE = new Set([
@@ -30,7 +30,7 @@ const EUROPE = new Set([
 ]);
 type Region = 'france' | 'europe' | 'monde';
 type Cat = 'all' | 'combat' | 'endurance' | 'force' | 'nature' | 'autre';
-const CAT_LABEL: Record<Cat, string> = { all: traduire('Tout'), combat: traduire('Combat'), endurance: 'Endurance', force: 'Force', nature: traduire('Nature'), autre: 'Autres' };
+const CAT_LABEL: Record<Cat, string> = { all: traduire('Tout'), combat: traduire('Combat'), endurance: traduire('Endurance'), force: traduire('Force'), nature: traduireSens('plein air', 'Nature'), autre: traduire('Autres') };
 const CAT_TINT: Record<string, string> = { combat: '#EEE1DF', endurance: '#E4EADB', force: '#E3E6EE', nature: '#E9E4D8', autre: '#E6E4DD' };
 
 function eventParams(e: SportEvent) {

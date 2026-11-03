@@ -185,7 +185,7 @@ export function EditeurRond({ style: st, onChange, contenu, scene, prenom, resum
                       onPress={() => { if (!on) choisir({ contourRond: id }); }}
                       accessibilityRole="button"
                       accessibilityState={{ selected: on }}
-                      accessibilityLabel={`Contour ${nom}`}
+                      accessibilityLabel={traduire('Contour {0}', traduire(nom))}
                       style={({ pressed }) => ({ width: '20%', alignItems: 'center', gap: 4, transform: [{ scale: pressed ? 0.94 : 1 }] })}
                     >
                       <View style={{ width: 46, height: 46, borderRadius: 23, borderWidth: 2.5, borderColor: on ? P.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>

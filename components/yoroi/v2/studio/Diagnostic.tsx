@@ -129,7 +129,7 @@ export function Diagnostic() {
   const copyLogs = async () => {
     const text = logs.map((l) => `${new Date(l.at).toLocaleTimeString(LOCALE)} ${l.level} ${l.message}`).join('\n');
     try {
-      await Clipboard.setStringAsync(text || 'Journal vide');
+      await Clipboard.setStringAsync(text || traduire('Journal vide'));
       appAlert(traduire('Copié'), traduire('Le journal est copié. Rien n’a été envoyé.'));
     } catch {
       appAlert(traduire('Oups'), traduire('La copie est indisponible.'));

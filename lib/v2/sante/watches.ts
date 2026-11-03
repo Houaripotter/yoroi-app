@@ -54,7 +54,7 @@ export const WATCHES: Watch[] = [
     keeps: [],
     ios: {
       ok: true,
-      app: 'Santé',
+      app: traduire('Santé'),
       steps: [traduire('Porte ta montre : elle remplit Apple Santé toute seule.'), traduire('Dans YOROI, touche Connecter Apple Santé.'), traduire('Sur la fenêtre d’Apple, touche Tout activer, puis Autoriser.')],
       keys: [
         'pas', 'distance', 'etages', 'exercice', 'debout', 'energie-active', 'energie-repos',
@@ -86,7 +86,7 @@ export const WATCHES: Watch[] = [
     ios: {
       ok: true,
       app: 'WHOOP',
-      steps: ['Ouvre l’app WHOOP.', traduire('Va dans Profil, puis Apps et appareils.'), traduire('Choisis Apple Santé et active toutes les catégories.'), traduire('Laisse WHOOP ouvert quelques minutes, puis tire vers le bas dans YOROI.')],
+      steps: [traduire('Ouvre l’app WHOOP.'), traduire('Va dans Profil, puis Apps et appareils.'), traduire('Choisis Apple Santé et active toutes les catégories.'), traduire('Laisse WHOOP ouvert quelques minutes, puis tire vers le bas dans YOROI.')],
       keys: ['frequence-cardiaque', 'fc-repos', 'sommeil', 'respiration', 'oxygene', 'energie-active', 'pas'],
       extra: [traduire('Séances détectées')],
       missing: ['vfc'],
@@ -96,7 +96,7 @@ export const WATCHES: Watch[] = [
     android: {
       ok: true,
       app: 'WHOOP',
-      steps: ['Ouvre l’app WHOOP.', traduire('Va dans Profil, puis Apps et appareils.'), traduire('Choisis Health Connect et autorise toutes les données.'), traduire('Laisse WHOOP ouvert quelques minutes, puis tire vers le bas dans YOROI.')],
+      steps: [traduire('Ouvre l’app WHOOP.'), traduire('Va dans Profil, puis Apps et appareils.'), traduire('Choisis Health Connect et autorise toutes les données.'), traduire('Laisse WHOOP ouvert quelques minutes, puis tire vers le bas dans YOROI.')],
       keys: [],
       list: 'unknown',
       note: traduire('WHOOP annonce un échange dans les deux sens mais ne publie pas la liste de ce qu’il écrit. YOROI affiche tout ce qui arrive.'),
@@ -124,7 +124,7 @@ export const WATCHES: Watch[] = [
     android: {
       ok: true,
       app: 'Google Health',
-      steps: ['Ouvre l’app Google Health (l’ancienne app Fitbit).', 'Touche Connexions, puis Apps partenaires.', traduire('Touche Synchroniser tes apps santé, puis Configurer.'), traduire('Choisis les données, puis autorise l’historique et l’arrière plan.')],
+      steps: [traduire('Ouvre l’app Google Health (l’ancienne app Fitbit).'), traduire('Touche Connexions, puis Apps partenaires.'), traduire('Touche Synchroniser tes apps santé, puis Configurer.'), traduire('Choisis les données, puis autorise l’historique et l’arrière plan.')],
       keys: ['pas', 'vitesse', 'cadence-pas', 'vo2max', 'etages', 'distance', 'denivele', 'temperature', 'sommeil', 'glycemie', 'frequence-cardiaque', 'vfc', 'respiration', 'fc-repos', 'poids', 'masse-grasse', 'eau', 'calories-mangees', 'proteines', 'glucides', 'lipides'],
       extra: [traduire('Séances et tracés GPS'), traduire('Calories totales'), traduire('Température de la peau')],
       missing: ['oxygene'],
@@ -144,7 +144,7 @@ export const WATCHES: Watch[] = [
     ios: {
       ok: true,
       app: 'Garmin Connect',
-      steps: ['Ouvre Garmin Connect.', traduire('Va dans Paramètres, puis Applications connectées, puis Apple Santé.'), traduire('Active toutes les catégories.'), traduire('Garde Garmin Connect ouvert pendant la synchro : Garmin n’écrit dans Santé que quand l’app est à l’écran.')],
+      steps: [traduire('Ouvre Garmin Connect.'), traduire('Va dans Paramètres, puis Applications connectées, puis Apple Santé.'), traduire('Active toutes les catégories.'), traduire('Garde Garmin Connect ouvert pendant la synchro : Garmin n’écrit dans Santé que quand l’app est à l’écran.')],
       keys: ['frequence-cardiaque', 'sommeil', 'energie-active', 'pas'],
       extra: [traduire('Séances')],
       missing: ['fc-repos', 'vfc', 'respiration', 'oxygene'],
@@ -173,9 +173,9 @@ export const WATCHES: Watch[] = [
     ios: {
       ok: true,
       app: 'Oura',
-      steps: ['Ouvre l’app Oura.', traduire('Menu en haut à gauche, puis Réglages, puis Apple Santé.'), traduire('Active Connecter à Santé et Enregistrer les minutes de pleine conscience.'), traduire('Dans Santé, Profil, Apps, Oura : active aussi Pas.')],
+      steps: [traduire('Ouvre l’app Oura.'), traduire('Menu en haut à gauche, puis Réglages, puis Apple Santé.'), traduire('Active Connecter à Santé et Enregistrer les minutes de pleine conscience.'), traduire('Dans Santé, Profil, Apps, Oura : active aussi Pas.')],
       keys: ['energie-active', 'frequence-cardiaque', 'pleine-conscience', 'respiration', 'sommeil', 'pas', 'poids'],
-      extra: [traduire('Phases de sommeil'), traduire('Séances et tracés'), 'Taille'],
+      extra: [traduire('Phases de sommeil'), traduire('Séances et tracés'), traduire('Taille')],
       missing: ['fc-repos', 'vfc', 'oxygene', 'temperature'],
       list: 'complete',
       note: traduire('Bague Gen2, ou Gen3 et suivantes avec abonnement actif.'),
@@ -183,9 +183,9 @@ export const WATCHES: Watch[] = [
     android: {
       ok: true,
       app: 'Oura',
-      steps: ['Ouvre l’app Oura.', traduire('Menu en haut à gauche, puis Réglages.'), traduire('Sous Partage des données, choisis Health Connect.'), traduire('Active les données à partager.')],
+      steps: [traduire('Ouvre l’app Oura.'), traduire('Menu en haut à gauche, puis Réglages.'), traduire('Sous Partage des données, choisis Health Connect.'), traduire('Active les données à partager.')],
       keys: ['energie-active', 'distance', 'pas', 'poids', 'sommeil', 'frequence-cardiaque', 'vfc'],
-      extra: [traduire('Séances'), 'Taille'],
+      extra: [traduire('Séances'), traduire('Taille')],
       missing: ['oxygene', 'temperature'],
       list: 'complete',
       note: traduire('Sur Android, Oura envoie aussi la variabilité cardiaque.'),
@@ -206,7 +206,7 @@ export const WATCHES: Watch[] = [
       app: 'Samsung Health',
       steps: [traduire('Mets à jour Samsung Health.'), traduire('Ouvre Samsung Health, Réglages, Health Connect.'), traduire('Touche Commencer, puis autorise la lecture et l’écriture.'), traduire('Active Réglages, Synchro avec Samsung Cloud.')],
       keys: ['pas', 'glycemie', 'oxygene', 'tension', 'distance', 'frequence-cardiaque', 'puissance', 'vitesse', 'vo2max', 'calories-mangees', 'proteines', 'glucides', 'lipides', 'sommeil', 'poids', 'masse-grasse', 'energie-repos'],
-      extra: [traduire('Séances'), traduire('Calories de séance'), traduire('Phases de sommeil'), 'Taille'],
+      extra: [traduire('Séances'), traduire('Calories de séance'), traduire('Phases de sommeil'), traduire('Taille')],
       list: 'complete',
       note: traduire('La fréquence cardiaque continue de la montre arrive avec du retard, pour économiser la batterie. Les scores maison ne figurent pas dans la liste de Samsung.'),
     },
@@ -223,7 +223,7 @@ export const WATCHES: Watch[] = [
     ios: {
       ok: true,
       app: 'Polar Flow',
-      steps: ['Ouvre Polar Flow.', traduire('Touche Plus, puis Réglages généraux.'), traduire('Active Apple Santé et choisis les catégories.'), 'Touche Autoriser.'],
+      steps: [traduire('Ouvre Polar Flow.'), traduire('Touche Plus, puis Réglages généraux.'), traduire('Active Apple Santé et choisis les catégories.'), traduire('Touche Autoriser.')],
       keys: ['energie-active', 'energie-repos', 'sommeil', 'pas', 'poids', 'frequence-cardiaque'],
       extra: [traduire('Séances avec distance')],
       missing: ['vfc', 'fc-repos'],
@@ -233,12 +233,12 @@ export const WATCHES: Watch[] = [
     android: {
       ok: true,
       app: 'Polar Flow',
-      steps: ['Ouvre Polar Flow.', traduire('Va dans Réglages généraux et active Health Connect.'), traduire('Choisis les données et touche Autoriser.')],
+      steps: [traduire('Ouvre Polar Flow.'), traduire('Va dans Réglages généraux et active Health Connect.'), traduire('Choisis les données et touche Autoriser.')],
       keys: ['energie-active', 'distance', 'frequence-cardiaque', 'oxygene', 'fc-repos', 'poids', 'vo2max', 'sommeil', 'vitesse', 'pas'],
-      extra: [traduire('Séances et tracés'), traduire('Calories totales'), traduire('Phases de sommeil'), 'Taille'],
+      extra: [traduire('Séances et tracés'), traduire('Calories totales'), traduire('Phases de sommeil'), traduire('Taille')],
       list: 'complete',
     },
-    from: 'Aide Polar',
+    from: traduire('Aide Polar'),
   },
   {
     key: 'coros',
@@ -251,19 +251,19 @@ export const WATCHES: Watch[] = [
     ios: {
       ok: true,
       app: 'COROS',
-      steps: ['Ouvre l’app COROS.', traduire('Profil, Réglages, Apps tierces, Synchro des données.'), traduire('Choisis Apple Santé et les types de données.')],
+      steps: [traduire('Ouvre l’app COROS.'), traduire('Profil, Réglages, Apps tierces, Synchro des données.'), traduire('Choisis Apple Santé et les types de données.')],
       keys: ['distance-velo', 'frequence-cardiaque', 'sommeil', 'pas', 'distance-nage', 'distance'],
       list: 'complete',
     },
     android: {
       ok: true,
       app: 'COROS',
-      steps: ['Ouvre l’app COROS.', traduire('Profil, Réglages, Apps tierces, Synchro des données.'), traduire('Choisis Health Connect et les types de données.')],
+      steps: [traduire('Ouvre l’app COROS.'), traduire('Profil, Réglages, Apps tierces, Synchro des données.'), traduire('Choisis Health Connect et les types de données.')],
       keys: [],
       list: 'unknown',
       note: traduire('COROS propose Health Connect mais ne publie pas la liste. YOROI affiche tout ce qui arrive.'),
     },
-    from: 'Aide COROS, HeiaHeia',
+    from: traduire('Aide COROS, HeiaHeia'),
   },
   {
     key: 'withings',
@@ -276,7 +276,7 @@ export const WATCHES: Watch[] = [
     ios: {
       ok: true,
       app: 'Withings',
-      steps: ['Ouvre l’app Withings.', traduire('Va dans Profil, puis Réglages, puis Apple Santé.'), traduire('Choisis les données et touche Autoriser.'), traduire('Monte sur ta balance ou synchronise ta montre.')],
+      steps: [traduire('Ouvre l’app Withings.'), traduire('Va dans Profil, puis Réglages, puis Apple Santé.'), traduire('Choisis les données et touche Autoriser.'), traduire('Monte sur ta balance ou synchronise ta montre.')],
       keys: ['poids', 'pas', 'sommeil', 'frequence-cardiaque'],
       list: 'partial',
       note: traduire('Withings ne publie pas de liste complète. Masse grasse, eau, os et tension passent selon le modèle et la version.'),
@@ -284,12 +284,12 @@ export const WATCHES: Watch[] = [
     android: {
       ok: true,
       app: 'Withings',
-      steps: ['Ouvre l’app Withings.', traduire('Va dans Profil, puis Réglages, puis Health Connect.'), traduire('Choisis les données et autorise.'), traduire('Monte sur ta balance ou synchronise ta montre.')],
+      steps: [traduire('Ouvre l’app Withings.'), traduire('Va dans Profil, puis Réglages, puis Health Connect.'), traduire('Choisis les données et autorise.'), traduire('Monte sur ta balance ou synchronise ta montre.')],
       keys: ['poids', 'pas', 'sommeil', 'frequence-cardiaque'],
       list: 'partial',
       note: traduire('Withings ne publie pas de liste complète. Masse grasse, eau, os et tension passent selon le modèle et la version.'),
     },
-    from: 'Aide Withings, Fitmesh',
+    from: traduire('Aide Withings, Fitmesh'),
   },
   {
     key: 'xiaomi',
@@ -302,13 +302,13 @@ export const WATCHES: Watch[] = [
     ios: {
       ok: true,
       app: 'Mi Fitness',
-      steps: ['Ouvre Mi Fitness.', traduire('Profil, Données tierces, Santé.'), traduire('Choisis les données à partager.'), traduire('Dans Santé : Profil, Confidentialité, Apps, Mi Fitness, active les types.')],
+      steps: [traduire('Ouvre Mi Fitness.'), traduire('Profil, Données tierces, Santé.'), traduire('Choisis les données à partager.'), traduire('Dans Santé : Profil, Confidentialité, Apps, Mi Fitness, active les types.')],
       keys: ['pas', 'sommeil', 'poids'],
       list: 'partial',
       note: traduire('Xiaomi ne publie pas de liste complète.'),
     },
     android: NONE('Mi Fitness', traduire('Xiaomi ne documente pas de partage vers Health Connect.')),
-    from: 'Aide Xiaomi',
+    from: traduire('Aide Xiaomi'),
   },
   {
     key: 'amazfit',
@@ -321,7 +321,7 @@ export const WATCHES: Watch[] = [
     ios: {
       ok: true,
       app: 'Zepp',
-      steps: ['Ouvre l’app Zepp.', traduire('Dans Profil, cherche les comptes liés, puis Santé.'), traduire('Autorise les données.')],
+      steps: [traduire('Ouvre l’app Zepp.'), traduire('Dans Profil, cherche les comptes liés, puis Santé.'), traduire('Autorise les données.')],
       keys: [],
       list: 'unknown',
       note: traduire('Zepp propose Apple Santé mais ne publie pas la liste. YOROI affiche tout ce qui arrive.'),
@@ -329,13 +329,13 @@ export const WATCHES: Watch[] = [
     android: {
       ok: true,
       app: 'Zepp',
-      steps: ['Ouvre l’app Zepp.', traduire('Dans Profil, cherche les comptes liés, puis Health Connect.'), traduire('Autorise les données.')],
+      steps: [traduire('Ouvre l’app Zepp.'), traduire('Dans Profil, cherche les comptes liés, puis Health Connect.'), traduire('Autorise les données.')],
       keys: ['frequence-cardiaque', 'energie-active', 'sommeil'],
       extra: [traduire('26 types au total selon Zepp')],
       list: 'partial',
       note: traduire('Zepp écrit dans Health Connect mais ne lit rien.'),
     },
-    from: 'Gadgets and Wearables (janvier 2025)',
+    from: traduire('Gadgets and Wearables (janvier 2025)'),
   },
   {
     key: 'huawei',

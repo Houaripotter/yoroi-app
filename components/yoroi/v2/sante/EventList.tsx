@@ -10,13 +10,13 @@ import type { MetricDef } from '@/lib/v2/sante/metrics';
 import type { HealthEvent } from '@/lib/v2/sante/data';
 import { S } from './ui';
 import { SanteIcon } from './SanteIcon';
-import { traduire, LOCALE } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, LOCALE } from '@/lib/i18n/tr';
 
 /** « 1 alerte », « 3 alertes », « 2 ECG » */
 export function countLabel(n: number, unit: string): string {
   const v = Math.round(n);
   if (!unit) return String(v);
-  return `${v} ${v > 1 ? unit : unit.replace(/s$/, '')}`;
+  return traduirePluriel(v, v > 1, `{0} ${unit.replace(/s$/, '')}`, `{0} ${unit}`, v);
 }
 
 function whenText(iso: string): { day: string; time: string } {

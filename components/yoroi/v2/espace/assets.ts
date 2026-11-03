@@ -125,7 +125,7 @@ export function personnageImage(personnage: string, rankIndex: number, fallbackG
 
 export function personnageNom(personnage: string): string {
   const pack = PACKS.find((p) => p.id === personnage);
-  if (pack) return pack.nom;
+  if (pack) return traduire(pack.nom);
   if (parsePersonnage(personnage).kind !== 'guerrier') return dojoPersonnageName(personnage);
   return personnage === 'guerrier_f' ? traduire('Guerrière') : traduire('Guerrier');
 }

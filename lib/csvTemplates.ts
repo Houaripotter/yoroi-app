@@ -913,7 +913,7 @@ export async function shareTemplate(): Promise<boolean> {
 
     await Sharing.shareAsync(path, {
       mimeType: 'text/csv',
-      dialogTitle: 'Modele CSV Yoroi : ouvre dans Excel ou Google Sheets',
+      dialogTitle: traduire('Modele CSV Yoroi : ouvre dans Excel ou Google Sheets'),
       UTI: 'public.comma-separated-values-text',
     });
     return true;
@@ -938,7 +938,7 @@ export async function shareExportCSV(): Promise<boolean> {
 
     await Sharing.shareAsync(path, {
       mimeType: 'text/csv',
-      dialogTitle: 'Export Yoroi : sauvegarde de tes données',
+      dialogTitle: traduire('Export Yoroi : sauvegarde de tes données'),
       UTI: 'public.comma-separated-values-text',
     });
     return true;
@@ -1016,7 +1016,7 @@ export async function shareFilteredTrainingsCSV(filters: TrainingExportFilters =
 
     await Sharing.shareAsync(path, {
       mimeType: 'text/csv',
-      dialogTitle: 'Export séances Yoroi',
+      dialogTitle: traduire('Export séances Yoroi'),
       UTI: 'public.comma-separated-values-text',
     });
     return true;

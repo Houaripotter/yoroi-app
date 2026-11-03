@@ -32,9 +32,9 @@ export const SONS_DES_SCENES: Partial<Record<SceneId, { ambiance: string | null;
 };
 
 export const AMBIANCES: SonScene[] = [
-  { id: "pluie", nom: "Pluie", source: require('@/assets/sounds/ambiance/ambiance_pluie.mp3') },
+  { id: "pluie", nom: traduire("Pluie"), source: require('@/assets/sounds/ambiance/ambiance_pluie.mp3') },
   { id: "neige", nom: traduire("Neige et vent"), source: require('@/assets/sounds/ambiance/ambiance_neige.mp3') },
-  { id: "mer", nom: "Vagues", source: require('@/assets/sounds/ambiance/ambiance_mer.mp3') },
+  { id: "mer", nom: traduire("Vagues"), source: require('@/assets/sounds/ambiance/ambiance_mer.mp3') },
   { id: "desert", nom: traduire("Vent du désert"), source: require('@/assets/sounds/ambiance/ambiance_desert.mp3') },
   { id: "foret", nom: traduire("Forêt et ruisseau"), source: require('@/assets/sounds/ambiance/ambiance_foret.mp3') },
 ];

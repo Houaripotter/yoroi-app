@@ -110,7 +110,7 @@ export default function PhotoEtContour() {
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
         reload();
       } else if (r === 'refuse') {
-        appAlert(source === 'camera' ? traduire('Caméra') : 'Photos', source === 'camera' ? traduire('Autorise la caméra dans les réglages du téléphone pour prendre une photo.') : traduire('Autorise l’accès aux photos dans les réglages du téléphone.'), [
+        appAlert(source === 'camera' ? traduire('Caméra') : traduire('Photos'), source === 'camera' ? traduire('Autorise la caméra dans les réglages du téléphone pour prendre une photo.') : traduire('Autorise l’accès aux photos dans les réglages du téléphone.'), [
           { text: traduire('Ouvrir les réglages'), style: 'primary', onPress: ouvrirReglagesTelephone },
           { text: traduire('Annuler'), style: 'cancel' },
         ]);

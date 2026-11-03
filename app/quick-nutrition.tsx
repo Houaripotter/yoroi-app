@@ -175,7 +175,7 @@ export default function QuickNutritionScreen() {
                   <View style={{ gap: 4 }}>
                     {m.tips.map((t) => (
                       <Bullet key={t} color={pc.fg}>
-                        {t}
+                        {traduire(t)}
                       </Bullet>
                     ))}
                   </View>

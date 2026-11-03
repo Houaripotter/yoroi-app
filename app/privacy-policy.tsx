@@ -42,7 +42,7 @@ export default function PrivacyPolicyScreen() {
       <View style={{ borderRadius: 22, backgroundColor: c.carteDouce, padding: 20, gap: 8, overflow: 'hidden' }}>
         <Glyph kind="sakura" size={150} color={'rgba(35,53,143,0.07)'} style={{ position: 'absolute', right: -24, top: -34 }} />
         <Ink size={26} weight="black" tight color={c.ink}>{isFR ? traduire('Politique de confidentialité') : 'Privacy policy'}</Ink>
-        <Ink size={13} color={c.textSecondary}>{`${isFR ? traduire('Dernière mise à jour') : 'Last updated'} : ${LAST_UPDATE}`}</Ink>
+        <Ink size={13} color={c.textSecondary}>{`${isFR ? traduire('Dernière mise à jour') : 'Last updated'}${isFR ? ' : ' : ': '}${LAST_UPDATE}`}</Ink>
         <View style={{ alignSelf: 'flex-start', marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.goldLight, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }}>
           <Icon name="check" size={14} color={c.ink} stroke={3} />
           <Ink size={13} weight="extraBold">{isFR ? traduire('Tes données de santé restent sur ton téléphone') : 'Your health data stays on your phone'}</Ink>

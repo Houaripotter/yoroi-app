@@ -17,9 +17,9 @@ import { traduire } from '@/lib/i18n/tr';
 export type StyleSante = 'anneaux' | 'clair' | 'cadran' | 'nuit' | 'mosaique';
 
 export const STYLES_SANTE: { id: StyleSante; nom: string }[] = [
-  { id: 'anneaux', nom: 'Anneaux' },
-  { id: 'clair', nom: 'Clair' },
-  { id: 'cadran', nom: 'Cadran' },
+  { id: 'anneaux', nom: traduire('Anneaux') },
+  { id: 'clair', nom: traduire('Clair') },
+  { id: 'cadran', nom: traduire('Cadran') },
   { id: 'nuit', nom: traduire('Nuit') },
   { id: 'mosaique', nom: traduire('Mosaïque') },
 ];

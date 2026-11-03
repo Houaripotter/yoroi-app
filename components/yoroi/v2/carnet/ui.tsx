@@ -14,7 +14,7 @@ import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
 import { fontStyle } from '@/components/yoroi/fonts';
 import { P, Press, tap } from '@/components/yoroi/v2/accueil/kit';
 import { paletteSombre } from '@/components/yoroi/livePalette';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduireSens } from '@/lib/i18n/tr';
 import { RetourCompact } from '@/components/yoroi/v2/entete/EnTete';
 import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
@@ -273,7 +273,7 @@ export function ResultDot({ result, size = 26 }: { result?: 'win' | 'loss' | 'dr
   const bg = r === 'V' ? P.moss : r === 'D' ? P.danger : r === 'N' ? P.gold : '#CFCAC0';
   return (
     <View style={{ width: size, height: size, borderRadius: size * 0.34, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
-      <Ink size={size * 0.46} weight="black" color={P.white}>{r}</Ink>
+      <Ink size={size * 0.46} weight="black" color={P.white}>{r === '?' ? r : traduireSens('résultat', r)}</Ink>
     </View>
   );
 }

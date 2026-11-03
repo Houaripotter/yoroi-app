@@ -47,11 +47,11 @@ export function CompositionSection({ open, onToggle, text, origin, lastDate, onC
     ? traduire('masse grasse, muscle, eau, os, viscérale')
     : allRow
     ? traduirePluriel(filled.length, filled.length > 1, "{0} mesure déjà enregistrée ce jour", "{0} mesures déjà enregistrées ce jour", filled.length)
-    : `${filled.length} ${filled.length > 1 ? traduire('mesures pré-remplies') : traduire('mesure pré-remplie')}${fromHealth ? `, ${healthText ?? traduire("depuis {0}", provider)}` : ''}`;
+    : `${filled.length} ${filled.length > 1 ? traduire('mesures pré-remplies') : traduire('mesure pré-remplie')}${fromHealth ? `, ${healthText ?? traduire("depuis {0}", traduire(provider))}` : ''}`;
 
   const subOf = (f: FieldSpec): { t: string; tone: 'health' | 'muted' | 'plain' } => {
     const o = origin[f.key] ?? 'none';
-    if (o === 'health') return { t: healthText ?? traduire("depuis {0}", provider), tone: 'health' };
+    if (o === 'health') return { t: healthText ?? traduire("depuis {0}", traduire(provider)), tone: 'health' };
     if (o === 'row') return { t: allRow ? '' : traduire('déjà enregistrée ce jour'), tone: 'plain' };
     if (o === 'last') return { t: lastDate[f.key] ? traduire("ta dernière mesure, le {0}", lastDate[f.key]) : traduire('ta dernière mesure'), tone: 'muted' };
     if (o === 'user') return { t: traduire('saisie à la main'), tone: 'plain' };
@@ -97,7 +97,7 @@ export function CompositionSection({ open, onToggle, text, origin, lastDate, onC
                     </View>
                   ) : null}
                 </View>
-                <Pressable onPress={() => onBump(f.key, -1)} accessibilityRole="button" accessibilityLabel={traduire("{0}, moins", f.label)} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
+                <Pressable onPress={() => onBump(f.key, -1)} accessibilityRole="button" accessibilityLabel={traduire("{0}, moins", traduire(f.label))} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
                   <Ink size={20} weight="extraBold">−</Ink>
                 </Pressable>
                 <View style={{ width: 90, height: 50, borderRadius: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}>
@@ -110,12 +110,12 @@ export function CompositionSection({ open, onToggle, text, origin, lastDate, onC
                     returnKeyType="done"
                     selectTextOnFocus
                     maxLength={6}
-                    accessibilityLabel={`${f.label} en ${f.unit}`}
+                    accessibilityLabel={traduire("{0} en {1}", traduire(f.label), traduire(f.unit))}
                     style={[fontStyle('black'), { flexShrink: 1, minWidth: 40, height: 44, fontSize: 20, lineHeight: Platform.OS === 'ios' ? undefined : 26, color: muted ? c.textSecondary : c.ink, textAlign: 'right', paddingVertical: 0, includeFontPadding: false }]}
                   />
-                  <Ink size={11} weight="bold" color={c.textSecondary} style={{ marginLeft: 4 }}>{f.unit}</Ink>
+                  <Ink size={11} weight="bold" color={c.textSecondary} style={{ marginLeft: 4 }}>{traduire(f.unit)}</Ink>
                 </View>
-                <Pressable onPress={() => onBump(f.key, 1)} accessibilityRole="button" accessibilityLabel={traduire("{0}, plus", f.label)} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
+                <Pressable onPress={() => onBump(f.key, 1)} accessibilityRole="button" accessibilityLabel={traduire("{0}, plus", traduire(f.label))} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
                   <Ink size={20} weight="extraBold">+</Ink>
                 </Pressable>
               </View>
@@ -124,13 +124,13 @@ export function CompositionSection({ open, onToggle, text, origin, lastDate, onC
 
           {lean || bmi ? (
             <View style={{ flexDirection: 'row', gap: 10, paddingTop: 12, borderTopWidth: 1, borderColor: c.divider }}>
-              {lean ? <Info label={traduire("Masse maigre")} value={`${fmtValue(lean)} kg`} sub={traduire("lue dans {0}", provider)} /> : null}
-              {bmi ? <Info label={traduire("IMC")} value={fmtValue(bmi.value)} sub={bmi.from === 'health' ? traduire("lu dans {0}", provider) : traduire('calculé avec ta taille')} /> : null}
+              {lean ? <Info label={traduire("Masse maigre")} value={`${fmtValue(lean)} kg`} sub={traduire("lue dans {0}", traduire(provider))} /> : null}
+              {bmi ? <Info label={traduire("IMC")} value={fmtValue(bmi.value)} sub={bmi.from === 'health' ? traduire("lu dans {0}", traduire(provider)) : traduire('calculé avec ta taille')} /> : null}
             </View>
           ) : null}
 
           <Ink size={12} color={c.textSecondary} style={{ marginTop: 12 }}>
-            {scaleBrand != null ? traduire("{0} reçoit de ta balance le poids, la masse grasse et la masse maigre. La masse musculaire, l’eau, l’os et la graisse viscérale n’y passent pas : recopie ces mesures depuis l’app {1}. Une mesure grisée vient de ta dernière saisie : tu peux l’ajuster ou l’effacer.", provider, scaleBrand) : traduire("{0} reçoit de ta balance le poids, la masse grasse et la masse maigre. La masse musculaire, l’eau, l’os et la graisse viscérale n’y passent pas : recopie ces mesures depuis l’app de ta balance. Une mesure grisée vient de ta dernière saisie : tu peux l’ajuster ou l’effacer.", provider)}
+            {scaleBrand != null ? traduire("{0} reçoit de ta balance le poids, la masse grasse et la masse maigre. La masse musculaire, l’eau, l’os et la graisse viscérale n’y passent pas : recopie ces mesures depuis l’app {1}. Une mesure grisée vient de ta dernière saisie : tu peux l’ajuster ou l’effacer.", traduire(provider), scaleBrand) : traduire("{0} reçoit de ta balance le poids, la masse grasse et la masse maigre. La masse musculaire, l’eau, l’os et la graisse viscérale n’y passent pas : recopie ces mesures depuis l’app de ta balance. Une mesure grisée vient de ta dernière saisie : tu peux l’ajuster ou l’effacer.", traduire(provider))}
           </Ink>
         </View>
       ) : null}

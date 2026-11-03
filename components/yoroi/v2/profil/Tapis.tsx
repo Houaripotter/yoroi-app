@@ -10,7 +10,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Card } from '@/components/yoroi/v2/espace/ui';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { Ceinture } from './Ceinture';
-import { traduire } from '@/lib/i18n/tr';
+import { LANG, traduire } from '@/lib/i18n/tr';
 
 export const BELTS: { id: string; label: string; color: string }[] = [
   { id: 'blanche', label: traduire('Blanche'), color: '#FFFFFF' },
@@ -50,7 +50,7 @@ export function TapisCard({ sport, femme, belt, onBelt }: { sport?: string; femm
               onPress={() => { selectionAsync().catch(() => {}); onBelt(b.id); }}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
-              accessibilityLabel={traduire("Ceinture {0}", b.label)}
+              accessibilityLabel={LANG === 'fr' ? traduire("Ceinture {0}", b.label) : traduire(`Ceinture ${b.id}`)}
               style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderRadius: 14, borderWidth: on ? 2 : 1, borderColor: on ? c.accent : c.border, backgroundColor: on ? c.fillSoft : c.surface }}
             >
               <View style={{ width: 26, height: 10, borderRadius: 3, backgroundColor: b.color, borderWidth: 1, borderColor: b.id === 'blanche' ? '#C9C4B8' : c.border }}>

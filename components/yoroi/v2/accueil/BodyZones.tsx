@@ -85,7 +85,7 @@ export function BodyZones({ body, onChange }: { body: BodyStatusData; onChange: 
     }
   };
 
-  const label = BODY_ZONES.find((z) => z.key === zone)?.label ?? '';
+  const label = traduire(BODY_ZONES.find((z) => z.key === zone)?.label ?? '');
 
   return (
     <>
@@ -158,7 +158,7 @@ export function BodyZones({ body, onChange }: { body: BodyStatusData; onChange: 
                 style={{ minHeight: 90, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, padding: 14, fontSize: 15, color: P.ink, textAlignVertical: 'top' }}
               />
             ) : null}
-            <BigButton label={saving ? 'Enregistrement' : traduire('Enregistrer')} onPress={save} disabled={saving} />
+            <BigButton label={saving ? traduire('Enregistrement') : traduire('Enregistrer')} onPress={save} disabled={saving} />
             {zone && body[zone] ? (
               <Pressable onPress={clear} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
                 <Ink size={14} weight="bold" color={P.danger}>

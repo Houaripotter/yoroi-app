@@ -131,7 +131,7 @@ function BrandSheet({ w }: { w: Watch }) {
               {traduire(w.name)}
             </Ink>
             <Ink size={13} weight="bold" color={S.ink2}>
-              {`${traduire(w.kind)}, app ${p.app || w.ios.app || w.android.app}`}
+              {traduire('{0}, app {1}', traduire(w.kind), traduire(p.app || w.ios.app || w.android.app))}
             </Ink>
           </View>
         </View>

@@ -96,7 +96,7 @@ export function Demo() {
       if (msg) appAlert(traduire('C’est fait'), msg);
     } catch (e) {
       logger.error(`[Studio] ${id}`, e);
-      appAlert('Oups', traduire('L’opération n’a pas abouti. Tes vraies données restent de côté.'));
+      appAlert(traduire('Oups'), traduire('L’opération n’a pas abouti. Tes vraies données restent de côté.'));
     } finally {
       setBusy(null);
     }
@@ -115,7 +115,7 @@ export function Demo() {
     appAlert(traduire('Revenir à tes données ?'), traduire('Heny est retirée et tes vraies données reviennent, avec tes vraies XP.'), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Revenir',
+        text: traduire('Revenir'),
         onPress: () =>
           void run('restore', async () => {
             await backToRealData();
