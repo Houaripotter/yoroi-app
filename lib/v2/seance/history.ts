@@ -6,9 +6,10 @@ import type { Training } from '@/lib/database';
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { nomBibliotheque } from './rechercheExo';
 import { versUnitePoids } from '@/lib/v2/unitePoids';
-import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
-export type SetValue = { weight: number; reps: number };
+/** 3 novembre 2026 : `plaques`, la charge comptee en plaques de la pile (lib/v2/seances/plaquesSerie.ts) ; weight reste en kilos */
+export type SetValue = { weight: number; reps: number; plaques?: number };
 
 export type ExerciseHistory = {
   name: string;
@@ -43,9 +44,13 @@ export function epley(weight: number, reps: number): number {
   return weight * (1 + reps / 30);
 }
 
-function setsOf(e: { sets?: number; reps?: number; weight?: number; setsData?: { weight: number; reps: number }[] }): SetValue[] {
+function setsOf(e: { sets?: number; reps?: number; weight?: number; setsData?: { weight: number; reps: number; plaques?: number }[] }): SetValue[] {
   if (Array.isArray(e.setsData) && e.setsData.length > 0) {
-    return e.setsData.map((s) => ({ weight: Number(s.weight) || 0, reps: Number(s.reps) || 0 }));
+    return e.setsData.map((s) => {
+      const v: SetValue = { weight: Number(s.weight) || 0, reps: Number(s.reps) || 0 };
+      const p = Number(s?.plaques);
+      return typeof s?.plaques === 'number' && Number.isFinite(p) && p >= 0 ? { ...v, plaques: Math.round(p) } : v;
+    });
   }
   const n = Math.max(1, Math.min(Number(e.sets) || 1, 20));
   const w = Number(e.weight) || 0;
@@ -83,14 +88,14 @@ export function buildExerciseHistory(trainings: Training[]): { map: Map<string, 
   for (const t of sorted) {
     for (const e of t.exercises ?? []) {
       if (!e || !e.name) continue;
-      const sets = setsOf(e).filter((s) => s.weight > 0 || s.reps > 0);
+      const sets = setsOf(e).filter((s) => s.weight > 0 || s.reps > 0 || (s.plaques ?? 0) > 0);
       if (sets.length === 0) continue;
       const key = cleExercice(e.name);
       const bestW = Math.max(...sets.map((s) => s.weight));
       const bestE = Math.max(...sets.map((s) => epley(s.weight, s.reps)));
       const h = map.get(key);
       if (!h) {
-        const travail = Array.isArray(e.setsData) ? setsOf({ setsData: e.setsData.filter((s) => (s as { type?: string })?.type !== 'warmup') }).filter((s) => s.weight > 0 || s.reps > 0) : [];
+        const travail = Array.isArray(e.setsData) ? setsOf({ setsData: e.setsData.filter((s) => (s as { type?: string })?.type !== 'warmup') }).filter((s) => s.weight > 0 || s.reps > 0 || (s.plaques ?? 0) > 0) : [];
         map.set(key, { name: e.name, muscle: e.muscle_group, lastDate: t.date.slice(0, 10), lastSets: sets, bestWeight: bestW, bestE1rm: bestE, count: 1, ...(travail.length ? { travail } : {}) });
         recent.push(key);
       } else {
@@ -131,6 +136,11 @@ export const MUSCLE_ORDER = ['PECTORAUX', 'DOS', 'ÉPAULES', 'JAMBES', 'FESSIERS
 /** Resume court d'une serie : "72,5 kg × 8" */
 export function setLabel(s: SetValue, unite: 'kg' | 'lb' = 'kg'): string {
   // 18 octobre 2026 : en livres, la charge (stockee en kilos) est montree en livres
+  // 3 novembre 2026 : une serie comptee en plaques s'affiche en plaques, jamais en kilos (« 7 plaques × 10 »)
+  if (typeof s.plaques === 'number' && s.plaques > 0) {
+    const pl = traduirePluriel(s.plaques, s.plaques > 1, '{0} plaque', '{0} plaques', s.plaques);
+    return s.reps > 0 ? `${pl} × ${s.reps}` : pl;
+  }
   const w = String(Math.round(versUnitePoids(s.weight, unite) * 100) / 100).replace('.', DECIMAL);
   if (s.weight > 0) return `${w} ${unite} × ${s.reps}`;
   return traduire("{0} répétitions", s.reps);
