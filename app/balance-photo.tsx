@@ -34,11 +34,14 @@ import { getProfile, getWeights, openDatabase } from '@/lib/database';
 import type { Weight } from '@/lib/database';
 import { BALANCE_FIELD, BALANCE_FIELDS, BALANCE_PROMPT, blockSignature, fmtAutre, fmtBalance, parseBalanceBlocks, PHYSIQUE_LABELS, readEdited, readNumber } from '@/lib/v2/balance/format';
 import type { BalanceFieldSpec, BalanceGroup, ParseResult, ScaleAutre } from '@/lib/v2/balance/format';
-import { autreReplaceId, existingAutres, existingValues, measureOfDay, pickSameDayRow, valueStatus } from '@/lib/v2/balance/multi';
+import { autreReplaceId, existingAutres, existingValues, measureOfDay, pickSameDayRow, planBlock, valueStatus } from '@/lib/v2/balance/multi';
 import type { MeasureDay } from '@/lib/v2/balance/multi';
 import { saveImportBlock, sameDayWeight } from '@/lib/v2/balance/save';
 import type { Ranges } from '@/lib/v2/balance/save';
-import { rangementDe } from '@/lib/v2/balance/rangement';
+import { rangementDe, separerAutres } from '@/lib/v2/balance/rangement';
+import { boutonsLot, enregistrerLot, messageFinal, preparerLot, questionLot, resumeLot, texteBouton, titreAVerifier } from '@/lib/v2/balance/toutValider';
+import type { LigneLot, Lot } from '@/lib/v2/balance/toutValider';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import type { Rangement } from '@/lib/v2/balance/rangement';
 import { LABEL_MOMENT } from '@/components/yoroi/v2/corps/libelles';
 import { buildPhotoPrompt, dateProposal, frenchDateTime, frenchTime, groupSessions, isoDay, proposalLabel, readStoredDates } from '@/lib/v2/balance/photos';
@@ -202,6 +205,8 @@ export default function BalancePhotoScreen() {
   const [notice, setNotice] = useState<string | null>(null);
   const [allDone, setAllDone] = useState(false);
   const [picker, setPicker] = useState<number | null>(null);
+  // TOUT VALIDER : « Enregistrement, 12 sur 25 » pendant le lot
+  const [lotProgress, setLotProgress] = useState<string | null>(null);
   // PHOTOS DATEES
   const [photos, setPhotos] = useState<DatedPhoto[]>([]);
   const [storedDates, setStoredDates] = useState<{ at?: number }[]>([]);
@@ -450,13 +455,14 @@ export default function BalancePhotoScreen() {
         : !count
           ? traduire('Coche au moins une valeur.')
           : undefined;
-    return { values, list, replace, err };
+    return { values, list, replace, err, bad };
   };
 
   /** Enregistre une carte ; le texte du resultat, ou null si elle n'a pas pu l'etre (l'erreur est sur la carte) */
-  const saveBlock = async (i: number): Promise<string | null> => {
+  const saveBlock = async (i: number, force?: BlockState): Promise<string | null> => {
     const b = blocks[i];
-    const st = states[i];
+    // TOUT VALIDER : la carte avec sa date validee d'un coup (l'etat a l'ecran n'est pas encore a jour)
+    const st = force ?? states[i];
     if (!b || !st) return null;
     const { values, list, replace, err } = collect(b, st);
     if (err) {
@@ -751,6 +757,120 @@ export default function BalancePhotoScreen() {
     );
   };
 
+  /** BALANCE 3 : poids loin de tes dernieres pesees, IMC qui ne va pas avec ton poids et ta taille */
+  const warnsOf = (b: ParseResult, st: BlockState, bi: number) => {
+    if (!b.values.some((v) => v.key === 'poids_kg')) return [];
+    const num = (k: string) => (st.checked[k] && st.edits[k] !== undefined ? readEdited(st.edits[k] ?? '', BALANCE_FIELD[k]) : undefined);
+    const others: WeightPoint[] = states.flatMap((o, k) => {
+      const w = k === bi ? undefined : readEdited(o.edits.poids_kg ?? '', BALANCE_FIELD.poids_kg);
+      return w ? [{ date: o.date || todayIso(), weight: w }] : [];
+    });
+    return checkCoherence({ date: st.date || todayIso(), values: { poids_kg: num('poids_kg'), imc: num('imc'), muscle_kg: num('muscle_kg'), os_kg: num('os_kg'), graisse_kg: num('graisse_kg'), graisse_pct: num('graisse_pct') }, history, others, heightCm });
+  };
+
+  /**
+   * TOUT VALIDER : une carte vue par le lot. La date proposee par l'IA ou la photo vaut confirmation ; une date
+   * non lue, deux dates possibles, une valeur hors norme ou un avertissement la mettent de cote.
+   * Doublon : la regle de l'import (planBlock) ne trouve rien a ecrire, tout est deja note ce jour-la.
+   */
+  const ligneDe = (b: ParseResult, st: BlockState, i: number): LigneLot => {
+    const p = st.proposal;
+    const { values, list, replace, err, bad } = collect(b, { ...st, confirmed: true });
+    const dateLue = !!st.date && (st.confirmed || (!b.badDate && p.source !== 'aujourdhui' && p.source !== 'aucune'));
+    const ex = existingOf(st);
+    const parRang = separerAutres(list);
+    const plan = planBlock(values, parRang.pesee, ex.values, ex.autres, replace);
+    const rien = !Object.keys(plan.write).length && !plan.autres.length && !parRang.mensuration_plus.length && !parRang.biomarqueur.length && !parRang.pli.length;
+    const deja = plan.same.length + plan.kept.length + plan.autresSame + plan.autresKept;
+    // une valeur lue hors norme est decochee d'office : la ligne reste a verifier tant que tu n'as pas regarde la carte
+    const horsLues = b.values.filter((v) => v.outOfRange && !st.checked[v.key] && !st.confirmed).map((v) => BALANCE_FIELD[v.key].label.toLowerCase());
+    return {
+      index: i,
+      date: st.date,
+      include: st.include,
+      done: !!st.done,
+      dateLue,
+      deuxDates: !!p.conflict && !st.confirmed,
+      horsNorme: [...bad, ...horsLues],
+      alertes: warnsOf(b, st, i).map((w) => w.text),
+      incomplete: err && !bad.length && st.date ? err : undefined,
+      doublon: !err && rien && deja > 0,
+      pesee: values.poids_kg !== undefined && b.values.some((v) => v.key === 'poids_kg'),
+      tourTaille: values.tour_de_taille_cm !== undefined,
+    };
+  };
+
+  /** Le lot, recalcule a chaque changement (une ligne decochee, une date choisie) */
+  const lotDe = (): Lot => preparerLot(blocks.flatMap((b, i) => (states[i] ? [ligneDe(b, states[i], i)] : [])));
+
+  const validerLot = async (lot: Lot) => {
+    if (saving || !lot.aValider.length) return;
+    setSaving(true);
+    setError(null);
+    setNotice(null);
+    const forced = new Map<number, BlockState>();
+    for (const l of lot.aValider) if (states[l.index]) forced.set(l.index, { ...states[l.index], confirmed: true });
+    const dbl = new Set(lot.doublons.map((l) => l.index));
+    const verif = new Set(lot.aVerifier.map((d) => d.ligne.index));
+    setStates((all) =>
+      all.map((s, i) =>
+        dbl.has(i)
+          ? { ...s, confirmed: true, done: traduire('Déjà notée, ignorée.'), include: false, open: false, error: undefined }
+          : forced.has(i)
+            ? { ...s, confirmed: true }
+            : verif.has(i)
+              ? { ...s, open: true }
+              : s,
+      ),
+    );
+    try {
+      if (lot.aEcrire.length > SNAPSHOT_OVER) {
+        // copie de securite locale avant un gros import (jamais bloquante)
+        try {
+          const db = await openDatabase();
+          await snapshotBeforeImport(db, traduire("Avant l’import de {0} pesées", lot.aEcrire.length));
+        } catch (err) {
+          logger.warn('[Balance photo] copie avant import impossible', err);
+        }
+      }
+      if (lot.aEcrire.length) setLotProgress(traduire('Enregistrement, {0} sur {1}', 0, lot.aEcrire.length));
+      const bilan = await enregistrerLot(
+        lot,
+        async (i) => (await saveBlock(i, forced.get(i))) as 'new' | 'merged' | 'same' | null,
+        (fait, tot) => setLotProgress(traduire('Enregistrement, {0} sur {1}', fait, tot)),
+      );
+      if (bilan.ajoutees + bilan.completees) {
+        DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+        track('poids_saisi', { methode: 'photo_balance' });
+      }
+      notificationAsync(bilan.echecs.length || bilan.aVerifier ? NotificationFeedbackType.Warning : NotificationFeedbackType.Success).catch(() => {});
+      void reload();
+      lastSaved.current = null;
+      setNotice(messageFinal(bilan));
+      const lotIdx = new Set(lot.aValider.map((l) => l.index));
+      if (!bilan.echecs.length && !bilan.aVerifier && states.every((s, i) => !!s.done || !s.include || lotIdx.has(i))) {
+        setAllDone(true);
+        void cleanupPhotos(photos, prepared?.copies);
+        void clearStoredDates();
+      }
+    } catch (err) {
+      logger.error('[Balance photo] enregistrement du lot impossible', err);
+      setError(traduire('Enregistrement impossible, réessaie.'));
+    } finally {
+      setSaving(false);
+      setLotProgress(null);
+    }
+  };
+
+  /** « Tu valides les 25 dates d'un coup ? » dans la fenetre maison ; « Vérifier une par une » ne change rien */
+  const demanderLot = () => {
+    if (saving) return;
+    const lot = lotDe();
+    if (!lot.aValider.length) return;
+    selectionAsync().catch(() => {});
+    appAlert(questionLot(lot.aValider.length), resumeLot(lot), boutonsLot(() => void validerLot(lot)), { cancelable: true });
+  };
+
   const card = (b: ParseResult, st: BlockState, bi: number) => {
     const ex = existingOf(st);
     const shown: BalanceFieldSpec[] = BALANCE_FIELDS.filter((f) => st.edits[f.key] !== undefined);
@@ -783,15 +903,7 @@ export default function BalancePhotoScreen() {
       return row(bi, st, { id: f.key, label: f.label, unit: f.unit, color: f.kind ? CORPS[f.kind] : f.group === 'mensuration' ? c.accent : c.textMuted, sub, off, placeholder: f.step >= 1 ? '0' : '0,0', first, old: oldV !== undefined ? `${fmtBalance(oldV, f.step)}${f.unit && f.unit !== 'niveau' ? ` ${f.unit}` : ''}` : undefined, status });
     };
     const title = st.date ? dayTitle(st.date) : traduire('Date à choisir');
-    // BALANCE 3 : poids loin de tes dernieres pesees, IMC qui ne va pas avec ton poids et ta taille
-    const num = (k: string) => (st.checked[k] && st.edits[k] !== undefined ? readEdited(st.edits[k] ?? '', BALANCE_FIELD[k]) : undefined);
-    const others: WeightPoint[] = states.flatMap((o, k) => {
-      const w = k === bi ? undefined : readEdited(o.edits.poids_kg ?? '', BALANCE_FIELD.poids_kg);
-      return w ? [{ date: o.date || todayIso(), weight: w }] : [];
-    });
-    const warns = hasWeight
-      ? checkCoherence({ date: st.date || todayIso(), values: { poids_kg: num('poids_kg'), imc: num('imc'), muscle_kg: num('muscle_kg'), os_kg: num('os_kg'), graisse_kg: num('graisse_kg'), graisse_pct: num('graisse_pct') }, history, others, heightCm })
-      : [];
+    const warns = warnsOf(b, st, bi);
     return (
       <GlassCard key={`b${bi}`} style={{ padding: 0, overflow: 'hidden' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12 }}>
@@ -925,6 +1037,37 @@ export default function BalancePhotoScreen() {
   const pending = states.filter((s) => s.include && !s.done).length;
   const toChoose = states.filter((s) => !s.date && !s.done).length;
   const single = states[0];
+  const lot = multi && states.length === blocks.length ? lotDe() : null;
+  const nLot = lot?.aValider.length ?? 0;
+  const boutonLot = (haut: boolean) =>
+    lot && nLot && !allDone ? (
+      <PrimaryButton
+        label={lotProgress ?? (saving ? traduire('Enregistrement en cours') : texteBouton(nLot))}
+        onPress={demanderLot}
+        disabled={saving}
+        style={haut ? { marginTop: 4 } : undefined}
+      />
+    ) : null;
+  const blocVerif = lot && lot.aVerifier.length ? (
+    <View accessibilityLiveRegion="polite" style={{ padding: 12, borderRadius: 14, backgroundColor: c.goldTint, gap: 8 }}>
+      <Ink size={14} weight="extraBold">{titreAVerifier(lot.aVerifier.length)}</Ink>
+      {lot.aVerifier.map((d) => (
+        <Pressable
+          key={`v${d.ligne.index}`}
+          onPress={() => update(d.ligne.index, (s) => ({ ...s, open: true }))}
+          accessibilityRole="button"
+          accessibilityLabel={`${d.ligne.date ? dayTitle(d.ligne.date) : traduire('Date à choisir')}, ${d.texte}`}
+          style={{ minHeight: 40, justifyContent: 'center' }}
+        >
+          <Ink size={13} weight="bold" numberOfLines={2}>
+            {`${d.ligne.date ? dayTitle(d.ligne.date) : traduire('Date à choisir')} : `}
+            <Ink size={13} color={c.textSecondary}>{traduire(d.texte)}</Ink>
+          </Ink>
+        </Pressable>
+      ))}
+      <Ink size={12} color={c.textSecondary}>{traduire('Elles ne partent pas avec Tout valider. Ouvre chaque carte, corrige ou confirme, puis enregistre-la.')}</Ink>
+    </View>
+  ) : null;
   const singleCount = single && blocks[0] ? BALANCE_FIELDS.filter((f) => single.edits[f.key] !== undefined && single.checked[f.key]).length + blocks[0].autres.filter((_, i) => single.checked[autreId(i)]).length : 0;
 
   return (
@@ -1112,6 +1255,8 @@ export default function BalancePhotoScreen() {
                   : traduire('Corrige un chiffre si l’IA s’est trompée, décoche ce que tu ne veux pas garder.')}
               </Ink>
             </View>
+            {boutonLot(true)}
+            {blocVerif}
             {blocks.map((b, i) => (states[i] ? card(b, states[i], i) : null))}
             {notice ? (
               <View accessibilityLiveRegion="polite" style={{ padding: 14, borderRadius: 16, backgroundColor: c.fillSubtle, borderWidth: 1.5, borderColor: c.successText, gap: 10 }}>
@@ -1140,7 +1285,19 @@ export default function BalancePhotoScreen() {
                 <Ink size={14} weight="bold">{error}</Ink>
               </View>
             ) : null}
-            {!allDone ? (
+            {boutonLot(false)}
+            {!allDone && nLot ? (
+              <GhostButton
+                label={
+                  saving
+                    ? traduire('Enregistrement en cours')
+                    : pending > 1
+                      ? traduire("Valider date par date, {0} pesées", pending)
+                      : traduire('Enregistrer la pesée cochée')
+                }
+                onPress={() => void saveAll()}
+              />
+            ) : !allDone ? (
               <PrimaryButton
                 label={
                   saving
