@@ -18,7 +18,8 @@ import { normalizeRounds, weekStartOf } from './params';
 import { setsCount, tonnage } from '@/lib/v2/trainingWeek';
 import { APPAREIL_MONTRE_YOROI, champsKcalMesurees, champsKcalSaisie, normaliserSourceKcal, sourceApresSaisieKcal } from './sourceKcal';
 
-export type SeanceRecord = { name: string; weight: number; reps: number; kind: 'charge' | 'max' };
+/** 3 novembre 2026 : `plaques`, un record en plaques de la pile (lib/v2/seances/plaquesSerie.ts) */
+export type SeanceRecord = { name: string; weight: number; reps: number; kind: 'charge' | 'max'; plaques?: number };
 
 export type SeanceResult = {
   id: number;
