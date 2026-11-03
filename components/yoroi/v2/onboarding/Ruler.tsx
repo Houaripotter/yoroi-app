@@ -11,6 +11,7 @@ import { selectionAsync } from 'expo-haptics';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { useColors } from './ui';
 import { DECIMAL } from '@/lib/i18n/tr';
+import { ltrSiRTL } from '@/lib/v2/rtl';
 
 export function Ruler({
   value,
@@ -111,7 +112,7 @@ export function Ruler({
   const labels = Math.floor(ticks / labelEvery) + 1;
 
   return (
-    <View style={{ height: 84 }} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+    <View style={[{ height: 84 }, ltrSiRTL]} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
       {width > 0 ? (
         <ScrollView
           ref={scrollRef}
