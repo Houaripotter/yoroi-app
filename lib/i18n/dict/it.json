@@ -22691,5 +22691,7 @@
 "puis {0}": "poi {0}",
 "Jour d’entraînement": "Giorno di allenamento",
 "Il a manqué {0} séance": "È mancata {0} sessione",
-"Il a manqué {0} séances": "Sono mancate {0} sessioni"
+"Il a manqué {0} séances": "Sono mancate {0} sessioni",
+"Ta prochaine pesée : {0}. Touche pour te peser": "La tua prossima pesata: {0}. Tocca per pesarti",
+"Prochaine pesée": "Prossima pesata"
 }

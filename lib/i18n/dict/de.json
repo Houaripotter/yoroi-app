@@ -22691,5 +22691,7 @@
 "puis {0}": "danach {0}",
 "Jour d’entraînement": "Trainingstag",
 "Il a manqué {0} séance": "{0} Einheit verpasst",
-"Il a manqué {0} séances": "{0} Einheiten verpasst"
+"Il a manqué {0} séances": "{0} Einheiten verpasst",
+"Ta prochaine pesée : {0}. Touche pour te peser": "Dein nächstes Wiegen: {0}. Tippe, um dich zu wiegen",
+"Prochaine pesée": "Nächstes Wiegen"
 }

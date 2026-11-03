@@ -22691,5 +22691,7 @@
 "puis {0}": "daarna {0}",
 "Jour d’entraînement": "Trainingsdag",
 "Il a manqué {0} séance": "Er is {0} sessie gemist",
-"Il a manqué {0} séances": "Er zijn {0} sessies gemist"
+"Il a manqué {0} séances": "Er zijn {0} sessies gemist",
+"Ta prochaine pesée : {0}. Touche pour te peser": "Je volgende weging: {0}. Tik om je te wegen",
+"Prochaine pesée": "Volgende weging"
 }

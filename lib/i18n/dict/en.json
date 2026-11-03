@@ -22691,5 +22691,7 @@
 "puis {0}": "then {0}",
 "Jour d’entraînement": "Training day",
 "Il a manqué {0} séance": "Missed {0} session",
-"Il a manqué {0} séances": "Missed {0} sessions"
+"Il a manqué {0} séances": "Missed {0} sessions",
+"Ta prochaine pesée : {0}. Touche pour te peser": "Your next weigh-in: {0}. Tap to weigh in",
+"Prochaine pesée": "Next weigh-in"
 }
