@@ -1,6 +1,2 @@
 <resources>
-  <!-- Widgets -->
-  <string name="widget_dashboard_desc">Je belangrijkste cijfers in één oogopslag</string>
-  <string name="widget_hydration_desc">Volg hoeveel water je per dag drinkt</string>
-  <string name="widget_streak_desc">Je reeks opeenvolgende trainingen</string>
 </resources>
