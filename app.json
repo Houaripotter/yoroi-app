@@ -332,7 +332,7 @@
         "android.permission.health.WRITE_SLEEP",
         "android.permission.health.WRITE_EXERCISE"
       ],
-      "versionCode": 62,
+      "versionCode": 63,
       "allowBackup": true
     },
     "extra": {
