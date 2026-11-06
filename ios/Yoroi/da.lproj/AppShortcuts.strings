@@ -1,0 +1,10 @@
+/* YOROI : phrases Siri en da. Clé = phrase du code Swift. */
+"Ajouter ma pesée ${applicationName}" = "Tilføj min vejning i ${applicationName}";
+"Démarrer un sparring ${applicationName}" = "Start sparring i ${applicationName}";
+"Démarrer une séance avec ${applicationName}" = "Start en træning med ${applicationName}";
+"Lance un sparring ${applicationName}" = "Start en sparring med ${applicationName}";
+"Lance une séance ${applicationName}" = "Start en ${applicationName}-træning";
+"Log weight in ${applicationName}" = "Log weight in ${applicationName}";
+"Logger ma pesée dans ${applicationName}" = "Log min vejning i ${applicationName}";
+"Start session with ${applicationName}" = "Start session with ${applicationName}";
+"Start sparring with ${applicationName}" = "Start sparring with ${applicationName}";

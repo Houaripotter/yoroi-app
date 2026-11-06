@@ -1,0 +1,9 @@
+/* YOROI Yoroi : textes en fi. Clé = texte français du code Swift. */
+"Chrono" = "Ajanotto";
+"Démarrer un sparring" = "Aloita sparri";
+"Démarrer une séance" = "Aloita treeni";
+"Démarrer une séance Yoroi" = "Aloita Yoroi-treeni";
+"Logger ma pesée" = "Kirjaa punnitus";
+"Ouvre Yoroi sur l'écran d'ajout de pesée." = "Avaa Yoroin punnituksen lisäysnäkymän.";
+"Ouvre Yoroi sur le timer pour démarrer une séance." = "Avaa Yoroin ajastimen treenin aloittamiseksi.";
+"Ouvre le timer combat BJJ/MMA." = "Avaa BJJ/MMA-otteluajastimen.";

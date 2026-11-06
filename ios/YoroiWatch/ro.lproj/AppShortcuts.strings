@@ -1,0 +1,12 @@
+/* Phrases Siri des raccourcis Yoroi (montre) */
+"Démarrer le chrono ${applicationName}" = "Pornește cronometrul ${applicationName}";
+"Lance le chrono ${applicationName}" = "Lansează cronometrul ${applicationName}";
+"Lance un minuteur ${applicationName}" = "Pornește un timer ${applicationName}";
+"Lance un minuteur de ${duree} dans ${applicationName}" = "Pornește un timer de ${duree} în ${applicationName}";
+"Mes minuteurs ${applicationName}" = "Timerele mele ${applicationName}";
+"Minuteur de ${duree} ${applicationName}" = "Timer de ${duree} ${applicationName}";
+"Noter mon poids dans ${applicationName}" = "Înregistrează greutatea în ${applicationName}";
+"Noter un verre d'eau dans ${applicationName}" = "Înregistrează un pahar de apă în ${applicationName}";
+"Ouvre les minuteurs ${applicationName}" = "Deschide timerele ${applicationName}";
+"Pesée ${applicationName}" = "Cântărire ${applicationName}";
+"Un verre d'eau ${applicationName}" = "Un pahar de apă ${applicationName}";

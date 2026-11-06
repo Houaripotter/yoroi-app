@@ -1,0 +1,6 @@
+<resources>
+  <!-- Widgets -->
+  <string name="widget_dashboard_desc">Твої ключові показники з першого погляду</string>
+  <string name="widget_hydration_desc">Відстежуй, скільки води ти п\'єш за день</string>
+  <string name="widget_streak_desc">Твоя серія тренувань поспіль</string>
+</resources>

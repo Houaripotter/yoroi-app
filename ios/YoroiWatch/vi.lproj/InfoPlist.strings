@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en vi. */
+"CFBundleDisplayName" = "Yoroi";
+"NSHealthShareUsageDescription" = "YOROI đọc từ Apple Sức khỏe nhịp tim, nồng độ oxy, nhịp tim khi nghỉ, HRV, nhịp thở, calo, cân nặng và ngày sinh của bạn (cho vùng nhịp tim), để hiển thị nhịp tim trực tiếp, tổng kết buổi tập và các complication Tim, Oxy, Nghỉ và Hô hấp.";
+"NSHealthUpdateUsageDescription" = "YOROI ghi vào Apple Sức khỏe các buổi tập của bạn, kèm nhịp tim và calo, các lần cân và các ly nước, để mọi thứ ở cùng một chỗ.";
+"NSUserNotificationUsageDescription" = "YOROI báo cho bạn mỗi khi hết round và khi hẹn giờ kết thúc lúc màn hình tắt.";

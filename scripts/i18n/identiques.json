@@ -29,5 +29,39 @@
   "ios/YoroiWatch/it.lproj/Localizable.strings|FC max",
   "ios/YoroiWatch/it.lproj/Localizable.strings|Facile",
   "ios/YoroiWatchWidgets/it.lproj/Localizable.strings|FC"
+ ],
+ "sv": [
+  "ios/YoroiWatch/sv.lproj/Localizable.strings|%@, rang %@",
+  "ios/YoroiWatch/sv.lproj/Localizable.strings|Yoroi Rang",
+  "ios/YoroiWatchWidgets/sv.lproj/Localizable.strings|%@, rang %@",
+  "ios/YoroiWatchWidgets/sv.lproj/Localizable.strings|Yoroi Rang",
+  "ios/YoroiWidgets/sv.lproj/Localizable.strings|%@, rang %@",
+  "ios/YoroiWidgets/sv.lproj/Localizable.strings|Yoroi Rang"
+ ],
+ "da": [
+  "ios/YoroiWatch/da.lproj/Localizable.strings|%@, rang %@",
+  "ios/YoroiWatch/da.lproj/Localizable.strings|Yoroi Rang",
+  "ios/YoroiWatchWidgets/da.lproj/Localizable.strings|%@, rang %@",
+  "ios/YoroiWatchWidgets/da.lproj/Localizable.strings|Yoroi Rang",
+  "ios/YoroiWidgets/da.lproj/Localizable.strings|%@, rang %@",
+  "ios/YoroiWidgets/da.lproj/Localizable.strings|Yoroi Rang"
+ ],
+ "nb": [
+  "ios/YoroiWatch/nb.lproj/Localizable.strings|%@, rang %@",
+  "ios/YoroiWatch/nb.lproj/Localizable.strings|Yoroi Rang",
+  "ios/YoroiWatchWidgets/nb.lproj/Localizable.strings|%@, rang %@",
+  "ios/YoroiWatchWidgets/nb.lproj/Localizable.strings|Yoroi Rang",
+  "ios/YoroiWidgets/nb.lproj/Localizable.strings|%@, rang %@",
+  "ios/YoroiWidgets/nb.lproj/Localizable.strings|Yoroi Rang"
+ ],
+ "hu": [
+  "ios/YoroiWatch/hu.lproj/Localizable.strings|Yoroi Rang",
+  "ios/YoroiWatchWidgets/hu.lproj/Localizable.strings|Yoroi Rang",
+  "ios/YoroiWidgets/hu.lproj/Localizable.strings|Yoroi Rang"
+ ],
+ "ro": [
+  "ios/YoroiWatch/ro.lproj/Localizable.strings|Yoroi Rang",
+  "ios/YoroiWatchWidgets/ro.lproj/Localizable.strings|Yoroi Rang",
+  "ios/YoroiWidgets/ro.lproj/Localizable.strings|Yoroi Rang"
  ]
 }

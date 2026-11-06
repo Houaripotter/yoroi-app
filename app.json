@@ -49,7 +49,22 @@
           "ko",
           "zh-Hans",
           "th",
-          "id"
+          "id",
+          "sv",
+          "da",
+          "nb",
+          "fi",
+          "vi",
+          "ms",
+          "hi",
+          "el",
+          "hu",
+          "pl",
+          "ru",
+          "uk",
+          "ro",
+          "cs",
+          "ar"
         ]
       },
       "entitlements": {
@@ -159,7 +174,22 @@
               "ko",
               "zh-Hans",
               "th",
-              "id"
+              "id",
+              "sv",
+              "da",
+              "nb",
+              "fi",
+              "vi",
+              "ms",
+              "hi",
+              "el",
+              "hu",
+              "pl",
+              "ru",
+              "uk",
+              "ro",
+              "cs",
+              "ar"
             ],
             "android": [
               "fr",
@@ -174,7 +204,22 @@
               "ko",
               "zh-Hans",
               "th",
-              "id"
+              "id",
+              "sv",
+              "da",
+              "nb",
+              "fi",
+              "vi",
+              "ms",
+              "hi",
+              "el",
+              "hu",
+              "pl",
+              "ru",
+              "uk",
+              "ro",
+              "cs",
+              "ar"
             ]
           }
         }

@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en hu. */
+"CFBundleDisplayName" = "Yoroi";
+"NSHealthShareUsageDescription" = "A YOROI az Apple Egészség appból olvassa a pulzusodat, a véroxigénszintedet, a nyugalmi pulzusodat, a HRV-det, a légzésszámodat, a kalóriáidat, a testsúlyodat és a születési dátumodat (a pulzuszónáidhoz), hogy megmutassa az élő pulzusodat, az edzésösszesítődet, valamint a Szív, Oxigén, Pihenés és Légzés komplikációidat.";
+"NSHealthUpdateUsageDescription" = "A YOROI az Apple Egészség appba menti az edzéseidet a pulzusukkal és kalóriáikkal, a méréseidet és a pohár vizeidet, hogy minden egy helyen legyen.";
+"NSUserNotificationUsageDescription" = "A YOROI minden menet végén és az időzítőid lejártakor jelez, amikor a képernyő ki van kapcsolva.";

@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en fi. */
+"CFBundleDisplayName" = "Yoroi";
+"NSHealthShareUsageDescription" = "YOROI lukee Applen Terveydestä sykkeesi, veren happipitoisuutesi, leposykkeesi, sykevälivaihtelusi, hengitystiheytesi, kalorisi, painosi ja syntymäaikasi (sykealueitasi varten), näyttääkseen reaaliaikaisen sykkeesi, treenisi yhteenvedon sekä Sydän-, Happi-, Lepo- ja Hengitys-komplikaatiosi.";
+"NSHealthUpdateUsageDescription" = "YOROI tallentaa Applen Terveyteen treenisi sykkeineen ja kaloreineen, punnituksesi ja vesilasisi, jotta kaikki pysyy yhdessä paikassa.";
+"NSUserNotificationUsageDescription" = "YOROI ilmoittaa sinulle jokaisen erän lopussa ja ajastimiesi päättyessä, kun näyttö on sammuksissa.";

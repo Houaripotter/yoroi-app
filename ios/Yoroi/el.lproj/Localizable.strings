@@ -1,0 +1,9 @@
+/* YOROI Yoroi : textes en el. Clé = texte français du code Swift. */
+"Chrono" = "Χρονόμετρο";
+"Démarrer un sparring" = "Έναρξη sparring";
+"Démarrer une séance" = "Έναρξη προπόνησης";
+"Démarrer une séance Yoroi" = "Έναρξη προπόνησης Yoroi";
+"Logger ma pesée" = "Καταγραφή ζύγισης";
+"Ouvre Yoroi sur l'écran d'ajout de pesée." = "Ανοίγει το Yoroi στην οθόνη προσθήκης ζύγισης.";
+"Ouvre Yoroi sur le timer pour démarrer une séance." = "Ανοίγει το Yoroi στον χρονοδιακόπτη για να ξεκινήσεις προπόνηση.";
+"Ouvre le timer combat BJJ/MMA." = "Ανοίγει τον χρονοδιακόπτη μάχης BJJ/MMA.";

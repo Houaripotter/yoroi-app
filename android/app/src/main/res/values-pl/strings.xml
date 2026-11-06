@@ -1,0 +1,6 @@
+<resources>
+  <!-- Widgets -->
+  <string name="widget_dashboard_desc">Najważniejsze statystyki w skrócie</string>
+  <string name="widget_hydration_desc">Śledź, ile wody pijesz każdego dnia</string>
+  <string name="widget_streak_desc">Twoja passa treningów z rzędu</string>
+</resources>

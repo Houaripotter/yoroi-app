@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en sv. */
+"CFBundleDisplayName" = "Yoroi";
+"NSHealthShareUsageDescription" = "YOROI läser från Apple Hälsa din puls, din syremättnad, din vilopuls, din HRV, din andningsfrekvens, dina kalorier, din vikt och ditt födelsedatum (för dina pulszoner), för att visa din puls live, din passammanfattning och dina komplikationer Hjärta, Syre, Vila och Andning.";
+"NSHealthUpdateUsageDescription" = "YOROI sparar i Apple Hälsa dina pass, med puls och kalorier, dina vägningar och dina glas vatten, så att allt finns på samma ställe.";
+"NSUserNotificationUsageDescription" = "YOROI meddelar dig i slutet av varje rond och när dina timrar är klara, även när skärmen är släckt.";

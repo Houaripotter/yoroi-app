@@ -1,0 +1,12 @@
+/* Phrases Siri des raccourcis Yoroi (montre) */
+"Démarrer le chrono ${applicationName}" = "Käynnistä ajanotto sovelluksessa ${applicationName}";
+"Lance le chrono ${applicationName}" = "Aloita ajanotto sovelluksessa ${applicationName}";
+"Lance un minuteur ${applicationName}" = "Käynnistä ajastin sovelluksessa ${applicationName}";
+"Lance un minuteur de ${duree} dans ${applicationName}" = "Käynnistä ${duree} ajastin sovelluksessa ${applicationName}";
+"Mes minuteurs ${applicationName}" = "Omat ajastimeni sovelluksessa ${applicationName}";
+"Minuteur de ${duree} ${applicationName}" = "Ajastin ${duree} sovelluksessa ${applicationName}";
+"Noter mon poids dans ${applicationName}" = "Kirjaa painoni sovellukseen ${applicationName}";
+"Noter un verre d'eau dans ${applicationName}" = "Kirjaa lasi vettä sovellukseen ${applicationName}";
+"Ouvre les minuteurs ${applicationName}" = "Avaa ajastimet sovelluksessa ${applicationName}";
+"Pesée ${applicationName}" = "Punnitus sovelluksessa ${applicationName}";
+"Un verre d'eau ${applicationName}" = "Lasi vettä sovelluksessa ${applicationName}";

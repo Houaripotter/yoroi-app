@@ -1,0 +1,12 @@
+/* Phrases Siri des raccourcis Yoroi (montre) */
+"Démarrer le chrono ${applicationName}" = "Starta tidtagaruret i ${applicationName}";
+"Lance le chrono ${applicationName}" = "Kör tidtagaruret i ${applicationName}";
+"Lance un minuteur ${applicationName}" = "Starta en timer i ${applicationName}";
+"Lance un minuteur de ${duree} dans ${applicationName}" = "Starta en timer på ${duree} i ${applicationName}";
+"Mes minuteurs ${applicationName}" = "Mina timrar i ${applicationName}";
+"Minuteur de ${duree} ${applicationName}" = "Timer på ${duree} i ${applicationName}";
+"Noter mon poids dans ${applicationName}" = "Logga min vikt i ${applicationName}";
+"Noter un verre d'eau dans ${applicationName}" = "Logga ett glas vatten i ${applicationName}";
+"Ouvre les minuteurs ${applicationName}" = "Öppna timrarna i ${applicationName}";
+"Pesée ${applicationName}" = "Vägning i ${applicationName}";
+"Un verre d'eau ${applicationName}" = "Ett glas vatten i ${applicationName}";

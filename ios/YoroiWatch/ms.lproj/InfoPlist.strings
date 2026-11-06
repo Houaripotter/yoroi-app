@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en ms. */
+"CFBundleDisplayName" = "Yoroi";
+"NSHealthShareUsageDescription" = "YOROI membaca daripada Apple Health kadar denyutan jantung, ketepuan oksigen, denyutan jantung rehat, kebolehubahan kadar jantung, kadar pernafasan, kalori, berat dan tarikh lahir anda (untuk zon jantung anda), untuk memaparkan denyutan jantung secara langsung, ringkasan sesi dan komplikasi Jantung, Oksigen, Rehat dan Pernafasan anda.";
+"NSHealthUpdateUsageDescription" = "YOROI menyimpan dalam Apple Health sesi anda, bersama kadar denyutan jantung dan kalorinya, penimbangan dan gelas air anda, supaya semuanya kekal di satu tempat.";
+"NSUserNotificationUsageDescription" = "YOROI memberitahu anda pada setiap akhir round dan apabila pemasa anda tamat ketika skrin dimatikan.";

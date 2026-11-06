@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en cs. */
+"CFBundleDisplayName" = "Yoroi";
+"NSHealthShareUsageDescription" = "YOROI čte ze Zdraví tvůj tep, saturaci kyslíkem, klidový tep, HRV, dechovou frekvenci, kalorie, hmotnost a datum narození (pro tvoje tepové zóny), aby ti ukázal živý tep, souhrn tréninku a komplikace Srdce, Kyslík, Klid a Dech.";
+"NSHealthUpdateUsageDescription" = "YOROI ukládá do Zdraví tvoje tréninky s tepem a kaloriemi, tvoje vážení a sklenice vody, aby bylo všechno na jednom místě.";
+"NSUserNotificationUsageDescription" = "YOROI tě upozorní na konci každého kola a na konci časovačů, i když je displej zhasnutý.";

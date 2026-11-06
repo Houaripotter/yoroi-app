@@ -1,0 +1,12 @@
+/* Phrases Siri des raccourcis Yoroi (montre) */
+"Démarrer le chrono ${applicationName}" = "${applicationName} स्टॉपवॉच शुरू करें";
+"Lance le chrono ${applicationName}" = "${applicationName} स्टॉपवॉच चलाएं";
+"Lance un minuteur ${applicationName}" = "${applicationName} टाइमर चलाएं";
+"Lance un minuteur de ${duree} dans ${applicationName}" = "${applicationName} में ${duree} का टाइमर चलाएं";
+"Mes minuteurs ${applicationName}" = "मेरे ${applicationName} टाइमर";
+"Minuteur de ${duree} ${applicationName}" = "${duree} का टाइमर ${applicationName}";
+"Noter mon poids dans ${applicationName}" = "${applicationName} में मेरा वज़न दर्ज करें";
+"Noter un verre d'eau dans ${applicationName}" = "${applicationName} में एक गिलास पानी दर्ज करें";
+"Ouvre les minuteurs ${applicationName}" = "${applicationName} टाइमर खोलें";
+"Pesée ${applicationName}" = "${applicationName} वज़न जांच";
+"Un verre d'eau ${applicationName}" = "${applicationName} एक गिलास पानी";

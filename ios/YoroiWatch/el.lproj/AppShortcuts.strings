@@ -1,0 +1,12 @@
+/* Phrases Siri des raccourcis Yoroi (montre) */
+"Démarrer le chrono ${applicationName}" = "Έναρξη χρονομέτρου ${applicationName}";
+"Lance le chrono ${applicationName}" = "Ξεκίνα το χρονόμετρο ${applicationName}";
+"Lance un minuteur ${applicationName}" = "Ξεκίνα χρονοδιακόπτη ${applicationName}";
+"Lance un minuteur de ${duree} dans ${applicationName}" = "Ξεκίνα χρονοδιακόπτη ${duree} στο ${applicationName}";
+"Mes minuteurs ${applicationName}" = "Οι χρονοδιακόπτες μου ${applicationName}";
+"Minuteur de ${duree} ${applicationName}" = "Χρονοδιακόπτης ${duree} ${applicationName}";
+"Noter mon poids dans ${applicationName}" = "Κατάγραψε το βάρος μου στο ${applicationName}";
+"Noter un verre d'eau dans ${applicationName}" = "Κατάγραψε ένα ποτήρι νερό στο ${applicationName}";
+"Ouvre les minuteurs ${applicationName}" = "Άνοιξε τους χρονοδιακόπτες ${applicationName}";
+"Pesée ${applicationName}" = "Ζύγιση ${applicationName}";
+"Un verre d'eau ${applicationName}" = "Ένα ποτήρι νερό ${applicationName}";

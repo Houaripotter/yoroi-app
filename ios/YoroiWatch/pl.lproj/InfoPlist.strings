@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en pl. */
+"CFBundleDisplayName" = "Yoroi";
+"NSHealthShareUsageDescription" = "YOROI odczytuje z aplikacji Zdrowie twoje tętno, saturację, tętno spoczynkowe, zmienność rytmu serca (HRV), częstość oddechu, kalorie, wagę i datę urodzenia (do stref tętna), aby pokazać tętno na żywo, podsumowanie treningu oraz komplikacje Serce, Tlen, Spoczynek i Oddech.";
+"NSHealthUpdateUsageDescription" = "YOROI zapisuje w aplikacji Zdrowie twoje treningi wraz z tętnem i kaloriami, ważenia i szklanki wody, aby wszystko było w jednym miejscu.";
+"NSUserNotificationUsageDescription" = "YOROI powiadamia cię na koniec każdej rundy i po zakończeniu timerów, gdy ekran jest wygaszony.";

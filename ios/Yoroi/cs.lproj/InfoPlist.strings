@@ -1,0 +1,15 @@
+/* YOROI : textes système en cs. Source : Info.plist (français). */
+"CFBundleDisplayName" = "Yoroi";
+"NSCalendarsFullAccessUsageDescription" = "YOROI přidá závod do tvého kalendáře, když o to požádáš, například tvůj příští turnaj s připomínkou den předem. Než se událost uloží, potvrdíš ji.";
+"NSCalendarsUsageDescription" = "YOROI přidá závod do tvého kalendáře, když o to požádáš, například tvůj příští turnaj s připomínkou den předem. Než se událost uloží, potvrdíš ji.";
+"NSCameraUsageDescription" = "YOROI používá fotoaparát jen tehdy, když to zvolíš: tvoje profilová fotka, fotky pokroku, fotka karty ke sdílení, logo tvého klubu nebo video techniky do deníku. Například fotka zepředu každý měsíc, ať vidíš, jak se mění tvoje forma. Nic se neodesílá na server YOROI.";
+"NSFaceIDUsageDescription" = "YOROI používá Face ID jen tehdy, když zapneš zámek aplikace, aby nikdo jiný neotevřel tvůj deník a tvoje vážení.";
+"NSHealthShareUsageDescription" = "YOROI čte ze Zdraví tvoji hmotnost a složení těla, aktivitu, srdce, spánek, tréninky (trasy, úsilí, krok, výkon, zóny) a to, co piješ a jíš, aby ukázal tvůj pokrok a dnešní připravenost. Pokročilá měření (chůze, upozornění na srdce, zvuky, živiny) jen tehdy, když je zapneš. Nic se neodesílá na server YOROI.";
+"NSHealthUpdateUsageDescription" = "YOROI ukládá do Zdraví tvoje vážení a tělesný tuk, tréninky, které zaznamenáš, tvůj pitný režim a spánek zadaný ručně. Nic se neodesílá na server YOROI.";
+"NSLocalNetworkUsageDescription" = "YOROI používá místní síť k synchronizaci tvých dat přímo mezi zařízeními spárovanými kódem (iPhone, iPad, Mac), když je aplikace otevřená. Nic nejde přes internet ani přes server YOROI.";
+"NSLocationWhenInUseUsageDescription" = "YOROI používá tvou polohu jen tehdy, když o ni v tréninku požádáš, aby k němu zapsal název místa, například tvoji posilovnu a město. Nikdy na pozadí a nic se neodesílá na server YOROI.";
+"NSMicrophoneUsageDescription" = "YOROI používá mikrofon pro zvuk videí, která natáčíš do tréninkového deníku, a pro hlasové poznámky na kartě sparringového partnera. Například natočit techniku s vysvětlením tvého trenéra. Nic se neodesílá na server YOROI.";
+"NSPhotoLibraryAddUsageDescription" = "YOROI ukládá do tvé knihovny fotek karty ke sdílení, které vytvoříš, jen když o to požádáš. Například kartu rekordu nebo srovnání před a po. Nic se neodesílá na server YOROI.";
+"NSPhotoLibraryUsageDescription" = "YOROI otevírá tvou knihovnu fotek jen tehdy, když vybíráš obrázek nebo video: profilovou fotku, fotky pokroku, fotky z váhy, video do deníku, fotky partnera nebo logo klubu. Například importovat video z posledního sparringu. Nic se neodesílá na server YOROI.";
+"NSRemindersFullAccessUsageDescription" = "YOROI nečte ani nevytváří připomínky v tvé aplikaci Připomínky a nežádá o tento přístup. Tvoje připomínky, například ta na spaní, chodí jako oznámení YOROI.";
+"NSRemindersUsageDescription" = "YOROI nečte ani nevytváří připomínky v tvé aplikaci Připomínky a nežádá o tento přístup. Tvoje připomínky, například ta na spaní, chodí jako oznámení YOROI.";

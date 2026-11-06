@@ -107,7 +107,7 @@ describe('Langues complètes', () => {
           if (!new RegExp(`path = "?(Yoroi/)?${s}\\.lproj/${f.replace('.', '\\.')}"?;`).test(pbx)) fautes.push(`${l} : Xcode ${c}/${s}.lproj/${f}`);
         }
       }
-      if (l !== 'en' && !existe(`android/app/src/main/res/values-${s.split('-')[0]}/strings.xml`)) fautes.push(`${l} : Android strings.xml`);
+      if (l !== 'en' && !existe(`android/app/src/main/res/values-${({ id: 'in', he: 'iw' } as Record<string, string>)[s.split('-')[0]] ?? s.split('-')[0]}/strings.xml`)) fautes.push(`${l} : Android strings.xml`);
     }
     expect(fautes).toEqual([]);
   });

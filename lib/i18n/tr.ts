@@ -30,6 +30,21 @@ const REGISTRE = {
   zh: { nom: '简体中文', drapeau: '🇨🇳', code: 'ZH', locale: 'zh-CN', systeme: 'zh-Hans', decimal: '.', milliers: ',', jours: ['一', '二', '三', '四', '五', '六', '日'], unSingulier: false, dict: () => require('./dict/zh.json') },
   th: { nom: 'ไทย', drapeau: '🇹🇭', code: 'TH', locale: 'th-TH', systeme: 'th', decimal: '.', milliers: ',', jours: ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'], unSingulier: false, dict: () => require('./dict/th.json') },
   id: { nom: 'Bahasa Indonesia', drapeau: '🇮🇩', code: 'ID', locale: 'id-ID', systeme: 'id', decimal: ',', milliers: '.', jours: ['S', 'S', 'R', 'K', 'J', 'S', 'M'], unSingulier: false, dict: () => require('./dict/id.json') },
+  sv: { nom: 'Svenska', drapeau: '🇸🇪', code: 'SV', locale: 'sv-SE', systeme: 'sv', decimal: ',', milliers: NBSP, jours: ['M', 'T', 'O', 'T', 'F', 'L', 'S'], unSingulier: false, dict: () => require('./dict/sv.json') },
+  da: { nom: 'Dansk', drapeau: '🇩🇰', code: 'DA', locale: 'da-DK', systeme: 'da', decimal: ',', milliers: '.', jours: ['M', 'T', 'O', 'T', 'F', 'L', 'S'], unSingulier: false, dict: () => require('./dict/da.json') },
+  nb: { nom: 'Norsk', drapeau: '🇳🇴', code: 'NB', locale: 'nb-NO', systeme: 'nb', decimal: ',', milliers: NBSP, jours: ['M', 'T', 'O', 'T', 'F', 'L', 'S'], unSingulier: false, dict: () => require('./dict/nb.json') },
+  fi: { nom: 'Suomi', drapeau: '🇫🇮', code: 'FI', locale: 'fi-FI', systeme: 'fi', decimal: ',', milliers: NBSP, jours: ['M', 'T', 'K', 'T', 'P', 'L', 'S'], unSingulier: false, dict: () => require('./dict/fi.json') },
+  vi: { nom: 'Tiếng Việt', drapeau: '🇻🇳', code: 'VI', locale: 'vi-VN', systeme: 'vi', decimal: ',', milliers: '.', jours: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], unSingulier: false, dict: () => require('./dict/vi.json') },
+  ms: { nom: 'Bahasa Melayu', drapeau: '🇲🇾', code: 'MS', locale: 'ms-MY', systeme: 'ms', decimal: '.', milliers: ',', jours: ['I', 'S', 'R', 'K', 'J', 'S', 'A'], unSingulier: false, dict: () => require('./dict/ms.json') },
+  hi: { nom: 'हिन्दी', drapeau: '🇮🇳', code: 'HI', locale: 'hi-IN', systeme: 'hi', decimal: '.', milliers: ',', jours: ['सो', 'मं', 'बु', 'गु', 'शु', 'श', 'र'], unSingulier: true, dict: () => require('./dict/hi.json') },
+  el: { nom: 'Ελληνικά', drapeau: '🇬🇷', code: 'EL', locale: 'el-GR', systeme: 'el', decimal: ',', milliers: '.', jours: ['Δ', 'Τ', 'Τ', 'Π', 'Π', 'Σ', 'Κ'], unSingulier: false, dict: () => require('./dict/el.json') },
+  hu: { nom: 'Magyar', drapeau: '🇭🇺', code: 'HU', locale: 'hu-HU', systeme: 'hu', decimal: ',', milliers: NBSP, jours: ['H', 'K', 'Sz', 'Cs', 'P', 'Sz', 'V'], unSingulier: false, dict: () => require('./dict/hu.json') },
+  pl: { nom: 'Polski', drapeau: '🇵🇱', code: 'PL', locale: 'pl-PL', systeme: 'pl', decimal: ',', milliers: NBSP, jours: ['P', 'W', 'Ś', 'C', 'P', 'S', 'N'], unSingulier: false, dict: () => require('./dict/pl.json') },
+  ru: { nom: 'Русский', drapeau: '🇷🇺', code: 'RU', locale: 'ru-RU', systeme: 'ru', decimal: ',', milliers: NBSP, jours: ['П', 'В', 'С', 'Ч', 'П', 'С', 'В'], unSingulier: false, dict: () => require('./dict/ru.json') },
+  uk: { nom: 'Українська', drapeau: '🇺🇦', code: 'UK', locale: 'uk-UA', systeme: 'uk', decimal: ',', milliers: NBSP, jours: ['П', 'В', 'С', 'Ч', 'П', 'С', 'Н'], unSingulier: false, dict: () => require('./dict/uk.json') },
+  ro: { nom: 'Română', drapeau: '🇷🇴', code: 'RO', locale: 'ro-RO', systeme: 'ro', decimal: ',', milliers: '.', jours: ['L', 'M', 'M', 'J', 'V', 'S', 'D'], unSingulier: false, dict: () => require('./dict/ro.json') },
+  cs: { nom: 'Čeština', drapeau: '🇨🇿', code: 'CS', locale: 'cs-CZ', systeme: 'cs', decimal: ',', milliers: NBSP, jours: ['P', 'Ú', 'S', 'Č', 'P', 'S', 'N'], unSingulier: false, dict: () => require('./dict/cs.json') },
+  ar: { nom: 'العربية', drapeau: '🇸🇦', code: 'AR', locale: 'ar-u-nu-latn', systeme: 'ar', decimal: '.', milliers: ',', jours: ['ن', 'ث', 'ر', 'خ', 'ج', 'س', 'ح'], unSingulier: false, dict: () => require('./dict/ar.json') },
 } as const;
 
 export type Lang = keyof typeof REGISTRE;
@@ -178,7 +193,24 @@ export function traduireSens(sens: string, fr: string, ...valeurs: unknown[]): s
 }
 
 /** Règle de pluriel d'une langue autre que le français (unSingulier du registre). */
+/**
+ * Langues à plus de deux formes de pluriel (règles CLDR, nombres entiers). « one » prend la phrase au singulier,
+ * « other » la phrase au pluriel, « few » et « many » la clé « pluriel français§few » ou « §many » du dictionnaire.
+ */
+export type FormePluriel = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
+const peu = (n: number) => n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14);
+export const FORMES_PLURIEL: Partial<Record<string, (n: number) => FormePluriel>> = {
+  pl: (n) => (!Number.isInteger(n) ? 'other' : n === 1 ? 'one' : peu(n) ? 'few' : 'many'),
+  ru: (n) => (!Number.isInteger(n) ? 'other' : n % 10 === 1 && n % 100 !== 11 ? 'one' : peu(n) ? 'few' : 'many'),
+  uk: (n) => (!Number.isInteger(n) ? 'other' : n % 10 === 1 && n % 100 !== 11 ? 'one' : peu(n) ? 'few' : 'many'),
+  cs: (n) => (!Number.isInteger(n) ? 'many' : n === 1 ? 'one' : n >= 2 && n <= 4 ? 'few' : 'other'),
+  ro: (n) => (!Number.isInteger(n) ? 'few' : n === 1 ? 'one' : n === 0 || (n % 100 >= 2 && n % 100 <= 19) ? 'few' : 'other'),
+  ar: (n) => (!Number.isInteger(n) ? 'other' : n === 0 ? 'zero' : n === 1 ? 'one' : n === 2 ? 'two' : n % 100 >= 3 && n % 100 <= 10 ? 'few' : n % 100 >= 11 ? 'many' : 'other'),
+};
+
 export function plurielDe(l: Lang, n: number): boolean {
+  const f = FORMES_PLURIEL[l];
+  if (f) return f(Math.abs(Number(n))) !== 'one';
   return REGISTRE[l].unSingulier ? Math.abs(Number(n)) >= 2 : Number(n) !== 1;
 }
 
@@ -188,6 +220,9 @@ export function plurielDe(l: Lang, n: number): boolean {
  */
 export function traduirePluriel(n: number, plurielFr: boolean, un: string, plusieurs: string, ...valeurs: unknown[]): string {
   const pluriel = LANG === 'fr' ? plurielFr : plurielDe(LANG, n);
+  // polonais, russe, tchèque, arabe... : forme « zero », « two », « few » ou « many » quand la langue l'a
+  const forme = LANG !== 'fr' ? FORMES_PLURIEL[LANG]?.(Math.abs(Number(n))) : undefined;
+  if (forme && forme !== 'one' && forme !== 'other') return traduireSens(forme, plusieurs, ...valeurs);
   return traduire(pluriel ? plusieurs : un, ...valeurs);
 }
 

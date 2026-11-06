@@ -158,6 +158,42 @@ def phrases_du_code(reference):
 
 # ─── Ce qui manque ───────────────────────────────────────────────────────────
 
+FORME = re.compile(r'§(zero|two|few|many)$')
+
+
+def formes_pluriel():
+    """Langues du registre FORMES_PLURIEL de lib/i18n/tr.ts et les formes à traduire en plus (zero, two, few, many)."""
+    s = open('lib/i18n/tr.ts', encoding='utf-8').read()
+    a = s.find('FORMES_PLURIEL')
+    if a < 0:
+        return {}
+    b = s.index('};', a)
+    out = {}
+    for m in re.finditer(r"^\s+([a-z]{2,3}): \(n\) => \((.*)\),$", s[a:b], re.M):
+        out[m.group(1)] = sorted(set(re.findall(r"'(zero|two|few|many)'", m.group(2))))
+    return out
+
+
+def paires_pluriel():
+    """Paires (singulier, pluriel) écrites en dur dans traduirePluriel()."""
+    out = []
+    vus = set()
+    for d in DOSSIERS_CODE:
+        for r, _, fs in os.walk(d):
+            for f in fs:
+                if not f.endswith(('.ts', '.tsx')):
+                    continue
+                p = os.path.join(r, f)
+                if p.startswith(STUDIO) or '__tests__' in p:
+                    continue
+                for m in PATS[2].finditer(open(p, encoding='utf-8').read()):
+                    paire = (lit(m.group(1)), lit(m.group(2)))
+                    if paire not in vus:
+                        vus.add(paire)
+                        out.append(paire)
+    return out
+
+
 def a_traduire(l, avec_code=True):
     """Liste des entrées à traduire pour la langue l : [{type, ...}]."""
     reg = registre()
@@ -167,7 +203,8 @@ def a_traduire(l, avec_code=True):
     toutes = {}
     for x in langues_trad():
         for k in lire_dict(x):
-            toutes.setdefault(k, None)
+            if not FORME.search(k):
+                toutes.setdefault(k, None)
     if avec_code:
         for k, ou in phrases_du_code(en).items():
             toutes[k] = ou
@@ -180,6 +217,13 @@ def a_traduire(l, avec_code=True):
             if ou:
                 e['ou'] = ou
             out.append(e)
+    # langues à plusieurs formes de pluriel (polonais, russe...) : une clé « pluriel§few » ou « §many » par paire du code
+    for cat in formes_pluriel().get(l, []):
+        for un, plusieurs in paires_pluriel():
+            k = f'{plusieurs}§{cat}'
+            if k not in d:
+                out.append({'type': 'phrase', 'fr': k, 'pluriel': cat, 'singulier': un,
+                            'aide': f'Forme « {cat} » du pluriel de « {plusieurs} » (règles CLDR de la langue). Traduis seulement la phrase, sans « §{cat} ».'})
     # textes natifs iOS : clé et français pris dans fr.lproj
     sysl = reg[l]['systeme']
     ident = set(json.load(open(IDENTIQUES, encoding='utf-8')).get(l, [])) if os.path.exists(IDENTIQUES) else set()

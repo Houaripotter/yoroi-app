@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en hi. */
+"CFBundleDisplayName" = "Yoroi";
+"NSHealthShareUsageDescription" = "आपकी लाइव हार्ट रेट, सेशन का सारांश और Heart, Oxygen, Rest और Breathing कॉम्प्लिकेशन दिखाने के लिए YOROI Apple Health से आपकी हार्ट रेट, ऑक्सीजन सैचुरेशन, आराम के समय की हार्ट रेट, HRV, सांस की दर, कैलोरी, वज़न और जन्मतिथि (आपके हार्ट रेट ज़ोन के लिए) पढ़ता है।";
+"NSHealthUpdateUsageDescription" = "YOROI Apple Health में आपके सेशन उनकी हार्ट रेट और कैलोरी के साथ, आपकी वज़न जांच और पानी के गिलास सेव करता है, ताकि सब कुछ एक ही जगह रहे।";
+"NSUserNotificationUsageDescription" = "स्क्रीन बंद होने पर भी YOROI हर राउंड के अंत में और आपके टाइमर खत्म होने पर आपको बताता है।";

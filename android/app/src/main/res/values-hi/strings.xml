@@ -1,0 +1,6 @@
+<resources>
+  <!-- Widgets -->
+  <string name="widget_dashboard_desc">एक नज़र में आपके मुख्य आंकड़े</string>
+  <string name="widget_hydration_desc">रोज़ कितना पानी पिया, इसे ट्रैक करें</string>
+  <string name="widget_streak_desc">लगातार वर्कआउट की आपकी स्ट्रीक</string>
+</resources>

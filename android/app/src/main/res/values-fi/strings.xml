@@ -1,0 +1,6 @@
+<resources>
+  <!-- Widgets -->
+  <string name="widget_dashboard_desc">Tärkeimmät lukusi yhdellä silmäyksellä</string>
+  <string name="widget_hydration_desc">Seuraa päivittäistä vedenjuontiasi</string>
+  <string name="widget_streak_desc">Peräkkäisten treeniesi putki</string>
+</resources>

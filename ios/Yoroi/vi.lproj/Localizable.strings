@@ -1,0 +1,9 @@
+/* YOROI Yoroi : textes en vi. Clé = texte français du code Swift. */
+"Chrono" = "Bấm giờ";
+"Démarrer un sparring" = "Bắt đầu sparring";
+"Démarrer une séance" = "Bắt đầu buổi tập";
+"Démarrer une séance Yoroi" = "Bắt đầu buổi tập Yoroi";
+"Logger ma pesée" = "Ghi lần cân của tôi";
+"Ouvre Yoroi sur l'écran d'ajout de pesée." = "Mở Yoroi ở màn hình thêm lần cân.";
+"Ouvre Yoroi sur le timer pour démarrer une séance." = "Mở Yoroi ở hẹn giờ để bắt đầu buổi tập.";
+"Ouvre le timer combat BJJ/MMA." = "Mở hẹn giờ đối kháng BJJ/MMA.";

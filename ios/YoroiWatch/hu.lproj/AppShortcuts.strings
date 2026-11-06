@@ -1,0 +1,12 @@
+/* Phrases Siri des raccourcis Yoroi (montre) */
+"Démarrer le chrono ${applicationName}" = "${applicationName} stopper indítása";
+"Lance le chrono ${applicationName}" = "Indítsd el a(z) ${applicationName} stoppert";
+"Lance un minuteur ${applicationName}" = "Indíts egy ${applicationName} időzítőt";
+"Lance un minuteur de ${duree} dans ${applicationName}" = "Indíts egy ${duree} időzítőt a(z) ${applicationName} appban";
+"Mes minuteurs ${applicationName}" = "${applicationName} időzítőim";
+"Minuteur de ${duree} ${applicationName}" = "${applicationName} időzítő: ${duree}";
+"Noter mon poids dans ${applicationName}" = "Testsúlyom rögzítése a(z) ${applicationName} appban";
+"Noter un verre d'eau dans ${applicationName}" = "Egy pohár víz rögzítése a(z) ${applicationName} appban";
+"Ouvre les minuteurs ${applicationName}" = "Nyisd meg a(z) ${applicationName} időzítőket";
+"Pesée ${applicationName}" = "${applicationName} mérés";
+"Un verre d'eau ${applicationName}" = "Egy pohár víz, ${applicationName}";

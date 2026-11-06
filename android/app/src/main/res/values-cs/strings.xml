@@ -1,0 +1,6 @@
+<resources>
+  <!-- Widgets -->
+  <string name="widget_dashboard_desc">Tvoje hlavní statistiky na první pohled</string>
+  <string name="widget_hydration_desc">Sleduj svůj denní pitný režim</string>
+  <string name="widget_streak_desc">Tvoje šňůra tréninků v řadě</string>
+</resources>

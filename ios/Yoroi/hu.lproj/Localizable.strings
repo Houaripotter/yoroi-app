@@ -1,0 +1,9 @@
+/* YOROI Yoroi : textes en hu. Clé = texte français du code Swift. */
+"Chrono" = "Stopper";
+"Démarrer un sparring" = "Sparring indítása";
+"Démarrer une séance" = "Edzés indítása";
+"Démarrer une séance Yoroi" = "Yoroi edzés indítása";
+"Logger ma pesée" = "Mérésem rögzítése";
+"Ouvre Yoroi sur l'écran d'ajout de pesée." = "Megnyitja a Yoroit a mérés hozzáadása képernyőn.";
+"Ouvre Yoroi sur le timer pour démarrer une séance." = "Megnyitja a Yoroit az időzítőn egy edzés indításához.";
+"Ouvre le timer combat BJJ/MMA." = "Megnyitja a BJJ/MMA küzdőidőzítőt.";

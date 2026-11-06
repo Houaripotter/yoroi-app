@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en ro. */
+"CFBundleDisplayName" = "Yoroi";
+"NSHealthShareUsageDescription" = "YOROI citește din Apple Sănătate pulsul, saturația de oxigen, pulsul în repaus, variabilitatea cardiacă (HRV), frecvența respiratorie, caloriile, greutatea și data nașterii (pentru zonele de puls), ca să-ți arate pulsul în timp real, bilanțul antrenamentului și complicațiile Inimă, Oxigen, Repaus și Respirație.";
+"NSHealthUpdateUsageDescription" = "YOROI salvează în Apple Sănătate antrenamentele, cu pulsul și caloriile lor, cântăririle și paharele de apă, ca totul să rămână în același loc.";
+"NSUserNotificationUsageDescription" = "YOROI te anunță la finalul fiecărei runde și la finalul timerelor când ecranul e stins.";
