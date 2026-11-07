@@ -180,6 +180,8 @@ export async function saveSeance(training: Training, opts: SaveOptions): Promise
 
   DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
   DeviceEventEmitter.emit(ARMURE_CHANGED_EVENT, after);
+  // 7 novembre 2026 : une copie automatique (sans les photos) part bientot, au plus une toutes les 2 minutes
+  void import('@/lib/v2/sauvegarde/declencheurs').then((m) => m.demanderCopie('seance')).catch(() => undefined);
   if (!isEdit) {
     runAfterSave(training, opts.skipHealth === true);
     void mesurerSeance(training.sport, opts.methode ?? 'saisie');
