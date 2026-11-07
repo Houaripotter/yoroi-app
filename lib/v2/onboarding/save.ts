@@ -239,7 +239,9 @@ export async function saveOnboarding(d: Draft): Promise<void> {
     });
   }
 
-  // 31 octobre 2026 : ou tu as entendu parler de YOROI, garde sur le telephone (rien si l'ecran a ete passe)
+  // 31 octobre 2026 : ou tu as entendu parler de YOROI, garde sur le telephone (rien si l'ecran a ete passe).
+  // 7 novembre 2026 : l'ecran passe apres Ton plan (donc apres cet enregistrement) ; la reponse est posee en le quittant
+  // (enregistrerSourceConnu, ci dessous). Garde ici pour un ancien brouillon qui l'avait deja.
   if (d.source) await AsyncStorage.setItem(SOURCE_CONNU_KEY, d.source).catch(() => {});
 
   await AsyncStorage.setItem(LEGAL_ACCEPTED_KEY, 'true');
@@ -253,4 +255,18 @@ export async function saveOnboarding(d: Draft): Promise<void> {
   await Promise.all([markTourSeen(), markWhatsNewSeen()]);
   DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
   logger.info('Onboarding completed', { step: 'all' });
+}
+
+/**
+ * 7 novembre 2026 : « Où as-tu connu YOROI » passe juste apres Ton plan, donc apres saveOnboarding. La reponse est
+ * posee sous SOURCE_CONNU_KEY en quittant l'ecran ; passee, la cle est retiree (rien d'ancien ne reste).
+ * L'appelant ne l'appelle jamais en apercu ni en mode createur sans ecriture (lib/v2/creator/onboardingCreateur.ts).
+ */
+export async function enregistrerSourceConnu(source: string | null | undefined): Promise<void> {
+  try {
+    if (source) await AsyncStorage.setItem(SOURCE_CONNU_KEY, source);
+    else await AsyncStorage.removeItem(SOURCE_CONNU_KEY);
+  } catch {
+    // rien de bloquant : l'ecran est facultatif
+  }
 }
