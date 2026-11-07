@@ -4,7 +4,7 @@
  */
 import { Platform } from 'react-native';
 import { nomDuCloud, type EtatProtection } from './copieAuto';
-import { traduire, LOCALE } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, LOCALE } from '@/lib/i18n/tr';
 
 const NB = '\u00a0';
 
@@ -21,7 +21,7 @@ export function texteCopieAuto(etat: EtatProtection, jours: number | null, dossi
   if (etat === 'en_panne') {
     return {
       titre: traduire('Ta copie automatique ne passe plus'),
-      texte: traduire("{0}Choisis à nouveau ton dossier{1} dans {2}.", jours != null ? `Dernière copie il y a ${jours} jour${jours > 1 ? 's' : ''}. ` : '', dossier ? ` « ${dossier} »` : '', cloud),
+      texte: traduire("{0}Choisis à nouveau ton dossier{1} dans {2}.", jours != null ? `${traduirePluriel(jours, jours > 1, 'Dernière copie il y a {0} jour.', 'Dernière copie il y a {0} jours.', jours)} ` : '', dossier ? ` « ${dossier} »` : '', cloud),
       bouton: traduire('Choisir le dossier'),
     };
   }

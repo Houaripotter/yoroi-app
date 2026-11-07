@@ -181,7 +181,7 @@ export default function SportScreen() {
       setConvertedAt(at);
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
       tap('success');
-      appAlert(traduire('Planning mis à jour'), r.created ? traduirePluriel(r.created, r.created > 1, "{0} créneau ajouté au planning{1}.", "{0} créneaux ajoutéx au planning{1}.", r.created, r.skipped ? `, ${r.skipped} déjà présent${r.skipped > 1 ? 's' : ''}` : '') : traduire('Tous tes créneaux étaient déjà dans le planning.'), [
+      appAlert(traduire('Planning mis à jour'), r.created ? traduirePluriel(r.created, r.created > 1, "{0} créneau ajouté au planning{1}.", "{0} créneaux ajoutéx au planning{1}.", r.created, r.skipped ? traduirePluriel(r.skipped, r.skipped > 1, ', {0} déjà présent', ', {0} déjà présents', r.skipped) : '') : traduire('Tous tes créneaux étaient déjà dans le planning.'), [
         { text: traduire('Rester ici'), style: 'cancel' },
         { text: traduire('Ouvrir le planning'), onPress: () => router.push('/planning' as any) },
       ]);

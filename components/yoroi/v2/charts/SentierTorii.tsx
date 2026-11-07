@@ -140,7 +140,7 @@ export function SentierTorii(props: Props) {
     <View
       accessible
       accessibilityRole="progressbar"
-      accessibilityLabel={traduire("Ton chemin vers ton cap. Départ {0} kilos, cap {1} kilos{2}. {3}. {4}", kg1(depart), kg1(cap), torii && !atteint ? `, arrivée prévue le ${jourCourt(torii)}` : '', pctTxt, texte)}
+      accessibilityLabel={traduire("Ton chemin vers ton cap. Départ {0} kilos, cap {1} kilos{2}. {3}. {4}", kg1(depart), kg1(cap), torii && !atteint ? traduire(', arrivée prévue le {0}', jourCourt(torii)) : '', pctTxt, texte)}
       accessibilityValue={{ min: 0, max: 100, now: Math.round(pct * 100) }}
       style={ltrSiRTL}
     >
