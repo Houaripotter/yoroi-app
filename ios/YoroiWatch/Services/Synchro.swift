@@ -117,13 +117,18 @@ final class Synchro: NSObject, WCSessionDelegate {
   /// 28 octobre 2026 : un appui de la seance guidee (« Série faite », « +15 s »), dans le format des appuis
   /// de la Dynamic Island (lib/v2/seance/actionsIle.ts). Pas de file locale : watchOS garde le transferUserInfo
   /// jusqu'a l'iPhone, et l'iPhone dedoublonne par id.
-  func envoyerAppuiSeance(type: String, exo: String?) {
+  /// 7 novembre 2026 : aussi « repos » (minuteur de la montre pendant la seance, secondes et fin), « passer »
+  /// (Passer, ou Arreter sur la sonnerie du repos, fin du repos coupe) et « arme » (la montre sonne la fin `fin`,
+  /// l'iPhone se tait : une seule sonnerie).
+  func envoyerAppuiSeance(type: String, exo: String?, secondes: Int? = nil, fin: Double? = nil) {
     var o: [String: Any] = [
       "id": UUID().uuidString.lowercased(),
       "type": type,
       "at": (Date().timeIntervalSince1970 * 1000).rounded(),
     ]
     if let exo { o["exo"] = exo }
+    if let secondes { o["secondes"] = secondes }
+    if let fin, fin.isFinite { o["fin"] = fin.rounded() }
     guard let s = session, s.activationState == .activated,
           JSONSerialization.isValidJSONObject(o),
           let data = try? JSONSerialization.data(withJSONObject: o, options: []),
@@ -205,7 +210,7 @@ final class Synchro: NSObject, WCSessionDelegate {
       if rechargerWidgets { WidgetCenter.shared.reloadAllTimelines() }
     }
     // la seance guidee suit l'iPhone (et garde tes appuis pas encore revenus)
-    SeanceGuidee.shared.recevoir(base.seance)
+    SeanceGuidee.shared.recevoir(base.seance, genere: recu?.dateGeneree)
   }
 
   /// A appeler quand l'app revient au premier plan (changement de jour, de semaine).
@@ -298,9 +303,14 @@ final class Synchro: NSObject, WCSessionDelegate {
 
 /// Ta seance de musculation de l'iPhone, guidee sur la montre : la serie en cours, la charge, le repos.
 /// « Série faite », « +15 s » et « Passer » avancent tout de suite l'affichage (comme l'ile de l'iPhone),
-/// puis partent a l'iPhone (sauf Passer, qui ne coupe le repos que sur la montre). Chaque repos est confie
-/// a un minuteur de la montre (MinuteurMoteur) : fin de repos avec la meme alarme que les minuteurs,
-/// qui reveille la montre (session d'alarme) et sonne meme ecran eteint.
+/// puis partent a l'iPhone. Chaque repos est confie a un minuteur de la montre (MinuteurMoteur) : fin de repos
+/// avec la meme alarme que les minuteurs, qui reveille la montre (session d'alarme) et sonne meme ecran eteint.
+///
+/// 7 novembre 2026, une seule sonnerie (plan _propositions/montre_minuteur_2026-11-03/PLAN.md) :
+/// - la montre qui arme son minuteur pour le repos le dit a l'iPhone (« arme ») : l'iPhone se tait ;
+/// - Passer, et Arreter sur la sonnerie du repos, coupent aussi le repos sur l'iPhone (« passer ») ;
+/// - pendant la seance, un minuteur lance sur la montre devient le repos de la seance (lancerRepos, « repos ») ;
+/// - reglage Fin de repos sur iPhone (champ sonne du contexte) : la montre affiche le repos sans sonner.
 @Observable
 final class SeanceGuidee {
   static let shared = SeanceGuidee()
@@ -313,6 +323,11 @@ final class SeanceGuidee {
   @ObservationIgnored private var localeLe = Date.distantPast
   /// Fin de repos coupee par Passer : la meme fin renvoyee par l'iPhone reste coupee.
   @ObservationIgnored private var reposPasse: Double?
+  /// 7 novembre 2026 : fin de repos changee sur la montre (serie, +15 s, minuteur lance) que l'iPhone n'a pas
+  /// encore reprise : un contexte plus ancien ne la defait pas (20 s au plus).
+  @ObservationIgnored private var finLocale: Double?
+  @ObservationIgnored private var totalLocal = 0
+  @ObservationIgnored private var finLocaleLe: Date?
   /// Minuteur de la montre qui porte le repos en cours, et sa fin.
   @ObservationIgnored private(set) var idMinuteur: String?
   @ObservationIgnored private var finArmee: Date?
@@ -321,6 +336,8 @@ final class SeanceGuidee {
   private static let dureeMax: TimeInterval = 6 * 3600
   private static let cleMinuteur = "yoroi.seance.minuteurRepos"
   private static let cleFin = "yoroi.seance.finRepos"
+  /// Ecart tolere entre deux fins de repos (ms), comme l'iPhone (lib/v2/seance/sonneurRepos.ts).
+  private static let tolerance: Double = 1500
 
   init() {
     // l'app relancee retrouve le minuteur du repos en cours : pas de second minuteur pour le meme repos
@@ -349,15 +366,37 @@ final class SeanceGuidee {
 
   private static func faites(_ s: SeanceCtx) -> Int { s.exos.reduce(0) { $0 + $1.faites } }
 
-  /// Le contexte de l'iPhone vient d'arriver (ou d'etre recalcule).
-  func recevoir(_ recue: SeanceCtx?) {
+  /// Deux fins de repos egales a 1,5 s pres (ou toutes deux absentes).
+  private static func memeFin(_ a: Double?, _ b: Double?) -> Bool {
+    switch (a, b) {
+    case (nil, nil): return true
+    case let (x?, y?): return abs(x - y) <= tolerance
+    default: return false
+    }
+  }
+
+  /// Le contexte de l'iPhone vient d'arriver (ou d'etre recalcule). genere : l'heure du contexte sur l'iPhone.
+  func recevoir(_ recue: SeanceCtx?, genere: Date? = nil) {
     var s = recue
     if let r = s, Date().timeIntervalSince(r.debut) > SeanceGuidee.dureeMax { s = nil }
-    if var r = s, let p = reposPasse, r.finReposMs == p { r.finReposMs = nil; s = r }
+    if var r = s, let p = reposPasse, let f = r.finReposMs, abs(f - p) <= SeanceGuidee.tolerance { r.finReposMs = nil; s = r }
+    let finRecue = s?.finReposMs
     if let l = locale, Date().timeIntervalSince(localeLe) < 20, let r = s, r.debutMs == l.debutMs, SeanceGuidee.faites(r) < SeanceGuidee.faites(l) {
       s = l
     } else {
       locale = nil
+    }
+    if let le = finLocaleLe {
+      // contexte genere avant que l'iPhone ait pu prendre l'appui de la montre (3 s de marge)
+      let perime = genere.map { $0 < le.addingTimeInterval(3) } ?? true
+      if s == nil || Date().timeIntervalSince(le) >= 20 || !perime || SeanceGuidee.memeFin(finRecue, finLocale) {
+        finLocale = nil
+        finLocaleLe = nil
+      } else if var r = s {
+        r.finReposMs = finLocale
+        r.reposTotalS = totalLocal
+        s = r
+      }
     }
     if s != seance { seance = s }
     if s == nil {
@@ -385,6 +424,7 @@ final class SeanceGuidee {
       s.reposTotalS = repos
     }
     reposPasse = nil
+    noterFinLocale(s)
     garderLocale(s)
     Haptique.validation()
     Synchro.shared.envoyerAppuiSeance(type: "serie", exo: exo.id)
@@ -395,28 +435,92 @@ final class SeanceGuidee {
     guard var s = seance, let fin = s.finReposMs, fin > Date().timeIntervalSince1970 * 1000 else { return }
     s.finReposMs = fin + 15_000
     s.reposTotalS += 15
+    noterFinLocale(s)
     garderLocale(s)
     Synchro.shared.envoyerAppuiSeance(type: "repos15", exo: nil)
     if let id = idMinuteur, MinuteurMoteur.shared.actif(id) != nil {
       MinuteurMoteur.shared.ajouter(id, secondes: 15)
       finArmee = finArmee?.addingTimeInterval(15)
       memoriser()
+      envoyerArme()
     } else {
       armerRepos()
     }
   }
 
-  /// Passer le repos : sur la montre seulement (l'iPhone n'a pas d'appui pour ca).
+  /// 7 novembre 2026 : +30 s sur l'ecran du minuteur du repos : la nouvelle fin part a l'iPhone (« repos »).
+  func ajouterRepos(secondes: Int) {
+    guard var s = seance, let fin = s.finReposMs, fin > Date().timeIntervalSince1970 * 1000 else { return }
+    let plus = max(1, secondes)
+    let nouvelle = fin + Double(plus) * 1000
+    s.finReposMs = nouvelle
+    s.reposTotalS += plus
+    noterFinLocale(s)
+    garderLocale(s)
+    let reste = Int((nouvelle / 1000 - Date().timeIntervalSince1970).rounded())
+    Synchro.shared.envoyerAppuiSeance(type: "repos", exo: s.exoCourant?.id, secondes: max(1, reste), fin: nouvelle)
+    if let id = idMinuteur, MinuteurMoteur.shared.actif(id) != nil {
+      MinuteurMoteur.shared.ajouter(id, secondes: plus)
+      finArmee = finArmee?.addingTimeInterval(Double(plus))
+      memoriser()
+      envoyerArme()
+    } else {
+      armerRepos()
+    }
+  }
+
+  /// Passer le repos : sur la montre, et sur l'iPhone depuis le 7 novembre 2026 (« passer » avec la fin coupee).
   func passer() {
     guard var s = seance, let fin = s.finReposMs else { return }
     reposPasse = fin
     s.finReposMs = nil
+    finLocale = nil
+    finLocaleLe = nil
     garderLocale(s)
     Haptique.cran()
     if let id = idMinuteur, MinuteurMoteur.shared.actif(id) != nil { MinuteurMoteur.shared.annuler(id) }
     idMinuteur = nil
     finArmee = nil
     memoriser()
+    Synchro.shared.envoyerAppuiSeance(type: "passer", exo: nil, fin: fin)
+  }
+
+  /// 7 novembre 2026 : un minuteur lance sur la montre pendant la seance devient le repos de la seance
+  /// (jamais un second minuteur pour le meme repos). Renvoie l'id du minuteur a afficher, nil sans seance
+  /// ou avec le reglage Fin de repos sur iPhone (la seance guidee affiche alors le repos).
+  @discardableResult
+  func lancerRepos(secondes: Int) -> String? {
+    guard var s = seance else { return nil }
+    let d = min(99 * 60, max(1, secondes))
+    let fin = (Date().timeIntervalSince1970 + Double(d)) * 1000
+    s.finReposMs = fin
+    s.reposTotalS = d
+    reposPasse = nil
+    noterFinLocale(s)
+    garderLocale(s)
+    Synchro.shared.envoyerAppuiSeance(type: "repos", exo: s.exoCourant?.id, secondes: d, fin: fin)
+    armerRepos(recent: true)
+    guard let id = idMinuteur, MinuteurMoteur.shared.actif(id) != nil else { return nil }
+    return id
+  }
+
+  /// 7 novembre 2026 : Arreter sur la sonnerie du repos (ecran de fin, notification, alerte d'Apple) :
+  /// le repos est fini sur les deux appareils. L'iPhone coupe le sien, et sa sonnerie s'il sonnait en secours.
+  func reposArrete(_ idSonnerie: String) {
+    guard idSonnerie == idMinuteur else { return }
+    let fin = finArmee.map { ($0.timeIntervalSince1970 * 1000).rounded() } ?? seance?.finReposMs
+    idMinuteur = nil
+    finArmee = nil
+    memoriser()
+    // seulement le repos qui vient de sonner : un repos relance entre temps reste
+    if var s = seance, let f = s.finReposMs, SeanceGuidee.memeFin(f, fin) {
+      reposPasse = f
+      s.finReposMs = nil
+      finLocale = nil
+      finLocaleLe = nil
+      garderLocale(s)
+    }
+    Synchro.shared.envoyerAppuiSeance(type: "passer", exo: nil, fin: fin)
   }
 
   private func garderLocale(_ s: SeanceCtx) {
@@ -425,16 +529,33 @@ final class SeanceGuidee {
     seance = s
   }
 
+  private func noterFinLocale(_ s: SeanceCtx) {
+    finLocale = s.finReposMs
+    totalLocal = s.reposTotalS
+    finLocaleLe = Date()
+  }
+
+  /// La montre sonne la fin armee : l'iPhone se tait pour ce repos.
+  private func envoyerArme() {
+    guard let f = finArmee else { return }
+    Synchro.shared.envoyerAppuiSeance(type: "arme", exo: nil, fin: (f.timeIntervalSince1970 * 1000).rounded())
+  }
+
   /// Le repos en cours porte par un minuteur de la montre (lance, decale ou coupe selon la fin connue).
-  private func armerRepos() {
+  /// recent : le minuteur prend place dans tes Recents (lance par toi depuis les minuteurs).
+  private func armerRepos(recent: Bool = false) {
     let maintenant = Date()
     let moteur = MinuteurMoteur.shared
-    guard let fin = seance?.finRepos, fin.timeIntervalSince(maintenant) > 2 else {
-      // effort, ou repos deja fini : un minuteur de repos encore en marche n'a plus lieu d'etre
-      if seance?.finRepos == nil, let id = idMinuteur, moteur.actif(id)?.tourne(a: maintenant) == true {
+    // reglage Fin de repos sur iPhone : la montre affiche le repos, l'iPhone sonne
+    let sonneIci = !(seance?.sonneSurIphone ?? false)
+    guard sonneIci, let fin = seance?.finRepos, fin.timeIntervalSince(maintenant) > 2 else {
+      // effort, repos deja fini ou sonnerie sur l'iPhone : un minuteur de repos encore en marche n'a plus lieu d'etre
+      let plusDeMinuteur = seance?.finRepos == nil || !sonneIci
+      if plusDeMinuteur, let id = idMinuteur, moteur.actif(id)?.tourne(a: maintenant) == true {
         moteur.annuler(id)
       }
-      if seance?.finRepos == nil && idMinuteur != nil {
+      // le minuteur qui sonne reste celui du repos : Arreter le dira a l'iPhone
+      if plusDeMinuteur && idMinuteur != nil && moteur.sonnerie?.id != idMinuteur {
         idMinuteur = nil
         finArmee = nil
         memoriser()
@@ -444,8 +565,10 @@ final class SeanceGuidee {
     if let f = finArmee, abs(f.timeIntervalSince(fin)) < 1.5, let id = idMinuteur, moteur.actif(id) != nil { return }
     if let id = idMinuteur, moteur.actif(id) != nil { moteur.annuler(id) }
     let secondes = Int(fin.timeIntervalSince(maintenant).rounded())
-    idMinuteur = moteur.lancer(secondes: secondes, recent: false)
+    let nouveau = moteur.lancer(secondes: secondes, recent: recent)
+    idMinuteur = nouveau
     finArmee = fin
     memoriser()
+    envoyerArme()
   }
 }
