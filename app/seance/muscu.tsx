@@ -46,6 +46,7 @@ import type { SeanceRecord } from '@/lib/v2/seance/save';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { useNow } from '@/lib/v2/seance/useNow';
 import { rappelReposAutorise, useRappelFinRepos } from '@/lib/v2/seance/rappelRepos';
+import { montreSonne } from '@/lib/v2/seance/sonneurRepos';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { blancA } from '@/components/yoroi/livePalette';
 import { PlusPastille } from '@/components/yoroi/v2/accueil/kit';
@@ -220,7 +221,9 @@ export default function SeanceMuscu() {
     const suite = draft.exercises.find((e) => e.id !== cur.id && seriesRestantes(e) > 0);
     return suite ? traduire('Ensuite : {0}', sansTiret(traduire(nomFr(suite.name)))) : '';
   })();
-  useRappelFinRepos(draft?.sansRepos ? null : draft?.restEndsAt ?? null, traduire('Repos terminé'), corpsRepos);
+  // 7 novembre 2026 : ton Apple Watch sonne ce repos, le telephone se tait (lib/v2/seance/sonneurRepos.ts)
+  const reposSurMontre = montreSonne(draft);
+  useRappelFinRepos(draft?.sansRepos ? null : draft?.restEndsAt ?? null, traduire('Repos terminé'), corpsRepos, reposSurMontre);
   // fin du repos vue en revenant dans l'app : pas de son, un petit message qui part tout seul (lib/v2/seances/finRepos.ts)
   const [reposFiniVu, setReposFiniVu] = useState(false);
   useEffect(() => {
@@ -2000,6 +2003,7 @@ export default function SeanceMuscu() {
           endsAt={draft.restEndsAt}
           total={draft.restTotal}
           bottom={insets.bottom + 12}
+          silencieux={reposSurMontre}
           onAdd={(sec) => update((d) => ({ ...d, restEndsAt: (d.restEndsAt ?? Date.now()) + sec * 1000, restTotal: d.restTotal + sec }))}
           onSkip={() => update((d) => ({ ...d, restEndsAt: null }))}
           onFinish={(enRetard) => {
