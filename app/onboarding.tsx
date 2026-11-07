@@ -30,7 +30,7 @@
  *   « Nouvel utilisateur » (deja un bac a sable) aucune ecriture, comme l'apercu. L'ordre du Studio : lib/v2/onboarding/ordreEcrans.ts.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, BackHandler, Platform, StyleSheet, View } from 'react-native';
+import { AppState, BackHandler, Modal, Platform, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
@@ -42,7 +42,7 @@ import { getUserSettings, saveUserSettings } from '@/lib/storage';
 import { getProfile } from '@/lib/database';
 import { brouillonPrerempli } from '@/lib/v2/onboarding/fusion';
 import { importDataFromJSON } from '@/lib/exportService';
-import { choisirSauvegardeICloud } from '@/components/yoroi/v2/sauvegarde/trouverICloud';
+import { ListeSauvegardes } from '@/components/yoroi/v2/sauvegarde/ListeSauvegardes';
 import type { Trouvee } from '@/lib/v2/sauvegarde/retrouver';
 import { markTourSeen, markVisiteDone } from '@/components/yoroi/v2/tour/keys';
 import { markWhatsNewSeen } from '@/components/WhatsNewModal';
@@ -466,7 +466,21 @@ export default function OnboardingScreen() {
     goTo(PRENOM);
   };
 
-  const handleRestoreBackup = () => restaurer();
+  // 7 novembre 2026 : « J'ai déjà une sauvegarde » ouvre la liste de tes copies (iCloud, ou dossier relie sur Android),
+  // la meme que dans les Reglages. Le selecteur de fichiers seulement si iCloud (ou le dossier) n'est pas disponible.
+  const [listeOuverte, setListeOuverte] = useState(false);
+  const handleRestoreBackup = async () => {
+    if (restoring || isPreview) return;
+    let liste = false;
+    try {
+      const { sourceDuTelephone } = await import('@/lib/v2/sauvegarde/restaurerListe');
+      liste = !!(await sourceDuTelephone()?.disponible());
+    } catch {
+      liste = false;
+    }
+    if (liste) setListeOuverte(true);
+    else void restaurer();
+  };
 
   // 7 novembre 2026 : « Retrouver » sur la carte du premier lancement remet directement la sauvegarde trouvee
   const retrouverOffre = () => {
@@ -478,17 +492,25 @@ export default function OnboardingScreen() {
     if (restoring || isPreview) return;
     setRestoring(true);
     try {
-      // 18 octobre 2026 : sur iPhone, la sauvegarde du coffre iCloud est proposee d'abord
-      const icloud = cheminTrouve ?? (await choisirSauvegardeICloud().catch(() => undefined));
-      if (icloud === 'annule') {
-        setRestoring(false);
-        return;
-      }
-      const ok = await importDataFromJSON(icloud);
+      // 7 novembre 2026 : la liste des copies iCloud passe avant (handleRestoreBackup) ; ici, la sauvegarde trouvee
+      // au premier lancement, ou le selecteur de fichiers quand iCloud n'est pas disponible
+      const ok = await importDataFromJSON(cheminTrouve);
       if (!ok) {
         setRestoring(false);
         return;
       }
+      await terminerRestauration();
+    } catch (error) {
+      logger.error('Onboarding restore failed', error);
+      const msg = error instanceof Error ? error.message : String(error);
+      appAlert(traduire('Restauration impossible'), msg);
+      setRestoring(false);
+    }
+  };
+
+  /** Apres une restauration reussie (fichier, sauvegarde trouvee, ou liste des copies) : onboarding termine */
+  const terminerRestauration = async () => {
+    try {
       await AsyncStorage.setItem(LEGAL_ACCEPTED_KEY, 'true');
       await AsyncStorage.setItem(ONBOARDING_DONE_KEY, 'true');
       try {
@@ -508,6 +530,7 @@ export default function OnboardingScreen() {
       await clearDraft();
       onboardingEvent('fin', { par: 'restauration' });
       logger.info('Onboarding completed via backup restore');
+      setListeOuverte(false);
       router.replace('/(tabs)');
     } catch (error) {
       logger.error('Onboarding restore failed', error);
@@ -1111,6 +1134,12 @@ export default function OnboardingScreen() {
           {render()}
         </Animated.View>
       </PreviewBar>
+      {/* 7 novembre 2026 : « J'ai déjà une sauvegarde », la liste de tes copies (la meme que dans les Reglages) */}
+      {listeOuverte ? (
+        <Modal visible animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setListeOuverte(false)}>
+          <ListeSauvegardes onRetour={() => setListeOuverte(false)} onRestauree={() => void terminerRestauration()} />
+        </Modal>
+      ) : null}
     </View>
   );
 }
