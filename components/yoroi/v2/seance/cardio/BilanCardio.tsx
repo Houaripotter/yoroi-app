@@ -52,7 +52,8 @@ export function BilanCardio({ chrono, dureeSec, lecture, onParler, onSuite }: Pr
   return (
     <View style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {b.distanceKm ? <Chiffre v={`${fmtNum(b.distanceKm)} km`} l={traduire('distance, d’après la vitesse du tapis')} /> : null}
+        {/* 7 novembre 2026 : une distance mesuree (montre) ou notee passe avant celle calculee, comme a l'enregistrement */}
+        {b.distanceKm && !(chrono.distanceKm && chrono.distanceKm > 0) ? <Chiffre v={`${fmtNum(b.distanceKm)} km`} l={traduire('distance, d’après la vitesse du tapis')} /> : null}
         {typeof b.penteMoy === 'number' ? <Chiffre v={`${fmtNum(b.penteMoy)} %`} l={traduire('pente moyenne')} /> : null}
         {typeof b.vitesseMoy === 'number' ? <Chiffre v={`${fmtNum(b.vitesseMoy)} km/h`} l={traduire('vitesse moyenne')} /> : null}
         {typeof b.niveauMoy === 'number' ? <Chiffre v={fmtNum(b.niveauMoy)} l={traduire('niveau moyen')} /> : null}
