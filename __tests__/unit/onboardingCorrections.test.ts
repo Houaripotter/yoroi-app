@@ -36,24 +36,27 @@ describe('ordre des ecrans du Studio', () => {
       expect(position).toBeGreaterThanOrEqual(1);
       expect(position).toBeLessThanOrEqual(total);
     }
-    expect(compteurEcran(22)).toEqual({ position: 5, total: 22 });
-    expect(compteurEcran(20)).toEqual({ position: 7, total: 22 });
+    // 7 novembre 2026 : Ou as-tu connu YOROI (22) juste apres Ton plan (18), avant Sante et Premium
+    expect(compteurEcran(22)).toEqual({ position: 20, total: 22 });
+    expect(compteurEcran(20)).toEqual({ position: 6, total: 22 });
     expect(compteurEcran(19)).toEqual({ position: 22, total: 22 });
   });
 
   it('les fleches suivent le parcours reel', () => {
-    expect(ecranSuivant(3)).toBe(22);
-    expect(ecranSuivant(22)).toBe(4);
+    expect(ecranSuivant(3)).toBe(4);
     expect(ecranSuivant(4)).toBe(20);
     expect(ecranSuivant(20)).toBe(5);
-    expect(ecranSuivant(18)).toBe(9);
+    expect(ecranSuivant(18)).toBe(22);
+    expect(ecranSuivant(22)).toBe(9);
+    expect(ecranPrecedent(22)).toBe(18);
     expect(ecranSuivant(19)).toBe(19);
     expect(ecranPrecedent(0)).toBe(0);
     expect(ecranPrecedent(5)).toBe(20);
   });
 
   it('les puces et la page demandee ouvrent le bon ecran', () => {
-    expect(ecranAPosition(4)).toBe(22);
+    expect(ecranAPosition(4)).toBe(4);
+    expect(ecranAPosition(19)).toBe(22);
     expect(ecranAPosition(TOTAL_ECRANS - 1)).toBe(19);
     expect(ecranAPosition(99)).toBe(19);
     expect(ecranApercuDemande(22)).toBe(22);
