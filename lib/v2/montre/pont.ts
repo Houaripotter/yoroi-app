@@ -8,6 +8,7 @@ type Pont = {
   activateSession?: () => Promise<boolean>;
   ping?: () => Promise<{ supported?: boolean; paired?: boolean; installed?: boolean; reachable?: boolean; state?: string }>;
   updateApplicationContext?: (ctx: Record<string, unknown>) => Promise<boolean>;
+  sendMessageToWatch?: (msg: Record<string, unknown>) => Promise<unknown>;
   getPendingPayloads?: () => Promise<string[]>;
   clearPendingPayloads?: (count: number) => Promise<boolean>;
   addListener?: (e: string) => void;
@@ -44,6 +45,21 @@ export async function envoyerContexteNatif(json: string): Promise<boolean> {
   if (!mod?.updateApplicationContext) return false;
   try {
     return !!(await mod.updateApplicationContext({ yoroi: json }));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 7 novembre 2026 : sendMessage({ yoroi: JSON }), livre tout de suite quand la montre est joignable (app ouverte
+ * ou gardee vivante par la seance). false si elle ne l'est pas : le contexte d'application suit son chemin.
+ * La montre le lit comme un contexte (ios/YoroiWatch/Services/Synchro.swift, didReceiveMessage).
+ */
+export async function envoyerMessageNatif(json: string): Promise<boolean> {
+  if (!mod?.sendMessageToWatch) return false;
+  try {
+    await mod.sendMessageToWatch({ yoroi: json });
+    return true;
   } catch {
     return false;
   }
