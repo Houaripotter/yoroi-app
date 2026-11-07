@@ -76,11 +76,24 @@ final class Routeur {
     chemin = pileMinuteurs()
   }
 
-  /// Lance un minuteur et affiche son ecran.
+  /// Lance un minuteur et affiche son ecran (Siri, bouton Action, Raccourcis : LancerMinuteurIntent).
   func lancerMinuteur(secondes: Int) {
-    let id = MinuteurMoteur.shared.lancer(secondes: secondes)
+    let pile = lancerEtPile(secondes: secondes)
     guard live == nil else { return }
-    chemin = [.minuteurs, .minuteur(id)]
+    chemin = pile
+  }
+
+  /// 7 novembre 2026 : lance un minuteur et renvoie la pile a afficher. Pendant ta seance guidee, le minuteur
+  /// devient le repos de la seance (SeanceGuidee.lancerRepos, une seule sonnerie avec l'iPhone) : son ecran,
+  /// ou la seance guidee si c'est l'iPhone qui sonne (reglage Fin de repos).
+  func lancerEtPile(secondes: Int) -> [Ecran] {
+    let guidee = SeanceGuidee.shared
+    if guidee.active {
+      if let id = guidee.lancerRepos(secondes: secondes) { return [.minuteurs, .minuteur(id)] }
+      return [.seanceGuidee]
+    }
+    let id = MinuteurMoteur.shared.lancer(secondes: secondes)
+    return [.minuteurs, .minuteur(id)]
   }
 
   func lancerChrono(_ p: ChronoPreset) {
