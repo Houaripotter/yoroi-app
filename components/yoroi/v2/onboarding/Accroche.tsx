@@ -55,6 +55,7 @@ import { illustration, useIllustrations, type NomSticker } from '@/components/yo
 import Animated, { FadeIn, FadeOut, useReducedMotion } from 'react-native-reanimated';
 import { SceneAnimee } from '@/components/yoroi/v2/scenes/SceneAnimee';
 import { SCENES_VOYAGES } from '@/lib/v2/espace/voyages';
+import { OffreRetrouver } from './OffreRetrouver';
 
 
 /** Compteur reel du contenu (null s'il manque : la carte ne s'affiche pas) */
@@ -746,6 +747,7 @@ export function Accroche({
   onOpenTerms,
   onOpenPrivacy,
   onClose,
+  offre,
 }: {
   genre: 'h' | 'f';
   onStart: () => void;
@@ -756,6 +758,8 @@ export function Accroche({
   onOpenTerms: () => void;
   onOpenPrivacy: () => void;
   onClose?: () => void;
+  /** 7 novembre 2026 : premier lancement, une sauvegarde iCloud trouvee (lib/v2/sauvegarde/retrouver.ts) */
+  offre?: { modifiedAt: number; onRetrouver: () => void; onZero: () => void };
 }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
@@ -1029,6 +1033,7 @@ export function Accroche({
         </View>
       </View>
       </ScrollView>
+      {offre ? <OffreRetrouver modifiedAt={offre.modifiedAt} busy={restoringBackup} onRetrouver={offre.onRetrouver} onZero={offre.onZero} /> : null}
     </View>
   );
 }
