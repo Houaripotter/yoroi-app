@@ -16,6 +16,8 @@ enum Partage {
     static let sons = "yoroi.reglage.sons"
     /// 28 octobre 2026 : son de fin de minuteur, "wizz" (absent = wizz) ou "alarme" (les bips aigus d'avant).
     static let sonFin = "yoroi.reglage.sonFin"
+    /// 7 novembre 2026 : claquettes de bois a 10 s de la fin (absent = actives).
+    static let claquettes = "yoroi.reglage.claquettes10s"
     static let idsEcritsSante = "yoroi.sante.ids"
   }
 
