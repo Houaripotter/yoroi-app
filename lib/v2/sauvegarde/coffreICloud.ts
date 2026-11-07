@@ -12,8 +12,16 @@ import { NativeModules, Platform } from 'react-native';
 import { logger } from '@/lib/security/logger';
 
 export const ICLOUD_OK = '@yoroi_last_icloud_success';
-/** nombre de copies gardees dans le dossier iCloud (ecrasees a tour de role) */
-export const COPIES_ICLOUD = 3;
+/** 7 novembre 2026 : dernier echec d'une copie iCloud, et premier essai (pour l'alerte des 3 jours sans copie) */
+export const ICLOUD_KO = '@yoroi_cloud_sync_icloud_echec';
+export const ICLOUD_PREMIER_ESSAI = '@yoroi_cloud_sync_icloud_premier_essai';
+/**
+ * Nombre de copies gardees dans le dossier iCloud (ecrasees a tour de role, une par jour).
+ * 7 novembre 2026 : 7 au lieu de 3. Sans les photos, 7 copies pesent quelques Mo au plus.
+ */
+export const COPIES_ICLOUD = 7;
+/** Les noms d'avant le 7 novembre 2026 (3 copies, sans nom d'appareil) : toujours lus pour remettre une sauvegarde */
+export const ANCIENS_NOMS_ICLOUD = ['yoroi_backup_auto_1.json', 'yoroi_backup_auto_2.json', 'yoroi_backup_auto_3.json'];
 
 export type SauvegardeICloud = { name: string; size: number; modifiedAt: number; telecharge: boolean };
 
@@ -30,9 +38,33 @@ function natif(): ModuleNatif | null {
   return m && typeof m.icloudDisponible === 'function' ? m : null;
 }
 
-/** Nom du fichier du jour dans le dossier iCloud (3 noms, un par jour, a tour de role) */
-export function nomCopieICloud(now = Date.now()): string {
-  return `yoroi_backup_auto_${(Math.floor(now / 86400000) % COPIES_ICLOUD) + 1}.json`;
+/**
+ * Nom du fichier du jour dans le dossier iCloud : 7 noms, un par jour, a tour de role, avec le petit identifiant
+ * de ce telephone (lib/v2/sauvegarde/appareil.ts) pour que l'iPad n'ecrase plus l'iPhone.
+ * yoroi_backup_auto_<appareil>_<1 a 7>.json
+ */
+export function nomCopieICloud(now = Date.now(), appareil = 'appareil'): string {
+  return `yoroi_backup_auto_${appareil}_${(Math.floor(now / 86400000) % COPIES_ICLOUD) + 1}.json`;
+}
+
+/** La copie la plus recente de ce telephone, reecrite a chaque copie : yoroi_backup_auto_<appareil>_derniere.json */
+export function nomDerniereICloud(appareil = 'appareil'): string {
+  return `yoroi_backup_auto_${appareil}_derniere.json`;
+}
+
+/** Une copie automatique (nouveaux noms ou anciens yoroi_backup_auto_1 a 3) */
+export function estCopieAuto(nom: string): boolean {
+  return ANCIENS_NOMS_ICLOUD.includes(nom) || /^yoroi_backup_auto_[a-z0-9]{1,12}_([1-9]|derniere)\.json$/.test(nom);
+}
+
+/**
+ * L'ordre pour remettre une sauvegarde : la plus recente d'abord ; a date egale (meme copie ecrite deux fois),
+ * le fichier « derniere » d'abord. Tous les noms comptent, anciens compris.
+ */
+export function ordreRestauration(l: SauvegardeICloud[]): SauvegardeICloud[] {
+  return [...l]
+    .filter((x) => x && typeof x.name === 'string' && /^yoroi_backup_.*\.json$/.test(x.name))
+    .sort((a, b) => (b.modifiedAt - a.modifiedAt) || (Number(/_derniere\.json$/.test(b.name)) - Number(/_derniere\.json$/.test(a.name))));
 }
 
 /** Vrai si l'utilisateur est connecte a iCloud avec iCloud Drive, et que l'app a la capacite iCloud */
@@ -52,13 +84,20 @@ export async function copierDansICloud(cheminLocal: string): Promise<boolean> {
   if (!m?.copyToICloud) return false;
   try {
     const propre = cheminLocal.startsWith('file://') ? decodeURIComponent(cheminLocal.slice(7)) : cheminLocal;
+    if (!(await AsyncStorage.getItem(ICLOUD_PREMIER_ESSAI).catch(() => null))) await AsyncStorage.setItem(ICLOUD_PREMIER_ESSAI, new Date().toISOString()).catch(() => undefined);
     const ok = (await m.copyToICloud(propre)) === true;
-    if (ok) await AsyncStorage.setItem(ICLOUD_OK, new Date().toISOString()).catch(() => undefined);
+    await AsyncStorage.setItem(ok ? ICLOUD_OK : ICLOUD_KO, new Date().toISOString()).catch(() => undefined);
     return ok;
   } catch (e) {
     logger.warn('[CoffreICloud] copie impossible', e);
+    await AsyncStorage.setItem(ICLOUD_KO, new Date().toISOString()).catch(() => undefined);
     return false;
   }
+}
+
+/** Note un echec de copie iCloud venu d'ailleurs (delai depasse) */
+export async function noterEchecICloud(): Promise<void> {
+  await AsyncStorage.setItem(ICLOUD_KO, new Date().toISOString()).catch(() => undefined);
 }
 
 /** Les sauvegardes du dossier iCloud, la plus recente d'abord */
@@ -86,13 +125,23 @@ export async function preparerICloud(nom: string): Promise<string | null> {
   }
 }
 
-/** Date de la derniere copie reussie dans iCloud (ms), 0 si jamais */
-export async function derniereCopieICloud(): Promise<number> {
+const lireTemps = async (cle: string): Promise<number> => {
   try {
-    const v = await AsyncStorage.getItem(ICLOUD_OK);
+    const v = await AsyncStorage.getItem(cle);
     const t = v ? new Date(v).getTime() : 0;
     return Number.isFinite(t) ? t : 0;
   } catch {
     return 0;
   }
+};
+
+/** Date de la derniere copie reussie dans iCloud (ms), 0 si jamais */
+export async function derniereCopieICloud(): Promise<number> {
+  return lireTemps(ICLOUD_OK);
+}
+
+/** Dernier echec et premier essai de copie iCloud (ms), 0 si jamais */
+export async function echecsICloud(): Promise<{ echec: number; premierEssai: number }> {
+  const [echec, premierEssai] = await Promise.all([lireTemps(ICLOUD_KO), lireTemps(ICLOUD_PREMIER_ESSAI)]);
+  return { echec, premierEssai };
 }
