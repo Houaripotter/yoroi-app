@@ -167,7 +167,7 @@ const base64ToImage = async (base64: string, fileName: string): Promise<string |
  * @param options.includePhotos Si false, les photos sont exclues (backup léger, 10-50x plus petit).
  *                              Utile pour : envoi par email, stockage limité, backup rapide sans média.
  */
-export const exportDataToJSON = async (options?: { silent?: boolean; includePhotos?: boolean }): Promise<boolean> => {
+export const exportDataToJSON = async (options?: { silent?: boolean; includePhotos?: boolean; local?: boolean }): Promise<boolean> => {
   // 7 novembre 2026 : les photos ne quittent jamais le telephone. Par defaut, une sauvegarde silencieuse (automatique)
   // se fait SANS les photos ; un export lance a la main les garde, comme avant (lib/v2/sauvegarde/regleCopieCloud.ts).
   const { silent, includePhotos } = optionsExport(options);
@@ -647,7 +647,8 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
 
     // 7 novembre 2026 : rien ne part dans le cloud avec les photos, ni une copie automatique vide
     // (lib/v2/sauvegarde/regleCopieCloud.ts). Le nom de la copie automatique porte l'identifiant du telephone.
-    const versLeCloud = copieCloudPermise({ silent, includePhotos, counts });
+    // 7 novembre 2026 : local (copie de securite avant « Retrouver une sauvegarde ») : rien ne part dans le cloud
+    const versLeCloud = copieCloudPermise({ silent, includePhotos, counts }) && options?.local !== true;
     if (!versLeCloud) logger.info('[Backup] Pas de copie cloud pour ce fichier (photos ou sauvegarde vide)');
     let appareil = 'appareil';
     if (versLeCloud && silent) {
