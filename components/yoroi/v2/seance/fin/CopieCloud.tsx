@@ -13,7 +13,7 @@ import React, { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { activerCopieAuto, copierMaintenant, etatProtection, lireProtection, nomDuCloud } from '@/lib/v2/sauvegarde/copieAuto';
+import { activerCopieAuto, copierMaintenant, etatProtection, lireProtection, nomDuCloud, rappelsMasques } from '@/lib/v2/sauvegarde/copieAuto';
 import type { EtatProtection } from '@/lib/v2/sauvegarde/copieAuto';
 import { traduire } from '@/lib/i18n/tr';
 import { lireMontreeAccueil, lirePlusTard, montrerFinSeance, noterMontreeFinSeance } from '@/lib/v2/sauvegarde/momentCopie';
@@ -35,11 +35,16 @@ export function CopieCloud() {
       const [plusTardLe, autreCarteLe] = await Promise.all([lirePlusTard(), lireMontreeAccueil()]);
       if (!vivant) return;
       if (!montrerFinSeance({ etat: e, plusTardLe, autreCarteLe, aujourdhui })) return;
-      if (e !== 'protege') void noterMontreeFinSeance(aujourdhui);
-      if (e === 'protege') {
+      // 7 novembre 2026 : copie automatique en place (iCloud, ou dossier relie) : la copie part, sans proposition
+      if (!rappelsMasques(e)) void noterMontreeFinSeance(aujourdhui);
+      if (rappelsMasques(e)) {
         setEtat('copie');
         const ok = await copierMaintenant();
-        if (vivant) setEtat(ok ? 'copiee' : 'en_panne');
+        if (!vivant) return;
+        if (ok) return setEtat('copiee');
+        // une seule copie ratee n'est pas une panne : l'alerte vient seulement apres 3 jours sans copie
+        const apres = etatProtection(await lireProtection());
+        if (vivant) setEtat(apres === 'en_panne' ? 'en_panne' : 'lecture');
       } else setEtat(e);
     })().catch(() => vivant && setEtat('non_dispo'));
     return () => {
