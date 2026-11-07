@@ -15,6 +15,9 @@
  * ça ne sert à rien ») : juste apres ton chemin, la carte « Ce que YOROI va faire pour toi » : 3 ou 4 choses concretes
  * tirees de tes reponses et des vraies fonctions de l'app (lib/v2/premium/pourToi.ts, ceQueYoroiFait) ; la seule
  * Premium est marquee comme telle, et la premiere carte du paywall la prolonge.
+ * 7 novembre 2026 (audit valide par Houari : « le graphique est presque vide ») : ton chemin dessine ta ligne projetee
+ * avec tes paliers dessus (CheminPaliers.tsx : meme logique que la carte Ton poids de l'accueil, couleurs des anneaux
+ * de Sante, seulement tes chiffres). Les pastilles des paliers prennent les memes couleurs.
  */
 import React from 'react';
 import { Image, View } from 'react-native';
@@ -35,6 +38,7 @@ import { PiedArrivee } from '@/components/yoroi/v2/premium/TonPlan';
 import { joursTexte } from '@/components/yoroi/v2/espace/JoursPicker';
 import { arriveeVue, gapText } from './Cap';
 import { PlanCurve } from './PlanCurve';
+import { CheminPaliers, couleurPalier, paliersDuPlan } from './CheminPaliers';
 import { SemaineCouleurs } from './SemaineCouleurs';
 import { PlanSport } from './PlanSport';
 import { ApercuProgres, apercuCheminVisible } from './ApercuProgres';
@@ -86,6 +90,9 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
   const v = e && start != null ? arriveeVue(e, start, target as number) : null;
   const ok = e?.kind === 'ok';
   const baisse = start != null && target != null && !maintain && (target as number) < start;
+  // 7 novembre 2026 : la ligne et ses paliers vont vers le cap affiche (le cap propose si le tien est trop loin)
+  const versChemin = !maintain && start != null ? (v ? v.courbeVers : (target as number | null)) : null;
+  const avecPaliers = start != null && versChemin != null && Math.abs(versChemin - start) >= 1;
   const g = genre === 'f' ? 'f' : 'h';
   const ri = Math.max(0, Math.min(4, rankIndex));
   const persoDe = (i: number) => (univers === 'japon' ? guerrierImage(genre, i) : univers === 'classique' ? CLASSIQUE_IMAGES[g][i] : null);
@@ -164,15 +171,19 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIn
                 text={maintain ? traduire('Garder **{0} kg**', kg(start)) : v ? (ok ? traduire("Cap sur **{0} kg**", kg(target as number)) : v.titre) : traduire('Tu es déjà sur ton cap')}
               />
               {/* vague 50 : l'arrivee prevue comme sur Ton plan : le vrai torii et les vraies dates, en indigo fonce */}
-              {ok && e?.kind === 'ok' ? <PiedArrivee arrivee={fourchetteDates(e.earliest, e.latest)} style={{ borderRadius: 16, borderWidth: 1, borderColor: '#EFE4C8', marginVertical: 2 }} /> : null}
-              <PlanCurve start={start} target={maintain ? null : v ? v.courbeVers : target} width={Math.max(120, largeur - 32)} height={140} endLabel={v ? v.fin : null} />
-              {/* 27 octobre 2026 : les paliers de ton chemin, avec tes kilos (25, 50, 75 % entre ton poids du jour et ton cap) */}
-              {!maintain && target != null && Math.abs((target as number) - start) >= 1 ? (
+              {ok && e?.kind === 'ok' ? <PiedArrivee arrivee={fourchetteDates(e.earliest, e.latest).replace(/(\d) /g, '$1\u00A0')} style={{ borderRadius: 16, borderWidth: 1, borderColor: '#EFE4C8', marginVertical: 2 }} /> : null}
+              {avecPaliers ? (
+                <CheminPaliers start={start} target={versChemin as number} width={Math.max(120, largeur - 32)} endLabel={v ? v.fin : null} />
+              ) : (
+                <PlanCurve start={start} target={maintain ? null : v ? v.courbeVers : target} width={Math.max(120, largeur - 32)} height={140} endLabel={v ? v.fin : null} />
+              )}
+              {/* 27 octobre 2026 : les paliers de ton chemin, avec tes kilos ; 7 novembre 2026 : les memes que sur la ligne et a l'accueil */}
+              {avecPaliers ? (
                 <View style={{ flexDirection: 'row', gap: 6 }}>
-                  {[0.25, 0.5, 0.75].map((p, k) => (
-                    <View key={p} style={{ flex: 1, borderRadius: 14, backgroundColor: ['#E8ECFF', '#EFE6F3', '#F6EEDD'][k], paddingVertical: 8, alignItems: 'center', gap: 1 }}>
-                      <Ink size={10} weight="black" color={['#3557D9', '#8A3F78', '#A57A1C'][k]} style={{ letterSpacing: 0.8 }}>{traduire('PALIER {0}', k + 1)}</Ink>
-                      <Ink size={15} weight="black" color={c.ink}>{`${kg(start + ((target as number) - start) * p)} kg`}</Ink>
+                  {paliersDuPlan(start, versChemin as number).slice(0, 3).map((p, k) => (
+                    <View key={k} style={{ flex: 1, borderRadius: 14, backgroundColor: c.surface, borderWidth: 2, borderColor: couleurPalier(k).rond, paddingVertical: 7, alignItems: 'center', gap: 1 }}>
+                      <Ink size={10} weight="black" color={couleurPalier(k).texte} style={{ letterSpacing: 0.8 }}>{traduire('PALIER {0}', k + 1)}</Ink>
+                      <Ink size={15} weight="black" color={c.ink}>{`${kg(p.kg)} kg`}</Ink>
                     </View>
                   ))}
                 </View>
