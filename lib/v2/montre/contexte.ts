@@ -122,6 +122,8 @@ export type SeanceMontre = {
   /** index de l'exercice en cours */
   cur: number;
   exos: ExoSeanceMontre[];
+  /** 7 novembre 2026 : « iphone », reglage Fin de repos sur iPhone, la montre affiche le repos sans sonner */
+  sonne?: 'iphone';
 };
 
 export type ProfilPlan = {
