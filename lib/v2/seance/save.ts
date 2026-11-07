@@ -225,7 +225,9 @@ function runAfterSave(t: Training, skipHealth = false): void {
       const start = new Date(t.date.slice(0, 10) + 'T12:00:00');
       start.setHours(h || 0, m || 0, 0, 0);
       const end = new Date(start.getTime() + (t.duration_minutes || 60) * 60000);
-      await health.writeWorkout({ activityType: getSportName(t.sport), startDate: start, endDate: end, distance: t.distance, calories: t.calories });
+      // 7 novembre 2026 : des kcal lues dans Sante (cardio repris de la montre) y sont deja : jamais recopiees
+      const dejaDansSante = t.calories_source === 'appareil' || t.calories_source === 'sante';
+      await health.writeWorkout({ activityType: getSportName(t.sport), startDate: start, endDate: end, distance: t.distance, calories: dejaDansSante ? undefined : t.calories });
     })
     .catch((err) => logger.warn('Export Sante non fait (non bloquant)', err));
 }
