@@ -6,7 +6,7 @@
 import { bilanCardio, infoCardio, typeDeNom } from './cardioChoix';
 import type { SegmentCardio, TypeCardio } from './cardioChoix';
 import type { ChronoCardio } from './cardioFin';
-export type ExoLive = { notes?: string; cardio?: Pick<ChronoCardio, 'distanceKm' | 'type' | 'segments' | 'fcMoy' | 'zone2' | 'parler'> | null };
+export type ExoLive = { notes?: string; cardio?: Pick<ChronoCardio, 'distanceKm' | 'type' | 'segments' | 'fcMoy' | 'zone2' | 'parler' | 'montre'> | null };
 /**
  * 31 octobre 2026 : le resume du cardio garde avec l'exercice (le JSON des exercices de la seance, sans nouvelle
  * colonne) : type, pente, vitesse ou niveau moyens, segments s'il y en a plusieurs, FC moyenne et zone 2.
@@ -22,6 +22,8 @@ export type ResumeCardio = {
   parler?: boolean;
   /** la distance vient de la vitesse du tapis et du temps */
   distanceCalculee?: true;
+  /** 7 novembre 2026 : repris de la montre (Apple Sante) : l'appareil et les kcal mesurees (lib/v2/seance/montreCardio.ts) */
+  montre?: { appareil: string | null; kcal?: number; kcalSource?: 'appareil' | 'sante' };
 };
 export type ExoEnregistre = { notes?: string; duration?: number; distance?: number; cardio?: ResumeCardio };
 
@@ -47,6 +49,8 @@ export function completerExercice<T extends ExoEnregistre>(out: T, e: ExoLive, d
       if (e.cardio.zone2) r.zone2 = { ...e.cardio.zone2 };
       if (typeof e.cardio.parler === 'boolean') r.parler = e.cardio.parler;
       if (!(e.cardio.distanceKm && e.cardio.distanceKm > 0) && b?.distanceKm) r.distanceCalculee = true;
+      const m = e.cardio.montre;
+      if (m) r.montre = { appareil: m.appareil ?? null, ...(m.kcal && m.kcal > 0 && m.kcalSource ? { kcal: Math.round(m.kcal), kcalSource: m.kcalSource } : {}) };
       out.cardio = r;
     }
   }
