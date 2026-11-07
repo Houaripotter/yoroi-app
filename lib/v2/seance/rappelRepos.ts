@@ -13,6 +13,7 @@ import { useEffect, useRef } from 'react';
 import { AppState, Platform } from 'react-native';
 import { contenuNotificationSur } from '@/lib/v2/notifications/contenuSur';
 import { annulerAlarmeRepos, delaiRetraitPremierPlan, estIdAlarme, programmerAlarmeRepos, chargerSonnerieRepos, retirerAlarmeRepos, retirerToutesAlarmesRepos } from '@/lib/v2/seances/alarmeRepos';
+import { assurerReglageFinRepos, estFinSurMontre, noterFinSurMontre } from './sonneurRepos';
 
 export const TYPE_FIN_REPOS = 'rest_finished';
 const CLE_DEMANDE = 'yoroi_rappel_repos_demande_v1';
@@ -204,6 +205,8 @@ function depsApp(titre: () => string, corps: () => string = () => ''): DepsRappe
     // 31 octobre 2026 : l'autorisation est verifiee dans planifier, par voie (alarme, puis notification)
     autorise: async () => true,
     planifier: async (secondes, finMs) => {
+      // 7 novembre 2026 : ce repos sonne sur la montre, le telephone se tait (lib/v2/seance/sonneurRepos.ts)
+      if (estFinSurMontre(typeof finMs === 'number' ? finMs : Date.now() + secondes * 1000)) return null;
       // 31 octobre 2026 : d'abord l'alarme du systeme (AlarmKit, iOS 26), qui sonne comme le minuteur d'Apple
       if (await finReposVoulue()) {
         const fin = typeof finMs === 'number' ? finMs : Date.now() + secondes * 1000;
@@ -229,8 +232,13 @@ function depsApp(titre: () => string, corps: () => string = () => ''): DepsRappe
 }
 /* eslint-enable @typescript-eslint/no-require-imports */
 
-/** Branche le rappel de fin de repos sur l'écran de séance : `finMs` est la fin du repos en cours (ou null) */
-export function useRappelFinRepos(finMs: number | null | undefined, titre: string, corps = ''): void {
+/**
+ * Branche le rappel de fin de repos sur l'écran de séance : `finRepos` est la fin du repos en cours (ou null).
+ * 7 novembre 2026 : surMontre, la montre a confirmé qu'elle sonne ce repos : notification et alarme retirées.
+ * Sans cette confirmation (5 s au plus apres le debut du repos), le rappel reste programme : le telephone sonne.
+ */
+export function useRappelFinRepos(finRepos: number | null | undefined, titre: string, corps = '', surMontre = false): void {
+  const finMs = surMontre ? null : finRepos;
   const rappel = useRef<ReturnType<typeof creerRappelRepos> | null>(null);
   const titreRef = useRef(titre);
   titreRef.current = titre;
@@ -240,6 +248,11 @@ export function useRappelFinRepos(finMs: number | null | undefined, titre: strin
   if (!rappel.current) rappel.current = creerRappelRepos(depsApp(() => titreRef.current, () => corpsRef.current));
 
   useEffect(() => {
+    noterFinSurMontre(surMontre ? finRepos ?? null : null);
+  }, [surMontre, finRepos]);
+
+  useEffect(() => {
+    assurerReglageFinRepos();
     const r = rappel.current!;
     const sub = AppState.addEventListener('change', (etat) => {
       if (etat === 'background') void r.arrierePlan();
