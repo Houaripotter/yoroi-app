@@ -11,6 +11,10 @@
  * La frequence ne change que si tu la touches.
  * 27 octobre 2026 (Houari : « réduis un peu la taille, vraiment légèrement ») : titre, cartes, ronds et tuiles
  * environ 8 a 10 % plus petits, pour que plus de choses tiennent sans defiler.
+ * 7 novembre 2026 (audit valide par Houari) : plus de question « Combien de fois par semaine ? ». Le nombre suit les
+ * jours touches, exactement comme Tes jours d'entrainement (Rythme.tsx) : une question de moins, meme frequence gardee.
+ * Rien d'autre ne lisait ce nombre : seuls les jours (peseeJours) sont gardes et enregistres (lib/v2/onboarding/save.ts),
+ * et Ton plan compte les pesees par semaine a partir d'eux. Les ronds des jours sont partages avec Rythme (JoursRonds).
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
@@ -20,8 +24,8 @@ import { selectionAsync } from 'expo-haptics';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
 import { tap } from '@/components/yoroi/v2/accueil/kit';
-import { JOURS_LETTRES, JOURS_NOMS, joursRepartis, joursTexte } from '@/components/yoroi/v2/espace/JoursPicker';
-import { joursTries, synchroniserOrdre, toucherJour } from '@/lib/v2/joursFrequence';
+import { basculerJour, joursTexte } from '@/components/yoroi/v2/espace/JoursPicker';
+import { JoursRonds } from './JoursRonds';
 import { Tampon } from '@/components/yoroi/v2/tampons/Tampon';
 import type { TamponId } from '@/components/yoroi/v2/tampons/table';
 import type { PeseeMoment } from '@/lib/v2/onboarding/draft';
@@ -29,7 +33,7 @@ import { ENCRES_THEME as ENCRES } from './couleurs';
 import type { Encre } from './couleurs';
 import { MainButton, Riche, Shell, useColors } from './ui';
 import type { Nav } from './types';
-import { traduire, traduirePluriel, LANG, LOCALE } from '@/lib/i18n/tr';
+import { traduire, LANG, LOCALE } from '@/lib/i18n/tr';
 
 /** Hors français : l'heure « HH:MM » au format de la langue (« 6:30 PM », « 18:30 ») */
 const heureLocale = (t: string) => new Date(2026, 0, 1, parseInt(t, 10) || 0, parseInt(t.split(':')[1] ?? '0', 10) || 0).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
@@ -160,32 +164,6 @@ function Bloc({ n, titre, children, delay }: { n: number; titre: string; childre
   );
 }
 
-/** Pastille ronde (nombre ou jour) */
-function Rond({ label, sous, on, onPress, a11y, role = 'button' }: { label: string; sous?: string; on: boolean; onPress: () => void; a11y: string; role?: 'button' | 'checkbox' }) {
-  const c = useColors();
-  return (
-    <Pressable
-      onPress={() => {
-        tap('medium');
-        onPress();
-      }}
-      accessibilityRole={role}
-      accessibilityState={role === 'checkbox' ? { checked: on } : { selected: on }}
-      accessibilityLabel={a11y}
-      style={{ flex: 1, alignItems: 'center', gap: 4 }}
-    >
-      {({ pressed }) => (
-        <>
-          <View style={{ width: '100%', maxWidth: 40, aspectRatio: 1, borderRadius: 999, backgroundColor: on ? CHOISI : pressed ? c.fillSubtle : c.fillSoft, alignItems: 'center', justifyContent: 'center', transform: [{ scale: on ? 1.08 : 1 }] }}>
-            <Ink size={15.5} weight="black" color={on ? '#FFFFFF' : c.ink}>{label}</Ink>
-          </View>
-          {sous ? <Ink size={10} weight={on ? 'black' : 'bold'} color={on ? CHOISI : c.textMuted}>{sous}</Ink> : null}
-        </>
-      )}
-    </Pressable>
-  );
-}
-
 export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onNext }: {
   nav: Nav;
   value: PeseeMoment | null;
@@ -200,23 +178,8 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
   const c = useColors();
   const n = jours.length;
   const h = heure ?? '07:00';
-  // la frequence choisie a la main ; au retour sur l'ecran, celle qui correspond aux jours deja pris
-  const [freq, setFreq] = useState<number | null>(jours.length || null);
-  // l'ordre ou les jours ont ete pris (le plus ancien en tete) : c'est lui qui laisse sa place
-  const ordre = useRef<number[]>(joursTries(jours));
-  ordre.current = synchroniserOrdre(ordre.current, jours);
-  const toucher = (j: number) => {
-    const next = toucherJour(ordre.current, j, freq);
-    ordre.current = next;
-    onJours(joursTries(next));
-  };
-  const choisirFrequence = (k: number) => {
-    setFreq(k);
-    const next = joursRepartis(k);
-    ordre.current = next;
-    onJours(next);
-  };
-  const reste = freq != null && n < freq ? freq - n : 0;
+  // 7 novembre 2026 : toucher un jour le prend ou le retire ; le nombre de pesees par semaine en decoule
+  const toucher = (j: number) => onJours(basculerJour(jours, j));
   const ready = !!value && value !== 'inconnu' && n > 0;
   return (
     <Shell {...nav} title={traduire("Ton **moment** avec la balance")} echelle={0.91} gap={12} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={!ready} />}>
@@ -233,35 +196,17 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
         />
       </Animated.View>
 
-      <Bloc n={1} titre={traduire("Combien de fois par semaine ?")} delay={60}>
-        <View style={{ flexDirection: 'row', gap: 6 }}>
-          {[1, 2, 3, 4, 5, 6, 7].map((k) => (
-            <Rond key={k} label={String(k)} on={freq === k} onPress={() => choisirFrequence(k)} a11y={k === 7 ? traduire('Tous les jours') : traduire("{0} fois par semaine", k)} />
-          ))}
-        </View>
-      </Bloc>
-
-      <Bloc n={2} titre={traduire("Quels jours ?")} delay={120}>
-        <View style={{ flexDirection: 'row', gap: 6 }}>
-          {JOURS_LETTRES.map((l, j) => (
-            <Rond key={JOURS_NOMS[j]} label={l} sous={JOURS_NOMS[j].slice(0, 3)} on={jours.includes(j)} onPress={() => toucher(j)} a11y={traduire("Pesée : {0}", JOURS_NOMS[j])} role="checkbox" />
-          ))}
-        </View>
+      <Bloc n={1} titre={traduire("Quels jours ?")} delay={60}>
+        <JoursRonds value={jours} onToggle={toucher} a11y={(nom) => traduire("Pesée : {0}", nom)} />
         <Riche
-          text={
-            n
-              ? `${n === 7 ? traduire('**Tous les jours**') : traduire("**{0} fois** : {1}", n, joursTexte(jours))}${reste ? traduirePluriel(reste, reste > 1, ". Encore {0} jour à choisir.", ". Encore {0} jours à choisir.", reste) : ''}`
-              : freq
-                ? traduire('Touche {0}.', freq === 1 ? traduire('ton jour') : traduire("tes {0} jours", freq))
-                : traduire('Choisis un nombre ou touche tes jours.')
-          }
+          text={n ? (n === 7 ? traduire('**Tous les jours**') : traduire("**{0} fois** : {1}", n, joursTexte(jours))) : traduire('Touche les jours où tu te pèses. Le nombre suit tout seul.')}
           size={14}
           weight="bold"
           ink={c.accent}
         />
       </Bloc>
 
-      <Bloc n={3} titre={traduire("À quel moment ?")} delay={180}>
+      <Bloc n={2} titre={traduire("À quel moment ?")} delay={120}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {LIST.map((m) => {
             const on = value === m.id;
@@ -297,7 +242,7 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
         {value === 'reveil' ? <Riche text={traduire("**À jeun, au réveil** : le plus fiable d’un jour à l’autre.")} size={13} weight="bold" ink={ENCRES.or.ink} /> : null}
       </Bloc>
 
-      <Animated.View entering={FadeInDown.delay(240).duration(300)} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 11, borderRadius: 20, backgroundColor: c.accentTint, padding: 12 }}>
+      <Animated.View entering={FadeInDown.delay(180).duration(300)} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 11, borderRadius: 20, backgroundColor: c.accentTint, padding: 12 }}>
         <Image source={illustration('rappels')} style={{ width: 34, height: 34 }} resizeMode="contain" accessibilityIgnoresInvertColors />
         <Riche
           text={traduire("**Un seul rappel doux**, environ 2{0}h après, seulement ces jours et si ta pesée manque. Tu peux tout changer dans Réglages, Rappels.", NB)}
