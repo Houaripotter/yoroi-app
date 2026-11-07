@@ -188,11 +188,37 @@ export async function runAutoBackupIfDue(): Promise<boolean> {
     return false;
   }
 
+  return lancerCopieSilencieuse('quotidienne');
+}
+
+// 7 novembre 2026 : heure de la derniere ecriture silencieuse (reussie ou non), lue par les declencheurs
+// (lib/v2/sauvegarde/declencheurs.ts) pour ne jamais ecrire plus d'une fois toutes les 2 minutes.
+let derniereEcriture = 0;
+export function derniereEcritureSilencieuse(): number {
+  return derniereEcriture;
+}
+
+/**
+ * 7 novembre 2026 : une sauvegarde silencieuse tout de suite (apres une seance, une pesee, en quittant l'app),
+ * SANS les photos, avec le meme verrou que la sauvegarde du jour. Le rythme (2 minutes au moins entre deux
+ * ecritures) est garde par lib/v2/sauvegarde/declencheurs.ts.
+ */
+export async function executerCopieSilencieuse(raison: string): Promise<boolean> {
+  if (Platform.OS === 'web' || vitrineActive()) return false;
+  if (runningPromise) return runningPromise;
+  if (!(await isAutoBackupEnabled())) return false;
+  return lancerCopieSilencieuse(raison);
+}
+
+function lancerCopieSilencieuse(raison: string): Promise<boolean> {
+  if (runningPromise) return runningPromise;
   runningPromise = (async (): Promise<boolean> => {
     try {
+      derniereEcriture = Date.now();
       await markAttempt();
-      logger.info('[AutoBackup] Déclenchement backup automatique silent');
-      const ok = await exportDataToJSON({ silent: true });
+      logger.info(`[AutoBackup] Déclenchement backup automatique silent (${raison})`);
+      // les photos ne quittent jamais le telephone : une copie automatique part toujours sans elles
+      const ok = await exportDataToJSON({ silent: true, includePhotos: false });
       if (ok) {
         const now = new Date().toISOString();
         await AsyncStorage.setItem(LAST_AUTO_BACKUP_KEY, now);
@@ -209,6 +235,8 @@ export async function runAutoBackupIfDue(): Promise<boolean> {
       return false;
     } finally {
       runningPromise = null;
+      // la ligne d'etat des Reglages et les cartes se relisent (PROTECTION_CHANGED_EVENT de lib/v2/sauvegarde/copieAuto.ts)
+      DeviceEventEmitter.emit('yoroi:protection_donnees');
     }
   })();
 
@@ -234,6 +262,14 @@ export function scheduleAutoBackupOnStartup(): void {
       runAutoBackupIfDue().catch(e => logger.error('[AutoBackup] Erreur startup:', e));
       autoBackupTimer = null;
     }, STARTUP_DELAY_MS);
+  }
+
+  // 7 novembre 2026 : apres une pesee ou une seance, et en quittant l'app (lib/v2/sauvegarde/declencheurs.ts)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    (require('./v2/sauvegarde/declencheurs') as typeof import('./v2/sauvegarde/declencheurs')).installerDeclencheurs();
+  } catch (e) {
+    logger.warn('[AutoBackup] Declencheurs non installes', e);
   }
 
   // Observe AppState pour annuler si background (et re-schedule à active)
