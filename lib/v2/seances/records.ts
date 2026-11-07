@@ -13,9 +13,9 @@ import { getSportName } from '@/lib/sports';
 import { durationOf } from '@/lib/v2/trainingWeek';
 import { libelleUnite, versUnitePoids, type UnitePoids } from '@/lib/v2/unitePoids';
 import { estimatedMax, familyOf, firstSport, parseExercises, parseRounds, workSets } from './sessionData';
-import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 import { nomBibliotheque } from '@/lib/v2/seance/rechercheExo';
-import { exerciceEnPlaques } from './plaquesSerie';
+import { exerciceEnPlaques, libellePlaques, maxPlaques } from './plaquesSerie';
 
 export type RecordKind = 'force' | 'reps' | 'distance' | 'allure' | 'rounds' | 'duree';
 
@@ -43,6 +43,27 @@ export type RecordLine = {
   history: RecordPoint[];
 };
 
+/**
+ * 7 novembre 2026 (demande de Houari) : les records en plaques de la pile (lib/v2/seances/plaquesSerie.ts).
+ * Compares en plaques : plus de plaques, puis plus de repetitions a nombre egal. Jamais convertis en kilos et
+ * jamais ranges avec les records en kilos : ils vivent a part (`plaques`, `recentPlaques`), hors des `lines`,
+ * des `highlights` et du total de tampons lus par la gamification et les widgets.
+ * Meme regle que la pastille « Record : 9 plaques » en seance (reperesExo.ts) : series d'echauffement exclues,
+ * la premiere fois sert de point de depart, sans tampon.
+ */
+export type SeriePlaques = { plaques: number; reps: number };
+export type RecordPlaquesPoint = SeriePlaques & { date: string; trainingId?: number; isRecord: boolean };
+export type RecordPlaquesLine = {
+  key: string;
+  name: string;
+  sport: string;
+  best: SeriePlaques;
+  date: string;
+  trainingId?: number;
+  stamps: number;
+  history: RecordPlaquesPoint[];
+};
+
 export type RecordsResult = {
   lines: RecordLine[];
   totalStamps: number;
@@ -52,7 +73,35 @@ export type RecordsResult = {
   recent: { line: RecordLine; point: RecordPoint }[];
   /** records utiles a mettre en avant (force, endurance, puis duree), sans les reperes secondaires */
   highlights: RecordLine[];
+  /** records en plaques de la pile, a part des kilos, du plus recent au plus ancien */
+  plaques: RecordPlaquesLine[];
+  /** records en plaques battus, du plus recent au plus ancien */
+  recentPlaques: { line: RecordPlaquesLine; point: RecordPlaquesPoint }[];
 };
+
+/** Plus de plaques, ou autant de plaques avec plus de repetitions */
+export function plaquesMieux(a: SeriePlaques, b: SeriePlaques): boolean {
+  return a.plaques > b.plaques || (a.plaques === b.plaques && a.reps > b.reps);
+}
+
+function pushPlaques(map: Map<string, RecordPlaquesLine>, key: string, name: string, sport: string, date: string, serie: SeriePlaques, trainingId?: number) {
+  let l = map.get(key);
+  if (!l) {
+    l = { key, name, sport, best: { ...serie }, date, trainingId, stamps: 0, history: [] };
+    map.set(key, l);
+  }
+  const first = l.history.length === 0;
+  const better = first || plaquesMieux(serie, l.best);
+  const isRecord = !first && better;
+  l.history.push({ ...serie, date, trainingId, isRecord });
+  if (better) {
+    l.best = { ...serie };
+    l.date = date;
+    l.trainingId = trainingId;
+    l.name = name;
+  }
+  if (isRecord) l.stamps += 1;
+}
 
 type Acc = {
   line: RecordLine;
@@ -90,6 +139,7 @@ export function cleRecordExercice(name: string): string {
 export function computeRecords(trainings: Training[]): RecordsResult {
   const sorted = [...trainings].filter((t) => t && t.date).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.start_time ?? '').localeCompare(b.start_time ?? '')));
   const map = new Map<string, Acc>();
+  const mapPlaques = new Map<string, RecordPlaquesLine>();
 
   for (const t of sorted) {
     const date = t.date.slice(0, 10);
@@ -117,6 +167,10 @@ export function computeRecords(trainings: Training[]): RecordsResult {
         if (!enPlaques && !(s.weight > 0) && s.reps > bestReps) bestReps = s.reps;
       }
       const key = cleRecordExercice(name);
+      if (enPlaques) {
+        const mp = maxPlaques((ex.setsData ?? []).filter((s) => s && s.type !== 'warmup'));
+        if (mp) pushPlaques(mapPlaques, `plaques:${key}`, name, sport, date, mp, t.id);
+      }
       if (bestMax > 0 && bestSet) {
         const set = bestSet;
         push(map, `force:${key}`, () => ({ key: `force:${key}`, kind: 'force', name, sport, best: 0, date, stamps: 0, history: [] }), false, { date, value: Math.round(bestMax * 10) / 10, trainingId: t.id }, (l) => { l.bestSet = set; l.name = name; });
@@ -179,7 +233,12 @@ export function computeRecords(trainings: Training[]): RecordsResult {
     }
   }
   recent.sort((a, b) => (a.point.date < b.point.date ? 1 : a.point.date > b.point.date ? -1 : 0));
-  return { lines, totalStamps, stampedTrainings, recent, highlights: pickHighlights(lines) };
+
+  const plaques = Array.from(mapPlaques.values()).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.stamps - a.stamps));
+  const recentPlaques: { line: RecordPlaquesLine; point: RecordPlaquesPoint }[] = [];
+  for (const l of plaques) for (const p of l.history) if (p.isRecord) recentPlaques.push({ line: l, point: p });
+  recentPlaques.sort((a, b) => (a.point.date < b.point.date ? 1 : a.point.date > b.point.date ? -1 : 0));
+  return { lines, totalStamps, stampedTrainings, recent, highlights: pickHighlights(lines), plaques, recentPlaques };
 }
 
 const KIND_RANK: Record<RecordKind, number> = { force: 0, allure: 1, distance: 2, reps: 3, duree: 4, rounds: 9 };
@@ -322,6 +381,18 @@ export function regularity(trainings: Training[], today: string): Regularity {
 export function recordsOfTraining(result: RecordsResult, trainingId: number | undefined): { line: RecordLine; point: RecordPoint }[] {
   if (trainingId == null) return [];
   return result.recent.filter((r) => r.point.trainingId === trainingId);
+}
+
+/** Records en plaques battus pendant une seance donnee */
+export function recordsPlaquesOfTraining(result: RecordsResult, trainingId: number | undefined): { line: RecordPlaquesLine; point: RecordPlaquesPoint }[] {
+  if (trainingId == null) return [];
+  return (result.recentPlaques ?? []).filter((r) => r.point.trainingId === trainingId);
+}
+
+/** « 9 plaques », « pour 10 répétitions » : jamais de kilos */
+export function formatRecordPlaques(v: SeriePlaques): { main: string; sub: string } {
+  const r = Math.round(v.reps);
+  return { main: libellePlaques(Math.round(v.plaques)), sub: r > 0 ? traduirePluriel(r, r > 1, 'pour {0} répétition', 'pour {0} répétitions', r) : '' };
 }
 
 export function formatRecordValue(line: RecordLine, value?: number, unite: UnitePoids = 'kg'): { main: string; sub: string } {
