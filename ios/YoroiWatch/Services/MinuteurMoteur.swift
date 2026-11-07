@@ -24,6 +24,9 @@ import WidgetKit
 //   en arriere plan desactivee, seance d'entrainement en cours), c'est elle qui previent ;
 // - pause ou annulation : session et notification annulees.
 // Rien n'est envoye a l'iPhone ni ecrit dans Apple Sante.
+// 7 novembre 2026 : sauf pour le repos de ta seance guidee (SeanceGuidee, Services/Synchro.swift) : Arreter sur
+// sa sonnerie coupe aussi le repos sur l'iPhone, une seule sonnerie pour les deux appareils.
+// 7 novembre 2026 : claquettes de bois a 10 s de la fin des minuteurs de plus de 12 s (reglage, actif par defaut).
 //
 // 29 octobre 2026 (Houari : il voyait l'alerte d'Apple, Arreter ou Ouvrir, et pas l'ecran de Yoroi) :
 // tant qu'un minuteur tourne ou sonne, une seance d'entrainement sans enregistrement (MaintienActif,
@@ -82,6 +85,8 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   @ObservationIgnored private var boucle: Timer?
   @ObservationIgnored private var finBoucle = Date.distantPast
   @ObservationIgnored private var dernierDecompte: [String: Int] = [:]
+  /// 7 novembre 2026 : claquettes des 10 s deja jouees pour ce minuteur (remis a zero par +30 s, +15 s)
+  @ObservationIgnored private var dernierClap: [String: Bool] = [:]
   @ObservationIgnored private var notifAutorisees = false
   @ObservationIgnored private var alertesCritiques = false
 
@@ -142,10 +147,19 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
     let duree = dureeS ?? sonnerie?.dureeS
     arreterSonnerie()
     UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [identifiant])
+    // 7 novembre 2026 : l'app dormait, la notification a sonne la fin du repos de la seance : l'iPhone le coupe aussi
+    if identifiant.hasPrefix(MinuteurMoteur.prefixeNotif) {
+      SeanceGuidee.shared.reposArrete(String(identifiant.dropFirst(MinuteurMoteur.prefixeNotif.count)))
+    }
     switch action {
     case MinuteurMoteur.actionRelancer:
       if let d = duree {
-        lancer(secondes: d)
+        // pendant une seance guidee, le minuteur relance est le repos de la seance
+        if SeanceGuidee.shared.active {
+          SeanceGuidee.shared.lancerRepos(secondes: d)
+        } else {
+          lancer(secondes: d)
+        }
         Routeur.shared.recevoir(lien: "minuteurs")
       }
     case UNNotificationDefaultActionIdentifier:
@@ -238,6 +252,8 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
     }
     etat.actifs[i] = a
     dernierDecompte[id] = nil
+    // le temps ajoute repasse au dessus de 10 s : les claquettes rejouent au nouveau repere
+    if a.restant(Date()) > 10 { dernierClap[id] = nil }
     if !a.enPause { planifierNotification(a, maintenant: Date()) }
     Haptique.cran()
     enregistrer()
@@ -248,6 +264,7 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
     etat.actifs.removeAll { $0.id == id }
     annulerNotification(id)
     dernierDecompte[id] = nil
+    dernierClap[id] = nil
     Haptique.pause()
     enregistrer()
     arreterSiInutile()
@@ -265,6 +282,8 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
     // Prochain minuteur encore en marche : on replanifie l'alarme pour lui.
     planifierAlarme()
     assurerMaintien()
+    // 7 novembre 2026 : la fin du repos de la seance guidee : l'iPhone coupe aussi ce repos
+    if let id { SeanceGuidee.shared.reposArrete(id) }
   }
 
   /// Relance la meme duree depuis l'ecran de fin. Renvoie l'id du nouveau minuteur.
@@ -383,6 +402,11 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
         dernierDecompte[a.id] = r
         Haptique.decompteMinuteur()
       }
+      // 7 novembre 2026 : clac clac clac a 10 s de la fin, minuteurs de plus de 12 s (pas sur les 3, 2, 1)
+      if r == 10 && a.totalS > 12 && dernierClap[a.id] != true && Haptique.claquettesActives {
+        dernierClap[a.id] = true
+        Haptique.claquettes10s()
+      }
     }
     nettoyer(maintenant: maintenant, sonner: true)
     arreterSiInutile()
@@ -404,7 +428,10 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
     }
     guard !finis.isEmpty else { return }
     etat.actifs.removeAll { a in finis.contains { $0.id == a.id } }
-    for a in finis { dernierDecompte[a.id] = nil }
+    for a in finis {
+      dernierDecompte[a.id] = nil
+      dernierClap[a.id] = nil
+    }
     if sonner, let recent = finis.filter({ maintenant.timeIntervalSince($0.fin ?? maintenant) < 60 }).last {
       sonnerie = recent
       if auPremierPlan || alarmeEnMarche || entrainementEnCours {
@@ -666,6 +693,7 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   func extendedRuntimeSession(_ extendedRuntimeSession: WKExtendedRuntimeSession, didInvalidateWith reason: WKExtendedRuntimeSessionInvalidationReason, error: Error?) {
     DispatchQueue.main.async {
       guard self.sessionAlarme === extendedRuntimeSession else { return }
+      let idSonnerie = self.sonnerie?.id
       // Fermee par watchOS (refus, fin du temps) ou par Arreter dans l'alerte d'alarme du systeme.
       // Si elle a ete refusee avant de demarrer, la notification de filet est toujours planifiee.
       if let e = error as NSError? {
@@ -690,6 +718,8 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
       }
       self.cibleAlarme = nil
       self.memoriserCible(nil)
+      // 7 novembre 2026 : Arreter dans l'alerte d'Apple sur la fin du repos de la seance : l'iPhone le coupe aussi
+      if let id = idSonnerie, self.sonnerie == nil { SeanceGuidee.shared.reposArrete(id) }
     }
   }
 }
