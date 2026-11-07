@@ -8,6 +8,8 @@ struct ReglagesVue: View {
   @AppStorage(Partage.Cle.sonFort, store: UserDefaults(suiteName: Partage.groupe)) private var sonFort = true
   /// 28 octobre 2026 : le son de fin, wizz (par defaut) ou alarme
   @AppStorage(Partage.Cle.sonFin, store: UserDefaults(suiteName: Partage.groupe)) private var sonFin = "wizz"
+  /// 7 novembre 2026 : claquettes de bois a 10 s de la fin (rounds, repos, minuteurs), actives par defaut
+  @AppStorage(Partage.Cle.claquettes, store: UserDefaults(suiteName: Partage.groupe)) private var claquettes = true
   @State private var synchro = Synchro.shared
 
   var body: some View {
@@ -18,6 +20,12 @@ struct ReglagesVue: View {
           .onChange(of: hapticFort) { _, _ in Haptique.validation() }
         Toggle("Son fort", isOn: $sonFort)
           .frame(minHeight: 44)
+        Toggle("Claquettes à 10 s", isOn: $claquettes)
+          .frame(minHeight: 44)
+          .onChange(of: claquettes) { _, actives in
+            // un essai tout de suite : tu entends ce que tu viens d'allumer
+            if actives { Haptique.claquettes10s() }
+          }
         if sonFort {
           Text("Son de fin")
             .font(.system(size: 12, weight: .heavy, design: .rounded))
