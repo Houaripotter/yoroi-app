@@ -92,6 +92,9 @@ struct LancerMinuteurIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult {
+    // 7 novembre 2026 : pendant ta seance guidee, ce minuteur devient le repos de la seance (Routeur.lancerEtPile) ;
+    // la synchro est lue d'abord pour savoir si une seance tourne
+    _ = Synchro.shared
     Routeur.shared.lancerMinuteur(secondes: duree.secondes)
     return .result()
   }
