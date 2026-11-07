@@ -3,7 +3,8 @@
  * Memes lignes qu'avant : Sauvegarde (avec le bouton Sauvegarder), Copies de securite automatiques,
  * Mes donnees (exporter, effacer), Coffre photos. Le bouton Sauvegarder reste aussi sur la page Reglages.
  * Les marges de l'encoche et du bas (useSafeAreaInsets) sont gerees par EspaceScreen.
- * 7 novembre 2026 : en haut, la ligne d'etat de la sauvegarde automatique (components/yoroi/v2/reglages/LigneSauvegarde.tsx).
+ * 7 novembre 2026 : en haut, la ligne d'etat de la sauvegarde automatique (components/yoroi/v2/reglages/LigneSauvegarde.tsx),
+ * puis « Retrouver une sauvegarde » (app/settings/retrouver.tsx), le chemin principal pour remettre une copie.
  */
 import React, { useCallback, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -53,6 +54,10 @@ export default function DonneesEtSauvegardes() {
     <EspaceScreen title={traduire("Données et sauvegardes")} subtitle={traduire("Pas de compte : tout reste sur ton téléphone")} gap={14}>
       {/* 7 novembre 2026 : l'etat de la sauvegarde automatique (iCloud, ou dossier relie sur Android), en une ligne */}
       <LigneSauvegarde />
+      {/* 7 novembre 2026 : remettre une copie sans fouiller les dossiers (la liste de tes sauvegardes, dans l'app) */}
+      <Card>
+        <ValueRow first tint={TUILE.indigo} sticker="coffre_ouvert" icon="archive" label={traduire("Retrouver une sauvegarde")} sub={traduire("Tes copies, sans chercher de fichier")} onPress={() => go('/settings/retrouver')} />
+      </Card>
       <Card>
         <ValueRow first tint={TUILE.mousse} sticker="sauvegarde" icon="save" label={traduire("Sauvegarde")} sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/backup-history')} action={<MiniAction label={traduire("Sauvegarder")} onPress={backupNow} busy={busy} />} />
         {/* les copies faites seules avant chaque mise a jour, a voir, partager et remettre */}
