@@ -335,6 +335,27 @@ async function mesurerDemarrage(d: SeanceDraft): Promise<void> {
   }
 }
 
+/**
+ * 7 novembre 2026 : « J'ai commencé plus tôt ». L'heure de debut (startedAt) change, la seance reste la meme :
+ * la sauvegarde garde sa generation (useSauvegardeBrouillon.ts) et la mesure ne compte pas une seconde seance.
+ */
+const debutsAjustes = new Map<number, number>();
+const origineDebut = (ms: number): number => debutsAjustes.get(ms) ?? ms;
+
+export function noterDebutAjuste(ancien: number, nouveau: number): void {
+  if (ancien === nouveau) return;
+  debutsAjustes.set(nouveau, origineDebut(ancien));
+  if (debutMesure === ancien) debutMesure = nouveau;
+  AsyncStorage.getItem(CLE_MESURE_DEBUT)
+    .then((v) => (v === String(ancien) ? AsyncStorage.setItem(CLE_MESURE_DEBUT, String(nouveau)) : undefined))
+    .catch(() => {});
+}
+
+/** Vrai si ces deux heures de debut sont celles d'une meme seance (debut corrige entre temps) */
+export function memeSeanceDebut(a: number, b: number): boolean {
+  return a === b || origineDebut(a) === origineDebut(b);
+}
+
 /** 2 novembre 2026 (mesure) : seance en direct abandonnee sans enregistrer. Le fait seulement, aucune valeur. */
 export function mesurerAbandon(d: SeanceDraft | null | undefined): void {
   if (!d || d.form) return;
