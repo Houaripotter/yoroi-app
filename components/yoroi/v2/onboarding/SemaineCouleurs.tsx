@@ -10,6 +10,8 @@
  * change ») : la muscu passe en premier (au moins autant de jours qu'un autre sport sur la première image), puis la
  * répartition tourne toutes les 2,5 s (un sport décale d'un jour à chaque fois), avec un fondu doux sur les ronds :
  * il voit qu'il choisit et peut changer. Toujours les jours qu'il a pris. Réduire les animations : première image, fixe.
+ * 7 novembre 2026 (audit valide par Houari : « les ronds de Ta semaine sont presque invisibles ») : un jour pris est un
+ * rond plein dans la couleur franche de son sport, sticker par dessus ; les jours de repos gardent un rond clair net.
  */
 import React, { useEffect, useState } from 'react';
 import { Image, View } from 'react-native';
@@ -107,16 +109,16 @@ function Rond({ on, sport, i, size, calme, doux }: { on: boolean; sport: string 
               key={`on-${sport ?? 'x'}`}
               entering={calme ? undefined : doux ? FadeIn.duration(450) : ZoomIn.delay(i * 70).duration(320)}
               exiting={calme ? undefined : FadeOut.duration(220)}
-              style={{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: f.teinte, borderWidth: 2, borderColor: f.couleur, alignItems: 'center', justifyContent: 'center' }}
+              style={{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: f.couleur, alignItems: 'center', justifyContent: 'center' }}
             >
               <Image source={illus.img(stickerSport(sport))} style={{ width: Math.round(size * 0.74), height: Math.round(size * 0.74) }} resizeMode="contain" accessibilityIgnoresInvertColors />
             </Animated.View>
           </>
         ) : (
-          <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: pal.teinte, borderWidth: 1.5, borderColor: pal.anneau }} />
+          <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: pal.carte, borderWidth: 2, borderColor: pal.anneau }} />
         )}
       </View>
-      <Ink size={12} weight={on ? 'black' : 'bold'} color={on ? f.couleur : pal.texte3}>{JOURS_LETTRES[i]}</Ink>
+      <Ink size={12} weight={on ? 'black' : 'bold'} color={on ? f.couleur : pal.texte2}>{JOURS_LETTRES[i]}</Ink>
     </View>
   );
 }
