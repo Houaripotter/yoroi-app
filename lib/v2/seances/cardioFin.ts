@@ -78,6 +78,8 @@ export type ChronoCardio = {
   zone2?: { min: number; max: number };
   /** ce que tu as decide pour la prochaine fois : garder, ou la suggestion */
   suite?: 'garder' | 'suggestion';
+  /** 7 novembre 2026 : repris d'un entrainement de la montre (Apple Sante), kcal mesurees comprises (lib/v2/seance/montreCardio.ts) */
+  montre?: import('@/lib/v2/seance/montreCardio').MontreCardio;
 };
 
 export type TypeCardio = 'marche_inclinee' | 'tapis_course' | 'velo' | 'rameur' | 'elliptique' | 'escalier' | 'corde' | 'autre';
