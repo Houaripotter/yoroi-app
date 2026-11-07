@@ -16,6 +16,9 @@ import type { MuscuDraft } from '@/lib/v2/seance/model';
 import { seancesDeLExo } from '@/lib/v2/programmes/progression';
 import { SEANCE_LIVE_ENREGISTREE_EVENT } from '@/lib/v2/seance/save';
 import { getEspace } from '@/lib/v2/espace';
+import { loadClapEnabled } from '@/lib/v2/carnet/chrono';
+import { CLAQUETTES_S } from '@/lib/v2/carnet/claquettes';
+import { claquettesAuLieuDuCoach, montreSonne } from '@/lib/v2/seance/sonneurRepos';
 import { chargeVaMonter, evenementsEntre, prochaineEstDerniere } from './brouillon';
 import { decider, etatInitial, objectifDuProfil, REPERE_REPOS_S, type EvenementCoach, type NiveauCoach, type ObjectifCoach } from './moteur';
 import { useNiveauCoach } from './reglages';
@@ -69,6 +72,12 @@ export function useCoachVocal(draft: MuscuDraft | null, toutesSeances?: Seances)
     distraction.current = null;
   }, []);
 
+  // 7 novembre 2026 : claquettes des 10 s allumées, elles remplacent la phrase des 10 s (pas de voix par dessus)
+  const clapOn = useRef(true);
+  useEffect(() => {
+    loadClapEnabled().then((v) => { clapOn.current = v; }, () => undefined);
+  }, []);
+
   // ton objectif de l'onboarding, sans chiffre
   useEffect(() => {
     getEspace().then((e) => setObjectif(objectifDuProfil(e?.objectifs)), () => undefined);
@@ -106,7 +115,10 @@ export function useCoachVocal(draft: MuscuDraft | null, toutesSeances?: Seances)
     const t10 = fin - REPERE_REPOS_S * 1000 - Date.now();
     if (t10 > 1500) {
       minuteurs.push(setTimeout(() => {
-        if (brouillon.current?.restEndsAt !== fin || Date.now() - (fin - REPERE_REPOS_S * 1000) > RETARD_MAX_MS) return;
+        const d = brouillon.current;
+        if (d?.restEndsAt !== fin || Date.now() - (fin - REPERE_REPOS_S * 1000) > RETARD_MAX_MS) return;
+        // les claquettes jouent à 10 s (barre de repos, ou la montre qui sonne ce repos) : le coach se tait
+        if (claquettesAuLieuDuCoach({ clapOn: clapOn.current && d.restTotal > CLAQUETTES_S, appActive: AppState.currentState === 'active', surMontre: montreSonne(d) })) return;
         emettre([{ type: 'restTick', remaining: REPERE_REPOS_S }]);
       }, t10));
     }
