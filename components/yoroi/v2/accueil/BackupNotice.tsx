@@ -25,7 +25,7 @@ import { PROPOSITION_COACH_EVENT, lireProposition } from '@/lib/v2/onboarding/pr
 import { lireDepart } from '@/lib/v2/programmes/depart';
 import { isVisiteDone } from '@/components/yoroi/v2/tour/keys';
 import { useVisiteEnCours } from '@/components/yoroi/v2/tour/VisiteGuidee';
-import { PROTECTION_CHANGED_EVENT, etatProtection, joursDepuisCopie, lireProtection, type EtatProtection } from '@/lib/v2/sauvegarde/copieAuto';
+import { PROTECTION_CHANGED_EVENT, copierMaintenant, etatProtection, joursDepuisCopie, lireProtection, type EtatProtection } from '@/lib/v2/sauvegarde/copieAuto';
 import { texteCopieAuto } from '@/lib/v2/sauvegarde/textesCopie';
 import { lancerCopieAuto } from '@/components/yoroi/v2/sauvegarde/lancerCopieAuto';
 import { CarteMessage } from '@/components/yoroi/v2/messages/CarteMessage';
@@ -60,7 +60,7 @@ export function texteRappelCopie(days: number | null, os: string = Platform.OS):
 /** fine : la bande fine de l'accueil en grand écran (1er novembre 2026) ; sur iPhone, la carte comme avant */
 export function BackupNotice({ fine }: { fine?: boolean } = {}) {
   const router = useRouter();
-  const [state, setState] = useState<{ show: boolean; days: number | null; etat: EtatProtection; dossier: string | null }>({ show: false, days: null, etat: 'non_dispo', dossier: null });
+  const [state, setState] = useState<{ show: boolean; days: number | null; etat: EtatProtection; dossier: string | null; icloud?: boolean }>({ show: false, days: null, etat: 'non_dispo', dossier: null });
   const [busy, setBusy] = useState(false);
 
   const visiteEnCours = useVisiteEnCours();
@@ -99,7 +99,7 @@ export function BackupNotice({ fine }: { fine?: boolean } = {}) {
       if (!premierMomentArrive(base) && !base.visiteEnCours && !base.coachEnAttente) base.aDesDonnees = await aDesDonnees();
       const show = montrerCarteAccueil(base);
       if (show) void noterMontreeAccueil(aujourdhui);
-      setState({ show, days, etat, dossier: auto ? infos.dossier : null });
+      setState({ show, days, etat, dossier: auto ? infos.dossier : null, icloud: !!infos.icloud });
     } catch {
       setState({ show: false, days: null, etat: 'non_dispo', dossier: null });
     }
@@ -129,10 +129,22 @@ export function BackupNotice({ fine }: { fine?: boolean } = {}) {
 
   if (!state.show) return null;
   const auto = state.etat === 'a_activer' || state.etat === 'en_panne';
-  const t = auto ? texteCopieAuto(state.etat, state.days, state.dossier) : { ...texteRappelCopie(state.days), bouton: traduire('Faire ma copie') };
+  // 7 novembre 2026 : iPhone avec iCloud, sans dossier relie : la seule alerte, apres 3 jours sans copie, relance la copie
+  const relancer = state.etat === 'en_panne' && !!state.icloud && !state.dossier;
+  const t = auto ? texteCopieAuto(state.etat, state.days, state.dossier, Platform.OS, !!state.icloud) : { ...texteRappelCopie(state.days), bouton: traduire('Faire ma copie') };
   const { titre, texte } = t;
 
-  const activer = () => lancerCopieAuto(() => load());
+  const activer = async () => {
+    if (!relancer) return lancerCopieAuto(() => load());
+    if (busy) return;
+    setBusy(true);
+    try {
+      await copierMaintenant({ immediat: true });
+    } finally {
+      setBusy(false);
+      load();
+    }
+  };
 
   const copier = async () => {
     if (busy) return;
