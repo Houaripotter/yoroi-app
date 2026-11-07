@@ -72,6 +72,13 @@ async function pushManualToHealth(day: string, weight: number, fat?: number): Pr
 }
 
 export async function saveWeighIn(input: WeighInInput, history: Weight[]): Promise<void> {
+  await enregistrerPesee(input, history);
+  // 7 novembre 2026 : apres une pesee, une copie automatique (sans les photos) part bientot. Regroupee : plusieurs
+  // pesees a la suite donnent une seule copie, au plus une toutes les 2 minutes (lib/v2/sauvegarde/declencheurs.ts).
+  void import('@/lib/v2/sauvegarde/declencheurs').then((m) => m.demanderCopie('pesee')).catch(() => undefined);
+}
+
+async function enregistrerPesee(input: WeighInInput, history: Weight[]): Promise<void> {
   const cols = columns(input.weight, input.compo);
   const row = input.rowId ? history.find((w) => w.id === input.rowId) : undefined;
   const fromScale = !!(input.health?.weight && Math.abs(input.health.weight - input.weight) < 0.05);
