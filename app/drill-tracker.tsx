@@ -102,7 +102,7 @@ function DrillCard({ t, onAdd, onEdit }: { t: DrillTechnique; onAdd: (n: number)
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <StepPlates n={step.n} />
             <Ink size={12} weight="bold" color={P.ink2} style={{ flex: 1 }}>
-              {step.n < STEPS ? traduire("Palier {0} sur {1}, encore {2} répétitions", step.n, STEPS, step.toNext.toLocaleString(LOCALE)) : `Palier ${STEPS} atteint`}
+              {step.n < STEPS ? traduire("Palier {0} sur {1}, encore {2} répétitions", step.n, STEPS, step.toNext.toLocaleString(LOCALE)) : traduire('Palier {0} atteint', STEPS)}
             </Ink>
           </View>
         </View>

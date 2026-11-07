@@ -385,7 +385,7 @@ export default function RecordsScreen() {
             <Glass onPress={current.trainingId != null ? () => openTraining(current.trainingId) : undefined} label={traduire("Voir la séance du record")} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <Hanko size={28} rotate={-6} color={lastStamp ? c.record : '#B9B6AE'} />
               <View style={{ flex: 1, gap: 2 }}>
-                <Ink size={15} weight="extraBold">{lastStamp ? `Dernier record, ${longDate(lastStamp.date)}` : traduire("Ta meilleure marque, {0}", longDate(current.date))}</Ink>
+                <Ink size={15} weight="extraBold">{lastStamp ? traduire('Dernier record, {0}', longDate(lastStamp.date)) : traduire("Ta meilleure marque, {0}", longDate(current.date))}</Ink>
                 <Ink size={13} color={c.textSecondary}>
                   {current.kind === 'force' && current.bestSet ? traduirePluriel(current.bestSet.reps, current.bestSet.reps > 1, "{0} {1} pour {2} répétition", "{0} {1} pour {2} répétitions", fmt1(cv(current.bestSet.weight)), uL, current.bestSet.reps) : formatRecordValue(current).main}
                 </Ink>
@@ -437,7 +437,7 @@ export default function RecordsScreen() {
           <>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               <Tile label={traduire("Victoires en sparring")} value={String(combat.wins)} sub={combat.roundsTotal ? traduire("sur {0} rounds notés", combat.roundsTotal) : traduire('note tes rounds pour les compter')} />
-              <Tile label={traduire("Soumissions placées")} value={String(combat.submissionsTotal)} sub={combat.submissions[0] ? `Surtout : ${combat.submissions[0].technique.trim().charAt(0).toUpperCase()}${combat.submissions[0].technique.trim().slice(1)}` : undefined} />
+              <Tile label={traduire("Soumissions placées")} value={String(combat.submissionsTotal)} sub={combat.submissions[0] ? traduire('Surtout : {0}', `${combat.submissions[0].technique.trim().charAt(0).toUpperCase()}${combat.submissions[0].technique.trim().slice(1)}`) : undefined} />
               {combat.compTotal > 0 ? <Tile label={traduire("Victoires en compétition")} value={String(combat.compWins)} sub={traduirePluriel(combat.compTotal, combat.compTotal > 1, "sur {0} combat", "sur {0} combats", combat.compTotal)} /> : null}
             </View>
 

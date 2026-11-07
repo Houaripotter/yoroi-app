@@ -89,7 +89,7 @@ const BackupFaqAccordionInner: React.FC = () => {
               onPress={() => toggle(i)}
               activeOpacity={0.7}
               style={styles.itemHeader}
-              accessibilityLabel={`Question : ${item.q}`}
+              accessibilityLabel={traduire('Question : {0}', item.q)}
               accessibilityRole="button"
               accessibilityState={{ expanded: isOpen }}
             >

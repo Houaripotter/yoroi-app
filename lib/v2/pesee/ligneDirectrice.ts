@@ -225,18 +225,18 @@ export function phraseStatut(l: Ligne, iso: string, poids: number, torii?: strin
   const m = medianeA(l, torii ?? null, iso);
   const ecart = m == null ? 0 : poids - m;
   const tu = passe ? traduire('Ce jour, tu étais ') : traduire('Tu es ');
-  if (st.id === 'avant') return { ton: 'gris', avant: passe ? traduire('Ce jour, ') : '', cle: passe ? 'avant le début de ton plan' : 'Avant le début de ton plan', apres: '' };
+  if (st.id === 'avant') return { ton: 'gris', avant: passe ? traduire('Ce jour, ') : '', cle: passe ? traduire('avant le début de ton plan') : traduire('Avant le début de ton plan'), apres: '' };
   if (l.mode === 'maintien' || l.mode === 'recompo') {
-    if (st.id === 'sur') return { ton: 'vert', avant: passe ? traduire('Ce jour, ') : '', cle: passe ? 'dans ta zone de forme' : 'Dans ta zone de forme', apres: '' };
-    return { ton: 'bleu', avant: tu, cle: `${kgPhrase(ecart)} ${ecart > 0 ? 'au-dessus' : 'en dessous'}`, apres: traduire(' de ton poids de forme') };
+    if (st.id === 'sur') return { ton: 'vert', avant: passe ? traduire('Ce jour, ') : '', cle: passe ? traduire('dans ta zone de forme') : traduire('Dans ta zone de forme'), apres: '' };
+    return { ton: 'bleu', avant: tu, cle: `${kgPhrase(ecart)} ${ecart > 0 ? traduire('au-dessus') : traduire('en dessous')}`, apres: traduire(' de ton poids de forme') };
   }
-  if (st.id === 'lent') return { ton: 'bleu', avant: tu, cle: `${kgPhrase(ecart)} ${l.mode === 'perte' ? 'au-dessus' : 'en dessous'}`, apres: traduire(' de ton rythme prévu') };
+  if (st.id === 'lent') return { ton: 'bleu', avant: tu, cle: `${kgPhrase(ecart)} ${l.mode === 'perte' ? traduire('au-dessus') : traduire('en dessous')}`, apres: traduire(' de ton rythme prévu') };
   if (st.id === 'vite') {
     const verbe = l.mode === 'perte' ? (passe ? traduire('Ce jour, tu descendais ') : traduire('Tu descends ')) : passe ? traduire('Ce jour, tu montais ') : traduire('Tu montes ');
-    return { ton: 'orange', avant: verbe, cle: 'plus vite que prévu', apres: passe ? '' : traduire(', ralentis un peu') };
+    return { ton: 'orange', avant: verbe, cle: traduire('plus vite que prévu'), apres: passe ? '' : traduire(', ralentis un peu') };
   }
-  if (Math.abs(ecart) <= TOLERANCE_KG) return { ton: 'vert', avant: passe ? traduire('Ce jour, ') : '', cle: passe ? 'pile sur ton rythme prévu' : 'Pile sur ton rythme prévu', apres: '' };
-  return { ton: 'vert', avant: passe ? traduire('Ce jour, ') : '', cle: passe ? 'sur ton rythme prévu' : 'Sur ton rythme prévu', apres: traduire(", à {0} près", kgPhrase(ecart)) };
+  if (Math.abs(ecart) <= TOLERANCE_KG) return { ton: 'vert', avant: passe ? traduire('Ce jour, ') : '', cle: passe ? traduire('pile sur ton rythme prévu') : traduire('Pile sur ton rythme prévu'), apres: '' };
+  return { ton: 'vert', avant: passe ? traduire('Ce jour, ') : '', cle: passe ? traduire('sur ton rythme prévu') : traduire('Sur ton rythme prévu'), apres: traduire(", à {0} près", kgPhrase(ecart)) };
 }
 
 /**

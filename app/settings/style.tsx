@@ -507,7 +507,7 @@ export default function Personnaliser() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 6 }}>
             <View style={{ flex: 1, gap: 1 }}>
               <Ink size={15} weight="black" numberOfLines={1}>{traduire("Tes courbes")}</Ink>
-              <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={1}>{`Style ${styleCourbe.id}, ${styleCourbe.nom.toLowerCase()}, ${couleur.nom.toLowerCase()}`}</Ink>
+              <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={1}>{traduire('Style {0}, {1}, {2}', styleCourbe.id, traduire(styleCourbe.nom).toLowerCase(), traduire(couleur.nom).toLowerCase())}</Ink>
             </View>
             <Icon name="chevron" size={15} color={c.textMuted} stroke={2.6} />
           </View>
@@ -522,13 +522,13 @@ export default function Personnaliser() {
                 onPress={() => choisirStyle(s.id)}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: actif }}
-                accessibilityLabel={`Style ${s.id}, ${s.nom}`}
+                accessibilityLabel={traduire('Style {0}, {1}', s.id, traduire(s.nom))}
                 style={({ pressed }) => ({ width: styleL, alignItems: 'center', gap: 4, opacity: pressed ? 0.85 : 1 })}
               >
                 <View style={{ borderRadius: 12, borderWidth: 2, borderColor: actif ? c.accent : 'transparent', padding: 1 }}>
                   <ApercuCourbe style={s.id} width={styleL - 6} height={40} />
                 </View>
-                <Ink size={11.5} weight={actif ? 'black' : 'bold'} color={actif ? c.accent : c.textSecondary} numberOfLines={1}>{`Style ${s.id}`}</Ink>
+                <Ink size={11.5} weight={actif ? 'black' : 'bold'} color={actif ? c.accent : c.textSecondary} numberOfLines={1}>{traduire('Style {0}', s.id)}</Ink>
               </Pressable>
             );
           })}

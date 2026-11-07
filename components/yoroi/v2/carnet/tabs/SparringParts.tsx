@@ -34,7 +34,7 @@ export function Podium({ partners, photos, metric, onSelect }: { partners: Partn
       {order.map((p, i) =>
         p ? (
           <View key={p.name} style={{ flex: 1 }}>
-            <Press onPress={() => onSelect(p)} accessibilityRole="button" accessibilityLabel={`${p.name}, place ${ranks[i]}`}>
+            <Press onPress={() => onSelect(p)} accessibilityRole="button" accessibilityLabel={traduire('{0}, place {1}', p.name, ranks[i])}>
               <View style={{ alignItems: 'center', gap: 4 }}>
                 <Avatar name={p.name} uri={photos[p.name.trim().toLowerCase()]} size={i === 1 ? 58 : 48} ring={tones[i]} />
                 <Ink size={13} weight="extraBold" numberOfLines={1} style={{ textAlign: 'center' }}>{traduire(p.name)}</Ink>
@@ -78,11 +78,11 @@ export function PartnerRow({ p, top, photo, hasFiche, maxRounds, onOpen, onEdit,
             {p.losses > 0 ? <Tag text={`${p.losses} D`} color={P.danger} /> : null}
             {p.draws > 0 ? <Tag text={`${p.draws} N`} color={P.goldDark} /> : null}
             {p.submissionsGiven > 0 ? <Tag text={traduire("{0} soumissions données", p.submissionsGiven)} color={P.mossText} /> : null}
-            {p.submissionsTaken > 0 ? <Tag text={`${p.submissionsTaken} subies`} color={P.danger} /> : null}
+            {p.submissionsTaken > 0 ? <Tag text={traduirePluriel(p.submissionsTaken, true, '{0} subie', '{0} subies', p.submissionsTaken)} color={P.danger} /> : null}
             {p.avgRating != null ? <Tag text={traduire("niveau {0} sur 10{1}", String(p.avgRating).replace('.', DECIMAL), diff > 0 ? `, +${diff}` : diff < 0 ? `, ${diff}` : '')} color={levelTone(p.avgRating)} /> : null}
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            {p.lastSession ? <Ink size={12} weight="bold" color={P.muted}>{`Dernier sparring ${relative(p.lastSession)}`}</Ink> : <View />}
+            {p.lastSession ? <Ink size={12} weight="bold" color={P.muted}>{traduire('Dernier sparring {0}', relative(p.lastSession))}</Ink> : <View />}
             <Press onPress={() => router.push(`/sparring-partners?partnerName=${encodeURIComponent(p.name)}` as any)} accessibilityRole="button" accessibilityLabel={hasFiche ? traduire("Voir la fiche de {0}", p.name) : traduire("Créer la fiche de {0}", p.name)}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 36, paddingHorizontal: 12, borderRadius: 18, backgroundColor: hasFiche ? P.indigoSoft : P.accentSoft }}>
                 <CIcon name={hasFiche ? 'note' : 'plus'} size={13} color={hasFiche ? P.indigo : P.accent} />

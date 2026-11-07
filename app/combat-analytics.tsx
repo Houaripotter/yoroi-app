@@ -229,7 +229,7 @@ export default function CombatAnalyticsScreen() {
                     {pctText(ratio.dPct)}
                   </Ink>
                   <Ink size={12} weight="bold" color={P.ink2}>
-                    {`drilling, ${plural(ratio.drilling, traduire('séance'))}`}
+                    {traduire('drilling, {0}', plural(ratio.drilling, traduire('séance')))}
                   </Ink>
                 </View>
                 <View style={{ flex: 1, gap: 2 }}>
@@ -237,7 +237,7 @@ export default function CombatAnalyticsScreen() {
                     {pctText(ratio.sPct)}
                   </Ink>
                   <Ink size={12} weight="bold" color={P.ink2}>
-                    {`sparring, ${plural(ratio.sparring, traduire('séance'))}`}
+                    {traduire('sparring, {0}', plural(ratio.sparring, traduire('séance')))}
                   </Ink>
                 </View>
               </View>

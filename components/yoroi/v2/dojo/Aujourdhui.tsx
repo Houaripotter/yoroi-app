@@ -182,7 +182,7 @@ export function Aujourdhui({ serie, coffre, onOuvrir, onVerre, suite, onCadeau, 
         </Animated.View>
         <View style={{ flex: 1, gap: 4 }}>
           <Ink size={15} weight="black">
-            {coffre.etat === 'ouvert' ? (coffre.grand ? 'Grand coffre ouvert' : 'Coffre ouvert') : coffre.grand ? traduire('Ton grand coffre') : traduire('Ton coffre du jour')}
+            {coffre.etat === 'ouvert' ? (coffre.grand ? traduire('Grand coffre ouvert') : traduire('Coffre ouvert')) : coffre.grand ? traduire('Ton grand coffre') : traduire('Ton coffre du jour')}
           </Ink>
           {coffre.etat === 'verrouille' ? (
             <Ink size={13} color={c.textSecondary}>{traduire('Une séance, une pesée ou un verre d’eau pour l’ouvrir.')}</Ink>

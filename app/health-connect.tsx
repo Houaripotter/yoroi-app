@@ -399,8 +399,8 @@ export default function HealthConnectScreen() {
       {isLive ? (
         <CardBox>
           <ActionRow first icon="sync" title={importing ? progress || traduire('Import en cours') : traduire('Réimporter toutes mes séances')} sub={importing ? traduire('Patiente, ça peut prendre quelques minutes') : traduire("Tout l'historique depuis {0}", provider)} onPress={reimport} busy={importing} color={S.mossText} tint={S.mossSoft} />
-          {Platform.OS === 'ios' ? <ActionRow icon="search" title={diagnosing ? 'Diagnostic en cours' : traduire('Diagnostiquer mes séances')} sub={traduire("Comprendre pourquoi les séances ne s'importent pas")} onPress={diagnose} busy={diagnosing} color={S.indigo} tint={S.indigoSoft} /> : null}
-          <ActionRow icon="spark" title={askingMore ? 'Autorisation en cours' : traduire('Autoriser les nouvelles mesures')} sub={Platform.OS === 'android' ? traduire('Tension, nutrition, puissance, historique complet') : traduire('Poignet, lumière du jour, nutrition, récupération')} onPress={askMore} busy={askingMore} color={S.gold} tint={S.goldSoft} />
+          {Platform.OS === 'ios' ? <ActionRow icon="search" title={diagnosing ? traduire('Diagnostic en cours') : traduire('Diagnostiquer mes séances')} sub={traduire("Comprendre pourquoi les séances ne s'importent pas")} onPress={diagnose} busy={diagnosing} color={S.indigo} tint={S.indigoSoft} /> : null}
+          <ActionRow icon="spark" title={askingMore ? traduire('Autorisation en cours') : traduire('Autoriser les nouvelles mesures')} sub={Platform.OS === 'android' ? traduire('Tension, nutrition, puissance, historique complet') : traduire('Poignet, lumière du jour, nutrition, récupération')} onPress={askMore} busy={askingMore} color={S.gold} tint={S.goldSoft} />
           <ActionRow icon="close" title={traduire("Déconnecter")} sub={traduire("Arrêter la synchronisation")} onPress={disconnect} color={S.danger} tint={S.dangerSoft} />
         </CardBox>
       ) : null}
@@ -408,7 +408,7 @@ export default function HealthConnectScreen() {
       {Platform.OS === 'ios' && montre ? (
         <CardBox>
           <ActionRow first icon="watch" title="Apple Watch" sub={texteMontre(montre)} color={S.accent} tint={S.accentSoft} />
-          <ActionRow icon="sync" title={watchSyncing ? 'Envoi en cours' : traduire('Envoyer à la montre maintenant')} onPress={watchSync} busy={watchSyncing} color={S.accent} tint={S.accentSoft} />
+          <ActionRow icon="sync" title={watchSyncing ? traduire('Envoi en cours') : traduire('Envoyer à la montre maintenant')} onPress={watchSync} busy={watchSyncing} color={S.accent} tint={S.accentSoft} />
         </CardBox>
       ) : null}
 
@@ -493,7 +493,7 @@ export default function HealthConnectScreen() {
       )}
       <CardBox>
         <ActionRow first icon="watch" title={traduire("Configurer ta montre ou ta balance")} sub={traduire("Le guide de ta marque, pas à pas, vers {0}", provider)} onPress={() => router.push('/sante/montre' as any)} color={S.accent} tint={S.accentSoft} />
-        {native ? <ActionRow icon="external" title={`Ouvrir ${provider}`} sub={traduire("Vérifier les autorisations de YOROI")} onPress={openApp} /> : null}
+        {native ? <ActionRow icon="external" title={traduire('Ouvrir {0}', provider)} sub={traduire("Vérifier les autorisations de YOROI")} onPress={openApp} /> : null}
       </CardBox>
 
       <Accordion title={traduire("Ce que chaque appareil envoie")} sub={traduire("Poids, cœur, sommeil, pas, calories, VO2 max")} mark={<BrandMark text="" kind="montre" color={S.accent} size={38} />}>
@@ -514,7 +514,7 @@ export default function HealthConnectScreen() {
         {check ? (
           <View>
             {[
-              { label: `${provider} disponible`, ok: check.available },
+              { label: traduire('{0} disponible', provider), ok: check.available },
               { label: traduire('Autorisations accordées'), ok: check.permissions },
               { label: check.hasWeight && check.weightValue ? traduire("Dernier poids : {0} kg", check.weightValue.toFixed(1).replace('.', DECIMAL)) : traduire('Poids reçu'), ok: check.hasWeight },
             ].map((it, i) => (

@@ -313,7 +313,7 @@ export default function CentreNotifications() {
         <Animated.View key={g.key} layout={LinearTransition} style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', paddingHorizontal: 4, marginTop: 4 }}>
             <Ink size={17} weight="black" tight style={{ flex: 1 }}>{traduire(g.label)}</Ink>
-            <Ink size={12} weight="bold" color={c.textMuted}>{`${g.list.length} notification${g.list.length > 1 ? 's' : ''}`}</Ink>
+            <Ink size={12} weight="bold" color={c.textMuted}>{traduirePluriel(g.list.length, g.list.length > 1, '{0} notification', '{0} notifications', g.list.length)}</Ink>
           </View>
           <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, overflow: 'hidden' }}>
             {g.list.map((n, i) => {

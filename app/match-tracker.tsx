@@ -91,7 +91,7 @@ function ActionPlate({ a, onPress }: { a: Action; onPress: () => void }) {
   const bg = tapAction ? (me ? V : D) : P.white;
   const fg = tapAction ? P.white : me ? V : D;
   return (
-    <Press onPress={onPress} haptic="none" accessibilityRole="button" accessibilityLabel={`${traduire(a.label)}${a.points ? `, ${a.points} points` : ''}`} style={{ width: '31.5%' }}>
+    <Press onPress={onPress} haptic="none" accessibilityRole="button" accessibilityLabel={`${traduire(a.label)}${a.points ? traduire(', {0} points', a.points) : ''}`} style={{ width: '31.5%' }}>
       <View style={{ height: 78, borderTopLeftRadius: 20, borderTopRightRadius: 20, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, backgroundColor: bg, borderWidth: tapAction ? 0 : 1.5, borderColor: `${fg}40`, alignItems: 'center', justifyContent: 'center', gap: 4 }}>
         <Ink size={15} weight="black" color={fg} numberOfLines={1}>
           {traduire(a.short)}

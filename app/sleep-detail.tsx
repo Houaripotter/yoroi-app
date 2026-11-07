@@ -324,7 +324,7 @@ export default function DetailNuit() {
                         <Ink size={26} weight="black" tight>
                           {coeur ? traduire("{0} à {1}", coeur.min, coeur.max) : traduire("{0} à {1}", Math.round(fcStockee!.min), Math.round(fcStockee!.max))}
                           <Ink size={13} weight="bold" color={P.muted}>
-                            {` bpm, moyenne ${coeur ? coeur.moy : Math.round(fcStockee!.avg)}`}
+                            {traduire(' bpm, moyenne {0}', coeur ? coeur.moy : Math.round(fcStockee!.avg))}
                           </Ink>
                         </Ink>
                         {coeur && n && coeur.tranches.length > 1 ? <BarresMinMax tranches={coeur.tranches} debut={n.debut} fin={n.fin} couleur={P.heart} unite="bpm" /> : null}
@@ -368,7 +368,7 @@ export default function DetailNuit() {
 
           {n ? (
             <Ink size={12} weight="medium" color={P.muted} style={{ paddingHorizontal: 4 }}>
-              {`Source : ${n.source}${n.sources.length > 1 ? traduirePluriel(n.sources.length, n.sources.length > 2, ". Comme Santé, une seule source par nuit ({0} autre ignorée).", ". Comme Santé, une seule source par nuit ({0} autres ignorées).", n.sources.length - 1) : '.'}`}
+              {`${traduire('Source : {0}', n.source)}${n.sources.length > 1 ? traduirePluriel(n.sources.length, n.sources.length > 2, ". Comme Santé, une seule source par nuit ({0} autre ignorée).", ". Comme Santé, une seule source par nuit ({0} autres ignorées).", n.sources.length - 1) : '.'}`}
             </Ink>
           ) : null}
         </>

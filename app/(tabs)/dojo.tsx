@@ -750,7 +750,7 @@ function SportCard({ b, gender, onPress }: { b: BeltInfo; gender: Gender; onPres
         <View style={{ marginTop: 4 }}>
           <Bar progress={b.progress} color={barColor} height={6} />
         </View>
-        <Ink size={11} color={c.textMuted} numberOfLines={2}>{b.next ? traduire("encore {0} pour {1}", b.remaining, b.next.name) : 'sommet atteint'}</Ink>
+        <Ink size={11} color={c.textMuted} numberOfLines={2}>{b.next ? traduire("encore {0} pour {1}", b.remaining, b.next.name) : traduire('sommet atteint')}</Ink>
       </View>
     </Pressable>
   );

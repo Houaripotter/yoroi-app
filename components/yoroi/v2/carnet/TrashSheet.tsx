@@ -8,7 +8,7 @@ import { Sheet } from '@/components/yoroi/v2/seance/Sheet';
 import type { Benchmark, Skill, TrashItem } from '@/lib/carnetService';
 import { relative } from '@/lib/v2/carnet/format';
 import { P, Press, CIcon, BigButton, Label, EmptyState } from './ui';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type Props = {
   visible: boolean;
@@ -44,11 +44,11 @@ export function TrashSheet(p: Props) {
       {p.trashCount === 0 ? <EmptyState title={traduire("La corbeille est vide")} text={traduire("Ce que tu supprimes du carnet arrive ici. Tu peux le restaurer quand tu veux.")} /> : null}
       {p.trashBenchmarks.length > 0 ? <Label>{traduire("Records supprimés, {0}", p.trashBenchmarks.length)}</Label> : null}
       {p.trashBenchmarks.map((t) => (
-        <Line key={t.item.id} title={traduire(t.item.name)} sub={traduire("Supprimé {0}{1}", relative(t.deletedAt), t.item.entries.length > 0 ? `, ${t.item.entries.length} perf${t.item.entries.length > 1 ? 's' : ''}` : '')} onRestore={() => p.onRestoreBenchmark(t.item.id)} />
+        <Line key={t.item.id} title={traduire(t.item.name)} sub={traduire("Supprimé {0}{1}", relative(t.deletedAt), t.item.entries.length > 0 ? traduirePluriel(t.item.entries.length, t.item.entries.length > 1, ', {0} perf', ', {0} perfs', t.item.entries.length) : '')} onRestore={() => p.onRestoreBenchmark(t.item.id)} />
       ))}
       {p.trashSkills.length > 0 ? <Label>{traduire("Techniques supprimées, {0}", p.trashSkills.length)}</Label> : null}
       {p.trashSkills.map((t) => (
-        <Line key={t.item.id} title={traduire(t.item.name)} sub={traduire("Supprimée {0}, {1} répétitions{2}", relative(t.deletedAt), t.item.drillCount, t.item.notes.length > 0 ? `, ${t.item.notes.length} notes` : '')} onRestore={() => p.onRestoreSkill(t.item.id)} />
+        <Line key={t.item.id} title={traduire(t.item.name)} sub={traduire("Supprimée {0}, {1} répétitions{2}", relative(t.deletedAt), t.item.drillCount, t.item.notes.length > 0 ? traduirePluriel(t.item.notes.length, true, ', {0} note', ', {0} notes', t.item.notes.length) : '')} onRestore={() => p.onRestoreSkill(t.item.id)} />
       ))}
       {p.trashCount > 0 ? <BigButton label={traduire("Vider la corbeille, {0}", p.trashCount)} icon="trash" tone="ink" onPress={p.onEmptyTrash} /> : null}
     </Sheet>

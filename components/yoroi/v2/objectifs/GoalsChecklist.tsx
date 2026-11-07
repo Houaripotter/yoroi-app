@@ -95,7 +95,7 @@ export function GoalsChecklist() {
 
   const row = (g: Goal, i: number) => (
     <Card key={g.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, opacity: g.completed ? 0.94 : 1 }}>
-      <Press onPress={() => toggle(g.id)} accessibilityRole="checkbox" accessibilityState={{ checked: g.completed }} accessibilityLabel={g.completed ? traduire("{0}, atteint. Annuler", g.title) : `${g.title}. Marquer comme atteint`}>
+      <Press onPress={() => toggle(g.id)} accessibilityRole="checkbox" accessibilityState={{ checked: g.completed }} accessibilityLabel={g.completed ? traduire("{0}, atteint. Annuler", g.title) : traduire('{0}. Marquer comme atteint', g.title)}>
         <GoalPlate done={g.completed} size={40} />
       </Press>
       <View style={{ flex: 1, gap: 2 }}>
@@ -148,14 +148,14 @@ export function GoalsChecklist() {
 
       {active.length > 0 ? (
         <Enter i={1} style={{ gap: 10 }}>
-          <SectionTitle>{`En cours, ${active.length}`}</SectionTitle>
+          <SectionTitle>{traduire('En cours, {0}', active.length)}</SectionTitle>
           {active.map(row)}
         </Enter>
       ) : null}
 
       {done.length > 0 ? (
         <Enter i={2} style={{ gap: 10 }}>
-          <SectionTitle>{`Atteints, ${done.length}`}</SectionTitle>
+          <SectionTitle>{traduire('Atteints, {0}', done.length)}</SectionTitle>
           {done.map(row)}
         </Enter>
       ) : null}

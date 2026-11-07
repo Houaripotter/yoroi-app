@@ -147,7 +147,7 @@ export function Celebration({ visible, rankUp, seals, recap, plate, xp = 0, imag
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 14 }}>
                 {seals.map((s) => (
-                  <View key={s.id} style={{ width: '33.333%', alignItems: 'center', gap: 6, paddingHorizontal: 4 }} accessible accessibilityLabel={`Sceau ${nomSceau(s, u)}`}>
+                  <View key={s.id} style={{ width: '33.333%', alignItems: 'center', gap: 6, paddingHorizontal: 4 }} accessible accessibilityLabel={traduire('Sceau {0}', nomSceau(s, u))}>
                     <SealMedal id={s.id} color={familyOf(s.family).ink} size={72} />
                     <Ink size={12} weight="bold" color="#F5F6FB" style={{ textAlign: 'center' }} numberOfLines={2}>{nomSceau(s, u)}</Ink>
                   </View>

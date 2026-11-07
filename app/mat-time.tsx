@@ -164,7 +164,7 @@ export default function MatTimeScreen() {
             </Enter>
 
             <Card style={{ flexDirection: 'row' }}>
-              <Stat value={hm(s.month)} label={`en ${monthLong(new Date().getMonth())}`} />
+              <Stat value={hm(s.month)} label={traduire('en {0}', monthLong(new Date().getMonth()))} />
               <Stat value={hm(s.avg)} label={traduire("par séance")} />
               <Stat value={hm(s.longest)} label={traduire("la plus longue")} color={P.accent} />
             </Card>

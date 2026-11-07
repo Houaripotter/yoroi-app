@@ -60,7 +60,7 @@ export default function Sceaux() {
             </View>
           </View>
           <Bar progress={seals.length ? earned / seals.length : 0} color={c.gold} />
-          <Ink size={13} color={c.textSecondary}>{latest[0] ? traduire("Dernier gagné : {0}{1}", nomSceau(latest[0], (classique ? 'classique' : 'japon')), latest[0].earnedAt ? `, le ${formatDay(latest[0].earnedAt)}` : '') : traduire('Ton premier sceau t’attend. Appuie sur un sceau pour voir comment le gagner.')}</Ink>
+          <Ink size={13} color={c.textSecondary}>{latest[0] ? traduire("Dernier gagné : {0}{1}", nomSceau(latest[0], (classique ? 'classique' : 'japon')), latest[0].earnedAt ? traduire(', le {0}', formatDay(latest[0].earnedAt)) : '') : traduire('Ton premier sceau t’attend. Appuie sur un sceau pour voir comment le gagner.')}</Ink>
         </Animated.View>
 
         <Animated.View entering={ENTREE} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16 }}>

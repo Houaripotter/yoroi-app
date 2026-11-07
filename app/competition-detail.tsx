@@ -181,7 +181,7 @@ export default function CompetitionDetailScreen() {
   const wins = combats.filter((c) => c.resultat === 'victoire').length;
   const losses = combats.filter((c) => c.resultat === 'defaite').length;
   const draws = combats.length - wins - losses;
-  const subtitle = [SPORT_LABELS[comp.sport] ?? comp.sport, comp.type_evenement, extra.ceinture ? `ceinture ${beltLabel(extra.ceinture).toLowerCase()}` : ''].filter(Boolean).join(', ');
+  const subtitle = [SPORT_LABELS[comp.sport] ?? comp.sport, comp.type_evenement, extra.ceinture ? traduire('ceinture {0}', beltLabel(extra.ceinture).toLowerCase()) : ''].filter(Boolean).join(', ');
   const happened = days <= 0 && comp.statut !== 'annulee';
 
   return (
@@ -369,7 +369,7 @@ export default function CompetitionDetailScreen() {
                         {traduire(r.label)}
                         {c.adversaire_nom ? (
                           <Ink size={15} weight="extraBold" color={P.ink}>
-                            {` contre ${c.adversaire_nom}`}
+                            {traduire(' contre {0}', c.adversaire_nom)}
                           </Ink>
                         ) : null}
                       </Ink>
@@ -399,7 +399,7 @@ export default function CompetitionDetailScreen() {
         </View>
         {comp.statut === 'terminee' && combats.length > 0 ? (
           <Ink size={13} weight="bold" color={P.ink2} style={{ paddingHorizontal: 4 }}>
-            {`Bilan : ${plural(wins, 'victoire')}, ${plural(losses, traduire('défaite'))}.`}
+            {traduire('Bilan : {0}, {1}.', plural(wins, traduire('victoire')), plural(losses, traduire('défaite')))}
           </Ink>
         ) : null}
       </Enter>

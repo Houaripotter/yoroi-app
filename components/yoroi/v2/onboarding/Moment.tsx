@@ -252,7 +252,7 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
             n
               ? `${n === 7 ? traduire('**Tous les jours**') : traduire("**{0} fois** : {1}", n, joursTexte(jours))}${reste ? traduirePluriel(reste, reste > 1, ". Encore {0} jour à choisir.", ". Encore {0} jours à choisir.", reste) : ''}`
               : freq
-                ? `Touche ${freq === 1 ? traduire('ton jour') : traduire("tes {0} jours", freq)}.`
+                ? traduire('Touche {0}.', freq === 1 ? traduire('ton jour') : traduire("tes {0} jours", freq))
                 : traduire('Choisis un nombre ou touche tes jours.')
           }
           size={14}

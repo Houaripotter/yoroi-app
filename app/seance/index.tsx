@@ -214,9 +214,9 @@ export default function OnSentraine() {
     if (last && (last.exercises ?? []).length > 0 && seanceKindFor(last.sport) === 'muscu') {
       const n = (last.exercises ?? []).length;
       return {
-        over: `Comme ${relativeDay(last.date)}`,
+        over: traduire('Comme {0}', relativeDay(last.date)),
         title: traduire(`Refaire ta séance`),
-        sub: traduirePluriel(n, n > 1, "{0} exercice{1}", "{0} exercices{1}", n, last.duration_minutes ? `, environ ${fmtMinutes(last.duration_minutes)}` : ''),
+        sub: traduirePluriel(n, n > 1, "{0} exercice{1}", "{0} exercices{1}", n, last.duration_minutes ? traduire(', environ {0}', fmtMinutes(last.duration_minutes)) : ''),
         sport: last.sport,
         cta: direct ? traduire('Commencer') : traduire('Noter cette séance'),
         go: () => go(last.sport, { repeatId: String(last.id) }),
@@ -412,7 +412,7 @@ export default function OnSentraine() {
             <StickerSinon nom="sante_appareils" taille={36}><Icon name="clock" size={22} color={c.accent} /></StickerSinon>
             <View style={{ flex: 1 }}>
               <Ink size={12} weight="bold" color={c.textMuted}>{traduire("Ta montre, via {0}", provider)}</Ink>
-              <Ink size={15} weight="extraBold" numberOfLines={2}>{sync === 'idle' ? traduire('Récupérer tes séances') : sync === 'busy' ? 'Synchro en cours...' : sync}</Ink>
+              <Ink size={15} weight="extraBold" numberOfLines={2}>{sync === 'idle' ? traduire('Récupérer tes séances') : sync === 'busy' ? traduire('Synchro en cours...') : sync}</Ink>
             </View>
             {sync === 'busy' ? <ActivityIndicator color={c.accent} /> : <Icon name="chevron" size={18} color={c.textMuted} />}
           </Pressable>

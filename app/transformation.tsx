@@ -38,7 +38,7 @@ import type { Pose } from '@/lib/v2/photos/outils';
 import { logger } from '@/lib/security/logger';
 import { carteAvantApresDirecte } from '@/lib/v2/nav/direct';
 import { P } from '@/components/yoroi/livePalette';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type Filtre = Pose | 'toutes';
 type Cible = 'avant' | 'apres';
@@ -298,7 +298,7 @@ export default function TransformationScreen() {
             style={{ marginHorizontal: GUTTER, marginTop: 18 }}
             items={[
               weightDiff === null ? { value: 'Sans poids', label: traduire('pas de poids sur ces photos') } : { value: ecartTexte(weightDiff), label: ecartLibelle(weightDiff) },
-              { value: dureeTexte(days), label: traduire("entre les deux photos{0}", days >= 21 ? `, ${days} jours` : '') },
+              { value: dureeTexte(days), label: traduire("entre les deux photos{0}", days >= 21 ? traduirePluriel(days, days > 1, ', {0} jour', ', {0} jours', days) : '') },
             ]}
           />
         )}

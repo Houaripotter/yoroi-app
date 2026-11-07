@@ -364,7 +364,7 @@ export default function MontreScreen() {
     );
   }
   return (
-    <DetailScreen title={traduire("Ta montre et YOROI")} subtitle={ANDROID ? 'Via Health Connect' : traduire('Via l’app Santé de ton téléphone')}>
+    <DetailScreen title={traduire("Ta montre et YOROI")} subtitle={ANDROID ? traduire('Via Health Connect') : traduire('Via l’app Santé de ton téléphone')}>
       <GlassBox style={{ gap: 8 }}>
         <Ink size={18} weight="black" tight>
           {traduire("Comment ça marche")}</Ink>

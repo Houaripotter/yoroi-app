@@ -109,7 +109,7 @@ const SafetyBackupRestoreButtonInner: React.FC = () => {
           <IconeOuSticker sticker="refresh" taille={14}><RotateCcw size={14} color="#fff" strokeWidth={2.5} /></IconeOuSticker>
         )}
         <Text style={styles.btnText}>
-          {restoring ? 'Restauration…' : traduire('Annuler la dernière restauration')}
+          {restoring ? traduire('Restauration…') : traduire('Annuler la dernière restauration')}
         </Text>
       </TouchableOpacity>
     </View>

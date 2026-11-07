@@ -645,7 +645,7 @@ export default function BalancePhotoScreen() {
           hitSlop={8}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: on }}
-          accessibilityLabel={`Garder ${p.label}`}
+          accessibilityLabel={traduire('Garder {0}', p.label)}
         >
           <Check on={on} />
         </Pressable>
@@ -699,7 +699,7 @@ export default function BalancePhotoScreen() {
                     ? traduire("Déjà noté ce jour : {0}. La balance fait foi : {1} le remplace, {2} reste dans tes pesées.", p.old, nowTxt, p.old)
                     : traduire("Déjà noté ce jour : {0}, gardé. Coche pour prendre {1} de la balance.", p.old, nowTxt)
                   : rep
-                    ? `Remplacer ${p.old}`
+                    ? traduire('Remplacer {0}', p.old)
                     : traduire("Déjà notée : {0}, gardée", p.old)}
               </Ink>
             </Pressable>

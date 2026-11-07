@@ -7,7 +7,7 @@
 import type { ImageSourcePropType } from 'react-native';
 import { RANKS, nextStepFor, platesFor, rankFor, PLATES_PER_RANK } from '@/lib/v2/armure';
 import { rangNom, universCourant, type Univers } from './univers';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG } from '@/lib/i18n/tr';
 
 export type PieceId = 'bushi' | 'samourai' | 'ronin' | 'shogun' | 'dan';
 
@@ -26,7 +26,7 @@ export const PIECES: Record<PieceId, PieceArmure> = {
   bushi: { id: 'bushi', nom: traduire('Le plastron'), etapes: [traduire('les plaques de la jupe'), traduire('le plastron laqué'), traduire('les épaulières et le blason')], image: require('@/assets/avatars/app/armure/bushi.webp'), ratio: 336 / 480 },
   samourai: { id: 'samourai', nom: traduire('Le casque'), etapes: [traduire('le couvre nuque'), traduire('la bombe du casque'), traduire('le cimier doré')], image: require('@/assets/avatars/app/armure/samourai.webp'), ratio: 490 / 480 },
   ronin: { id: 'ronin', nom: traduire('Le chapeau et la cape'), etapes: [traduire('la cape pliée'), traduire('le bord du chapeau'), traduire('la pointe du chapeau')], image: require('@/assets/avatars/app/armure/ronin.webp'), ratio: 476 / 480 },
-  shogun: { id: 'shogun', nom: 'L’armure d’apparat', etapes: [traduire('le socle et la jupe'), traduire('le plastron et les épaules'), traduire('le casque et son cimier')], image: require('@/assets/avatars/app/armure/shogun.webp'), ratio: 284 / 480 },
+  shogun: { id: 'shogun', nom: traduire('L’armure d’apparat'), etapes: [traduire('le socle et la jupe'), traduire('le plastron et les épaules'), traduire('le casque et son cimier')], image: require('@/assets/avatars/app/armure/shogun.webp'), ratio: 284 / 480 },
   dan: { id: 'dan', nom: traduire('L’éventail de commandement'), etapes: [traduire('le manche et les glands'), traduire('le corps de l’éventail'), traduire('le soleil d’or')], image: require('@/assets/avatars/app/armure/dan.webp'), ratio: 249 / 480 },
 };
 
@@ -75,7 +75,7 @@ export function construction(xp: number, u: Univers = universCourant()): Constru
   const piece = r.nextMinXp !== null ? pieceDuRang(r.index + 1, u) : piecesDe(u).dan;
   // le palier suivant porte le nom du rang dans l'univers choisi (« Bushi » ou « Régulier », « Shōgun, 2e dan »)
   const palier = r.nextMinXp !== null ? rangNom(r.index + 1, u) : step.name.replace(RANKS[RANKS.length - 1].name, rangNom(4, u));
-  const de = /^[AEIOUÉÈÊaeiou]/.test(palier) ? 'd’' : traduire('de ');
+  const de = LANG === 'fr' && /^[AEIOUÉÈÊaeiou]/.test(palier) ? 'd’' : traduire('de ');
   return {
     piece,
     palier,

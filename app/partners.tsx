@@ -14,7 +14,7 @@ import type { Club, Coach } from '@/data/partners';
 import { BigButton, Card, CIcon, DetailScreen, Enter, Glass, Hanko, IconBtn, P, Press, Section } from '@/components/yoroi/v2/combat/ui';
 import type { CIconName } from '@/components/yoroi/v2/combat/ui';
 import { blancA } from '@/components/yoroi/livePalette';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type Item = Coach | Club;
 const isCoach = (x: Item): x is Coach => 'specialties' in x;
@@ -77,7 +77,7 @@ function ItemCard({ item, onPress }: { item: Item; onPress: () => void }) {
           ) : null}
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Ink size={13} weight="bold" color={P.muted}>
-              {item.instagram ? (Array.isArray(item.instagram) ? `${item.instagram.length} comptes Instagram` : item.instagram) : item.featured ? traduire('Coup de cœur') : traduire('Voir la fiche')}
+              {item.instagram ? (Array.isArray(item.instagram) ? traduirePluriel(item.instagram.length, true, '{0} compte Instagram', '{0} comptes Instagram', item.instagram.length) : item.instagram) : item.featured ? traduire('Coup de cœur') : traduire('Voir la fiche')}
             </Ink>
             <CIcon name="chevron" size={16} color={P.muted} />
           </View>

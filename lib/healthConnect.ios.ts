@@ -5001,7 +5001,7 @@ class HealthConnectService {
       title: (v) => (v === 2 ? traduire('Stabilité très basse') : v === 3 ? traduire('Stabilité toujours basse') : v === 4 ? traduire('Stabilité toujours très basse') : traduire('Stabilité basse')),
     },
     'alerte-son-casque': { id: 'HKCategoryTypeIdentifierHeadphoneAudioExposureEvent', title: () => traduire('Dose de son au casque dépassée sur 7 jours') },
-    'alerte-son-ambiant': { id: 'HKCategoryTypeIdentifierEnvironmentalAudioExposureEvent', title: () => 'Bruit ambiant trop fort' },
+    'alerte-son-ambiant': { id: 'HKCategoryTypeIdentifierEnvironmentalAudioExposureEvent', title: () => traduire('Bruit ambiant trop fort') },
   };
 
   /** Clé YOROI vers type HealthKit, manière de cumuler la journée, unité demandée et facteur */
@@ -5390,7 +5390,7 @@ class HealthConnectService {
           9: traduire('déçu'), 10: traduire('découragé'), 11: traduire('dégoûté'), 12: traduire('gêné'), 13: 'enthousiaste', 14: traduire('frustré'), 15: 'reconnaissant',
           16: 'coupable', 17: 'heureux', 18: traduire('désespéré'), 19: traduire('irrité'), 20: 'jaloux', 21: 'joyeux', 22: 'seul', 23: traduire('passionné'),
           24: 'serein', 25: 'fier', 26: traduire('soulagé'), 27: 'triste', 28: traduire('effrayé'), 29: traduire('stressé'), 30: 'surpris', 31: 'inquiet',
-          32: traduire('agacé'), 33: 'confiant', 34: traduire('épuisé'), 35: 'plein d’espoir', 36: traduire('indifférent'), 37: traduire('débordé'), 38: 'satisfait',
+          32: traduire('agacé'), 33: traduire('confiant'), 34: traduire('épuisé'), 35: traduire('plein d’espoir'), 36: traduire('indifférent'), 37: traduire('débordé'), 38: traduire('satisfait'),
         };
         return (rows ?? [])
           .filter((r) => r?.startDate && Number(r?.valenceClassification) >= 1)

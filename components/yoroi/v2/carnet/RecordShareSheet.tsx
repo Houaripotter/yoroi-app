@@ -222,7 +222,7 @@ export function RecordShareSheet({ data, onClose, source = 'record_mouvement' }:
             {(['story', 'carre'] as Format[]).map((f) => {
               const on = format === f;
               return (
-                <Press key={f} onPress={() => setFormat(f)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={f === 'story' ? 'Format story' : traduire('Format carré')}>
+                <Press key={f} onPress={() => setFormat(f)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={f === 'story' ? traduire('Format story') : traduire('Format carré')}>
                   <View style={{ minHeight: 44, paddingHorizontal: 18, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: on ? P.ink : P.white, borderWidth: 1, borderColor: on ? P.ink : P.line2 }}>
                     <View style={{ width: f === 'story' ? 10 : 14, height: f === 'story' ? 16 : 14, borderRadius: 3, borderWidth: 2, borderColor: on ? P.white : P.ink2 }} />
                     <Ink size={14} weight="extraBold" color={on ? P.white : P.ink2}>{f === 'story' ? 'Story' : traduire('Carré')}</Ink>
@@ -236,7 +236,7 @@ export function RecordShareSheet({ data, onClose, source = 'record_mouvement' }:
             {PARTAGE_FONDS_LISTE.map((f) => {
               const on = fond === f.key;
               return (
-                <Press key={f.key} onPress={() => setFond(f.key)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`Fond ${f.label}`}>
+                <Press key={f.key} onPress={() => setFond(f.key)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={traduire('Fond {0}', f.label)}>
                   <View style={{ alignItems: 'center', gap: 4 }}>
                     <View style={{ width: 58, height: 58, borderRadius: 18, overflow: 'hidden', borderWidth: on ? 3 : 1, borderColor: on ? P.accent : P.line2 }}>
                       <Image source={PARTAGE_FONDS[f.key]} style={{ width: '100%', height: '100%' }} resizeMode="cover" />

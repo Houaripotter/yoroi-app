@@ -608,7 +608,7 @@ export default function DicteSeance() {
                         {list.map((l) => (
                           <View key={l.id} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 36, borderRadius: 12, paddingLeft: 12, backgroundColor: mode === 'reussi' ? P.mossSoft : P.accentSoft }}>
                             <Ink size={13} weight="extraBold" color={mode === 'reussi' ? P.mossText : P.ink}>{l.note ? `${l.label} (${l.note})` : l.label}</Ink>
-                            <Pressable onPress={() => { tap(); set({ learned: form.learned.filter((x) => x !== l) }); }} accessibilityRole="button" accessibilityLabel={`Retirer ${l.label}`} hitSlop={4} style={{ width: 32, height: 36, alignItems: 'center', justifyContent: 'center' }}>
+                            <Pressable onPress={() => { tap(); set({ learned: form.learned.filter((x) => x !== l) }); }} accessibilityRole="button" accessibilityLabel={traduire('Retirer {0}', l.label)} hitSlop={4} style={{ width: 32, height: 36, alignItems: 'center', justifyContent: 'center' }}>
                               <Icon name="close" size={13} color={P.muted} />
                             </Pressable>
                           </View>
@@ -708,7 +708,7 @@ export default function DicteSeance() {
               <Field
                 label={traduire("Distance")}
                 src={src('distance')}
-                note={pace ? `allure ${form.paceSaid ? '' : traduire('calculée ')}${pace}` : undefined}
+                note={pace ? traduire('allure {0}{1}', form.paceSaid ? '' : traduire('calculée '), pace) : undefined}
                 empty={form.distance === null ? traduire('pas dite') : undefined}
                 onAdd={form.distance === null ? () => set({ distance: 5 }) : undefined}
                 onClear={form.distance !== null ? () => set({ distance: null }) : undefined}
@@ -830,7 +830,7 @@ function Field({ label, empty, note, src, children, onAdd, onClear }: { label: s
             </Pressable>
           ) : null}
           {onClear ? (
-            <Pressable onPress={() => { tap(); onClear(); }} accessibilityRole="button" accessibilityLabel={`Vider : ${label}`} hitSlop={6} style={{ minHeight: 36, paddingHorizontal: 10, justifyContent: 'center' }}>
+            <Pressable onPress={() => { tap(); onClear(); }} accessibilityRole="button" accessibilityLabel={traduire('Vider : {0}', label)} hitSlop={6} style={{ minHeight: 36, paddingHorizontal: 10, justifyContent: 'center' }}>
               <Ink size={13} weight="bold" color={P.muted}>Vider</Ink>
             </Pressable>
           ) : null}
@@ -901,19 +901,19 @@ function ExerciseRow({ ex, first, src, onChange, onRemove }: { ex: DicteeExercis
           {cardio ? <Ink size={13} weight="medium" color={P.ink2}>{exLine(ex)}</Ink> : null}
           {ex.load || ex.missing?.length ? (
             <Ink size={12} weight="medium" color={P.ink2}>
-              {[ex.load ? CHARGE_LABEL[ex.load] : '', ex.missing?.length ? `à compléter : ${ex.missing.map((m) => (m === 'sets' ? 'séries' : m === 'reps' ? 'répétitions' : 'charge')).join(', ')}` : ''].filter(Boolean).join(', ')}
+              {[ex.load ? CHARGE_LABEL[ex.load] : '', ex.missing?.length ? traduire('à compléter : {0}', ex.missing.map((m) => (m === 'sets' ? traduire('séries') : m === 'reps' ? traduire('répétitions') : traduire('charge'))).join(', ')) : ''].filter(Boolean).join(', ')}
             </Ink>
           ) : null}
         </View>
-        <Pressable onPress={onRemove} accessibilityRole="button" accessibilityLabel={`Retirer ${ex.name}`} hitSlop={6} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={onRemove} accessibilityRole="button" accessibilityLabel={traduire('Retirer {0}', ex.name)} hitSlop={6} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="close" size={18} color={P.muted} />
         </Pressable>
       </View>
       {!cardio ? (
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <NumBox value={ex.sets} label={traduire("séries")} missing={ex.missing?.includes('sets')} onChange={(v) => onChange({ sets: Math.max(1, v), missing: dropMissing(ex, 'sets') })} />
-          <NumBox value={ex.max ? 0 : ex.reps} label={ex.max ? 'reps (max)' : 'reps'} missing={ex.missing?.includes('reps')} onChange={(v) => onChange({ reps: v, max: v ? undefined : ex.max, missing: v ? dropMissing(ex, 'reps') : ex.missing })} />
-          <NumBox value={ex.weight} label={ex.load === 'pdc' ? 'lest kg' : 'kg'} decimals missing={ex.missing?.includes('weight')} onChange={(v) => onChange({ weight: v, missing: v ? dropMissing(ex, 'weight') : ex.missing })} />
+          <NumBox value={ex.max ? 0 : ex.reps} label={ex.max ? traduire('reps (max)') : traduire('reps')} missing={ex.missing?.includes('reps')} onChange={(v) => onChange({ reps: v, max: v ? undefined : ex.max, missing: v ? dropMissing(ex, 'reps') : ex.missing })} />
+          <NumBox value={ex.weight} label={ex.load === 'pdc' ? traduire('lest kg') : 'kg'} decimals missing={ex.missing?.includes('weight')} onChange={(v) => onChange({ weight: v, missing: v ? dropMissing(ex, 'weight') : ex.missing })} />
         </View>
       ) : null}
     </View>
@@ -941,7 +941,7 @@ function PartnerCard({ card, src, onChange, onRemove }: { card: CardForm; src: s
           <Pressable onPress={() => bump(list, t)} accessibilityRole="button" accessibilityLabel={traduire("{0}, toucher pour en ajouter une", techniqueText(t))} style={{ minHeight: 36, justifyContent: 'center' }}>
             <Ink size={13} weight="extraBold" color={list === 'given' ? P.mossText : P.goldDark}>{techniqueText(t)}</Ink>
           </Pressable>
-          <Pressable onPress={() => remove(list, t.id)} accessibilityRole="button" accessibilityLabel={`Retirer ${t.label}`} hitSlop={4} style={{ width: 32, height: 36, alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable onPress={() => remove(list, t.id)} accessibilityRole="button" accessibilityLabel={traduire('Retirer {0}', t.label)} hitSlop={4} style={{ width: 32, height: 36, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="close" size={13} color={P.muted} />
           </Pressable>
         </View>

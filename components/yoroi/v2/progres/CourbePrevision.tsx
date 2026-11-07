@@ -110,7 +110,7 @@ export function CourbePrevision({ passe, prev, unite, height = 230 }: { passe: {
   }, [width, height, passe, prev, unite]);
 
   const derniere = prev.dates[prev.dates.length - 1];
-  const a11y = traduire("Ta prévision : ta tendance des dernières semaines, puis {0} {1}, entre {2} et {3}{4}.", poidsTexte(derniere.valeur, unite), derniere.label.toLowerCase(), poidsTexte(derniere.bas, unite), poidsTexte(derniere.haut, unite), prev.torii && prev.cap != null ? `. Ta ligne arrive à ${poidsTexte(prev.cap, unite)} au torii, le ${jourCourt(prev.torii)}` : '');
+  const a11y = traduire("Ta prévision : ta tendance des dernières semaines, puis {0} {1}, entre {2} et {3}{4}.", poidsTexte(derniere.valeur, unite), derniere.label.toLowerCase(), poidsTexte(derniere.bas, unite), poidsTexte(derniere.haut, unite), prev.torii && prev.cap != null ? traduire('. Ta ligne arrive à {0} au torii, le {1}', poidsTexte(prev.cap, unite), jourCourt(prev.torii)) : '');
 
   return (
     <View onLayout={(e) => setWidth(Math.round(e.nativeEvent.layout.width))} style={{ height }} accessible accessibilityRole="image" accessibilityLabel={a11y}>

@@ -52,7 +52,7 @@ function WeekChart({ title, sub, bars, weeks, format, readOut, label, onMore }: 
     <View>
       <SectionHead title={title} aside={onMore?.label} onPress={onMore ? () => { tapLight(); onMore.onPress(); } : undefined} />
       <Ink size={14} color={sel !== null ? c.ink : c.textSecondary} weight={sel !== null ? 'bold' : 'medium'} style={{ marginTop: 2 }} numberOfLines={2}>
-        {sel !== null ? traduire("Semaine du {0} : {1}", dayShort(weeks[sel]), readOut(bars[sel].value)) : avg !== null ? `${sub}, en moyenne ${format(avg)}` : sub}
+        {sel !== null ? traduire("Semaine du {0} : {1}", dayShort(weeks[sel]), readOut(bars[sel].value)) : avg !== null ? traduire('{0}, en moyenne {1}', sub, format(avg)) : sub}
       </Ink>
       <View style={{ marginTop: 10 }}>
         <InkBarChart bars={bars} highlight={bars.length - 1} average={avg} format={format} onSelect={setSel} label={label} sparseLabels height={160} />

@@ -129,12 +129,12 @@ export const WeeklyRecapCard = React.memo(React.forwardRef<View, WeeklyRecapCard
                   keepPhotoClear ? (
                     <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginTop: 2 }}>
                       <Text style={{ color: GOLD_COLOR, fontSize: 8, fontWeight: '900' }}>
-                        {`NIV. ${userLevel}`}
+                        {traduire('NIV. {0}', userLevel)}
                       </Text>
                     </View>
                   ) : (
                     <Text style={{ color: GOLD_COLOR, fontSize: 8, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2, marginTop: 2 }}>
-                      {`NIV. ${userLevel}`}
+                      {traduire('NIV. {0}', userLevel)}
                     </Text>
                   )
                 )}

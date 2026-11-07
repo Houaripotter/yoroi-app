@@ -11,7 +11,7 @@ import { kmOf, useTrainings } from '@/lib/v2/carnet/useCarnetData';
 import { P, Sheet2, Columns, Hanko, BlockTitle } from '../ui';
 import { TabEmpty, TabLoading } from './common';
 import { blancA } from '@/components/yoroi/livePalette';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const ENDURANCE = new Set(sportsInPack('endurance'));
 const DISTANCES = [
@@ -84,7 +84,7 @@ export function AlluresView({ refreshKey, hideEmpty }: { refreshKey: number; hid
           <View style={{ flex: 1, gap: 2 }}>
             <Ink size={14} weight="bold" color={p.best ? P.indigo : P.muted}>{traduire(p.label)}</Ink>
             {p.best ? <Ink size={24} weight="black" tight>{timeText(p.best.min)}</Ink> : <Ink size={14} weight="medium" color={P.muted}>{traduire("Pas encore de sortie à cette distance")}</Ink>}
-            {p.count > 0 ? <Ink size={12} weight="bold" color={P.muted}>{`${p.count} sortie${p.count > 1 ? 's' : ''}`}</Ink> : null}
+            {p.count > 0 ? <Ink size={12} weight="bold" color={P.muted}>{traduirePluriel(p.count, p.count > 1, '{0} sortie', '{0} sorties', p.count)}</Ink> : null}
           </View>
           {p.best ? (
             <View style={{ alignItems: 'flex-end', gap: 4 }}>

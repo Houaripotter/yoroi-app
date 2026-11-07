@@ -275,7 +275,7 @@ export default function CombatTimerScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: P.paper }}>
         <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-          <ScreenHead title={traduire("Session terminée")} subtitle={config.partnerName.trim() ? `Contre ${config.partnerName.trim()}` : traduire('Beau travail sur le tatami')} onBack={newSession} />
+          <ScreenHead title={traduire("Session terminée")} subtitle={config.partnerName.trim() ? traduire('Contre {0}', config.partnerName.trim()) : traduire('Beau travail sur le tatami')} onBack={newSession} />
           <View style={{ paddingHorizontal: 22, gap: 14, marginTop: 18 }}>
             <Sheet2>
               <BigStats

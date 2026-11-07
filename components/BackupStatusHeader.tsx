@@ -91,7 +91,7 @@ const BackupStatusHeaderInner: React.FC = () => {
         <View style={{ flex: 1 }}>
           <Text style={[styles.title, { color }]}>{title}</Text>
           <Text style={[styles.sub, { color: colors.text }]}>
-            {lastBackup ? `Dernier backup ${formatRelative(lastBackup)}` : traduire('Jamais sauvegardé')}
+            {lastBackup ? traduire('Dernier backup {0}', formatRelative(lastBackup)) : traduire('Jamais sauvegardé')}
           </Text>
         </View>
       </View>

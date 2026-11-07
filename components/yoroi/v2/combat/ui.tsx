@@ -243,7 +243,7 @@ export function TagEditor({ items, color, onChange, placeholder = traduire('Ajou
               key={`${it}_${i}`}
               onPress={() => { tap(); onChange(items.filter((_, j) => j !== i)); }}
               accessibilityRole="button"
-              accessibilityLabel={`Retirer ${it}`}
+              accessibilityLabel={traduire('Retirer {0}', it)}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36, paddingHorizontal: 12, borderRadius: 18, backgroundColor: `${color}14`, borderWidth: 1, borderColor: `${color}40` }}
             >
               <Ink size={14} weight="bold" color={color}>

@@ -35,7 +35,7 @@ export function texteCopieAuto(etat: EtatProtection, jours: number | null, dossi
 /** Texte de la carte, avec ce que l'utilisateur a deja construit */
 export function texteAbri(etat: EtatProtection, o: { rang: string; xp: number; serie: number }): { titre: string; texte: string } {
   const xp = o.xp.toLocaleString(LOCALE).replace(/\s/g, NB);
-  const bien = traduire("Ton rang {0}, tes {1}{2}XP{3}", o.rang, xp, NB, o.serie > 1 ? ` et tes ${o.serie} jours d’affilée` : '');
+  const bien = traduire("Ton rang {0}, tes {1}{2}XP{3}", o.rang, xp, NB, o.serie > 1 ? ` ${traduirePluriel(o.serie, o.serie > 1, 'et ton {0} jour d’affilée', 'et tes {0} jours d’affilée', o.serie)}` : '');
   if (etat === 'en_panne') return { titre: traduire('Ta copie automatique ne passe plus'), texte: traduire("{0} ne sont plus copiés. Choisis à nouveau ton dossier dans {1}.", bien, nomDuCloud()) };
   return { titre: traduire('Mets ton Dojo à l’abri'), texte: traduire("{0} vivent seulement sur ce téléphone. Une copie chaque jour dans {1}, et tu ne perds jamais rien.", bien, nomDuCloud()) };
 }

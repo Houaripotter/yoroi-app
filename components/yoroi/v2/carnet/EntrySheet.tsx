@@ -175,7 +175,7 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
               <Ink size={12} weight="bold" color={P.muted} style={{ width: 56 }}>{shortDate(e.date)}</Ink>
               <Ink size={14} weight="extraBold" style={{ flex: 1 }} numberOfLines={1}>{entryText(benchmark, e)}</Ink>
               {pr && pr.id === e.id ? <Hanko size={22} /> : null}
-              {e.rpe ? <Ink size={12} weight="bold" color={P.muted}>{`effort ${e.rpe}`}</Ink> : null}
+              {e.rpe ? <Ink size={12} weight="bold" color={P.muted}>{traduire('effort {0}', e.rpe)}</Ink> : null}
             </View>
           ))}
         </View>
@@ -272,7 +272,7 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
         <View style={{ flexDirection: 'row', gap: 4 }}>
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => (
             <View key={v} style={{ flex: 1 }}>
-              <Press onPress={() => setRpe(v)} accessibilityRole="button" accessibilityLabel={`Effort ${v}`} accessibilityState={{ selected: v === rpe }}>
+              <Press onPress={() => setRpe(v)} accessibilityRole="button" accessibilityLabel={traduire('Effort {0}', v)} accessibilityState={{ selected: v === rpe }}>
                 <View style={{ height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: v <= rpe ? intensite(niveauRpe(v)).fill : '#EEF0F7' }}>
                   <Ink size={13} weight="black" color={v <= rpe ? intensite(niveauRpe(v)).onFill : P.ink2}>{String(v)}</Ink>
                 </View>

@@ -921,7 +921,7 @@ export default function TimerScreen() {
             <>
               <SetupHero label={traduire("Durée totale")} big={humanSeconds(total)} line={traduire("{0} de {1} s, {2} s de repos", plural(tabataRounds * tabataSets, 'effort'), tabataWork, tabataRest)} band={band} legend={[{ color: PHASE_COLORS.effort.main, text: traduire('À fond') }, { color: PHASE_COLORS.repos.main, text: traduire('Repos') }, ...prepaLegend]} />
               <SetupBlock title={traduire("Combien de temps")}>
-                <ChoiceGrid items={TABATA_PRESETS.map((p) => ({ key: p.rounds, title: `${p.rounds} efforts`, sub: humanSeconds(p.rounds * (p.work + p.rest) - p.rest) }))} value={tabataWork === 20 && tabataRest === 10 ? tabataRounds : null} onPick={(r) => { const p = TABATA_PRESETS.find((x) => x.rounds === r)!; setTabataRounds(p.rounds); setTabataWork(p.work); setTabataRest(p.rest); haptic('light'); }} columns={3} />
+                <ChoiceGrid items={TABATA_PRESETS.map((p) => ({ key: p.rounds, title: traduire('{0} efforts', p.rounds), sub: humanSeconds(p.rounds * (p.work + p.rest) - p.rest) }))} value={tabataWork === 20 && tabataRest === 10 ? tabataRounds : null} onPick={(r) => { const p = TABATA_PRESETS.find((x) => x.rounds === r)!; setTabataRounds(p.rounds); setTabataWork(p.work); setTabataRest(p.rest); haptic('light'); }} columns={3} />
               </SetupBlock>
               <SetupBlock title={traduire("Tes intervalles")}>
                 <View>

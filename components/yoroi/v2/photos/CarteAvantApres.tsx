@@ -60,7 +60,7 @@ export const CarteAvantApres = forwardRef<View, Props>(function CarteAvantApres(
           {diff !== null ? (
             <Ink size={30 * f} weight="black" tight color={ENCRE}>{ecartTexte(diff)}</Ink>
           ) : null}
-          <Ink size={13 * f} weight="bold" color={GRIS}>{days === 0 ? traduire('le même jour') : `en ${dureeTexte(days)}`}</Ink>
+          <Ink size={13 * f} weight="bold" color={GRIS}>{days === 0 ? traduire('le même jour') : traduire('en {0}', dureeTexte(days))}</Ink>
         </View>
         <Ink size={12 * f} weight="extraBold" color={GRIS} style={{ letterSpacing: 2 * f }}>YOROI</Ink>
       </View>

@@ -139,7 +139,7 @@ export function Reader({ content, read, onClose, onToggleRead, onSource }: { con
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 18, backgroundColor: P.paper, padding: 14, minHeight: 56 }}>
                   <XIcon name="book" size={20} color={m.color} />
                   <Ink size={13} weight="bold" color={P.ink2} style={{ flex: 1 }}>
-                    {content.sourceName}
+                    {traduire(content.sourceName)}
                   </Ink>
                   <Icon name="share" size={18} color={P.muted} />
                 </View>

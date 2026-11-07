@@ -532,7 +532,7 @@ export default function Seances() {
             <Ink size={13} weight="bold" color={c.textSecondary} style={{ flex: 1 }}>
               {trainings.length > 0
                 ? filterLabel
-                  ? traduirePluriel(filtered.length, filtered.length > 1, "{0} séance {1}", "{0} séances {1}", filtered.length, filter.kind === 'sport' ? `de ${filterLabel}` : filterLabel)
+                  ? traduirePluriel(filtered.length, filtered.length > 1, "{0} séance {1}", "{0} séances {1}", filtered.length, filter.kind === 'sport' ? traduire('de {0}', filterLabel) : filterLabel)
                   : traduirePluriel(trainings.length, trainings.length > 1, "{0} séance au total", "{0} séances au total", trainings.length)
                 : ''}
             </Ink>

@@ -63,7 +63,7 @@ function vueDe(r: IssueImport, source: string): Vue {
         reglages: true,
       };
     case 'indisponible':
-      return { k: 'souci', titre: `${source} indisponible`, texte: android ? traduire('Installe Health Connect depuis le Play Store, puis réessaie.') : traduire('L’app Santé n’existe pas sur cet appareil.'), reglages: false };
+      return { k: 'souci', titre: traduire('{0} indisponible', source), texte: android ? traduire('Installe Health Connect depuis le Play Store, puis réessaie.') : traduire('L’app Santé n’existe pas sur cet appareil.'), reglages: false };
     case 'en_cours':
       return { k: 'souci', titre: traduire('Un import est déjà en cours'), texte: traduire('Attends qu’il se termine, puis relance si besoin.'), reglages: false };
     default:

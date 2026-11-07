@@ -83,7 +83,7 @@ export default function GamePlanScreen() {
           }
         >
           <EnTete
-            titre={params.partnerName ? `Plan contre ${params.partnerName}` : traduire('Mon plan de jeu')}
+            titre={params.partnerName ? traduire('Plan contre {0}', params.partnerName) : traduire('Mon plan de jeu')}
             sousTitre={traduire("Tiré de tes débriefs de rounds")}
             onRetour={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as never))}
             style={{ marginHorizontal: -22, marginTop: -8 }}
@@ -157,7 +157,7 @@ export default function GamePlanScreen() {
                             </View>
                           ) : null}
                           <Ink size={12} weight="bold" color={P.muted}>
-                            {[item.partner ? `contre ${item.partner}` : null, shortDate(item.date)].filter(Boolean).join(', ')}
+                            {[item.partner ? traduire('contre {0}', item.partner) : null, shortDate(item.date)].filter(Boolean).join(', ')}
                           </Ink>
                         </View>
                       </View>

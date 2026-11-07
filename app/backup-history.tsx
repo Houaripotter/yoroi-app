@@ -377,7 +377,7 @@ export default function BackupHistoryScreen() {
                     </View>
                     <View style={{ flex: 1, gap: 1 }}>
                       <Ink size={16} weight="extraBold">{formatDay(b.modifiedAt)}</Ink>
-                      <Ink size={12} color={c.textMuted}>{b.protegee ? `${formatTime(b.modifiedAt)}, ${formatSize(b.size)}` : `${formatTime(b.modifiedAt)}, ${formatSize(b.size)}, version ${b.version}`}</Ink>
+                      <Ink size={12} color={c.textMuted}>{b.protegee ? `${formatTime(b.modifiedAt)}, ${formatSize(b.size)}` : `${formatTime(b.modifiedAt)}, ${formatSize(b.size)}, ${traduire('version {0}', b.version)}`}</Ink>
                     </View>
                     {i === 0 ? (
                       <View style={{ backgroundColor: c.successTint, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
@@ -469,7 +469,7 @@ export default function BackupHistoryScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Ink size={22} weight="black" tight>{formatLong(preview.modifiedAt)}</Ink>
-                  <Ink size={13} color={c.textMuted}>{preview.protegee ? `${formatTime(preview.modifiedAt)}, ${formatSize(preview.size)}` : `${formatTime(preview.modifiedAt)}, ${formatSize(preview.size)}, version ${preview.version}`}</Ink>
+                  <Ink size={13} color={c.textMuted}>{preview.protegee ? `${formatTime(preview.modifiedAt)}, ${formatSize(preview.size)}` : `${formatTime(preview.modifiedAt)}, ${formatSize(preview.size)}, ${traduire('version {0}', preview.version)}`}</Ink>
                   {preview.userName !== '?' ? <Ink size={13} weight="bold" color={c.indigo}>{traduire("Profil de {0}", preview.userName)}</Ink> : null}
                 </View>
                 <RoundButton icon="close" label={traduire("Fermer")} onPress={() => setPreview(null)} />

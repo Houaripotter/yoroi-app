@@ -203,7 +203,7 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
               </View>
             ))}
             {!dayList.length && daySlots.length ? (
-              <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Créneau prévu : {0}", sansTiret(daySlots.map((s) => `${s.label || sportLabel(s.sport)}${s.time ? ` à ${s.time}` : ''}`).join(', ')))}</Ink>
+              <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Créneau prévu : {0}", sansTiret(daySlots.map((s) => `${s.label || sportLabel(s.sport)}${s.time ? ` ${traduire('à {0}', s.time)}` : ''}`).join(', ')))}</Ink>
             ) : null}
             <Row title={traduire("Ajouter une séance ce jour")} icon="plus" onPress={() => { const iso = day; setDay(null); router.push(`/seance?date=${iso}` as any); }} />
             <Row

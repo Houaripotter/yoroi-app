@@ -62,7 +62,7 @@ export type BalanceFieldSpec = {
 const SEGMENTS: { seg: SegmentKey; key: string; label: string; de: string; names: string[] }[] = [
   { seg: 'arm_right', key: 'bras_droit', label: traduire('bras droit'), de: traduire('du bras droit'), names: ['bras_droit', 'bras_d', 'bd', 'right_arm', 'arm_right', 'r_arm', 'arm_r'] },
   { seg: 'arm_left', key: 'bras_gauche', label: traduire('bras gauche'), de: traduire('du bras gauche'), names: ['bras_gauche', 'bras_g', 'bg', 'left_arm', 'arm_left', 'l_arm', 'arm_l'] },
-  { seg: 'trunk', key: 'tronc', label: 'tronc', de: traduire('du tronc'), names: ['tronc', 'torse', 'trunk', 'torso', 'core'] },
+  { seg: 'trunk', key: 'tronc', label: traduire('tronc'), de: traduire('du tronc'), names: ['tronc', 'torse', 'trunk', 'torso', 'core'] },
   { seg: 'leg_right', key: 'jambe_droite', label: traduire('jambe droite'), de: traduire('de la jambe droite'), names: ['jambe_droite', 'jambe_d', 'jd', 'right_leg', 'leg_right', 'r_leg', 'leg_r'] },
   { seg: 'leg_left', key: 'jambe_gauche', label: traduire('jambe gauche'), de: traduire('de la jambe gauche'), names: ['jambe_gauche', 'jambe_g', 'jg', 'left_leg', 'leg_left', 'l_leg', 'leg_l'] },
 ];
@@ -129,7 +129,7 @@ function segFields(): BalanceFieldSpec[] {
     out.push({
       ...base,
       key: `graisse_${s.key}_pct`,
-      label: `Graisse ${s.label}`,
+      label: traduire('Graisse {0}', s.label),
       unit: '%',
       min: 2,
       max: 75,
@@ -144,7 +144,7 @@ function segFields(): BalanceFieldSpec[] {
     out.push({
       ...base,
       key: `muscle_${s.key}_kg`,
-      label: `Muscle ${s.label}`,
+      label: traduire('Muscle {0}', s.label),
       unit: 'kg',
       min,
       max,
@@ -160,7 +160,7 @@ function segFields(): BalanceFieldSpec[] {
     out.push({
       ...base,
       key: `graisse_${s.key}_kg`,
-      label: `Graisse ${s.label}`,
+      label: traduire('Graisse {0}', s.label),
       unit: 'kg',
       min: 0.1,
       max: 60,
@@ -176,7 +176,7 @@ function segFields(): BalanceFieldSpec[] {
     out.push({
       ...base,
       key: `muscle_${s.key}_pct`,
-      label: `Muscle ${s.label}`,
+      label: traduire('Muscle {0}', s.label),
       unit: '%',
       min: 1,
       max: 90,

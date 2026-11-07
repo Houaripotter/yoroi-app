@@ -114,7 +114,7 @@ export function computeGlobalInsights(stats: PartnerStats[]): GlobalInsight[] {
         id: 'belt_stat',
         type: 'belt_stat',
         title: traduire("Contre ceinture {0}", target.belt),
-        text: `${target.winrate}% (${target.total} rounds). ${target.winrate >= 40 ? traduire('Tu tiens la') : 'Zone a travailler'}.`,
+        text: traduire('{0}% ({1} rounds). {2}.', target.winrate, target.total, target.winrate >= 40 ? traduire('Tu tiens la') : traduire('Zone a travailler')),
         color: target.winrate >= 40 ? '#10B981' : '#EF4444',
       });
     }
@@ -145,7 +145,7 @@ export function computeGlobalInsights(stats: PartnerStats[]): GlobalInsight[] {
       id: 'rival_of_month',
       type: 'rival_of_month',
       title: traduire(`Rival principal`),
-      text: `${top.name} : ${top.total} rounds. ${top.winrate != null ? traduire("Taux de victoire {0}%.", top.winrate) : ''}`,
+      text: `${traduire('{0} : {1} rounds.', top.name, top.total)} ${top.winrate != null ? traduire("Taux de victoire {0}%.", top.winrate) : ''}`,
       color: '#D4AF37',
       partnerIds: [top.id],
     });

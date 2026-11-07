@@ -112,7 +112,7 @@ export function ScoreHero({ readiness, onOpen }: { readiness: Readiness | null; 
                 </View>
                 {p.delta ? (
                   <Ink size={11} weight="bold" color={S.muted}>
-                    {p.baseline ? `${p.delta}, moyenne ${p.baseline}` : p.delta}
+                    {p.baseline ? traduire('{0}, moyenne {1}', p.delta, p.baseline) : p.delta}
                   </Ink>
                 ) : null}
               </View>

@@ -149,9 +149,9 @@ export default function SparringRankingScreen() {
         {ranked.length > 0 ? (
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, paddingTop: 4, flexWrap: 'wrap' }}>
             {[
-              { t: 'up' as const, l: 'En progression' },
+              { t: 'up' as const, l: traduire('En progression') },
               { t: 'stable' as const, l: 'Stable' },
-              { t: 'down' as const, l: 'En baisse' },
+              { t: 'down' as const, l: traduire('En baisse') },
             ].map((x) => (
               <View key={x.l} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <TrendMark t={x.t} />

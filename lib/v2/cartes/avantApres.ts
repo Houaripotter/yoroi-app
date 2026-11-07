@@ -57,7 +57,7 @@ export function carteAvantApres(liste: PhotoCarte[], avantId?: string | null, ap
   return {
     moment: 'avant_apres',
     titre: traduire('Avant, après'),
-    sousTitre: jours > 0 ? `En ${dureeTexte(jours)}` : traduire('Le même jour'),
+    sousTitre: jours > 0 ? traduire('En {0}', dureeTexte(jours)) : traduire('Le même jour'),
     avantApres: { avant: a, apres: b, jours },
     cle: `avant_apres:${a.id}:${b.id}`,
   };

@@ -73,12 +73,12 @@ export default function TesCourbes() {
             ) : null}
             <ApercuCourbe style={style.id} width={W - 40} height={100} />
           </View>
-          <Ink size={13} weight="bold" color={c.textSecondary} style={{ textAlign: 'center' }}>{`Style ${style.id}, ${style.nom}`}</Ink>
+          <Ink size={13} weight="bold" color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire('Style {0}, {1}', style.id, traduire(style.nom))}</Ink>
         </View>
       </Card>
 
       <Card>
-        <ValueRow first tint={TUILE.bleu} sticker="bilan" icon="pulse" label={traduire("Style de la courbe")} value={`Style ${style.id}`} onPress={() => setPicker('style')} />
+        <ValueRow first tint={TUILE.bleu} sticker="bilan" icon="pulse" label={traduire("Style de la courbe")} value={traduire('Style {0}', style.id)} onPress={() => setPicker('style')} />
         <ValueRow tint={TUILE.or} sticker="arc_en_ciel" icon="wand" label={traduire("Couleur de ta courbe")} value={couleur.nom} onPress={() => setPicker('couleur')} />
         <ValueRow tint={TUILE.mousse} sticker="sentier" icon="image" label={traduire("Fond de la courbe")} value={fondNom} onPress={() => setPicker('fond')} />
         <ValueRow

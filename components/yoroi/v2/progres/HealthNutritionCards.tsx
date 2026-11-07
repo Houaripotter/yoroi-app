@@ -276,7 +276,7 @@ export function HealthNutritionCards() {
       ? { value: `${formatDuration(Math.max(1, Math.round((Date.now() - new Date(fasting.startTime).getTime()) / 60000)))}`, sub: traduire('Jeûne en cours.') }
       : { cta: traduire('Lancer un jeûne'), sub: traduire('16/8, 18/6 ou Ramadan.') };
     out.cut = compet
-      ? { value: `J-${Math.max(0, daysDiff(today, compet.date.slice(0, 10)))}`, sub: compet.poids_max ? `${compet.nom}, ${num(compet.poids_max, 1)} kg maximum.` : `${compet.nom}.` }
+      ? { value: `J-${Math.max(0, daysDiff(today, compet.date.slice(0, 10)))}`, sub: compet.poids_max ? traduire('{0}, {1} kg maximum.', compet.nom, num(compet.poids_max, 1)) : `${compet.nom}.` }
       : { cta: traduire('Préparer ma pesée'), sub: traduire('Les derniers kilos avant un combat, sans casse.') };
     out.height = { value: profile?.height_cm ? String(profile.height_cm) : '', sub: '' };
     const body = await safe(() => loadBodyData());
@@ -323,7 +323,7 @@ export function HealthNutritionCards() {
             <AccessCard key="n" icon="bowl" tint={c.goldTint} title={traduire("Plan nutritionnel")} preview={pv.plan} href="/nutrition-plan" />,
             <AccessCard key="f" icon="clock" tint={c.goldTint} title={traduire("Jeûne")} preview={pv.fasting} href="/fasting" />,
             <AccessCard key="c" icon="scale" tint={c.accentTint} title={traduire("Coupe de poids")} preview={pv.cut} href="/cut-mode" />,
-            <AccessCard key="k" icon="calc" tint={c.fillSoft} title={traduire("Calculateurs")} preview={bmi ? { value: `IMC ${num(bmi, 1, false)}`, sub: traduire('Et tes besoins, ta fréquence maximale, tes protéines.') } : { cta: traduire('Calculer'), sub: traduire('IMC, besoins, fréquence maximale, protéines, eau.') }} href="/calculators" />,
+            <AccessCard key="k" icon="calc" tint={c.fillSoft} title={traduire("Calculateurs")} preview={bmi ? { value: traduire('IMC {0}', num(bmi, 1, false)), sub: traduire('Et tes besoins, ta fréquence maximale, tes protéines.') } : { cta: traduire('Calculer'), sub: traduire('IMC, besoins, fréquence maximale, protéines, eau.') }} href="/calculators" />,
             <AccessCard key="q" icon="bowl" tint={c.successTint} title={traduire("Repas du jour")} preview={{ cta: traduire('Voir'), sub: traduire('Quoi manger avant et après ta séance.') }} href="/quick-nutrition" />,
           ]}
         </Grid>

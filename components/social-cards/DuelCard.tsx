@@ -113,7 +113,7 @@ export const DuelCard = React.memo(
               </View>
               {topMethodGiven || topMethodTaken ? (
                 <View style={{ flex: 1.3, gap: 2 }}>
-                  {topMethodGiven ? <Ink size={11} weight="extraBold" color={p.panelInk} numberOfLines={1}>{`Arme : ${topMethodGiven}`}</Ink> : null}
+                  {topMethodGiven ? <Ink size={11} weight="extraBold" color={p.panelInk} numberOfLines={1}>{traduire('Arme : {0}', topMethodGiven)}</Ink> : null}
                   {topMethodTaken ? <Ink size={11} weight="bold" color={p.panelInk2} numberOfLines={1}>{traduire("À surveiller : {0}", topMethodTaken)}</Ink> : null}
                 </View>
               ) : null}

@@ -399,7 +399,7 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
           </>
         ) : photo ? (
           <>
-            {entete('En photo', () => setPhoto(false))}
+            {entete(traduire('En photo'), () => setPhoto(false))}
             {vuePhoto()}
           </>
         ) : (

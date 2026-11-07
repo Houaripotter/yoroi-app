@@ -702,7 +702,7 @@ export function TuileMensurationsDefile() {
               key={m.cle}
               onPress={() => router.push({ pathname: '/measurements-detail', params: { field: m.cle } } as any)}
               accessibilityRole="button"
-              accessibilityLabel={traduire("{0} : {1} centimètres{2}. Voir le détail", m.nom, cm(last.value), d !== null ? `, ${d < 0 ? 'moins' : 'plus'} ${cm(Math.abs(d))} au total` : '')}
+              accessibilityLabel={traduire("{0} : {1} centimètres{2}. Voir le détail", m.nom, cm(last.value), d !== null ? (d < 0 ? traduire(', moins {0} au total', cm(Math.abs(d))) : traduire(', plus {0} au total', cm(Math.abs(d)))) : '')}
               style={({ pressed }) => ({ width: L, minHeight: 124, borderRadius: 16, borderWidth: 1, borderColor: P.line2, backgroundColor: pressed ? P.paper : P.white, padding: 10, gap: 3 })}
             >
               <Ink size={11.5} weight="extraBold" color={t.texte} numberOfLines={1}>

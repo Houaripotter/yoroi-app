@@ -769,7 +769,7 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
         <View style={{ backgroundColor: POIDS.encre, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6, gap: 3, alignItems: 'flex-start', shadowColor: '#1D2029', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 6 } }}>
           <Ink size={12.5} weight="bold" color={POIDS.surEncre} numberOfLines={1}>
             <Ink size={15} weight="extraBold" color={POIDS.surEncre}>{`${kg1(p.value)} kg`}</Ink>
-            {`  ${quand}${p.week ? ', moyenne' : ''}`}
+            {`  ${quand}${p.week ? traduire(', moyenne') : ''}`}
           </Ink>
           {style === 4 && capOn ? (
             <Ink size={12} weight="bold" color={POIDS.surEncre} style={{ opacity: 0.8 }} numberOfLines={1}>
@@ -795,7 +795,7 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
     >
       <ToriiImage width={16} />
       <Ink size={11.5} weight="extraBold" color={POIDS.encre} numberOfLines={1}>
-        {'torii, '}
+        {traduire('torii, ')}
         <Ink size={11.5} weight="extraBold" color={POIDS.or}>
           {jourCourt(toriiDate as string)}
         </Ink>

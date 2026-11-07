@@ -77,7 +77,7 @@ export function ChronoBanner() {
 export function ReprendreCard({ mode, resume, onPress }: { mode: TimerMode; resume: string; onPress: () => void }) {
   const look = lookDuMode(mode);
   return (
-    <Press onPress={onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={`Reprendre : ${resume}`}>
+    <Press onPress={onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire('Reprendre : {0}', resume)}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, paddingRight: 14, borderRadius: 24, backgroundColor: look.doux }}>
         <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: blancA(0.7), overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
           <Image source={look.art} style={{ width: 64, height: 76 }} resizeMode="contain" accessibilityIgnoresInvertColors />

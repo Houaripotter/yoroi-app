@@ -218,7 +218,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
               p={p}
               onSet={(text) => update({ activeGoal: { text, createdAt: new Date().toISOString() } }, true)}
               onAchieved={() => {
-                const done: TacticalNote = { id: makeId(), date: new Date().toISOString(), content: `Objectif atteint : ${p.activeGoal?.text ?? ''}` };
+                const done: TacticalNote = { id: makeId(), date: new Date().toISOString(), content: traduire('Objectif atteint : {0}', p.activeGoal?.text ?? '') };
                 update({ activeGoal: undefined, notes: [done, ...p.notes] }, true);
                 tap('success');
               }}

@@ -115,7 +115,7 @@ export default function RadarPerformanceScreen() {
                 </Ink>
                 {insight.source ? (
                   <Ink size={11} weight="medium" color={P.ink2}>
-                    {insight.source}
+                    {traduire(insight.source)}
                   </Ink>
                 ) : null}
               </View>

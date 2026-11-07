@@ -214,7 +214,7 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
 
           {/* Message personnel */}
           <Text style={[styles.greeting, { color: colors.textPrimary }]}>
-            {t('rating.greeting') || 'Salut Champion !'}
+            {t('rating.greeting') || traduire('Salut Champion !')}
           </Text>
 
           <Text style={[styles.actionMessage, { color: colors.textPrimary }]}>

@@ -158,7 +158,7 @@ export const UniversalShareCard = React.memo(
           const distNum = training.distance!;
           return {
             heroNum: km, heroSub: traduire('KILOMÈTRES'),
-            badge: distNum >= 42.195 ? 'MARATHON' : distNum >= 21.1 ? 'SEMI MARATHON' : distNum >= 10 ? '10 KM+' : null,
+            badge: distNum >= 42.195 ? 'MARATHON' : distNum >= 21.1 ? traduire('SEMI MARATHON') : distNum >= 10 ? '10 KM+' : null,
             stats: [
               { v: fmtDur(training.duration_minutes ?? training.duration), l: 'DURÉE' },
               fmtPace(training.speed)  ? { v: fmtPace(training.speed)!,    l: 'ALLURE' }   : null,
@@ -440,7 +440,7 @@ export const UniversalShareCard = React.memo(
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 * s, marginBottom: 10 * s }}>
               <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
               <Text style={{ color: 'rgba(255,255,255,0.30)', fontSize: 7 * s, fontWeight: '700', letterSpacing: 1 }}>
-                {traduire("SÉANCE #{0}{1}, {2}", yearlyCount, yearlyObjective ? ` SUR ${yearlyObjective}` : '', new Date().getFullYear())}
+                {traduire("SÉANCE #{0}{1}, {2}", yearlyCount, yearlyObjective ? traduire(' SUR {0}', yearlyObjective) : '', new Date().getFullYear())}
               </Text>
               <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
             </View>

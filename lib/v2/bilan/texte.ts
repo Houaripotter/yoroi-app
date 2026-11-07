@@ -681,7 +681,7 @@ export function bilanSeance(e: EntreeSeance): BilanSeance {
   const compteurs: BilanSeance['compteurs'] = [
     { label: traduire('cette semaine'), value: ordinal(k.semaine) },
     { label: traduire('ce mois'), value: ordinal(k.mois) },
-    { label: `en ${annee}`, value: ordinal(k.annee) },
+    { label: traduire('en {0}', annee), value: ordinal(k.annee) },
   ];
   if (e.recues && e.recues > 1) topo.push(riche('compteur', seg('fort', traduire("{0} séances", e.recues)), traduire(' sont arrivées d’un coup : voici le bilan de la dernière.')));
   if (k.total === 1) topo.push({ ...riche(null, traduire('C’est ta '), seg('seance', traduire('toute première séance')), traduire(' enregistrée : bienvenue, le compteur est lancé.')), phare: true });
@@ -722,7 +722,7 @@ export function bilanSeance(e: EntreeSeance): BilanSeance {
       a.fait >= a.total
         ? riche('annee', seg('objectif', traduire("Ton objectif de {0} est tenu", annee)), ' : ', seg('objectif', traduire("{0} séances", a.fait)), traduire(" pour {0} visées.", a.total))
         : a.ecart > 0
-          ? riche('annee', traduire("Sur ton objectif de {0}, tu as ", annee), seg('objectif', `${a.ecart} ${pluriel(a.ecart, traduire('séance'), traduire('séances'))} d’avance`), traduire(' sur ton rythme ('), seg('fort', traduire("{0} sur {1}", a.fait, a.total)), ').')
+          ? riche('annee', traduire("Sur ton objectif de {0}, tu as ", annee), seg('objectif', traduirePluriel(a.ecart, a.ecart > 1, '{0} séance d’avance', '{0} séances d’avance', a.ecart)), traduire(' sur ton rythme ('), seg('fort', traduire("{0} sur {1}", a.fait, a.total)), ').')
           : a.ecart < 0
             ? riche('annee', traduire("Sur ton objectif de {0}, ", annee), seg('fort', traduire("{0} séances sur {1}", a.fait, a.total)), traduire(" : {0} de retard sur ton rythme, rien qui ne se rattrape.", -a.ecart))
             : riche('annee', traduire("Sur ton objectif de {0}, tu es ", annee), seg('objectif', traduire('pile dans ton rythme')), ' : ', seg('fort', traduire("{0} sur {1}", a.fait, a.total)), '.');

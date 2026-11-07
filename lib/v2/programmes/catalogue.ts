@@ -9,6 +9,7 @@
 import { programmePersoParId } from './registrePerso';
 import { ordonnerParPoste } from './ordre';
 import type { ExoProgramme, JourProgramme, Materiel, Niveau, Programme } from './types';
+import { traduire } from '@/lib/i18n/tr';
 
 const exo = (nom: string, muscle: string, series: number, repsMin: number, repsMax: number, reposSec: number, conseil?: string, poidsDuCorps?: boolean, secondes?: boolean): ExoProgramme => ({
   nom, muscle, series, repsMin, repsMax, reposSec, ...(conseil ? { conseil } : {}), ...(poidsDuCorps ? { poidsDuCorps } : {}), ...(secondes ? { secondes } : {}),
@@ -1490,7 +1491,7 @@ const PROGRAMMES_BRUTS: Programme[] = [
     sources: ['buist2007', 'buist2008', 'nielsen2014', 'damsted2019', 'videbaek2015', 'kluitenberg2015', 'garber2011', 'oms2020'],
     jours: [1, 2, 3].map((n) => ({
       id: `sortie-${n}`,
-      titre: `Sortie ${n}`,
+      titre: traduire('Sortie {0}', n),
       muscles: ['jambes'],
       exos: [],
       cardio: {

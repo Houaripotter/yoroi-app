@@ -369,7 +369,7 @@ export default function MesDonnees() {
                 <Button tone="accent" label={traduire("Ouvrir Santé")} onPress={() => safeOpenURL('x-apple-health://')} />
               </>
             ) : null}
-            <Ink size={15} weight="extraBold">{Platform.OS === 'ios' ? '2. Autorisations' : '1. Autorisations'}</Ink>
+            <Ink size={15} weight="extraBold">{Platform.OS === 'ios' ? traduire('2. Autorisations') : traduire('1. Autorisations')}</Ink>
             <Ink size={14} color={c.textSecondary}>{traduire("Coupe les autorisations restantes (notifications, photos, caméra) puis supprime l’app depuis l’écran d’accueil.")}</Ink>
             <Button tone="accent" label={traduire("Ouvrir les réglages du téléphone")} onPress={() => Linking.openSettings()} />
             <Button tone="ghost" label={traduire("Terminé")} onPress={closeCleanSheet} />

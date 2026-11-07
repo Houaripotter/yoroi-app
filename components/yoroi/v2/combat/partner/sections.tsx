@@ -263,7 +263,7 @@ export function StreaksAndBadges({ ins, p }: { ins: PartnerInsights; p: Partner 
       ) : null}
       {badges.length > 0 ? (
         <View style={{ gap: 8 }}>
-          <Section title={traduire("Sceaux gagnés")} sub={`${badges.length} contre ${p.name}`} />
+          <Section title={traduire("Sceaux gagnés")} sub={traduire('{0} contre {1}', badges.length, p.name)} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
             {badges.map((b) => (
               <View key={b.id} style={{ width: 132, padding: 12, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, gap: 8, alignItems: 'flex-start' }}>

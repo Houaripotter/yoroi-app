@@ -73,7 +73,7 @@ export function AnneeSection() {
         </Ink>
         <Ink size={14} weight="bold" color={c.textSecondary}>
           {streaks.best > 1 ? traduire("Ta meilleure série : {0} semaines d’affilée", streaks.best) : traduire('Enchaîne les semaines pour lancer ta série')}
-          {streaks.current > 1 && streaks.current < streaks.best ? `, en cours ${streaks.current}` : streaks.current > 1 && streaks.current === streaks.best ? traduire(', et elle est en cours') : ''}
+          {streaks.current > 1 && streaks.current < streaks.best ? traduire(', en cours {0}', streaks.current) : streaks.current > 1 && streaks.current === streaks.best ? traduire(', et elle est en cours') : ''}
         </Ink>
       </View>
 

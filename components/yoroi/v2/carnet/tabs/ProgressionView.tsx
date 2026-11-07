@@ -12,7 +12,7 @@ import { shortDate } from '@/lib/v2/carnet/format';
 import { useBenchmarks } from '@/lib/v2/carnet/useCarnetData';
 import { P, Sheet2, CIcon, Hanko } from '../ui';
 import { TabEmpty, TabLoading } from './common';
-import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, DECIMAL, traduirePluriel } from '@/lib/i18n/tr';
 
 const LIFTS = [
   { key: 'squat', label: 'Squat', kw: ['squat', 'back squat', 'front squat'] },
@@ -76,12 +76,12 @@ export function ProgressionView({ refreshKey, hideEmpty }: { refreshKey: number;
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <View style={{ flex: 1 }}>
               <Ink size={17} weight="black" tight>{traduire(l.label)}</Ink>
-              <Ink size={12} weight="bold" color={P.muted}>{`${l.entries.length} perf${l.entries.length > 1 ? 's' : ''}${l.best ? traduire(", record le {0}", shortDate(l.best.date)) : ''}`}</Ink>
+              <Ink size={12} weight="bold" color={P.muted}>{`${traduirePluriel(l.entries.length, l.entries.length > 1, '{0} perf', '{0} perfs', l.entries.length)}${l.best ? traduire(", record le {0}", shortDate(l.best.date)) : ''}`}</Ink>
             </View>
             {l.trend ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, height: 30, borderRadius: 15, backgroundColor: l.trend === 'up' ? P.mossSoft : l.trend === 'down' ? P.dangerSoft : P.goldSoft }}>
                 {l.trend !== 'stable' ? <CIcon name={l.trend} size={14} color={l.trend === 'up' ? P.mossText : P.danger} width={2.6} /> : null}
-                <Ink size={12} weight="extraBold" color={l.trend === 'up' ? P.mossText : l.trend === 'down' ? P.danger : P.goldDark}>{l.trend === 'up' ? traduire('En progrès') : l.trend === 'down' ? 'En baisse' : 'Stable'}</Ink>
+                <Ink size={12} weight="extraBold" color={l.trend === 'up' ? P.mossText : l.trend === 'down' ? P.danger : P.goldDark}>{l.trend === 'up' ? traduire('En progrès') : l.trend === 'down' ? traduire('En baisse') : traduire('Stable')}</Ink>
               </View>
             ) : null}
           </View>

@@ -224,7 +224,7 @@ export function OuvertureCoffre({ visible, grand, serie, ouvrir, suite, onCadeau
           {!ouvert ? <Ink size={15} color="rgba(255,255,255,0.75)">{phase === 'attente' ? traduire('Touche le coffre pour l’ouvrir') : traduire('Ça s’ouvre…')}</Ink> : null}
         </View>
 
-        <Pressable onPress={toucher} accessibilityRole="button" accessibilityLabel={ouvert ? 'Coffre ouvert' : traduire('Ouvrir le coffre')} style={{ width: ray, height: ray, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={toucher} accessibilityRole="button" accessibilityLabel={ouvert ? traduire('Coffre ouvert') : traduire('Ouvrir le coffre')} style={{ width: ray, height: ray, alignItems: 'center', justifyContent: 'center' }}>
           <Animated.View pointerEvents="none" style={{ position: 'absolute', opacity: rayons, transform: [{ rotate: rot }] }}>
             <Rayons size={ray} couleur={g ? '#C9A2FF' : '#FFD56B'} />
           </Animated.View>

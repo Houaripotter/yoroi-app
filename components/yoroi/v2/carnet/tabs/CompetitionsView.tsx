@@ -142,7 +142,7 @@ export function CompetitionsView({ refreshKey }: { refreshKey: number }) {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <ResultDot result={res(last.resultat)} size={40} />
             <View style={{ flex: 1 }}>
-              <Ink size={16} weight="extraBold" numberOfLines={1}>{`Contre ${last.adversaire_nom ?? traduire('un adversaire')}`}</Ink>
+              <Ink size={16} weight="extraBold" numberOfLines={1}>{traduire('Contre {0}', last.adversaire_nom ?? traduire('un adversaire'))}</Ink>
               {last.adversaire_club ? <Ink size={12} weight="bold" color={P.muted}>{last.adversaire_club}</Ink> : null}
               {last.methode || last.technique ? <Ink size={13} weight="medium" color={P.ink2}>{`${last.methode ? METHOD_LABEL[last.methode] ?? last.methode : ''}${last.technique ? `${last.methode ? ', ' : ''}${last.technique}` : ''}`}</Ink> : null}
             </View>

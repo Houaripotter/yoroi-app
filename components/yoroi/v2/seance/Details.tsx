@@ -243,7 +243,7 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
             {sortedClubs.map((cl) => {
               const on = cl.id === value.clubId;
               return (
-                <Pressable key={cl.id} onPress={() => pickClub(cl.id ?? null)} accessibilityRole="button" accessibilityLabel={`Club ${cl.name}`} accessibilityState={{ selected: on }} style={{ ...chosen(on), maxWidth: '100%', minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 6, paddingRight: 12, paddingVertical: 6, borderRadius: 16 }}>
+                <Pressable key={cl.id} onPress={() => pickClub(cl.id ?? null)} accessibilityRole="button" accessibilityLabel={traduire('Club {0}', cl.name)} accessibilityState={{ selected: on }} style={{ ...chosen(on), maxWidth: '100%', minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 6, paddingRight: 12, paddingVertical: 6, borderRadius: 16 }}>
                   <ClubMark club={cl} size={30} />
                   <Ink size={14} weight="extraBold" color={on ? d.texte : c.ink} numberOfLines={2} style={{ flexShrink: 1 }}>{traduire(cl.name)}</Ink>
                 </Pressable>
@@ -303,7 +303,7 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
             <TextInput
               value={value.place}
               onChangeText={(t) => onChange({ place: t, lat: null, lon: null })}
-              placeholder={cadre === 'salle' && !club ? traduire('Nom de la salle, facultatif') : 'Parc, plage, stade, facultatif'}
+              placeholder={cadre === 'salle' && !club ? traduire('Nom de la salle, facultatif') : traduire('Parc, plage, stade, facultatif')}
               placeholderTextColor={c.textMuted}
               accessibilityLabel={cadre === 'salle' && !club ? traduire('Nom de la salle') : traduire('Endroit de la séance')}
               style={[fontStyle('bold'), { height: 50, fontSize: 15, color: c.ink, paddingHorizontal: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }]}
@@ -323,7 +323,7 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
                 {places.map((p) => {
                   const on = p.name === value.place;
                   return (
-                    <Pressable key={p.name} onPress={() => onChange({ place: p.name, lat: p.lat, lon: p.lon })} accessibilityRole="button" accessibilityLabel={`Endroit ${p.name}`} accessibilityState={{ selected: on }} style={{ minHeight: 40, maxWidth: '100%', paddingHorizontal: 12, borderRadius: 12, justifyContent: 'center', backgroundColor: on ? d.plein : c.fillSoft }}>
+                    <Pressable key={p.name} onPress={() => onChange({ place: p.name, lat: p.lat, lon: p.lon })} accessibilityRole="button" accessibilityLabel={traduire('Endroit {0}', p.name)} accessibilityState={{ selected: on }} style={{ minHeight: 40, maxWidth: '100%', paddingHorizontal: 12, borderRadius: 12, justifyContent: 'center', backgroundColor: on ? d.plein : c.fillSoft }}>
                       <Ink size={13} weight="bold" color={on ? d.surPlein : c.ink} numberOfLines={1}>{traduire(p.name)}</Ink>
                     </Pressable>
                   );

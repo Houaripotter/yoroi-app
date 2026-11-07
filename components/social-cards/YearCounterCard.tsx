@@ -111,7 +111,7 @@ export const YearCounterCard = React.memo(forwardRef<View, YearCounterCardProps>
                 {stats.currentStreak > 0 ? stats.currentStreak : stats.bestStreak}
               </Text>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                {stats.currentStreak > 0 ? traduire('Streak actuel') : 'Meilleur streak'}
+                {stats.currentStreak > 0 ? traduire('Streak actuel') : traduire('Meilleur streak')}
               </Text>
             </View>
 

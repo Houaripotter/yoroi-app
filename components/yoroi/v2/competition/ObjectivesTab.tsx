@@ -242,7 +242,7 @@ export function ObjectivesTab() {
                       </Ink>
                     </View>
                   </Press>
-                  <Press onPress={() => complete(o)} accessibilityRole="button" accessibilityLabel={`Marquer ${o.title} comme atteint`} style={{ flex: 1.3 }}>
+                  <Press onPress={() => complete(o)} accessibilityRole="button" accessibilityLabel={traduire('Marquer {0} comme atteint', o.title)} style={{ flex: 1.3 }}>
                     <View style={{ minHeight: 44, borderRadius: 14, backgroundColor: P.ink, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                       <Icon name="check" size={16} color={P.white} width={3} />
                       <Ink size={13} weight="extraBold" color={P.white}>
@@ -334,7 +334,7 @@ export function ObjectivesTab() {
           </View>
         ) : (
           <View style={{ gap: 14 }}>
-            <Field value={title} onChangeText={setTitle} placeholder={type === 'competition' ? traduire('Ex : Championnat de France') : type === 'weight' ? 'Ex : Atteindre 75 kg' : traduire("Titre de l'objectif")} icon="flag" maxLength={80} />
+            <Field value={title} onChangeText={setTitle} placeholder={type === 'competition' ? traduire('Ex : Championnat de France') : type === 'weight' ? traduire('Ex : Atteindre 75 kg') : traduire("Titre de l'objectif")} icon="flag" maxLength={80} />
             <DateField label={traduire("Date visée")} value={date} onChange={setDate} minimumDate={addDays(startOfToday(), 1)} />
             {type === 'competition' || type === 'exam' ? (
               <View style={{ gap: 8 }}>
@@ -346,7 +346,7 @@ export function ObjectivesTab() {
                 </ChipScroll>
               </View>
             ) : null}
-            {type === 'competition' || type === 'travel' ? <Field label={traduire("Lieu")} value={location} onChangeText={setLocation} placeholder={type === 'travel' ? 'Ex : Tokyo, Japon' : 'Ville, pays'} icon="flag" maxLength={80} /> : null}
+            {type === 'competition' || type === 'travel' ? <Field label={traduire("Lieu")} value={location} onChangeText={setLocation} placeholder={type === 'travel' ? traduire('Ex : Tokyo, Japon') : traduire('Ville, pays')} icon="flag" maxLength={80} /> : null}
             {type === 'weight' ? <Field label={traduire("Poids visé")} value={targetWeight} onChangeText={setTargetWeight} placeholder={traduire("Ex : 75")} keyboardType="decimal-pad" suffix="kg" icon="scale" /> : null}
             <Field label={traduire("Notes")} value={description} onChangeText={setDescription} placeholder={traduire("Détails, motivation")} multiline maxLength={300} />
             <View style={{ flexDirection: 'row', gap: 10 }}>

@@ -10,7 +10,7 @@ import { humanMinutes, shortDate } from '@/lib/v2/carnet/format';
 import { useTrainings } from '@/lib/v2/carnet/useCarnetData';
 import { P, Sheet2, BigStats, BrushBar, BlockTitle } from '../ui';
 import { SessionLine, TabEmpty, TabLoading } from './common';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 const NATURE = new Set(sportsInPack('nature'));
@@ -70,7 +70,7 @@ export function VoiesView({ refreshKey, hideEmpty }: { refreshKey: number; hideE
             <View key={d.g} style={{ gap: 6 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Ink size={16} weight="black" color={gradeTone(d.i)}>{d.g}</Ink>
-                <Ink size={13} weight="bold" color={P.ink2}>{`${d.count} voie${d.count > 1 ? 's' : ''}`}</Ink>
+                <Ink size={13} weight="bold" color={P.ink2}>{traduirePluriel(d.count, d.count > 1, '{0} voie', '{0} voies', d.count)}</Ink>
               </View>
               <BrushBar value={d.count / st.max} color={gradeTone(d.i)} height={8} />
             </View>

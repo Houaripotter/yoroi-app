@@ -591,7 +591,7 @@ export default function WorkoutDetailScreen() {
                               </View>
                               <Ink size={16} weight="extraBold" style={{ flex: 1 }}>
                                 {pl !== null && pl > 0 ? libelleSeriePlaques(pl, s.reps) : s.weight > 0 ? `${formatKg(cv(s.weight))} ${uL} × ${s.reps}` : traduire("{0} répétitions", s.reps)}
-                                {s.type === 'dropset' ? <Ink size={12} weight="bold" color={c.textMuted}>{traduire('  dégressive')}</Ink> : s.type === 'superset' ? <Ink size={12} weight="bold" color={c.textMuted}>{'  superset'}</Ink> : null}
+                                {s.type === 'dropset' ? <Ink size={12} weight="bold" color={c.textMuted}>{traduire('  dégressive')}</Ink> : s.type === 'superset' ? <Ink size={12} weight="bold" color={c.textMuted}>{traduire('  superset')}</Ink> : null}
                               </Ink>
                               {m > 0 && s.type !== 'warmup' ? <Ink size={12} weight="bold" color={c.textMuted}>{traduire("max estimé {0}", Math.round(cv(m)))}</Ink> : null}
                             </View>
@@ -967,7 +967,7 @@ export default function WorkoutDetailScreen() {
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {details?.weatherTemp != null ? <Stat value={`${appleTemperature(details.weatherTemp)}°`} label={traduire("Température")} /> : null}
                 {details?.weatherHumidity != null ? <Stat value={`${appleHumidity(details.weatherHumidity)}`} unit="%" label={traduire("Humidité")} /> : null}
-                {details?.airQualityIndex != null ? <Stat value={String(details.airQualityIndex)} label={details.airQualityCategory ? `Air, ${traduire(details.airQualityCategory).toLowerCase()}` : traduire('Qualité de l’air')} /> : null}
+                {details?.airQualityIndex != null ? <Stat value={String(details.airQualityIndex)} label={details.airQualityCategory ? traduire('Air, {0}', traduire(details.airQualityCategory).toLowerCase()) : traduire('Qualité de l’air')} /> : null}
               </View>
               {details?.weatherCondition ? <Ink size={14} color={c.textSecondary}>{details.weatherCondition}</Ink> : null}
             </Glass>

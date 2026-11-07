@@ -33,7 +33,7 @@ export function WeighInCard({ categorie, poidsMax, weight, weightDate, daysLeft,
             {peseeLabel ? traduire("Pesée officielle, {0}", peseeLabel) : traduire('Pesée officielle')}
           </Ink>
           <Ink size={19} weight="black" tight>
-            {categorie ? (open ? traduire("{0}, sans limite", categorie) : `${categorie}, ${formatKg(poidsMax!)} kg max`) : traduire('Catégorie à choisir')}
+            {categorie ? (open ? traduire("{0}, sans limite", categorie) : traduire('{0}, {1} kg max', categorie, formatKg(poidsMax!))) : traduire('Catégorie à choisir')}
           </Ink>
         </View>
         {inside ? <Hanko size={40} /> : null}

@@ -37,10 +37,10 @@ export function Bienvenue({ visible, summary, image, scene, onClose }: Props) {
   const rows: { key: string; label: string }[] = [];
   if (summary.seances > 0) rows.push({ key: 'seances', label: plural(summary.seances, traduire('séance'), traduire('séances')) });
   if (summary.pesees > 0) rows.push({ key: 'pesees', label: plural(summary.pesees, traduire('jour de pesée'), traduire('jours de pesée')) });
-  if (summary.records > 0) rows.push({ key: 'records', label: plural(summary.records, 'record personnel', 'records personnels') });
+  if (summary.records > 0) rows.push({ key: 'records', label: plural(summary.records, traduire('record personnel'), traduire('records personnels')) });
   if (summary.semaines > 0) rows.push({ key: 'semaines', label: plural(summary.semaines, traduire('semaine réussie'), traduire('semaines réussies')) });
   if (summary.quetesXp > 0) rows.push({ key: 'quetes', label: traduire("{0} XP de tes quêtes et défis", formatXp(summary.quetesXp)) });
-  if (summary.badges > 0) rows.push({ key: 'badges', label: `${plural(summary.badges, 'ancien badge', 'anciens badges')}, ${formatXp(summary.badgesXp)} XP` });
+  if (summary.badges > 0) rows.push({ key: 'badges', label: `${plural(summary.badges, traduire('ancien badge'), traduire('anciens badges'))}, ${formatXp(summary.badgesXp)} XP` });
 
   return (
     <Modal visible={visible} animationType="fade" onRequestClose={onClose} statusBarTranslucent>

@@ -50,7 +50,7 @@ export function BarresMinMax({ tranches, debut, fin, couleur, unite, decimales =
       <View style={{ minHeight: 18, justifyContent: 'center' }}>
         {choisi ? (
           <Ink size={13} weight="extraBold" numberOfLines={1}>
-            {traduire("De {0} à {1} : {2} {3}", heure(Math.max(choisi.debut, debut)), heure(Math.min(choisi.fin, fin)), choisi.min === choisi.max ? fmt(choisi.min) : `${fmt(choisi.min)} à ${fmt(choisi.max)}`, unite)}
+            {traduire("De {0} à {1} : {2} {3}", heure(Math.max(choisi.debut, debut)), heure(Math.min(choisi.fin, fin)), choisi.min === choisi.max ? fmt(choisi.min) : traduire('{0} à {1}', fmt(choisi.min), fmt(choisi.max)), unite)}
           </Ink>
         ) : null}
       </View>

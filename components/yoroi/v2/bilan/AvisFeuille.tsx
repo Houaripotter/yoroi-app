@@ -24,7 +24,7 @@ const LOGO = require('@/assets/logo d\'app/yoroi-logo2.png');
 const TAILLE_LOGO = 108;
 const NB_ETOILES = 5;
 
-export const nomDuStore = () => (Platform.OS === 'android' ? 'Google Play' : 'l’App Store');
+export const nomDuStore = () => (Platform.OS === 'android' ? 'Google Play' : traduire('l’App Store'));
 
 /** La fenetre de note du systeme, sinon la fiche du store */
 export async function ouvrirNoteStore(): Promise<void> {

@@ -10,7 +10,7 @@ import { durationOf, formatDuration } from '@/lib/v2/trainingWeek';
 import type { NextSession } from '@/lib/v2/accueil/home';
 import { relativeDay } from '@/lib/v2/accueil/home';
 import { formatMinutes } from '@/lib/v2/accueil/forme';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export type ActivityToday = { connected: boolean; steps: number | null; move: number | null; exercise: number | null; moveGoal: number; exerciseGoal: number };
 
@@ -38,7 +38,7 @@ export function nextTarget(next: NextSession | null, trainings: Training[], favo
     return {
       over: traduire("Dernière séance {0}", relativeDay(last.date)),
       title: getSportName(main),
-      sub: [n > 0 ? `${n} exercice${n > 1 ? 's' : ''}` : null, dur > 0 ? `environ ${formatDuration(dur)}` : null].filter(Boolean).join(', ') || undefined,
+      sub: [n > 0 ? traduirePluriel(n, n > 1, '{0} exercice', '{0} exercices', n) : null, dur > 0 ? traduire('environ {0}', formatDuration(dur)) : null].filter(Boolean).join(', ') || undefined,
       sportId: main,
       params: n > 0 ? { sport: main, repeatId: String(last.id) } : { sport: main },
     };

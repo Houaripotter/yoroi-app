@@ -259,7 +259,7 @@ export default function Sommeil() {
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 6, paddingTop: 14, borderTopWidth: 1, borderTopColor: P.line2 }}>
               <Stat value={stats && stats.averageDuration > 0 ? hm(stats.averageDuration) : traduire('pas noté')} label={traduire("en moyenne")} color={P.indigo} />
               <Stat value={stats && stats.averageQuality > 0 ? String(stats.averageQuality).replace('.', DECIMAL) : traduire('pas noté')} unit={stats && stats.averageQuality > 0 ? traduire('sur 5') : undefined} label={traduire("qualité")} />
-              <Stat value={stats ? (stats.trend === 'improving' ? 'en hausse' : stats.trend === 'declining' ? 'en baisse' : 'stable') : 'stable'} label="tendance" color={stats?.trend === 'declining' ? intensite(4).text : stats?.trend === 'improving' ? P.mossText : P.ink} />
+              <Stat value={stats ? (stats.trend === 'improving' ? traduire('en hausse') : stats.trend === 'declining' ? traduire('en baisse') : traduire('stable')) : traduire('stable')} label={traduire('tendance')} color={stats?.trend === 'declining' ? intensite(4).text : stats?.trend === 'improving' ? P.mossText : P.ink} />
             </View>
             {adv ? (
               <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: P.paper, borderRadius: 16, padding: 12 }}>

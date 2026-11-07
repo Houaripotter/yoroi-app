@@ -244,7 +244,7 @@ export default function ImportCSVScreen() {
           </View>
           <Card style={{ paddingVertical: 6 }}>
             {parseResult.rows.slice(0, 20).map((row, idx) => (
-              <ParsedRow key={idx} ok={row.valid} title={row.preview || `Ligne ${row.lineNumber}`} error={row.error} />
+              <ParsedRow key={idx} ok={row.valid} title={row.preview || traduire('Ligne {0}', row.lineNumber)} error={row.error} />
             ))}
             {parseResult.rows.length > 20 ? <Ink size={13} weight="bold" color={P.ink2} style={{ paddingVertical: 10 }}>{traduire("Et {0} de plus", parseResult.rows.length - 20)}</Ink> : null}
           </Card>
@@ -287,7 +287,7 @@ export default function ImportCSVScreen() {
             <Card style={{ paddingVertical: 6 }}>
               <Ink size={15} weight="black" color={P.danger} style={{ paddingVertical: 8 }}>{traduire("À corriger")}</Ink>
               {advParseResult.rows.filter((r) => !r.valid).slice(0, 10).map((row, idx) => (
-                <ParsedRow key={idx} ok={false} title={`Ligne ${row.lineNumber}, ${ADV_LABELS[row.type as CSVRowType] ?? 'type inconnu'}`} error={row.error} />
+                <ParsedRow key={idx} ok={false} title={traduire('Ligne {0}, {1}', row.lineNumber, ADV_LABELS[row.type as CSVRowType] ?? traduire('type inconnu'))} error={row.error} />
               ))}
             </Card>
           ) : null}

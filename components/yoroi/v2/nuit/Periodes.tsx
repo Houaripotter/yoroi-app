@@ -28,7 +28,7 @@ export function OngletsPeriode({ value, onChange }: { value: Periode; onChange: 
             onPress={() => onChange(p)}
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
-            accessibilityLabel={`Vue ${NOM[p]}`}
+            accessibilityLabel={traduire('Vue {0}', NOM[p])}
             style={{ flex: 1, minHeight: 34, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? P.white : 'transparent', shadowColor: '#000', shadowOpacity: on ? 0.08 : 0, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }}
           >
             <Ink size={14} weight={on ? 'black' : 'bold'} color={on ? P.ink : P.ink2}>

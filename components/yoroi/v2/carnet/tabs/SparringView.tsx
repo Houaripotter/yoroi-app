@@ -295,7 +295,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 18, backgroundColor: '#F5F6FB' }}>
                 <Kozane on={streak.current > 0} w={24} h={30} />
                 <Ink size={14} weight="extraBold" style={{ flex: 1 }}>{streak.current > 0 ? traduirePluriel(streak.current, streak.current > 1, "{0} semaine d’affilée au tatami", "{0} semaines d’affilée au tatami", streak.current) : traduire('Reviens cette semaine pour relancer ta série')}</Ink>
-                <Ink size={12} weight="bold" color={P.muted}>{`record ${streak.best}`}</Ink>
+                <Ink size={12} weight="bold" color={P.muted}>{traduire('record {0}', streak.best)}</Ink>
               </View>
             ) : null}
           </Sheet2>
@@ -475,7 +475,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
                 <View key={s.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Ink size={15} weight="bold" style={{ flex: 1 }} numberOfLines={1}>{traduire(s.name)}</Ink>
                   {s.given > 0 ? <Ink size={13} weight="extraBold" color={P.mossText}>{traduirePluriel(s.given, s.given > 1, "{0} placée", "{0} placées", s.given)}</Ink> : null}
-                  {s.taken > 0 ? <Ink size={13} weight="extraBold" color={P.danger}>{`${s.taken} subie${s.taken > 1 ? 's' : ''}`}</Ink> : null}
+                  {s.taken > 0 ? <Ink size={13} weight="extraBold" color={P.danger}>{traduirePluriel(s.taken, s.taken > 1, '{0} subie', '{0} subies', s.taken)}</Ink> : null}
                 </View>
               ))}
             </Sheet2>

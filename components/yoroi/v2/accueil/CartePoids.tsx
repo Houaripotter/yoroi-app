@@ -743,7 +743,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
       {objectifTxt ? (
         // 18 octobre 2026 : ancre de la visite guidee (« Ton objectif », avec Changer)
         <TourAnchor id="accueil.objectif">
-        <Press onPress={() => setFeuille({ quoi: null })} haptic="light" accessibilityRole="button" accessibilityLabel={traduire("Ton objectif : {0}{1}. Changer ton début, ton objectif ou ta date du cap", objectifTxt, plan.torii ? `, date du cap le ${jourCourt(plan.torii)}` : '')}>
+        <Press onPress={() => setFeuille({ quoi: null })} haptic="light" accessibilityRole="button" accessibilityLabel={traduire("Ton objectif : {0}{1}. Changer ton début, ton objectif ou ta date du cap", objectifTxt, plan.torii ? traduire(', date du cap le {0}', jourCourt(plan.torii)) : '')}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginHorizontal: 18, marginTop: chemin ? -6 : 0, marginBottom: 14, paddingTop: 10, borderTopWidth: 1, borderColor: P.line2 }}>
             <Ink size={12.5} weight="bold" color={P.ink2} numberOfLines={1} style={{ flexShrink: 1 }}>
               {traduire("Ton objectif : {0}", objectifTxt)}
@@ -825,7 +825,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
   const kgCible = goal !== null ? (Math.abs(goal - Math.round(goal)) < 0.05 ? String(Math.round(goal)) : formatKg(goal)) : null;
   const pastilleObjectif = objectifTxt && kgCible ? (
     <TourAnchor id="accueil.objectif">
-      <Press onPress={() => setFeuille({ quoi: null })} haptic="light" hitSlop={8} accessibilityRole="button" accessibilityLabel={traduire("Ton objectif : {0}{1}. Changer ton début, ton objectif ou ta date du cap", objectifTxt, plan.torii ? `, date du cap le ${jourCourt(plan.torii)}` : '')}>
+      <Press onPress={() => setFeuille({ quoi: null })} haptic="light" hitSlop={8} accessibilityRole="button" accessibilityLabel={traduire("Ton objectif : {0}{1}. Changer ton début, ton objectif ou ta date du cap", objectifTxt, plan.torii ? traduire(', date du cap le {0}', jourCourt(plan.torii)) : '')}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: HAUT_OBJECTIF, paddingHorizontal: 9, borderRadius: HAUT_OBJECTIF / 2, borderWidth: 1, borderColor: P.line }}>
           <Svg width={11} height={11} viewBox="0 0 24 24" fill="none">
             <Path d="M4 20l4 -1l11 -11l-3 -3l-11 11z" stroke={P.muted} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />

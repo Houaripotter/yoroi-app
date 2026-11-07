@@ -160,7 +160,7 @@ export function RecordsView({ benchmarks, pratique, isPremium, refreshKey, onOpe
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: P.redSoft }}>
                   <Hanko size={38} rotate={-8} />
                   <View style={{ flex: 1, gap: 1 }}>
-                    <Ink size={12} weight="bold" color={P.record}>{`Dernier record battu, ${relative(lb.date)}`}</Ink>
+                    <Ink size={12} weight="bold" color={P.record}>{traduire('Dernier record battu, {0}', relative(lb.date))}</Ink>
                     <Ink size={15} weight="extraBold" numberOfLines={2}>{`${niceName(lb.b.name)} : ${perfText(lb.b, summarize(lb.b).pr)}`}</Ink>
                   </View>
                   <CIcon name="chevron" size={16} color={P.record} />
@@ -282,7 +282,7 @@ export function RecordCard({ b, onOpen, onAdd, onDelete }: { b: Benchmark; onOpe
       }
       delayLongPress={450}
       accessibilityRole="button"
-      accessibilityLabel={`${name}, record ${perfText(b, s.pr)}${s.beaten ? ', record battu' : ''}`}
+      accessibilityLabel={traduire('{0}, record {1}{2}', name, perfText(b, s.pr), s.beaten ? traduire(', record battu') : '')}
       accessibilityHint={traduire("Touche pour l’historique, garde appuyé pour supprimer")}
     >
       <View style={{ padding: 16, borderRadius: 24, backgroundColor: P.white, borderWidth: 1, borderColor: s.lastIsBest ? 'rgba(176,40,46,0.28)' : P.line2, gap: 10 }}>
@@ -312,7 +312,7 @@ export function RecordCard({ b, onOpen, onAdd, onDelete }: { b: Benchmark; onOpe
             <View style={{ alignItems: 'flex-end', gap: 2 }}>
               {/* vague 45 : trait violet avec halo et point final (le rouge reste au tampon de record) */}
               <Sparkline values={s.curve} width={curveW} height={34} color={couleurTraitDomaine('seances')} minSpan={0} />
-              <Ink size={11} weight="bold" color={P.muted}>{`${s.count} perfs`}</Ink>
+              <Ink size={11} weight="bold" color={P.muted}>{traduirePluriel(s.count, true, '{0} perf', '{0} perfs', s.count)}</Ink>
             </View>
           ) : null}
         </View>
@@ -324,7 +324,7 @@ export function RecordCard({ b, onOpen, onAdd, onDelete }: { b: Benchmark; onOpe
             </View>
           ) : null}
           <Ink size={12} weight="medium" color={P.muted} style={{ flexShrink: 1 }}>
-            {s.lastIsBest && s.pr ? `Record battu ${relative(s.pr.date)}` : s.last && s.pr && s.last.id !== s.pr.id ? traduire("Dernière : {0}, {1}", perfText(b, s.last), relative(s.last.date)) : s.last ? traduire("Noté {0}", relative(s.last.date)) : ''}
+            {s.lastIsBest && s.pr ? traduire('Record battu {0}', relative(s.pr.date)) : s.last && s.pr && s.last.id !== s.pr.id ? traduire("Dernière : {0}, {1}", perfText(b, s.last), relative(s.last.date)) : s.last ? traduire("Noté {0}", relative(s.last.date)) : ''}
           </Ink>
         </View>
       </View>

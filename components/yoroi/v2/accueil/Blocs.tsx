@@ -462,13 +462,13 @@ export function BlocCitation({ text }: { text: string | null }) {
 export function BlocRecords({ record }: { record: LastRecord | null }) {
   const router = useRouter();
   return (
-    <Press onPress={() => router.push('/records' as any)} accessibilityRole="button" accessibilityLabel={record ? `Dernier record : ${sansTiret(record.exercise)}` : traduire('Tes records')}>
+    <Press onPress={() => router.push('/records' as any)} accessibilityRole="button" accessibilityLabel={record ? traduire('Dernier record : {0}', sansTiret(record.exercise)) : traduire('Tes records')}>
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
         <Hanko size={36} />
         {record ? (
           <View style={{ flex: 1, gap: 2 }}>
             <Ink size={13} weight="bold" color={P.ink2}>
-              {`Dernier record, ${relativeDay(record.date)}`}
+              {traduire('Dernier record, {0}', relativeDay(record.date))}
             </Ink>
             <Ink size={18} weight="black" tight numberOfLines={1}>
               {sansTiret(record.exercise)}

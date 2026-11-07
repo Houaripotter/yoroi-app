@@ -10,7 +10,7 @@ import { useBenchmarks } from '@/lib/v2/carnet/useCarnetData';
 import { P, Sheet2, Hanko, BlockTitle } from '../ui';
 import { TabEmpty, TabLoading } from './common';
 import { blancA, paletteSombre } from '@/components/yoroi/livePalette';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const STATIONS = [
   { key: 'ski_erg', label: 'SkiErg', unit: 'sec', target: '1000 m', kw: ['ski erg', 'skierg', 'ski-erg'] },
@@ -109,7 +109,7 @@ export function StationsView({ refreshKey, hideEmpty }: { refreshKey: number; hi
             <View key={l.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ flex: 1 }}>
                 <Ink size={15} weight="bold">{traduire(l.label)}</Ink>
-                <Ink size={12} weight="bold" color={P.muted}>{`${l.total} perf${l.total > 1 ? 's' : ''}, ${shortDate(l.best!.date)}`}</Ink>
+                <Ink size={12} weight="bold" color={P.muted}>{traduirePluriel(l.total, l.total > 1, '{0} perf, {1}', '{0} perfs, {1}', l.total, shortDate(l.best!.date))}</Ink>
               </View>
               <Ink size={24} weight="black" tight color={P.accent}>
                 {`${l.best!.value}`}
