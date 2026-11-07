@@ -13,6 +13,7 @@
  */
 import type { LiveExercise, MuscuDraft } from './model';
 import { reposApresSerie } from '@/lib/v2/seances/minuteurRepos';
+import { TOLERANCE_FIN_MS, accuseValable } from './sonneurRepos';
 
 /** Un exercice tel que le natif le voit */
 export type ExoIle = { id: string; nom: string; faites: number; total: number; repos: number };
@@ -59,15 +60,26 @@ export function planIle(d: MuscuDraft, t: TextesIle, nomDe: (e: LiveExercise) =>
   return { exos, cur: i >= 0 ? i : 0, debutMs: d.startedAt, t, rappel: rappel && !d.sansRepos, maj: d.ile?.maj ?? 0 };
 }
 
-/** Une action rangée par le natif dans la file partagée */
-export type ActionIle = { id: string; type: 'serie' | 'repos15'; exo?: string; at: number };
+/**
+ * Une action rangée par le natif dans la file partagée.
+ * 7 novembre 2026, depuis l'Apple Watch (ios/YoroiWatch/Services/Synchro.swift) :
+ * « repos » : un minuteur de la montre lancé pendant la séance devient le repos (secondes, fin exacte si connue) ;
+ * « passer » : le repos de fin `fin` est coupé (Passer, ou Arrêter sur la sonnerie de la montre) ;
+ * « arme » : la montre a armé sa sonnerie pour la fin `fin`, le téléphone se tait (lib/v2/seance/sonneurRepos.ts).
+ */
+export type TypeActionIle = 'serie' | 'repos15' | 'repos' | 'passer' | 'arme';
+export type ActionIle = { id: string; type: TypeActionIle; exo?: string; at: number; secondes?: number; fin?: number };
+
+const TYPES: readonly string[] = ['serie', 'repos15', 'repos', 'passer', 'arme'];
 
 const estObjet = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object';
 
 /** Vrai pour les actions des boutons de la séance (les autres vont aux widgets et à la montre) */
 export function estActionIle(x: unknown): boolean {
-  return estObjet(x) && (x.type === 'serie' || x.type === 'repos15');
+  return estObjet(x) && typeof x.type === 'string' && TYPES.includes(x.type);
 }
+
+const nombre = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
 
 /** L'action lisible, ou null (id manquant, date folle) */
 export function lireActionIle(x: unknown): ActionIle | null {
@@ -77,7 +89,16 @@ export function lireActionIle(x: unknown): ActionIle | null {
   if (!id || at === null) return null;
   const exo = typeof x.exo === 'string' && x.exo ? x.exo : undefined;
   if (x.type === 'serie' && !exo) return null;
-  return { id, type: x.type as ActionIle['type'], exo, at };
+  const type = x.type as TypeActionIle;
+  const secondes = nombre(x.secondes);
+  const fin = nombre(x.fin);
+  // un repos sans durée lisible (entre 1 s et 99 min), un accusé sans fin : ignorés
+  if (type === 'repos' && (secondes === undefined || secondes < 1 || secondes > 99 * 60)) return null;
+  if (type === 'arme' && fin === undefined) return null;
+  const a: ActionIle = { id, type, exo, at };
+  if (secondes !== undefined && type === 'repos') a.secondes = Math.round(secondes);
+  if (fin !== undefined && type !== 'serie' && type !== 'repos15') a.fin = fin;
+  return a;
 }
 
 /** Prochain exercice avec une série à faire, après l'index i (puis depuis le début) */
@@ -103,6 +124,28 @@ export function appliquerActionsIle(d: MuscuDraft, actions: ActionIle[]): MuscuD
     r = { ...r, ile: { maj: Math.max(r.ile?.maj ?? 0, a.at), ids: [...(r.ile?.ids ?? []), a.id].slice(-50) } };
     if (a.type === 'repos15') {
       if (r.restEndsAt != null && r.restEndsAt > a.at) r = { ...r, restEndsAt: r.restEndsAt + 15000, restTotal: r.restTotal + 15 };
+      continue;
+    }
+    if (a.type === 'repos') {
+      // minuteur de la montre pendant la séance : il devient le repos (un repos en cours est prolongé ou raccourci)
+      const s = a.secondes ?? 0;
+      const fin = a.fin !== undefined && Math.abs(a.fin - (a.at + s * 1000)) < 5000 ? a.fin : a.at + s * 1000;
+      if (fin <= a.at) continue;
+      const enCours = r.restEndsAt != null && r.restEndsAt > a.at;
+      const total = enCours ? Math.max(1, Math.round(r.restTotal + (fin - (r.restEndsAt as number)) / 1000)) : s;
+      r = { ...r, restEndsAt: fin, restTotal: total };
+      continue;
+    }
+    if (a.type === 'passer') {
+      // seul le repos visé est coupé : un repos relancé entre temps sur le téléphone reste
+      if (r.restEndsAt != null && (a.fin === undefined || Math.abs(a.fin - r.restEndsAt) <= TOLERANCE_FIN_MS)) {
+        r = { ...r, restEndsAt: null, reposSurMontre: null };
+      }
+      continue;
+    }
+    if (a.type === 'arme') {
+      const ok = a.fin !== undefined ? accuseValable(r, a.fin, a.at) : null;
+      if (ok) r = { ...r, reposSurMontre: ok };
       continue;
     }
     const i = r.exercises.findIndex((e) => e.id === a.exo);
