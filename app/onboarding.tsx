@@ -16,6 +16,9 @@
  * La decision d'afficher l'onboarding reste dans app/index.tsx (lib/v2/onboarding/etatOuverture.ts).
  * 18 octobre 2026 (INSTALLATION) : apres une reinstallation, ce qui existe deja (trousseau, base) preremplit les reponses ;
  *   l'enregistrement final fusionne sans rien effacer (lib/v2/onboarding/fusion.ts).
+ * 7 novembre 2026 (audit valide par Houari) : « Où as-tu connu YOROI » passe juste apres Ton plan, avant Sante et
+ *   Premium ; la reponse est posee en quittant l'ecran (enregistrerSourceConnu), jamais en apercu ni en mode createur
+ *   sans ecriture. Moment ne demande plus « combien de fois » : le nombre suit les jours touches, comme Rythme.
  * 26 octobre 2026 (revue complete) : jours en couleurs avec tes sports (Rythme, Ton plan), « Tout au meme endroit »
  *   environ 40 % plus rapide, la preparation dit ce qu'elle prepare vraiment (lignes ci dessous), Ton plan compare
  *   sport, alimentation et les deux (sources.ts) et montre un apercu gamifie. Tes objectifs, tes jours et tes sports
@@ -74,6 +77,7 @@ import {
   categoriesOf,
   categorySportOf,
   connectHealth,
+  enregistrerSourceConnu,
   healthName,
   latestHealthWeighIn,
   saveOnboarding,
@@ -152,11 +156,12 @@ const PREMIUM = 19;
 const SCENE = 20;
 // 28 octobre 2026 : l'accueil du mode retour de la 3.0, en tete (hors apercu du Studio)
 const ACCUEIL_RETOUR = 21;
-// 31 octobre 2026 : ou tu as entendu parler de YOROI, juste apres Ta tranche d'age (numero a la fin, rien n'est decale)
+// 31 octobre 2026 : ou tu as entendu parler de YOROI (numero a la fin, rien n'est decale).
+// 7 novembre 2026 : juste apres Ton plan, avant Sante et Premium (lib/v2/onboarding/ordreEcrans.ts)
 const SOURCE = 22;
 const NUMERO_MAX = SOURCE;
-/** l'ordre reel du parcours (Ta scene apres Ton univers, Sante apres Ton plan), pour le sens de l'animation et la mesure */
-const ordreDe = (p: number) => (p === ACCUEIL_RETOUR ? -1 : p === SOURCE ? AGE + 0.5 : p === SCENE ? UNIVERS + 0.5 : p === SANTE ? RESULTAT + 0.5 : p);
+/** l'ordre reel du parcours (Ta scene apres Ton univers, Source puis Sante apres Ton plan), pour le sens de l'animation et la mesure */
+const ordreDe = (p: number) => (p === ACCUEIL_RETOUR ? -1 : p === SOURCE ? RESULTAT + 0.25 : p === SCENE ? UNIVERS + 0.5 : p === SANTE ? RESULTAT + 0.5 : p);
 const NAMES = ['ouverture', 'prenom', 'toi', 'age', 'univers', 'objectif', 'frein', 'affirmation', 'sport', 'sante', 'poids', 'taille', 'cap', 'rythme', 'moment_pesee', 'demonstration', 'comparaison', 'preparation', 'plan', 'premium', 'scene', 'retour_accueil', 'source'];
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
@@ -305,7 +310,9 @@ export default function OnboardingScreen() {
       if (!alive) return;
       if (saved && saved.page > OUVERTURE) {
         // la preparation se refait : l'enregistrement final est sans doublon
-        const p = saved.page >= FORGE && saved.page !== SCENE && saved.page !== SANTE && saved.page !== SOURCE ? COMPARAISON : saved.page;
+        // 7 novembre 2026 : un brouillon garde sur Source vient de l'ancien ordre (apres Ta tranche d'age) : reprise a Ton univers.
+        // Dans le nouvel ordre, Source suit la preparation, et le brouillon est deja efface a ce moment-la.
+        const p = saved.page === SOURCE ? UNIVERS : saved.page >= FORGE && saved.page !== SCENE && saved.page !== SANTE ? COMPARAISON : saved.page;
         const next = { ...saved, page: p };
         draftRef.current = next;
         setD(next);
@@ -384,10 +391,11 @@ export default function OnboardingScreen() {
     // 27 octobre 2026 : Sante passe a la fin, juste avant Premium
     if (p === PRENOM && retour) return ACCUEIL_RETOUR;
     if (p === POIDS) return SPORT;
-    if (p === SANTE) return RESULTAT;
+    // 7 novembre 2026 : Source juste apres Ton plan (jamais en mode retour), puis Sante
+    if (p === SANTE) return retour ? RESULTAT : SOURCE;
     if (p === SCENE) return UNIVERS;
-    if (p === SOURCE) return AGE;
-    if (p === UNIVERS) return retour ? AGE : SOURCE;
+    if (p === SOURCE) return RESULTAT;
+    if (p === UNIVERS) return AGE;
     if (p === OBJECTIF) return SCENE;
     if (p === RYTHME) return sensDe(objectifsDuBrouillon(draftRef.current)) === 'stable' ? TAILLE : CAP;
     if (p === RESULTAT) return COMPARAISON;
@@ -661,6 +669,9 @@ export default function OnboardingScreen() {
     versPremium();
   };
 
+  // 7 novembre 2026 : apres « Où as-tu connu YOROI » (jamais en mode retour) : Sante si elle n'est pas reliee, sinon Premium
+  const apresSource = () => (santeOff ? goTo(SANTE) : versPremium());
+
   // mode retour : Premium seulement si tu n'es pas abonne
   const versPremium = () => {
     if (retour && isPremium) finish('premium');
@@ -873,15 +884,22 @@ export default function OnboardingScreen() {
           />
         );
       case AGE:
-        return <Age nav={nav({ skip: () => skip({ trancheAge: null }, retour ? UNIVERS : SOURCE) })} value={d.trancheAge} onPick={(t) => answer('tranche_age', { trancheAge: t })} onNext={() => goTo(retour ? UNIVERS : SOURCE)} />;
+        return <Age nav={nav({ skip: () => skip({ trancheAge: null }, UNIVERS) })} value={d.trancheAge} onPick={(t) => answer('tranche_age', { trancheAge: t })} onNext={() => goTo(UNIVERS)} />;
       case SOURCE:
+        // 7 novembre 2026 : apres Ton plan. Le profil est deja enregistre : la reponse est posee ici, en quittant l'ecran
         return (
           <Source
-            nav={{ ...nav(), progress: progressOf(AGE + 0.5, firstAnswered, PRENOM, RESULTAT) }}
+            nav={{ ...nav(), progress: 1 }}
             value={d.source ?? null}
             onPick={(s) => answer('source', { source: s })}
-            onNext={() => goTo(UNIVERS)}
-            onSkip={() => skip({ source: null }, UNIVERS)}
+            onNext={() => {
+              if (!sansEcriture) void enregistrerSourceConnu(draftRef.current.source);
+              apresSource();
+            }}
+            onSkip={() => {
+              if (!sansEcriture) void enregistrerSourceConnu(null);
+              skip({ source: null }, santeOff ? SANTE : PREMIUM);
+            }}
           />
         );
       case UNIVERS:
@@ -1089,7 +1107,7 @@ export default function OnboardingScreen() {
             height={d.height}
             sports={d.sports}
             scene={d.scene ?? null}
-            onNext={() => (santeOff && (!retour || santeJamais) ? goTo(SANTE) : versPremium())}
+            onNext={() => (retour ? (santeOff && santeJamais ? goTo(SANTE) : versPremium()) : goTo(SOURCE))}
           />
         );
       default:
