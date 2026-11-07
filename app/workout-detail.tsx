@@ -36,7 +36,7 @@ import { formatKg } from '@/lib/v2/weightStats';
 import {
   endTime, estimatedMax, familyOf, formatClock, isCombat, longDate, parseExercises, parseRounds, sessionTitle, tileColor, workSets,
 } from '@/lib/v2/seances/sessionData';
-import { cleRecordExercice, computeRecords, formatRecordValue, recordsOfTraining } from '@/lib/v2/seances/records';
+import { cleRecordExercice, computeRecords, formatRecordPlaques, formatRecordValue, recordsOfTraining, recordsPlaquesOfTraining } from '@/lib/v2/seances/records';
 import { libelleSeriePlaques, plaquesDe } from '@/lib/v2/seances/plaquesSerie';
 import { dedupeTrainings } from '@/lib/v2/seances/dedupe';
 import { sportArt } from '@/lib/v2/seances/illustrations';
@@ -295,8 +295,12 @@ export default function WorkoutDetailScreen() {
 
   const exercises = useMemo(() => parseExercises(training), [training]);
   const rounds: CombatRound[] = useMemo(() => parseRounds(training), [training]);
-  const records = useMemo(() => recordsOfTraining(computeRecords(allTrainings), training?.id), [allTrainings, training?.id]);
-  const recordKeys = useMemo(() => new Set(records.map((r) => r.line.key)), [records]);
+  const tousRecords = useMemo(() => computeRecords(allTrainings), [allTrainings]);
+  const records = useMemo(() => recordsOfTraining(tousRecords, training?.id), [tousRecords, training?.id]);
+  // 7 novembre 2026 : les records en plaques de la pile battus dans cette seance, a part des kilos
+  const recordsPlaques = useMemo(() => recordsPlaquesOfTraining(tousRecords, training?.id), [tousRecords, training?.id]);
+  const nRecords = records.length + recordsPlaques.length;
+  const recordKeys = useMemo(() => new Set([...records.map((r) => r.line.key), ...recordsPlaques.map((r) => r.line.key)]), [records, recordsPlaques]);
 
   // Intervalle exact de la seance (debut, fin, pauses) : celui d'Apple si on l'a, sinon l'heure saisie
   const span = useMemo(() => {
@@ -529,12 +533,12 @@ export default function WorkoutDetailScreen() {
           </View>
 
           {/* Records battus */}
-          {records.length > 0 ? (
+          {nRecords > 0 ? (
             <Glass style={{ gap: 12, borderColor: c.accentTint }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <Hanko size={30} rotate={-6} />
                 <View style={{ flex: 1 }}>
-                  <Ink size={17} weight="black" tight>{traduirePluriel(records.length, records.length > 1, "Record battu", "{0} records battus", records.length)}</Ink>
+                  <Ink size={17} weight="black" tight>{traduirePluriel(nRecords, nRecords > 1, "Record battu", "{0} records battus", nRecords)}</Ink>
                   <Ink size={13} color={c.textSecondary}>{traduire("Tu as battu ta meilleure marque.")}</Ink>
                 </View>
               </View>
@@ -547,6 +551,12 @@ export default function WorkoutDetailScreen() {
                   </Pressable>
                 );
               })}
+              {recordsPlaques.map((r) => (
+                <Pressable key={r.line.key} onPress={() => { tap(); router.push({ pathname: '/records', params: { focus: r.line.key } } as any); }} accessibilityRole="button" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 40, borderTopWidth: 1, borderColor: c.divider }}>
+                  <Ink size={15} weight="bold" style={{ flex: 1 }} numberOfLines={1}>{traduire(r.line.name)}</Ink>
+                  <Ink size={15} weight="black">{formatRecordPlaques(r.point).main}</Ink>
+                </Pressable>
+              ))}
             </Glass>
           ) : null}
 
@@ -565,7 +575,7 @@ export default function WorkoutDetailScreen() {
               {exercises.map((ex, idx) => {
                 const sets = ex.setsData && ex.setsData.length > 0 ? ex.setsData : workSets(ex);
                 const vol = sets.filter((s) => s.type !== 'warmup').reduce((a, s) => a + (s.weight || 0) * (s.reps || 0), 0);
-                const isRec = recordKeys.has(`force:${cleRecordExercice(ex.name ?? '')}`) || recordKeys.has(`reps:${cleRecordExercice(ex.name ?? '')}`);
+                const isRec = recordKeys.has(`force:${cleRecordExercice(ex.name ?? '')}`) || recordKeys.has(`reps:${cleRecordExercice(ex.name ?? '')}`) || recordKeys.has(`plaques:${cleRecordExercice(ex.name ?? '')}`);
                 // 31 octobre 2026 : le cardio de fin de seance, sa duree est rangee en secondes dans la serie : pas de ligne « 1800 répétitions »
                 const cardio = resumeCardioDe(ex);
                 const cardioSeance = !!cardio || (ex.muscle_group === 'CARDIO' && (ex.duration ?? 0) > 0);
