@@ -16,8 +16,17 @@ export function etapesSelecteur(os: string = Platform.OS): string {
 }
 
 /** Textes de la copie automatique (a activer, ou qui ne passe plus) */
-export function texteCopieAuto(etat: EtatProtection, jours: number | null, dossier: string | null, os: string = Platform.OS): { titre: string; texte: string; bouton: string } {
+export function texteCopieAuto(etat: EtatProtection, jours: number | null, dossier: string | null, os: string = Platform.OS, icloud = false): { titre: string; texte: string; bouton: string } {
   const cloud = nomDuCloud(os);
+  // 7 novembre 2026 : iPhone sans dossier relie, la copie part dans le coffre iCloud de l'app : rien a choisir,
+  // on relance la copie (la cause la plus courante : iCloud plein)
+  if (etat === 'en_panne' && icloud && !dossier) {
+    return {
+      titre: traduire('Ta copie automatique ne passe plus'),
+      texte: traduire("{0}Vérifie qu’il reste de la place dans ton iCloud, puis réessaie.", jours != null ? `${traduirePluriel(jours, jours > 1, 'Dernière copie il y a {0} jour.', 'Dernière copie il y a {0} jours.', jours)} ` : ''),
+      bouton: traduire('Sauvegarder maintenant'),
+    };
+  }
   if (etat === 'en_panne') {
     return {
       titre: traduire('Ta copie automatique ne passe plus'),
