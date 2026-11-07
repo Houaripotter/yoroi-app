@@ -4,8 +4,11 @@
  * 0,25 a 0,5 % pour prendre, en ralentissant pres du but). Les seances ne sont pas encore choisies :
  * la fourchette entiere est montree, Ton plan l'affine. Sans date si le cap est trop loin
  * ou hors des reperes d'IMC : un premier cap est propose, sans jugement. Une estimation, jamais une promesse.
+ * 7 novembre 2026 (audit valide par Houari) : plus de courbe d'arrivee ici. La meme estimation revient dans la
+ * preparation, Ton plan (avec ta ligne et tes paliers) et Premium. Restent la date, les kilos a perdre et l'explication,
+ * centres dans la place libre sous le titre pour que l'ecran ne paraisse pas vide.
  */
-import React, { useState } from 'react';
+import React from 'react';
 import { Pressable, View } from 'react-native';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { tap } from '@/components/yoroi/v2/accueil/kit';
@@ -14,7 +17,6 @@ import { PAS_UNE_PROMESSE, estimerArrivee, fourchetteDates, fourchetteTexte, pou
 import type { Estimation } from '@/lib/v2/pesee/estimation';
 import { Ruler } from './Ruler';
 import { PAS_KG, Pas } from './Pas';
-import { PlanCurve } from './PlanCurve';
 import { MainButton, OR_PROFOND, Riche, Shell, kg, marquer, useColors } from './ui';
 import type { Nav } from './types';
 import { traduire } from '@/lib/i18n/tr';
@@ -66,7 +68,6 @@ export function Cap({ nav, start, target, height, recompo = false, sens, onTarge
   onNext: () => void;
 }) {
   const c = useColors();
-  const [w, setW] = useState(0);
   const baisse = sens === 'baisse' || sens === 'recompo';
   const hausse = sens === 'hausse';
   const bas = hausse ? Math.min(250, Math.round((start + 0.1) * 10) / 10) : 30;
@@ -80,36 +81,38 @@ export function Cap({ nav, start, target, height, recompo = false, sens, onTarge
   // vague 30 : les mots importants en gras et en couleur (kilos a perdre, une estimation)
   const texte = v.texte ? marquer(`${v.texte} ${PAS_UNE_PROMESSE}${ok ? traduire(' Ton plan l’affinera avec tes séances.') : ''}`, [gapText(start, target), traduire('Une estimation'), traduire('tes séances')]) : '';
   return (
-    <Shell {...nav} title={traduire("Où veux tu **arriver** ?")} sub={sub} gap={14} footer={<MainButton label={traduire("Continuer")} onPress={onNext} />}>
-      <View style={{ alignItems: 'center' }}>
-        <Ink size={64} weight="black" tight numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }}>{kg(target)}</Ink>
-        <Ink size={15} weight="bold" color={c.textSecondary}>{traduire("kilos visés")}</Ink>
-      </View>
-      <Ruler value={target} onChange={regler} hardMin={bas} hardMax={haut} label={traduire("Règle du poids visé, fais glisser pour régler")} />
-      {/* vague 30 : au kilo et au dixieme, appui long pour aller vite */}
-      <Pas value={target} onChange={regler} pas={PAS_KG} clamp={borne} />
-
-      <View onLayout={(ev) => setW(ev.nativeEvent.layout.width)} style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingVertical: 14, paddingHorizontal: 14, gap: 8 }}>
-        <View style={{ gap: 1 }}>
-          {ok ? <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Arrivée estimée")}</Ink> : null}
-          {/* vague 30 : la date estimee dans l'or profond, en gras, visible d'un coup d'oeil */}
-          <Ink size={ok ? 21 : 17} weight="black" tight color={ok ? OR_PROFOND : c.ink} style={{ lineHeight: ok ? 26 : 22 }}>{ok ? insecable(majuscule(v.titre)) : v.titre}</Ink>
+    <Shell {...nav} title={traduire("Où veux tu **arriver** ?")} sub={sub} gap={14} centrer footer={<MainButton label={traduire("Continuer")} onPress={onNext} />}>
+      {/* 7 novembre 2026 : sans la courbe, le bloc est centre dans la place libre (Shell centrer ne garde pas l'ecart) */}
+      <View style={{ gap: 16 }}>
+        <View style={{ alignItems: 'center' }}>
+          <Ink size={64} weight="black" tight numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }}>{kg(target)}</Ink>
+          <Ink size={15} weight="bold" color={c.textSecondary}>{traduire("kilos visés")}</Ink>
         </View>
-        {w > 0 ? <PlanCurve start={start} target={v.courbeVers} width={w - 28} height={124} endLabel={v.fin} /> : <View style={{ height: 124 }} />}
-        {texte ? <Riche text={texte} size={14} lineHeight={20} /> : null}
-        {v.cap != null ? (
-          <Pressable
-            onPress={() => {
-              tap('medium');
-              onTarget(v.cap as number);
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={traduire("Viser {0} kilos pour commencer", kg(v.cap))}
-            style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 14, backgroundColor: pressed ? c.fillSoft : c.accentTint })}
-          >
-            <Ink size={14} weight="extraBold" color={c.accent}>{traduire("Viser {0} kg pour commencer", kg(v.cap))}</Ink>
-          </Pressable>
-        ) : null}
+        <Ruler value={target} onChange={regler} hardMin={bas} hardMax={haut} label={traduire("Règle du poids visé, fais glisser pour régler")} />
+        {/* vague 30 : au kilo et au dixieme, appui long pour aller vite */}
+        <Pas value={target} onChange={regler} pas={PAS_KG} clamp={borne} />
+
+        <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingVertical: 16, paddingHorizontal: 16, gap: 10 }}>
+          <View style={{ gap: 2 }}>
+            {ok ? <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Arrivée estimée")}</Ink> : null}
+            {/* vague 30 : la date estimee dans l'or profond, en gras, visible d'un coup d'oeil */}
+            <Ink size={ok ? 22 : 17} weight="black" tight color={ok ? OR_PROFOND : c.ink} style={{ lineHeight: ok ? 27 : 22 }}>{ok ? insecable(majuscule(v.titre)) : v.titre}</Ink>
+          </View>
+          {texte ? <Riche text={texte} size={14} lineHeight={20} /> : null}
+          {v.cap != null ? (
+            <Pressable
+              onPress={() => {
+                tap('medium');
+                onTarget(v.cap as number);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={traduire("Viser {0} kilos pour commencer", kg(v.cap))}
+              style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 14, backgroundColor: pressed ? c.fillSoft : c.accentTint })}
+            >
+              <Ink size={14} weight="extraBold" color={c.accent}>{traduire("Viser {0} kg pour commencer", kg(v.cap))}</Ink>
+            </Pressable>
+          ) : null}
+        </View>
       </View>
     </Shell>
   );
