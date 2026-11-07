@@ -26,6 +26,9 @@ enum Haptique {
   /// Son fort de fin de minuteur, actif tant que l'utilisateur ne l'a pas coupe.
   static var sonFort: Bool { Partage.defaults.object(forKey: Partage.Cle.sonFort) as? Bool ?? true }
 
+  /// 7 novembre 2026 : claquettes a 10 s de la fin, actives tant que l'utilisateur ne les a pas coupees.
+  static var claquettesActives: Bool { Partage.defaults.object(forKey: Partage.Cle.claquettes) as? Bool ?? true }
+
   /// Son de fin choisi avec Son fort : "wizz" (par defaut) ou "alarme".
   static var sonFin: String { Partage.defaults.string(forKey: Partage.Cle.sonFin) == "alarme" ? "alarme" : "wizz" }
 
@@ -129,7 +132,59 @@ enum Haptique {
     if fort { suite([.start, .directionUp, .start]) } else { suite([.start, .directionUp]) }
   }
 
-  /// Claquettes, 10 s avant la fin du round.
+  // MARK: Claquettes des 10 s (7 novembre 2026)
+
+  /// Lecteur a part : jamais celui de la sonnerie de fin, qui tourne en boucle.
+  private static var lecteurClaquettes: AVAudioPlayer?
+  private static var finClaquettes: DispatchWorkItem?
+
+  /// Clac clac clac, 10 s avant la fin d'un round, d'un repos, d'une preparation ou d'un minuteur :
+  /// trois tapotements .click a 0,18 s d'ecart et le son des claquettes (claquettes_10s.mp3 s'il a ete ajoute
+  /// a la cible de la montre, sinon clap10.mp3 deja dans l'app).
+  /// Son : categorie ambiante melangee aux autres sons (tes AirPods et ta musique restent sur l'iPhone, rien en
+  /// mode silence), lecture seulement avec Son fort, comme la sonnerie. Le tapotement joue toujours.
+  /// App suspendue (aucune seance ni minuteur qui la garde vivante) : rien ne joue, la fin sonne quand meme.
+  static func claquettes10s() {
+    suite([.click, .click, .click], ecart: 0.18)
+    jouerSonClaquettes()
+  }
+
+  private static func jouerSonClaquettes() {
+    guard let url = Bundle.main.url(forResource: "claquettes_10s", withExtension: "mp3")
+      ?? Bundle.main.url(forResource: "clap10", withExtension: "mp3") else { return }
+    // la sonnerie de fin tourne deja : elle garde sa categorie et sa session audio
+    if lecteurSonnerie?.isPlaying != true {
+      let session = AVAudioSession.sharedInstance()
+      var lecture = false
+      if sonFort {
+        lecture = (try? session.setCategory(.playback, mode: .default, policy: .default, options: [.mixWithOthers])) != nil
+      }
+      if !lecture {
+        try? session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+      }
+      try? session.setActive(true)
+    }
+    guard let l = try? AVAudioPlayer(contentsOf: url) else { return }
+    l.numberOfLoops = 0
+    l.volume = 1.0
+    l.prepareToPlay()
+    l.play()
+    lecteurClaquettes = l
+    finClaquettes?.cancel()
+    let fin = DispatchWorkItem {
+      lecteurClaquettes?.stop()
+      lecteurClaquettes = nil
+      finClaquettes = nil
+      // la sonnerie de fin a pu demarrer entre temps : on ne lui retire pas la session audio
+      if lecteurSonnerie?.isPlaying != true {
+        try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
+      }
+    }
+    finClaquettes = fin
+    DispatchQueue.main.asyncAfter(deadline: .now() + max(0.8, l.duration + 0.4), execute: fin)
+  }
+
+  /// Claquettes, 10 s avant la fin du round (vibrations seules, reglage Claquettes coupe).
   static func alerteFinRound() {
     suite(fort ? [.click, .click, .click, .click] : [.click, .click, .click], ecart: 0.18)
   }
