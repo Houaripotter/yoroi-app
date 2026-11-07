@@ -197,3 +197,27 @@ export function transmettreActionsIle(actions: ActionIle[]): boolean {
   if (!ecouteur || actions.length === 0) return false;
   return ecouteur(actions);
 }
+
+/*
+ * 7 novembre 2026 : les séries validées sur la montre téléphone verrouillé ou hors de portée arrivent toutes au
+ * retour, souvent au lancement de l'app, pendant que l'écran de la séance lit encore le brouillon. Elles partaient
+ * au brouillon enregistré, puis l'écran écrivait par dessus la version qu'il venait de lire : séries perdues.
+ * Elles sont maintenant gardées ici un moment, et l'écran les rejoue une fois la séance chargée (sans doublon :
+ * chaque appui a son id, gardé dans la séance). 30 au plus, sous les 50 ids gardés par la séance.
+ */
+const HORS_ECRAN_MAX = 30;
+let horsEcran: ActionIle[] = [];
+
+/** Des appuis que l'écran n'a pas pu prendre (séance pas encore chargée) */
+export function retenirActionsHorsEcran(actions: ActionIle[]): void {
+  const ids = new Set(horsEcran.map((x) => x.id));
+  const neuves = actions.filter((a) => (ids.has(a.id) ? false : (ids.add(a.id), true)));
+  if (neuves.length) horsEcran = [...horsEcran, ...neuves].slice(-HORS_ECRAN_MAX);
+}
+
+/** Les appuis gardés faits pendant cette séance, pour l'écran qui vient de la charger ; la liste est vidée */
+export function prendreActionsHorsEcran(debutSeanceMs: number): ActionIle[] {
+  const l = horsEcran.filter((a) => a.at >= debutSeanceMs);
+  horsEcran = [];
+  return l;
+}
