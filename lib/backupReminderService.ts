@@ -56,6 +56,13 @@ class BackupReminderService {
     await this.initialize();
     this.state.dataAddedCount++;
     await this.saveState();
+    // 7 novembre 2026 : la copie automatique marche (copie recente) ou part toute seule : pas de rappel
+    try {
+      const { etatProtection, lireProtection, rappelsMasques } = await import('@/lib/v2/sauvegarde/copieAuto');
+      if (rappelsMasques(etatProtection(await lireProtection()))) return false;
+    } catch {
+      // lecture impossible : la regle d'avant
+    }
     return this.shouldShowReminder();
   }
 
