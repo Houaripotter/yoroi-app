@@ -5,6 +5,8 @@
  * (chaque chiffre reste une seconde pile, aucune acceleration). Son « wizz » et vibration a la fin.
  * 30 octobre 2026 : le son seulement si tu as l'app sous les yeux a la fin ; vue en retard (retour dans l'app),
  * la fin est discrete (lib/v2/seances/finRepos.ts).
+ * 7 novembre 2026 : silencieux quand ton Apple Watch sonne ce repos (lib/v2/seance/sonneurRepos.ts) : ni son, ni
+ * claquettes, « Sonne sur ta montre ». Avec le coach vocal, les claquettes jouent et le coach laisse sa phrase des 10 s.
  */
 import React, { useEffect, useRef } from 'react';
 import { AppState, Image, Pressable, Vibration, View } from 'react-native';
@@ -16,7 +18,6 @@ import { decisionFinRepos } from '@/lib/v2/seances/finRepos';
 import { fmtClock } from '@/lib/v2/seance/format';
 import { PHASE_COLORS, loadClapEnabled } from '@/lib/v2/carnet/chrono';
 import { claquettesAuPassage, tapsClaquettes } from '@/lib/v2/carnet/claquettes';
-import { niveauCoach } from '@/lib/v2/coachVocal/reglages';
 import { useAlignedNow } from '@/lib/v2/carnet/useAlignedNow';
 import { blancA } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
@@ -31,11 +32,13 @@ type Props = {
   onSkip: () => void;
   /** enRetard : fin vue au retour dans l'app, sans son */
   onFinish: (enRetard: boolean) => void;
+  /** la montre sonne la fin de ce repos : le telephone se tait (une seule sonnerie) */
+  silencieux?: boolean;
 };
 
 const INK = '#1D2029';
 
-export function RestBar({ endsAt, total, bottom, onAdd, onSkip, onFinish }: Props) {
+export function RestBar({ endsAt, total, bottom, onAdd, onSkip, onFinish, silencieux = false }: Props) {
   const now = useAlignedNow(endsAt, true);
   // 30 octobre 2026 (Houari : des stickers partout) : le sablier du repos, rien en Encre japonaise comme avant
   const illus = useIllustrations();
@@ -47,7 +50,10 @@ export function RestBar({ endsAt, total, bottom, onAdd, onSkip, onFinish }: Prop
   }, [endsAt]);
 
   // 3 novembre 2026 : clac clac clac à 10 s de la fin du repos, app sous les yeux (réglage commun des chronos).
-  // Le coach vocal parle déjà à 10 s : avec lui, pas de claquettes par dessus sa voix.
+  // 7 novembre 2026 : avec le coach vocal aussi, c'est lui qui laisse sa phrase des 10 s (lib/v2/coachVocal/useCoachVocal.ts).
+  // La montre sonne ce repos : c'est elle qui claque.
+  const silence = useRef(silencieux);
+  silence.current = silencieux;
   const clapOn = useRef(true);
   const clapFait = useRef(false);
   useEffect(() => {
@@ -57,7 +63,7 @@ export function RestBar({ endsAt, total, bottom, onAdd, onSkip, onFinish }: Prop
     if (clapFait.current || !clapOn.current || AppState.currentState !== 'active') return;
     if (!claquettesAuPassage(total, endsAt - Date.now())) return;
     clapFait.current = true;
-    if (niveauCoach() !== 'off') return;
+    if (silence.current) return;
     playClapSound().catch(() => {});
     tapsClaquettes(() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); });
   }, [now, endsAt, total]);
@@ -72,7 +78,7 @@ export function RestBar({ endsAt, total, bottom, onAdd, onSkip, onFinish }: Prop
       // en arriere plan : la notification previent, l'ecran attend ton retour
       if (d === 'attendre' || d === 'rien') return;
       fired.current = true;
-      if (d === 'son') {
+      if (d === 'son' && !silence.current) {
         Vibration.vibrate([0, 400, 150, 400]);
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
         playWizzSound().catch(() => {});
@@ -109,7 +115,7 @@ export function RestBar({ endsAt, total, bottom, onAdd, onSkip, onFinish }: Prop
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 16, paddingRight: 10, paddingTop: 10, paddingBottom: 12 }}>
         {illus.stickers ? <Image source={illus.img('sablier')} style={{ width: 40, height: 40 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Ink size={12} weight="extraBold" color={pc.deep} numberOfLines={1}>{final ? traduire('Ça repart') : traduire('Repos')}</Ink>
+          <Ink size={12} weight="extraBold" color={pc.deep} numberOfLines={1}>{silencieux ? traduire('Sonne sur ta montre') : final ? traduire('Ça repart') : traduire('Repos')}</Ink>
           <Ink size={32} weight="black" color={final ? pc.deep : INK} style={{ fontVariant: ['tabular-nums'] }} numberOfLines={1}>{fmtClock(left)}</Ink>
         </View>
         {btn('15 s', traduire('Enlever 15 secondes de repos'), () => onAdd(-15), 'minus')}
