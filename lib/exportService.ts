@@ -1,3 +1,4 @@
+import { copieCloudPermise, optionsExport } from '@/lib/v2/sauvegarde/regleCopieCloud';
 import { track } from '@/utils/telemetry';
 import * as FileSystem from 'expo-file-system/legacy';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
@@ -167,8 +168,9 @@ const base64ToImage = async (base64: string, fileName: string): Promise<string |
  *                              Utile pour : envoi par email, stockage limité, backup rapide sans média.
  */
 export const exportDataToJSON = async (options?: { silent?: boolean; includePhotos?: boolean }): Promise<boolean> => {
-  const silent = options?.silent === true;
-  const includePhotos = options?.includePhotos !== false; // par défaut : inclure les photos
+  // 7 novembre 2026 : les photos ne quittent jamais le telephone. Par defaut, une sauvegarde silencieuse (automatique)
+  // se fait SANS les photos ; un export lance a la main les garde, comme avant (lib/v2/sauvegarde/regleCopieCloud.ts).
+  const { silent, includePhotos } = optionsExport(options);
   if (!silent) track('sauvegarde_exportee', { type: 'json' });
   try {
     // ─── Check espace disque libre avant de commencer ─────────────────
@@ -643,21 +645,31 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
       logger.warn('[Backup] Erreur auto-nettoyage (non bloquant):', cleanupError);
     }
 
+    // 7 novembre 2026 : rien ne part dans le cloud avec les photos, ni une copie automatique vide
+    // (lib/v2/sauvegarde/regleCopieCloud.ts). Le nom de la copie automatique porte l'identifiant du telephone.
+    const versLeCloud = copieCloudPermise({ silent, includePhotos, counts });
+    if (!versLeCloud) logger.info('[Backup] Pas de copie cloud pour ce fichier (photos ou sauvegarde vide)');
+    let appareil = 'appareil';
+    if (versLeCloud && silent) {
+      try {
+        appareil = await (await import('@/lib/v2/sauvegarde/appareil')).idAppareil();
+      } catch { /* nom par defaut */ }
+    }
+
     // Sync automatique vers le dossier cloud connecté (bloquant mais avec timeout, pour
     // savoir si le push cloud a réellement réussi, important pour les banners UI).
-    try {
+    if (versLeCloud) try {
       const { getSavedCloudFolder, copyToCloudFolder } = await import('@/lib/cloudFolderService');
       const cloudFolder = await getSavedCloudFolder();
       if (cloudFolder) {
-        // 18 octobre 2026 : la copie automatique du jour tourne sur 3 noms fixes (yoroi_backup_auto_1 a 3),
-        // ecrases a tour de role : le dossier cloud garde les 3 derniers jours au lieu d'une copie de plus
-        // chaque jour (avec les photos, des centaines de Mo par mois finissaient par remplir iCloud Drive).
-        // Les copies faites a la main gardent leur nom date.
+        // 18 octobre 2026 : la copie automatique du jour tourne sur des noms fixes, ecrases a tour de role.
+        // 7 novembre 2026 : 7 noms au lieu de 3, avec l'identifiant du telephone (yoroi_backup_auto_<appareil>_<1 a 7>),
+        // comme le coffre iCloud. Les copies faites a la main gardent leur nom date.
         let source = fileUri;
         let temporaire: string | null = null;
         if (silent && FileSystem.cacheDirectory) {
-          const n = (Math.floor(Date.now() / 86400000) % 3) + 1;
-          temporaire = `${FileSystem.cacheDirectory}yoroi_backup_auto_${n}.json`;
+          const { nomCopieICloud } = await import('@/lib/v2/sauvegarde/coffreICloud');
+          temporaire = `${FileSystem.cacheDirectory}${nomCopieICloud(Date.now(), appareil)}`;
           await FileSystem.deleteAsync(temporaire, { idempotent: true }).catch(() => {});
           await FileSystem.copyAsync({ from: fileUri, to: temporaire });
           source = temporaire;
@@ -684,21 +696,28 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
     }
 
     // 18 octobre 2026 : iPhone, la copie automatique du jour part aussi dans le coffre iCloud de l'app
-    // (dossier « YOROI » du iCloud Drive, sans rien choisir ; lib/v2/sauvegarde/coffreICloud.ts),
-    // 3 fichiers a tour de role. Rien si l'utilisateur n'est pas connecte a iCloud.
-    if (silent && Platform.OS === 'ios' && FileSystem.cacheDirectory) {
+    // (dossier « YOROI » du iCloud Drive, sans rien choisir ; lib/v2/sauvegarde/coffreICloud.ts).
+    // 7 novembre 2026 : 7 fichiers a tour de role au nom du telephone, plus « derniere », toujours sans les photos.
+    // Rien si l'utilisateur n'est pas connecte a iCloud.
+    if (versLeCloud && silent && Platform.OS === 'ios' && FileSystem.cacheDirectory) {
       try {
         const icloud = await import('@/lib/v2/sauvegarde/coffreICloud');
         if (await icloud.icloudDisponible()) {
-          const copie = `${FileSystem.cacheDirectory}${icloud.nomCopieICloud()}`;
-          await FileSystem.deleteAsync(copie, { idempotent: true }).catch(() => {});
-          await FileSystem.copyAsync({ from: fileUri, to: copie });
-          const ok = await Promise.race<boolean>([
-            icloud.copierDansICloud(copie),
-            new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 60000)),
-          ]);
-          await FileSystem.deleteAsync(copie, { idempotent: true }).catch(() => {});
-          logger.info(ok ? '[Backup] Copie iCloud faite' : '[Backup] Copie iCloud non faite');
+          for (const nom of [icloud.nomCopieICloud(Date.now(), appareil), icloud.nomDerniereICloud(appareil)]) {
+            const copie = `${FileSystem.cacheDirectory}${nom}`;
+            await FileSystem.deleteAsync(copie, { idempotent: true }).catch(() => {});
+            await FileSystem.copyAsync({ from: fileUri, to: copie });
+            const ok = await Promise.race<boolean>([
+              icloud.copierDansICloud(copie),
+              new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 60000)),
+            ]);
+            await FileSystem.deleteAsync(copie, { idempotent: true }).catch(() => {});
+            logger.info(ok ? '[Backup] Copie iCloud faite' : '[Backup] Copie iCloud non faite');
+            if (!ok) {
+              await icloud.noterEchecICloud();
+              break;
+            }
+          }
         }
       } catch (icloudError) {
         logger.warn('[Backup] Copie iCloud impossible:', icloudError);
