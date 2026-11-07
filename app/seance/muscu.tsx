@@ -35,7 +35,7 @@ import type { ExerciseHistory, SetValue } from '@/lib/v2/seance/history';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { kgDepuisSaisie, saisieDepuisKg } from '@/lib/v2/unitePoids';
 import { useSauvegardeBrouillon } from '@/lib/v2/seance/useSauvegardeBrouillon';
-import { allerAExercice, seriesRestantes, chargerSaisie, clearDraft, effacerSaisie, loadDraft, loadRestPref, mesurerAbandon, saveRestPref, uid } from '@/lib/v2/seance/model';
+import { allerAExercice, seriesRestantes, chargerSaisie, clearDraft, effacerSaisie, loadDraft, loadRestPref, mesurerAbandon, noterDebutAjuste, saveRestPref, uid } from '@/lib/v2/seance/model';
 import { offrirSaisie } from '@/lib/v2/seance/repriseSaisie';
 import type { LiveExercise, LiveSet, MuscuDraft, SessionDetails } from '@/lib/v2/seance/model';
 import { detailsFromTraining, loadTrainingForEdit, trainingFromDetails } from '@/lib/v2/seance/edit';
@@ -66,7 +66,7 @@ import { lireZones, seanceZones, titreZones } from '@/lib/v2/programmes/zones';
 import { marquerFaite, maSeanceParId, seriesPrevues } from '@/lib/v2/seance/mesSeances';
 import { terminerActiviteSeance, useActiviteSeance } from '@/lib/v2/widgets/activiteSeance';
 import type { EtatSeance } from '@/lib/v2/widgets/activiteSeance';
-import { appliquerActionsIle, ecouterActionsIle, planIle } from '@/lib/v2/seance/actionsIle';
+import { appliquerActionsIle, ecouterActionsIle, planIle, prendreActionsHorsEcran } from '@/lib/v2/seance/actionsIle';
 import { coachSeance } from '@/lib/v2/seance/coachSeance';
 import type { TextesIle } from '@/lib/v2/seance/actionsIle';
 import { LIBELLE_REGION, regionsDesBlessures, unirRegions } from '@/lib/v2/programmes/blessures';
@@ -99,6 +99,11 @@ import type { Zone2 } from '@/lib/v2/seances/zone2';
 import { fcMoyenneEntre } from '@/lib/v2/seances/fcCardio';
 import { FeuilleChoixCardio } from '@/components/yoroi/v2/seance/cardio/FeuilleChoixCardio';
 import { CarteCardio } from '@/components/yoroi/v2/seance/cardio/CarteCardio';
+import { BanniereMontre, BoutonMontre, FeuilleChoixMontre, MessageMontre } from '@/components/yoroi/v2/seance/cardio/RecupMontre';
+import { FeuilleDebut, PastilleDebut } from '@/components/yoroi/v2/seance/DebutSeance';
+import { AVANT_SEANCE_MS, RECUL_MAX_MS, avecDebut, entrainementsPourCardio, idsDejaPris, issueRecherche, kcalDesCardiosMontre, messageAucun, phraseBanniere, remplirCardio, suggestionsDebut } from '@/lib/v2/seance/montreCardio';
+import type { EntrainementMontre } from '@/lib/v2/seance/montreCardio';
+import { lireEntrainementsMontre, santeLisible, surIphone } from '@/lib/v2/seance/lectureMontre';
 import { playWizzSound } from '@/lib/soundManager';
 import { encouragement, etatSerie, nouvelleSerie, remettreSerie, sansSerie, seriesAFaire } from '@/lib/v2/seances/seriesSaisie';
 import { chargerMinuteurRepos, enregistrerMinuteurRepos, reposApresSerie } from '@/lib/v2/seances/minuteurRepos';
@@ -734,6 +739,128 @@ export default function SeanceMuscu() {
     if (ex.cardio.premierDebutMs) lireFcCardio(ex.id, ex.cardio.premierDebutMs, t);
     notificationAsync(NotificationFeedbackType.Success).catch(() => {});
   };
+  /*
+   * 7 novembre 2026 : le cardio fait avec l'app Exercice de l'Apple Watch, repris d'Apple Sante (duree, kcal
+   * actives, distance, FC moyenne), sans rien estimer (lib/v2/seance/montreCardio.ts, lectureMontre.ts).
+   */
+  const [etatMontre, setEtatMontre] = useState<{ exoId: string; etat: 'lecture' | 'aucun' | 'acces' | 'indisponible' } | null>(null);
+  const [choixMontre, setChoixMontre] = useState<{ exoId: string; liste: EntrainementMontre[] } | null>(null);
+  const [banniere, setBanniere] = useState<{ exoId: string; w: EntrainementMontre } | null>(null);
+  const ignoresMontre = useRef<Set<string>>(new Set());
+  const appliquerMontre = (exoId: string, w: EntrainementMontre) => {
+    const ex = draft?.exercises.find((e) => e.id === exoId);
+    if (!ex?.cardio) return;
+    if (chronoEnCours(ex.cardio)) void annulerFinCardio();
+    updateExercise(exoId, (e) => {
+      const r = remplirCardio(e, w);
+      return r.cardio && zone2 ? { ...r, cardio: { ...r.cardio, zone2: { min: zone2.min, max: zone2.max } } } : r;
+    });
+    setBanniere(null);
+    setEtatMontre(null);
+    setChoixMontre(null);
+    // sans FC moyenne dans l'entrainement : les mesures de la montre pendant ce temps, si elles existent
+    if (w.fcMoy === undefined) lireFcCardio(exoId, w.debutMs, w.finMs);
+    notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+  };
+  const recupererMontre = async (ex: LiveExercise) => {
+    if (!draft || !ex.cardio) return;
+    const d = draft;
+    setBanniere(null);
+    setEtatMontre({ exoId: ex.id, etat: 'lecture' });
+    const r = await lireEntrainementsMontre(d.startedAt - AVANT_SEANCE_MS, true);
+    if (r.etat !== 'ok') {
+      setEtatMontre({ exoId: ex.id, etat: r.etat });
+      return;
+    }
+    const issue = issueRecherche(entrainementsPourCardio(r.liste, ex.cardio.type ?? typeDepart(ex.name), d.startedAt, Date.now(), idsDejaPris(d.exercises.filter((e) => e.id !== ex.id))));
+    if (issue.type === 'aucun') setEtatMontre({ exoId: ex.id, etat: 'aucun' });
+    else if (issue.type === 'un') appliquerMontre(ex.id, issue.w);
+    else {
+      setEtatMontre(null);
+      setChoixMontre({ exoId: ex.id, liste: issue.liste });
+    }
+  };
+  // a l'ouverture de l'ecran et au retour au premier plan : un entrainement fini qui va avec un cardio pas fait
+  const dernierCoupOeil = useRef(0);
+  const chercherMontre = useRef<() => void>(() => undefined);
+  chercherMontre.current = () => {
+    const d = draft;
+    if (!d || d.form || d.editId || !santeLisible()) return;
+    const attente = d.exercises.filter((e) => e.cardio && !e.sets.every((x) => x.done));
+    if (!attente.length) return;
+    const t = Date.now();
+    if (t - dernierCoupOeil.current < 20_000) return;
+    dernierCoupOeil.current = t;
+    void lireEntrainementsMontre(d.startedAt - AVANT_SEANCE_MS, false).then((r) => {
+      if (r.etat !== 'ok') return;
+      const pris = idsDejaPris(d.exercises);
+      for (const e of attente) {
+        const w = entrainementsPourCardio(r.liste, e.cardio?.type ?? typeDepart(e.name), d.startedAt, Date.now(), pris).find((x) => !ignoresMontre.current.has(x.id));
+        if (w) {
+          setBanniere({ exoId: e.id, w });
+          return;
+        }
+      }
+    }, () => {});
+  };
+  const cardiosEnAttente = (draft?.exercises ?? []).filter((e) => e.cardio && !e.sets.every((x) => x.done)).map((e) => e.id).join(',');
+  useEffect(() => {
+    chercherMontre.current();
+  }, [cardiosEnAttente, draft?.currentId]);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st !== 'active') return;
+      dernierCoupOeil.current = 0;
+      chercherMontre.current();
+    });
+    return () => sub.remove();
+  }, []);
+  // le cardio a ete fait ou retire entre temps : la banniere part
+  useEffect(() => {
+    if (banniere && !draft?.exercises.some((e) => e.id === banniere.exoId && e.cardio && !e.sets.every((x) => x.done))) setBanniere(null);
+  }, [cardiosEnAttente]); // eslint-disable-line react-hooks/exhaustive-deps
+  const ignorerBanniere = () => {
+    if (banniere) ignoresMontre.current.add(banniere.w.id);
+    setBanniere(null);
+  };
+  const bandeauMontre = (ex: LiveExercise): React.ReactNode => {
+    if (banniere && banniere.exoId === ex.id && banniere.w.activite) {
+      const b = banniere;
+      return <BanniereMontre texte={phraseBanniere(b.w.activite!, b.w.dureeSec)} onOui={() => appliquerMontre(ex.id, b.w)} onNon={ignorerBanniere} />;
+    }
+    if (etatMontre?.exoId !== ex.id) return null;
+    if (etatMontre.etat === 'aucun') return <MessageMontre texte={messageAucun()} onFermer={() => setEtatMontre(null)} />;
+    if (etatMontre.etat === 'acces') return <MessageMontre texte={traduire('Connecte Apple Santé pour lire les entraînements de ta montre.')} action={traduire('Connecter Apple Santé')} onAction={() => { setEtatMontre(null); router.push('/health-connect' as any); }} onFermer={() => setEtatMontre(null)} />;
+    if (etatMontre.etat === 'indisponible') return <MessageMontre texte={traduire('Apple Santé n’est pas lisible dans cette version de l’app.')} onFermer={() => setEtatMontre(null)} />;
+    return null;
+  };
+
+  /* 7 novembre 2026 : « J'ai commencé plus tôt », l'heure de debut se corrige (3 heures au plus) */
+  const [debutOuvert, setDebutOuvert] = useState(false);
+  const [suggDebut, setSuggDebut] = useState<{ lecture: boolean; liste: EntrainementMontre[] }>({ lecture: false, liste: [] });
+  const ouvrirDebut = () => {
+    if (!draft) return;
+    const d = draft;
+    setDebutOuvert(true);
+    if (!santeLisible()) {
+      setSuggDebut({ lecture: false, liste: [] });
+      return;
+    }
+    setSuggDebut({ lecture: true, liste: [] });
+    lireEntrainementsMontre(Date.now() - RECUL_MAX_MS, false).then(
+      (r) => setSuggDebut({ lecture: false, liste: r.etat === 'ok' ? suggestionsDebut(r.liste, d.startedAt, Date.now()) : [] }),
+      () => setSuggDebut({ lecture: false, liste: [] }),
+    );
+  };
+  const changerDebut = (ms: number) => {
+    setDebutOuvert(false);
+    update((d) => {
+      const n = avecDebut(d, ms, Date.now());
+      if (n !== d) noterDebutAjuste(d.startedAt, n.startedAt);
+      return n;
+    });
+  };
+
   // objectif atteint : le son si tu as l'app sous les yeux, le petit message si tu reviens apres (memes regles que le repos)
   const [cardioFiniVu, setCardioFiniVu] = useState(false);
   useEffect(() => {
@@ -1202,6 +1329,14 @@ export default function SeanceMuscu() {
       }),
     [update],
   );
+  // 7 novembre 2026 : les appuis de la montre arrivés pendant le chargement de la séance (lib/v2/seance/actionsIle.ts)
+  const rattrape = useRef(false);
+  useEffect(() => {
+    if (!draft || draft.form || draft.editId || rattrape.current) return;
+    rattrape.current = true;
+    const l = prendreActionsHorsEcran(draft.startedAt);
+    if (l.length) update((x) => appliquerActionsIle(x, l));
+  }, [!!draft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const autoMuscles = useMemo(
     () => Array.from(new Set((draft?.exercises ?? []).filter((e) => e.sets.some((s) => s.done)).map((e) => muscleId(e.muscle)).filter((m): m is string => !!m && MUSCLES.some((x) => x.id === m)))),
@@ -1297,6 +1432,8 @@ export default function SeanceMuscu() {
           notes: draft.notes.trim() || undefined,
           intensity: draft.intensity ?? undefined,
           source: 'manual',
+          // 7 novembre 2026 : les kcal mesurees par la montre sur le cardio repris (source 'appareil' ou 'sante')
+          ...(!draft.editId ? kcalDesCardiosMontre(draft.exercises) ?? {} : {}),
         },
         { slotId: draft.slotId, title: draft.editId ? getSportName(draft.sport) : draftTitle(draft), records, editId: draft.editId, methode: 'live' },
       );
@@ -1405,6 +1542,13 @@ export default function SeanceMuscu() {
         <BoutonPrincipal onPress={() => setFinishOpen(true)} hauteur={46} rayon={16} compact tailleTexte={15} lignes={1} label={draft.form ? traduire('Enregistrer') : traduire('Terminer')} />
       </View>
 
+      {/* 7 novembre 2026 : « J'ai commencé plus tôt », sous le chrono (aligné sur le titre) */}
+      {!draft.form ? (
+        <View style={{ paddingStart: 72, paddingEnd: 16, marginTop: 4, flexDirection: 'row' }}>
+          <PastilleDebut debut={draft.startedAt} onPress={ouvrirDebut} />
+        </View>
+      ) : null}
+
       {/* Avancement : une barre par exercice */}
       {draft.exercises.length > 0 ? (
         <View style={{ flexDirection: 'row', gap: 5, paddingHorizontal: 16, marginTop: 10 }} accessibilityLabel={traduire("Exercice {0} sur {1}", draft.exercises.indexOf(current!) + 1, draft.exercises.length)}>
@@ -1430,6 +1574,18 @@ export default function SeanceMuscu() {
           />
         ) : (
           <>
+            {/* 7 novembre 2026 : un cardio de la séance est sur ta montre, mais tu es sur un autre exercice */}
+            {banniere && banniere.exoId !== current.id && banniere.w.activite ? (
+              <BanniereMontre
+                texte={phraseBanniere(banniere.w.activite, banniere.w.dureeSec)}
+                onOui={() => {
+                  const b = banniere;
+                  update((d) => allerAExercice(d, b.exoId));
+                  appliquerMontre(b.exoId, b.w);
+                }}
+                onNon={ignorerBanniere}
+              />
+            ) : null}
             {/* 25 octobre 2026 : le coach en direct, une phrase qui change à chaque moment (lib/v2/seance/coachSeance.ts) */}
             <CoachDirect draft={draft} femme={femme} unite={unite} />
             {/* 31 octobre 2026 : superset ou circuit en cours, les exercices lies et celui ou tu en es (superset.ts) */}
@@ -1596,6 +1752,8 @@ export default function SeanceMuscu() {
                 onParler={(oui) => changerCardio(current.id, (x) => ({ ...x, parler: oui }))}
                 onSuite={(suite, prochain) => suiteCardio(current, suite, prochain)}
                 nom={current.name}
+                bandeauMontre={bandeauMontre(current)}
+                boutonMontre={surIphone() ? <BoutonMontre lecture={etatMontre?.exoId === current.id && etatMontre.etat === 'lecture'} onPress={() => void recupererMontre(current)} /> : null}
               />
             ) : (<>
             {/* 3 novembre 2026 (Houari) : sur une machine sans poids ecrit, la charge en plaques de la pile (lib/v2/seances/plaques.ts) */}
@@ -2067,6 +2225,10 @@ export default function SeanceMuscu() {
       })()}
 
       {/* Options d'un exercice */}
+      {/* 7 novembre 2026 : plusieurs entrainements de la montre vont avec ce cardio */}
+      <FeuilleChoixMontre visible={!!choixMontre} liste={choixMontre?.liste ?? []} onChoisir={(w) => choixMontre && appliquerMontre(choixMontre.exoId, w)} onClose={() => setChoixMontre(null)} />
+      {/* 7 novembre 2026 : « J'ai commencé plus tôt » */}
+      {!draft.form ? <FeuilleDebut visible={debutOuvert} debut={draft.startedAt} maintenant={Date.now()} suggestions={suggDebut.liste} lecture={suggDebut.lecture} onValider={changerDebut} onClose={() => setDebutOuvert(false)} /> : null}
       {/* 31 octobre 2026 : « Ton cardio », type, duree, ou passer (components/yoroi/v2/seance/cardio/FeuilleChoixCardio.tsx) */}
       <FeuilleChoixCardio visible={!!exoChoixCardio} depart={departCardio} onValider={validerChoixCardio} onPasser={passerCardio} onFermer={() => setChoixCardioFor(null)} />
 
