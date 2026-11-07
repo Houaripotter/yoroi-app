@@ -244,10 +244,22 @@ final class ChronoMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
     if enPause { return }
 
     // Claquettes avant la fin du round
+    // 7 novembre 2026 : le vrai clac clac clac (tapotements et son), vibrations seules si le reglage est coupe
     if case .round = s.phase, let p = preset, p.alerteS > 0, Double(p.alerteS) < s.duree,
        r <= p.alerteS, !alerteFaite.contains(i) {
       alerteFaite.insert(i)
-      Haptique.alerteFinRound()
+      if Haptique.claquettesActives { Haptique.claquettes10s() } else { Haptique.alerteFinRound() }
+    }
+
+    // 7 novembre 2026 : claquettes a 10 s de la fin du repos et de la preparation (plus de 12 s, Tabata compris),
+    // pas pour un passage vu en retard (app reveillee a 5 s de la fin)
+    switch s.phase {
+    case .preparation, .repos:
+      if Haptique.claquettesActives, s.duree > 12, r <= 10, r >= 8, !alerteFaite.contains(i) {
+        alerteFaite.insert(i)
+        Haptique.claquettes10s()
+      }
+    default: break
     }
 
     // Decompte des 3 dernieres secondes de preparation et de repos
