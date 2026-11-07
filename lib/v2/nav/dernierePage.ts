@@ -46,7 +46,7 @@ const EXCLUS_PREFIXES = [
   // appairage et synchro avec son code
   '/sync-devices', '/sync-history',
   // suppression, corbeille, restauration
-  '/corbeille', '/privacy-data', '/backup-history', '/settings/copies-securite',
+  '/corbeille', '/privacy-data', '/backup-history', '/settings/copies-securite', '/settings/retrouver',
   // Studio createur : ecrans de test des etats d'erreur et des fenetres
   '/studio/etats', '/studio/fenetres',
 ];
