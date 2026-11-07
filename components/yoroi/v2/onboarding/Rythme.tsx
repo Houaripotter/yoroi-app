@@ -4,12 +4,15 @@
  * Les jours deviennent ta semaine type (espace.joursSemaine) : Ton plan, la carte Ta semaine de l'accueil et des Seances.
  * 26 octobre 2026 : la carte « Ta semaine » montre tes jours en couleurs, avec tes sports (SemaineCouleurs.tsx),
  * et ces jours servent aussi a ton coach pour placer ton programme (lib/v2/programmes/profilCoach.ts) : il ne les redemande pas.
+ * 7 novembre 2026 (audit valide par Houari) : les jours pris etaient un pastel presque invisible. Ils prennent les ronds
+ * bleu nuit pleins de Ton moment avec la balance (JoursRonds.tsx) : le meme choix des jours sur les deux ecrans.
  */
 import React from 'react';
 import { View } from 'react-native';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { JoursPicker, JOURS_LETTRES, JOURS_NOMS, joursTexte } from '@/components/yoroi/v2/espace/JoursPicker';
+import { JOURS_LETTRES, JOURS_NOMS, joursTexte } from '@/components/yoroi/v2/espace/JoursPicker';
+import { JoursRonds } from './JoursRonds';
 import type { Goal } from '@/lib/v2/onboarding/draft';
 import { MainButton, Riche, Shell, useColors } from './ui';
 import { SemaineCouleurs } from './SemaineCouleurs';
@@ -57,8 +60,8 @@ export function Rythme({ nav, days, sports = [], onToggle, onNext }: { nav: Nav;
       sub={traduire("Touche les jours où tu peux t’entraîner. Le nombre de séances suit tout seul.")}
       footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={!n} />}
     >
-      {/* 27 octobre 2026 (refonte Pastel) : les jours pris en pastel ; les couleurs de tes sports restent sur Ta semaine, dessous */}
-      <JoursPicker value={days} onToggle={onToggle} label={traduire('Entraînement')} />
+      {/* 7 novembre 2026 : les jours pris en ronds bleu nuit pleins, comme Ton moment ; les couleurs de tes sports restent sur Ta semaine, dessous */}
+      <JoursRonds value={days} onToggle={onToggle} a11y={(nom) => traduire('{0} : {1}', traduire('Entraînement'), nom)} />
       <View style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 12 }}>
         <View style={{ gap: 4 }}>
           <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ta semaine")}</Ink>
