@@ -27,7 +27,8 @@ const STORAGE_SKIP: RegExp[] = [
   /creator|token|password|secret|encrypt/i,
   /demo/i,
   /dedupe_v1_backup/,
-  /^@yoroi_(safety|data_version|migration_|last_auto_backup|last_cloud|install_date|last_known_cloud|cloud_sync|cloud_folder|last_full_import)/,
+  // 7 novembre 2026 : last_icloud (date de la derniere copie iCloud de CE telephone) ne repart plus avec une sauvegarde
+  /^@yoroi_(safety|data_version|migration_|last_auto_backup|last_cloud|last_icloud|install_date|last_known_cloud|cloud_sync|cloud_folder|last_full_import)/,
   /peer|pairing|appair|paired|_sync_|sync_state|tombstone|last_?sync/i,
   /notif(ication)?_?ids?$|scheduled_notif/i,
   /healthkit_asked|healthconnect_connected/i,
