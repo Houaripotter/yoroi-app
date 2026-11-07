@@ -12,7 +12,7 @@
  */
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
-import { ecrireBrouillon, generationBrouillon, sauverSaisie } from './model';
+import { ecrireBrouillon, generationBrouillon, memeSeanceDebut, sauverSaisie } from './model';
 import type { SeanceDraft } from './model';
 
 export function useSauvegardeBrouillon(draft: SeanceDraft | null, finished: { current: boolean }): void {
@@ -21,6 +21,8 @@ export function useSauvegardeBrouillon(draft: SeanceDraft | null, finished: { cu
   // la generation de CETTE seance, relevee quand elle apparait a l'ecran (nouvelle seance : nouvelle releve)
   const vue = useRef<{ debut: number; gen: number } | null>(null);
   const gen = (d: SeanceDraft): number => {
+    // 7 novembre 2026 : un debut corrige (« J'ai commencé plus tôt ») garde la generation de la seance
+    if (vue.current && vue.current.debut !== d.startedAt && memeSeanceDebut(vue.current.debut, d.startedAt)) vue.current = { ...vue.current, debut: d.startedAt };
     if (!vue.current || vue.current.debut !== d.startedAt) vue.current = { debut: d.startedAt, gen: generationBrouillon() };
     return vue.current.gen;
   };
