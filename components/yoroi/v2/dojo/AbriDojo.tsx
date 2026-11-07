@@ -31,7 +31,8 @@ export function AbriDojo({ rang, xp, serie }: { rang: string; xp: number; serie:
     try {
       const infos = await lireProtection();
       const e = etatProtection(infos);
-      if (e !== 'a_activer' && e !== 'en_panne') return setEtat(null);
+      // 7 novembre 2026 : une seule alerte « ne passe plus » (la carte de l'accueil) ; ici, seulement la proposition
+      if (e !== 'a_activer') return setEtat(null);
       const [inst, tard] = await Promise.all([AsyncStorage.getItem(INSTALL), AsyncStorage.getItem(PLUS_TARD)]);
       const installe = inst ? new Date(inst).getTime() : Date.now();
       if (e === 'a_activer' && Date.now() - installe < 48 * 3600 * 1000) return setEtat(null);
