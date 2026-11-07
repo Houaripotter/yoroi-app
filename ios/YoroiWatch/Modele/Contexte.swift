@@ -447,8 +447,11 @@ struct SeanceCtx: Codable, Equatable {
   var reposTotalS: Int
   var cur: Int
   var exos: [ExoSeanceCtx]
+  /// 7 novembre 2026 : "iphone" quand le reglage Fin de repos de l'iPhone est sur iPhone (la montre ne sonne pas
+  /// le repos de la seance, elle l'affiche). Absent : la montre sonne (lib/v2/seance/sonneurRepos.ts).
+  var sonne: String?
 
-  enum CodingKeys: String, CodingKey { case titre, debutMs, finReposMs, reposTotalS, cur, exos }
+  enum CodingKeys: String, CodingKey { case titre, debutMs, finReposMs, reposTotalS, cur, exos, sonne }
 
   init(from decoder: Decoder) throws {
     let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -460,7 +463,11 @@ struct SeanceCtx: Codable, Equatable {
     let i: Double = c.lire(.cur, 0)
     cur = max(0, Int(i.rounded()))
     exos = c.lire(.exos, [ExoSeanceCtx]())
+    sonne = c.lireOpt(.sonne)
   }
+
+  /// La fin du repos sonne sur l'iPhone (reglage), pas sur la montre.
+  var sonneSurIphone: Bool { sonne == "iphone" }
 
   var debut: Date { Date(timeIntervalSince1970: debutMs / 1000) }
 
