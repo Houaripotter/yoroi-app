@@ -43,6 +43,7 @@ import { getProfile } from '@/lib/database';
 import { brouillonPrerempli } from '@/lib/v2/onboarding/fusion';
 import { importDataFromJSON } from '@/lib/exportService';
 import { choisirSauvegardeICloud } from '@/components/yoroi/v2/sauvegarde/trouverICloud';
+import type { Trouvee } from '@/lib/v2/sauvegarde/retrouver';
 import { markTourSeen, markVisiteDone } from '@/components/yoroi/v2/tour/keys';
 import { markWhatsNewSeen } from '@/components/WhatsNewModal';
 import { logger } from '@/lib/security/logger';
@@ -230,6 +231,26 @@ export default function OnboardingScreen() {
   // la preparation ne se joue qu'une fois : au retour depuis le plan, on la saute
   const [forged, setForged] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  // 7 novembre 2026 : premier lancement (rien sur le telephone), la sauvegarde iCloud la plus recente et entiere
+  // est proposee sur le premier ecran (lib/v2/sauvegarde/retrouver.ts). Jamais bloquant : l'ecran est deja la.
+  const [offre, setOffre] = useState<Trouvee | null>(null);
+  useEffect(() => {
+    if (isPreview || retour || !regleConnue || sansEcriture || Platform.OS !== 'ios') return;
+    let vivant = true;
+    (async () => {
+      try {
+        const r = await import('@/lib/v2/sauvegarde/retrouver');
+        if (!(await r.telephoneVide())) return;
+        const t = await r.chercherSauvegardeICloud();
+        if (vivant && t) setOffre(t);
+      } catch {
+        // rien a proposer
+      }
+    })();
+    return () => {
+      vivant = false;
+    };
+  }, [isPreview, retour, regleConnue, sansEcriture]);
 
   // ===== Brouillon =====
   const persist = useCallback(
@@ -445,12 +466,20 @@ export default function OnboardingScreen() {
     goTo(PRENOM);
   };
 
-  const handleRestoreBackup = async () => {
+  const handleRestoreBackup = () => restaurer();
+
+  // 7 novembre 2026 : « Retrouver » sur la carte du premier lancement remet directement la sauvegarde trouvee
+  const retrouverOffre = () => {
+    if (!offre) return;
+    void restaurer(offre.chemin);
+  };
+
+  const restaurer = async (cheminTrouve?: string) => {
     if (restoring || isPreview) return;
     setRestoring(true);
     try {
       // 18 octobre 2026 : sur iPhone, la sauvegarde du coffre iCloud est proposee d'abord
-      const icloud = await choisirSauvegardeICloud().catch(() => undefined);
+      const icloud = cheminTrouve ?? (await choisirSauvegardeICloud().catch(() => undefined));
       if (icloud === 'annule') {
         setRestoring(false);
         return;
@@ -803,6 +832,7 @@ export default function OnboardingScreen() {
             onOpenTerms={() => (Platform.OS === 'ios' ? void safeOpenURL(APPLE_EULA_URL) : router.push('/terms' as any))}
             onOpenPrivacy={() => router.push('/privacy-policy' as any)}
             onClose={isPreview ? closePreview : undefined}
+            offre={offre ? { modifiedAt: offre.modifiedAt, onRetrouver: retrouverOffre, onZero: () => setOffre(null) } : undefined}
           />
         );
       case PRENOM:
