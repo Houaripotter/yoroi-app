@@ -3,10 +3,13 @@ import UIKit
 
 // Minuteurs de repos : En cours, Epingles, Recents, Tous, rond + pour une duree libre.
 // Un toucher lance tout de suite. Modifier : toucher un rond l'epingle ou le retire.
+// 7 novembre 2026 : pendant ta seance guidee, la tuile « Ta séance » en haut, et le minuteur lance devient le
+// repos de la seance (une seule sonnerie avec l'iPhone, SeanceGuidee.lancerRepos).
 
 struct MinuteursVue: View {
   @State private var moteur = MinuteurMoteur.shared
   @State private var routeur = Routeur.shared
+  @State private var guidee = SeanceGuidee.shared
   @State private var edition = false
   /// Rappel montre une seule fois : les vibrations fortes se reglent dans watchOS, pas dans l'app.
   @AppStorage("yoroi.astuce.vibrationsProno") private var astuceVue = false
@@ -20,6 +23,9 @@ struct MinuteursVue: View {
       let colonnes = [GridItem(.flexible(), spacing: TailleTuile.ecart), GridItem(.flexible(), spacing: TailleTuile.ecart)]
       ScrollView {
         VStack(alignment: .leading, spacing: TailleTuile.ecart) {
+          if let s = guidee.seance, !edition {
+            TuileTaSeance(seance: s) { routeur.chemin.append(.seanceGuidee) }
+          }
           if !astuceVue && !edition {
             AstuceVibrations { astuceVue = true }
           }
@@ -126,8 +132,53 @@ struct MinuteursVue: View {
   }
 
   private func lancer(_ s: Int) {
+    // pendant la seance guidee : le repos de la seance
+    if guidee.active {
+      routeur.chemin = routeur.lancerEtPile(secondes: s)
+      return
+    }
     let id = moteur.lancer(secondes: s)
     routeur.chemin.append(.minuteur(id))
+  }
+}
+
+/// 7 novembre 2026 : « Ta séance », l'exercice en cours et sa serie, en haut des minuteurs pendant la seance guidee.
+struct TuileTaSeance: View {
+  let seance: SeanceCtx
+  var action: () -> Void
+
+  var body: some View {
+    Button(action: action) {
+      HStack(spacing: 9) {
+        Image(systemName: "dumbbell.fill")
+          .font(.system(size: 16, weight: .semibold))
+          .foregroundStyle(Teinte.menthe)
+          .frame(width: 26)
+        VStack(alignment: .leading, spacing: 1) {
+          Capitales(texte: NSLocalizedString("Ta séance", comment: ""), couleur: Teinte.menthe, taille: 9)
+          if let e = seance.exoCourant {
+            Text(e.nom)
+              .font(.system(size: 14, weight: .heavy, design: .rounded))
+              .foregroundStyle(Teinte.texte)
+              .lineLimit(1)
+              .minimumScaleFactor(0.6)
+            Text(String(format: NSLocalizedString("Série %@ sur %@", comment: ""), "\(min(e.total, e.faites + 1))", "\(e.total)"))
+              .font(.system(size: 11, weight: .bold, design: .rounded))
+              .foregroundStyle(Teinte.texteDoux)
+              .lineLimit(1)
+          }
+        }
+        Spacer(minLength: 0)
+        Image(systemName: "chevron.right")
+          .font(.system(size: 13, weight: .bold))
+          .foregroundStyle(Teinte.menthe)
+      }
+      .padding(.horizontal, 10)
+      .padding(.vertical, 7)
+      .frame(maxWidth: .infinity, minHeight: 52)
+      .background(Teinte.carte, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+    .buttonStyle(StyleAppui())
   }
 }
 
@@ -245,7 +296,14 @@ struct MinuteurVue: View {
   let id: String
   @State private var moteur = MinuteurMoteur.shared
   @State private var routeur = Routeur.shared
+  @State private var guidee = SeanceGuidee.shared
   @Environment(\.isLuminanceReduced) private var veille
+
+  /// 7 novembre 2026 : l'exercice du repos de ta seance guidee (nil pour un minuteur lance hors seance).
+  private func exoDuRepos(_ a: MinuteurActif) -> ExoSeanceCtx? {
+    guard guidee.estRepos(a.id) else { return nil }
+    return guidee.seance?.exoCourant
+  }
 
   var body: some View {
     Group {
@@ -276,17 +334,20 @@ struct MinuteurVue: View {
       .ignoresSafeArea()
 
       VStack(spacing: 2) {
-        Capitales(texte: SeanceGuidee.shared.estRepos(a.id) ? NSLocalizedString("Repos", comment: "") : NSLocalizedString("Minuteur", comment: ""), couleur: couleur)
-        Text(Format.dureeCourte(a.dureeS))
+        let exo = exoDuRepos(a)
+        Capitales(texte: guidee.estRepos(a.id) ? NSLocalizedString("Repos", comment: "") : NSLocalizedString("Minuteur", comment: ""), couleur: couleur)
+        // 7 novembre 2026 : le repos de ta seance montre l'exercice (le minuteur, sa duree)
+        Text(exo?.nom ?? Format.dureeCourte(a.dureeS))
           .font(.system(size: 15, weight: .heavy, design: .rounded))
           .foregroundStyle(couleur)
           .lineLimit(1)
+          .minimumScaleFactor(0.6)
         temps(a)
           .font(.chiffre(64, .heavy))
           .foregroundStyle(a.enPause ? Teinte.texteDoux : Teinte.texte)
           .lineLimit(1)
           .minimumScaleFactor(0.45)
-        Text(a.enPause ? NSLocalizedString("En pause", comment: "") : String(format: NSLocalizedString("fin à %@", comment: ""), "\(Format.heure(a.fin ?? Date()))"))
+        Text(sousTemps(a, exo))
           .font(.system(size: 12, weight: .bold, design: .rounded))
           .foregroundStyle(Teinte.texteDoux)
           .lineLimit(1)
@@ -294,7 +355,8 @@ struct MinuteurVue: View {
         if !veille {
           HStack(spacing: 0) {
             boutonRond(icone: "xmark", fond: Teinte.plateau2, texte: Teinte.texte, largeur: 46) {
-              moteur.annuler(a.id)
+              // le repos de la seance : coupe aussi sur l'iPhone
+              if guidee.estRepos(a.id) { guidee.passer() } else { moteur.annuler(a.id) }
             }
             .accessibilityLabel("Annuler")
             Spacer(minLength: 4)
@@ -304,7 +366,7 @@ struct MinuteurVue: View {
             .accessibilityLabel(a.enPause ? NSLocalizedString("Reprendre", comment: "") : NSLocalizedString("Pause", comment: ""))
             Spacer(minLength: 4)
             Button {
-              moteur.ajouter30(a.id)
+              if guidee.estRepos(a.id) { guidee.ajouterRepos(secondes: 30) } else { moteur.ajouter30(a.id) }
             } label: {
               Text("+30")
                 .font(.system(size: 15, weight: .heavy, design: .rounded))
@@ -321,6 +383,15 @@ struct MinuteurVue: View {
       .padding(.horizontal, 10)
       .padding(.top, 4)
     }
+  }
+
+  /// Sous le temps : « Série X sur Y » pour le repos de ta seance, sinon l'heure de fin ; En pause en pause.
+  private func sousTemps(_ a: MinuteurActif, _ exo: ExoSeanceCtx?) -> String {
+    if a.enPause { return NSLocalizedString("En pause", comment: "") }
+    if let e = exo {
+      return String(format: NSLocalizedString("Série %@ sur %@", comment: ""), "\(min(e.total, e.faites + 1))", "\(e.total)")
+    }
+    return String(format: NSLocalizedString("fin à %@", comment: ""), "\(Format.heure(a.fin ?? Date()))")
   }
 
   @ViewBuilder
@@ -371,6 +442,12 @@ struct AlarmeMinuteurVue: View {
     finDeRepos ? NSLocalizedString("Repos fini", comment: "") : NSLocalizedString("Temps écoulé", comment: "")
   }
 
+  /// 7 novembre 2026 : l'exercice qui reprend, sur l'ecran de fin du repos de ta seance.
+  private var nomExo: String? {
+    guard finDeRepos, let e = guidee.seance?.exoCourant, !e.nom.isEmpty else { return nil }
+    return e.nom
+  }
+
   private var sousTitre: String {
     if finDeRepos, let e = guidee.seance?.exoCourant, !e.fini {
       return String(format: NSLocalizedString("Au boulot, série %@ sur %@", comment: ""), "\(e.faites + 1)", "\(e.total)")
@@ -411,6 +488,13 @@ struct AlarmeMinuteurVue: View {
             .foregroundStyle(Teinte.navy)
             .lineLimit(1)
             .minimumScaleFactor(0.7)
+          if let nom = nomExo {
+            Text(nom)
+              .font(.system(size: 13 * k, weight: .heavy, design: .rounded))
+              .foregroundStyle(Teinte.navy)
+              .lineLimit(1)
+              .minimumScaleFactor(0.6)
+          }
           Text(sousTitre)
             .font(.system(size: 12 * k, weight: .bold, design: .rounded))
             .foregroundStyle(Teinte.pecheSous)
@@ -436,7 +520,13 @@ struct AlarmeMinuteurVue: View {
             .buttonStyle(StyleAppui())
             .accessibilityLabel("Arrêter")
             Button {
-              if let id = moteur.relancer() { routeur.chemin = [.minuteurs, .minuteur(id)] }
+              // 7 novembre 2026 : pendant la seance guidee, Repeter relance le repos de la seance
+              if guidee.active, let s = moteur.sonnerie {
+                moteur.arreterSonnerie()
+                routeur.chemin = routeur.lancerEtPile(secondes: s.dureeS)
+              } else if let id = moteur.relancer() {
+                routeur.chemin = [.minuteurs, .minuteur(id)]
+              }
             } label: {
               Image(systemName: "arrow.clockwise")
                 .font(.system(size: 20 * k, weight: .heavy))
@@ -572,8 +662,8 @@ struct MinuteurLibreVue: View {
         .foregroundStyle(Teinte.texteDoux)
       Spacer(minLength: 0)
       BoutonPlein(titre: NSLocalizedString("Lancer", comment: ""), icone: "play.fill") {
-        let id = MinuteurMoteur.shared.lancer(secondes: secondes)
-        routeur.chemin = [.minuteurs, .minuteur(id)]
+        // 7 novembre 2026 : pendant ta seance guidee, le repos de la seance
+        routeur.chemin = routeur.lancerEtPile(secondes: secondes)
       }
     }
     .navigationTitle("Durée")
