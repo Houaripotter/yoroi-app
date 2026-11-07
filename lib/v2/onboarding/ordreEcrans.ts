@@ -8,8 +8,12 @@
  * Numeros internes : ceux de app/onboarding.tsx (OUVERTURE = 0 ... SOURCE = 22). Logique pure, sans dependance.
  */
 
-/** Le parcours reel, numeros internes dans l'ordre vu par l'utilisateur (Ta scene apres Ton univers, Sante avant Premium) */
-export const ORDRE_ONBOARDING: readonly number[] = [0, 1, 2, 3, 22, 4, 20, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 9, 19];
+/**
+ * Le parcours reel, numeros internes dans l'ordre vu par l'utilisateur (Ta scene apres Ton univers, Sante avant Premium).
+ * 7 novembre 2026 (audit de l'onboarding, valide par Houari) : Ou as-tu connu YOROI (22) passe juste apres Ton plan (18),
+ * avant Sante (9) et Premium (19) : demandee en 5e position, c'etait un cout avant toute valeur.
+ */
+export const ORDRE_ONBOARDING: readonly number[] = [0, 1, 2, 3, 4, 20, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 22, 9, 19];
 
 /** Ecran d'accueil du mode retour : jamais dans l'apercu du Studio */
 export const ECRAN_HORS_APERCU = 21;
