@@ -143,6 +143,8 @@ export type MuscuDraft = DraftBase & {
   ile?: { maj: number; ids: string[] };
   /** 30 octobre 2026 : minuteur de repos coupe (lib/v2/seances/minuteurRepos.ts), aucun repos apres une serie */
   sansRepos?: boolean;
+  /** 7 novembre 2026 : la montre a arme sa sonnerie pour ce repos (lib/v2/seance/sonneurRepos.ts), le telephone se tait */
+  reposSurMontre?: { fin: number; debut: number } | null;
 };
 
 export type RoundIntensity = 'detendu' | 'technique' | 'guerre';
