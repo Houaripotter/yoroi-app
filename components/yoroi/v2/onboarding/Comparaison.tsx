@@ -9,11 +9,13 @@
  * Ancienne version (ancien monde puis tuiles, environ 1,6 s) : _archive_ancien_design_2026-10-09/onb_retouches/.
  * 26 octobre 2026 (Houari : « accélère un peu, c'est trop lent ») : environ 40 % plus rapide, un étage toutes les
  * 0,9 s (au lieu de 1,5 s), fondus de 0,45 s ; tout est là en un peu plus de 3 s au lieu de 5,8 s.
+ * 7 novembre 2026 (audit valide par Houari : « les cartes Avant et Puis ont l'air désactivées ») : elles ne s'effacent
+ * plus a l'arrivee de YOROI. Stickers en pleine couleur, titres en encre : seul le libelle Avant ou Puis dit le passe.
  */
 import React, { useEffect, useState } from 'react';
 import { AccessibilityInfo, Image, Platform, View, useWindowDimensions } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
-import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
 import { guerrierImage } from '@/components/yoroi/v2/espace/assets';
@@ -69,28 +71,23 @@ function Lien({ visible, calme }: { visible: boolean; calme: boolean }) {
   );
 }
 
-/** Un etage de l'ancien monde : vignette papier, quand, titre, phrase ; il s'efface un peu quand YOROI arrive */
-function Etage({ quand, titre, sous, sticker, Picto, eteint, calme, picto }: { quand: string; titre: string; sous: string; sticker: NomSticker; Picto: React.ComponentType<{ size?: number }>; eteint: boolean; calme: boolean; picto: number }) {
+/** Un etage de l'ancien monde : vignette papier, quand, titre, phrase. 7 novembre 2026 : jamais efface (plus d'air desactive) */
+function Etage({ quand, titre, sous, sticker, Picto, calme, picto }: { quand: string; titre: string; sous: string; sticker: NomSticker; Picto: React.ComponentType<{ size?: number }>; calme: boolean; picto: number }) {
   const c = useColors();
   const illus = useIllustrations();
   const image = illus.stickers || ANCIENNES[sticker] ? illus.img(sticker) : null;
-  const o = useSharedValue(1);
-  useEffect(() => {
-    o.value = calme ? (eteint ? 0.62 : 1) : withTiming(eteint ? 0.62 : 1, { duration: FONDU_MS });
-  }, [eteint, calme, o]);
-  const anim = useAnimatedStyle(() => ({ opacity: o.value }));
   return (
     <Animated.View entering={calme ? undefined : FadeInDown.duration(FONDU_MS)}>
     <Animated.View
       accessible
       accessibilityLabel={`${quand} : ${titre}. ${sous}`}
-      style={[{ flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingVertical: picto < 56 ? 8 : 12, paddingHorizontal: 12 }, anim]}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingVertical: picto < 56 ? 8 : 12, paddingHorizontal: 12 }}
     >
       <View style={{ width: picto + 12, height: picto + 12, borderRadius: 18, backgroundColor: '#F5F6FB', alignItems: 'center', justifyContent: 'center' }}>
         {image ? <Image source={image} style={{ width: picto, height: picto }} resizeMode="contain" accessibilityIgnoresInvertColors /> : <Picto size={picto} />}
       </View>
       <View style={{ flex: 1, gap: 2 }}>
-        <Ink size={12} weight="extraBold" color={c.textMuted} style={{ textTransform: 'uppercase', letterSpacing: 1 }}>{quand}</Ink>
+        <Ink size={12} weight="extraBold" color={c.textSecondary} style={{ textTransform: 'uppercase', letterSpacing: 1 }}>{quand}</Ink>
         <Ink size={17} weight="black" tight color={c.ink}>{titre}</Ink>
         <Ink size={13} weight="medium" color={c.textSecondary} style={{ lineHeight: 18 }} numberOfLines={2}>{sous}</Ink>
       </View>
@@ -141,7 +138,7 @@ export function Comparaison({ nav, genre = 'h', univers = 'japon', onNext }: { n
       {AVANT.map((e, i) => (
         <React.Fragment key={e.cle}>
           {i > 0 ? <Lien visible={etape > i} calme={calme} /> : null}
-          {etape > i ? <Etage quand={e.quand} titre={e.titre} sous={e.sous} sticker={e.sticker} Picto={e.Picto} eteint={yoroi} calme={calme} picto={picto} /> : <View style={{ height: picto + (petit ? 28 : 36) }} />}
+          {etape > i ? <Etage quand={e.quand} titre={e.titre} sous={e.sous} sticker={e.sticker} Picto={e.Picto} calme={calme} picto={picto} /> : <View style={{ height: picto + (petit ? 28 : 36) }} />}
         </React.Fragment>
       ))}
       <Lien visible={yoroi} calme={calme} />
