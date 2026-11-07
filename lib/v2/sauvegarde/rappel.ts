@@ -13,6 +13,8 @@ import { traduire } from '@/lib/i18n/tr';
 
 const MANUAL_KEY = '@yoroi_last_manual_export';
 const CLOUD_KEY = '@yoroi_last_cloud_sync_success';
+// 7 novembre 2026 : la copie automatique du coffre iCloud compte aussi (elle est hors du telephone)
+const ICLOUD_KEY = '@yoroi_last_icloud_success';
 const TIP_SEEN_KEY = '@yoroi_conseil_sauvegarde_vu';
 
 const toTime = (iso: string | null) => {
@@ -20,11 +22,11 @@ const toTime = (iso: string | null) => {
   return Number.isFinite(t) ? t : 0;
 };
 
-/** Date de la derniere copie envoyee hors du telephone (partage vers le cloud, ou dossier cloud relie), ou null */
+/** Date de la derniere copie envoyee hors du telephone (partage vers le cloud, dossier cloud relie, coffre iCloud), ou null */
 export async function getLastOffPhoneBackupDate(): Promise<Date | null> {
   try {
-    const [m, c] = await Promise.all([AsyncStorage.getItem(MANUAL_KEY), AsyncStorage.getItem(CLOUD_KEY)]);
-    const best = Math.max(toTime(m), toTime(c));
+    const [m, c, i] = await Promise.all([AsyncStorage.getItem(MANUAL_KEY), AsyncStorage.getItem(CLOUD_KEY), AsyncStorage.getItem(ICLOUD_KEY)]);
+    const best = Math.max(toTime(m), toTime(c), toTime(i));
     return best ? new Date(best) : null;
   } catch {
     return null;
@@ -51,9 +53,12 @@ export async function proposerSauvegardeDouce(): Promise<void> {
     if ((await AsyncStorage.getItem(TIP_SEEN_KEY)) === '1') return;
     await AsyncStorage.setItem(TIP_SEEN_KEY, '1');
     const cloud = Platform.OS === 'android' ? 'Google Drive' : 'iCloud Drive';
+    const { lireProtection, etatProtection, rappelsMasques } = await import('./copieAuto');
+    const etat = etatProtection(await lireProtection());
+    // 7 novembre 2026 : la copie automatique marche (ou part toute seule dans iCloud) : pas de conseil
+    if (rappelsMasques(etat)) return;
     const illustration = await illustrer('sauvegarde');
-    const { lireProtection, etatProtection } = await import('./copieAuto');
-    const auto = etatProtection(await lireProtection()) === 'a_activer';
+    const auto = etat === 'a_activer';
     const { etapesSelecteur } = await import('@/components/yoroi/v2/sauvegarde/lancerCopieAuto');
     appAlert(
       traduire('Tes données, chez toi'),
