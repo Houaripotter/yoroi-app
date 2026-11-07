@@ -20,9 +20,13 @@ import type { Valeurs } from '@/lib/v2/seances/cardioChoix';
 import type { Zone2 } from '@/lib/v2/seances/zone2';
 import { BandeZone2, SaisieCardio } from './SaisieCardio';
 import { BilanCardio } from './BilanCardio';
+import { BadgeMontre } from './RecupMontre';
 
 /** 30 octobre 2026 (J) : la carte de l'exercice cardio, gros chrono, Démarrer, Pause, Terminer, durée à la main */
-export function CarteCardio({ chrono, fait, dureeFaite, maintenant, onDemarrer, onPause, onTerminer, onManuel, onDistance, zone2, lectureFc, onChoisir, onValeur, onSegment, onRetirerSegment, onParler, onSuite, nom }: {
+export function CarteCardio({ chrono, fait, dureeFaite, maintenant, onDemarrer, onPause, onTerminer, onManuel, onDistance, zone2, lectureFc, onChoisir, onValeur, onSegment, onRetirerSegment, onParler, onSuite, nom, bandeauMontre, boutonMontre }: {
+  /* 7 novembre 2026 : le cardio repris de la montre (RecupMontre.tsx) : banniere ou message en haut, bouton sous le chrono */
+  bandeauMontre?: React.ReactNode;
+  boutonMontre?: React.ReactNode;
   /* 31 octobre 2026 : type, pente et vitesse, zone 2 et bilan */
   zone2: Zone2 | null;
   lectureFc: boolean;
@@ -72,13 +76,17 @@ export function CarteCardio({ chrono, fait, dureeFaite, maintenant, onDemarrer, 
         </View>
         {fait ? null : <Ink size={13} weight="extraBold" color={c.accentText}>{traduire('Changer')}</Ink>}
       </Pressable>
+      {!fait && bandeauMontre ? bandeauMontre : null}
       {!fait && zone2 ? <BandeZone2 zone={zone2} /> : null}
       <View accessibilityLiveRegion="polite" accessibilityLabel={traduire('{0} sur {1}', fmtChrono(ecoule), fmtChrono(chrono.objectifSec))} style={{ alignItems: 'center' }}>
         <Ink size={56} weight="black" tight color={c.ink} style={{ fontVariant: ['tabular-nums'] }}>{fmtChrono(ecoule)}</Ink>
         <Ink size={17} weight="extraBold" color={c.textSecondary} style={{ fontVariant: ['tabular-nums'] }}>{traduire('sur {0}', fmtChrono(chrono.objectifSec))}</Ink>
       </View>
       {fait ? (
-        <BilanCardio chrono={chrono} dureeSec={dureeFaite} lecture={lectureFc} onParler={onParler} onSuite={onSuite} />
+        <>
+          {chrono.montre ? <BadgeMontre montre={chrono.montre} dureeSec={dureeFaite} distanceKm={chrono.distanceKm} fcMoy={chrono.fcMoy} /> : null}
+          <BilanCardio chrono={chrono} dureeSec={dureeFaite} lecture={lectureFc} onParler={onParler} onSuite={onSuite} />
+        </>
       ) : (
         <>
           <SaisieCardio type={type} segments={chrono.segments ?? [{ aSec: 0 }]} ecouleSec={ecoule} marche={marche} onValeur={onValeur} onSegment={onSegment} onRetirerSegment={onRetirerSegment} />
@@ -86,6 +94,7 @@ export function CarteCardio({ chrono, fait, dureeFaite, maintenant, onDemarrer, 
             {marche ? bouton(traduire('Pause'), onPause, false) : bouton(ecoule > 0 ? traduire('Reprendre') : traduire('Démarrer'), onDemarrer, true)}
             {bouton(traduire('Terminer'), onTerminer, marche || atteint, peutTerminer)}
           </View>
+          {boutonMontre ?? null}
           {/* chrono oublie : la duree a la main */}
           {ecoule === 0 && !marche ? (
             manuel ? (
