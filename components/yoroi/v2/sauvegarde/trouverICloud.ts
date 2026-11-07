@@ -6,7 +6,8 @@
  * Telechargement impossible : 'annule' (un message le dit, l'ecran ne fait rien).
  */
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
-import { listerICloud, preparerICloud } from '@/lib/v2/sauvegarde/coffreICloud';
+import { listerICloud, ordreRestauration, preparerICloud } from '@/lib/v2/sauvegarde/coffreICloud';
+import { choisirSauvegardeValide, empreinteOk } from '@/lib/v2/sauvegarde/retrouver';
 import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 function quand(ms: number): string {
@@ -16,7 +17,8 @@ function quand(ms: number): string {
 }
 
 export async function choisirSauvegardeICloud(): Promise<string | 'annule' | undefined> {
-  const liste = await listerICloud();
+  // 7 novembre 2026 : la plus recente d'abord, tous les noms (7 copies au nom du telephone, « derniere », anciens 1 a 3)
+  const liste = ordreRestauration(await listerICloud());
   const derniere = liste[0];
   if (!derniere) return undefined;
   const choix = await new Promise<'remettre' | 'autre'>((resolve) => {
@@ -30,7 +32,16 @@ export async function choisirSauvegardeICloud(): Promise<string | 'annule' | und
     );
   });
   if (choix === 'autre') return undefined;
-  const chemin = await preparerICloud(derniere.name);
+  // 7 novembre 2026 : une copie abimee (empreinte fausse) : on prend celle d'avant
+  let chemin: string | null = null;
+  try {
+    const FS = await import('expo-file-system/legacy');
+    const { digestStringAsync, CryptoDigestAlgorithm } = await import('expo-crypto');
+    const t = await choisirSauvegardeValide(liste, preparerICloud, async (p) => empreinteOk(await FS.readAsStringAsync(p, { encoding: FS.EncodingType.UTF8 }), (s) => digestStringAsync(CryptoDigestAlgorithm.SHA256, s)));
+    chemin = t?.chemin ?? null;
+  } catch {
+    chemin = await preparerICloud(derniere.name);
+  }
   if (!chemin) {
     appAlert(traduire('Pas encore téléchargée'), traduire('La sauvegarde est encore dans iCloud. Vérifie ta connexion, puis réessaie dans un instant. Tu peux aussi choisir le fichier à la main.'));
     return 'annule';
