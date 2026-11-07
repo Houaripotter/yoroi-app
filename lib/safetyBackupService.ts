@@ -24,9 +24,10 @@ const MAX_SAFETY_BACKUPS = 5;
  * Timeout 5s : si ça prend trop de temps, on n'empêche pas l'action.
  *
  * @param label Description de l'action pour le log (ex: "reset profil")
+ * @param opts.local la copie reste sur ce telephone, sans partir dans le cloud (avant « Retrouver une sauvegarde »)
  * @returns true si le backup a réussi, false sinon
  */
-export async function runSafetyBackup(label: string): Promise<boolean> {
+export async function runSafetyBackup(label: string, opts?: { local?: boolean }): Promise<boolean> {
   if (pendingBackup) {
     logger.info(`[SafetyBackup] (${label}) Un backup est déjà en cours, on attend`);
     return pendingBackup;
@@ -36,7 +37,8 @@ export async function runSafetyBackup(label: string): Promise<boolean> {
   pendingBackup = (async () => {
     try {
       const ok = await Promise.race<boolean>([
-        exportDataToJSON({ silent: true }),
+        // 7 novembre 2026 : local, la copie reste sur ce telephone (rien dans iCloud ni dans le dossier relie)
+        exportDataToJSON(opts?.local ? { silent: true, local: true } : { silent: true }),
         new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 5000)),
       ]);
       if (ok) {
