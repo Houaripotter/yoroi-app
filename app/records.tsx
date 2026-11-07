@@ -24,7 +24,7 @@ import { logger } from '@/lib/security/logger';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { todayISO } from '@/lib/v2/weightStats';
 import { useSeancesData } from '@/lib/v2/seances/useSeancesData';
-import { chartSeries, combatSummary, formatRecordValue, regularity } from '@/lib/v2/seances/records';
+import { chartSeries, combatSummary, formatRecordPlaques, formatRecordValue, regularity } from '@/lib/v2/seances/records';
 import type { RecordLine } from '@/lib/v2/seances/records';
 import { formatHours, mainSport } from '@/lib/v2/seances/weekSummary';
 import { MONTHS, familyOf, isoOf, longDate, relativeDay } from '@/lib/v2/seances/sessionData';
@@ -164,13 +164,15 @@ export default function RecordsScreen() {
 
   const groups = useMemo(() => {
     const present = new Set(records.lines.map(groupOf));
+    // 7 novembre 2026 : un exercice compte en plaques ouvre aussi l'onglet Muscu
+    if (records.plaques.length > 0) present.add('force');
     if (hasCombat) present.add('combat');
     if (trainings.length > 0) present.add('regularite');
     const main = groupOfSport(mainSport(favoris, trainings));
     const list = ORDER.filter((g) => present.has(g));
     // le sport principal passe en premier
     return list.includes(main) ? [main, ...list.filter((g) => g !== main)] : list;
-  }, [records.lines, hasCombat, trainings, favoris]);
+  }, [records.lines, records.plaques, hasCombat, trainings, favoris]);
 
   useEffect(() => {
     if (params.focus) {
@@ -180,9 +182,13 @@ export default function RecordsScreen() {
         setSelected(l.key);
         return;
       }
+      if (records.plaques.some((x) => x.key === params.focus)) {
+        setGroup('force');
+        return;
+      }
     }
     if (groups.length && (!group || !groups.includes(group))) setGroup(groups[0]);
-  }, [groups, params.focus, records.lines]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [groups, params.focus, records.lines, records.plaques]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const g0: Group = group ?? groups[0] ?? 'regularite';
   const lines = useMemo(() => records.lines.filter((l) => groupOf(l) === g0), [records.lines, g0]);
@@ -290,6 +296,9 @@ export default function RecordsScreen() {
     });
     return Array.from(map.entries());
   };
+
+  const motPl = traduire('plaques');
+  const titrePlaques = motPl.charAt(0).toUpperCase() + motPl.slice(1);
 
   const combatDuree = lines.filter((l) => l.kind === 'duree');
   const combatRounds = lines.filter((l) => l.kind === 'rounds');
@@ -429,6 +438,39 @@ export default function RecordsScreen() {
                 </View>
               ))
             )}
+          </>
+        ) : null}
+
+        {/* 7 novembre 2026 (demande de Houari) : les records en plaques de la pile, compares en plaques, dans leur
+            propre liste : jamais ranges avec les kilos ni convertis */}
+        {g0 === 'force' && records.plaques.length > 0 ? (
+          <>
+            <SectionTitle title={titrePlaques} />
+            <View style={card}>
+              {records.plaques.map((l, i) => {
+                const v = formatRecordPlaques(l.best);
+                const on = params.focus === l.key;
+                return (
+                  <Pressable
+                    key={l.key}
+                    onPress={() => openTraining(l.trainingId)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${sansTiret(traduire(l.name))}, ${v.main}`}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider, backgroundColor: on ? blancA(0.6) : 'transparent' }}
+                  >
+                    <Hanko size={24} color={l.date >= freshLimit && l.stamps > 0 ? c.record : '#B9B6AE'} rotate={-7} />
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Ink size={15} weight="extraBold" numberOfLines={2}>{sansTiret(traduire(l.name))}</Ink>
+                      <Ink size={12} color={c.textSecondary} numberOfLines={2}>{`${relativeDay(l.date, today)}${l.stamps > 0 ? traduire(", battu {0} fois", l.stamps) : ''}`}</Ink>
+                    </View>
+                    <View style={{ alignItems: 'flex-end', gap: 1, maxWidth: '44%' }}>
+                      <Ink size={16} weight="black" tight numberOfLines={1}>{v.main}</Ink>
+                      {v.sub ? <Ink size={11} color={c.textMuted} numberOfLines={2}>{v.sub}</Ink> : null}
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
           </>
         ) : null}
 
