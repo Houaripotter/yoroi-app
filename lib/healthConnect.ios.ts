@@ -258,6 +258,9 @@ export interface HealthData {
     averageHeartRate?: number;    // BPM
     maxHeartRate?: number;        // BPM
     source?: string;
+    /** 7 novembre 2026 : identifiant Apple et duree en secondes (pauses retirees), quand Apple les donne */
+    hkUUID?: string;
+    dureeSec?: number;
     // 2 novembre 2026 : d'ou viennent les kcal (lib/v2/seance/sourceKcal.ts)
     calories_source?: ChampsSourceKcal['calories_source'];
     calories_appareil?: string | null;
@@ -2601,9 +2604,15 @@ class HealthConnectService {
         }
 
         const kcal = caloriesKcal != null ? appleInt(caloriesKcal) : undefined;
+        // 7 novembre 2026 : la duree d'Apple en secondes (pauses retirees), pour le cardio repris de la montre
+        const dureeQ = workout.duration;
+        const dureeBrute = this.extractQuantityValue(dureeQ);
+        const uniteDuree = dureeQ && typeof dureeQ === 'object' ? String(dureeQ.unit ?? 's') : 's';
+        const dureeSec = dureeBrute != null && dureeBrute > 0 ? (uniteDuree === 'min' ? dureeBrute * 60 : uniteDuree === 's' ? dureeBrute : undefined) : undefined;
         mapped.push({
           id: deterministicId,
           hkUUID: uuid || undefined,
+          dureeSec,
           activityType: String(activityType),
           startDate: startStr,
           endDate: endStr,
@@ -2701,6 +2710,24 @@ class HealthConnectService {
 
   async getWorkouts(): Promise<HealthData['workouts'] | null> {
     return this.getIOSWorkouts();
+  }
+
+  /**
+   * 7 novembre 2026 (cardio de la seance repris de la montre) : les seances d'Apple Sante finies apres `depuisMs`,
+   * lues et classees comme a l'import (kcal et appareil, FC moyenne), sans celles ecrites par YOROI.
+   * Lecture seule : HKWorkoutTypeIdentifier est deja demande, aucune nouvelle autorisation.
+   * null : rien de lisible (aucune seance, acces coupe, Expo Go).
+   */
+  async lireEntrainementsDepuis(depuisMs: number): Promise<HealthData['workouts'] | null> {
+    if (!HealthKit || !isHealthKitAvailable || isRunningInExpoGo) return null;
+    const jours = Math.max(1, Math.ceil((Date.now() - depuisMs) / 86400000));
+    try {
+      const liste = await this.withTimeout(this.getIOSWorkouts(jours), 20000);
+      return liste ? liste.filter((w) => Date.parse(w.endDate) >= depuisMs) : null;
+    } catch (e) {
+      logger.warn('[lireEntrainementsDepuis] lecture impossible', e);
+      return null;
+    }
   }
 
   /**
