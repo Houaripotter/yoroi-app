@@ -10,6 +10,7 @@
 import { DeviceEventEmitter } from 'react-native';
 import type { SeanceMontre } from './contexte';
 import type { PlanIle } from '@/lib/v2/seance/actionsIle';
+import { reglageFinRepos } from '@/lib/v2/seance/sonneurRepos';
 
 /** émis quand la séance en cours change (une série, un repos, la fin) */
 export const SEANCE_MONTRE_EVENT = 'YOROI_SEANCE_MONTRE_CHANGED';
@@ -50,6 +51,8 @@ export function seanceDepuisPlan(e: {
     reposTotalS: Math.max(0, Math.round(e.reposTotalS)),
     cur: Math.min(Math.max(0, p.cur), exos.length - 1),
     exos,
+    // 7 novembre 2026 : une seule sonnerie (lib/v2/seance/sonneurRepos.ts), reglage Fin de repos sur iPhone
+    ...(reglageFinRepos() === 'iphone' ? { sonne: 'iphone' as const } : {}),
   };
 }
 
