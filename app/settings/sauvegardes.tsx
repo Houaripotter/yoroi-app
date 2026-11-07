@@ -3,6 +3,7 @@
  * Memes lignes qu'avant : Sauvegarde (avec le bouton Sauvegarder), Copies de securite automatiques,
  * Mes donnees (exporter, effacer), Coffre photos. Le bouton Sauvegarder reste aussi sur la page Reglages.
  * Les marges de l'encoche et du bas (useSafeAreaInsets) sont gerees par EspaceScreen.
+ * 7 novembre 2026 : en haut, la ligne d'etat de la sauvegarde automatique (components/yoroi/v2/reglages/LigneSauvegarde.tsx).
  */
 import React, { useCallback, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -11,6 +12,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Card, EspaceScreen } from '@/components/yoroi/v2/espace/ui';
 import { MiniAction, ValueRow } from '@/components/yoroi/v2/espace/reglages/parts';
 import { TUILE } from '@/components/yoroi/v2/reglages/kit';
+import { LigneSauvegarde } from '@/components/yoroi/v2/reglages/LigneSauvegarde';
 import { backupAgeDays, backupWhen, useEspaceStatus } from '@/components/yoroi/v2/espace/reglages/useEspaceStatus';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { exportDataToJSON } from '@/lib/exportService';
@@ -49,6 +51,8 @@ export default function DonneesEtSauvegardes() {
 
   return (
     <EspaceScreen title={traduire("Données et sauvegardes")} subtitle={traduire("Pas de compte : tout reste sur ton téléphone")} gap={14}>
+      {/* 7 novembre 2026 : l'etat de la sauvegarde automatique (iCloud, ou dossier relie sur Android), en une ligne */}
+      <LigneSauvegarde />
       <Card>
         <ValueRow first tint={TUILE.mousse} sticker="sauvegarde" icon="save" label={traduire("Sauvegarde")} sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/backup-history')} action={<MiniAction label={traduire("Sauvegarder")} onPress={backupNow} busy={busy} />} />
         {/* les copies faites seules avant chaque mise a jour, a voir, partager et remettre */}
