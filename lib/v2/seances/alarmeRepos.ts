@@ -19,6 +19,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeModules, Platform } from 'react-native';
 import { signalerASynchroniser } from '@/lib/v2/synchro/cles';
+import { estFinSurMontre } from '@/lib/v2/seance/sonneurRepos';
 
 export const CLE_SONNERIE_REPOS = 'yoroi_sonnerie_fin_repos_v1';
 
@@ -101,9 +102,12 @@ const CLE_DEMANDE = 'yoroi_alarme_repos_demande_v1';
  * Programme l'alarme de fin de repos si c'est la voie choisie. Renvoie son identifiant (prefixe « alarme: »),
  * ou null : la notification prend le relais.
  * Premiere fois (autorisation jamais demandee) : la demande part une fois, au premier repos.
+ * 7 novembre 2026 : une seule sonnerie. Ce repos sonne sur l'Apple Watch (lib/v2/seance/sonneurRepos.ts) : pas
+ * d'alarme ici, sinon watchOS relaierait celle de l'iPhone et la montre sonnerait deux fois.
  */
 export async function programmerAlarmeRepos(finMs: number, titre: string, corps: string, mod: ModuleAlarmeRepos | null = lireModuleAlarme()): Promise<string | null> {
   if (!mod) return null;
+  if (estFinSurMontre(finMs)) return null;
   try {
     const sonnerie = await chargerSonnerieRepos();
     if (!sonnerie) return null;
