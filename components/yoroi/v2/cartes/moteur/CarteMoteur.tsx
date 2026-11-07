@@ -1191,7 +1191,10 @@ function typo(plan: Plan, c: ContenuCarte): React.ReactNode {
   const yHero = v.y + (story ? 60 : 24);
   const hs = story ? 600 : 420;
   const mHero = mesureChiffre(c.hero.v, undefined, hs, 0.4, W - 2 * G0.M);
-  const yMot = yHero + mHero.s * 0.8 + (story ? 70 : 66);
+  // 7 novembre 2026 : la queue de la virgule (« 12,5 ») descend sous la ligne du chiffre et touchait « TONNES » ;
+  // le mot descend d'autant (environ 0,1 du chiffre), sans rien changer aux chiffres sans virgule
+  const queueVirgule = c.hero.v.includes(',') ? Math.round(mHero.s * 0.1) : 0;
+  const yMot = yHero + mHero.s * 0.8 + (story ? 70 : 66) + queueVirgule;
   const ms = story ? 150 : 110;
   const yLib = yMot + ms + 16;
   const lsz = story ? 42 : 36;
