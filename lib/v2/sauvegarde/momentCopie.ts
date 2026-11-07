@@ -19,6 +19,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { EtatProtection } from './copieAuto';
+import { rappelsMasques } from './copieAuto';
 
 export const DELAI_MAX_HEURES = 48;
 export const JOURS_APRES_REFUS = 7;
@@ -67,7 +68,8 @@ export function premierMomentArrive(c: Pick<ContexteCopie, 'visiteFaite' | 'visi
 /** La carte de l'accueil se montre-t-elle ? */
 export function montrerCarteAccueil(c: ContexteCopie): boolean {
   const now = c.now ?? Date.now();
-  if (c.visiteEnCours || c.etat === 'protege') return false;
+  // 7 novembre 2026 : copie automatique qui marche (ou en route, sans alerte) : aucune carte
+  if (c.visiteEnCours || rappelsMasques(c.etat)) return false;
   if (refusRecent(c.plusTardLe, now)) return false;
   if (c.autreCarteLe === c.aujourdhui) return false;
   if (c.etat === 'en_panne') return true;
@@ -81,7 +83,7 @@ export function montrerCarteAccueil(c: ContexteCopie): boolean {
  * Copie automatique reliee : toujours true, elle part en silence et le dit en une ligne.
  */
 export function montrerFinSeance(c: Pick<ContexteCopie, 'etat' | 'plusTardLe' | 'autreCarteLe' | 'aujourdhui' | 'now'>): boolean {
-  if (c.etat === 'protege') return true;
+  if (rappelsMasques(c.etat)) return true;
   if (refusRecent(c.plusTardLe, c.now ?? Date.now())) return false;
   return c.autreCarteLe !== c.aujourdhui;
 }
