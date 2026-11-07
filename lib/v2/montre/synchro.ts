@@ -20,7 +20,7 @@ import { construireContexte } from './contexte';
 import { lireSourcesContexte } from './sources';
 import { appliquerCharges } from './actions';
 import { chargerIdsMontre } from './idsRecus';
-import { activerSessionMontre, chargesEnAttente, ecouterChargesMontre, envoyerContexteNatif, pontMontreDisponible, retirerChargesEnAttente } from './pont';
+import { activerSessionMontre, chargesEnAttente, ecouterChargesMontre, envoyerContexteNatif, envoyerMessageNatif, pontMontreDisponible, retirerChargesEnAttente } from './pont';
 
 /** emis par le chrono quand tes rounds changent */
 export const CHRONOS_CHANGED_EVENT = 'YOROI_CHRONOS_CHANGED';
@@ -31,6 +31,14 @@ const ANTI_REBOND_SEANCE_MS = 400;
 
 let timer: ReturnType<typeof setTimeout> | null = null;
 let dernierEnvoi = '';
+/** la seance du dernier contexte envoye : quand elle change, le contexte part aussi par message (immediat) */
+let derniereSeance = '';
+
+/** Vrai quand la seance du contexte a change depuis le dernier envoi (une serie, un repos lance, coupe, decale) */
+export function seanceAChange(precedente: string, ctx: { seance?: unknown }): { change: boolean; empreinte: string } {
+  const e = ctx.seance ? JSON.stringify(ctx.seance) : '';
+  return { change: e !== precedente, empreinte: e };
+}
 let enCours: Promise<boolean> | null = null;
 let demarree = false;
 
@@ -46,8 +54,16 @@ export async function envoyerContexteMontre(force = false): Promise<boolean> {
       const { genere, ...reste } = ctx;
       const empreinte = JSON.stringify(reste);
       if (!force && empreinte === dernierEnvoi) return true;
-      const ok = await envoyerContexteNatif(JSON.stringify(ctx));
+      const json = JSON.stringify(ctx);
+      const ok = await envoyerContexteNatif(json);
       if (ok) dernierEnvoi = empreinte;
+      // 7 novembre 2026 : la seance a change (Passer sur l'iPhone, repos lance) : la montre coupe ou arme son
+      // minuteur dans la seconde, sans attendre que watchOS livre le contexte d'application
+      const s = seanceAChange(derniereSeance, ctx);
+      if (s.change) {
+        derniereSeance = s.empreinte;
+        void envoyerMessageNatif(json);
+      }
       return ok;
     } catch (e) {
       logger.warn('[Montre] contexte non envoye', e);
