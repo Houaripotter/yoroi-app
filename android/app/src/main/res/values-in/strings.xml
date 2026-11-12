@@ -1,6 +1,2 @@
 <resources>
-  <!-- Widgets -->
-  <string name="widget_dashboard_desc">Statistik utamamu sekilas</string>
-  <string name="widget_hydration_desc">Pantau asupan air harianmu</string>
-  <string name="widget_streak_desc">Streak sesi latihan berturut-turut</string>
 </resources>
