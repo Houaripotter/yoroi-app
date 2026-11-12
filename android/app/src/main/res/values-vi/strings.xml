@@ -1,6 +1,2 @@
 <resources>
-  <!-- Widgets -->
-  <string name="widget_dashboard_desc">Các chỉ số chính của bạn trong nháy mắt</string>
-  <string name="widget_hydration_desc">Theo dõi lượng nước uống mỗi ngày</string>
-  <string name="widget_streak_desc">Chuỗi buổi tập liên tiếp của bạn</string>
 </resources>
