@@ -1,6 +1,2 @@
 <resources>
-  <!-- Widgets -->
-  <string name="widget_dashboard_desc">핵심 통계를 한눈에</string>
-  <string name="widget_hydration_desc">하루 수분 섭취 기록</string>
-  <string name="widget_streak_desc">연속 운동 기록</string>
 </resources>
