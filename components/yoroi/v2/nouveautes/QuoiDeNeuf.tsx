@@ -5,7 +5,7 @@
  * lib/v2/nouveautes/quoiDeNeuf.ts. Montee au lancement par QuoiDeNeufGate, revue depuis Reglages.
  */
 import React from 'react';
-import { Modal, ScrollView, View } from 'react-native';
+import { Modal, Platform, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -14,7 +14,7 @@ import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 import { carteBlanche, ton } from '@/components/yoroi/v2/seance/pastel';
 import { useFeuilleCentree } from '@/lib/v2/nav/useGrandEcran';
 import { traduire } from '@/lib/i18n/tr';
-import { NOUVEAUTES, TEXTES_QUOI_DE_NEUF, VERSION_NOUVEAUTES, type Nouveaute } from '@/lib/v2/nouveautes/quoiDeNeuf';
+import { MOT_TRADUCTIONS, nouveautesPour, TEXTES_QUOI_DE_NEUF, VERSION_NOUVEAUTES, type Nouveaute } from '@/lib/v2/nouveautes/quoiDeNeuf';
 
 function Rubrique({ n }: { n: Nouveaute }) {
   const { theme } = useYoroiTheme();
@@ -68,11 +68,12 @@ export function QuoiDeNeuf({ visible, onClose }: { visible: boolean; onClose: ()
           <Ink size={14.5} weight="bold" color={ciel.encre} style={{ opacity: 0.8 }}>{traduire(TEXTES_QUOI_DE_NEUF.sousTitre)}</Ink>
         </View>
 
-        {NOUVEAUTES.map((n) => (
+        {nouveautesPour(Platform.OS).map((n) => (
           <Rubrique key={n.id} n={n} />
         ))}
 
-        {/* Le mot sur les traductions, tout en bas, doux */}
+        {/* Le mot sur les traductions, tout en bas, doux (plus montre depuis la 3.0.3) */}
+        {MOT_TRADUCTIONS ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: creme.fond, borderRadius: 22, padding: 14 }}>
           <Sticker nom="langue" taille={50} />
           <View style={{ flex: 1, gap: 3 }}>
@@ -80,6 +81,7 @@ export function QuoiDeNeuf({ visible, onClose }: { visible: boolean; onClose: ()
             <Ink size={13} color={creme.encre} style={{ lineHeight: 18.5 }}>{traduire(TEXTES_QUOI_DE_NEUF.traductionsTexte)}</Ink>
           </View>
         </View>
+        ) : null}
       </ScrollView>
       <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: centree ? 18 : insets.bottom + 18, backgroundColor: c.background }}>
         <BoutonPrincipal onPress={onClose} label={traduire(TEXTES_QUOI_DE_NEUF.bouton)} tailleTexte={16} />
