@@ -1,6 +1,2 @@
 <resources>
-  <!-- Widgets -->
-  <string name="widget_dashboard_desc">A fő adataid egy pillantással</string>
-  <string name="widget_hydration_desc">Kövesd a napi folyadékbeviteledet</string>
-  <string name="widget_streak_desc">Az egymást követő edzéseid szériája</string>
 </resources>
