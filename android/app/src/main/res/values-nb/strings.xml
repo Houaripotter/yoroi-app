@@ -1,6 +1,2 @@
 <resources>
-  <!-- Widgets -->
-  <string name="widget_dashboard_desc">De viktigste tallene dine på et blikk</string>
-  <string name="widget_hydration_desc">Følg det daglige væskeinntaket ditt</string>
-  <string name="widget_streak_desc">Rekken din med treningsøkter på rad</string>
 </resources>
