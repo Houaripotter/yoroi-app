@@ -1,5 +1,5 @@
 /**
- * « Quoi de neuf dans YOROI 3.0.2 » (1er novembre 2026) : la fenetre des nouveautes, une seule fois par version.
+ * « Quoi de neuf dans YOROI » (1er novembre 2026, rubriques de la 3.0.3 le 12 novembre 2026) : la fenetre des nouveautes, une seule fois par version.
  * Logique pure, testee (__tests__/unit/quoiDeNeuf.test.ts). Fenetre : components/yoroi/v2/nouveautes/QuoiDeNeuf.tsx,
  * montee par QuoiDeNeufGate dans app/(tabs)/_layout.tsx, et revue depuis Reglages, section YOROI.
  *
@@ -15,7 +15,7 @@
 /** La version dont l'utilisateur a deja vu les nouveautes */
 export const QUOI_DE_NEUF_VU_KEY = '@yoroi_quoi_de_neuf_vu_version';
 /** La version que decrit la fenetre (la liste NOUVEAUTES ci dessous) */
-export const VERSION_NOUVEAUTES = '3.0.2';
+export const VERSION_NOUVEAUTES = '3.0.3';
 
 /** Compare deux versions « 3.0.2 » : negatif si a < b */
 export function comparerVersionsApp(a: string, b: string): number {
@@ -89,82 +89,93 @@ export async function marquerQuoiDeNeufVu(p: PortsQuoiDeNeuf): Promise<void> {
   }
 }
 
-// ── Les nouveautes de la 3.0.2 ─────────────────────────────────────────────
-// Uniquement ce qui est livre dans l'app (verifie dans _propositions/SUIVI_DEMANDES.md, points X, Z, AD a AY).
-// Ecartes : les grands widgets iPad et Mac et la sonnerie de fin de repos (etape Xcode pas encore faite).
+// ── Les nouveautes de la 3.0.3 (12 novembre 2026) ──────────────────────────
+// Reprend les notes de version 3.0.3 (~/Desktop/YOROI_store_2026/notes_3.0.3/NOTES_FR.md), rien de plus.
+// plateforme : rubrique reservee a iOS ou a Android (jamais Apple, iCloud ni Apple Watch sur Android).
 // Textes en francais, passes par traduire() a l'affichage.
 
 export type Nouveaute = {
   id: string;
-  sticker: 'calendrier' | 'musculation' | 'zones_corps' | 'metre_ruban' | 'scan_ia' | 'partager' | 'telephone' | 'etincelles';
+  sticker: 'sauvegarde' | 'coffre_ouvert' | 'chrono' | 'sport_marche' | 'sablier' | 'records' | 'langue';
   ton: 'peche' | 'menthe' | 'creme' | 'lilas' | 'ciel';
   titre: string;
   texte: string;
   puces?: string[];
+  plateforme?: 'ios' | 'android';
 };
 
 export const NOUVEAUTES: Nouveaute[] = [
   {
-    id: 'programme',
-    sticker: 'calendrier',
-    ton: 'ciel',
-    titre: 'Ton programme, jour par jour',
-    texte: 'Touche un jour et tu vois toute ta séance. Tes prochaines séances sont prêtes à l’avance.',
-    puces: ['Séances A et B', 'Chaque muscle 2 fois', 'Changer un exercice pour un jour'],
-  },
-  {
-    id: 'seance',
-    sticker: 'musculation',
-    ton: 'peche',
-    titre: 'La séance en direct',
-    texte: 'Plus rapide à remplir, plus simple à suivre.',
-    puces: ['Poids plus rapide', 'Séries prévues visibles', 'Corriger une série', 'Superset', 'Changer de machine', 'Cardio avec pente et vitesse', 'Zone 2'],
-  },
-  {
-    id: 'muscles',
-    sticker: 'zones_corps',
-    ton: 'lilas',
-    titre: 'Les muscles travaillés',
-    texte: 'Chaque exercice allume ses vrais muscles, sur ta séance comme sur ta semaine.',
-  },
-  {
-    id: 'corps',
-    sticker: 'metre_ruban',
+    id: 'sauvegarde_ios',
+    plateforme: 'ios',
+    sticker: 'sauvegarde',
     ton: 'menthe',
-    titre: 'Les données de ton corps',
-    texte: 'Suis ce qui compte pour toi. Une donnée enregistrée n’est jamais cachée.',
-    puces: ['Composition détaillée', 'Nouvelles mensurations', 'Pesée avant et après séance', 'Forme du matin', 'Ce que tu suis, en 3 niveaux'],
+    titre: 'Ta sauvegarde, automatique',
+    texte: 'Une copie sur iCloud après chaque séance et chaque pesée. Tes photos ne quittent jamais ton téléphone.',
   },
   {
-    id: 'import',
-    sticker: 'scan_ia',
-    ton: 'creme',
-    titre: 'L’import par photo avec ton IA',
-    texte: 'Ta balance, ton app ou ton bilan en photo : ton IA lit, YOROI range chaque valeur à sa place.',
+    id: 'sauvegarde_android',
+    plateforme: 'android',
+    sticker: 'sauvegarde',
+    ton: 'menthe',
+    titre: 'Ta sauvegarde, automatique',
+    texte: 'Une copie dans ton cloud après chaque séance et chaque pesée. Tes photos ne quittent jamais ton téléphone.',
   },
   {
-    id: 'cartes',
-    sticker: 'partager',
-    ton: 'lilas',
-    titre: 'Tes cartes à partager',
-    texte: 'Une bibliothèque de cartes faites avec tes vraies séances, tes records, ton mois et ton année.',
-    puces: ['10 styles', 'Avec ta photo', 'Story ou autocollant'],
-  },
-  {
-    id: 'grand_ecran',
-    sticker: 'telephone',
+    id: 'retrouver',
+    sticker: 'coffre_ouvert',
     ton: 'ciel',
-    titre: 'YOROI sur iPad et Mac',
-    texte: 'Le menu passe sur le côté et tes pages s’ouvrent en tableau de bord.',
+    titre: 'Tes données, retrouvées en un geste',
+    texte: 'Choisis ta sauvegarde dans la liste et tout revient.',
   },
   {
-    id: 'vivant',
-    sticker: 'etincelles',
+    id: 'repos_montre',
+    plateforme: 'ios',
+    sticker: 'chrono',
     ton: 'peche',
-    titre: 'Plus vivant partout',
-    texte: 'Des exercices animés, des stickers partout et un nouvel écran de chargement sur la Corniche.',
+    titre: 'Le même repos sur ta montre et ton iPhone',
+    texte: 'Avec le nom de l’exercice, et un clap en bois à 10 secondes de la fin.',
+  },
+  {
+    id: 'cardio_montre',
+    plateforme: 'ios',
+    sticker: 'sport_marche',
+    ton: 'lilas',
+    titre: 'Ta marche et ton cardio de l’Apple Watch',
+    texte: 'Reprends les dans ta séance, et corrige l’heure de début.',
+  },
+  {
+    id: 'heure_debut',
+    plateforme: 'android',
+    sticker: 'sablier',
+    ton: 'lilas',
+    titre: 'Tu as commencé plus tôt ?',
+    texte: 'Corrige l’heure de début de ta séance.',
+  },
+  {
+    id: 'plaques',
+    sticker: 'records',
+    ton: 'creme',
+    titre: 'Tes records en plaques',
+    texte: 'Ils arrivent dans Progrès.',
+  },
+  {
+    id: 'langues',
+    sticker: 'langue',
+    ton: 'ciel',
+    titre: 'YOROI parle 28 langues',
+    texte: 'Dont l’arabe. L’app suit la langue de ton téléphone.',
   },
 ];
+
+/** Les rubriques a montrer sur cette plateforme */
+export function nouveautesPour(os: string): Nouveaute[] {
+  const p = os === 'android' ? 'android' : 'ios';
+  return NOUVEAUTES.filter((n) => !n.plateforme || n.plateforme === p);
+}
+
+/** 3.0.3 : l'app parle 28 langues, le mot « les traductions arrivent bientot » n'est plus montre */
+export const MOT_TRADUCTIONS = false;
 
 /** Les textes de la fenetre, hors rubriques (pour a_traduire.json) */
 export const TEXTES_QUOI_DE_NEUF = {
