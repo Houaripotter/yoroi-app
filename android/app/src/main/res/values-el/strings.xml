@@ -1,6 +1,2 @@
 <resources>
-  <!-- Widgets -->
-  <string name="widget_dashboard_desc">Τα βασικά σου στατιστικά με μια ματιά</string>
-  <string name="widget_hydration_desc">Παρακολούθησε το νερό που πίνεις κάθε ημέρα</string>
-  <string name="widget_streak_desc">Το σερί σου σε συνεχόμενες προπονήσεις</string>
 </resources>
