@@ -1,6 +1,2 @@
 <resources>
-  <!-- Widgets -->
-  <string name="widget_dashboard_desc">Statisticile tale cheie dintr-o privire</string>
-  <string name="widget_hydration_desc">Urmărește câtă apă bei pe zi</string>
-  <string name="widget_streak_desc">Seria ta de antrenamente consecutive</string>
 </resources>
