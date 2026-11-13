@@ -390,16 +390,16 @@ describe('28 octobre 2026 : accueil plus compact', () => {
     const ch = lire('components/yoroi/v2/charts/CheminPierres.tsx');
     // l'accueil et Progres dessinent le chemin avec le meme composant, les couleurs ont une seule source
     // 2 novembre 2026 (proposition A) : l'accueil dessine sa ligne de paliers, Progres garde le chemin de pierres
-    expect(c).toContain('<LigneDePaliers depart={start} ligne={ligne} sombre={sombre} />');
+    // 13 novembre 2026 : la ligne de paliers devient la montagne (bloc C choisi par Houari), memes donnees
+    expect(c).toContain('<MontagnePaliers ligne={ligne} objectif={goal!} actuel={last.value} progression={chemin.part} atteint={atteint} sombre={sombre} largeurInitiale={W - 36} />');
+    expect(c).not.toContain('function LigneDePaliers');
     // 3 novembre 2026 nuit : les couleurs des anneaux d'Aujourd'hui, prises a leur source (couleurActivite), aucun hex recopie
     expect(c).toContain("import { couleurActivite } from './Visus';");
     expect(c).toContain("couleurActivite('energie-active')");
     expect(c).toContain("couleurActivite('exercice')");
     expect(c).toContain("couleurActivite('pas')");
-    expect(c).toContain('<Circle cx={12} cy={12} r={12} fill={A.vert} />');
     expect(c).not.toContain('P.moss');
-    // le point du prochain palier en rose, le texte bleu sans reflet vert, le chiffre du rythme en couleur
-    expect(c).toContain('<Circle cx={14} cy={14} r={4.3} fill={A.rose} />');
+    // le texte bleu sans reflet vert, le chiffre du rythme en couleur
     expect(c).toContain('bleuTexte: paletteSombre() ? bleu.anneau : P.indigo,');
     expect(c).toContain("phrase.ton === 'bleu' ? anneaux.roseTexte");
     expect(c).toContain('etatsLignePaliers(start, goal, last.value, chemin.part, atteint)');
@@ -492,7 +492,8 @@ describe('28 octobre 2026 : accueil plus compact', () => {
     expect(ch).toContain('withRepeat(withTiming(1');
     // le lecteur d'ecran dit l'etat de chaque palier
     expect(ch).toContain('accessibilityLabel={texteEtatsChemin(depart, objectif, p, atteint)}');
-    expect(lire('components/yoroi/v2/accueil/CartePoids.tsx')).toContain('texteEtatsChemin(start, goal, chemin.part, atteint)');
+    // 13 novembre 2026 : sur l'accueil, la montagne lit sa progression (« 3 paliers sur 4 franchis, encore 0,6 kg... »)
+    expect(lire('components/yoroi/v2/accueil/CartePoids.tsx')).toContain('texteMontagne(ligne, chemin.reste, kgCible ?? formatKg(goal), atteint)');
     // les couleurs franches restent celles de la palette C (meme teinte, un cran plus soutenues), le gris des pierres a venir est clair
     expect(ETATS_CHEMIN.franc).toHaveLength(4);
     expect(ETATS_CHEMIN.aVenir.clair).toBe('#B7C1DC');
