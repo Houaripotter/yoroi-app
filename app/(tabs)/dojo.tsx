@@ -23,6 +23,7 @@ import { TourAnchor, registerTourScroller } from '@/components/yoroi/v2/tour/Tou
 import { defilementPourMontrer, hautDeBarre } from '@/components/yoroi/v2/tour/placement';
 import { FeatureList } from '@/components/yoroi/v2/FeatureList';
 import { INK_TAB_BAR_SPACE } from '@/components/yoroi/v2/InkTabBar';
+import { useDefilementBarre } from '@/lib/v2/nav/barreDefilement';
 import { ArmureEnConstruction, EtapesPiece } from '@/components/yoroi/v2/dojo/ArmureEnConstruction';
 import { construction } from '@/lib/v2/dojo/pieces';
 import { Hanko } from '@/components/yoroi/v2/dojo/Hanko';
@@ -181,6 +182,8 @@ export default function Dojo() {
 
   // Vague 48 : la visite du Dojo avec la voix
   const scrollRef = useRef<ScrollView>(null);
+  // 13 novembre 2026 : la barre en verre se replie quand tu descends (lib/v2/nav/barreDefilement.ts)
+  const defilementBarre = useDefilementBarre();
   // 27 octobre 2026 : la visite guidee remonte l'onglet en haut avant de montrer ton rang
   // 28 octobre 2026 : et elle le fait defiler jusqu'a ce qu'elle montre (ta serie, ta prochaine recompense)
   const scrollY = useRef(0);
@@ -351,6 +354,7 @@ export default function Dojo() {
       <ScrollView
         ref={scrollRef}
         onScroll={(ev) => {
+          defilementBarre(ev);
           scrollY.current = ev.nativeEvent.contentOffset.y;
         }}
         scrollEventThrottle={32}
