@@ -13,6 +13,8 @@ import { computeRecords, cleRecordExercice } from './records';
 import { parseExercises, workSets } from './sessionData';
 import { cranDe, type Reglages } from './reglagesMachine';
 import { nomBibliotheque, nomFr } from '@/lib/v2/seance/rechercheExo';
+import { movementKey } from '@/constants/exerciseLibrary';
+import { sansPrise } from '@/lib/v2/seance/prise';
 import { libelleUnite, versUnitePoids, type UnitePoids } from '@/lib/v2/unitePoids';
 import { DECIMAL } from '@/lib/i18n/tr';
 import { exerciceEnPlaques, maxPlaques, recordPlaquesBattu } from './plaquesSerie';
@@ -107,7 +109,16 @@ export function reperesDe(index: IndexReperes, nom: string): ReperesExo {
 /** Le cran de la derniere fois, sous le nom de l'exercice, son nom de bibliotheque ou son nom francais */
 export function cranAvant(r: Reglages, nom: string): number | null {
   if (!nom) return null;
-  return cranDe(r, nom) ?? cranDe(r, nomBibliotheque(nom)) ?? cranDe(r, nomFr(nom));
+  const direct = cranDe(r, nom) ?? cranDe(r, nomBibliotheque(nom)) ?? cranDe(r, nomFr(nom));
+  if (direct != null) return direct;
+  // 13 novembre 2026 (Houari : « les crans, ils sont partis ») : un cran note sous un autre nom du meme mouvement
+  // (ancien nom, nom anglais relie, accents ou majuscules differents) est retrouve. Rien n'est reecrit.
+  const base = sansPrise(nom).base;
+  const cles = new Set([movementKey(base), movementKey(nomBibliotheque(base)), movementKey(nomFr(base))].filter(Boolean));
+  for (const [k, v] of Object.entries(r)) {
+    if (typeof v === 'number' && cles.has(movementKey(k))) return v;
+  }
+  return null;
 }
 
 /** Le cran a afficher : celui note pendant la seance, sinon celui de la derniere fois ; null si aucun */
