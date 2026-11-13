@@ -30,6 +30,7 @@ import { TourAnchor, registerTourScroller } from '@/components/yoroi/v2/tour/Tou
 import { WeightTrendChart } from '@/components/yoroi/v2/progres/WeightTrendChart';
 import { POIDS } from '@/components/yoroi/v2/charts/CourbePoids';
 import { INK_TAB_BAR_SPACE } from '@/components/yoroi/v2/InkTabBar';
+import { useDefilementBarre } from '@/lib/v2/nav/barreDefilement';
 import { CorpsSection } from '@/components/yoroi/v2/progres/CorpsSection';
 import { ForceSection } from '@/components/yoroi/v2/progres/ForceSection';
 import { AnneeSection } from '@/components/yoroi/v2/progres/AnneeSection';
@@ -141,6 +142,8 @@ export default function Progres() {
   const illus = useIllustrations();
   const [section, setSection] = useState<ThemeProgres>('Corps');
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  // 13 novembre 2026 : la barre en verre se replie quand tu descends (lib/v2/nav/barreDefilement.ts)
+  const defilementBarre = useDefilementBarre();
   // 30 octobre 2026 : en grand ecran, deux colonnes (les themes, puis leur detail)
   const page = usePageLarge();
   const grand = page.grand;
@@ -427,6 +430,7 @@ export default function Progres() {
         ref={scrollRef}
         refreshControl={refreshControl}
         onScroll={(e) => {
+          defilementBarre(e);
           const y = e.nativeEvent.contentOffset.y;
           scrollY.current = y;
           // en grand ecran, les themes restent dans la colonne de gauche : pas de barre collee
