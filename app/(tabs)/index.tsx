@@ -38,11 +38,12 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
-import Animated, { useAnimatedRef, useScrollOffset } from 'react-native-reanimated';
+import Animated, { runOnJS, useAnimatedReaction, useAnimatedRef, useScrollOffset } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { INK_TAB_BAR_SPACE } from '@/components/yoroi/v2/InkTabBar';
+import { signalerDefilement } from '@/lib/v2/nav/barreDefilement';
 import { useWeightData } from '@/lib/v2/useWeightData';
 import { useJoursPrevus } from '@/lib/v2/seances/joursPrevus';
 import { objectifVise } from '@/lib/v2/espace';
@@ -155,6 +156,13 @@ export default function Accueil() {
   // vague 44 : la scene suit legerement le defilement, sur le fil d'animation (aucun re-rendu)
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const scrollY = useScrollOffset(scrollRef);
+  // 13 novembre 2026 : la barre en verre se replie quand tu descends (lib/v2/nav/barreDefilement.ts)
+  useAnimatedReaction(
+    () => scrollY.value,
+    (y, avant) => {
+      if (y !== avant) runOnJS(signalerDefilement)(y);
+    },
+  );
   // visite guidee : elle fait defiler l'accueil jusqu'a l'element qu'elle montre, puis remonte
   useEffect(
     () =>
