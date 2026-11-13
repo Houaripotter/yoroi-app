@@ -35,6 +35,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { TourAnchor, registerTourScroller } from '@/components/yoroi/v2/tour/TourAnchor';
 import { INK_TAB_BAR_SPACE } from '@/components/yoroi/v2/InkTabBar';
+import { useDefilementBarre } from '@/lib/v2/nav/barreDefilement';
 import type { Training } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
 import { useTirerPourActualiser } from '@/lib/v2/actualiser/useTirerPourActualiser';
@@ -137,6 +138,8 @@ export default function Seances() {
   const [choixImportOpen, setChoixImportOpen] = useState(false);
   const importSante = importSeancesDisponible();
   const scrollRef = useRef<ScrollView>(null);
+  // 13 novembre 2026 : la barre en verre se replie quand tu descends (lib/v2/nav/barreDefilement.ts)
+  const defilementBarre = useDefilementBarre();
   // 27 octobre 2026 : la visite guidee remonte l'onglet en haut avant de montrer ta semaine
   // 28 octobre 2026 : elle le fait aussi defiler jusqu'a ce qu'elle montre (ta derniere seance, ton mois, ton historique)
   const defileY = useRef(0);
@@ -241,6 +244,7 @@ export default function Seances() {
       <ScrollView
         ref={scrollRef}
         onScroll={(ev) => {
+          defilementBarre(ev);
           defileY.current = ev.nativeEvent.contentOffset.y;
           const bas = defileY.current > 84;
           if (bas !== compact) setCompact(bas);
