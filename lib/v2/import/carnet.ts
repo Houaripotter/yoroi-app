@@ -299,6 +299,146 @@ export function lireHevy(texte: string): ResultatLecture | null {
   return { seances, incomprises };
 }
 
+/**
+ * Une seance partagee depuis Hevy en texte (12 novembre 2026, retour d'un utilisateur) :
+ *
+ *   PUSH A FORCE
+ *   Le lundi, nov. 02, 2026 à 9:02am
+ *
+ *   Développé Couché (Machine Smith)
+ *   Série 1: 20 kg x 20
+ *   Série 3: 20.3 kg x 10      (point decimal)
+ *   Série 1: 12 répétitions    (poids du corps)
+ *
+ *   @hevyapp
+ *   https://hevy.com/workout/...
+ *
+ * En anglais : « Monday, Nov 02, 2026 at 9:02am », « Set 1: 20 kg x 20 », « Set 1: 45 lbs x 12 », « 12 reps ».
+ */
+const RE_LIGNE_SERIE = /^(?:s[ée]rie|set|serie)\s+([0-9]+|w|d|f|[ée]chauffement|warm[\s-]?up|drop(?:\s*set)?|[ée]chec|failure)\s*:\s*(.*)$/i;
+const RE_JOUR = /^(?:le\s+)?(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|monday|tuesday|wednesday|thursday|friday|saturday|sunday|lun|mar|mer|jeu|ven|sam|dim|mon|tue|wed|thu|fri|sat|sun)\.?,?\s+/i;
+
+/** « Le lundi, nov. 02, 2026 à 9:02am », « Monday, Nov 2, 2026 at 9:02 PM », « lundi 2 nov. 2026 à 21:02 » */
+export function lireDateHevyTexte(ligne: string): { date: string; heure?: string } | null {
+  const t = sansAccents(ligne.trim().toLowerCase());
+  if (!RE_JOUR.test(t)) return null;
+  const reste = t.replace(RE_JOUR, '');
+  let j: number | undefined, mo: number | undefined, a: number | undefined, suite = '';
+  let m = /^([a-z]+)\.?\s+(\d{1,2}),?\s+(\d{4})(.*)$/.exec(reste);
+  if (m && (MOIS[m[1]] ?? MOIS_EN[m[1].slice(0, 3)])) {
+    mo = MOIS[m[1]] ?? MOIS_EN[m[1].slice(0, 3)];
+    j = +m[2];
+    a = +m[3];
+    suite = m[4];
+  } else {
+    m = /^(\d{1,2})(?:er)?\s+([a-z]+)\.?,?\s+(\d{4})(.*)$/.exec(reste);
+    if (m && (MOIS[m[2]] ?? MOIS_EN[m[2].slice(0, 3)])) {
+      j = +m[1];
+      mo = MOIS[m[2]] ?? MOIS_EN[m[2].slice(0, 3)];
+      a = +m[3];
+      suite = m[4];
+    }
+  }
+  if (!j || !mo || !a || j > 31) return null;
+  const date = `${a}-${deux(mo)}-${deux(j)}`;
+  const h = /(\d{1,2})[:h](\d{2})\s*(am|pm)?/.exec(suite);
+  if (!h) return { date };
+  let hh = +h[1];
+  if (h[3] === 'pm' && hh < 12) hh += 12;
+  if (h[3] === 'am' && hh === 12) hh = 0;
+  if (hh > 23 || +h[2] > 59) return { date };
+  return { date, heure: `${deux(hh)}:${h[2]}` };
+}
+
+/** Le detail d'une serie : « 20 kg x 20 », « 20.3 kg x 10 », « 45 lbs x 12 », « 12 répétitions », « 12 reps », « 20 kg × 8 @ 8 rpe » */
+function lireSerieHevy(detail: string): { weight: number; reps: number } | null {
+  const t = sansAccents(detail.trim().toLowerCase());
+  let m = /^(\d+(?:[.,]\d+)?)\s*(kg|kgs|lb|lbs)\s*[x×*]\s*(\d{1,3})\b/.exec(t);
+  if (m) {
+    const kg = nombre(m[1]) * (m[2].startsWith('l') ? 0.45359237 : 1);
+    return { weight: Math.round(kg * 100) / 100, reps: +m[3] };
+  }
+  m = /^(\d{1,3})\s*(?:repetitions?|reps?|rep\.?|x)\b/.exec(t);
+  if (m) return { weight: 0, reps: +m[1] };
+  return null;
+}
+
+/** Le texte ressemble-t-il a une seance partagee depuis Hevy ? */
+export function estPartageHevy(texte: string): boolean {
+  const lignes = texte.replace(/\r/g, '').split('\n').map((l) => l.trim()).filter(Boolean);
+  const series = lignes.filter((l) => RE_LIGNE_SERIE.test(l)).length;
+  if (series === 0) return false;
+  return series >= 2 || lignes.some((l) => /^@hevyapp$/i.test(l) || /hevy\.com\/workout/i.test(l));
+}
+
+/** Une ou plusieurs seances partagees depuis Hevy en texte */
+export function lireHevyTexte(texte: string): ResultatLecture | null {
+  if (!estPartageHevy(texte)) return null;
+  const lignes = texte.replace(/^\uFEFF/, '').replace(/\r/g, '').split('\n').map((l) => l.trim());
+  const seances: SeanceLue[] = [];
+  const incomprises: string[] = [];
+  let s: SeanceLue | null = null;
+  let exo: ExoLu | null = null;
+  let titreAttente: string | null = null;
+  const fermer = () => {
+    if (s) {
+      s.exos = s.exos.filter((e) => e.series.length > 0);
+      if (s.exos.length) seances.push(s);
+    }
+    s = null;
+    exo = null;
+  };
+  for (let k = 0; k < lignes.length; k++) {
+    const l = lignes[k];
+    if (!l) continue;
+    if (/^@hevyapp\b/i.test(l) || /^https?:\/\//i.test(l) || /hevy\.com/i.test(l)) continue;
+    const d = lireDateHevyTexte(l);
+    if (d) {
+      fermer();
+      const titre = titreAttente ?? undefined;
+      titreAttente = null;
+      s = { date: d.date, ...(d.heure ? { heure: d.heure } : {}), ...(titre ? { titre } : {}), exos: [], cle: '' };
+      continue;
+    }
+    const serie = RE_LIGNE_SERIE.exec(l);
+    if (serie) {
+      if (!exo) {
+        incomprises.push(l);
+        continue;
+      }
+      const v = lireSerieHevy(serie[2]);
+      if (!v) {
+        if (serie[2].trim()) incomprises.push(l);
+        continue;
+      }
+      const marque = sansAccents(serie[1].toLowerCase());
+      const type: SerieLue['type'] = /^(w|echauffement)/.test(marque) ? 'warmup' : /^d/.test(marque) ? 'dropset' : undefined;
+      exo.series.push({ ...v, ...(type ? { type } : {}) });
+      continue;
+    }
+    // une ligne de texte : le titre (avant la date) ou un exercice
+    const suivante = lignes.slice(k + 1).find((x) => x);
+    if (!s || (suivante && lireDateHevyTexte(suivante))) {
+      if (s) fermer();
+      titreAttente = l;
+      continue;
+    }
+    if (suivante && RE_LIGNE_SERIE.test(suivante)) {
+      exo = { nom: l, series: [] };
+      s.exos.push(exo);
+      continue;
+    }
+    // une note d'exercice (Hevy la met sous le nom), sinon incomprise
+    if (exo && exo.series.length === 0) exo.notes = exo.notes ? `${exo.notes} ${l}` : l;
+    else incomprises.push(l);
+  }
+  fermer();
+  if (!seances.length) return null;
+  for (const x of seances) x.cle = `hevy:${x.date}T${x.heure ?? ''}:${empreinte(x.titre ?? '')}`;
+  seances.sort((a, b) => (a.date + (a.heure ?? '') < b.date + (b.heure ?? '') ? -1 : 1));
+  return { seances, incomprises };
+}
+
 /** Le texte colle ou le fichier : Hevy si l'en-tete le dit, sinon des notes */
 export function lireCarnet(texte: string, aujourdhui: Date = new Date()): ResultatLecture {
   const premiere = texte.replace(/^﻿/, '').split(/\r?\n/, 1)[0].toLowerCase();
@@ -306,6 +446,8 @@ export function lireCarnet(texte: string, aujourdhui: Date = new Date()): Result
     const h = lireHevy(texte);
     if (h) return h;
   }
+  const partage = lireHevyTexte(texte);
+  if (partage) return partage;
   return lireNotes(texte, aujourdhui);
 }
 
