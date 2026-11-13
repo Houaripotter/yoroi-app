@@ -49,6 +49,9 @@ type Props = {
   titre?: string;
 };
 
+/** le temps que la fenetre des machines finisse de se fermer avant de fermer celle ci */
+const ATTENTE_FERMETURE_MS = 450;
+
 export function ExercisePicker({ visible, onClose, onPick, history, recent, already, muscleDepart, titre }: Props) {
   const { theme } = useYoroiTheme();
   // 30 octobre 2026 : un sticker sur les listes vides (rien en Encre japonaise, comme avant)
@@ -59,6 +62,10 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState<string | null>(recent.length > 0 ? 'recents' : null);
   const [machines, setMachines] = useState(false);
+  // 13 novembre 2026 (ecran noir apres un exercice de poulie) : un exercice choisi dans « Trouve ta machine »
+  // fermait les deux fenetres en meme temps (celle des machines, posee sur celle-ci). Sur iPhone, l'app restait
+  // bloquee sur un fond noir. On ferme d'abord la fenetre des machines, puis on ajoute l'exercice.
+  const [choixMachine, setChoixMachine] = useState<{ name: string; muscle?: string } | null>(null);
   const [focus, setFocus] = useState(false);
   const dejaNote = useRef('');
   // 26 octobre 2026 : « Creer mon exercice » visible tout de suite, pas seulement apres une recherche vide
@@ -146,6 +153,15 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
     dejaNote.current = k;
     void noterRecherche(q, 0);
   }
+
+  useEffect(() => {
+    if (machines || !choixMachine) return;
+    const t = setTimeout(() => {
+      setChoixMachine(null);
+      pick(choixMachine.name, choixMachine.muscle);
+    }, ATTENTE_FERMETURE_MS);
+    return () => clearTimeout(t);
+  }, [machines, choixMachine]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const exact = query.trim() && all.some((i) => normName(i.name) === normName(query) || (!!i.autre && normName(i.autre) === normName(query)));
 
@@ -305,7 +321,7 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
             );
           }}
         />
-        <MachineFinder visible={machines} onClose={() => setMachines(false)} onPick={(name, muscle) => pick(name, muscle)} nommer={nommer} />
+        <MachineFinder visible={machines} onClose={() => setMachines(false)} onPick={(name, muscle) => { setChoixMachine({ name, muscle }); setMachines(false); }} nommer={nommer} />
       </View>
     </Modal>
   );
