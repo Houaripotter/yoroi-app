@@ -1,3 +1,5 @@
+import { estPartageHevy } from '@/lib/v2/import/carnet';
+
 /** Texte colle ailleurs (Dicte ta seance) et passe a l'import du carnet, sans le mettre dans l'adresse */
 let attente: string | null = null;
 export function deposerTexteCarnet(t: string): void {
@@ -16,6 +18,8 @@ export function prendreTexteCarnet(): string | null {
 export function ressembleCarnet(t: string): boolean {
   const lignes = t.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   if (lignes[0] && /exercise_title/i.test(lignes[0])) return true;
+  // une seance partagee depuis Hevy en texte (« Série 1: 20 kg x 20 », « Set 1: 12 reps »)
+  if (estPartageHevy(t)) return true;
   const exos = lignes.filter((l) => /[a-zà-ÿ]/i.test(l) && /\d\s*[x×*]\s*\d/i.test(l)).length;
   const dates = lignes.filter((l) => /^(\w+\s+)?\d{1,2}\s*[/.\-]\s*\d{1,2}([/.\-]\d{2,4})?$/.test(l)).length;
   return exos >= 3 || (exos >= 2 && dates >= 1);
