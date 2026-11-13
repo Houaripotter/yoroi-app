@@ -31,7 +31,7 @@ export const AIR_BULLE = 12;
 
 /** Le haut de la barre d'onglets, pour un bord bas (insets.bottom) : meme calcul que InkTabBar */
 export function hautDeBarre(H: number, insetBas: number): number {
-  return H - (Math.max(insetBas - 8, 0) + 14) - 64;
+  return H - (Math.max(insetBas - 8, 0) + 14) - 70;
 }
 
 /**
