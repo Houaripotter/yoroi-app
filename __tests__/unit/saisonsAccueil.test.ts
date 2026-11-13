@@ -390,8 +390,9 @@ describe('28 octobre 2026 : accueil plus compact', () => {
     const ch = lire('components/yoroi/v2/charts/CheminPierres.tsx');
     // l'accueil et Progres dessinent le chemin avec le meme composant, les couleurs ont une seule source
     // 2 novembre 2026 (proposition A) : l'accueil dessine sa ligne de paliers, Progres garde le chemin de pierres
-    // 13 novembre 2026 : la ligne de paliers devient la montagne (bloc C choisi par Houari), memes donnees
-    expect(c).toContain('<MontagnePaliers ligne={ligne} objectif={goal!} actuel={last.value} progression={chemin.part} atteint={atteint} sombre={sombre} largeurInitiale={W - 36} />');
+    // 13 novembre 2026 : la ligne de paliers devient la montagne (bloc C), puis le 14 la barre en tranches (bloc A), memes donnees
+    expect(c).toContain('<BarrePaliers ligne={ligne} depart={start} objectif={goal!} actuel={last.value} reste={chemin.reste} atteint={atteint} sombre={sombre} legendeAtteint={legendePaliers} largeurInitiale={W - 36} />');
+    expect(c).not.toContain('<MontagnePaliers');
     expect(c).not.toContain('function LigneDePaliers');
     // 3 novembre 2026 nuit : les couleurs des anneaux d'Aujourd'hui, prises a leur source (couleurActivite), aucun hex recopie
     expect(c).toContain("import { couleurActivite } from './Visus';");
