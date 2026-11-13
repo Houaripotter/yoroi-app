@@ -470,9 +470,11 @@ function Bulle(p: {
         <Verre rayon={26} sombre={p.sombre} surface={p.surface} voile={0.75} />
         <Image source={p.img} style={styles.bulleSticker} resizeMode="contain" accessibilityIgnoresInvertColors />
       </Pressable>
-      <Ink size={14} weight="black" color="#FFFFFF" numberOfLines={1} style={styles.bulleNom}>
-        {b.nom()}
-      </Ink>
+      <View pointerEvents="none" style={styles.bulleNomPlace}>
+        <Ink size={14} weight="black" color="#FFFFFF" numberOfLines={1} style={styles.bulleNom}>
+          {b.nom()}
+        </Ink>
+      </View>
     </Animated.View>
   );
 }
@@ -532,11 +534,9 @@ const styles = StyleSheet.create({
   },
   bulleChoisie: { borderWidth: 4, borderColor: '#FFFFFF' },
   bulleSticker: { width: 48, height: 48 },
+  // le nom sous la bulle, centre, sans pousser la bulle (son centre reste celui de la maquette)
+  bulleNomPlace: { position: 'absolute', top: TAILLE_BULLE + 6, left: (TAILLE_BULLE - 110) / 2, width: 110, alignItems: 'center' },
   bulleNom: {
-    position: 'absolute',
-    top: TAILLE_BULLE + 6,
-    left: (TAILLE_BULLE - 110) / 2,
-    width: 110,
     textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,0.4)',
     textShadowOffset: { width: 0, height: 1 },
