@@ -74,7 +74,8 @@ import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
 import { ecouterPagePoids } from '@/lib/v2/visite/pagePoids';
 import type { QuoiObjectif } from '@/components/yoroi/v2/pesee/ObjectifPoids';
 import { Card, Icon, ombreCarte, P, Press } from './kit';
-import { COULEURS_MONTAGNE, MontagnePaliers, texteMontagne } from './MontagnePaliers';
+import { texteMontagne } from '@/lib/v2/accueil/montagnePaliers';
+import { BarrePaliers } from './BarrePaliers';
 import { couleurActivite } from './Visus';
 import { traduire, LANG } from '@/lib/i18n/tr';
 import { useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
@@ -309,8 +310,10 @@ function couleursAnneaux() {
     roseTexte: rose.ombre ?? rose.texte,
   };
 }
-// 13 novembre 2026 : la ligne de ronds (LigneDePaliers) laisse la place a la montagne (./MontagnePaliers.tsx, bloc C
-// choisi par Houari). Version d'avant : _archive_ancien_design_2026-10-09/paliers_avant_montagne_2026-11-13/.
+// 13 novembre 2026 : la ligne de ronds (LigneDePaliers) laisse la place a la montagne (bloc C). Version d'avant :
+// _archive_ancien_design_2026-10-09/paliers_avant_montagne_2026-11-13/.
+// 14 novembre 2026 (Houari : la montagne peu lisible et trop haute) : la barre en tranches (./BarrePaliers.tsx,
+// bloc A), 80 points au plus. La montagne : _archive_ancien_design_2026-10-09/paliers_montagne_2026-11-13/.
 
 export function CartePoids({ series: seriesIn, targetWeight, startWeight, today: todayProp, demo, centre = CENTRAGE_POIDS, onPage, pesee, avecDecor = false }: Props) {
   const router = useRouter();
@@ -802,25 +805,8 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
         })()}
       </Ink>
     </Ink>
-  ) : (
-    (() => {
-      // 13 novembre 2026 (la montagne) : en bas a gauche, ce qu'il te reste avant ton objectif, le chiffre en rose
-      const resteTxt = `${formatKg(chemin!.reste)} kg`;
-      const phraseReste = traduire('Encore {0} kg avant ton objectif', formatKg(chemin!.reste));
-      const j = phraseReste.indexOf(resteTxt);
-      return (
-        <Ink size={12.5} weight="extraBold" color={fg} numberOfLines={2}>
-          {j < 0 ? phraseReste : phraseReste.slice(0, j)}
-          {j < 0 ? null : (
-            <Ink size={12.5} weight="black" color={COULEURS_MONTAGNE.rose[sombre ? 'sombre' : 'clair']} style={{ fontVariant: ['tabular-nums'] }}>
-              {resteTxt}
-            </Ink>
-          )}
-          {j < 0 ? null : phraseReste.slice(j + resteTxt.length)}
-        </Ink>
-      );
-    })()
-  );
+  ) : null;
+  // 14 novembre 2026 : hors objectif atteint, la ligne « Depart 86,4 · Objectif 80,0 · encore 0,6 kg » est dans la barre
   // 3 novembre 2026 nuit (Houari : des chiffres en couleur) : dans la phrase du rythme, seul le chiffre en kg prend la
   // couleur : rose des anneaux quand tu es en retard sur ton rythme prevu (au dessus en perte, en dessous en prise, ton
   // 'bleu'), vert des anneaux quand tu es dessus ou en avance ; le reste de la phrase reste gris
@@ -937,8 +923,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
         <>
           {/* le lecteur d'ecran dit l'etat de chaque palier (franchi, en cours, a venir) */}
           <Press onPress={openDetail} haptic="none" accessibilityRole="button" accessibilityLabel={goal !== null ? traduire("{0}. Voir le détail", [texteMontagne(ligne, chemin.reste, kgCible ?? formatKg(goal), atteint), arrivee ? `${plan.choisie ? traduire('ta date du cap') : traduire('arrivée prévue')} ${arrivee}` : null].filter(Boolean).join(', ')) : traduire("Voir le détail de ton poids")}>
-            <MontagnePaliers ligne={ligne} objectif={goal!} actuel={last.value} progression={chemin.part} atteint={atteint} sombre={sombre} largeurInitiale={W - 36} />
-            {legendePaliers ? <View style={{ marginTop: 2 }}>{legendePaliers}</View> : null}
+            <BarrePaliers ligne={ligne} depart={start} objectif={goal!} actuel={last.value} reste={chemin.reste} atteint={atteint} sombre={sombre} legendeAtteint={legendePaliers} largeurInitiale={W - 36} />
           </Press>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: ligneRythme ? 'space-between' : 'flex-end', gap: 8, marginTop: 10, minHeight: HAUT_OBJECTIF }}>
             {ligneRythme}
