@@ -39,7 +39,6 @@ import { useRouter } from 'expo-router';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { CheminPierresApercu } from '@/components/yoroi/v2/charts/CheminPierres';
 import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
-import { texteEtatsChemin } from '@/lib/v2/pesee/cheminPierres';
 import { etatsLignePaliers } from '@/lib/v2/accueil/lignePaliers';
 import type { LignePaliers } from '@/lib/v2/accueil/lignePaliers';
 import { useIllustrations } from '@/components/yoroi/v2/stickers';
@@ -75,6 +74,7 @@ import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
 import { ecouterPagePoids } from '@/lib/v2/visite/pagePoids';
 import type { QuoiObjectif } from '@/components/yoroi/v2/pesee/ObjectifPoids';
 import { Card, Icon, ombreCarte, P, Press } from './kit';
+import { COULEURS_MONTAGNE, MontagnePaliers, texteMontagne } from './MontagnePaliers';
 import { couleurActivite } from './Visus';
 import { traduire, LANG } from '@/lib/i18n/tr';
 import { useLargeurEcran } from '@/lib/v2/nav/useGrandEcran';
@@ -287,9 +287,6 @@ function PointsPages({ nb, page, couleur, inactif }: { nb: number; page: number;
  * 2 novembre 2026 soir (Houari : les paliers atteints en vert) : la coche sur le vert, 3,8 a 1 en clair
  * (blanc sur #6E8C3A) et 7,2 a 1 en sombre (encre #1A1E29 sur #93B562), au dessus du seuil de 3 a 1 d'une icone.
  */
-const LIGNE_PALIERS = { hauteur: 52, trait: 6, centre: 13, atteint: 24, prochain: 28, aVenir: 22, depart: 10, chiffres: 34, largeurChiffre: 48, margeG: 8, margeD: 14 } as const;
-const GRIS_ROND = { clair: '#C9CDDB', sombre: '#4D5679' } as const;
-
 /**
  * 3 novembre 2026 nuit (Houari : « les mêmes couleurs que les anneaux d'Aujourd'hui ») : la ligne de paliers et ses
  * chiffres cles prennent les couleurs des anneaux Sante (couleurActivite de ./Visus, la meme source que les anneaux) :
@@ -312,59 +309,8 @@ function couleursAnneaux() {
     roseTexte: rose.ombre ?? rose.texte,
   };
 }
-function LigneDePaliers({ depart, ligne, sombre }: { depart: number; ligne: LignePaliers; sombre: boolean }) {
-  const L = LIGNE_PALIERS;
-  const A = couleursAnneaux();
-  const accent = A.bleu;
-  const gris = sombre ? GRIS_ROND.sombre : GRIS_ROND.clair;
-  const n = ligne.paliers.length;
-  const x = (i: number) => `${(i / n) * 100}%` as const;
-  const chiffre = (cle: string, i: number, texte: string, couleur: string, poids: 'bold' | 'extraBold' | 'black', taille: number) => (
-    <View key={cle} style={{ position: 'absolute', left: x(i), top: L.chiffres, width: L.largeurChiffre, transform: [{ translateX: -L.largeurChiffre / 2 }] }}>
-      <Ink size={taille} weight={poids} color={couleur} numberOfLines={1} style={{ textAlign: 'center', fontVariant: ['tabular-nums'] }}>
-        {texte}
-      </Ink>
-    </View>
-  );
-  return (
-    <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={[{ height: L.hauteur, marginTop: 18, marginLeft: L.margeG, marginRight: L.margeD }, ltrSiRTL]}>
-      {ligne.paliers.map((_, i) => (
-        <View key={`t${i}`} style={{ position: 'absolute', top: L.centre - L.trait / 2, height: L.trait, left: x(i), width: `${100 / n}%`, borderRadius: L.trait / 2, backgroundColor: i < ligne.atteints ? accent : P.line }} />
-      ))}
-      {/* le trait vers le prochain palier, rempli de ce que tu as deja fait depuis le palier d'avant */}
-      {ligne.prochain && ligne.avance > 0 && ligne.atteints < n ? (
-        <View style={{ position: 'absolute', top: L.centre - L.trait / 2, height: L.trait, left: x(ligne.atteints), width: `${(100 / n) * ligne.avance}%`, backgroundColor: accent, borderRadius: L.trait / 2 }} />
-      ) : null}
-      <View style={{ position: 'absolute', left: x(0), top: L.centre - L.depart / 2, width: L.depart, height: L.depart, borderRadius: L.depart / 2, borderWidth: 2, borderColor: gris, backgroundColor: P.white, transform: [{ translateX: -L.depart / 2 }] }} />
-      {chiffre('d', 0, formatKg(depart), P.muted, 'bold', 11)}
-      {ligne.paliers.map((p, i) => {
-        const t = p.etat === 'atteint' ? L.atteint : p.etat === 'prochain' ? L.prochain : L.aVenir;
-        return (
-          <View key={`r${i}`} style={{ position: 'absolute', left: x(i + 1), top: L.centre - t / 2, width: t, height: t, transform: [{ translateX: -t / 2 }] }}>
-            {p.etat === 'atteint' ? (
-              <Svg width={t} height={t} viewBox="0 0 24 24">
-                <Circle cx={12} cy={12} r={12} fill={A.vert} />
-                <Path d="M7 12.4l3.2 3.2L17.2 8.6" fill="none" stroke={sombre ? P.white : P.ink} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
-            ) : p.etat === 'prochain' ? (
-              <Svg width={t} height={t} viewBox="0 0 28 28">
-                <Circle cx={14} cy={14} r={13} fill={P.indigoSoft} stroke={accent} strokeWidth={2} />
-                <Circle cx={14} cy={14} r={4.3} fill={A.rose} />
-              </Svg>
-            ) : (
-              <Svg width={t} height={t} viewBox="0 0 22 22">
-                <Circle cx={11} cy={11} r={10} fill={P.white} stroke={gris} strokeWidth={2} />
-              </Svg>
-            )}
-          </View>
-        );
-      })}
-      {ligne.paliers.map((p, i) =>
-        chiffre(`c${i}`, i + 1, formatKg(p.kg), p.etat === 'atteint' ? P.ink : p.etat === 'prochain' ? A.bleuTexte : P.muted, p.etat === 'prochain' ? 'black' : 'extraBold', 12),
-      )}
-    </View>
-  );
-}
+// 13 novembre 2026 : la ligne de ronds (LigneDePaliers) laisse la place a la montagne (./MontagnePaliers.tsx, bloc C
+// choisi par Houari). Version d'avant : _archive_ancien_design_2026-10-09/paliers_avant_montagne_2026-11-13/.
 
 export function CartePoids({ series: seriesIn, targetWeight, startWeight, today: todayProp, demo, centre = CENTRAGE_POIDS, onPage, pesee, avecDecor = false }: Props) {
   const router = useRouter();
@@ -856,46 +802,25 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
         })()}
       </Ink>
     </Ink>
-  ) : ligne.prochain ? (
+  ) : (
     (() => {
-      const pr = ligne.prochain;
-      // 3 novembre 2026 (Houari) : ce qu'il te reste a perdre ou a prendre, dans le rose des anneaux (jamais pale)
-      const resteTxt = `${formatKg(pr.dernier ? chemin!.reste : pr.encore)} kg`;
-      const finBrute = traduire('encore {0} kg', formatKg(pr.dernier ? chemin!.reste : pr.encore));
-      const j = finBrute.indexOf(resteTxt);
-      const fin =
-        j < 0 ? (
-          finBrute
-        ) : (
-          <>
-            {finBrute.slice(0, j)}
-            <Ink size={12.5} weight="black" color={anneaux.roseTexte} style={{ fontVariant: ['tabular-nums'] }}>
-              {resteTxt}
-            </Ink>
-            {finBrute.slice(j + resteTxt.length)}
-          </>
-        );
-      if (pr.dernier) {
-        return (
-          <Ink size={12.5} weight="extraBold" color={fg} numberOfLines={2}>
-            {traduire('Dernier palier : ton objectif, ')}
-            {fin}
-          </Ink>
-        );
-      }
-      const kgTxt = `${formatKg(pr.kg)} kg`;
-      const debut = traduire('Prochain palier : {0} kg, ', formatKg(pr.kg));
-      const i = debut.indexOf(kgTxt);
+      // 13 novembre 2026 (la montagne) : en bas a gauche, ce qu'il te reste avant ton objectif, le chiffre en rose
+      const resteTxt = `${formatKg(chemin!.reste)} kg`;
+      const phraseReste = traduire('Encore {0} kg avant ton objectif', formatKg(chemin!.reste));
+      const j = phraseReste.indexOf(resteTxt);
       return (
         <Ink size={12.5} weight="extraBold" color={fg} numberOfLines={2}>
-          {i < 0 ? debut : debut.slice(0, i)}
-          {i < 0 ? null : <Ink size={12.5} weight="extraBold" color={anneaux.bleuTexte}>{kgTxt}</Ink>}
-          {i < 0 ? null : debut.slice(i + kgTxt.length)}
-          {fin}
+          {j < 0 ? phraseReste : phraseReste.slice(0, j)}
+          {j < 0 ? null : (
+            <Ink size={12.5} weight="black" color={COULEURS_MONTAGNE.rose[sombre ? 'sombre' : 'clair']} style={{ fontVariant: ['tabular-nums'] }}>
+              {resteTxt}
+            </Ink>
+          )}
+          {j < 0 ? null : phraseReste.slice(j + resteTxt.length)}
         </Ink>
       );
     })()
-  ) : null;
+  );
   // 3 novembre 2026 nuit (Houari : des chiffres en couleur) : dans la phrase du rythme, seul le chiffre en kg prend la
   // couleur : rose des anneaux quand tu es en retard sur ton rythme prevu (au dessus en perte, en dessous en prise, ton
   // 'bleu'), vert des anneaux quand tu es dessus ou en avance ; le reste de la phrase reste gris
@@ -1011,9 +936,9 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
       {chemin && ligne ? (
         <>
           {/* le lecteur d'ecran dit l'etat de chaque palier (franchi, en cours, a venir) */}
-          <Press onPress={openDetail} haptic="none" accessibilityRole="button" accessibilityLabel={goal !== null ? traduire("{0}. Voir le détail", [texteEtatsChemin(start, goal, chemin.part, atteint), arrivee ? `${plan.choisie ? traduire('ta date du cap') : traduire('arrivée prévue')} ${arrivee}` : null].filter(Boolean).join(', ')) : traduire("Voir le détail de ton poids")}>
-            <LigneDePaliers depart={start} ligne={ligne} sombre={sombre} />
-            {legendePaliers ? <View style={{ marginTop: 4 }}>{legendePaliers}</View> : null}
+          <Press onPress={openDetail} haptic="none" accessibilityRole="button" accessibilityLabel={goal !== null ? traduire("{0}. Voir le détail", [texteMontagne(ligne, chemin.reste, kgCible ?? formatKg(goal), atteint), arrivee ? `${plan.choisie ? traduire('ta date du cap') : traduire('arrivée prévue')} ${arrivee}` : null].filter(Boolean).join(', ')) : traduire("Voir le détail de ton poids")}>
+            <MontagnePaliers ligne={ligne} objectif={goal!} actuel={last.value} progression={chemin.part} atteint={atteint} sombre={sombre} largeurInitiale={W - 36} />
+            {legendePaliers ? <View style={{ marginTop: 2 }}>{legendePaliers}</View> : null}
           </Press>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: ligneRythme ? 'space-between' : 'flex-end', gap: 8, marginTop: 10, minHeight: HAUT_OBJECTIF }}>
             {ligneRythme}
