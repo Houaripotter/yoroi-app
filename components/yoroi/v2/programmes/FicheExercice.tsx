@@ -31,7 +31,8 @@ import { musclesDeExo } from '@/lib/v2/programmes/musclesExos';
 import { libelleRepos } from '@/lib/v2/programmes/catalogue';
 import type { ExoProgramme } from '@/lib/v2/programmes/types';
 import { musclesExercice } from '@/lib/v2/seances/musclesExercices';
-import { chargerReglages, cranDe } from '@/lib/v2/seances/reglagesMachine';
+import { chargerReglages } from '@/lib/v2/seances/reglagesMachine';
+import { cranAvant } from '@/lib/v2/seances/reperesExo';
 import { libelleHauteurPoulie } from '@/lib/v2/seances/hauteurPoulie';
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import { sansPrise } from '@/lib/v2/seance/prise';
@@ -110,7 +111,7 @@ export function FicheExercice({ exo, charge, onClose, onChanger, children }: {
     if (!nom) return;
     let vivant = true;
     setCran(null);
-    void chargerReglages().then((r) => { if (vivant) setCran(cranDe(r, nom)); });
+    void chargerReglages().then((r) => { if (vivant) setCran(cranAvant(r, nom)); });
     return () => { vivant = false; };
   }, [nom]);
 
