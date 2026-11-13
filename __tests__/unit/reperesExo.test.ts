@@ -79,6 +79,12 @@ describe('cran', () => {
     expect(cranAvant({ [BIBLIO.toLowerCase()]: 12 }, FR)).toBe(12);
     expect(cranAvant({}, BIBLIO)).toBeNull();
   });
+  it('retrouve le cran note sous un nom relie, un ancien nom ou avec la prise', () => {
+    expect(cranAvant({ 'crunch poulie haute': 9 }, 'Cable Crunch')).toBe(9);
+    expect(cranAvant({ 'cable crunch': 9 }, 'Crunch Poulie Haute')).toBe(9);
+    expect(cranAvant({ 'ecartes a la poulie haute': 14 }, 'Écartés à la Poulie Haute')).toBe(14);
+    expect(cranAvant({ 'squat bulgare': 3 }, 'Cable Crunch')).toBeNull();
+  });
   it('le cran de la seance prime, rien quand il n y en a pas', () => {
     expect(cranAffiche(undefined, 17)).toBe(17);
     expect(cranAffiche(19, 17)).toBe(19);
