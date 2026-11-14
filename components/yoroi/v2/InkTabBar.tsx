@@ -1,6 +1,7 @@
 /**
  * Barre de navigation v2 : 4 onglets (Accueil, Seances, Progres, Dojo) et le bouton +.
  *
+ * 14 novembre 2026 (Houari : « je vois des choses entre les boutons, ça fait moche ») : verre presque opaque, voile 0,9 et flou plus fort.
  * 13 novembre 2026, barre en verre (maquette mixte.html validee par Houari) :
  * 1. Au repos : une pilule de verre (flou, blanc translucide, bordure blanche fine, ombre douce) de 14 du bord gauche
  *    a 86 du bord droit, 70 de haut ; les 4 onglets avec leur sticker (ou l'icone au trait en Encre japonaise) et le
@@ -90,12 +91,12 @@ function opacite(hex: string, a: number): string {
 type Props = BottomTabBarProps & { onPressAdd: () => void };
 
 /** Le fond de verre d'une forme : flou et voile blanc, ou blanc a 92 % sans flou */
-function Verre({ rayon, sombre, surface, voile = 0.58 }: { rayon: number; sombre: boolean; surface: string; voile?: number }) {
+function Verre({ rayon, sombre, surface, voile = 0.9 }: { rayon: number; sombre: boolean; surface: string; voile?: number }) {
   if (!FLOU) return <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: rayon, backgroundColor: opacite(surface, 0.92) }]} />;
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: rayon, overflow: 'hidden' }]}>
-      <BlurView intensity={sombre ? 40 : 30} tint={sombre ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: opacite(surface, sombre ? voile + 0.12 : voile) }]} />
+      <BlurView intensity={sombre ? 60 : 50} tint={sombre ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: opacite(surface, sombre ? Math.min(voile + 0.06, 0.96) : voile) }]} />
     </View>
   );
 }
@@ -382,7 +383,7 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
       >
         <View style={[styles.ombre, { shadowColor: ombre, borderRadius: MINI_HAUT / 2 }]}>
           <View style={[styles.miniPilule, { borderColor: bordVerre }]}>
-            <Verre rayon={MINI_HAUT / 2} sombre={isDark} surface={c.surface} voile={0.6} />
+            <Verre rayon={MINI_HAUT / 2} sombre={isDark} surface={c.surface} />
             {ONGLETS.map(renderMini)}
           </View>
         </View>
