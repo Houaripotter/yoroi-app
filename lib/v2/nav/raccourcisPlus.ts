@@ -1,47 +1,60 @@
 /**
- * Raccourcis du + (13 novembre 2026, barre en verre validee par Houari) : un appui long sur le + ouvre 4 bulles en
- * arc (Pesee, Muscu, Combat, Chrono). Tu glisses le doigt jusqu'a une bulle et tu lâches : c'est lance.
+ * Raccourcis du + (13 novembre 2026, barre en verre validee par Houari) : le + ouvre un eventail de bulles en arc.
+ * 14 novembre 2026 (Houari : « quand je clique sur le +, ca m'ouvre la page Enregistrer ; sur l'image je voyais un
+ * truc en arc de cercle ») : l'appui simple ouvre l'eventail, l'appui long avec glissement marche toujours, et une
+ * 5e bulle « Tout » ouvre la page /ajouter, pour ne perdre aucune option.
  *
- * Ici, sans React Native : la place de chaque bulle (prise sur la maquette mixte.html), la bulle sous le doigt, et
- * l'ecran que chaque raccourci ouvre (des routes qui existent deja). Tests : lib/v2/nav/__tests__/raccourcisPlus.test.ts.
+ * Ici, sans React Native : la place de chaque bulle (un quart de cercle regulier, du cote gauche jusqu'au dessus du +),
+ * la bulle sous le doigt, et l'ecran de chaque raccourci (des routes qui existent deja).
+ * Tests : __tests__/unit/raccourcisPlus.test.ts.
  */
 import { saisieDirecte } from '@/lib/v2/nav/direct';
 import { seanceKindFor } from '@/lib/v2/seance/sportVisuals';
 
-export type IdRaccourci = 'pesee' | 'muscu' | 'combat' | 'chrono';
+export type IdRaccourci = 'pesee' | 'muscu' | 'combat' | 'chrono' | 'tout';
 
-/**
- * Les bulles, de la plus basse a la plus haute. dx et dy : le centre de la bulle par rapport au centre du +
- * (dx negatif a gauche, dy negatif au dessus). Maquette : + de 62 a 14 du bord droit, bulles de 72.
- */
-export const RACCOURCIS: { id: IdRaccourci; dx: number; dy: number }[] = [
-  { id: 'pesee', dx: -195, dy: -35 },
-  { id: 'muscu', dx: -160, dy: -130 },
-  { id: 'combat', dx: -90, dy: -200 },
-  { id: 'chrono', dx: 0, dy: -225 },
-];
+/** Les bulles, de la plus a gauche (a hauteur du +) a celle juste au dessus du + */
+export const ORDRE_RACCOURCIS: IdRaccourci[] = ['pesee', 'muscu', 'combat', 'chrono', 'tout'];
 
-/** Taille d'une bulle (carre arrondi de verre) */
+/** Taille d'une bulle (carre de verre aux coins de 26) */
 export const TAILLE_BULLE = 72;
-/** Le doigt « est sur » une bulle a moins de 56 de son centre (la bulle et un peu d'air autour) */
-export const RAYON_PRISE = 56;
+export const RAYON_COINS_BULLE = 26;
+/** Le rayon de l'arc, du centre du + au centre des bulles */
+export const RAYON_ARC = 230;
+/** Air garde entre une bulle et le bord de l'ecran */
+export const MARGE_ECRAN = 8;
+/** Distance du centre du + au bord droit de l'ecran (rond de 62 a 14 du bord) */
+export const PLUS_AU_BORD = 14 + 31;
+/** Le doigt « est sur » une bulle a moins de 46 de son centre (zones separees, l'arc est serre) */
+export const RAYON_PRISE = 46;
+
+/** Le rayon de l'arc pour cette largeur d'ecran : 230, raccourci seulement si la bulle de gauche sortait de l'ecran */
+export function rayonArc(largeurEcran: number): number {
+  if (!Number.isFinite(largeurEcran) || largeurEcran <= 0) return RAYON_ARC;
+  const place = largeurEcran - PLUS_AU_BORD - TAILLE_BULLE / 2 - MARGE_ECRAN;
+  return Math.max(150, Math.min(RAYON_ARC, place));
+}
 
 /**
- * L'arc tient sur les petits ecrans : sur un telephone plus etroit que 390, les bulles se rapprochent du + dans la
- * meme proportion (jamais moins de 80 %).
+ * La place de chaque bulle : dx et dy, son centre par rapport au centre du + (dx negatif a gauche, dy negatif au
+ * dessus). Un quart de cercle regulier : 180° (a gauche du +), puis tous les 22,5° jusqu'a 90° (juste au dessus).
  */
-export function echelleArc(largeurEcran: number): number {
-  if (!Number.isFinite(largeurEcran) || largeurEcran <= 0) return 1;
-  return Math.max(0.8, Math.min(1, largeurEcran / 390));
+export function positionsBulles(largeurEcran: number): { id: IdRaccourci; dx: number; dy: number }[] {
+  const r = rayonArc(largeurEcran);
+  const n = ORDRE_RACCOURCIS.length;
+  return ORDRE_RACCOURCIS.map((id, i) => {
+    const a = Math.PI - (i * (Math.PI / 2)) / (n - 1);
+    return { id, dx: Math.round(r * Math.cos(a) * 10) / 10, dy: Math.round(-r * Math.sin(a) * 10) / 10 };
+  });
 }
 
 /** La bulle sous le doigt (decalage du doigt par rapport au centre du +), ou null */
-export function bulleSousLeDoigt(dx: number, dy: number, echelle = 1): IdRaccourci | null {
+export function bulleSousLeDoigt(dx: number, dy: number, largeurEcran = 390): IdRaccourci | null {
   if (!Number.isFinite(dx) || !Number.isFinite(dy)) return null;
   let meilleure: IdRaccourci | null = null;
   let min = RAYON_PRISE;
-  for (const b of RACCOURCIS) {
-    const d = Math.hypot(dx - b.dx * echelle, dy - b.dy * echelle);
+  for (const b of positionsBulles(largeurEcran)) {
+    const d = Math.hypot(dx - b.dx, dy - b.dy);
     if (d < min) {
       min = d;
       meilleure = b.id;
@@ -63,7 +76,8 @@ export function sportDeCombat(favoris: readonly string[] | null | undefined): st
  * Pesee : /pesee (la pesee rapide, comme « Poids » dans le +) ;
  * Muscu : la seance de musculation en direct (/seance/muscu) ;
  * Combat : la seance de combat en direct (/seance/combat) avec ton sport de combat ;
- * Chrono : le chrono de rounds (/timer en mode combat).
+ * Chrono : le chrono de rounds (/timer en mode combat) ;
+ * Tout : la page /ajouter, avec toutes les options.
  */
 export function routeRaccourci(id: IdRaccourci, favoris?: readonly string[] | null): { pathname: string; params?: Record<string, string> } {
   switch (id) {
@@ -77,5 +91,7 @@ export function routeRaccourci(id: IdRaccourci, favoris?: readonly string[] | nu
     }
     case 'chrono':
       return { pathname: '/timer', params: { mode: 'combat' } };
+    case 'tout':
+      return { pathname: '/ajouter' };
   }
 }
