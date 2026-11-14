@@ -7,10 +7,12 @@
  *    nom dessous en petit ; l'onglet ouvert en pastel (#DCE3FF) avec icone et nom bleu nuit, les autres en gris.
  *    Le + est un rond de verre separe de 62, a droite. Le point d'or du coffre reste sur Dojo.
  *    Sur Android (pas de flou fiable), un blanc a 92 %. En sombre, les memes roles avec theme.colors.
- * 2. Appui long sur le + (300 ms) : vibration, l'ecran se voile et se floute, la barre s'efface, le + devient bleu
- *    nuit et tourne en ×. 4 bulles sortent en arc (Pesee, Muscu, Combat, Chrono) : tu glisses le doigt, la bulle
- *    grossit avec une petite vibration, tu lâches dessus et c'est lance ; ailleurs, ca se ferme. Un appui court
- *    ouvre toujours /ajouter. Les ecrans : lib/v2/nav/raccourcisPlus.ts.
+ * 2. Le + ouvre l'eventail : vibration, l'ecran se voile et se floute, la barre s'efface, le + devient bleu nuit et
+ *    tourne en ×. 5 bulles sortent en arc regulier (Pesee, Muscu, Combat, Chrono, et Tout qui ouvre /ajouter).
+ *    14 novembre 2026 (Houari) : l'appui simple ouvre l'eventail (avant : la page Enregistrer) ; tu touches une bulle,
+ *    ou le voile ou le × pour fermer. L'appui long marche toujours : tu glisses le doigt, la bulle grossit avec une
+ *    petite vibration, tu lâches dessus et c'est lance ; ailleurs, ca se ferme. Pendant la visite guidee, le + ouvre
+ *    la page Enregistrer, comme la visite le raconte. Les places et les ecrans : lib/v2/nav/raccourcisPlus.ts.
  * 3. Au defilement d'une page d'onglet : la barre se replie en petite pilule de 52 (icones seules) avec un rond + de
  *    52 a cote ; elle se redeploie quand tu remontes, en haut de page, ou quand tu touches une icone.
  *    L'etat : lib/v2/nav/barreDefilement.ts. Pendant la visite guidee, la barre reste deployee.
@@ -34,7 +36,7 @@ import { traduire } from '@/lib/i18n/tr';
 import { STICKERS, useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import { useCoffrePret } from '@/components/yoroi/v2/dojo/useCoffrePret';
 import { changementDOnglet, deplierBarre, useBarreRepliee } from '@/lib/v2/nav/barreDefilement';
-import { RACCOURCIS, TAILLE_BULLE, bulleSousLeDoigt, echelleArc, routeRaccourci, type IdRaccourci } from '@/lib/v2/nav/raccourcisPlus';
+import { TAILLE_BULLE, bulleSousLeDoigt, positionsBulles, routeRaccourci, type IdRaccourci } from '@/lib/v2/nav/raccourcisPlus';
 import { getEspace } from '@/lib/v2/espace';
 
 const ICONS: Record<string, { label: string; d: string[]; join?: boolean; sticker: NomSticker }> = {
@@ -55,6 +57,7 @@ const BULLES: Record<IdRaccourci, { sticker: NomSticker; nom: () => string; a11y
   muscu: { sticker: 'musculation', nom: () => traduire('Muscu'), a11y: () => traduire('Musculation') },
   combat: { sticker: 'gants', nom: () => traduire('Combat'), a11y: () => traduire('Démarrer une séance de combat') },
   chrono: { sticker: 'chrono', nom: () => traduire('Chrono'), a11y: () => traduire('Rounds de combat') },
+  tout: { sticker: 'etincelles', nom: () => traduire('Tout'), a11y: () => traduire("Enregistrer une séance, une pesée ou une mesure") },
 };
 
 // Mesures de la maquette
@@ -135,10 +138,11 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
     repli.value = withTiming(repliee ? 1 : 0, { duration: reduit ? 120 : 280, easing: Easing.out(Easing.cubic) });
   }, [repliee, reduit, repli]);
 
-  // le centre du + (depuis le bord gauche, et depuis le bas), a sa place du moment
-  const echelle = echelleArc(W);
-  const plusX = repliee ? W / 2 - MINI_GROUPE / 2 + MINI_LARGEUR + MINI_ESPACE + MINI_HAUT / 2 : W - BORD - ROND / 2;
-  const plusBas = repliee ? bottom + 2 + MINI_HAUT / 2 : bottom + HAUT / 2;
+  // le centre de l'eventail : le + a sa place au repos (depuis le bord gauche, et depuis le bas). Ouvrir l'eventail
+  // redeploie la barre : le + y revient, l'arc tient toujours dans l'ecran
+  const plusX = W - BORD - ROND / 2;
+  const plusBas = bottom + HAUT / 2;
+  const positions = useMemo(() => positionsBulles(W), [W]);
   const decaleX = W / 2 - MINI_GROUPE / 2 + MINI_LARGEUR + MINI_ESPACE + MINI_HAUT / 2 - (W - BORD - ROND / 2);
   const decaleY = HAUT / 2 - (2 + MINI_HAUT / 2);
 
@@ -149,6 +153,7 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
     setSurvol(null);
     setOuvert(true);
     setVoile(true);
+    deplierBarre();
     impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
     eventail.value = withTiming(1, { duration: reduit ? 120 : 200 });
     getEspace()
@@ -171,11 +176,13 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
   const lancer = useCallback(
     (id: IdRaccourci) => {
       impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
-      const r = routeRaccourci(id, favorisRef.current);
       fermer();
+      // Tout : la page Ajouter, comme le + d'avant
+      if (id === 'tout') return onPressAdd();
+      const r = routeRaccourci(id, favorisRef.current);
       router.push((r.params ? { pathname: r.pathname, params: r.params } : r.pathname) as any);
     },
-    [fermer, router],
+    [fermer, router, onPressAdd],
   );
 
   // retour Android : ferme l'eventail
@@ -191,15 +198,27 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
   const suivreDoigt = useCallback(
     (x: number, y: number) => {
       if (!ouvertRef.current) return;
-      const id = bulleSousLeDoigt(x - plusX, y - (H - plusBas), echelle);
+      const id = bulleSousLeDoigt(x - plusX, y - (H - plusBas), W);
       if (id !== survolRef.current) {
         survolRef.current = id;
         setSurvol(id);
         if (id) selectionAsync().catch(() => {});
       }
     },
-    [plusX, plusBas, H, echelle],
+    [plusX, plusBas, H, W],
   );
+
+  // l'appui simple : l'eventail s'ouvre, ou se ferme (le ×) ; pendant la visite guidee, la page Enregistrer
+  const appuiSimple = useCallback(() => {
+    if (visite) {
+      impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+      onPressAdd();
+    } else if (ouvertRef.current) {
+      selectionAsync().catch(() => {});
+      fermer();
+    } else ouvrir();
+  }, [visite, onPressAdd, fermer, ouvrir]);
+  const glisseActif = useRef(false);
 
   const geste = useMemo(() => {
     const tap = Gesture.Tap()
@@ -209,30 +228,33 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
         appui.value = withTiming(1, { duration: 90 });
       })
       .onEnd((_e, ok) => {
-        if (!ok) return;
-        impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
-        onPressAdd();
+        if (ok) appuiSimple();
       })
       .onFinalize(() => {
         appui.value = withTiming(0, { duration: 140 });
       });
     const glisse = Gesture.Pan()
       .runOnJS(true)
+      .enabled(!visite)
       .activateAfterLongPress(APPUI_LONG)
       .onStart((e) => {
+        glisseActif.current = true;
         ouvrir();
         suivreDoigt(e.absoluteX, e.absoluteY);
       })
       .onUpdate((e) => suivreDoigt(e.absoluteX, e.absoluteY))
       .onFinalize(() => {
         appui.value = withTiming(0, { duration: 140 });
+        // un appui court n'active pas le glissement : c'est l'appui simple qui decide
+        if (!glisseActif.current) return;
+        glisseActif.current = false;
         if (!ouvertRef.current) return;
         const id = survolRef.current;
         if (id) lancer(id);
         else fermer();
       });
     return Gesture.Race(glisse, tap);
-  }, [appui, onPressAdd, ouvrir, suivreDoigt, lancer, fermer]);
+  }, [appui, appuiSimple, visite, ouvrir, suivreDoigt, lancer, fermer]);
 
   // ====== styles animes ======
   const styleBarre = useAnimatedStyle(() => ({
@@ -368,15 +390,16 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
 
       {/* 2. les bulles de l'eventail */}
       {voile
-        ? RACCOURCIS.map((r, i) => (
+        ? positions.map((r, i) => (
             <Bulle
               key={r.id}
               id={r.id}
               rang={i}
-              gauche={plusX + r.dx * echelle - TAILLE_BULLE / 2}
-              bas={plusBas - r.dy * echelle - TAILLE_BULLE / 2}
-              dx={r.dx * echelle}
-              dy={r.dy * echelle}
+              gauche={plusX + r.dx - TAILLE_BULLE / 2}
+              bas={plusBas - r.dy - TAILLE_BULLE / 2}
+              dx={r.dx}
+              dy={r.dy}
+              texte={c.accent}
               ouvert={ouvert}
               choisie={survol === r.id}
               reduit={reduit}
@@ -396,12 +419,12 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
               accessible
               accessibilityRole="button"
               accessibilityLabel={traduire("Enregistrer une séance, une pesée ou une mesure")}
-              accessibilityHint={traduire('Appui long : Pesée, Muscu, Combat et Chrono')}
+              accessibilityHint={visite ? undefined : ouvert ? traduire('Fermer') : traduire('Ouvre tes raccourcis : Pesée, Muscu, Combat, Chrono et Tout')}
+              accessibilityState={{ expanded: ouvert }}
               accessibilityActions={[{ name: 'activate' }, { name: 'raccourcis', label: traduire('Raccourcis') }]}
               onAccessibilityAction={(e) => {
-                if (e.nativeEvent.actionName === 'raccourcis') ouvrir();
-                else if (ouvertRef.current) fermer();
-                else onPressAdd();
+                if (e.nativeEvent.actionName === 'raccourcis' && !visite) ouvrir();
+                else appuiSimple();
               }}
               style={[styles.ombre, styles.plus, { shadowColor: ombre }]}
             >
@@ -443,6 +466,7 @@ function Bulle(p: {
   sombre: boolean;
   surface: string;
   img: any;
+  texte: string;
   onPress: () => void;
 }) {
   const sortie = useSharedValue(0);
@@ -469,12 +493,11 @@ function Bulle(p: {
       <Pressable onPress={p.onPress} accessibilityRole="button" accessibilityLabel={b.a11y()} style={[styles.bulleVerre, p.choisie ? styles.bulleChoisie : null]}>
         <Verre rayon={26} sombre={p.sombre} surface={p.surface} voile={0.75} />
         <Image source={p.img} style={styles.bulleSticker} resizeMode="contain" accessibilityIgnoresInvertColors />
-      </Pressable>
-      <View pointerEvents="none" style={styles.bulleNomPlace}>
-        <Ink size={14} weight="black" color="#FFFFFF" numberOfLines={1} style={styles.bulleNom}>
+        {/* 14 novembre 2026 : le nom dans la bulle ; dessous, il touchait la bulle voisine dans l'arc a 5 bulles */}
+        <Ink size={11} weight="black" color={p.texte} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={styles.bulleNom}>
           {b.nom()}
         </Ink>
-      </View>
+      </Pressable>
     </Animated.View>
   );
 }
@@ -533,13 +556,6 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   bulleChoisie: { borderWidth: 4, borderColor: '#FFFFFF' },
-  bulleSticker: { width: 48, height: 48 },
-  // le nom sous la bulle, centre, sans pousser la bulle (son centre reste celui de la maquette)
-  bulleNomPlace: { position: 'absolute', top: TAILLE_BULLE + 6, left: (TAILLE_BULLE - 110) / 2, width: 110, alignItems: 'center' },
-  bulleNom: {
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.4)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 6,
-  },
+  bulleSticker: { width: 40, height: 40, marginTop: 2 },
+  bulleNom: { maxWidth: TAILLE_BULLE - 10, textAlign: 'center', marginTop: 1 },
 });
