@@ -2,6 +2,7 @@ import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import type { AudioPlayer } from 'expo-audio';
 import logger from '@/lib/security/logger';
 import { sonsActifs } from '@/lib/v2/sons/reglage';
+import { preparerSon, rendreLaMainApres } from '@/lib/v2/sons/sessionAudio';
 
 // ============================================
 // SOUND DESIGN - SoundManager
@@ -72,11 +73,9 @@ const loadSound = (soundName: string): AudioPlayer | null => {
 // partait sans que le mode audio soit regle. iOS gardait alors sa categorie par defaut (solo, qui coupe Spotify)
 // et Android prenait le focus audio (la musique se met en pause). Le mode « se melange a la musique » est
 // maintenant regle avant le premier son, partout.
-let modePret: Promise<void> | null = null;
-const assurerMode = (): Promise<void> => {
-  if (!modePret) modePret = initSoundManager().catch(() => { modePret = null; });
-  return modePret;
-};
+// 17 novembre 2026 (Houari : « les seances me coupent la musique ») : regle avant CHAQUE son, tous les champs
+// donnes, car un autre ecran a pu le changer entre temps. Sons courts : ta musique baisse le temps du son puis
+// remonte (duckOthers) ; le gong, long, se melange sans la baisser (lib/v2/sons/sessionAudio.ts).
 
 type NomSon = 'fanfare_badge' | 'level_up' | 'recovery' | 'ring' | 'beep' | 'gong' | 'clap' | 'bell' | 'wizz';
 
@@ -84,7 +83,7 @@ export const playSound = async (soundName: NomSon, volume: number = 0.7) => {
   try {
     // 27 octobre 2026 : rien ne joue quand les sons sont coupes dans les Reglages
     if (!sonsActifs()) return;
-    await assurerMode();
+    await preparerSon(soundName === 'gong' ? 'long' : 'court');
     const player = loadSound(soundName);
     if (!player) {
       logger.warn(`Son ${soundName} non disponible`);
@@ -94,6 +93,8 @@ export const playSound = async (soundName: NomSon, volume: number = 0.7) => {
     await player.seekTo(0);
     player.volume = volume;
     player.play();
+    // le son fini, la session audio est rendue : ta musique remonte
+    if (soundName !== 'gong') rendreLaMainApres(player);
 
     logger.info(`Son ${soundName} joué`);
   } catch (error) {
