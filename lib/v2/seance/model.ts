@@ -97,6 +97,11 @@ export type LiveExercise = {
   enchaine?: boolean;
   /** 31 octobre 2026 : ajoute au bloc par « Toujours dans ce programme » (lib/v2/programmes/enchainements.ts) */
   ajoutBloc?: boolean;
+  /**
+   * 17 novembre 2026 : repos apres une serie de cet exercice et son pourquoi (lib/v2/seances/reposConseille.ts) :
+   * ton choix garde, le repos du programme ou le repos conseille. Le minuteur, l'ile et la montre le prennent.
+   */
+  repos?: import('@/lib/v2/seances/reposConseille').ReposExo;
 };
 
 /** Changer d'exercice : celui qu'on quitte avec au moins une serie faite est « laisse » (plus repropose) */
