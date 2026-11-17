@@ -66,7 +66,8 @@ import { lireZones, seanceZones, titreZones } from '@/lib/v2/programmes/zones';
 import { marquerFaite, maSeanceParId, seriesPrevues } from '@/lib/v2/seance/mesSeances';
 import { terminerActiviteSeance, useActiviteSeance } from '@/lib/v2/widgets/activiteSeance';
 import type { EtatSeance } from '@/lib/v2/widgets/activiteSeance';
-import { appliquerActionsIle, ecouterActionsIle, planIle, prendreActionsHorsEcran } from '@/lib/v2/seance/actionsIle';
+import { appliquerActionsIle, ecouterActionsIle, planIle, prendreActionsHorsEcran, reposDe } from '@/lib/v2/seance/actionsIle';
+import { avecRetenu, chargerReposRetenus, objectifRepos, raisonRepos, reposConseille, reposRetenuDe, retenirReposExo, titreRepos, REPOS_MAX, REPOS_MIN, type ObjectifRepos, type ReposRetenus } from '@/lib/v2/seances/reposConseille';
 import { coachSeance } from '@/lib/v2/seance/coachSeance';
 import type { TextesIle } from '@/lib/v2/seance/actionsIle';
 import { LIBELLE_REGION, regionsDesBlessures, unirRegions } from '@/lib/v2/programmes/blessures';
@@ -105,7 +106,7 @@ import { AVANT_SEANCE_MS, RECUL_MAX_MS, avecDebut, entrainementsPourCardio, idsD
 import type { EntrainementMontre } from '@/lib/v2/seance/montreCardio';
 import { lireEntrainementsMontre, santeLisible, surIphone } from '@/lib/v2/seance/lectureMontre';
 import { playWizzSound } from '@/lib/soundManager';
-import { encouragement, etatSerie, nouvelleSerie, remettreSerie, sansSerie, seriesAFaire } from '@/lib/v2/seances/seriesSaisie';
+import { encouragement, etatSerie, nouvelleSerie, remettreSerie, reporterSerie, sansSerie, seriesAFaire } from '@/lib/v2/seances/seriesSaisie';
 import { chargerMinuteurRepos, enregistrerMinuteurRepos, reposApresSerie } from '@/lib/v2/seances/minuteurRepos';
 import { objectifExo, seriesVisees, texteReps, texteSerie } from '@/lib/v2/seances/objectifExo';
 import { chargerReglages, enregistrerCran, typeReglage, CRAN_MAX } from '@/lib/v2/seances/reglagesMachine';
@@ -593,6 +594,38 @@ export default function SeanceMuscu() {
     update((d) => ({ ...d, exercises: d.exercises.map((e) => (e.objectifSeries === undefined ? { ...e, objectifSeries: seriesVisees(e.sets) } : e)) }));
   }, [draft?.exercises, draft?.form]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /*
+   * (E) 17 novembre 2026 : repos de chaque exercice (lib/v2/seances/reposConseille.ts). Ton objectif (programme de la
+   * seance, sinon ton programme en cours, sinon l'onboarding) et tes repos gardes sont lus une fois ; chaque exercice
+   * sans repos recoit le sien (ton choix, le programme, ou le conseil), y compris ceux ajoutes ou remplaces en route.
+   */
+  const [ctxRepos, setCtxRepos] = useState<{ programme: string | null; onboarding: string[]; retenus: ReposRetenus } | null>(null);
+  useEffect(() => {
+    let vivant = true;
+    Promise.all([
+      chargerProgrammeActif().catch(() => null),
+      import('@/lib/v2/espace').then((m) => m.getEspace()).catch(() => null),
+      chargerReposRetenus(),
+    ]).then(([actif, espace, retenus]) => {
+      if (!vivant) return;
+      const programme = actif ? programmeParId(actif.id)?.objectif ?? null : null;
+      setCtxRepos({ programme, onboarding: (espace?.objectifs ?? []) as string[], retenus });
+    }, () => { if (vivant) setCtxRepos({ programme: null, onboarding: [], retenus: {} }); });
+    return () => { vivant = false; };
+  }, []);
+  useEffect(() => {
+    if (!draft || draft.form || !ctxRepos || !draft.exercises.some((e) => !e.repos && !e.cardio)) return;
+    const objectif: ObjectifRepos = objectifRepos({ programme: (draft.programme ? programmeParId(draft.programme.id)?.objectif : null) ?? ctxRepos.programme, onboarding: ctxRepos.onboarding });
+    update((d) => ({
+      ...d,
+      exercises: d.exercises.map((e) => (e.repos || e.cardio ? e : {
+        ...e,
+        // seance reprise d'avant le 17 novembre avec un repos regle a la main : il reste le tien
+        repos: reposConseille({ nom: e.name, muscle: e.muscle, objectif, reposProgramme: e.cible?.reposSec, reposRetenu: reposRetenuDe(ctxRepos.retenus, e.name) ?? (d.reposManuel ? d.restSec : null) }),
+      })),
+    }));
+  }, [draft?.exercises, draft?.form, ctxRepos]); // eslint-disable-line react-hooks/exhaustive-deps
+
   /* (D) le cran de la machine de la derniere fois, lu une fois a l'ouverture (lib/v2/seances/reglagesMachine.ts) */
   const [cransAvant, setCransAvant] = useState<Reglages>({});
   const [reglageOuvert, setReglageOuvert] = useState<string[]>([]);
@@ -1064,12 +1097,9 @@ export default function SeanceMuscu() {
     }
     // 3 novembre 2026 : en plaques, le record se compte en plaques (plus de plaques, ou autant et plus de repetitions)
     if (!record && typeof set.plaques === 'number') record = recordPlaquesBattu(reperesDe(indexRep, ex.name).recordPlaques ?? null, earlier.filter((s) => s.type !== 'warmup'), set);
-    const sets = ex.sets.map((s, i) => {
-      if (i === index) return { ...s, done: true, record };
-      // la serie suivante sans reference reprend les valeurs de celle-ci
-      if (i === index + 1 && !s.done && s.prevWeight === undefined) return { ...s, weight: set.weight, reps: set.reps, ...(typeof set.plaques === 'number' ? { plaques: set.plaques } : {}) };
-      return s;
-    });
+    // 17 novembre 2026 (retour de Houari, 20 kg puis 40 kg affiches) : les series suivantes pas encore faites
+    // reprennent les valeurs de celle-ci, qu'il y ait une derniere fois ou non (lib/v2/seances/seriesSaisie.ts)
+    const sets = reporterSerie(ex.sets.map((s, i) => (i === index ? { ...s, done: true, record } : s)), index);
     update((d) => {
       const exercises = d.exercises.map((e) => (e.id === ex.id ? { ...e, sets } : e));
       // 31 octobre 2026 : superset, A puis B sans repos, le repos apres le dernier puis retour au premier (superset.ts)
@@ -1080,7 +1110,8 @@ export default function SeanceMuscu() {
         ...(suite.suivantId ? { currentId: suite.suivantId } : {}),
         // seance de programme : le repos prevu pour cet exercice ; drop set suivi d'un autre drop set : pas de repos
         // 30 octobre 2026 : minuteur de repos coupe, pas de repos du tout (lib/v2/seances/minuteurRepos.ts)
-        ...reposApresSerie({ sansRepos: d.sansRepos, pasDeRepos: d.form || ex.sets[index + 1]?.type === 'dropset' || !suite.repos, secondes: d.reposManuel ? d.restSec : ex.cible?.reposSec ?? d.restSec, maintenant: Date.now() }),
+        // 17 novembre 2026 : le repos de cet exercice (reposDe, la meme regle que l'ile et la montre)
+        ...reposApresSerie({ sansRepos: d.sansRepos, pasDeRepos: d.form || ex.sets[index + 1]?.type === 'dropset' || !suite.repos, secondes: reposDe(d, exercises.find((e) => e.id === ex.id) ?? ex), maintenant: Date.now() }),
       };
     });
     if (record) {
@@ -1257,11 +1288,19 @@ export default function SeanceMuscu() {
   // repos affiche : celui de l'exercice en cours dans un programme, sinon ton reglage
   // (24 octobre 2026 : aussi pour une seance guidee sans programme, « Je choisis mes zones » : la cible decide)
   const guidee = !!draft?.programme || !!draft?.exercises.some((e) => e.cible);
-  const reposAffiche = guidee && !draft?.reposManuel && current?.cible ? current.cible.reposSec : draft?.restSec ?? 90;
+  // 17 novembre 2026 : le repos de l'exercice en cours (reposConseille.ts) ; sans exercice, ton reglage d'avant
+  const reposAffiche = draft && current ? reposDe(draft, current) : guidee && !draft?.reposManuel && current?.cible ? current.cible.reposSec : draft?.restSec ?? 90;
 
   const changeRest = (delta: number) => {
     if (!draft) return;
-    const v = Math.min(600, Math.max(15, reposAffiche + delta));
+    const v = Math.min(REPOS_MAX, Math.max(REPOS_MIN, reposAffiche + delta));
+    if (current && !current.cardio) {
+      // 17 novembre 2026 : ton repos pour cet exercice, garde et repris les fois suivantes
+      updateExercise(current.id, (e) => ({ ...e, repos: { sec: v, raison: 'toi' } }));
+      setCtxRepos((x) => (x ? { ...x, retenus: avecRetenu(x.retenus, current.name, v) } : x));
+      void retenirReposExo(current.name, v);
+      return;
+    }
     // seance de programme : regle a la main, ton repos remplace celui du programme jusqu'a la fin
     update((d) => ({ ...d, restSec: v, ...(guidee ? { reposManuel: true } : {}) }));
     // dans une seance guidee, le reglage reste pour cette seance : ton repos habituel n'est pas touche
@@ -1701,14 +1740,31 @@ export default function SeanceMuscu() {
               );
             })()}
 
+            {/* 17 novembre 2026 : repos conseille pour cet exercice et son pourquoi, reglable ici (reposConseille.ts) */}
+            {!draft.form && minuteurOn !== false && current.repos && !current.cardio ? (
+              <View style={[carteBlanche(c.surface, c.divider), { marginHorizontal: 4, paddingVertical: 10, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 10 }]}>
+                <Icon name="clock" size={20} color={c.textSecondary} />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Ink size={15} weight="extraBold">{titreRepos({ sec: reposAffiche, raison: current.repos.raison })}</Ink>
+                  <Ink size={12} weight="bold" color={c.textMuted}>{raisonRepos(current.repos.raison)}</Ink>
+                </View>
+                <Pressable onPress={() => changeRest(-15)} accessibilityLabel={traduire("Moins 15 secondes de repos")} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: pressed ? c.border : c.fillSoft, alignItems: 'center', justifyContent: 'center' })}>
+                  <Icon name="minus" size={16} strokeWidth={2.8} />
+                </Pressable>
+                <Pressable onPress={() => changeRest(15)} accessibilityLabel={traduire("Plus 15 secondes de repos")} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: pressed ? c.border : c.fillSoft, alignItems: 'center', justifyContent: 'center' })}>
+                  <Icon name="plus" size={16} strokeWidth={2.8} />
+                </Pressable>
+              </View>
+            ) : null}
+
             {current.cible ? (
               <View style={{ marginHorizontal: 4, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 18, backgroundColor: c.accentTint, gap: 3 }}>
                 <Ink size={13} weight="extraBold" color={c.accent}>
                   {current.cible.secondes
-                    ? traduire('Objectif : tenir {0} à {1} secondes, repos {2}. Note les secondes dans la colonne Répétitions.', current.cible.repsMin, current.cible.repsMax, libelleRepos(current.cible.reposSec))
+                    ? traduire('Objectif : tenir {0} à {1} secondes, repos {2}. Note les secondes dans la colonne Répétitions.', current.cible.repsMin, current.cible.repsMax, libelleRepos(reposAffiche))
                     : current.cible.repsMin === current.cible.repsMax
-                    ? traduire('Objectif : {0} répétitions, repos {1}', current.cible.repsMin, libelleRepos(current.cible.reposSec))
-                    : traduire('Objectif : {0} à {1} répétitions, repos {2}', current.cible.repsMin, current.cible.repsMax, libelleRepos(current.cible.reposSec))}
+                    ? traduire('Objectif : {0} répétitions, repos {1}', current.cible.repsMin, libelleRepos(reposAffiche))
+                    : traduire('Objectif : {0} à {1} répétitions, repos {2}', current.cible.repsMin, current.cible.repsMax, libelleRepos(reposAffiche))}
                 </Ink>
                 {current.cible.raison === 'monte' && current.cible.nouvelleCharge && !enPlaques ? (
                   <Ink size={13} color={c.textSecondary}>{lb ? traduire('Haut de la fourchette deux fois de suite : on monte à {0} livres.', fmtNum(saisieDepuisKg(current.cible.nouvelleCharge, unite))) : traduire('Haut de la fourchette deux fois de suite : on monte à {0} kilos.', fmtNum(saisieDepuisKg(current.cible.nouvelleCharge, unite)))}</Ink>
