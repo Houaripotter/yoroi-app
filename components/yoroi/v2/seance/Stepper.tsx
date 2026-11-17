@@ -12,6 +12,9 @@
  * chaque) et s'arrete des qu'un ecart depasse le seuil. Appui maintenu en plus : pas normal, puis moitie du saut
  * apres 1 s, puis le saut apres 2 s ; on relache, tout redevient normal. Ancienne logique archivee dans
  * _archive_ancien_design_2026-10-09/pas_rapide_2026-10-31/.
+ * 17 novembre 2026 (Houari : « ca va trop vite, que ca monte par 10 seulement apres 10 clics rapides ») : 10 pas
+ * normaux d'abord, en appuis rapides comme en appui maintenu, puis la moitie du saut jusqu'au 15e, puis le saut.
+ * Repetitions (sans saut) : l'appui maintenu ne prend de la vitesse qu'apres 10 pas, doucement (pasRapide.ts).
  * 30 octobre 2026 : `uniteForte` (« KG ») lisible d'un coup d'oeil a cote du chiffre, plus en petit dessous.
  */
 import React, { useEffect, useRef, useState } from 'react';
@@ -23,7 +26,7 @@ import { fontStyle } from '@/components/yoroi/fonts';
 import { fmtNum, parseNum } from '@/lib/v2/seance/format';
 import { Icon } from './Icon';
 import { traduire } from '@/lib/i18n/tr';
-import { compterTape, heureAppui, pasAppuiMaintenu, RAFALE_VIDE, REPETITION_GROS_MS, REPETITION_MS, TAPES_RAPIDES_POUR_SAUT, valeurSuivante, type Rafale } from '@/lib/v2/seances/pasRapide';
+import { compterTape, delaiRepetition, heureAppui, PAS_AVANT_ACCELERATION, PAS_AVANT_SAUT, pasAccelere, pasAppuiMaintenu, RAFALE_VIDE, REPETITION_GROS_MS, REPETITION_MS, valeurSuivante, type Rafale } from '@/lib/v2/seances/pasRapide';
 
 type Props = {
   value: number;
@@ -83,7 +86,7 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
     return true;
   };
 
-  // appuis tres rapides : saut a partir du 3e ; boutons fins : jamais de saut
+  // appuis rapides : 10 pas normaux, puis pas moyen, puis saut (pasRapide.ts) ; boutons fins : jamais de saut
   const tap = (bouton: string, dir: 1 | -1, amount: number = step, accelere = true) => {
     if (!saut || !accelere) {
       rafale.current = RAFALE_VIDE;
@@ -92,7 +95,8 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
     }
     const { rafale: apres, saut: enSaut } = compterTape(rafale.current, bouton, heureTape.current || Date.now());
     rafale.current = apres;
-    bump(dir, amount, enSaut ? saut : null, apres.compte === TAPES_RAPIDES_POUR_SAUT);
+    const changePas = apres.compte === PAS_AVANT_ACCELERATION + 1 || apres.compte === PAS_AVANT_SAUT + 1;
+    bump(dir, amount, enSaut ? pasAccelere(apres.compte, saut, step) : null, changePas);
   };
 
   function stop() {
@@ -114,11 +118,13 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
       return;
     }
     if (saut) {
-      // appui maintenu : pas normal, puis moitie du saut apres 1 s, puis le saut apres 2 s
+      // appui maintenu : 10 pas normaux, puis la moitie du saut jusqu'au 15e, puis le saut
       rafale.current = RAFALE_VIDE;
       let avant: number | null = null;
+      let rang = 0;
       const tickSaut = () => {
-        const gros = pasAppuiMaintenu(Date.now() - appuiDebut.current, saut);
+        rang += 1;
+        const gros = pasAppuiMaintenu(rang, saut, step);
         const change = gros !== avant;
         avant = gros;
         if (!bump(dir, amount, gros, change)) return stop();
@@ -130,8 +136,8 @@ export function Stepper({ value, step, min = 0, max = 9999, onChange, unit, size
     const tick = () => {
       if (!bump(dir, amount)) return stop();
       repeats.current += 1;
-      const delay = repeats.current > 12 ? 45 : repeats.current > 5 ? 80 : 130;
-      timer.current = setTimeout(tick, delay);
+      // repetitions : cadence reguliere pendant 10 pas, puis un peu plus vive, jamais d'un coup
+      timer.current = setTimeout(tick, delaiRepetition(repeats.current));
     };
     tick();
   };
