@@ -62,3 +62,30 @@ export function encouragement(
   if (travail.length === 0 || !travail.every((s) => s.reps >= cible)) return null;
   return [...travail].sort((a, b) => b.weight - a.weight || b.reps - a.reps)[0];
 }
+
+/**
+ * 17 novembre 2026, retour de Houari : « a la poulie je note 20 a la premiere serie, et a la deuxieme ca me met
+ * direct 40, alors que j'etais a 20. Pareil pour les repetitions ».
+ * Cause : apres une serie validee, la suivante ne reprenait ses valeurs que si elle n'avait aucune reference
+ * (prevWeight absent). Avec une derniere fois connue, ou une seance de programme, les series suivantes gardaient
+ * les charges et repetitions pre-remplies au lancement (ta derniere fois, ou la proposition du programme), meme
+ * quand tu venais de faire autre chose. D'ou 40 kg affiches juste apres une serie a 20 kg.
+ * Regle : la serie validee est recopiee, telle quelle (jamais additionnee ni doublee), dans les series suivantes
+ * pas encore faites, jusqu'a la prochaine serie deja faite. L'aide « la derniere fois » (prevWeight, prevReps)
+ * reste affichee. Exceptions : un echauffement ou un drop set valide ne se recopie pas (la serie de travail
+ * d'apres n'a pas sa charge), et une serie suivante d'echauffement ou de drop set garde ses valeurs.
+ */
+type SerieRecopiable = SerieSaisie & { type?: string; plaques?: number };
+
+export function reporterSerie<S extends SerieRecopiable>(sets: readonly S[], index: number): S[] {
+  const ref = sets[index];
+  const out = [...sets];
+  if (!ref || ref.type === 'warmup' || ref.type === 'dropset') return out;
+  for (let i = index + 1; i < out.length; i++) {
+    const s = out[i];
+    if (s.done) break;
+    if (s.type === 'warmup' || s.type === 'dropset') continue;
+    out[i] = { ...s, weight: ref.weight, reps: ref.reps, ...(typeof ref.plaques === 'number' ? { plaques: ref.plaques } : {}) };
+  }
+  return out;
+}
