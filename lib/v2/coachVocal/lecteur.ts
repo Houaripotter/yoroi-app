@@ -11,13 +11,19 @@
  * Une phrase à la fois : si une phrase est déjà en cours, la nouvelle est ignorée.
  * Voix en français seulement pour l'instant : dans une autre langue, le coach se tait.
  * Tout est protégé : une erreur audio ne casse jamais la séance.
+ * 17 novembre 2026 (Houari : « les séances me coupent la musique ») : quand la phrase était coupée par le garde fou
+ * des 9 s ou par taire() sans finir d'elle même, le lecteur était libéré sans pause : la session iOS restait active
+ * en duckOthers et ta musique restait basse. Le lecteur passe maintenant en pause avant d'être libéré, ce qui
+ * désactive la session (notifyOthersOnDeactivation) et rend le focus audio Android : ta musique remonte.
+ * Les deux modes donnent tous leurs champs (lib/v2/sons/sessionAudio.ts).
  */
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 import { LANG } from '@/lib/i18n/tr';
 import { fichierPhrase } from './sons';
+import { MODE_SON_COURT, MODE_SON_LONG } from '@/lib/v2/sons/sessionAudio';
 
-const MODE_PAROLE = { playsInSilentMode: true, shouldPlayInBackground: true, interruptionMode: 'duckOthers' as const };
-const MODE_NORMAL = { playsInSilentMode: true, shouldPlayInBackground: true, interruptionMode: 'mixWithOthers' as const };
+const MODE_PAROLE = MODE_SON_COURT;
+const MODE_NORMAL = MODE_SON_LONG;
 /** au delà, la phrase est coupée et la musique remonte quoi qu'il arrive */
 const DUREE_MAX_MS = 9000;
 
@@ -39,6 +45,12 @@ function finir(p: AudioPlayer | null): void {
     garde = null;
   }
   if (p && enCours === p) enCours = null;
+  try {
+    // la pause rend la session audio : sans elle, ta musique pouvait rester basse
+    p?.pause();
+  } catch {
+    // deja arrete
+  }
   try {
     p?.remove();
   } catch {
