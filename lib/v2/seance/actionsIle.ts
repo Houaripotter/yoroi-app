@@ -14,6 +14,7 @@
 import type { LiveExercise, MuscuDraft } from './model';
 import { reposApresSerie } from '@/lib/v2/seances/minuteurRepos';
 import { TOLERANCE_FIN_MS, accuseValable } from './sonneurRepos';
+import { reporterSerie } from '@/lib/v2/seances/seriesSaisie';
 
 /** Un exercice tel que le natif le voit */
 export type ExoIle = { id: string; nom: string; faites: number; total: number; repos: number };
@@ -39,8 +40,13 @@ export type TextesIle = {
 /** rappel : le natif peut programmer la notification de fin de repos (mêmes règles que lib/v2/seance/rappelRepos.ts) */
 export type PlanIle = { exos: ExoIle[]; cur: number; debutMs: number; t: TextesIle; rappel?: boolean; maj?: number };
 
-/** Le repos prévu après une série de cet exercice (même règle que la validation dans l'écran) */
+/**
+ * Le repos prévu après une série de cet exercice (même règle que la validation dans l'écran).
+ * 17 novembre 2026 : le repos de l'exercice d'abord (ton choix, le programme ou le conseil, reposConseille.ts) ;
+ * une séance commencée avant garde l'ancienne règle.
+ */
 export function reposDe(d: MuscuDraft, ex: LiveExercise): number {
+  if (ex.repos && ex.repos.sec > 0) return ex.repos.sec;
   return d.reposManuel ? d.restSec : ex.cible?.reposSec ?? d.restSec;
 }
 
@@ -155,12 +161,8 @@ export function appliquerActionsIle(d: MuscuDraft, actions: ActionIle[]): MuscuD
     if (k < 0) continue;
     const s = ex.sets[k];
     const reps = s.reps > 0 ? s.reps : ex.cible?.repsMin ?? s.prevReps ?? 10;
-    const sets = ex.sets.map((x, j) => {
-      if (j === k) return { ...x, reps, done: true };
-      // la série suivante sans référence reprend les valeurs de celle-ci (comme dans l'écran)
-      if (j === k + 1 && !x.done && x.prevWeight === undefined) return { ...x, weight: s.weight, reps };
-      return x;
-    });
+    // 17 novembre 2026 : les séries suivantes reprennent les valeurs de celle-ci, même règle que l'écran (seriesSaisie.ts)
+    const sets = reporterSerie(ex.sets.map((x, j) => (j === k ? { ...x, reps, done: true } : x)), k);
     const exercises = r.exercises.map((e, j) => (j === i ? { ...e, sets } : e));
     const fait = sets.every((x) => x.done);
     const apres = fait ? suivant(exercises, i) : null;
