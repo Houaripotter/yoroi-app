@@ -1,14 +1,18 @@
 /**
- * « Tu viens de Hevy ? Ramène tout » (18 novembre 2026). Le parcours complet, le meme depuis l'onboarding (premier
- * ecran, components/yoroi/v2/onboarding/Accroche.tsx) et depuis l'onglet Seances (Importer, app/reprise-hevy.tsx) :
- *  1. le guide, illustre avec nos stickers (pas de captures d'une autre app) : sortir le fichier de Hevy ;
- *  2. le fichier choisi (selecteur de documents : YOROI ne recoit pas encore un fichier partage directement) ;
- *  3. la verification : ce qui a ete compris, ta routine (decocher une seance, la renommer, ou ne garder que
- *     l'historique), tes exercices (refuser une correspondance, choisir le muscle d'un exercice a toi) ;
- *  4. l'enregistrement : historique sans doublon, exercices a toi, routine (jamais a la place de ton programme en
- *     cours sans te demander) ;
- *  5. Bienvenue : ce qui est revenu.
- * Rien n'est envoye nulle part : le fichier est lu sur le telephone (lib/v2/import/repriseHevy.ts, pur et teste).
+ * « Ramène tout » depuis ton ancienne app de muscu (18 novembre 2026). Le parcours complet, le meme depuis
+ * l'onboarding (premier ecran, components/yoroi/v2/onboarding/Accroche.tsx) et depuis l'onglet Seances (Importer,
+ * app/reprise-hevy.tsx) :
+ *  1. le choix de ton app (Hevy, Strong, FitNotes, ou un autre fichier) et son chemin d'export, illustres avec nos
+ *     stickers. Les noms d'apps suivent lib/v2/import/apps.ts (AFFICHER_NOMS_APPS) et ne se voient jamais dans
+ *     l'onboarding (Houari : « ne marque pas Hevy ») : guide general et fichier reconnu tout seul ;
+ *  2. le fichier choisi (selecteur de documents : YOROI ne recoit pas encore un fichier partage directement) ; un
+ *     fichier d'une app inconnue : tu choisis les colonnes (date, exercice, charge, repetitions, duree, distance) ;
+ *  3. la verification : le total, ta routine (decocher, renommer, ou juste l'historique), tes exercices (refuser une
+ *     correspondance, choisir le muscle d'un exercice a toi), et tout ce qui n'a pas pu etre repris, avec sa raison ;
+ *  4. l'enregistrement : historique sans doublon, exercices a toi en machines, routine (jamais a la place de ton
+ *     programme en cours sans te demander) ;
+ *  5. Bienvenue : ce qui est revenu, ce qui manque, et « Ajoute d'autres machines d'un coup ».
+ * Rien n'est envoye nulle part : le fichier est lu sur le telephone (lib/v2/import/carnet.ts, repriseHevy.ts, purs).
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, TextInput, View } from 'react-native';
@@ -23,8 +27,9 @@ import { BigButton, Glass } from '@/components/yoroi/v2/seances/ui';
 import { useIllustrations } from '@/components/yoroi/v2/stickers';
 import type { NomSticker } from '@/components/yoroi/v2/stickers';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
-import { lireCarnet } from '@/lib/v2/import/carnet';
-import type { SeanceLue } from '@/lib/v2/import/carnet';
+import { AjoutListe } from './AjoutListe';
+import { devinerColonnes, lireCarnet, lireCsv, lireCsvColonnes } from '@/lib/v2/import/carnet';
+import type { Colonnes, ResultatLecture, SeanceLue } from '@/lib/v2/import/carnet';
 import { reconnaitreExo } from '@/lib/v2/import/vocabulaire';
 import {
   appliquerChoix,
@@ -32,15 +37,17 @@ import {
   correspondances,
   estAToi,
   MUSCLES_CHOIX,
-  NOM_ROUTINE_HEVY,
   nomFinal,
+  nonRepris,
   reconnaitreHevy,
   reconstruireRoutine,
   refusParDefaut,
   versMesSeances,
   versProgrammeHevy,
 } from '@/lib/v2/import/repriseHevy';
-import type { BilanReprise, Correspondance, Routine } from '@/lib/v2/import/repriseHevy';
+import type { BilanReprise, Correspondance, NonRepris, Routine } from '@/lib/v2/import/repriseHevy';
+import { APPS, guideDe, nomDuFormat, nomsVisibles, origineDe } from '@/lib/v2/import/apps';
+import type { IdApp } from '@/lib/v2/import/apps';
 import { enregistrerCarnet } from '@/lib/v2/import/enregistrerCarnet';
 import { ajouterExosAToi, autreProgrammeEnCours, enregistrerRoutine, garderDansMesSeances, muscleBibliotheque, routineHevyExistante } from '@/lib/v2/import/enregistrerReprise';
 import { programmeParId } from '@/lib/v2/programmes/catalogue';
@@ -55,7 +62,7 @@ import { sansTiret } from '@/lib/v2/texte/sansTiret';
 
 let BIBLIO: ExoCherchable[] | null = null;
 const biblio = (): ExoCherchable[] =>
-  (BIBLIO ??= EXERCISE_LIBRARY.filter((e) => e.category === 'musculation' || e.unit === 'reps').map((e, rang) => ({ name: e.name, autre: nomFr(e.name) !== e.name ? nomFr(e.name) : undefined, muscle: e.muscle, rang })));
+  (BIBLIO ??= EXERCISE_LIBRARY.filter((e) => e.category === 'musculation' || e.unit === 'reps' || e.unit === 'time' || e.category === 'cardio').map((e, rang) => ({ name: e.name, autre: nomFr(e.name) !== e.name ? nomFr(e.name) : undefined, muscle: e.muscle, rang })));
 const reconnaitre = (n: string) => reconnaitreHevy(n, (x) => reconnaitreExo(x, biblio()), biblio());
 
 /** texte sur le bleu de l'accent (onPrimary est le bleu nuit du bouton pastel) */
@@ -68,53 +75,92 @@ export type FinReprise = { jours: number[]; seances: number };
 const nomJour = (d: number) => new Date(2026, 10, 16 + d, 12).toLocaleDateString(LOCALE, { weekday: 'long' });
 const dateCourte = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString(LOCALE, { day: 'numeric', month: 'long', year: 'numeric' });
 const nomExo = (n: string) => sansTiret(traduire(nomFr(n)));
+const separateur = (t: string) => {
+  const p = t.replace(/^﻿/, '').split(/\r?\n/, 1)[0];
+  return p.split(';').length > p.split(',').length ? ';' : ',';
+};
 
-const ETAPES: { sticker: NomSticker; texte: string }[] = [
-  { sticker: 'profil', texte: 'Dans Hevy, ouvre ton Profil, puis les Réglages.' },
-  { sticker: 'engrenage', texte: 'Touche Exporter et importer les données.' },
-  { sticker: 'tableur', texte: 'Touche Exporter les séances : Hevy prépare un fichier CSV.' },
-  { sticker: 'partager', texte: 'Enregistre le fichier dans Fichiers, ou envoie le toi.' },
-  { sticker: 'telephone', texte: 'Reviens ici et choisis le fichier.' },
+const CHAMPS: { cle: keyof Colonnes; label: string; requis?: boolean }[] = [
+  { cle: 'date', label: 'Date', requis: true },
+  { cle: 'exercice', label: 'Exercice', requis: true },
+  { cle: 'charge', label: 'Charge' },
+  { cle: 'reps', label: 'Répétitions' },
+  { cle: 'secondes', label: 'Durée (secondes)' },
+  { cle: 'distanceKm', label: 'Distance (km)' },
+  { cle: 'titre', label: 'Nom de la séance' },
 ];
+
+type Fin = { bilan: BilanReprise; dejaLa: number; routine: 'ab' | 'semaine' | 'mes' | null; nbRoutine: number; manques: NonRepris[]; jours: number[] };
+type Etape = 'choix' | 'guide' | 'colonnes' | 'verif' | 'enregistrement' | 'bienvenue';
 
 /**
  * apercu : rien n'est lu ni ecrit (apercu du Studio, mode createur). demo : un export deja lu, pour les rendus et
  * l'apercu (l'ecran s'ouvre a l'etape demandee, sans rien enregistrer).
  */
-export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, onFermer, onFini }: { depuisOnboarding?: boolean; apercu?: boolean; demo?: { texte: string; etape: 'verif' | 'bienvenue' }; onFermer: () => void; onFini: (r: FinReprise) => void }) {
+export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, appDepart, onFermer, onFini }: {
+  depuisOnboarding?: boolean;
+  apercu?: boolean;
+  demo?: { texte: string; etape: 'choix' | 'guide' | 'verif' | 'bienvenue' | 'colonnes'; app?: IdApp };
+  appDepart?: IdApp;
+  onFermer: () => void;
+  onFini: (r: FinReprise) => void;
+}) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const insets = useSafeAreaInsets();
   const illus = useIllustrations();
-  const [etape, setEtape] = useState<'guide' | 'verif' | 'enregistrement' | 'bienvenue'>('guide');
+  const avecNoms = nomsVisibles(depuisOnboarding);
+  const [app, setApp] = useState<IdApp | null>(appDepart ?? null);
+  const [etape, setEtape] = useState<Etape>(avecNoms && !appDepart ? 'choix' : 'guide');
+  const [lecture, setLecture] = useState<ResultatLecture | null>(null);
   const [brut, setBrut] = useState<SeanceLue[] | null>(null);
+  const [fichier, setFichier] = useState<{ texte: string; entete: string[]; colonnes: Colonnes; livres: boolean } | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [lecture, setLecture] = useState(false);
+  const [lit, setLit] = useState(false);
   const [refus, setRefus] = useState<Set<string>>(new Set());
   const [muscles, setMuscles] = useState<Record<string, string>>({});
   const [decochees, setDecochees] = useState<Set<string>>(new Set());
-  const [nom, setNom] = useState(traduire(NOM_ROUTINE_HEVY));
+  const [nom, setNom] = useState<string | null>(null);
   const [garderRoutine, setGarderRoutine] = useState(true);
   const [toutVoir, setToutVoir] = useState(false);
   const [existante, setExistante] = useState<ProgrammePerso | null>(null);
   const [progres, setProgres] = useState({ fait: 0, total: 0 });
-  const [fin, setFin] = useState<{ bilan: BilanReprise; dejaLa: number; routine: 'ab' | 'semaine' | 'mes' | null; nbRoutine: number; sansPlace: number; jours: number[] } | null>(null);
+  const [fin, setFin] = useState<Fin | null>(null);
 
-  useEffect(() => {
-    if (apercu) return;
-    routineHevyExistante().then((p) => {
-      setExistante(p);
-      // un deuxieme import sert d'habitude a l'historique : la routine deja la n'est pas touchee d'office
-      if (p) setGarderRoutine(false);
-    }, () => {});
-  }, [apercu]);
+  const nomApp = nomDuFormat(lecture?.format, depuisOnboarding);
+  const nomRoutine = nom ?? (nomApp ? traduire('Ma routine {0}', nomApp) : traduire('Ma routine'));
+
+  const accepter = (lu: ResultatLecture) => {
+    const l = correspondances(lu.seances, reconnaitre, muscleBibliotheque);
+    setRefus(refusParDefaut(l));
+    setLecture(lu);
+    setBrut(lu.seances);
+    setEtape('verif');
+    if (!apercu) {
+      routineHevyExistante(origineDe(lu.format)).then((p) => {
+        setExistante(p);
+        // un deuxieme import sert d'habitude a l'historique : la routine deja la n'est pas touchee d'office
+        if (p) setGarderRoutine(false);
+      }, () => {});
+    }
+  };
 
   useEffect(() => {
     if (!demo) return;
-    const lu = lireCarnet(demo.texte).seances;
-    setRefus(refusParDefaut(correspondances(lu, reconnaitre, muscleBibliotheque)));
-    setBrut(lu);
-    setEtape(demo.etape === 'bienvenue' ? 'bienvenue' : 'verif');
+    if (demo.app) setApp(demo.app);
+    if (demo.etape === 'choix' || demo.etape === 'guide') {
+      setEtape(demo.etape);
+      return;
+    }
+    if (demo.etape === 'colonnes') {
+      const entete = lireCsv(demo.texte, separateur(demo.texte))[0] ?? [];
+      setFichier({ texte: demo.texte, entete, colonnes: devinerColonnes(entete), livres: false });
+      setEtape('colonnes');
+      return;
+    }
+    accepter(lireCarnet(demo.texte));
+    if (demo.etape === 'bienvenue') setEtape('bienvenue');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [demo]);
 
   const liste: Correspondance[] = useMemo(() => (brut ? correspondances(brut, reconnaitre, muscleBibliotheque) : []), [brut]);
@@ -126,12 +172,28 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, on
   const muscleDe = (c2: Correspondance) => muscles[c2.saisi] ?? c2.muscle;
   const sansMuscle = aToi.filter((c2) => !muscleDe(c2));
   const gardees = routine.seances.filter((s) => !decochees.has(s.cle));
+  const manques = useMemo(() => (lecture ? nonRepris(routine, (k) => !decochees.has(k), lecture) : []), [lecture, routine, decochees]);
+
   // demo : l'ecran Bienvenue avec ce que la reprise aurait enregistre
   useEffect(() => {
     if (demo?.etape !== 'bienvenue' || !finales.length || fin) return;
     const nb = routine.seances.length;
-    setFin({ bilan: bilanReprise(finales), dejaLa: 0, routine: routine.rythme === 'ab' ? 'ab' : routine.rythme === 'semaine' ? 'semaine' : nb ? 'mes' : null, nbRoutine: nb, sansPlace: 0, jours: [] });
-  }, [demo, finales, routine, fin]);
+    setFin({ bilan: bilanReprise(finales), dejaLa: 0, routine: routine.rythme === 'ab' ? 'ab' : routine.rythme === 'semaine' ? 'semaine' : nb ? 'mes' : null, nbRoutine: nb, manques, jours: [] });
+  }, [demo, finales, routine, fin, manques]);
+
+  const lireTexte = (t: string) => {
+    const lu = lireCarnet(t);
+    const connu = lu.format === 'hevy' || lu.format === 'strong' || lu.format === 'fitnotes' || lu.seances.some((s) => s.cle.startsWith('hevy:'));
+    if (connu && lu.seances.length) return accepter(lu);
+    // un tableur d'une autre app : tu choisis les colonnes
+    const rows = lireCsv(t, separateur(t));
+    if (rows.length >= 2 && rows[0].length >= 2) {
+      setFichier({ texte: t, entete: rows[0].map((h) => h.trim()), colonnes: devinerColonnes(rows[0]), livres: false });
+      setEtape('colonnes');
+      return;
+    }
+    setErreur(traduire('YOROI ne reconnaît pas ce fichier. Choisis l’export des séances de ton app, en fichier CSV.'));
+  };
 
   const choisirFichier = async () => {
     if (apercu) return;
@@ -139,24 +201,25 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, on
     try {
       const r = await DocumentPicker.getDocumentAsync({ type: ['text/csv', 'text/comma-separated-values', 'text/plain', '*/*'], copyToCacheDirectory: true });
       if (r.canceled || !r.assets?.[0]) return;
-      setLecture(true);
-      const t = await FileSystem.readAsStringAsync(r.assets[0].uri, { encoding: FileSystem.EncodingType.UTF8 });
-      const lu = lireCarnet(t);
-      const hevy = lu.seances.length > 0 && lu.seances.every((s) => s.cle.startsWith('hevy:'));
-      if (!hevy) {
-        setErreur(traduire('Ce fichier ne ressemble pas à l’export des séances de Hevy. Dans Hevy, choisis Exporter les séances, puis réessaie.'));
-        return;
-      }
-      const l = correspondances(lu.seances, reconnaitre, muscleBibliotheque);
-      setRefus(refusParDefaut(l));
-      setBrut(lu.seances);
-      setEtape('verif');
+      setLit(true);
+      lireTexte(await FileSystem.readAsStringAsync(r.assets[0].uri, { encoding: FileSystem.EncodingType.UTF8 }));
     } catch (e) {
-      logger.warn('[RepriseHevy] fichier illisible', e);
-      setErreur(traduire('Fichier illisible. Réessaie avec le fichier exporté depuis Hevy.'));
+      logger.warn('[Reprise] fichier illisible', e);
+      setErreur(traduire('Fichier illisible. Réessaie avec le fichier exporté depuis ton app.'));
     } finally {
-      setLecture(false);
+      setLit(false);
     }
+  };
+
+  const lireColonnes = () => {
+    if (!fichier) return;
+    const lu = lireCsvColonnes(fichier.texte, fichier.colonnes, fichier.livres);
+    if (!lu.seances.length) {
+      setErreur(traduire('Aucune séance lue avec ces colonnes. Vérifie la date et l’exercice.'));
+      return;
+    }
+    setErreur(null);
+    accepter(lu);
   };
 
   const basculerRefus = (saisi: string) => setRefus((s) => {
@@ -173,14 +236,14 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, on
       const c2 = liste.find((x) => nomFinal(x, refus) === n);
       return c2 ? muscleDe(c2) : null;
     })();
-    const pp = avecProgramme ? versProgrammeHevy(routine, { nom, garder: (k) => !decochees.has(k), muscleDe: muscleFinal }) : null;
+    const pp = avecProgramme ? versProgrammeHevy(routine, { nom: nomRoutine, garder: (k) => !decochees.has(k), muscleDe: muscleFinal, origine: origineDe(lecture?.format) }) : null;
     const lancer = async (suivre: boolean) => {
       setEtape('enregistrement');
       setProgres({ fait: 0, total: finales.length });
       try {
         const b = await enregistrerCarnet(finales, (fait, total) => setProgres({ fait, total }));
         const ajout = await ajouterExosAToi(aToi.map((c2) => ({ nom: nomFinal(c2, refus), muscle: muscleDe(c2) })));
-        let quoi: 'ab' | 'semaine' | 'mes' | null = null;
+        let quoi: Fin['routine'] = null;
         let nb = 0;
         let jours: number[] = [];
         if (pp) {
@@ -194,21 +257,26 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, on
           nb = await garderDansMesSeances(versMesSeances(routine, (k) => !decochees.has(k), muscleFinal));
           if (nb) quoi = 'mes';
         }
-        setFin({ bilan: bilanReprise(finales), dejaLa: b.dejaLa, routine: quoi, nbRoutine: nb, sansPlace: ajout.sansPlace, jours });
+        const plus: NonRepris[] = [
+          ...ajout.sansMuscle.map((n) => ({ quoi: n, raison: 'gardé dans ton historique, pas ajouté à tes machines : muscle non choisi' })),
+          ...ajout.sansPlace.map((n) => ({ quoi: n, raison: 'gardé dans ton historique, pas ajouté à tes machines : tu en as déjà 500' })),
+          ...(b.echecs ? [{ quoi: traduirePluriel(b.echecs, b.echecs > 1, '{0} séance', '{0} séances', b.echecs), raison: 'pas enregistrée : erreur du téléphone, réimporte le fichier pour réessayer' }] : []),
+        ];
+        setFin({ bilan: bilanReprise(finales), dejaLa: b.dejaLa, routine: quoi, nbRoutine: nb, manques: [...manques, ...plus], jours });
         setEtape('bienvenue');
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
       } catch (e) {
-        logger.error('[RepriseHevy] reprise interrompue', e);
+        logger.error('[Reprise] reprise interrompue', e);
         appAlert(traduire('Enregistrement impossible'), traduire('Réessaie dans un instant.'));
         setEtape('verif');
       }
     };
     if (!pp) return void lancer(false);
-    // 18 novembre 2026 : ton programme en cours n'est jamais remplace sans toi
+    // ton programme en cours n'est jamais remplace sans toi
     const autre = await autreProgrammeEnCours(existante?.id);
     if (!autre) return void lancer(true);
     const titre = programmeParId(autre)?.titre ?? '';
-    appAlert(traduire('Tu suis déjà un programme'), traduire('Tu suis « {0} ». Ta routine Hevy le remplace, ou tu gardes les deux ? Rien n’est effacé.', traduire(titre)), [
+    appAlert(traduire('Tu suis déjà un programme'), traduire('Tu suis « {0} ». Ta routine le remplace, ou tu gardes les deux ? Rien n’est effacé.', traduire(titre)), [
       { text: traduire('Annuler'), style: 'cancel' },
       { text: traduire('Garder les deux'), onPress: () => void lancer(false) },
       { text: traduire('Remplacer'), onPress: () => void lancer(true) },
@@ -216,7 +284,6 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, on
   };
 
   const terminer = () => onFini({ jours: fin?.jours ?? [], seances: fin?.bilan.seances ?? 0 });
-
   const sticker = (n: NomSticker, t = 44) => <Image source={illus.img(n)} style={{ width: t, height: t }} resizeMode="contain" accessibilityIgnoresInvertColors />;
 
   const phraseRoutine = (): string => {
@@ -234,18 +301,66 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, on
     return [semaine, quand, exos].filter(Boolean).join(', ');
   };
 
+  const total = (b: { exercices: number; aToi: number }) => traduirePluriel(b.exercices, b.exercices > 1, '{0} machine ou exercice récupéré, dont {1} à toi', '{0} machines et exercices récupérés, dont {1} à toi', b.exercices, b.aToi);
+
+  const carteManques = (l: NonRepris[]) => (l.length ? (
+    <Glass style={{ gap: 6, padding: 18 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingBottom: 2 }}>
+        {sticker('info', 36)}
+        <Ink size={16} weight="black" tight style={{ flex: 1 }}>{traduirePluriel(l.length, l.length > 1, '{0} chose pas reprise', '{0} choses pas reprises', l.length)}</Ink>
+      </View>
+      {(toutVoir ? l : l.slice(0, 8)).map((x, k) => (
+        <Ink key={k} size={13} color={c.textSecondary} style={{ lineHeight: 18 }}>
+          <Ink size={13} weight="extraBold">{x.quoi}</Ink>
+          {` : ${traduire(x.raison)}`}
+        </Ink>
+      ))}
+      {l.length > 8 && !toutVoir ? (
+        <Pressable onPress={() => setToutVoir(true)} accessibilityRole="button" style={{ minHeight: 36, justifyContent: 'center' }}>
+          <Ink size={13} weight="extraBold" color={c.accent}>{traduire('Tout voir')}</Ink>
+        </Pressable>
+      ) : null}
+    </Glass>
+  ) : null);
+
+  /** ce que les fichiers d'export ne contiennent jamais : dit une fois, toujours */
+  const jamaisDansLExport = (
+    <Ink size={12} color={c.textMuted} style={{ lineHeight: 17 }}>{traduire('Les fichiers d’export ne contiennent ni les routines elles-mêmes, ni les temps de repos, ni les exercices jamais faits en séance : ajoute ces exercices avec la liste à la fin.')}</Ink>
+  );
+
   /* ---------------------------------- les ecrans ---------------------------------- */
 
+  const choix = (
+    <>
+      <View style={{ alignItems: 'center', gap: 10, paddingTop: 6 }}>
+        {sticker('carnet', 92)}
+        <Ink size={26} weight="black" tight style={{ textAlign: 'center' }} accessibilityRole="header">{traduire('Ramène tout depuis ton ancienne app')}</Ink>
+        <Ink size={15} color={c.textSecondary} style={{ textAlign: 'center', lineHeight: 21 }}>{traduire('Tes séances, ta routine, tes machines à toi et tes records. Choisis ton app pour voir où trouver l’export.')}</Ink>
+      </View>
+      <Glass style={{ gap: 4, padding: 10 }}>
+        {APPS.map((a) => (
+          <Pressable key={a.id} onPress={() => { setApp(a.id); setEtape('guide'); }} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 10, borderRadius: 16, backgroundColor: pressed ? c.fillSubtle : 'transparent' })}>
+            {sticker(a.id === 'autre' ? 'tableur' : 'musculation', 34)}
+            <Ink size={16} weight="extraBold" style={{ flex: 1 }}>{a.id === 'autre' ? traduire('Une autre app, un tableur') : a.nom}</Ink>
+            <Ink size={18} weight="black" color={c.textMuted}>›</Ink>
+          </Pressable>
+        ))}
+      </Glass>
+      <Ink size={12} color={c.textMuted} style={{ lineHeight: 17 }}>{traduire('Le fichier ne quitte pas ton téléphone : YOROI le lit ici, sans connexion.')}</Ink>
+    </>
+  );
+
+  const nomGuide = avecNoms && app && app !== 'autre' ? APPS.find((a) => a.id === app)?.nom : null;
   const guide = (
     <>
       <View style={{ alignItems: 'center', gap: 10, paddingTop: 6 }}>
         {sticker('carnet', 92)}
-        <Ink size={26} weight="black" tight style={{ textAlign: 'center' }} accessibilityRole="header">{traduire('Ramène tout depuis Hevy')}</Ink>
-        <Ink size={15} color={c.textSecondary} style={{ textAlign: 'center', lineHeight: 21 }}>{traduire('Tes séances, ta routine, tes exercices à toi et tes records. Tout reste sur ton téléphone.')}</Ink>
+        <Ink size={26} weight="black" tight style={{ textAlign: 'center' }} accessibilityRole="header">{nomGuide ? traduire('Ramène tout depuis {0}', nomGuide) : traduire('Ramène tout depuis ton ancienne app')}</Ink>
+        <Ink size={15} color={c.textSecondary} style={{ textAlign: 'center', lineHeight: 21 }}>{traduire('Tes séances, ta routine, tes machines à toi et tes records. Tout reste sur ton téléphone.')}</Ink>
       </View>
       <Glass style={{ gap: 14, padding: 18 }}>
-        {ETAPES.map((e, i) => (
-          <View key={e.sticker} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        {guideDe(app, depuisOnboarding).map((e, i) => (
+          <View key={`${e.sticker}${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <View>
               {sticker(e.sticker, 46)}
               <View style={{ position: 'absolute', right: -4, top: -4, width: 22, height: 22, borderRadius: 11, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
@@ -256,10 +371,42 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, on
           </View>
         ))}
       </Glass>
-      <Ink size={12} color={c.textMuted} style={{ lineHeight: 17 }}>{traduire('Les noms des menus peuvent changer un peu selon ta version de Hevy. Le fichier ne quitte pas ton téléphone : YOROI le lit ici, sans connexion.')}</Ink>
+      <Ink size={12} color={c.textMuted} style={{ lineHeight: 17 }}>{traduire('Les noms des menus peuvent changer un peu selon la version de ton app. Le fichier ne quitte pas ton téléphone : YOROI le lit ici, sans connexion.')}</Ink>
       {erreur ? <Ink size={14} weight="bold" color={c.danger}>{erreur}</Ink> : null}
     </>
   );
+
+  const colonnes = fichier ? (
+    <>
+      <Glass style={{ gap: 8, padding: 18 }}>
+        <Ink size={18} weight="black" tight>{traduire('Choisis tes colonnes')}</Ink>
+        <Ink size={13} color={c.textSecondary} style={{ lineHeight: 18 }}>{traduire('YOROI ne reconnaît pas l’app de ce fichier. Dis lui quelle colonne porte la date, l’exercice, la charge et les répétitions.')}</Ink>
+      </Glass>
+      {CHAMPS.map((f) => (
+        <View key={f.cle} style={{ gap: 6 }}>
+          <Ink size={13} weight="extraBold" color={c.textSecondary}>{traduire(f.label)}{f.requis ? ' *' : ''}</Ink>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+            {[...(f.requis ? [] : [-1]), ...fichier.entete.map((_, i) => i)].map((i) => {
+              const on = (fichier.colonnes[f.cle] ?? -1) === i;
+              return (
+                <Pressable key={i} onPress={() => setFichier((x) => (x ? { ...x, colonnes: { ...x.colonnes, [f.cle]: i } } : x))} accessibilityRole="radio" accessibilityState={{ selected: on }} style={{ minHeight: 34, paddingHorizontal: 12, borderRadius: 999, justifyContent: 'center', backgroundColor: on ? c.accent : c.fillSubtle }}>
+                  <Ink size={12} weight="extraBold" color={on ? BLANC : c.textSecondary}>{i < 0 ? traduire('Aucune') : fichier.entete[i] || traduire('Colonne {0}', i + 1)}</Ink>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      ))}
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {[false, true].map((lb) => (
+          <Pressable key={String(lb)} onPress={() => setFichier((x) => (x ? { ...x, livres: lb } : x))} accessibilityRole="radio" accessibilityState={{ selected: fichier.livres === lb }} style={{ flex: 1, minHeight: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: fichier.livres === lb ? c.accent : c.border, backgroundColor: fichier.livres === lb ? c.accentTint : 'transparent' }}>
+            <Ink size={13} weight="extraBold" color={fichier.livres === lb ? c.accent : c.textSecondary}>{lb ? traduire('Charges en livres') : traduire('Charges en kilos')}</Ink>
+          </Pressable>
+        ))}
+      </View>
+      {erreur ? <Ink size={14} weight="bold" color={c.danger}>{erreur}</Ink> : null}
+    </>
+  ) : null;
 
   const carteExo = (x: Correspondance) => {
     const relie = !estAToi(x, refus);
@@ -284,7 +431,7 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, on
       <View key={x.saisi} style={{ gap: 6, paddingTop: 10, borderTopWidth: 1, borderColor: c.divider }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Ink size={14} weight="extraBold" style={{ flex: 1 }} numberOfLines={2}>{x.saisi}</Ink>
-          {m ? <Ink size={12} weight="bold" color={c.accent}>{niceGroup(m)}</Ink> : null}
+          {m ? <Ink size={12} weight="bold" color={c.accent}>{niceGroup(m)}</Ink> : <Ink size={12} weight="bold" color={c.textMuted}>{traduire('Quel muscle ?')}</Ink>}
         </View>
         {!x.muscle ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
@@ -302,12 +449,17 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, on
     );
   };
 
+  const b0 = bilanReprise(finales);
   const verif = brut ? (
     <>
       <Glass style={{ gap: 6, padding: 18 }}>
         <Ink size={12} weight="black" color={c.accent} style={{ letterSpacing: 0.6 }}>{traduire('CE QUE YOROI A COMPRIS')}</Ink>
-        <Ink size={22} weight="black" tight>{traduirePluriel(finales.length, finales.length > 1, '{0} séance', '{0} séances', finales.length)}</Ink>
-        {finales.length ? <Ink size={13} color={c.textSecondary}>{traduire('du {0} au {1}', dateCourte(finales[0].date), dateCourte(finales[finales.length - 1].date))}</Ink> : null}
+        <Ink size={22} weight="black" tight>{total(b0)}</Ink>
+        <Ink size={14} weight="bold" color={c.textSecondary}>
+          {traduirePluriel(finales.length, finales.length > 1, '{0} séance', '{0} séances', finales.length)}
+          {finales.length ? `, ${traduire('du {0} au {1}', dateCourte(finales[0].date), dateCourte(finales[finales.length - 1].date))}` : ''}
+        </Ink>
+        {(lecture?.avertissements ?? []).map((a, k) => <Ink key={k} size={13} weight="bold" color={c.danger}>{traduire(a)}</Ink>)}
       </Glass>
 
       <Glass style={{ gap: 10, padding: 18 }}>
@@ -336,7 +488,7 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, on
             {routine.rythme !== 'aucun' && garderRoutine ? (
               <View style={{ gap: 4, paddingTop: 6 }}>
                 <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('Nom de ta routine')}</Ink>
-                <TextInput value={nom} onChangeText={setNom} maxLength={40} style={{ minHeight: 46, borderRadius: 14, borderWidth: 1.5, borderColor: c.border, backgroundColor: c.surface, paddingHorizontal: 14, color: c.ink, fontSize: 15 }} accessibilityLabel={traduire('Nom de ta routine')} />
+                <TextInput value={nomRoutine} onChangeText={setNom} maxLength={40} style={{ minHeight: 46, borderRadius: 14, borderWidth: 1.5, borderColor: c.border, backgroundColor: c.surface, paddingHorizontal: 14, color: c.ink, fontSize: 15 }} accessibilityLabel={traduire('Nom de ta routine')} />
               </View>
             ) : null}
             <View style={{ flexDirection: 'row', gap: 8, paddingTop: 4 }}>
@@ -352,7 +504,7 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, on
             </View>
           </>
         ) : (
-          <Ink size={14} color={c.textSecondary}>{traduire('Pas de séance qui revient sur tes 12 dernières semaines : on garde ton historique, tu construiras ta routine ensuite.')}</Ink>
+          <Ink size={14} color={c.textSecondary}>{lecture?.format === 'fitnotes' ? traduire('Ce fichier ne nomme pas tes séances : on garde ton historique, tu construiras ta routine ensuite.') : traduire('Pas de séance qui revient sur tes 12 dernières semaines : on garde ton historique, tu construiras ta routine ensuite.')}</Ink>
         )}
       </Glass>
 
@@ -383,9 +535,17 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, on
               <Ink size={12} color={c.textMuted}>{sansMuscle.length ? traduire('Gardés avec ton nom. Choisis le muscle principal de ceux qu’on ne devine pas.') : traduire('Gardés avec ton nom, avec leur historique et leurs records.')}</Ink>
             </View>
           </View>
-          {[...sansMuscle, ...aToi.filter((x) => muscleDe(x) && !sansMuscle.includes(x))].slice(0, toutVoir ? 999 : 12).map(choixMuscle)}
+          {[...sansMuscle, ...aToi.filter((x) => muscleDe(x) && !sansMuscle.includes(x))].slice(0, toutVoir ? 9999 : 12).map(choixMuscle)}
+          {aToi.length > 12 && !toutVoir ? (
+            <Pressable onPress={() => setToutVoir(true)} accessibilityRole="button" style={{ minHeight: 40, alignItems: 'center', justifyContent: 'center' }}>
+              <Ink size={13} weight="extraBold" color={c.accent}>{traduire('Voir les {0} exercices', aToi.length)}</Ink>
+            </Pressable>
+          ) : null}
         </Glass>
       ) : null}
+
+      {carteManques(manques)}
+      {jamaisDansLExport}
     </>
   ) : null;
 
@@ -397,8 +557,8 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, on
       </View>
       <Glass style={{ gap: 14, padding: 18 }}>
         {[
+          { s: 'musculation' as NomSticker, t: total(fin.bilan) },
           { s: 'carnet' as NomSticker, t: traduirePluriel(fin.bilan.seances, fin.bilan.seances > 1, '{0} séance récupérée', '{0} séances récupérées', fin.bilan.seances) },
-          { s: 'musculation' as NomSticker, t: traduirePluriel(fin.bilan.exercices, fin.bilan.exercices > 1, '{0} exercice dont {1} à toi', '{0} exercices dont {1} à toi', fin.bilan.exercices, fin.bilan.aToi) },
           { s: 'records' as NomSticker, t: traduirePluriel(fin.bilan.records, fin.bilan.records > 1, '{0} record', '{0} records', fin.bilan.records) },
           ...(fin.routine ? [{ s: 'calendrier' as NomSticker, t: fin.routine === 'ab' ? traduire('Ta routine en semaine A et B') : fin.routine === 'semaine' ? traduirePluriel(fin.nbRoutine, fin.nbRoutine > 1, 'Ta routine, {0} séance par semaine', 'Ta routine, {0} séances par semaine', fin.nbRoutine) : traduirePluriel(fin.nbRoutine, fin.nbRoutine > 1, '{0} séance dans Mes séances', '{0} séances dans Mes séances', fin.nbRoutine) }] : []),
         ].map((l) => (
@@ -409,35 +569,51 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, on
         ))}
       </Glass>
       {fin.dejaLa > 0 ? <Ink size={13} color={c.textSecondary}>{traduirePluriel(fin.dejaLa, fin.dejaLa > 1, '{0} était déjà dans YOROI, gardée une seule fois.', '{0} étaient déjà dans YOROI, gardées une seule fois.', fin.dejaLa)}</Ink> : null}
-      {fin.sansPlace > 0 ? <Ink size={13} color={c.textSecondary}>{traduire('{0} exercices à toi restent dans ton historique, sans être ajoutés à tes machines : la liste est pleine.', fin.sansPlace)}</Ink> : null}
+      {carteManques(fin.manques)}
+      {jamaisDansLExport}
+      {apercu && !demo ? null : <AjoutListe />}
     </View>
   ) : null;
 
-  const bas = etape === 'guide'
-    ? <BigButton label={lecture ? traduire('Lecture') : traduire('Choisir le fichier Hevy')} icon="download" onPress={() => void choisirFichier()} />
-    : etape === 'verif'
-      ? <BigButton label={traduire('Tout reprendre')} icon="check" onPress={() => void toutReprendre()} />
+  const bas = etape === 'choix'
+    ? null
+    : etape === 'guide'
+      ? <BigButton label={lit ? traduire('Lecture') : traduire('Choisir le fichier')} icon="download" onPress={() => void choisirFichier()} />
+      : etape === 'colonnes'
+        ? <BigButton label={traduire('Lire le fichier')} icon="check" onPress={lireColonnes} />
+        : etape === 'verif'
+          ? <BigButton label={traduire('Tout reprendre')} icon="check" onPress={() => void toutReprendre()} />
+          : etape === 'enregistrement'
+            ? (
+              <View style={{ minHeight: 56, borderRadius: 18, backgroundColor: c.primary, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center' }}>
+                <ActivityIndicator color={c.onPrimary} />
+                <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire('{0} sur {1}', progres.fait, progres.total)}</Ink>
+              </View>
+            )
+            : <BigButton label={depuisOnboarding ? traduire('Continuer') : traduire('Voir mes séances')} onPress={terminer} />;
+
+  const retour = etape === 'verif' || etape === 'colonnes'
+    ? () => setEtape('guide')
+    : etape === 'guide' && avecNoms && !appDepart
+      ? () => setEtape('choix')
       : etape === 'enregistrement'
-        ? (
-          <View style={{ minHeight: 56, borderRadius: 18, backgroundColor: c.primary, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center' }}>
-            <ActivityIndicator color={c.onPrimary} />
-            <Ink size={16} weight="extraBold" color={c.onPrimary}>{traduire('{0} sur {1}', progres.fait, progres.total)}</Ink>
-          </View>
-        )
-        : <BigButton label={depuisOnboarding ? traduire('Continuer') : traduire('Voir mes séances')} onPress={terminer} />;
+        ? () => {}
+        : etape === 'bienvenue'
+          ? terminer
+          : onFermer;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 120, gap: 14 }} keyboardShouldPersistTaps="handled">
         <EnTete
-          titre={etape === 'bienvenue' ? traduire('Reprise terminée') : traduire('Reprise depuis Hevy')}
-          onRetour={etape === 'verif' ? () => setEtape('guide') : etape === 'enregistrement' ? () => {} : etape === 'bienvenue' ? terminer : onFermer}
+          titre={etape === 'bienvenue' ? traduire('Reprise terminée') : nomApp ? traduire('Reprise depuis {0}', nomApp) : traduire('Reprendre mes séances')}
+          onRetour={retour}
           repli="/(tabs)/seances"
           style={{ marginHorizontal: -22, marginTop: -8 }}
         />
-        {etape === 'guide' ? guide : etape === 'bienvenue' ? bienvenue : verif}
+        {etape === 'choix' ? choix : etape === 'guide' ? guide : etape === 'colonnes' ? colonnes : etape === 'bienvenue' ? bienvenue : verif}
       </ScrollView>
-      <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 16 }}>{bas}</View>
+      {bas ? <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 16 }}>{bas}</View> : null}
     </View>
   );
 }
