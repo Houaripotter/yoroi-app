@@ -35,10 +35,12 @@ import type { ProgrammePerso, SeancePerso } from '@/lib/v2/programmes/monProgram
 export const cleTitre = (t: string | null | undefined): string => plierHevy(t ?? '');
 
 /** Les groupes de la bibliotheque qu'on peut choisir pour un exercice a toi (constants/exerciseLibrary.ts) */
-export const MUSCLES_CHOIX = ['PECTORAUX', 'DOS', 'ÉPAULES', 'BICEPS', 'TRICEPS', 'JAMBES', 'ISCHIOS', 'FESSIERS', 'MOLLETS', 'ABDOS', 'AVANT-BRAS'] as const;
+export const MUSCLES_CHOIX = ['PECTORAUX', 'DOS', 'ÉPAULES', 'BICEPS', 'TRICEPS', 'JAMBES', 'ISCHIOS', 'FESSIERS', 'MOLLETS', 'ABDOS', 'AVANT-BRAS', 'CARDIO'] as const;
 
 /** Les mots du nom, dans l'ordre ou ils departagent (« leg curl » avant « curl », « triceps » avant « extension ») */
 const MOTS_MUSCLE: [RegExp, string][] = [
+  // 18 novembre 2026 : le cardio d'abord (« rameur », pas « rowing » qui est un exercice de dos)
+  [/\b(velo|bike|cycling|spinning|biking|rameur|rower|rowing machine|row ergometer|concept ?2|ergometre|tapis|treadmill|elliptique|elliptical|stair ?master|stairs|escaliers?|corde a sauter|jump rope|skipping|running|run|course|marche|walking|walk|ski ?erg|assault|air bike|cardio|hiit)\b/, 'CARDIO'],
   [/\b(triceps?|pushdown|push down|skull ?crusher|barre au front|kick ?back triceps|dips? triceps|jm press|tate press|french press)\b/, 'TRICEPS'],
   [/\b(leg curl|ischio\w*|hamstrings?|nordic|rdl|romanian|roumain|jambes tendues|stiff leg|good morning)\b/, 'ISCHIOS'],
   [/\b(calf|calves|mollets?|tibialis)\b/, 'MOLLETS'],
@@ -111,8 +113,12 @@ export function correspondances(seances: readonly SeanceLue[], reconnaitre: Reco
       }
       const r = reconnaitre(saisi);
       const propose = r.sur ? r.nom : null;
-      const muscle = (propose ? muscleBiblio(propose) : null) || muscleDevine(saisi);
-      vus.set(saisi, { saisi, propose, exact: !!propose && r.exact !== false, fois: 1, muscle: muscle ?? null });
+      // 18 novembre 2026 : le groupe donne par l'app d'origine (categories de FitNotes) passe avant la devinette
+      // une simple ressemblance ne decide pas du muscle quand l'app d'origine l'a donne
+      const exact = !!propose && r.exact !== false;
+      const lib = propose ? muscleBiblio(propose) : null;
+      const muscle = (exact ? lib : null) || e.muscle || lib || muscleDevine(saisi);
+      vus.set(saisi, { saisi, propose, exact, fois: 1, muscle: muscle ?? null });
     }
   }
   return [...vus.values()].sort((a, b) => b.fois - a.fois || a.saisi.localeCompare(b.saisi));
@@ -147,7 +153,20 @@ export function appliquerChoix(seances: readonly SeanceLue[], liste: readonly Co
 
 /* ---------------------------------- la routine ---------------------------------- */
 
-export type ExoRoutine = { nom: string; series: number; repsMin: number; repsMax: number; charge: number; poidsDuCorps: boolean; enchaine?: boolean };
+export type ExoRoutine = {
+  nom: string;
+  series: number;
+  repsMin: number;
+  repsMax: number;
+  charge: number;
+  poidsDuCorps: boolean;
+  enchaine?: boolean;
+  /** 18 novembre 2026 : exercice tenu (gainage, suspension) : repsMin et repsMax sont des secondes */
+  secondes?: boolean;
+  /** 18 novembre 2026 : cardio (velo, rameur, corde...) : sa duree en minutes ; supposee quand l'export n'a que la distance */
+  minutes?: number;
+  minutesSupposees?: boolean;
+};
 export type SeanceType = {
   /** titre plie : la cle du regroupement */
   cle: string;
@@ -195,11 +214,17 @@ const travail = (series: readonly SerieLue[]) => {
 function exosDeLaVersion(s: SeanceLue): ExoRoutine[] {
   return s.exos
     .filter((e) => e.series.length > 0)
-    .map((e, i, l) => {
+    .map((e, i, l): ExoRoutine => {
       const t = travail(e.series);
       const reps = t.map((x) => x.reps).filter((r) => r > 0);
       const charge = Math.max(0, ...t.map((x) => x.weight || 0));
       const suivant = l[i + 1];
+      const enTemps = t.every((x) => !!x.secondes || (!!x.distanceKm && !x.reps));
+      const cardio = enTemps && (t.some((x) => !!x.distanceKm) || muscleDevine(e.nom) === 'CARDIO' || e.muscle === 'CARDIO');
+      if (cardio) {
+        const sec = t.reduce((n, x) => n + (x.secondes ?? 0), 0);
+        return { nom: e.nom, series: 1, repsMin: 1, repsMax: 1, charge: 0, poidsDuCorps: true, minutes: sec > 0 ? Math.max(1, Math.round(sec / 60)) : 20, ...(sec > 0 ? {} : { minutesSupposees: true }) };
+      }
       return {
         nom: e.nom,
         series: t.length,
@@ -207,6 +232,7 @@ function exosDeLaVersion(s: SeanceLue): ExoRoutine[] {
         repsMax: reps.length ? Math.max(...reps) : 12,
         charge,
         poidsDuCorps: charge === 0,
+        ...(enTemps ? { secondes: true } : {}),
         ...(e.superset && suivant && suivant.superset === e.superset ? { enchaine: true } : {}),
       };
     });
@@ -348,6 +374,9 @@ function versExoProgramme(e: ExoRoutine, muscle: string | null | undefined, ench
     // l'export de Hevy n'a pas les temps de repos
     reposSec: 90,
     ...(e.poidsDuCorps ? { poidsDuCorps: true } : {}),
+    ...(e.secondes ? { secondes: true } : {}),
+    // la brique Cardio de YOROI : une duree en minutes (5 a 120), le chrono de la seance en direct
+    ...(e.minutes ? { minutes: borne(e.minutes, 5, 120) } : {}),
     ...(enchaine ? { enchaine: true } : {}),
   };
 }
@@ -366,7 +395,7 @@ function versSeancePerso(t: SeanceType, i: number, muscleDe: (nom: string) => st
  * (ab, depuis) quand Hevy le montre, sinon une seule semaine ; sans fin (ta routine se repete). null : rien a
  * planifier (rythme 'aucun', ou toutes les seances decochees).
  */
-export function versProgrammeHevy(r: Routine, o: { nom?: string; garder?: (cle: string) => boolean; maintenant?: Date; muscleDe?: (nom: string) => string | null | undefined } = {}): ProgrammePerso | null {
+export function versProgrammeHevy(r: Routine, o: { nom?: string; garder?: (cle: string) => boolean; maintenant?: Date; muscleDe?: (nom: string) => string | null | undefined; origine?: string } = {}): ProgrammePerso | null {
   if (r.rythme === 'aucun') return null;
   const garder = o.garder ?? (() => true);
   const muscleDe = o.muscleDe ?? (() => null);
@@ -396,7 +425,7 @@ export function versProgrammeHevy(r: Routine, o: { nom?: string; garder?: (cle: 
     creeLe: jour,
     modifieLe: jour,
     duree: 0,
-    origine: ORIGINE_HEVY,
+    origine: o.origine ?? ORIGINE_HEVY,
   };
 }
 
@@ -435,4 +464,30 @@ export function bilanReprise(seances: readonly SeanceLue[]): BilanReprise {
     }
   }
   return { seances: seances.length, exercices: noms.size, aToi: aToi.size, records: avecRecord.size, premiere, derniere };
+}
+
+/* ---------------------------------- ce qui n'a pas pu etre repris ---------------------------------- */
+
+export type NonRepris = { quoi: string; raison: string; n?: number };
+
+/**
+ * 18 novembre 2026 (Houari : « liste ce qui n'a pas pu etre repris, sans rien taire ») : chaque limite, avec sa
+ * raison (gabarits francais, traduits a l'affichage). Les series vides et les lignes illisibles viennent de la
+ * lecture ; le reste, de la routine reconstruite (limites des programmes perso de YOROI).
+ */
+export function nonRepris(r: Routine, garder: (cle: string) => boolean = () => true, lecture: { incomprises?: readonly string[]; ignorees?: readonly { quoi: string; raison: string }[] } = {}): NonRepris[] {
+  const out: NonRepris[] = [];
+  for (const l of lecture.incomprises ?? []) out.push({ quoi: l, raison: 'ligne illisible : ni date, ni exercice' });
+  for (const x of lecture.ignorees ?? []) out.push({ quoi: x.quoi, raison: x.raison });
+  for (const s of r.seances) {
+    if (!garder(s.cle)) continue;
+    if (s.exos.length > 15) out.push({ quoi: s.titre, raison: 'plus de 15 exercices : la routine garde les 15 premiers, l’historique garde tout', n: s.exos.length - 15 });
+    for (const e of s.exos.slice(0, 15)) {
+      if (e.series > 10) out.push({ quoi: `${s.titre} : ${e.nom}`, raison: 'plus de 10 séries : la routine en garde 10' });
+      if (e.secondes && e.repsMax > 100) out.push({ quoi: `${s.titre} : ${e.nom}`, raison: 'tenue de plus de 100 secondes : la routine vise 100 secondes, l’historique garde ta vraie durée' });
+      if (e.minutesSupposees) out.push({ quoi: `${s.titre} : ${e.nom}`, raison: 'distance sans durée : 20 minutes proposées, à régler' });
+      else if (e.minutes && (e.minutes < 5 || e.minutes > 120)) out.push({ quoi: `${s.titre} : ${e.nom}`, raison: 'le cardio de la routine va de 5 à 120 minutes' });
+    }
+  }
+  return out;
 }
