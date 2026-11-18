@@ -29,7 +29,7 @@
  *   « Plus tard » en haut de chaque ecran, Sante seulement si jamais demandee, Premium seulement s'il n'est pas abonne.
  * 31 octobre 2026 : « Où as-tu entendu parler de YOROI ? » (facultatif, vrais logos) juste apres Ta tranche d'age,
  *   numero SOURCE a la fin pour ne decaler aucun ecran ; jamais en mode retour (components/yoroi/v2/onboarding/Source.tsx).
- * 18 novembre 2026 : « Tu viens de Hevy ? Ramène tout » sur le premier ecran (components/yoroi/v2/import/RepriseHevy.tsx) :
+ * 18 novembre 2026 : « Tu viens d'une autre app de muscu ? Ramène tout » sur le premier ecran, sans aucun nom d'app (components/yoroi/v2/import/RepriseHevy.tsx) :
  *   guide, fichier, verification, Bienvenue, puis un onboarding court (Draft.viaHevy) : prenom, poids, preparation et
  *   Premium. Tes sports (musculation) et tes jours viennent de ton import ; le reste garde ses valeurs par defaut.
  *   Jamais en apercu ni en mode createur sans ecriture (la reprise ecrit tes seances).
@@ -1188,7 +1188,7 @@ export default function OnboardingScreen() {
           <ListeSauvegardes onRetour={() => setListeOuverte(false)} onRestauree={() => void terminerRestauration()} />
         </Modal>
       ) : null}
-      {/* 18 novembre 2026 : « Tu viens de Hevy ? Ramène tout » ; en apercu et en mode createur, rien n'est lu ni ecrit */}
+      {/* 18 novembre 2026 : « Tu viens d'une autre app de muscu ? Ramène tout » ; en apercu et en mode createur, rien n'est lu ni ecrit */}
       {hevyOuvert ? (
         <Modal visible animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setHevyOuvert(false)}>
           <RepriseHevy depuisOnboarding apercu={sansEcriture} onFermer={() => setHevyOuvert(false)} onFini={(r) => void apresHevy(r)} />
