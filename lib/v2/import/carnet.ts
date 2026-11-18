@@ -13,7 +13,17 @@
  */
 
 export type SerieLue = { weight: number; reps: number; type?: 'normal' | 'warmup' | 'dropset' };
-export type ExoLu = { nom: string; series: SerieLue[]; notes?: string; /** le nom tel qu'il etait ecrit, quand l'exercice a ete reconnu sous un autre nom */ saisi?: string; /** nom pas reconnu : garde comme un exercice a toi */ inconnu?: boolean };
+export type ExoLu = {
+  nom: string;
+  series: SerieLue[];
+  notes?: string;
+  /** le nom tel qu'il etait ecrit, quand l'exercice a ete reconnu sous un autre nom */
+  saisi?: string;
+  /** nom pas reconnu : garde comme un exercice a toi */
+  inconnu?: boolean;
+  /** 18 novembre 2026 : le superset de Hevy (colonne superset_id), pour relier les exercices dans ta routine */
+  superset?: string;
+};
 export type SeanceLue = {
   /** AAAA-MM-JJ */
   date: string;
@@ -258,7 +268,7 @@ export function lireHevy(texte: string): ResultatLecture | null {
   const tete = rows[0].map((h) => h.trim().toLowerCase());
   const col = (n: string) => tete.indexOf(n);
   const iTitre = col('title'), iDebut = col('start_time'), iFin = col('end_time'), iExo = col('exercise_title');
-  const iKg = col('weight_kg'), iLb = col('weight_lbs'), iReps = col('reps'), iType = col('set_type'), iNote = col('exercise_notes');
+  const iKg = col('weight_kg'), iLb = col('weight_lbs'), iReps = col('reps'), iType = col('set_type'), iNote = col('exercise_notes'), iSup = col('superset_id');
   if (iDebut < 0 || iExo < 0 || iReps < 0) return null;
   const parSeance = new Map<string, SeanceLue>();
   const incomprises: string[] = [];
@@ -283,6 +293,8 @@ export function lireHevy(texte: string): ResultatLecture | null {
       exo = { nom, series: [] };
       const note = iNote >= 0 ? (r[iNote] ?? '').trim() : '';
       if (note) exo.notes = note;
+      const sup = iSup >= 0 ? (r[iSup] ?? '').trim() : '';
+      if (sup) exo.superset = sup;
       s.exos.push(exo);
     }
     const reps = Number(r[iReps]);
