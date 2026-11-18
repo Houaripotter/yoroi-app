@@ -748,6 +748,7 @@ export function Accroche({
   onOpenPrivacy,
   onClose,
   offre,
+  onHevy,
 }: {
   genre: 'h' | 'f';
   onStart: () => void;
@@ -760,6 +761,8 @@ export function Accroche({
   onClose?: () => void;
   /** 7 novembre 2026 : premier lancement, une sauvegarde iCloud trouvee (lib/v2/sauvegarde/retrouver.ts) */
   offre?: { modifiedAt: number; onRetrouver: () => void; onZero: () => void };
+  /** 18 novembre 2026 : « Tu viens de Hevy ? Ramène tout » (components/yoroi/v2/import/RepriseHevy.tsx) */
+  onHevy?: () => void;
 }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
@@ -1003,6 +1006,17 @@ export function Accroche({
         <NoteLauriers compact={short} />
         <View style={{ paddingHorizontal: GUTTER, paddingTop: tiny ? 8 : short ? 10 : 12, gap: tiny ? 6 : short ? 8 : 10 }}>
           <MainButton label={traduire("Commencer")} onPress={onStart} />
+          {/* 18 novembre 2026 (Houari : « ils ne veulent pas changer, il faut que ton app reprenne tout ») : juste sous
+              Commencer, le chemin de ceux qui viennent de Hevy ; « J'ai déjà une sauvegarde » reste en haut */}
+          {onHevy ? (
+            <Pressable onPress={onHevy} accessibilityRole="button" accessibilityLabel={traduire('Tu viens de Hevy ? Ramène tout')} hitSlop={4} style={({ pressed }) => ({ minHeight: 40, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: pressed ? c.fillSubtle : 'transparent' })}>
+              <Icon name="download" size={14} color={c.accent} />
+              <Ink size={13.5} color={c.textSecondary}>
+                {traduire('Tu viens de Hevy ? ')}
+                <Ink size={13.5} weight="extraBold" color={c.accent}>{traduire('Ramène tout')}</Ink>
+              </Ink>
+            </Pressable>
+          ) : null}
           {/* vague 30 : les vrais atouts, en grand (plus de « Version gratuite » : l'app est freemium) */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 4, marginHorizontal: -8 }}>
             {/* 27 octobre 2026 (Houari : « trop neutres ») : un sticker et un texte dans sa couleur pastel */}
