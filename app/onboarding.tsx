@@ -29,6 +29,10 @@
  *   « Plus tard » en haut de chaque ecran, Sante seulement si jamais demandee, Premium seulement s'il n'est pas abonne.
  * 31 octobre 2026 : « Où as-tu entendu parler de YOROI ? » (facultatif, vrais logos) juste apres Ta tranche d'age,
  *   numero SOURCE a la fin pour ne decaler aucun ecran ; jamais en mode retour (components/yoroi/v2/onboarding/Source.tsx).
+ * 18 novembre 2026 : « Tu viens de Hevy ? Ramène tout » sur le premier ecran (components/yoroi/v2/import/RepriseHevy.tsx) :
+ *   guide, fichier, verification, Bienvenue, puis un onboarding court (Draft.viaHevy) : prenom, poids, preparation et
+ *   Premium. Tes sports (musculation) et tes jours viennent de ton import ; le reste garde ses valeurs par defaut.
+ *   Jamais en apercu ni en mode createur sans ecriture (la reprise ecrit tes seances).
  * 3 novembre 2026 : en mode createur, rien ne compte (lib/v2/creator/onboardingCreateur.ts) : aucune mesure, et hors vue
  *   « Nouvel utilisateur » (deja un bac a sable) aucune ecriture, comme l'apercu. L'ordre du Studio : lib/v2/onboarding/ordreEcrans.ts.
  */
@@ -46,6 +50,8 @@ import { getProfile } from '@/lib/database';
 import { brouillonPrerempli } from '@/lib/v2/onboarding/fusion';
 import { importDataFromJSON } from '@/lib/exportService';
 import { ListeSauvegardes } from '@/components/yoroi/v2/sauvegarde/ListeSauvegardes';
+import { RepriseHevy } from '@/components/yoroi/v2/import/RepriseHevy';
+import type { FinReprise } from '@/components/yoroi/v2/import/RepriseHevy';
 import type { Trouvee } from '@/lib/v2/sauvegarde/retrouver';
 import { markTourSeen, markVisiteDone } from '@/components/yoroi/v2/tour/keys';
 import { markWhatsNewSeen } from '@/components/WhatsNewModal';
@@ -390,7 +396,9 @@ export default function OnboardingScreen() {
   const prevOf = (p: number): number => {
     // 27 octobre 2026 : Sante passe a la fin, juste avant Premium
     if (p === PRENOM && retour) return ACCUEIL_RETOUR;
-    if (p === POIDS) return SPORT;
+    if (p === POIDS) return draftRef.current.viaHevy ? PRENOM : SPORT;
+    // 18 novembre 2026 : venu de Hevy, Premium suit la preparation, juste apres le poids
+    if (p === PREMIUM && draftRef.current.viaHevy) return POIDS;
     // 7 novembre 2026 : Source juste apres Ton plan (jamais en mode retour), puis Sante
     if (p === SANTE) return retour ? RESULTAT : SOURCE;
     if (p === SCENE) return UNIVERS;
@@ -477,6 +485,26 @@ export default function OnboardingScreen() {
   // 7 novembre 2026 : « J'ai déjà une sauvegarde » ouvre la liste de tes copies (iCloud, ou dossier relie sur Android),
   // la meme que dans les Reglages. Le selecteur de fichiers seulement si iCloud (ou le dossier) n'est pas disponible.
   const [listeOuverte, setListeOuverte] = useState(false);
+  // 18 novembre 2026 : la reprise depuis Hevy, en plein ecran par dessus le premier ecran
+  const [hevyOuvert, setHevyOuvert] = useState(false);
+  const viaHevy = d.viaHevy === true;
+  const ouvrirHevy = () => {
+    onboardingEvent('reponse', { ecran: 'ouverture', question: 'hevy' });
+    setHevyOuvert(true);
+  };
+  const apresHevy = async (r: FinReprise) => {
+    setHevyOuvert(false);
+    if (!sansEcriture) await AsyncStorage.setItem(LEGAL_ACCEPTED_KEY, 'true').catch(() => {});
+    const cur = draftRef.current;
+    const jours = r.jours.length ? r.jours : cur.jours;
+    patch({
+      viaHevy: true,
+      sports: cur.sports.includes('musculation') ? cur.sports : [...cur.sports, 'musculation'],
+      jours,
+      sessions: jours.length || cur.sessions,
+    });
+    goTo(PRENOM);
+  };
   const handleRestoreBackup = async () => {
     if (restoring || isPreview) return;
     let liste = false;
@@ -585,7 +613,8 @@ export default function OnboardingScreen() {
     return cibleCoherente(x, depart) ?? presetTarget(goalsDe(x));
   };
 
-  const afterWeight = () => goTo(TAILLE);
+  // 18 novembre 2026 : venu de Hevy, la preparation suit le poids (une seule fois), puis Premium
+  const afterWeight = () => (draftRef.current.viaHevy ? goTo(forged ? PREMIUM : FORGE) : goTo(TAILLE));
 
   const afterHeight = () => {
     const cur = draftRef.current;
@@ -867,10 +896,11 @@ export default function OnboardingScreen() {
             onOpenPrivacy={() => router.push('/privacy-policy' as any)}
             onClose={isPreview ? closePreview : undefined}
             offre={offre ? { modifiedAt: offre.modifiedAt, onRetrouver: retrouverOffre, onZero: () => setOffre(null) } : undefined}
+            onHevy={retour ? undefined : ouvrirHevy}
           />
         );
       case PRENOM:
-        return <Prenom nav={nav()} name={d.name} onChange={(v) => patch({ name: v })} onNext={() => { onboardingEvent('reponse', { ecran: 'prenom', question: 'prenom' }); goTo(TOI); }} />;
+        return <Prenom nav={nav()} name={d.name} onChange={(v) => patch({ name: v })} onNext={() => { onboardingEvent('reponse', { ecran: 'prenom', question: 'prenom' }); goTo(viaHevy ? POIDS : TOI); }} />;
       case TOI:
         return (
           <Toi
@@ -1087,7 +1117,7 @@ export default function OnboardingScreen() {
       case COMPARAISON:
         return <Comparaison nav={nav()} genre={genre} univers={univers} onNext={() => goTo(forged ? RESULTAT : FORGE)} />;
       case FORGE:
-        return <Forge nav={{ progress: progressOf(page, true, PRENOM, RESULTAT), onClose: isPreview ? closePreview : undefined }} genre={genre} univers={univers} lignes={lignesPreparation()} chiffres={chiffresPreparation()} scene={d.scene ?? null} run={runFinal} onSound={playGong} onDone={() => goTo(RESULTAT)} />;
+        return <Forge nav={{ progress: progressOf(page, true, PRENOM, RESULTAT), onClose: isPreview ? closePreview : undefined }} genre={genre} univers={univers} lignes={lignesPreparation()} chiffres={chiffresPreparation()} scene={d.scene ?? null} run={runFinal} onSound={playGong} onDone={() => goTo(viaHevy ? PREMIUM : RESULTAT)} />;
       case RESULTAT:
         return (
           <Resultat
@@ -1156,6 +1186,12 @@ export default function OnboardingScreen() {
       {listeOuverte ? (
         <Modal visible animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setListeOuverte(false)}>
           <ListeSauvegardes onRetour={() => setListeOuverte(false)} onRestauree={() => void terminerRestauration()} />
+        </Modal>
+      ) : null}
+      {/* 18 novembre 2026 : « Tu viens de Hevy ? Ramène tout » ; en apercu et en mode createur, rien n'est lu ni ecrit */}
+      {hevyOuvert ? (
+        <Modal visible animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setHevyOuvert(false)}>
+          <RepriseHevy depuisOnboarding apercu={sansEcriture} onFermer={() => setHevyOuvert(false)} onFini={(r) => void apresHevy(r)} />
         </Modal>
       ) : null}
     </View>
