@@ -58,6 +58,9 @@ export function versExercice(e: SeanceLue['exos'][number]): Exercise {
   const travail = e.series.filter((s) => s.type !== 'warmup');
   const base = travail.length ? travail : e.series;
   const meilleure = [...base].sort((a, b) => b.weight - a.weight || b.reps - a.reps)[0];
+  const sec = e.series.reduce((n, s) => n + (s.secondes ?? 0), 0);
+  const duree = sec > 0 ? Math.round((sec / 60) * 10) / 10 : 0;
+  const distance = Math.round(e.series.reduce((n, s) => n + (s.distanceKm ?? 0), 0) * 100) / 100;
   return {
     name: e.nom,
     sets: e.series.length,
@@ -65,6 +68,11 @@ export function versExercice(e: SeanceLue['exos'][number]): Exercise {
     weight: meilleure?.weight ?? 0,
     setsData: e.series.map((s) => (s.type ? { weight: s.weight, reps: s.reps, type: s.type } : { weight: s.weight, reps: s.reps })),
     ...(e.notes ? { notes: e.notes } : {}),
+    // 18 novembre 2026 : gainage et cardio importes, comme la seance en direct : les secondes dans les repetitions,
+    // la duree totale (minutes) et la distance (km) sur l'exercice
+    ...(duree ? { duration: duree } : {}),
+    ...(distance ? { distance } : {}),
+    ...(e.muscle ? { muscle_group: e.muscle } : {}),
   };
 }
 
