@@ -12,7 +12,16 @@
  * L'ecran app/importer-carnet.tsx montre ce qui a ete compris avant d'enregistrer quoi que ce soit.
  */
 
-export type SerieLue = { weight: number; reps: number; type?: 'normal' | 'warmup' | 'dropset' };
+export type SerieLue = {
+  weight: number;
+  /** repetitions ; pour une serie tenue ou de cardio, les secondes (format de YOROI : les secondes dans la colonne Repetitions) */
+  reps: number;
+  type?: 'normal' | 'warmup' | 'dropset';
+  /** 18 novembre 2026 : serie en duree (gainage, velo, rameur...), en secondes */
+  secondes?: number;
+  /** 18 novembre 2026 : serie en distance, en kilometres */
+  distanceKm?: number;
+};
 export type ExoLu = {
   nom: string;
   series: SerieLue[];
@@ -23,6 +32,8 @@ export type ExoLu = {
   inconnu?: boolean;
   /** 18 novembre 2026 : le superset de Hevy (colonne superset_id), pour relier les exercices dans ta routine */
   superset?: string;
+  /** 18 novembre 2026 : le groupe musculaire donne par l'app d'origine (categorie de FitNotes), deja ecrit comme la bibliotheque */
+  muscle?: string;
 };
 export type SeanceLue = {
   /** AAAA-MM-JJ */
@@ -35,7 +46,16 @@ export type SeanceLue = {
   /** cle stable : la meme seance importee deux fois n'est enregistree qu'une fois */
   cle: string;
 };
-export type ResultatLecture = { seances: SeanceLue[]; incomprises: string[] };
+export type ResultatLecture = {
+  seances: SeanceLue[];
+  incomprises: string[];
+  /** 18 novembre 2026 : ce qui n'a pas ete repris, avec sa raison (gabarit francais, traduit a l'affichage) */
+  ignorees?: { quoi: string; raison: string }[];
+  /** 18 novembre 2026 : ce que l'utilisateur doit savoir (unite supposee...) ; gabarits francais */
+  avertissements?: string[];
+  /** l'app reconnue */
+  format?: 'hevy' | 'strong' | 'fitnotes' | 'colonnes' | 'notes' | 'hevy_texte';
+};
 
 const MOIS: Record<string, number> = {
   janvier: 1, janv: 1, jan: 1, january: 1,
@@ -209,7 +229,8 @@ export function lireNotes(texte: string, aujourdhui: Date = new Date()): Resulta
 }
 
 /** CSV avec guillemets (« "Bench Press (Barbell)" », virgules dans les notes) */
-export function lireCsv(texte: string): string[][] {
+/** CSV avec guillemets ; `sep` : la virgule, ou le point-virgule (export de Strong) */
+export function lireCsv(texte: string, sep = ','): string[][] {
   const out: string[][] = [];
   let ligne: string[] = [];
   let champ = '';
@@ -227,7 +248,7 @@ export function lireCsv(texte: string): string[][] {
       continue;
     }
     if (ch === '"') dansGuillemets = true;
-    else if (ch === ',') {
+    else if (ch === sep) {
       ligne.push(champ);
       champ = '';
     } else if (ch === '\n' || ch === '\r') {
@@ -261,6 +282,25 @@ export function lireDateHevy(s: string): { date: string; heure: string; ms: numb
   return null;
 }
 
+/**
+ * 18 novembre 2026 : une serie lue d'un export (Hevy, Strong, FitNotes, colonnes choisies). Charge et repetitions,
+ * ou duree (gainage, velo, rameur : les secondes vont dans les repetitions, comme la seance en direct de YOROI), ou
+ * distance. null : rien de mesure, la serie est vide.
+ */
+export function serieLue(kg: number, reps: number, secondes: number, km: number, type?: SerieLue['type']): SerieLue | null {
+  const w = Math.round((Number.isFinite(kg) && kg > 0 ? kg : 0) * 100) / 100;
+  const r = Number.isFinite(reps) && reps > 0 ? Math.round(reps) : 0;
+  const sec = Number.isFinite(secondes) && secondes > 0 ? Math.round(secondes) : 0;
+  const d = Number.isFinite(km) && km > 0 ? Math.round(km * 1000) / 1000 : 0;
+  if (!r && !sec && !d) return null;
+  return { weight: w, reps: r || sec, ...(type ? { type } : {}), ...(!r && sec ? { secondes: sec } : {}), ...(d ? { distanceKm: d } : {}) };
+}
+
+/** « 2 séries vides » : les exercices dont des series n'avaient ni charge, ni repetitions, ni duree, ni distance */
+function noterVides(vides: Map<string, number>): { quoi: string; raison: string }[] {
+  return [...vides.entries()].map(([quoi, n]) => ({ quoi: `${quoi} (${n})`, raison: 'séries vides : ni répétitions, ni durée, ni distance' }));
+}
+
 /** L'export CSV des seances de Hevy : une ligne par serie */
 export function lireHevy(texte: string): ResultatLecture | null {
   const rows = lireCsv(texte);
@@ -269,9 +309,12 @@ export function lireHevy(texte: string): ResultatLecture | null {
   const col = (n: string) => tete.indexOf(n);
   const iTitre = col('title'), iDebut = col('start_time'), iFin = col('end_time'), iExo = col('exercise_title');
   const iKg = col('weight_kg'), iLb = col('weight_lbs'), iReps = col('reps'), iType = col('set_type'), iNote = col('exercise_notes'), iSup = col('superset_id');
+  // 18 novembre 2026 : gainage, cardio et distance (colonnes duration_seconds et distance_km de l'export)
+  const iSec = col('duration_seconds'), iKm = col('distance_km');
   if (iDebut < 0 || iExo < 0 || iReps < 0) return null;
   const parSeance = new Map<string, SeanceLue>();
   const incomprises: string[] = [];
+  const vides = new Map<string, number>();
   for (const r of rows.slice(1)) {
     const debut = lireDateHevy(r[iDebut] ?? '');
     const nom = (r[iExo] ?? '').trim();
@@ -297,18 +340,21 @@ export function lireHevy(texte: string): ResultatLecture | null {
       if (sup) exo.superset = sup;
       s.exos.push(exo);
     }
-    const reps = Number(r[iReps]);
-    if (!Number.isFinite(reps) || reps <= 0) continue;
+    const reps = Number(r[iReps] || 0);
     const kg = iKg >= 0 && r[iKg] !== '' ? nombre(r[iKg]) : iLb >= 0 && r[iLb] !== '' ? nombre(r[iLb]) * 0.45359237 : 0;
     const typ = iType >= 0 ? (r[iType] ?? '').trim().toLowerCase() : '';
     const type: SerieLue['type'] = typ === 'warmup' || typ === '2' ? 'warmup' : typ === 'dropset' || typ === '3' ? 'dropset' : undefined;
-    exo.series.push({ weight: Math.round((Number.isFinite(kg) ? kg : 0) * 100) / 100, reps, ...(type ? { type } : {}) });
+    const sec = iSec >= 0 && r[iSec] !== '' ? nombre(r[iSec] ?? '') : 0;
+    const km = iKm >= 0 && r[iKm] !== '' ? nombre(r[iKm] ?? '') : 0;
+    const serie = serieLue(kg, reps, sec, km, type);
+    if (serie) exo.series.push(serie);
+    else vides.set(nom, (vides.get(nom) ?? 0) + 1);
   }
   const seances = [...parSeance.values()]
     .map((s) => ({ ...s, exos: s.exos.filter((e) => e.series.length > 0) }))
     .filter((s) => s.exos.length > 0)
     .sort((a, b) => (a.date + (a.heure ?? '') < b.date + (b.heure ?? '') ? -1 : 1));
-  return { seances, incomprises };
+  return { seances, incomprises, ignorees: noterVides(vides), format: 'hevy' };
 }
 
 /**
@@ -451,12 +497,252 @@ export function lireHevyTexte(texte: string): ResultatLecture | null {
   return { seances, incomprises };
 }
 
+/* ------------------------------------------------------------------------------------------------
+ * 18 novembre 2026 : les autres apps de muscu qui exportent leurs seances en fichier. Formats d'apres des exports
+ * reels publies (sources dans __tests__/unit/importAutresApps.test.ts) ; rien n'est invente : une colonne absente
+ * est simplement ignoree, et ce qui est suppose (l'unite des charges) est dit a l'ecran.
+ * ---------------------------------------------------------------------------------------------- */
+
+const LB = 0.45359237;
+const MI = 1.609344;
+const tete = (rows: string[][]) => rows[0].map((h) => h.replace(/^﻿/, '').trim().toLowerCase());
+/** « 2023-07-30 16:49:28 », « 2023-07-30 16:49 », « 2023-07-30 » */
+function dateIso(v: string): { date: string; heure?: string } | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{1,2}):(\d{2}))?/.exec(v.trim());
+  if (!m) return null;
+  return { date: `${m[1]}-${m[2]}-${m[3]}`, ...(m[4] ? { heure: `${deux(+m[4])}:${m[5]}` } : {}) };
+}
+/** « 44m », « 1h 2m », « 1h », « 01:02:00 » : minutes */
+function dureeMinutes(v: string): number | undefined {
+  const t = (v ?? '').trim().toLowerCase();
+  if (!t) return undefined;
+  let m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(t);
+  // « 01:02:00 » et « 1:02 » : heures et minutes
+  if (m) return +m[1] * 60 + +m[2];
+  const h = /(\d+)\s*h/.exec(t);
+  const mi = /(\d+)\s*m(?!s)/.exec(t);
+  if (!h && !mi) return undefined;
+  return (h ? +h[1] * 60 : 0) + (mi ? +mi[1] : 0);
+}
+/** « 0:01:30 », « 1:30 », « 90 » : secondes */
+function secondesDe(v: string): number {
+  const t = (v ?? '').trim();
+  if (!t) return 0;
+  const m = /^(?:(\d+):)?(\d{1,2}):(\d{2})$/.exec(t);
+  if (m) return (m[1] ? +m[1] * 3600 : 0) + +m[2] * 60 + +m[3];
+  const n = nombre(t);
+  return Number.isFinite(n) ? n : 0;
+}
+const versKm = (v: number, unite: string) => {
+  const u = unite.trim().toLowerCase();
+  return u.startsWith('mi') ? v * MI : u === 'm' || u.startsWith('met') ? v / 1000 : v;
+};
+function finir(parSeance: Map<string, SeanceLue>): SeanceLue[] {
+  return [...parSeance.values()]
+    .map((s) => ({ ...s, exos: s.exos.filter((e) => e.series.length > 0) }))
+    .filter((s) => s.exos.length > 0)
+    .sort((a, b) => (a.date + (a.heure ?? '') < b.date + (b.heure ?? '') ? -1 : 1));
+}
+function exoDe(s: SeanceLue, nom: string): ExoLu {
+  let exo = s.exos[s.exos.length - 1];
+  if (!exo || exo.nom !== nom) {
+    exo = { nom, series: [] };
+    s.exos.push(exo);
+  }
+  return exo;
+}
+
+/**
+ * Strong (export « Export Strong Data », CSV). Deux variantes vues dans des exports reels :
+ *  - virgules : Date, Workout Name, Duration, Exercise Name, Set Order, Weight, Reps, Distance, Seconds, Notes,
+ *    Workout Notes, RPE (sans unite : les charges sont supposees en kilos, c'est dit a l'ecran) ;
+ *  - points-virgules : Date;Workout Name;Exercise Name;Set Order;Weight;Weight Unit;Reps;RPE;Distance;Distance Unit;
+ *    Seconds;Notes;Workout Notes;Workout Duration, dates « 2023-07-30 16:49:28 », duree « 44m ».
+ * Les en-tetes sont en anglais (Hevy demande aussi de passer Strong en anglais avant d'exporter).
+ */
+export function lireStrong(texte: string): ResultatLecture | null {
+  const premiere = texte.replace(/^﻿/, '').split(/\r?\n/, 1)[0];
+  const sep = premiere.split(';').length > premiere.split(',').length ? ';' : ',';
+  const rows = lireCsv(texte, sep);
+  if (rows.length < 2) return null;
+  const t = tete(rows);
+  const col = (n: string) => t.indexOf(n);
+  const iDate = col('date'), iTitre = col('workout name'), iExo = col('exercise name'), iOrdre = col('set order');
+  const iKg = col('weight'), iUnite = col('weight unit'), iReps = col('reps'), iDist = col('distance'), iDistU = col('distance unit');
+  const iSec = col('seconds'), iNote = col('notes'), iDuree = col('workout duration') >= 0 ? col('workout duration') : col('duration');
+  if (iDate < 0 || iExo < 0 || iReps < 0 || iOrdre < 0) return null;
+  const parSeance = new Map<string, SeanceLue>();
+  const incomprises: string[] = [];
+  const vides = new Map<string, number>();
+  for (const r of rows.slice(1)) {
+    const d = dateIso(r[iDate] ?? '');
+    const nom = (r[iExo] ?? '').trim();
+    if (!d || !nom) {
+      incomprises.push(r.join(', ').slice(0, 80));
+      continue;
+    }
+    const titre = iTitre >= 0 ? (r[iTitre] ?? '').trim() : '';
+    const cle = `strong:${d.date}T${d.heure ?? ''}:${empreinte(titre)}`;
+    let s = parSeance.get(cle);
+    if (!s) {
+      const duree = iDuree >= 0 ? dureeMinutes(r[iDuree] ?? '') : undefined;
+      s = { date: d.date, ...(d.heure ? { heure: d.heure } : {}), titre: titre || undefined, exos: [], cle, ...(duree && duree > 0 && duree < 600 ? { duree } : {}) };
+      parSeance.set(cle, s);
+    }
+    const exo = exoDe(s, nom);
+    const note = iNote >= 0 ? (r[iNote] ?? '').trim() : '';
+    if (note && !exo.notes) exo.notes = note;
+    const unite = iUnite >= 0 ? (r[iUnite] ?? '').trim().toLowerCase() : '';
+    const kg = iKg >= 0 ? nombre(r[iKg] || '0') * (unite.startsWith('lb') ? LB : 1) : 0;
+    const km = iDist >= 0 ? versKm(nombre(r[iDist] || '0'), iDistU >= 0 ? r[iDistU] ?? '' : 'km') : 0;
+    const ordre = (r[iOrdre] ?? '').trim().toUpperCase();
+    const serie = serieLue(kg, nombre(r[iReps] || '0'), iSec >= 0 ? nombre(r[iSec] || '0') : 0, km, ordre === 'W' ? 'warmup' : ordre === 'D' ? 'dropset' : undefined);
+    if (serie) exo.series.push(serie);
+    else vides.set(nom, (vides.get(nom) ?? 0) + 1);
+  }
+  return {
+    seances: finir(parSeance),
+    incomprises,
+    ignorees: noterVides(vides),
+    format: 'strong',
+    ...(iUnite < 0 && iKg >= 0 ? { avertissements: ['Le fichier ne dit pas l’unité des charges : elles sont lues en kilos. Si ton app était en livres, change l’unité avant d’importer.'] } : {}),
+  };
+}
+
+/** Les categories de FitNotes vers les groupes de la bibliotheque */
+const CATEGORIES_FITNOTES: Record<string, string> = {
+  chest: 'PECTORAUX', back: 'DOS', shoulders: 'ÉPAULES', biceps: 'BICEPS', triceps: 'TRICEPS', legs: 'JAMBES', abs: 'ABDOS', calves: 'MOLLETS', glutes: 'FESSIERS', forearms: 'AVANT-BRAS',
+};
+
+/**
+ * FitNotes (export en tableur, CSV) : Date, Exercise, Category, Weight (kgs) ou Weight (lbs), Reps, Distance,
+ * Distance Unit, Time, une ligne par serie, date « 2014-08-03 » sans heure ni titre de seance : une seance par jour,
+ * pas de routine a reconstruire (rien ne la nomme). La categorie donne le muscle des exercices a toi.
+ */
+export function lireFitNotes(texte: string): ResultatLecture | null {
+  const rows = lireCsv(texte);
+  if (rows.length < 2) return null;
+  const t = tete(rows);
+  const col = (n: string) => t.indexOf(n);
+  const iDate = col('date'), iExo = col('exercise'), iCat = col('category'), iKg = col('weight (kgs)'), iLb = col('weight (lbs)');
+  const iReps = col('reps'), iDist = col('distance'), iDistU = col('distance unit'), iTemps = col('time');
+  if (iDate < 0 || iExo < 0 || iReps < 0 || (iKg < 0 && iLb < 0)) return null;
+  const parSeance = new Map<string, SeanceLue>();
+  const incomprises: string[] = [];
+  const vides = new Map<string, number>();
+  for (const r of rows.slice(1)) {
+    const d = dateIso(r[iDate] ?? '');
+    const nom = (r[iExo] ?? '').trim();
+    if (!d || !nom) {
+      incomprises.push(r.join(', ').slice(0, 80));
+      continue;
+    }
+    let s = parSeance.get(d.date);
+    if (!s) {
+      s = { date: d.date, exos: [], cle: '' };
+      parSeance.set(d.date, s);
+    }
+    const exo = exoDe(s, nom);
+    const cat = iCat >= 0 ? CATEGORIES_FITNOTES[(r[iCat] ?? '').trim().toLowerCase()] : undefined;
+    if (cat && !exo.muscle) exo.muscle = cat;
+    const kg = iKg >= 0 ? nombre(r[iKg] || '0') : nombre(r[iLb] || '0') * LB;
+    const km = iDist >= 0 ? versKm(nombre(r[iDist] || '0'), iDistU >= 0 ? r[iDistU] ?? '' : 'km') : 0;
+    const serie = serieLue(kg, nombre(r[iReps] || '0'), iTemps >= 0 ? secondesDe(r[iTemps] ?? '') : 0, km);
+    if (serie) exo.series.push(serie);
+    else vides.set(nom, (vides.get(nom) ?? 0) + 1);
+  }
+  const seances = finir(parSeance).map((s) => ({ ...s, cle: `fitnotes:${s.date}:${empreinte(s.exos.map((e) => `${e.nom}|${e.series.map((x) => `${x.weight}x${x.reps}`).join(',')}`).join(';'))}` }));
+  return { seances, incomprises, ignorees: noterVides(vides), format: 'fitnotes' };
+}
+
+/* ---------------------------------- un autre fichier : tu choisis les colonnes ---------------------------------- */
+
+export type Colonnes = { date: number; exercice: number; charge?: number; reps?: number; secondes?: number; distanceKm?: number; titre?: number };
+
+/** Les noms de colonnes les plus courants, francais et anglais ; -1 : a choisir */
+export function devinerColonnes(entete: readonly string[]): Colonnes {
+  const t = entete.map((h) => sansAccents(h.trim().toLowerCase()));
+  const trouve = (...motifs: RegExp[]) => {
+    for (const re of motifs) {
+      const i = t.findIndex((h) => re.test(h));
+      if (i >= 0) return i;
+    }
+    return -1;
+  };
+  const c: Colonnes = {
+    date: trouve(/^date$/, /date|start_time|jour/),
+    exercice: trouve(/^exercise( name)?$/, /^exercice$/, /exercise|exercice|movement|mouvement/),
+  };
+  const charge = trouve(/^weight( \(kgs?\))?$/, /weight|poids|charge|kg/);
+  const reps = trouve(/^reps$/, /reps|repetition/);
+  const sec = trouve(/seconds|secondes|duration_seconds|^time$|duree/);
+  const dist = trouve(/distance/);
+  const titre = trouve(/workout name|^title$|^titre$|seance|routine/);
+  if (charge >= 0) c.charge = charge;
+  if (reps >= 0) c.reps = reps;
+  if (sec >= 0) c.secondes = sec;
+  if (dist >= 0) c.distanceKm = dist;
+  if (titre >= 0 && titre !== c.exercice) c.titre = titre;
+  return c;
+}
+
+/** Date d'un fichier quelconque : ISO, ou jour/mois/annee (le format le plus courant en France) */
+function dateLibre(v: string): { date: string; heure?: string } | null {
+  const iso = dateIso(v);
+  if (iso) return iso;
+  const m = /^(\d{1,2})[/.](\d{1,2})[/.](\d{2,4})(?:[ T,]+(\d{1,2})[:h](\d{2}))?/.exec(v.trim());
+  if (!m) return null;
+  const a = m[3].length === 2 ? 2000 + +m[3] : +m[3];
+  if (+m[2] > 12 || +m[1] > 31) return null;
+  return { date: `${a}-${deux(+m[2])}-${deux(+m[1])}`, ...(m[4] ? { heure: `${deux(+m[4])}:${m[5]}` } : {}) };
+}
+
+/** Un CSV d'une autre app, avec les colonnes choisies par l'utilisateur ; `livres` : les charges sont en livres */
+export function lireCsvColonnes(texte: string, c: Colonnes, livres = false): ResultatLecture {
+  const premiere = texte.replace(/^﻿/, '').split(/\r?\n/, 1)[0];
+  const sep = premiere.split(';').length > premiere.split(',').length ? ';' : ',';
+  const rows = lireCsv(texte, sep).slice(1);
+  const parSeance = new Map<string, SeanceLue>();
+  const incomprises: string[] = [];
+  const vides = new Map<string, number>();
+  const v = (r: string[], i?: number) => (i !== undefined && i >= 0 ? (r[i] ?? '').trim() : '');
+  for (const r of rows) {
+    const d = dateLibre(v(r, c.date));
+    const nom = v(r, c.exercice);
+    if (!d || !nom) {
+      incomprises.push(r.join(', ').slice(0, 80));
+      continue;
+    }
+    const titre = v(r, c.titre);
+    const k = `${d.date}T${d.heure ?? ''}:${titre}`;
+    let s = parSeance.get(k);
+    if (!s) {
+      s = { date: d.date, ...(d.heure ? { heure: d.heure } : {}), ...(titre ? { titre } : {}), exos: [], cle: `csv:${d.date}T${d.heure ?? ''}:${empreinte(titre)}` };
+      parSeance.set(k, s);
+    }
+    const exo = exoDe(s, nom);
+    const serie = serieLue(nombre(v(r, c.charge) || '0') * (livres ? LB : 1), nombre(v(r, c.reps) || '0'), secondesDe(v(r, c.secondes)), nombre(v(r, c.distanceKm) || '0'));
+    if (serie) exo.series.push(serie);
+    else vides.set(nom, (vides.get(nom) ?? 0) + 1);
+  }
+  return { seances: finir(parSeance), incomprises, ignorees: noterVides(vides), format: 'colonnes' };
+}
+
 /** Le texte colle ou le fichier : Hevy si l'en-tete le dit, sinon des notes */
 export function lireCarnet(texte: string, aujourdhui: Date = new Date()): ResultatLecture {
   const premiere = texte.replace(/^﻿/, '').split(/\r?\n/, 1)[0].toLowerCase();
   if (premiere.includes('exercise_title') && premiere.includes('start_time')) {
     const h = lireHevy(texte);
     if (h) return h;
+  }
+  // 18 novembre 2026 : Strong et FitNotes
+  if (premiere.includes('exercise name') && premiere.includes('set order')) {
+    const st = lireStrong(texte);
+    if (st) return st;
+  }
+  if (premiere.includes('exercise') && premiere.includes('category') && premiere.includes('weight (')) {
+    const fn = lireFitNotes(texte);
+    if (fn) return fn;
   }
   const partage = lireHevyTexte(texte);
   if (partage) return partage;
