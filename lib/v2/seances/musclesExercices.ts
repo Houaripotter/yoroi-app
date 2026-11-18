@@ -109,12 +109,25 @@ function fiche(nom: string) {
 }
 
 const memo = new Map<string, MusclesExercice | null>();
+// un numero par liste de machines (et non plus toute la liste dans la cle : 500 machines feraient des cles enormes)
+const signatures = new WeakMap<readonly MachinePerso[], number>();
+let prochaineSignature = 1;
+function signatureDe(perso: readonly MachinePerso[]): number {
+  if (!perso.length) return 0;
+  let s = signatures.get(perso);
+  if (s === undefined) {
+    s = prochaineSignature++;
+    signatures.set(perso, s);
+  }
+  return s;
+}
 
 /** Muscles d'un exercice ; null s'il est inconnu (il ne compte pas) */
 export function musclesExercice(e: { name?: string; muscle_group?: string }, perso: readonly MachinePerso[] = machinesEnMemoire()): MusclesExercice | null {
   const nom = String(e.name ?? '').trim();
   const groupe = e.muscle_group ?? '';
-  const k = `${nom}|${groupe}|${perso.map((m) => `${m.nom}:${m.muscle}`).join(';')}`;
+  // 18 novembre 2026 : la signature de tes machines calculee une fois par liste (des centaines restent rapides)
+  const k = `${nom}|${groupe}|${signatureDe(perso)}`;
   if (memo.has(k)) return memo.get(k)!;
   const r = calculer(nom, groupe, perso);
   if (memo.size > 2000) memo.clear();
