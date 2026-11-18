@@ -150,7 +150,8 @@ describe('semaine A et semaine B sur 8 semaines', () => {
   });
   it('la semaine A suit le calendrier : la semaine apres la derniere (une B) est une A', () => {
     // derniere semaine : k = 7 (B) ; la semaine A de reference est k = 6
-    expect(r.depuis).toBe('2026-10-19');
+    // 18 novembre 2026 : la suite de l'alternance, la semaine apres la derniere (une B) : une A
+    expect(r.depuis).toBe('2026-11-02');
     const pp = versProgrammeHevy(r, { maintenant: new Date(2026, 10, 18, 10), muscleDe: (n) => muscleBiblio(n) ?? liste.find((c) => nomFinal(c, refus) === n)?.muscle ?? null })!;
     expect(pp.nom).toBe('Ma routine Hevy');
     expect(pp.ab).toBe(true);
@@ -249,7 +250,9 @@ describe('sans preuve, pas de planning', () => {
     const r = reconstruireRoutine(lu(csv(rows)));
     expect(r.rythme).toBe('aucun');
     expect(r.seances).toHaveLength(1);
-    expect(versProgrammeHevy(r)).toBeNull();
+    // 18 novembre 2026 : la semaine sort toujours construite, sur le jour le plus frequent (le premier en cas d'egalite)
+    const pp = versProgrammeHevy(r)!;
+    expect(pp.semaine.filter(Boolean)).toHaveLength(1);
     expect(versMesSeances(r, () => true, () => 'DOS')).toEqual([{ nom: 'Full body', exos: [{ nom: 'Deadlift (Barbell)', muscle: 'DOS', series: 1, reps: 3, poids: 140 }] }]);
   });
   it('des A et B dans le titre sans alternance prouvee par le calendrier : pas de semaine A et B devinee', () => {
