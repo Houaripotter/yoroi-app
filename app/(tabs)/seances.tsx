@@ -674,7 +674,9 @@ export default function Seances() {
         {importSante ? (
           <Row icon="watch" title={traduire("Depuis {0}", nomSourceSante())} sub={traduire("Tes séances enregistrées par ta montre ou ton téléphone")} onPress={() => { setChoixImportOpen(false); setTimeout(() => setImportOpen(true), 350); }} />
         ) : null}
-        <Row icon="dumbbell" title={traduire("Depuis une autre app de muscu")} sub={traduire("Le fichier CSV exporté depuis ses réglages, ou tes notes copiées")} onPress={() => { setChoixImportOpen(false); router.push('/importer-carnet' as any); }} />
+        {/* 18 novembre 2026 : Hevy en premier, la reprise complete (historique, routine, exercices a toi, records) */}
+        <Row icon="dumbbell" title={traduire("Depuis Hevy, tout reprendre")} sub={traduire("Tes séances, ta routine en semaine A et B, tes exercices à toi")} onPress={() => { setChoixImportOpen(false); router.push('/reprise-hevy' as any); }} />
+        <Row icon="book" title={traduire("Depuis une autre app de muscu")} sub={traduire("Le fichier CSV exporté depuis ses réglages, ou tes notes copiées")} onPress={() => { setChoixImportOpen(false); router.push('/importer-carnet' as any); }} />
         <Row icon="map" title={traduire("Course ou vélo (GPX, TCX)")} sub={traduire("Un fichier de parcours depuis ta montre ou une app de course")} onPress={() => { setChoixImportOpen(false); router.push('/import-workouts' as any); }} />
       </Sheet>
       {importSante ? <ImportSeancesSheet visible={importOpen} onClose={() => setImportOpen(false)} onFini={() => { void reload(); }} /> : null}
