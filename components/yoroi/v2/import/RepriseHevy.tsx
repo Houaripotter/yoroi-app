@@ -33,24 +33,30 @@ import type { Colonnes, ResultatLecture, SeanceLue } from '@/lib/v2/import/carne
 import { reconnaitreExo } from '@/lib/v2/import/vocabulaire';
 import {
   appliquerChoix,
+  avecSemainesAB,
   bilanReprise,
   correspondances,
   estAToi,
   MUSCLES_CHOIX,
   nomFinal,
   nonRepris,
+  placementPropose,
+  placerJour,
+  prochaineSeanceRoutine,
   reconnaitreHevy,
   reconstruireRoutine,
   refusParDefaut,
-  versMesSeances,
+  SEUIL_SUR,
   versProgrammeHevy,
 } from '@/lib/v2/import/repriseHevy';
-import type { BilanReprise, Correspondance, NonRepris, Routine } from '@/lib/v2/import/repriseHevy';
+import { libelleDureeRepos } from '@/lib/v2/seances/reposConseille';
+import type { BilanReprise, Correspondance, NonRepris, Placement, Routine } from '@/lib/v2/import/repriseHevy';
 import { APPS, guideDe, nomDuFormat, nomsVisibles, origineDe } from '@/lib/v2/import/apps';
 import type { IdApp } from '@/lib/v2/import/apps';
 import { enregistrerCarnet } from '@/lib/v2/import/enregistrerCarnet';
-import { ajouterExosAToi, autreProgrammeEnCours, enregistrerRoutine, garderDansMesSeances, muscleBibliotheque, routineHevyExistante } from '@/lib/v2/import/enregistrerReprise';
+import { ajouterExosAToi, autreProgrammeEnCours, enregistrerRoutine, muscleBibliotheque, routineHevyExistante } from '@/lib/v2/import/enregistrerReprise';
 import { programmeParId } from '@/lib/v2/programmes/catalogue';
+import { idDuJourPerso } from '@/lib/v2/programmes/monProgramme';
 import type { ProgrammePerso } from '@/lib/v2/programmes/monProgramme';
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
@@ -90,15 +96,30 @@ const CHAMPS: { cle: keyof Colonnes; label: string; requis?: boolean }[] = [
   { cle: 'titre', label: 'Nom de la séance' },
 ];
 
-type Fin = { bilan: BilanReprise; dejaLa: number; routine: 'ab' | 'semaine' | 'mes' | null; nbRoutine: number; manques: NonRepris[]; jours: number[] };
+/** La route de la seance en direct (app/seance/muscu.tsx), comme routeDuJour (lib/v2/programmes/lancer.ts) */
+export type RouteSeance = { pathname: string; params: Record<string, string> };
+type Prochaine = { titre: string; exos: number; dans: number; jour: number; route: RouteSeance };
+type Fin = { bilan: BilanReprise; dejaLa: number; routine: 'ab' | 'semaine' | null; nbRoutine: number; manques: NonRepris[]; jours: number[]; prochaine: Prochaine | null };
+
+/** La seance du jour (ou la prochaine) de la routine enregistree, prete a lancer */
+function prochaineDe(pp: ProgrammePerso, maintenant = new Date()): Prochaine | null {
+  const x = prochaineSeanceRoutine(pp, maintenant);
+  if (!x) return null;
+  const id = idDuJourPerso(pp, x.jour, x.b);
+  if (!id) return null;
+  return { titre: x.seance.titre ?? '', exos: x.seance.exos.length, dans: x.dans, jour: x.jour, route: { pathname: '/seance/muscu', params: { programme: pp.id, jour: id, sport: 'musculation' } } };
+}
+const LETTRES = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 type Etape = 'choix' | 'guide' | 'colonnes' | 'verif' | 'enregistrement' | 'bienvenue';
 
 /**
  * apercu : rien n'est lu ni ecrit (apercu du Studio, mode createur). demo : un export deja lu, pour les rendus et
  * l'apercu (l'ecran s'ouvre a l'etape demandee, sans rien enregistrer).
  */
-export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, appDepart, onFermer, onFini }: {
+export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, appDepart, onFermer, onFini, onLancer }: {
   depuisOnboarding?: boolean;
+  /** 18 novembre 2026 : « Lancer ma séance » sur Bienvenue ouvre la seance en direct (hors onboarding) */
+  onLancer?: (r: RouteSeance) => void;
   apercu?: boolean;
   demo?: { texte: string; etape: 'choix' | 'guide' | 'verif' | 'bienvenue' | 'colonnes'; app?: IdApp };
   appDepart?: IdApp;
@@ -126,6 +147,9 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, ap
   const [existante, setExistante] = useState<ProgrammePerso | null>(null);
   const [progres, setProgres] = useState({ fait: 0, total: 0 });
   const [fin, setFin] = useState<Fin | null>(null);
+  const [placementTouche, setPlacementTouche] = useState<Placement | null>(null);
+  // 18 novembre 2026 : un nom deduit des muscles (« Pecs et triceps ») se renomme ici
+  const [renoms, setRenoms] = useState<Record<string, string>>({});
 
   const nomApp = nomDuFormat(lecture?.format, depuisOnboarding);
   const nomRoutine = nom ?? (nomApp ? traduire('Ma routine {0}', nomApp) : traduire('Ma routine'));
@@ -165,20 +189,26 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, ap
 
   const liste: Correspondance[] = useMemo(() => (brut ? correspondances(brut, reconnaitre, muscleBibliotheque) : []), [brut]);
   const finales = useMemo(() => (brut ? appliquerChoix(brut, liste, refus) : []), [brut, liste, refus]);
-  const routine: Routine = useMemo(() => reconstruireRoutine(finales), [finales]);
+  const muscleLu = (n: string) => muscleBibliotheque(n) ?? liste.find((x) => nomFinal(x, refus) === n)?.muscle ?? null;
+  const routineBrute: Routine = useMemo(() => reconstruireRoutine(finales, { muscleDe: muscleLu }), [finales]); // eslint-disable-line react-hooks/exhaustive-deps
+  const routine: Routine = useMemo(() => ({ ...routineBrute, seances: routineBrute.seances.map((s) => (renoms[s.cle]?.trim() ? { ...s, titre: renoms[s.cle].trim().slice(0, 40) } : s)) }), [routineBrute, renoms]);
   // les exercices que YOROI relie (ou propose de relier) a un des siens
-  const reliees = liste.filter((c2) => !!c2.propose && c2.propose !== c2.saisi);
+  // 18 novembre 2026 : les correspondances incertaines d'abord (« Est-ce bien ça ? »), puis les sures
+  const reliees = liste.filter((c2) => !!c2.propose && c2.propose !== c2.saisi).sort((x, y) => Number(x.confiance >= SEUIL_SUR) - Number(y.confiance >= SEUIL_SUR) || y.fois - x.fois);
   const aToi = liste.filter((c2) => estAToi(c2, refus));
   const muscleDe = (c2: Correspondance) => muscles[c2.saisi] ?? c2.muscle;
   const sansMuscle = aToi.filter((c2) => !muscleDe(c2));
   const gardees = routine.seances.filter((s) => !decochees.has(s.cle));
+  // 18 novembre 2026 : Ta semaine, toujours construite : la proposition de YOROI, puis tes jours touches
+  const placement: Placement = placementTouche ?? placementPropose(routine);
   const manques = useMemo(() => (lecture ? nonRepris(routine, (k) => !decochees.has(k), lecture) : []), [lecture, routine, decochees]);
 
   // demo : l'ecran Bienvenue avec ce que la reprise aurait enregistre
   useEffect(() => {
     if (demo?.etape !== 'bienvenue' || !finales.length || fin) return;
     const nb = routine.seances.length;
-    setFin({ bilan: bilanReprise(finales), dejaLa: 0, routine: routine.rythme === 'ab' ? 'ab' : routine.rythme === 'semaine' ? 'semaine' : nb ? 'mes' : null, nbRoutine: nb, manques, jours: [] });
+    const pp = versProgrammeHevy(routine, { placement: placementPropose(routine) });
+    setFin({ bilan: bilanReprise(finales), dejaLa: 0, routine: pp ? (pp.ab ? 'ab' : 'semaine') : null, nbRoutine: nb, manques, jours: [], prochaine: pp ? prochaineDe(pp) : null });
   }, [demo, finales, routine, fin, manques]);
 
   const lireTexte = (t: string) => {
@@ -231,12 +261,12 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, ap
 
   const toutReprendre = async () => {
     if (!brut || apercu) return;
-    const avecProgramme = garderRoutine && routine.rythme !== 'aucun' && gardees.length > 0;
+    const avecProgramme = garderRoutine && gardees.length > 0;
     const muscleFinal = (n: string) => muscleBibliotheque(n) ?? (() => {
       const c2 = liste.find((x) => nomFinal(x, refus) === n);
       return c2 ? muscleDe(c2) : null;
     })();
-    const pp = avecProgramme ? versProgrammeHevy(routine, { nom: nomRoutine, garder: (k) => !decochees.has(k), muscleDe: muscleFinal, origine: origineDe(lecture?.format) }) : null;
+    const pp = avecProgramme ? versProgrammeHevy(routine, { nom: nomRoutine, garder: (k) => !decochees.has(k), muscleDe: muscleFinal, origine: origineDe(lecture?.format), placement }) : null;
     const lancer = async (suivre: boolean) => {
       setEtape('enregistrement');
       setProgres({ fait: 0, total: finales.length });
@@ -246,23 +276,22 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, ap
         let quoi: Fin['routine'] = null;
         let nb = 0;
         let jours: number[] = [];
+        let prochaine: Prochaine | null = null;
         if (pp) {
           const s = await enregistrerRoutine(pp, { suivre, remplacerId: existante?.id ?? null });
           if (s) {
             quoi = s.ab ? 'ab' : 'semaine';
             nb = gardees.length;
             jours = Array.from(new Set([...s.semaine, ...(s.semaineB ?? [])].map((x, i) => (x ? i % 7 : -1)).filter((d) => d >= 0))).sort();
+            prochaine = prochaineDe(s);
           }
-        } else if (garderRoutine && routine.rythme === 'aucun' && gardees.length) {
-          nb = await garderDansMesSeances(versMesSeances(routine, (k) => !decochees.has(k), muscleFinal));
-          if (nb) quoi = 'mes';
         }
         const plus: NonRepris[] = [
           ...ajout.sansMuscle.map((n) => ({ quoi: n, raison: 'gardé dans ton historique, pas ajouté à tes machines : muscle non choisi' })),
           ...ajout.sansPlace.map((n) => ({ quoi: n, raison: 'gardé dans ton historique, pas ajouté à tes machines : tu en as déjà 500' })),
           ...(b.echecs ? [{ quoi: traduirePluriel(b.echecs, b.echecs > 1, '{0} séance', '{0} séances', b.echecs), raison: 'pas enregistrée : erreur du téléphone, réimporte le fichier pour réessayer' }] : []),
         ];
-        setFin({ bilan: bilanReprise(finales), dejaLa: b.dejaLa, routine: quoi, nbRoutine: nb, manques: [...manques, ...plus], jours });
+        setFin({ bilan: bilanReprise(finales), dejaLa: b.dejaLa, routine: quoi, nbRoutine: nb, manques: [...manques, ...plus], jours, prochaine });
         setEtape('bienvenue');
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
       } catch (e) {
@@ -300,6 +329,12 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, ap
     const exos = traduirePluriel(s.exos.length, s.exos.length > 1, '{0} exercice', '{0} exercices', s.exos.length);
     return [semaine, quand, exos].filter(Boolean).join(', ');
   };
+  /** Ce que YOROI a decide pour cette seance, dit simplement */
+  const decisions = (s: Routine['seances'][number]): string[] => [
+    ...(s.reunies?.length ? [traduire('{0} et {1} réunies', s.titre, s.reunies.join(', '))] : []),
+    ...(s.versionPrecedente ? [traduire('Dernière fois incomplète : charges et répétitions de la fois d’avant')] : []),
+    ...(s.reposReelSec ? [traduire('Repos réglé sur ton rythme : environ {0}', libelleDureeRepos(s.reposReelSec))] : []),
+  ];
 
   const total = (b: { exercices: number; aToi: number }) => traduirePluriel(b.exercices, b.exercices > 1, '{0} machine ou exercice récupéré, dont {1} à toi', '{0} machines et exercices récupérés, dont {1} à toi', b.exercices, b.aToi);
 
@@ -410,9 +445,11 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, ap
 
   const carteExo = (x: Correspondance) => {
     const relie = !estAToi(x, refus);
+    const incertaine = x.confiance < SEUIL_SUR;
     return (
       <View key={x.saisi} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 10, borderTopWidth: 1, borderColor: c.divider }}>
         <View style={{ flex: 1, gap: 2 }}>
+          {incertaine ? <Ink size={11} weight="black" color={c.accent} style={{ letterSpacing: 0.4 }}>{traduire('EST-CE BIEN ÇA ?')}</Ink> : null}
           <Ink size={14} weight="extraBold" numberOfLines={2}>{x.saisi}</Ink>
           <Ink size={12} color={relie ? c.textSecondary : c.textMuted} numberOfLines={2}>
             {relie ? traduire('relié à {0}', nomExo(x.propose as string)) : traduire('YOROI propose {0}', nomExo(x.propose as string))}
@@ -470,7 +507,22 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, ap
         {routine.seances.length ? (
           <>
             <Ink size={15} weight="bold" style={{ lineHeight: 21 }}>{phraseRoutine()}</Ink>
-            {routine.rythme === 'aucun' ? <Ink size={13} color={c.textSecondary} style={{ lineHeight: 18 }}>{traduire('Tes jours changent d’une semaine à l’autre : pas de planning deviné. Tes séances iront dans Mes séances, prêtes à relancer.')}</Ink> : null}
+            {routine.parSemaine ? <Ink size={13} color={c.textSecondary}>{traduire('{0} séances par semaine en moyenne sur tes 8 dernières semaines d’entraînement', String(routine.parSemaine).replace('.', ','))}</Ink> : null}
+            {routine.libres ? <Ink size={12} color={c.textMuted}>{traduirePluriel(routine.libres, routine.libres > 1, '{0} séance unique gardée dans ton historique, pas dans la routine', '{0} séances uniques gardées dans ton historique, pas dans la routine', routine.libres)}</Ink> : null}
+            <Ink size={13} color={c.textSecondary} style={{ lineHeight: 18 }}>
+              {routine.rythme === 'aucun' ? traduire('Tes jours changent d’une semaine à l’autre : chaque séance est posée le jour où tu la faisais le plus. Touche un jour pour la déplacer.') : traduire('Ta semaine est prête. Touche un jour pour déplacer une séance.')}
+            </Ink>
+            <Pressable onPress={() => setPlacementTouche(avecSemainesAB(placement, !placement.ab))} accessibilityRole="switch" accessibilityState={{ checked: placement.ab }} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
+              <View style={{ width: 44, height: 26, borderRadius: 13, padding: 3, backgroundColor: placement.ab ? c.accent : c.fillSubtle, alignItems: placement.ab ? 'flex-end' : 'flex-start' }}>
+                <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: BLANC }} />
+              </View>
+              <Ink size={14} weight="extraBold" style={{ flex: 1 }}>{traduire('Semaine A et semaine B')}</Ink>
+              {routine.confianceAB && placement.ab ? (
+                <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: routine.confianceAB === 'sur' ? c.accentTint : c.goldTint }}>
+                  <Ink size={11} weight="black" color={routine.confianceAB === 'sur' ? c.accent : c.textSecondary}>{routine.confianceAB === 'sur' ? traduire('sûr') : traduire('à vérifier')}</Ink>
+                </View>
+              ) : null}
+            </Pressable>
             {routine.seances.map((s) => {
               const on = !decochees.has(s.cle);
               return (
@@ -478,14 +530,40 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, ap
                   <View style={{ width: 26, height: 26, borderRadius: 8, borderWidth: 2, borderColor: on ? c.accent : c.border, backgroundColor: on ? c.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                     {on ? <Ink size={15} weight="black" color={BLANC}>✓</Ink> : null}
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Ink size={15} weight="extraBold" numberOfLines={1}>{s.titre}</Ink>
-                    <Ink size={12} color={c.textMuted}>{sousSeance(s)}</Ink>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    {s.nomDeduit ? (
+                      <TextInput value={renoms[s.cle] ?? s.titre} onChangeText={(t) => setRenoms((v) => ({ ...v, [s.cle]: t }))} maxLength={40} style={{ minHeight: 36, borderRadius: 10, borderWidth: 1.5, borderColor: c.border, backgroundColor: c.surface, paddingHorizontal: 10, color: c.ink, fontSize: 15, fontWeight: '800' }} accessibilityLabel={traduire('Nom de la séance')} />
+                    ) : (
+                      <Ink size={15} weight="extraBold" numberOfLines={1}>{s.titre}</Ink>
+                    )}
+                    <Ink size={12} color={c.textMuted}>{s.nomDeduit ? `${traduire('Sans titre : nom tiré de tes muscles, touche pour renommer')}. ` : ''}{sousSeance(s)}</Ink>
+                    {decisions(s).map((d, k) => <Ink key={k} size={12} weight="bold" color={c.accent}>{d}</Ink>)}
                   </View>
                 </Pressable>
               );
+            }).flatMap((ligne, i) => {
+              const s = routine.seances[i];
+              if (decochees.has(s.cle) || !garderRoutine) return [ligne];
+              const lignes: ('a' | 'b')[] = placement.ab ? ['a', 'b'] : ['a'];
+              return [ligne, (
+                <View key={`${s.cle}-jours`} style={{ gap: 6, paddingLeft: 38 }}>
+                  {lignes.map((l) => (
+                    <View key={l} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      {placement.ab ? <Ink size={11} weight="black" color={c.textMuted} style={{ width: 22 }}>{l === 'a' ? 'A' : 'B'}</Ink> : null}
+                      {LETTRES.map((lettre, d) => {
+                        const on = (placement.jours[s.cle]?.[l] ?? []).includes(d);
+                        return (
+                          <Pressable key={d} onPress={() => setPlacementTouche(placerJour(placement, s.cle, l, d))} accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={`${s.titre}, ${nomJour(d)}${placement.ab ? (l === 'a' ? ', A' : ', B') : ''}`} hitSlop={2} style={{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.accent : c.fillSubtle }}>
+                            <Ink size={12} weight="black" color={on ? BLANC : c.textSecondary}>{lettre}</Ink>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  ))}
+                </View>
+              )];
             })}
-            {routine.rythme !== 'aucun' && garderRoutine ? (
+            {garderRoutine ? (
               <View style={{ gap: 4, paddingTop: 6 }}>
                 <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('Nom de ta routine')}</Ink>
                 <TextInput value={nomRoutine} onChangeText={setNom} maxLength={40} style={{ minHeight: 46, borderRadius: 14, borderWidth: 1.5, borderColor: c.border, backgroundColor: c.surface, paddingHorizontal: 14, color: c.ink, fontSize: 15 }} accessibilityLabel={traduire('Nom de ta routine')} />
@@ -494,7 +572,7 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, ap
             <View style={{ flexDirection: 'row', gap: 8, paddingTop: 4 }}>
               {[true, false].map((v) => {
                 const on = garderRoutine === v;
-                const label = v ? (routine.rythme === 'aucun' ? traduire('Garder mes séances') : existante ? traduire('Mettre à jour ma routine') : traduire('Créer ma routine')) : traduire('Juste l’historique');
+                const label = v ? (existante ? traduire('Mettre à jour ma routine') : traduire('Créer ma routine')) : traduire('Juste l’historique');
                 return (
                   <Pressable key={String(v)} onPress={() => setGarderRoutine(v)} accessibilityRole="radio" accessibilityState={{ selected: on }} style={{ flex: 1, minHeight: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8, borderWidth: 1.5, borderColor: on ? c.accent : c.border, backgroundColor: on ? c.accentTint : 'transparent' }}>
                     <Ink size={13} weight="extraBold" color={on ? c.accent : c.textSecondary} style={{ textAlign: 'center' }}>{label}</Ink>
@@ -560,7 +638,7 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, ap
           { s: 'musculation' as NomSticker, t: total(fin.bilan) },
           { s: 'carnet' as NomSticker, t: traduirePluriel(fin.bilan.seances, fin.bilan.seances > 1, '{0} séance récupérée', '{0} séances récupérées', fin.bilan.seances) },
           { s: 'records' as NomSticker, t: traduirePluriel(fin.bilan.records, fin.bilan.records > 1, '{0} record', '{0} records', fin.bilan.records) },
-          ...(fin.routine ? [{ s: 'calendrier' as NomSticker, t: fin.routine === 'ab' ? traduire('Ta routine en semaine A et B') : fin.routine === 'semaine' ? traduirePluriel(fin.nbRoutine, fin.nbRoutine > 1, 'Ta routine, {0} séance par semaine', 'Ta routine, {0} séances par semaine', fin.nbRoutine) : traduirePluriel(fin.nbRoutine, fin.nbRoutine > 1, '{0} séance dans Mes séances', '{0} séances dans Mes séances', fin.nbRoutine) }] : []),
+          ...(fin.routine ? [{ s: 'calendrier' as NomSticker, t: fin.routine === 'ab' ? traduire('Ta routine en semaine A et B') : traduirePluriel(fin.nbRoutine, fin.nbRoutine > 1, 'Ta routine, {0} séance par semaine', 'Ta routine, {0} séances par semaine', fin.nbRoutine) }] : []),
         ].map((l) => (
           <View key={l.s} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             {sticker(l.s, 40)}
@@ -568,6 +646,18 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, ap
           </View>
         ))}
       </Glass>
+      {fin.prochaine ? (
+        <Glass style={{ gap: 10, padding: 18 }}>
+          <Ink size={12} weight="black" color={c.accent} style={{ letterSpacing: 0.6 }}>{fin.prochaine.dans === 0 ? traduire('AUJOURD’HUI') : fin.prochaine.dans === 1 ? traduire('DEMAIN') : nomJour(fin.prochaine.jour).toLocaleUpperCase(LOCALE)}</Ink>
+          <Ink size={20} weight="black" tight>{traduire('{0}, {1} exercices, prête', fin.prochaine.titre, fin.prochaine.exos)}</Ink>
+          <Ink size={13} color={c.textSecondary} style={{ lineHeight: 18 }}>{traduire('Tes exercices dans ton ordre, tes séries et tes charges de la dernière fois.')}</Ink>
+          {onLancer && !depuisOnboarding && !apercu ? (
+            <BigButton label={traduire('Lancer ma séance')} icon="play" onPress={() => onLancer(fin.prochaine!.route)} />
+          ) : depuisOnboarding ? (
+            <Ink size={13} weight="bold" color={c.textMuted}>{traduire('Tu la lances depuis l’accueil, dès la fin de ton inscription.')}</Ink>
+          ) : null}
+        </Glass>
+      ) : null}
       {fin.dejaLa > 0 ? <Ink size={13} color={c.textSecondary}>{traduirePluriel(fin.dejaLa, fin.dejaLa > 1, '{0} était déjà dans YOROI, gardée une seule fois.', '{0} étaient déjà dans YOROI, gardées une seule fois.', fin.dejaLa)}</Ink> : null}
       {carteManques(fin.manques)}
       {jamaisDansLExport}
