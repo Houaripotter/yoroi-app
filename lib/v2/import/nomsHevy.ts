@@ -49,6 +49,9 @@ export const NOMS_HEVY: Record<string, string> = {
   'dips triceps': 'Dips (Focus Triceps)',
   // dos
   'pull up': 'Tractions (Pronation)',
+  // 18 novembre 2026 : le poids du corps leste (la charge notee est le lest ajoute)
+  'pull up weighted': 'Tractions Lestées',
+  'weighted pull up': 'Tractions Lestées',
   'chin up': 'Tractions (Supination)',
   'lat pulldown cable': 'Tirage Poitrine (Lat Pulldown)',
   'lat pulldown machine': 'Tirage Poitrine (Lat Pulldown)',
