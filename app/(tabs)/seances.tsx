@@ -24,6 +24,7 @@
  *    L'historique complet reste tout en bas. Rien n'a disparu. Ancienne version :
  *    _archive_ancien_design_2026-10-09/seances_A_2026-10-28.
  */
+import { AFFICHER_NOMS_APPS, APPS } from '@/lib/v2/import/apps';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
@@ -665,6 +666,8 @@ export default function Seances() {
 
       <Sheet visible={menuOpen} onClose={() => setMenuOpen(false)} title={traduire("Séances")}>
         <Row icon="download" title={traduire("Importer mes séances")} sub={traduire("Depuis ta montre, une autre app ou un fichier")} onPress={() => { setMenuOpen(false); setTimeout(() => setChoixImportOpen(true), 350); }} />
+        {/* 18 novembre 2026 : tes machines (jusqu'a 500) et « Ajoute d'autres machines d'un coup » */}
+        <Row icon="dumbbell" title={traduire("Mes machines")} sub={traduire("Tes exercices à toi, et en ajouter plusieurs d’un coup")} onPress={() => { setMenuOpen(false); router.push('/mes-machines' as any); }} />
         <Row icon="calendar" title={traduire("Planning et calendrier")} onPress={() => { setMenuOpen(false); router.push('/planning' as any); }} />
         {/* 28 octobre 2026 : les seances supprimees, 30 jours, avec « Restaurer » (app/corbeille.tsx) */}
         <Row icon="trash" sticker="corbeille" title={traduire("Corbeille")} sub={traduire("Séances, pesées et mensurations supprimées, 30 jours")} onPress={() => { setMenuOpen(false); router.push('/corbeille' as any); }} />
@@ -674,8 +677,9 @@ export default function Seances() {
         {importSante ? (
           <Row icon="watch" title={traduire("Depuis {0}", nomSourceSante())} sub={traduire("Tes séances enregistrées par ta montre ou ton téléphone")} onPress={() => { setChoixImportOpen(false); setTimeout(() => setImportOpen(true), 350); }} />
         ) : null}
-        {/* 18 novembre 2026 : Hevy en premier, la reprise complete (historique, routine, exercices a toi, records) */}
-        <Row icon="dumbbell" title={traduire("Depuis Hevy, tout reprendre")} sub={traduire("Tes séances, ta routine en semaine A et B, tes exercices à toi")} onPress={() => { setChoixImportOpen(false); router.push('/reprise-hevy' as any); }} />
+        {/* 18 novembre 2026 : la reprise complete d'une autre app (historique, routine, exercices a toi, records) ;
+            les noms des apps suivent lib/v2/import/apps.ts (AFFICHER_NOMS_APPS) */}
+        <Row icon="dumbbell" title={AFFICHER_NOMS_APPS ? traduire("Depuis {0}, tout reprendre", APPS.filter((a) => a.id !== 'autre').map((a) => a.nom).join(', ')) : traduire("Depuis une autre app, tout reprendre")} sub={traduire("Tes séances, ta routine en semaine A et B, tes machines à toi")} onPress={() => { setChoixImportOpen(false); router.push('/reprise-hevy' as any); }} />
         <Row icon="book" title={traduire("Depuis une autre app de muscu")} sub={traduire("Le fichier CSV exporté depuis ses réglages, ou tes notes copiées")} onPress={() => { setChoixImportOpen(false); router.push('/importer-carnet' as any); }} />
         <Row icon="map" title={traduire("Course ou vélo (GPX, TCX)")} sub={traduire("Un fichier de parcours depuis ta montre ou une app de course")} onPress={() => { setChoixImportOpen(false); router.push('/import-workouts' as any); }} />
       </Sheet>
