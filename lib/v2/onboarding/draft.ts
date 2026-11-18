@@ -89,6 +89,8 @@ export type Draft = {
   scene?: string | null;
   /** 31 octobre 2026 : ou tu as entendu parler de YOROI (ecran facultatif, liste fermee, lib/v2/onboarding/sourceConnu.ts) */
   source?: SourceConnu | null;
+  /** 18 novembre 2026 : arrive avec ses donnees de Hevy (RepriseHevy) : l'onboarding ne repose que l'essentiel */
+  viaHevy?: boolean;
 };
 
 export const EMPTY_DRAFT: Draft = {
@@ -178,6 +180,7 @@ export async function loadDraft(): Promise<Draft | null> {
       rappels: rappelsValides(d.rappels),
       scene: typeof d.scene === 'string' ? d.scene : null,
       source: isSourceConnu(d.source) ? d.source : null,
+      ...(d.viaHevy === true ? { viaHevy: true } : { viaHevy: undefined }),
     };
   } catch {
     return null;
