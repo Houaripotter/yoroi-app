@@ -7,7 +7,7 @@
  * Tout reste sur le telephone. Les calculs sont dans repriseHevy.ts (pur, teste).
  */
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
-import { ajouterMachinePerso, chargerMachinesPerso, machineDe, MAX_MACHINES_PERSO } from '@/lib/v2/seances/machinesPerso';
+import { ajouterMachinesPerso } from '@/lib/v2/seances/machinesPerso';
 import { CLE_PROGRAMMES_PERSO, chargerProgrammesPerso, enregistrerProgrammePerso, modifierProgrammePerso, programmesVisibles } from '@/lib/v2/programmes/monProgramme';
 import type { ProgrammePerso } from '@/lib/v2/programmes/monProgramme';
 import { chargerProgrammeActif, enFileProgramme, suivreProgrammePerso } from '@/lib/v2/programmes/suivi';
@@ -21,34 +21,24 @@ export function muscleBibliotheque(nom: string): string | null {
 }
 
 /**
- * Tes exercices a toi, ajoutes a tes machines. Jamais au dela de la place qui reste (60 machines) : un ajout de trop
- * ferait partir tes plus vieilles machines. Les plus faits passent d'abord ; ceux deja dans tes machines gardent
- * leur muscle. Rend le nombre ajoute et celui qui n'a pas eu de place.
+ * Tes exercices a toi, ajoutes a tes machines en une seule ecriture (machinesPerso.ts, avecMachines) : 500 au plus,
+ * tes machines d'avant ne partent jamais. Ceux deja dans tes machines gardent leur muscle ; sans muscle choisi, un
+ * exercice reste dans ton historique sans devenir une machine (dit a l'ecran Bienvenue).
  */
-export async function ajouterExosAToi(liste: readonly { nom: string; muscle: string | null }[]): Promise<{ ajoutes: number; sansPlace: number }> {
-  let deja = await chargerMachinesPerso().catch(() => []);
-  let ajoutes = 0;
-  let sansPlace = 0;
-  for (const e of liste) {
-    if (!e.muscle || machineDe(deja, e.nom)) continue;
-    if (deja.length >= MAX_MACHINES_PERSO) {
-      sansPlace++;
-      continue;
-    }
-    try {
-      deja = await ajouterMachinePerso(e.nom, e.muscle);
-      ajoutes++;
-    } catch (err) {
-      logger.warn('[RepriseHevy] exercice a toi non ajoute', err);
-    }
+export async function ajouterExosAToi(liste: readonly { nom: string; muscle: string | null }[]): Promise<{ ajoutes: number; sansPlace: string[]; sansMuscle: string[] }> {
+  try {
+    const r = await ajouterMachinesPerso(liste);
+    return { ajoutes: r.ajoutees.length, sansPlace: r.sansPlace, sansMuscle: r.sansMuscle };
+  } catch (err) {
+    logger.warn('[Reprise] exercices a toi non ajoutes', err);
+    return { ajoutes: 0, sansPlace: [], sansMuscle: [] };
   }
-  return { ajoutes, sansPlace };
 }
 
-/** Ta routine Hevy deja creee lors d'un import precedent (pas archivee), sinon null */
-export async function routineHevyExistante(): Promise<ProgrammePerso | null> {
+/** Ta routine deja creee lors d'un import precedent de la meme app (pas archivee), sinon null */
+export async function routineHevyExistante(origine: string = ORIGINE_HEVY): Promise<ProgrammePerso | null> {
   const l = programmesVisibles(await chargerProgrammesPerso().catch(() => []));
-  return l.find((p) => p.origine === ORIGINE_HEVY) ?? null;
+  return l.find((p) => p.origine === origine) ?? null;
 }
 
 /** Le programme que tu suis en ce moment (autre que celui-ci), pour demander avant de le remplacer */
