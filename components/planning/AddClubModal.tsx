@@ -31,7 +31,7 @@ import {
   ChevronRight,
   ChevronDown,
 } from 'lucide-react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPORTS, getSportIcon } from '@/lib/sports';
 import { addClub, updateClub, Club } from '@/lib/database';
