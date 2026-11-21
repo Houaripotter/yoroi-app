@@ -11,7 +11,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Modal, Platform, Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
