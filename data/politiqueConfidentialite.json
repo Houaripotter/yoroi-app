@@ -1,6 +1,6 @@
 {
   "miseAJour": {
-    "fr": "26 octobre 2026",
+    "fr": "21 novembre 2026",
     "en": "October 26, 2026",
     "de": "26. Oktober 2026",
     "nl": "26 oktober 2026",
@@ -74,11 +74,12 @@
       "icone": "eye",
       "siMesure": true,
       "lignes": [
-        "Pour savoir quels écrans servent et corriger les plantages, YOROI utilise Google Analytics pour Firebase et Sentry. C'est activé par défaut, et tu peux le couper à tout moment dans Réglages, Confidentialité. Couper arrête tout envoi immédiatement, plantages compris.",
+        "Pour savoir quels écrans servent et corriger les plantages, YOROI utilise Google Analytics pour Firebase, PostHog (hébergé en Europe) et Sentry. C'est activé par défaut, et tu peux le couper à tout moment dans Réglages, Confidentialité. Couper arrête tout envoi immédiatement, plantages compris.",
         "Ce qui est envoyé : des faits d'usage, sans valeur. Par exemple « une pesée a été saisie », « une séance de musculation a été enregistrée », « l'écran Progrès a été ouvert », l'objectif choisi à l'accueil (perdre, prendre, combat, maintenir), le genre déclaré (homme, femme ou autre), la tranche d'âge déclarée (par exemple 25 à 34 ans, jamais l'âge exact ni la date de naissance), la famille de sport, le statut gratuit ou abonné.",
         "Ce qui n'est JAMAIS envoyé : aucun poids, aucune mensuration, aucune calorie, aucune fréquence cardiaque, aucune durée ni charge de séance, aucune donnée d'Apple Santé ou de Health Connect, aucun texte que tu écris, aucun nom, aucun lieu, aucune photo.",
         "Google Analytics attribue à l'app un identifiant d'installation aléatoire et peut déduire le pays approximatif de la connexion. L'identifiant publicitaire n'est pas collecté. Sentry reçoit le rapport technique d'un plantage, sans adresse IP ni identifiant d'appareil.",
-        "Durée : 14 mois au plus pour la mesure d'audience, 90 jours au plus pour les plantages.",
+        "PostHog, hébergé dans l'Union européenne, reçoit seulement ces faits : l'app a été ouverte, une étape de l'accueil a été passée, l'accueil a été terminé (gratuit ou abonné), l'écran d'abonnement a été affiché, un essai ou un abonnement a commencé ou a été annulé, une pesée, une mensuration ou une séance a été enregistrée (avec la famille de sport : musculation, combat, cardio ou autre), un programme du coach a été lancé, une demande d'avis a été affichée. Ni valeur, ni nom, ni adresse e-mail, ni enregistrement de ton écran. PostHog attribue à l'app un identifiant d'installation aléatoire et peut déduire le pays approximatif de la connexion.",
+        "Durée : 14 mois au plus pour Google Analytics, 90 jours au plus pour les plantages.",
         "Un compteur local, visible dans Réglages, Confidentialité, te montre combien d'événements ont été notés. Il ne quitte pas ton téléphone."
       ]
     },
@@ -138,7 +139,7 @@
       "titre": "Transferts hors de l'Union européenne",
       "icone": "archive",
       "lignes": [
-        "Apple, Google, RevenueCat et Sentry peuvent traiter des données aux États-Unis, selon leurs propres politiques et les garanties prévues par le RGPD. Aucune donnée de santé ne leur est envoyée par YOROI."
+        "Apple, Google, RevenueCat et Sentry peuvent traiter des données aux États-Unis, selon leurs propres politiques et les garanties prévues par le RGPD. Aucune donnée de santé ne leur est envoyée par YOROI. PostHog, lui, garde les données dans l'Union européenne."
       ]
     },
     {
