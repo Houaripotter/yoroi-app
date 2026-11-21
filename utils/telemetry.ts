@@ -14,6 +14,8 @@
  *
  * track(evenement, params) fait, dans cet ordre : consentement (sort si coupe), compteur local, fil d'ariane Sentry,
  * envoi a Firebase Analytics.
+ * 21 novembre 2026 (build 3.0.4) : le meme envoi part aussi vers PostHog (hebergement Europe), seulement pour les
+ * evenements de sa table de correspondance et avec une liste blanche de proprietes (utils/telemetryPostHog.ts).
  *
  * Tant que Firebase et Sentry ne sont pas installes, utils/telemetryTransport.ts est une coquille : tout est compte
  * en local, rien ne part. Voir le document de projet « mesure, installation ».
