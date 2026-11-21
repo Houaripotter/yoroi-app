@@ -1,6 +1,6 @@
 import { StyleSheet, TouchableOpacity, View, Image } from 'react-native';
 import { Settings } from 'lucide-react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 interface UserAvatarProps {
   imageUrl?: string;
