@@ -9,7 +9,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native
 import { router } from 'expo-router';
 import { format, parseISO } from 'date-fns';
 import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { ChevronRight } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
