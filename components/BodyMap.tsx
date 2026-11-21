@@ -286,8 +286,8 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
   const isUpperBody = selectedZone ? selectedZone.y < 50 : true;
 
   const imageSource = view === 'front'
-    ? require('@/assets/body-images/body_front.png')
-    : require('@/assets/body-images/body_back.png');
+    ? require('@/assets/body-images/body_front.webp')
+    : require('@/assets/body-images/body_back.webp');
 
   // Fonctions d'édition
   const updateZone = (updates: Partial<BodyZone>) => {
