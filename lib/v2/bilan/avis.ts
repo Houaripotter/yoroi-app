@@ -9,7 +9,10 @@
  *  - jamais pendant l'onboarding ni la démo ;
  *  - pas avant 3 séances enregistrées (compteur yoroi_review_count de lib/reviewPromptService.ts) ;
  *  - au plus une fois tous les 60 jours ;
- *  - plus jamais après « Noter », ni après 3 « Plus tard ».
+ *  - plus jamais après « Noter », ni après 3 « Plus tard » ;
+ *  - 21 novembre 2026 : pas dans les 120 jours qui suivent une fenêtre native demandée après une séance
+ *    (lib/reviewPromptService.ts, clé @yoroi_review_last_prompt). Depuis ce jour, la fin de séance passe par la
+ *    fenêtre native seule ; la feuille reste après le bilan d'une pesée (app/bilan.tsx).
  * « Noter » : la fenêtre native (expo-store-review) quand elle est disponible, sinon la fiche du store
  * (lib/appConfig.ts : App Store id6757306612 ; Google Play par la recherche tant que l'app n'y a pas de lien direct).
  */
@@ -23,6 +26,9 @@ export const SEANCES_AVANT_AVIS_MAISON = 3;
 export const JOURS_ENTRE_AVIS = 60;
 export const REFUS_MAX = 3;
 const JOUR_MS = 86400000;
+/** Dernière fenêtre native (ms), écrite par lib/reviewPromptService.ts (lue ici par sa clé : pas d'import croisé) */
+export const CLE_DERNIERE_NATIVE = '@yoroi_review_last_prompt';
+export const JOURS_APRES_NATIVE = 120;
 
 /** derniere : quand la feuille a ete montree (ms) ; refus : « Plus tard » ; note : « Noter » touche */
 export type EtatAvis = { derniere: number | null; refus: number; note: boolean };
@@ -37,6 +43,8 @@ export type EntreeAvisMaison = {
   demo: boolean;
   /** une autre fenetre (rappels, celebration, fenetre maison) est deja a l'ecran */
   autreFenetre: boolean;
+  /** dernière fenêtre native demandée après une séance (ms, null ou absent si jamais) */
+  derniereNative?: number | null;
 };
 
 /** Faut-il montrer la feuille maintenant ? */
@@ -45,6 +53,7 @@ export function decisionAvisMaison(e: EntreeAvisMaison): boolean {
   if (e.etat.note || e.etat.refus >= REFUS_MAX) return false;
   if (e.seances < SEANCES_AVANT_AVIS_MAISON) return false;
   if (e.etat.derniere !== null && e.maintenant - e.etat.derniere < JOURS_ENTRE_AVIS * JOUR_MS) return false;
+  if (e.derniereNative != null && e.maintenant - e.derniereNative < JOURS_APRES_NATIVE * JOUR_MS) return false;
   return true;
 }
 
@@ -81,14 +90,17 @@ async function ecrireEtat(etat: EtatAvis): Promise<void> {
 /** Lit tout ce qu'il faut et rend la decision (appelee par l'hote au moment d'ouvrir) */
 export async function peutMontrerAvis(autreFenetre: boolean, maintenant = Date.now()): Promise<boolean> {
   try {
-    const [etat, brut, onboarding, demo] = await Promise.all([
+    const [etat, brut, onboarding, demo, native] = await Promise.all([
       lireEtatAvis(),
       AsyncStorage.getItem('yoroi_review_count'),
       AsyncStorage.getItem('yoroi_onboarding_done'),
       AsyncStorage.getItem('@yoroi_demo_data_active'),
+      AsyncStorage.getItem(CLE_DERNIERE_NATIVE),
     ]);
     const seances = parseInt(brut || '0', 10) || 0;
-    return decisionAvisMaison({ etat, seances, maintenant, onboardingFini: onboarding === 'true', demo: demo === 'true', autreFenetre });
+    const n = Number(native);
+    const derniereNative = native && Number.isFinite(n) && n > 0 ? n : null;
+    return decisionAvisMaison({ etat, seances, maintenant, onboardingFini: onboarding === 'true', demo: demo === 'true', autreFenetre, derniereNative });
   } catch {
     return false;
   }
