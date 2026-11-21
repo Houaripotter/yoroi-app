@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Flame, ChevronRight, Trophy, Target, Crown, Shield, Zap } from 'lucide-react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { getCurrentRank, getNextRank, getRankProgress, getDaysToNextRank, RANKS } from '@/lib/ranks';
 import { getDynamicTitle } from '@/lib/dynamicTitleService';
 import { useI18n } from '@/lib/I18nContext';
