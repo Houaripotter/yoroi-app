@@ -8,7 +8,7 @@ import React, { useCallback, useState } from 'react';
 import { DeviceEventEmitter, Pressable, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { carteBlanche } from '@/components/yoroi/v2/seance/pastel';
