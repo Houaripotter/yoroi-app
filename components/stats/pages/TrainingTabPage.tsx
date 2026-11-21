@@ -21,7 +21,7 @@ import { aggregateTrainingData } from '@/lib/statsAggregation';
 import { getTrainings } from '@/lib/database';
 import { getSportById } from '@/lib/sports';
 import { Flame, Target, Calendar, Award, Timer } from 'lucide-react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
 import { format, parseISO, startOfWeek, getISOWeek } from 'date-fns';
 import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
