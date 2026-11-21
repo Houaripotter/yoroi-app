@@ -14,7 +14,7 @@ import Svg, { Path, Rect as SvgRect } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 import { appliquerVitesse, libelleVitesse, useVitesseVoix } from '@/lib/v2/visite/vitesseVoix';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 import { useYoroiTheme } from '@/components/yoroi';
