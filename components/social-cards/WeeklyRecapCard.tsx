@@ -4,7 +4,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { WeekStats } from '@/lib/social-cards/useWeekStats';
 import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
 import { traduire } from '@/lib/i18n/tr';
