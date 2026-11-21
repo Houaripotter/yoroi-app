@@ -9,7 +9,7 @@ import {
   Pressable,
 } from 'react-native';
 import { Check, X, Edit3, AlertTriangle, Clock } from 'lucide-react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
 import { cancelSlot, Injury } from '@/lib/database';
