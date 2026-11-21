@@ -20,7 +20,7 @@ import {
   Moon, Scale, Camera, Footprints, Star,
   TrendingUp, TrendingDown,
 } from 'lucide-react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
