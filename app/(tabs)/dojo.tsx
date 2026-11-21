@@ -50,7 +50,7 @@ import { GLASS_L, loadHydration, saveHydrationAmount } from '@/lib/v2/accueil/hy
 import { Aujourdhui } from '@/components/yoroi/v2/dojo/Aujourdhui';
 import { BoutonPause, FeuillePause } from '@/components/yoroi/v2/dojo/PauseSemaine';
 import { VisiteDojo, etatVisiteDojo, type CibleDojo, type Rect } from '@/components/yoroi/v2/dojo/VisiteDojo';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { programmerRappelCoffre } from '@/lib/v2/dojo/rappelCoffre';
 import { proposerNotifications, reprogrammerRappels } from '@/lib/v2/notifications/permission';
 import type { BeltInfo, Celebration as CelebrationData, PauseKind, WeekStatus, WelcomeSummary } from '@/lib/v2/armure';
