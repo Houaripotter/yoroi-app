@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { X, Check, Trash2, ChevronDown, ChevronRight } from 'lucide-react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '@/lib/ThemeContext';
 import { useCustomPopup } from '@/components/CustomPopup';
