@@ -16,7 +16,7 @@ import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { useTheme } from '@/lib/ThemeContext';
 import { Training, Club } from '@/lib/database';
 import { getClubLogoSource, getSportIcon, getSportColor, getSportName, getSessionTypeLabel } from '@/lib/sports';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { WeeklySlotWithStatus } from '@/hooks/useWeeklySlots';
 
 interface DayDetailModalProps {
