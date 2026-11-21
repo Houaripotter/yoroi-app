@@ -12,12 +12,13 @@
  * Aucune XP ni sceau ici : la gamification vit dans l'onglet Dojo. Seule exception, le passage
  * de rang, celebre en plein ecran. 2 novembre 2026 : une ligne « Ton coffre t’attend dans le Dojo » quand il attend. Animations coupees si le telephone les reduit.
  * Parametre : id de la seance enregistree.
- * La demande de note passe par la feuille YOROI 5 secondes apres « Terminer » (lib/v2/bilan/avis.ts).
+ * 21 novembre 2026 : la demande de note est la fenetre native d'Apple ou de Google, juste apres « Terminer »,
+ * une fois la proposition de rappels passee (regles dans lib/reviewPromptService.ts). Plus de feuille YOROI ici.
  */
 import { usePersonnageUtilisateur } from '@/components/yoroi/v2/perso/usePersonnageUtilisateur';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Ornement } from '@/components/yoroi/v2/ornements/Ornement';
-import { BackHandler, Pressable, ScrollView, View } from 'react-native';
+import { AppState, BackHandler, Pressable, ScrollView, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
@@ -43,9 +44,10 @@ import type { ChoixCardio } from '@/lib/v2/seances/cardioJour';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { versUnitePoids } from '@/lib/v2/unitePoids';
 import type { SeanceResult } from '@/lib/v2/seance/save';
-import { proposerNotificationsApresReussite } from '@/lib/v2/notifications/permission';
+import { proposerNotificationsApresReussite, propositionEnCours } from '@/lib/v2/notifications/permission';
 import { BoutonCarte } from '@/components/yoroi/v2/bilan/BilanVue';
-import { programmerAvis } from '@/lib/v2/bilan/avis';
+import { demanderAvisApresSeance } from '@/lib/reviewPromptService';
+import { _fenetreCurrent } from '@/components/yoroi/v2/fenetre/api';
 import { chargerBilanSeance, lienCarteBilan } from '@/lib/v2/bilan/charger';
 import { lireBilanAuto } from '@/lib/v2/bilan/reglage';
 import { dateCourte, ordinal } from '@/lib/v2/bilan/texte';
@@ -69,6 +71,9 @@ import { BoutonPrincipal } from '@/components/yoroi/v2/ui/BoutonPrincipal';
 
 type Reward = { xp: number; records: string[]; weekHeld: boolean; weekXp: number; state: ArmureState };
 type RankParty = { data: CelebrationData; personnage: string };
+
+/** La fenetre native de note arrive un instant apres l'ecran d'arrivee, jamais pendant la transition */
+const DELAI_AVIS_NATIF_MS = 1200;
 
 export default function SeanceFin() {
   // 31 octobre 2026 (Houari : « soit le personnage de l'utilisateur, soit rien ») : ton personnage, ou rien
@@ -100,6 +105,10 @@ export default function SeanceFin() {
   // le bilan de la seance (compteurs, comparaison, cœur, techniques), sauf si le bilan est coupe dans les reglages
   const [bilan, setBilan] = useState<BilanSeance | null>(null);
   const suiteLancee = useRef(false);
+  // vrai quand la proposition de rappels a ete montree pour cette seance (l'avis attend alors la suivante)
+  const suite = useRef<Promise<boolean> | null>(null);
+  // une seule demande de note par ecran de fin, meme si « Terminer » et le retour sont touches tous les deux
+  const avisLance = useRef(false);
   // 24 octobre : le moment de la validation, sans animation si le telephone les reduit
   const reduit = useMouvementReduit();
   const anime = reduit === false;
@@ -171,16 +180,16 @@ export default function SeanceFin() {
   }, [id]);
 
   // Apres la seance, une seule fenetre a la fois et jamais par-dessus la celebration :
-  // la proposition de rappels ici ; la demande de note vient 5 s apres « Terminer » (programmerAvis).
+  // la proposition de rappels ici ; la fenetre native de note juste apres « Terminer », si les rappels n'ont rien montre.
   const lancerSuite = useCallback(
     (delai: number) => {
       if (suiteLancee.current || !id) return;
       suiteLancee.current = true;
-      setTimeout(() => {
-        void (async () => {
-          await proposerNotificationsApresReussite('seance');
-        })();
-      }, delai);
+      suite.current = new Promise<boolean>((resoudre) => {
+        setTimeout(() => {
+          proposerNotificationsApresReussite('seance').then(resoudre, () => resoudre(false));
+        }, delai);
+      });
     },
     [id],
   );
@@ -195,8 +204,19 @@ export default function SeanceFin() {
   const close = () => {
     // Terminer avant la fin du delai : la suite arrive juste apres, sur l'ecran d'arrivee
     if (rangVerifie && !party) lancerSuite(600);
-    // la feuille « Tu aimes YOROI ? », 5 s apres, sur l'ecran d'arrivee, si la regle le permet
-    if (id) programmerAvis();
+    // la fenetre native de note, sur l'ecran d'arrivee, si la regle le permet (jamais par-dessus le passage de rang)
+    if (id && result && !avisLance.current) {
+      avisLance.current = true;
+      const dureeMin = result.durationMin;
+      const pendantRang = !!party;
+      const rappels = suite.current ?? Promise.resolve(false);
+      void rappels.then((montres) => {
+        setTimeout(() => {
+          if (AppState.currentState !== 'active') return;
+          void demanderAvisApresSeance({ autreFenetre: montres || pendantRang || !!_fenetreCurrent() || propositionEnCours(), dureeMin });
+        }, DELAI_AVIS_NATIF_MS);
+      });
+    }
     if (router.canDismiss()) router.dismissAll();
     else router.replace('/(tabs)' as any);
   };
