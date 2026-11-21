@@ -21,7 +21,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Training, Club } from '@/lib/database';
 import { getSportIcon, getSportName, getSportColor, getSessionTypeLabel } from '@/lib/sports';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { ChevronLeft, ChevronRight, Dumbbell, ChevronDown, ChevronUp, AlertCircle, RefreshCw, ShieldAlert } from 'lucide-react-native';
 import { useDevMode } from '@/lib/DevModeContext';
 import { format, parseISO, isSameMonth, addMonths, subMonths } from 'date-fns';
