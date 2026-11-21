@@ -10,7 +10,7 @@ import { useI18n } from '@/lib/I18nContext';
 import Svg, { Path, Defs, LinearGradient, Stop, Circle, Line, Text as SvgText, G, Rect } from 'react-native-svg';
 import { format, parseISO, Locale } from 'date-fns';
 import { fr, es, de, it, pt, ru, ar, zhCN } from 'date-fns/locale';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 interface ScrollableLineChartProps {
   data: { date?: string; value: number }[];
