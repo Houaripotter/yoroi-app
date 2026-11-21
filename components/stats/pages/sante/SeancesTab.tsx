@@ -4,7 +4,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { getTrainings, Training } from '@/lib/database';
 import { getSportIcon, getSportName, getSportColor } from '@/lib/sports';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Dumbbell, ArrowDown, ArrowUp } from 'lucide-react-native';
 import { format, parseISO } from 'date-fns';
 import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
