@@ -27,7 +27,7 @@ import {
 import { fr, es, de, it, pt, ru, ar, zhCN, type Locale } from 'date-fns/locale';
 import { Training, Club } from '@/lib/database';
 import { getClubLogoSource, getSportIcon, getSportColor } from '@/lib/sports';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
 
 // Mapping des langues vers les locales date-fns
