@@ -18,9 +18,14 @@
  * Simulateur et developpement (16 octobre 2026) : RIEN ne part, ni vers Firebase ni vers Sentry.
  * Lecon d'INRO : les tests sur simulateur polluaient les chiffres. La collecte Firebase est coupee
  * nativement et aucun evenement n'est envoye quand l'app tourne sur un simulateur ou en mode dev.
+ *
+ * PostHog, hebergement Europe (21 novembre 2026, build 3.0.4) : branche ici, voir utils/telemetryPostHog.ts.
+ * Meme interrupteur, memes exclusions (simulateur, developpement), et seuls les evenements de sa table de
+ * correspondance partent, avec une liste blanche stricte de proprietes. Sans cle ni paquet : muet.
  */
 import type { Transport } from './telemetryTransport.types';
 import { masquerChemins, masquerCheminsProfond } from './masquageChemins';
+import { configPostHogReelle, creerEnvoiPostHog } from './telemetryPostHog';
 
 let actifCourant = true;
 
@@ -65,6 +70,9 @@ export function moduleNatifPresent(...noms: string[]): boolean {
 /** Vrai sur simulateur ou en developpement : la mesure reste muette, quoi qu'il arrive. */
 export const HORS_PRODUCTION: boolean = __DEV__ || estSimulateur();
 let sentryPret = false;
+
+/** PostHog : coupe avec le reste (consentement, simulateur, developpement), muet sans cle ni paquet */
+const posthog = creerEnvoiPostHog(configPostHogReelle(HORS_PRODUCTION));
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 // undefined : pas encore regarde ; null : absent pour toute la session (mode silencieux)
@@ -210,19 +218,23 @@ export const transport: Transport = {
   },
   async init(actif) {
     actifCourant = actif && !HORS_PRODUCTION;
+    posthog.init(actifCourant);
     await collecte(actifCourant);
     if (actifCourant) demarrerSentry();
   },
   async setActif(actif) {
     actifCourant = actif && !HORS_PRODUCTION;
+    posthog.setActif(actifCourant);
     await collecte(actifCourant);
     if (actifCourant) demarrerSentry();
     else await arreterSentry();
   },
   async evenement(nom, params) {
     if (!actifCourant) return false;
+    // PostHog d'abord : il ne depend pas de Firebase. Seuls les evenements de sa table partent.
+    const versPostHog = posthog.envoyer(nom, params);
     const f = firebase();
-    if (!f) return false;
+    if (!f) return versPostHog;
     try {
       if (nom === 'screen_view') {
         const ecran = params?.ecran ?? 'inconnu';
