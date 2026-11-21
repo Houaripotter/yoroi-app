@@ -1,6 +1,6 @@
 import React, { useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Check, X, Clock, RefreshCw } from 'lucide-react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useTheme } from '@/lib/ThemeContext';
