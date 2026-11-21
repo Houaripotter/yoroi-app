@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { ViewMode } from '@/hooks/useViewMode';
