@@ -10,7 +10,7 @@ import React from 'react';
 import { View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { IconeOuSticker } from '@/components/yoroi/v2/ui/StickerIcone';
 import { stickerDuSport } from '@/components/yoroi/v2/seances/MonthMarks';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
