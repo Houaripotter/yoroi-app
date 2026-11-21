@@ -7,7 +7,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { DeviceEventEmitter, Platform, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { MiniAction } from '@/components/yoroi/v2/espace/reglages/parts';
