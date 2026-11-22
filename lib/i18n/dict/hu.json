@@ -23278,5 +23278,10 @@
 "Récupère toutes tes séances et tes exercices": "Hozd át az összes edzésed és gyakorlatod",
 "Tes séances sont dans YOROI": "Az edzéseid a YOROI-ban vannak",
 "{0} exercice récupéré": "{0} gyakorlat áthozva",
-"{0} exercices récupérés": "{0} gyakorlat áthozva"
+"{0} exercices récupérés": "{0} gyakorlat áthozva",
+"Autre app (fichier CSV)": "Más app (CSV-fájl)",
+"Non, je commence avec YOROI": "Nem, a YOROI-val kezdem",
+"Tu utilises déjà une app pour tes séances ?": "Használsz már appot az edzéseidhez?",
+"app": "appot",
+"Tu récupères tout : séances, exercices, charges.": "Mindent visszakapsz: edzéseket, gyakorlatokat, súlyokat."
 }
