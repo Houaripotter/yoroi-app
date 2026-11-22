@@ -23600,5 +23600,10 @@
 "Tes séances sont dans YOROI": "Antrenamentele tale sunt în YOROI",
 "{0} exercice récupéré": "{0} exercițiu preluat",
 "{0} exercices récupérés": "{0} de exerciții preluate",
-"{0} exercices récupérés§few": "{0} exerciții preluate"
+"{0} exercices récupérés§few": "{0} exerciții preluate",
+"Autre app (fichier CSV)": "Altă aplicație (fișier CSV)",
+"Non, je commence avec YOROI": "Nu, încep cu YOROI",
+"Tu utilises déjà une app pour tes séances ?": "Folosești deja o aplicație pentru antrenamentele tale?",
+"app": "aplicație",
+"Tu récupères tout : séances, exercices, charges.": "Recuperezi tot: antrenamente, exerciții, greutăți."
 }
