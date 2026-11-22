@@ -1051,7 +1051,8 @@ function IndicateurDefiler({ onPress, reduire }: { onPress: () => void; reduire:
 }
 
 /** Bienvenue Premium apres l'achat : illustration, son et vibration (lances par l'appelant) */
-function Welcome({ genre, personnage = null, restored, trialEnd, reminder, onDone }: { genre: 'h' | 'f'; personnage?: string | null; restored: boolean; trialEnd: Date | null; reminder: boolean; onDone: () => void }) {
+/** 21 novembre 2026 : exporte pour le nouvel onboarding (components/yoroi/v2/onboarding-neuf), la meme bienvenue */
+export function Welcome({ genre, personnage = null, restored, trialEnd, reminder, onDone }: { genre: 'h' | 'f'; personnage?: string | null; restored: boolean; trialEnd: Date | null; reminder: boolean; onDone: () => void }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const insets = useSafeAreaInsets();
