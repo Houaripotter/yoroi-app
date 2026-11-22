@@ -23278,5 +23278,10 @@
 "Récupère toutes tes séances et tes exercices": "把所有训练和动作都带过来",
 "Tes séances sont dans YOROI": "你的训练已在 YOROI 里",
 "{0} exercice récupéré": "已导入 {0} 个动作",
-"{0} exercices récupérés": "已导入 {0} 个动作"
+"{0} exercices récupérés": "已导入 {0} 个动作",
+"Autre app (fichier CSV)": "其他应用（CSV 文件）",
+"Non, je commence avec YOROI": "没有，我从 YOROI 开始",
+"Tu utilises déjà une app pour tes séances ?": "你已经在用应用记录训练了吗？",
+"app": "应用",
+"Tu récupères tout : séances, exercices, charges.": "全部找回：训练、动作、重量。"
 }
