@@ -23278,5 +23278,10 @@
 "Récupère toutes tes séances et tes exercices": "Tüm antrenmanlarını ve egzersizlerini aktar",
 "Tes séances sont dans YOROI": "Antrenmanların YOROI'de",
 "{0} exercice récupéré": "{0} egzersiz aktarıldı",
-"{0} exercices récupérés": "{0} egzersiz aktarıldı"
+"{0} exercices récupérés": "{0} egzersiz aktarıldı",
+"Autre app (fichier CSV)": "Başka uygulama (CSV dosyası)",
+"Non, je commence avec YOROI": "Hayır, YOROI ile başlıyorum",
+"Tu utilises déjà une app pour tes séances ?": "Antrenmanların için zaten bir uygulama kullanıyor musun?",
+"app": "uygulama",
+"Tu récupères tout : séances, exercices, charges.": "Her şeyi geri alırsın: antrenmanlar, egzersizler, ağırlıklar."
 }
