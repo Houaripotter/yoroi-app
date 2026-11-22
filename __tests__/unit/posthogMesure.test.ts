@@ -56,8 +56,17 @@ function config(f: ReturnType<typeof fauxPostHog>, extra: Partial<ConfigPostHog>
 describe('PostHog : correspondance des noms', () => {
   const cas: [string, Record<string, string>, string, Record<string, unknown>][] = [
     ['app_boot', { origine: 'icone' }, 'app_opened', { origine: 'icone' }],
-    ['onboarding_etape', { etape: 'accroche' }, 'onboarding_step', { step: 1, step_name: 'accroche' }],
-    ['onboarding_etape', { etape: 'premium' }, 'onboarding_step', { step: 20, step_name: 'premium' }],
+    // 21 novembre 2026 : nouvel onboarding (interrupteur allume), 24 ecrans, le temps passe en tranche
+    ['onboarding_etape', { etape: 'entree' }, 'onboarding_step', { step: 1, step_name: 'entree' }],
+    ['onboarding_etape', { etape: 'paywall_3', temps: '3_10' }, 'onboarding_step', { step: 23, step_name: 'paywall_3', time_bucket: '3_10' }],
+    ['onboarding_choix', { etape: 'objectif', choix: 'perdre' }, 'onboarding_answer', { step_name: 'objectif', answer: 'perdre' }],
+    ['onboarding_choix', { etape: 'sport', famille: 'combat' }, 'onboarding_answer', { step_name: 'sport', answer: 'combat' }],
+    ['onboarding_rappels', { reponse: 'refuse' }, 'notifications_answered', { answer: 'refuse' }],
+    ['paywall_ecran_vu', { ecran: '2' }, 'paywall_step_viewed', { screen: 2 }],
+    ['rattrapage_vue', { source: 'onboarding' }, 'winback_shown', { source: 'onboarding' }],
+    ['rattrapage_tap', { source: 'onboarding' }, 'winback_tapped', { source: 'onboarding' }],
+    ['rattrapage_ok', { source: 'onboarding' }, 'winback_purchased', { source: 'onboarding' }],
+    ['rattrapage_refus', { source: 'onboarding' }, 'winback_dismissed', { source: 'onboarding' }],
     ['onboarding_termine', { statut: 'abonne' }, 'onboarding_completed', { status: 'abonne' }],
     ['paywall_view', { source: 'onboarding', statut: 'gratuit' }, 'paywall_shown', { source: 'onboarding' }],
     ['paywall_purchase_ok', { source: 'reglages', plan: 'annuel', essai: 'oui' }, 'trial_started', { source: 'reglages', plan: 'annuel' }],
@@ -79,8 +88,9 @@ describe('PostHog : correspondance des noms', () => {
     const couverts = new Set(Object.keys(CORRESPONDANCE_POSTHOG).flatMap((k) => cas.filter((c) => c[0] === k).map((c) => c[2])));
     for (const n of NOMS_POSTHOG) expect(couverts.has(n)).toBe(true);
     expect(NOMS_POSTHOG.sort()).toEqual([
-      'app_opened', 'coach_program_started', 'measurement_logged', 'onboarding_completed', 'onboarding_step', 'paywall_shown',
-      'purchase_cancelled', 'purchase_completed', 'rating_prompt_shown', 'trial_started', 'weigh_in_logged', 'workout_completed',
+      'app_opened', 'coach_program_started', 'measurement_logged', 'notifications_answered', 'onboarding_answer', 'onboarding_completed',
+      'onboarding_step', 'paywall_shown', 'paywall_step_viewed', 'purchase_cancelled', 'purchase_completed', 'rating_prompt_shown',
+      'trial_started', 'weigh_in_logged', 'winback_dismissed', 'winback_purchased', 'winback_shown', 'winback_tapped', 'workout_completed',
     ]);
   });
 
@@ -91,8 +101,14 @@ describe('PostHog : correspondance des noms', () => {
     expect(traduirePourPostHog('onboarding_etape', { etape: 'inconnue' })).toBeNull();
   });
 
+  it('nouvel onboarding : une duree exacte ou une reponse avec un chiffre ne passent pas', () => {
+    expect(traduirePourPostHog('onboarding_etape', { etape: 'prenom', temps: '7' })?.props).toEqual({ step: 2, step_name: 'prenom' });
+    expect(traduirePourPostHog('onboarding_choix', { etape: 'poids', choix: '82' })?.props).toEqual({ step_name: 'poids' });
+    expect(traduirePourPostHog('paywall_ecran_vu', { ecran: '4' })?.props).toEqual({});
+  });
+
   it('aucun autre evenement ne part vers PostHog', () => {
-    for (const nom of ['screen_view', 'app_first_open', 'sommeil_saisi', 'composition_ajoutee', 'onboarding_choix', 'tab_open', 'paywall_cta_tap', 'n_importe_quoi']) {
+    for (const nom of ['screen_view', 'app_first_open', 'sommeil_saisi', 'composition_ajoutee', 'tab_open', 'paywall_cta_tap', 'n_importe_quoi']) {
       expect(traduirePourPostHog(nom, { ecran: 'progres' })).toBeNull();
     }
   });
