@@ -3,8 +3,9 @@
  * l'onboarding (premier ecran, components/yoroi/v2/onboarding/Accroche.tsx) et depuis l'onglet Seances (Importer,
  * app/reprise-hevy.tsx) :
  *  1. le choix de ton app (Hevy, Strong, FitNotes, ou un autre fichier) et son chemin d'export, illustres avec nos
- *     stickers. Les noms d'apps suivent lib/v2/import/apps.ts (AFFICHER_NOMS_APPS) et ne se voient jamais dans
- *     l'onboarding (Houari : « ne marque pas Hevy ») : guide general et fichier reconnu tout seul ;
+ *     stickers. Les noms d'apps suivent lib/v2/import/apps.ts (AFFICHER_NOMS_APPS). Dans l'onboarding, appDepart
+ *     (l'app choisie a la question « Tu utilises déjà une app pour tes séances ? ») ouvre directement le guide de
+ *     cette app, avec son nom ; sans app choisie : guide general et fichier reconnu tout seul ;
  *  2. le fichier choisi (selecteur de documents : YOROI ne recoit pas encore un fichier partage directement) ; un
  *     fichier d'une app inconnue : tu choisis les colonnes (date, exercice, charge, repetitions, duree, distance) ;
  *  3. la verification : le total, ta routine (decocher, renommer, ou juste l'historique), tes exercices (refuser une
@@ -134,7 +135,9 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, ap
   const c = theme.colors;
   const insets = useSafeAreaInsets();
   const illus = useIllustrations();
-  const avecNoms = nomsVisibles(depuisOnboarding);
+  // 22 novembre 2026 : l'app choisie a la question de l'onboarding ouvre directement son guide, avec son nom
+  const appChoisie = depuisOnboarding && !!appDepart;
+  const avecNoms = nomsVisibles(depuisOnboarding, appChoisie);
   const [app, setApp] = useState<IdApp | null>(appDepart ?? null);
   const [etape, setEtape] = useState<Etape>(avecNoms && !appDepart ? 'choix' : 'guide');
   const [lecture, setLecture] = useState<ResultatLecture | null>(null);
@@ -155,7 +158,7 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, ap
   // 18 novembre 2026 : un nom deduit des muscles (« Pecs et triceps ») se renomme ici
   const [renoms, setRenoms] = useState<Record<string, string>>({});
 
-  const nomApp = nomDuFormat(lecture?.format, depuisOnboarding);
+  const nomApp = nomDuFormat(lecture?.format, depuisOnboarding, appChoisie);
   const nomRoutine = nom ?? (nomApp ? traduire('Ma routine {0}', nomApp) : traduire('Ma routine'));
 
   const accepter = (lu: ResultatLecture) => {
@@ -398,7 +401,7 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, ap
         <Ink size={15} color={c.textSecondary} style={{ textAlign: 'center', lineHeight: 21 }}>{traduire('Tes séances, ta routine, tes machines à toi et tes records. Tout reste sur ton téléphone.')}</Ink>
       </View>
       <Glass style={{ gap: 14, padding: 18 }}>
-        {guideDe(app, depuisOnboarding).map((e, i) => (
+        {guideDe(app, depuisOnboarding, appChoisie).map((e, i) => (
           <View key={`${e.sticker}${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <View>
               {sticker(e.sticker, 46)}
