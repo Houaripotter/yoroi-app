@@ -23271,5 +23271,12 @@
 "Premier paiement le {0} : {1}": "Första betalningen {0}: {1}",
 "Annule quand tu veux dans les réglages de ton compte {0}.": "Säg upp när du vill i inställningarna för ditt {0}-konto.",
 "Essai gratuit jusqu’au {0}": "Gratis provperiod till {0}",
-"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "I det riktiga flödet öppnas telefonens inställningar här."
+"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "I det riktiga flödet öppnas telefonens inställningar här.",
+"Tes séances {0} sont déjà dans YOROI": "Dina pass från {0} finns redan i YOROI",
+"Tes séances sont déjà dans YOROI": "Dina pass finns redan i YOROI",
+"Tu viens de Hevy ou Strong ?": "Kommer du från Hevy eller Strong?",
+"Récupère toutes tes séances et tes exercices": "Hämta alla dina pass och övningar",
+"Tes séances sont dans YOROI": "Dina pass finns i YOROI",
+"{0} exercice récupéré": "{0} övning hämtad",
+"{0} exercices récupérés": "{0} övningar hämtade"
 }
