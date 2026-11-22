@@ -23278,5 +23278,10 @@
 "Récupère toutes tes séances et tes exercices": "Hent alle dine træninger og øvelser",
 "Tes séances sont dans YOROI": "Dine træninger er i YOROI",
 "{0} exercice récupéré": "{0} øvelse hentet",
-"{0} exercices récupérés": "{0} øvelser hentet"
+"{0} exercices récupérés": "{0} øvelser hentet",
+"Autre app (fichier CSV)": "Anden app (CSV-fil)",
+"Non, je commence avec YOROI": "Nej, jeg starter med YOROI",
+"Tu utilises déjà une app pour tes séances ?": "Bruger du allerede en app til dine træninger?",
+"app": "app",
+"Tu récupères tout : séances, exercices, charges.": "Du får det hele med: træninger, øvelser, vægte."
 }
