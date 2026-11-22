@@ -23271,5 +23271,12 @@
 "Premier paiement le {0} : {1}": "ชำระเงินครั้งแรกวันที่ {0}: {1}",
 "Annule quand tu veux dans les réglages de ton compte {0}.": "ยกเลิกได้ทุกเมื่อในการตั้งค่าบัญชี {0} ของคุณ",
 "Essai gratuit jusqu’au {0}": "ทดลองใช้ฟรีถึง {0}",
-"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "ในขั้นตอนจริง การตั้งค่าโทรศัพท์จะเปิดขึ้นที่นี่"
+"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "ในขั้นตอนจริง การตั้งค่าโทรศัพท์จะเปิดขึ้นที่นี่",
+"Tes séances {0} sont déjà dans YOROI": "เซสชัน {0} ของคุณอยู่ใน YOROI แล้ว",
+"Tes séances sont déjà dans YOROI": "เซสชันของคุณอยู่ใน YOROI แล้ว",
+"Tu viens de Hevy ou Strong ?": "ย้ายมาจาก Hevy หรือ Strong ใช่ไหม?",
+"Récupère toutes tes séances et tes exercices": "ย้ายเซสชันและท่าทั้งหมดของคุณมา",
+"Tes séances sont dans YOROI": "เซสชันของคุณอยู่ใน YOROI แล้ว",
+"{0} exercice récupéré": "ได้ {0} ท่ากลับมา",
+"{0} exercices récupérés": "ได้ {0} ท่ากลับมา"
 }
