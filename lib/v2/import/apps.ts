@@ -4,7 +4,8 @@
  *
  * AFFICHER_NOMS_APPS : le seul interrupteur des noms d'apps. true : l'ecran d'import (onglet Seances) montre la liste
  * des apps reconnues avec leur nom, pour choisir la sienne et voir son chemin d'export. false : aucun nom nulle part,
- * un guide general et la detection automatique du fichier. L'onboarding ne montre jamais de nom (nomsVisibles).
+ * un guide general et la detection automatique du fichier. L'onboarding ne montre un nom que si tu as choisi ton app
+ * a sa premiere question (nomsVisibles).
  *
  * Les chemins d'export sont ecrits avec prudence, d'apres les aides publiques des apps et des guides de migration
  * (sources dans le rapport du 18 novembre 2026) ; ils peuvent changer avec les versions des apps.
@@ -65,18 +66,21 @@ export const APPS: AppReconnue[] = [
   },
 ];
 
-/** Les noms d'apps se voient-ils ici ? Jamais dans l'onboarding. */
-export const nomsVisibles = (depuisOnboarding: boolean): boolean => AFFICHER_NOMS_APPS && !depuisOnboarding;
+/**
+ * Les noms d'apps se voient-ils ici ? Dans l'onboarding, seulement quand la personne a choisi elle meme son app a la
+ * question « Tu utilises déjà une app pour tes séances ? » (22 novembre 2026, onboarding-neuf/AncienneApp.tsx).
+ */
+export const nomsVisibles = (depuisOnboarding: boolean, appChoisie = false): boolean => AFFICHER_NOMS_APPS && (!depuisOnboarding || appChoisie);
 
 /** Le guide : celui de l'app choisie quand les noms se voient, sinon le guide general (sans aucun nom) */
-export function guideDe(id: IdApp | null, depuisOnboarding: boolean): EtapeGuide[] {
-  const app = nomsVisibles(depuisOnboarding) && id ? APPS.find((a) => a.id === id) : undefined;
+export function guideDe(id: IdApp | null, depuisOnboarding: boolean, appChoisie = false): EtapeGuide[] {
+  const app = nomsVisibles(depuisOnboarding, appChoisie) && id ? APPS.find((a) => a.id === id) : undefined;
   return (app ?? APPS.find((a) => a.id === 'autre')!).etapes;
 }
 
 /** Le nom de l'app d'un fichier lu (format), ou null quand les noms ne se voient pas */
-export function nomDuFormat(format: string | undefined, depuisOnboarding: boolean): string | null {
-  if (!nomsVisibles(depuisOnboarding) || !format) return null;
+export function nomDuFormat(format: string | undefined, depuisOnboarding: boolean, appChoisie = false): string | null {
+  if (!nomsVisibles(depuisOnboarding, appChoisie) || !format) return null;
   const id = format === 'hevy_texte' ? 'hevy' : format;
   return APPS.find((a) => a.id === id && a.id !== 'autre')?.nom ?? null;
 }
