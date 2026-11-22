@@ -100,6 +100,9 @@ export function PaywallOffre({ formules, apercu, onAchat, onFermer, onAnnule, on
   const [hBas, setHBas] = useState(300 + Math.max(insets.bottom, 12));
   const carteHaut = Math.max(insets.top + 250, height - hBas - carteH - 10);
   const photoH = carteHaut + carteH * 0.5;
+  // apres une reprise, le bloc des avis (avec la bulle de plus) se pose juste au-dessus des cartes ; sur un petit ecran,
+  // moins d'avis (aucun s'il le faut) pour ne toucher ni le titre ni les cartes. Sans reprise : rien ne change.
+  const nbAvis = reprise ? Math.max(0, Math.min(2, Math.floor((carteHaut - 12 - (insets.top + 104) - 46 - 30) / 76))) : 2;
 
   const [attente, setAttente] = useState(false);
   const [feuille, setFeuille] = useState(false);
@@ -180,7 +183,7 @@ export function PaywallOffre({ formules, apercu, onAchat, onFermer, onAnnule, on
 
       <Txt style={f.titre}>{traduire('Choisis ta formule')}</Txt>
 
-      <View style={{ position: 'absolute', left: 20, right: 20, top: carteHaut - 190 - (reprise ? 46 : 0), alignItems: 'center' }} pointerEvents="none">
+      <View style={{ position: 'absolute', left: 20, right: 20, ...(reprise ? { bottom: height - carteHaut + 12 } : { top: carteHaut - 190 }), alignItems: 'center' }} pointerEvents="none">
         {reprise ? (
           <View style={[f.reprise, { backgroundColor: alpha(T.acc, 0.85) }]}>
             <Ionicons name="checkmark-circle" size={17} color={SUR_PHOTO} />
@@ -194,7 +197,7 @@ export function PaywallOffre({ formules, apercu, onAchat, onFermer, onAnnule, on
             <Txt style={f.noteSous}>{traduirePluriel(note.total, note.total > 1, '· {0} note', '· {0} notes', note.total)}</Txt>
           </View>
         ) : null}
-        {AVIS_PAYWALL.map((a) => (
+        {AVIS_PAYWALL.slice(0, nbAvis).map((a) => (
           <View key={a.pseudo} style={f.avisBulle}>
             <Txt style={f.avisTxt} numberOfLines={3}>{`« ${a.texte} »`}</Txt>
             <Txt style={f.avisNom}>{`${a.pseudo} · ${a.store}`}</Txt>
