@@ -23271,5 +23271,12 @@
 "Premier paiement le {0} : {1}": "Πρώτη πληρωμή στις {0}: {1}",
 "Annule quand tu veux dans les réglages de ton compte {0}.": "Ακύρωσε όποτε θέλεις στις ρυθμίσεις του λογαριασμού σου στο {0}.",
 "Essai gratuit jusqu’au {0}": "Δωρεάν δοκιμή έως {0}",
-"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "Στην πραγματική διαδρομή, εδώ ανοίγουν οι ρυθμίσεις του κινητού."
+"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "Στην πραγματική διαδρομή, εδώ ανοίγουν οι ρυθμίσεις του κινητού.",
+"Tes séances {0} sont déjà dans YOROI": "Οι προπονήσεις σου από το {0} είναι ήδη στο YOROI",
+"Tes séances sont déjà dans YOROI": "Οι προπονήσεις σου είναι ήδη στο YOROI",
+"Tu viens de Hevy ou Strong ?": "Έρχεσαι από Hevy ή Strong;",
+"Récupère toutes tes séances et tes exercices": "Φέρε όλες τις προπονήσεις και τις ασκήσεις σου",
+"Tes séances sont dans YOROI": "Οι προπονήσεις σου είναι στο YOROI",
+"{0} exercice récupéré": "{0} άσκηση ανακτήθηκε",
+"{0} exercices récupérés": "{0} ασκήσεις ανακτήθηκαν"
 }
