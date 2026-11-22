@@ -33,6 +33,7 @@ import { brouillonPrerempli } from '@/lib/v2/onboarding/fusion';
 import { importDataFromJSON } from '@/lib/exportService';
 import { ListeSauvegardes } from '@/components/yoroi/v2/sauvegarde/ListeSauvegardes';
 import { RepriseHevy, type FinReprise } from '@/components/yoroi/v2/import/RepriseHevy';
+import { nomAppOrigine } from '@/lib/v2/import/apps';
 import type { Trouvee } from '@/lib/v2/sauvegarde/retrouver';
 import { markTourSeen, markVisiteDone } from '@/components/yoroi/v2/tour/keys';
 import { markWhatsNewSeen } from '@/components/WhatsNewModal';
@@ -432,7 +433,10 @@ export function OnboardingNeufEcran({ etapeDemandee }: { etapeDemandee?: string 
     if (!sansEcriture) await AsyncStorage.setItem(LEGAL_ACCEPTED_KEY, 'true').catch(() => undefined);
     const cur = draftRef.current;
     const jours = r.jours.length ? r.jours : cur.jours;
-    patch({ viaHevy: true, sports: cur.sports.includes('musculation') ? cur.sports : [...cur.sports, 'musculation'], jours, sessions: jours.length || cur.sessions });
+    // 22 novembre 2026 : les vrais chiffres de la reprise, pour la confirmation du chargement et la ligne du paywall
+    const reprise = { seances: r.seances, exercices: typeof r.exercices === 'number' ? r.exercices : null, app: r.app ?? null };
+    patch({ viaHevy: true, reprise, sports: cur.sports.includes('musculation') ? cur.sports : [...cur.sports, 'musculation'], jours, sessions: jours.length || cur.sessions });
+    m.reprise('reussie', r.app ?? 'autre');
     suivant({ viaReprise: true });
   };
   const restaurerAchats = async () => {
@@ -679,6 +683,9 @@ export function OnboardingNeufEcran({ etapeDemandee }: { etapeDemandee?: string 
   const nav = { ...position(etape, etat), onNext: () => suivant(), onBack: retour, onClose: apercu ? fermerApercu : undefined };
   const depart = d.weighIn?.weight ?? d.weight ?? poids;
   const cap = capVu(d, depart);
+  // 22 novembre 2026 : apres une reprise, les chiffres vraiment lus (null quand on ne les connait pas, jamais inventes)
+  const repriseVue = d.viaHevy ? { seances: d.reprise?.seances ?? null, exercices: d.reprise?.exercices ?? null } : null;
+  const reprisePaywall = d.viaHevy ? { app: nomAppOrigine(d.reprise?.app) } : null;
   const ecran = (() => {
     switch (etape) {
       case 'entree':
@@ -686,7 +693,10 @@ export function OnboardingNeufEcran({ etapeDemandee }: { etapeDemandee?: string 
           <Entree
             onStart={() => void commencer()}
             onSauvegarde={() => void ouvrirSauvegardes()}
-            onReprise={() => setRepriseOuverte(true)}
+            onReprise={() => {
+              m.reprise('ouverte');
+              setRepriseOuverte(true);
+            }}
             onRestaurerAchats={() => void restaurerAchats()}
             onConditions={conditions}
             onConfidentialite={confidentialite}
@@ -852,10 +862,11 @@ export function OnboardingNeufEcran({ etapeDemandee }: { etapeDemandee?: string 
             etapes={etapesChargement(d.jours.length, cap)}
             run={runFinal}
             onNext={() => suivant()}
+            reprise={repriseVue}
           />
         );
       case 'paywall1':
-        return <Promesse formules={formules} onNext={() => suivant()} onBack={retour} onReessayer={() => void premium?.reloadOffers()} />;
+        return <Promesse formules={formules} onNext={() => suivant()} onBack={retour} onReessayer={() => void premium?.reloadOffers()} reprise={reprisePaywall} />;
       case 'paywall2':
         return <Rappel essaiJours={formules.annuel?.essai?.days ?? 7} onNext={() => suivant()} onBack={retour} />;
       case 'paywall':
@@ -876,6 +887,7 @@ export function OnboardingNeufEcran({ etapeDemandee }: { etapeDemandee?: string 
               onConditions={conditions}
               onConfidentialite={confidentialite}
               onReessayer={() => void premium?.reloadOffers()}
+              reprise={reprisePaywall}
             />
             {etape === 'rattrapage' ? (
               <Rattrapage
