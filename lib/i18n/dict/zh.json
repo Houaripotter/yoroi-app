@@ -23271,5 +23271,12 @@
 "Premier paiement le {0} : {1}": "首次付款日期 {0}：{1}",
 "Annule quand tu veux dans les réglages de ton compte {0}.": "可随时在你的 {0} 账户设置中取消。",
 "Essai gratuit jusqu’au {0}": "免费试用至 {0}",
-"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "在真实流程中，这里会打开手机设置。"
+"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "在真实流程中，这里会打开手机设置。",
+"Tes séances {0} sont déjà dans YOROI": "你的 {0} 训练已经在 YOROI 里了",
+"Tes séances sont déjà dans YOROI": "你的训练已经在 YOROI 里了",
+"Tu viens de Hevy ou Strong ?": "你从 Hevy 或 Strong 过来？",
+"Récupère toutes tes séances et tes exercices": "把所有训练和动作都带过来",
+"Tes séances sont dans YOROI": "你的训练已在 YOROI 里",
+"{0} exercice récupéré": "已导入 {0} 个动作",
+"{0} exercices récupérés": "已导入 {0} 个动作"
 }
