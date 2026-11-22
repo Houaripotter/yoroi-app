@@ -23271,5 +23271,12 @@
 "Premier paiement le {0} : {1}": "첫 결제 {0}: {1}",
 "Annule quand tu veux dans les réglages de ton compte {0}.": "{0} 계정 설정에서 언제든 취소할 수 있어요.",
 "Essai gratuit jusqu’au {0}": "{0}까지 무료 체험",
-"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "실제 흐름에서는 여기서 휴대폰 설정이 열려요."
+"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "실제 흐름에서는 여기서 휴대폰 설정이 열려요.",
+"Tes séances {0} sont déjà dans YOROI": "{0} 세션이 이미 YOROI에 있어요",
+"Tes séances sont déjà dans YOROI": "세션이 이미 YOROI에 있어요",
+"Tu viens de Hevy ou Strong ?": "Hevy나 Strong에서 왔나요?",
+"Récupère toutes tes séances et tes exercices": "모든 세션과 운동을 가져오세요",
+"Tes séances sont dans YOROI": "세션이 YOROI에 들어왔어요",
+"{0} exercice récupéré": "운동 {0}개 가져옴",
+"{0} exercices récupérés": "운동 {0}개 가져옴"
 }
