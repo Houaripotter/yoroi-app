@@ -176,7 +176,7 @@ describe('routine avec gainage et cardio', () => {
 });
 
 describe('les noms des apps', () => {
-  it('un seul interrupteur, et jamais de nom dans l onboarding', () => {
+  it('un seul interrupteur, et jamais de nom dans l onboarding tant que tu n as pas choisi ton app', () => {
     expect(typeof AFFICHER_NOMS_APPS).toBe('boolean');
     expect(nomsVisibles(true)).toBe(false);
     expect(nomDuFormat('hevy', true)).toBeNull();
@@ -189,5 +189,13 @@ describe('les noms des apps', () => {
     expect(guideDe('strong', false).map((e) => e.texte).join(' ')).toContain('Export Strong Data');
     expect(guideDe('hevy', false).map((e) => e.texte).join(' ')).toContain('Exporter les séances');
     expect(guideDe('fitnotes', false)[0].texte).toContain('FitNotes');
+  });
+  it('22 novembre 2026 : l app choisie a la question de l onboarding ouvre son propre guide, avec son nom', () => {
+    if (!AFFICHER_NOMS_APPS) return;
+    expect(nomsVisibles(true, true)).toBe(true);
+    expect(guideDe('hevy', true, true).map((e) => e.texte).join(' ')).toContain('Exporter les séances');
+    expect(guideDe('strong', true, true)[0].texte).toContain('Strong');
+    expect(guideDe('autre', true, true)).toEqual(APPS.find((a) => a.id === 'autre')!.etapes);
+    expect(nomDuFormat('hevy', true, true)).toBe('Hevy');
   });
 });
