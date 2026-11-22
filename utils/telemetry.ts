@@ -58,6 +58,8 @@ export type TypeNotif =
   | 'pesee' | 'seance' | 'sommeil' | 'hydratation' | 'serie' | 'recap' | 'carte_sociale' | 'citation'
   | 'conseil' | 'montre' | 'charge' | 'competition' | 'sparring' | 'fin_essai' | 'synchro' | 'autre';
 export type TypeExport = 'json' | 'csv' | 'pdf';
+/** 22 novembre 2026 : l'app d'ou viennent les seances reprises (lib/v2/import/apps.ts), autre pour un tableur quelconque */
+export type AppReprise = 'hevy' | 'strong' | 'fitnotes' | 'autre';
 export type MethodePoids = 'manuel' | 'balance' | 'photo_balance' | 'sante' | 'onboarding' | 'montre';
 export type MethodeSeance = 'live' | 'dictee' | 'deja_faite' | 'saisie' | 'montre' | 'refaire';
 export type TypeObjectif = 'poids' | 'seance';
@@ -129,6 +131,9 @@ export interface Evenements {
   rattrapage_tap: { source: SourcePaywall };
   rattrapage_ok: { source: SourcePaywall };
   rattrapage_refus: { source: SourcePaywall };
+  /** 22 novembre 2026 : nouvel onboarding, la reprise depuis une autre app ouverte depuis l'entree, puis reussie */
+  reprise_ouverte: { source: 'onboarding' };
+  reprise_reussie: { source: 'onboarding'; app: AppReprise };
   // paywall
   paywall_view: { source: SourcePaywall; statut: Statut };
   paywall_cta_tap: { source: SourcePaywall; plan?: Plan };
