@@ -91,6 +91,11 @@ export type Draft = {
   source?: SourceConnu | null;
   /** 18 novembre 2026 : arrive avec ses donnees de Hevy (RepriseHevy) : l'onboarding ne repose que l'essentiel */
   viaHevy?: boolean;
+  /**
+   * 22 novembre 2026 : ce que la reprise a vraiment lu (FinReprise) : seances, exercices differents, app d'origine
+   * (hevy, strong, fitnotes, ou null pour un tableur quelconque). Sert a la confirmation chiffree et au paywall.
+   */
+  reprise?: { seances: number; exercices: number | null; app: 'hevy' | 'strong' | 'fitnotes' | null } | null;
   /** 21 novembre 2026 : l'ecran du nouvel onboarding (components/yoroi/v2/onboarding-neuf/parcours.ts), pour la reprise */
   etapeNeuf?: string | null;
 };
@@ -153,6 +158,17 @@ function rappelsValides(r: unknown): ChoixRappels {
   };
 }
 
+/** Un compte lu dans le brouillon : un entier positif, sinon rien (jamais de nombre invente) */
+const compte = (v: unknown): number | null => (typeof v === 'number' && Number.isInteger(v) && v >= 0 ? v : null);
+function repriseValide(r: unknown): Draft['reprise'] {
+  if (!r || typeof r !== 'object') return null;
+  const x = r as Record<string, unknown>;
+  const seances = compte(x.seances);
+  if (seances === null) return null;
+  const app = x.app === 'hevy' || x.app === 'strong' || x.app === 'fitnotes' ? x.app : null;
+  return { seances, exercices: compte(x.exercices), app };
+}
+
 export async function loadDraft(): Promise<Draft | null> {
   try {
     const raw = await AsyncStorage.getItem(DRAFT_KEY);
@@ -183,6 +199,7 @@ export async function loadDraft(): Promise<Draft | null> {
       scene: typeof d.scene === 'string' ? d.scene : null,
       source: isSourceConnu(d.source) ? d.source : null,
       ...(d.viaHevy === true ? { viaHevy: true } : { viaHevy: undefined }),
+      reprise: repriseValide(d.reprise),
       etapeNeuf: typeof d.etapeNeuf === 'string' ? d.etapeNeuf : null,
     };
   } catch {
