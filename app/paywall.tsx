@@ -11,6 +11,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Paywall } from '@/components/yoroi/v2/premium/Paywall';
 import { setPurchasePreview } from '@/lib/v2/creator/premiumFlags';
 import { lireCompteur, lireSourcePaywall } from '@/lib/v2/premium/sources';
+import { ONBOARDING_NEUF_ACTIF } from '@/lib/v2/onboarding/interrupteur';
+import { PaywallInterieurEcran } from '@/components/yoroi/v2/onboarding-neuf/PaywallInterieur';
 
 export default function PaywallScreen() {
   const router = useRouter();
@@ -30,5 +32,8 @@ export default function PaywallScreen() {
     else router.replace('/(tabs)' as never);
   };
 
+  // 22 novembre 2026 (Houari) : avec le nouvel onboarding, le paywall de l'app prend son design, comme INRO
+  // (components/yoroi/v2/onboarding-neuf/PaywallInterieur.tsx) ; achats, restauration et mentions inchanges
+  if (ONBOARDING_NEUF_ACTIF) return <PaywallInterieurEcran origine={origine} compteur={compteur} apercu={preview} onFini={close} />;
   return <Paywall source="app" origine={origine} compteur={compteur} preview={preview} onFinish={close} onClose={close} />;
 }
