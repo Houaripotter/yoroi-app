@@ -83,3 +83,21 @@ export function nomDuFormat(format: string | undefined, depuisOnboarding: boolea
 
 /** L'origine gardee sur la routine creee (ProgrammePerso.origine), pour la retrouver a l'import suivant */
 export const origineDe = (format: string | undefined): string => (format === 'hevy' || format === 'hevy_texte' || !format ? 'hevy' : `import_${format}`);
+
+/**
+ * 22 novembre 2026 : l'app d'origine d'un fichier lu (format), pour la confirmation de l'onboarding et la ligne du
+ * paywall (« Tes séances Hevy sont déjà dans YOROI »). Houari veut maintenant nommer Hevy et Strong a l'entree.
+ * null pour un tableur quelconque (colonnes choisies a la main) ou des notes : on ne devine jamais l'app.
+ */
+export type AppOrigine = Exclude<IdApp, 'autre'>;
+export function appDuFormat(format: string | undefined): AppOrigine | null {
+  if (format === 'hevy' || format === 'hevy_texte') return 'hevy';
+  if (format === 'strong' || format === 'fitnotes') return format;
+  return null;
+}
+
+/** Le nom affiche d'une app d'origine (Hevy, Strong, FitNotes), null si on ne la connait pas */
+export function nomAppOrigine(id: string | null | undefined): string | null {
+  if (!id || id === 'autre') return null;
+  return APPS.find((a) => a.id === id)?.nom ?? null;
+}
