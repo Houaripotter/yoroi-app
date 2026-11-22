@@ -23278,5 +23278,10 @@
 "Récupère toutes tes séances et tes exercices": "Recupera tutte le tue sessioni e i tuoi esercizi",
 "Tes séances sont dans YOROI": "Le tue sessioni sono in YOROI",
 "{0} exercice récupéré": "{0} esercizio recuperato",
-"{0} exercices récupérés": "{0} esercizi recuperati"
+"{0} exercices récupérés": "{0} esercizi recuperati",
+"Autre app (fichier CSV)": "Altra app (file CSV)",
+"Non, je commence avec YOROI": "No, inizio con YOROI",
+"Tu utilises déjà une app pour tes séances ?": "Usi già un’app per i tuoi allenamenti?",
+"app": "app",
+"Tu récupères tout : séances, exercices, charges.": "Recuperi tutto: allenamenti, esercizi, carichi."
 }
