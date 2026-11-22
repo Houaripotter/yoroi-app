@@ -23278,5 +23278,10 @@
 "Récupère toutes tes séances et tes exercices": "Ambil semua sesi dan gerakanmu",
 "Tes séances sont dans YOROI": "Sesimu ada di YOROI",
 "{0} exercice récupéré": "{0} gerakan diambil",
-"{0} exercices récupérés": "{0} gerakan diambil"
+"{0} exercices récupérés": "{0} gerakan diambil",
+"Autre app (fichier CSV)": "Aplikasi lain (file CSV)",
+"Non, je commence avec YOROI": "Tidak, aku mulai dengan YOROI",
+"Tu utilises déjà une app pour tes séances ?": "Sudah pakai aplikasi untuk latihanmu?",
+"app": "aplikasi",
+"Tu récupères tout : séances, exercices, charges.": "Semuanya kembali: latihan, gerakan, beban."
 }
