@@ -40,6 +40,9 @@ export type NomPostHog =
   | 'winback_tapped'
   | 'winback_purchased'
   | 'winback_dismissed'
+  // 22 novembre 2026 : la reprise depuis une autre app, ouverte depuis l'entree du nouvel onboarding, puis reussie
+  | 'import_opened'
+  | 'import_completed'
   | 'paywall_shown'
   | 'trial_started'
   | 'purchase_completed'
@@ -95,6 +98,9 @@ export const CORRESPONDANCE_POSTHOG: { readonly [K in NomEvenement]?: (p: Params
   rattrapage_tap: (p) => ({ nom: 'winback_tapped', props: { source: p.source } }),
   rattrapage_ok: (p) => ({ nom: 'winback_purchased', props: { source: p.source } }),
   rattrapage_refus: (p) => ({ nom: 'winback_dismissed', props: { source: p.source } }),
+  // 22 novembre 2026 : l'app d'origine seulement (liste fermee), jamais un nombre de seances ni un nom d'exercice
+  reprise_ouverte: (p) => ({ nom: 'import_opened', props: { source: p.source } }),
+  reprise_reussie: (p) => ({ nom: 'import_completed', props: { source: p.source, app: p.app } }),
   // lib/v2/premium/events.ts (appele par le paywall, PremiumContext n'est pas touche)
   paywall_view: (p) => ({ nom: 'paywall_shown', props: { source: p.source } }),
   paywall_purchase_ok: (p) => ({ nom: p.essai === 'oui' ? 'trial_started' : 'purchase_completed', props: { source: p.source, plan: p.plan } }),
@@ -131,6 +137,8 @@ export const LISTE_BLANCHE: { readonly [N in NomPostHog]: Readonly<Record<string
   winback_tapped: { source: SOURCE },
   winback_purchased: { source: SOURCE },
   winback_dismissed: { source: SOURCE },
+  import_opened: { source: SOURCE },
+  import_completed: { source: SOURCE, app: dans(['hevy', 'strong', 'fitnotes', 'autre']) },
   paywall_shown: { source: SOURCE },
   trial_started: { source: SOURCE, plan: PLAN },
   purchase_completed: { source: SOURCE, plan: PLAN },
