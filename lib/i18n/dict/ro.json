@@ -23592,5 +23592,13 @@
 "{0} jours gratuits, puis {1} par an ({2} par mois)§few": "{0} zile gratuit, apoi {1} pe an ({2} pe lună)",
 "{0} jours gratuits, puis {1} par an§few": "{0} zile gratuit, apoi {1} pe an",
 "{0} jours pour tout essayer§few": "{0} zile ca să încerci tot",
-"{0} NOTES SUR LES STORES§few": "{0} EVALUĂRI ÎN MAGAZINE"
+"{0} NOTES SUR LES STORES§few": "{0} EVALUĂRI ÎN MAGAZINE",
+"Tes séances {0} sont déjà dans YOROI": "Antrenamentele tale din {0} sunt deja în YOROI",
+"Tes séances sont déjà dans YOROI": "Antrenamentele tale sunt deja în YOROI",
+"Tu viens de Hevy ou Strong ?": "Vii din Hevy sau Strong?",
+"Récupère toutes tes séances et tes exercices": "Adu toate antrenamentele și exercițiile tale",
+"Tes séances sont dans YOROI": "Antrenamentele tale sunt în YOROI",
+"{0} exercice récupéré": "{0} exercițiu preluat",
+"{0} exercices récupérés": "{0} de exerciții preluate",
+"{0} exercices récupérés§few": "{0} exerciții preluate"
 }
