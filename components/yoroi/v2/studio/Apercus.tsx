@@ -18,6 +18,8 @@ import { FREE_LIMITS } from '@/lib/v2/premium/limits';
 import { VISITE_TITRES } from '@/components/yoroi/v2/tour/VisiteGuidee';
 import { ONBOARDING_SCREEN_LABELS } from './PreviewBar';
 import { ecranAPosition } from '@/lib/v2/onboarding/ordreEcrans';
+import { ONBOARDING_NEUF_ACTIF } from '@/lib/v2/onboarding/interrupteur';
+import { NOMS_ETAPES, ORDRE as ORDRE_NEUF } from '@/components/yoroi/v2/onboarding-neuf/parcours';
 import { Chip, ChipWrap, KV, Note, SmallAction, StudioSection, SubTitle, useStudio } from './parts';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire } from '@/lib/i18n/tr';
@@ -28,6 +30,12 @@ type Router = ReturnType<typeof useRouter>;
 export function openOnboardingPreview(router: Router, page: number) {
   setPaywallVariant('reel');
   router.push({ pathname: '/onboarding', params: { preview: 'true', page: String(page) } } as never);
+}
+
+/** 21 novembre 2026 : le nouvel onboarding (interrupteur allume), ouvert a l'ecran choisi, en apercu */
+export function openOnboardingNeufPreview(router: Router, etape: string) {
+  setPaywallVariant('reel');
+  router.push({ pathname: '/onboarding', params: { preview: 'true', etape } } as never);
 }
 
 /** Paywall de l'app en apercu, avec la variante choisie */
@@ -88,9 +96,13 @@ export function Apercus() {
       <Card style={{ padding: 14, gap: 10 }}>
         <Ink size={15} weight="extraBold">{traduire("Onboarding, écran par écran")}</Ink>
         <ChipWrap>
-          {ONBOARDING_SCREEN_LABELS.map((label, i) => (
-            <Chip key={label} label={`${i + 1}. ${label}`} accessibilityLabel={traduire("Ouvrir l’écran {0}, {1}", i + 1, label)} onPress={() => openOnboardingPreview(router, ecranAPosition(i))} />
-          ))}
+          {ONBOARDING_NEUF_ACTIF
+            ? ORDRE_NEUF.map((e, i) => (
+                <Chip key={e} label={`${i + 1}. ${NOMS_ETAPES[e]}`} accessibilityLabel={traduire("Ouvrir l’écran {0}, {1}", i + 1, NOMS_ETAPES[e])} onPress={() => openOnboardingNeufPreview(router, e)} />
+              ))
+            : ONBOARDING_SCREEN_LABELS.map((label, i) => (
+                <Chip key={label} label={`${i + 1}. ${label}`} accessibilityLabel={traduire("Ouvrir l’écran {0}, {1}", i + 1, label)} onPress={() => openOnboardingPreview(router, ecranAPosition(i))} />
+              ))}
         </ChipWrap>
         <Note>{traduire("Une barre en bas te fait passer d’un écran à l’autre, la croix ferme. Aucune réponse, pesée ou achat n’est enregistré.")}</Note>
       </Card>
@@ -114,7 +126,8 @@ export function Apercus() {
               label={traduire("De l’onboarding")}
               onPress={() => {
                 setPaywallVariant(variant);
-                router.push({ pathname: '/onboarding', params: { preview: 'true', page: String(PAYWALL_PAGE) } } as never);
+                if (ONBOARDING_NEUF_ACTIF) router.push({ pathname: '/onboarding', params: { preview: 'true', etape: 'paywall1' } } as never);
+                else router.push({ pathname: '/onboarding', params: { preview: 'true', page: String(PAYWALL_PAGE) } } as never);
               }}
             />
           </View>
