@@ -23271,5 +23271,12 @@
 "Premier paiement le {0} : {1}": "First payment on {0}: {1}",
 "Annule quand tu veux dans les réglages de ton compte {0}.": "Cancel anytime in your {0} account settings.",
 "Essai gratuit jusqu’au {0}": "Free trial until {0}",
-"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "In the real flow, your phone settings open here."
+"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "In the real flow, your phone settings open here.",
+"Tes séances {0} sont déjà dans YOROI": "Your {0} sessions are already in YOROI",
+"Tes séances sont déjà dans YOROI": "Your sessions are already in YOROI",
+"Tu viens de Hevy ou Strong ?": "Coming from Hevy or Strong?",
+"Récupère toutes tes séances et tes exercices": "Bring over all your sessions and exercises",
+"Tes séances sont dans YOROI": "Your sessions are in YOROI",
+"{0} exercice récupéré": "{0} exercise brought over",
+"{0} exercices récupérés": "{0} exercises brought over"
 }
