@@ -23278,5 +23278,10 @@
 "Récupère toutes tes séances et tes exercices": "Φέρε όλες τις προπονήσεις και τις ασκήσεις σου",
 "Tes séances sont dans YOROI": "Οι προπονήσεις σου είναι στο YOROI",
 "{0} exercice récupéré": "{0} άσκηση ανακτήθηκε",
-"{0} exercices récupérés": "{0} ασκήσεις ανακτήθηκαν"
+"{0} exercices récupérés": "{0} ασκήσεις ανακτήθηκαν",
+"Autre app (fichier CSV)": "Άλλη εφαρμογή (αρχείο CSV)",
+"Non, je commence avec YOROI": "Όχι, ξεκινάω με το YOROI",
+"Tu utilises déjà une app pour tes séances ?": "Χρησιμοποιείς ήδη μια εφαρμογή για τις προπονήσεις σου;",
+"app": "εφαρμογή",
+"Tu récupères tout : séances, exercices, charges.": "Τα παίρνεις όλα πίσω: προπονήσεις, ασκήσεις, κιλά."
 }
