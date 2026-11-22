@@ -8,6 +8,7 @@ import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { freeTrialOf, type FreeTrial } from '@/lib/v2/onboarding/trial';
 import { FREE_LIMITS } from '@/lib/v2/premium/limits';
 import { traduire, traduirePluriel, DECIMAL, LOCALE } from '@/lib/i18n/tr';
+import { NOTES_STORES, RELEVE_LE } from './preuveSociale';
 
 // ===== Ce que Premium ajoute (verifie dans le code, ecran par ecran) =====
 
@@ -63,9 +64,10 @@ export type StoreRating = { note: number; notes: number };
  * Une note a null ne s'affiche pas.
  */
 export const REAL_STORE_RATING: { miseAJour: string; appStore: StoreRating | null; googlePlay: StoreRating | null } = {
-  miseAJour: '2026-10-11',
-  appStore: { note: 5, notes: 43 },
-  googlePlay: { note: 5, notes: 6 },
+  // 21 novembre 2026 : les notes vivent dans lib/v2/premium/preuveSociale.ts (un seul fichier a mettre a jour)
+  miseAJour: RELEVE_LE,
+  appStore: NOTES_STORES.appStore,
+  googlePlay: NOTES_STORES.googlePlay,
 };
 
 /** « 5,0 sur 5, 49 notes sur l’App Store et Google Play » : les deux stores additionnes, moyenne ponderee */
