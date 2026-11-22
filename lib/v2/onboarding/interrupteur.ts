@@ -14,7 +14,7 @@ export const ONBOARDING_NEUF_ACTIF = true;
 
 /** Les ecrans du nouvel onboarding, dans l'ordre de la mesure : le numero d'etape PostHog suit cet ordre */
 export const ORDRE_MESURE_NEUF = [
-  'entree', 'prenom', 'toi', 'age', 'source', 'interlude', 'objectif', 'sport', 'poids', 'taille', 'cap', 'rythme',
+  'entree', 'ancienne_app', 'prenom', 'toi', 'age', 'source', 'interlude', 'objectif', 'sport', 'poids', 'taille', 'cap', 'rythme',
   'univers', 'rappels', 'rappels_refus', 'sante', 'filtre', 'demo', 'preuve', 'chargement', 'paywall_1', 'paywall_2',
   'paywall_3', 'rattrapage',
 ] as const;
