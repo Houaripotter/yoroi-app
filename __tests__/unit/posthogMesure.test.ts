@@ -56,9 +56,11 @@ function config(f: ReturnType<typeof fauxPostHog>, extra: Partial<ConfigPostHog>
 describe('PostHog : correspondance des noms', () => {
   const cas: [string, Record<string, string>, string, Record<string, unknown>][] = [
     ['app_boot', { origine: 'icone' }, 'app_opened', { origine: 'icone' }],
-    // 21 novembre 2026 : nouvel onboarding (interrupteur allume), 24 ecrans, le temps passe en tranche
+    // 21 novembre 2026 : nouvel onboarding (interrupteur allume), le temps passe en tranche. 22 novembre 2026 : 25 ecrans,
+    // la question de l'ancienne app en 2
     ['onboarding_etape', { etape: 'entree' }, 'onboarding_step', { step: 1, step_name: 'entree' }],
-    ['onboarding_etape', { etape: 'paywall_3', temps: '3_10' }, 'onboarding_step', { step: 23, step_name: 'paywall_3', time_bucket: '3_10' }],
+    ['onboarding_etape', { etape: 'ancienne_app' }, 'onboarding_step', { step: 2, step_name: 'ancienne_app' }],
+    ['onboarding_etape', { etape: 'paywall_3', temps: '3_10' }, 'onboarding_step', { step: 24, step_name: 'paywall_3', time_bucket: '3_10' }],
     ['onboarding_choix', { etape: 'objectif', choix: 'perdre' }, 'onboarding_answer', { step_name: 'objectif', answer: 'perdre' }],
     ['onboarding_choix', { etape: 'sport', famille: 'combat' }, 'onboarding_answer', { step_name: 'sport', answer: 'combat' }],
     ['onboarding_rappels', { reponse: 'refuse' }, 'notifications_answered', { answer: 'refuse' }],
@@ -67,7 +69,10 @@ describe('PostHog : correspondance des noms', () => {
     ['rattrapage_tap', { source: 'onboarding' }, 'winback_tapped', { source: 'onboarding' }],
     ['rattrapage_ok', { source: 'onboarding' }, 'winback_purchased', { source: 'onboarding' }],
     ['rattrapage_refus', { source: 'onboarding' }, 'winback_dismissed', { source: 'onboarding' }],
-    // 22 novembre 2026 : la reprise depuis une autre app (entree du nouvel onboarding)
+    // 22 novembre 2026 : « Tu utilises déjà une app pour tes séances ? », la reponse en liste fermee
+    ['onboarding_choix', { etape: 'ancienne_app', choix: 'hevy' }, 'onboarding_answer', { step_name: 'ancienne_app', answer: 'hevy' }],
+    ['onboarding_choix', { etape: 'ancienne_app', choix: 'aucune' }, 'onboarding_answer', { step_name: 'ancienne_app', answer: 'aucune' }],
+    // 22 novembre 2026 : la reprise depuis une autre app (question de l'ancienne app du nouvel onboarding)
     ['reprise_ouverte', { source: 'onboarding' }, 'import_opened', { source: 'onboarding' }],
     ['reprise_reussie', { source: 'onboarding', app: 'strong' }, 'import_completed', { source: 'onboarding', app: 'strong' }],
     ['onboarding_termine', { statut: 'abonne' }, 'onboarding_completed', { status: 'abonne' }],
@@ -105,7 +110,8 @@ describe('PostHog : correspondance des noms', () => {
   });
 
   it('nouvel onboarding : une duree exacte ou une reponse avec un chiffre ne passent pas', () => {
-    expect(traduirePourPostHog('onboarding_etape', { etape: 'prenom', temps: '7' })?.props).toEqual({ step: 2, step_name: 'prenom' });
+    // 22 novembre 2026 : la question de l'ancienne app passe en 2, le prenom en 3
+    expect(traduirePourPostHog('onboarding_etape', { etape: 'prenom', temps: '7' })?.props).toEqual({ step: 3, step_name: 'prenom' });
     expect(traduirePourPostHog('onboarding_choix', { etape: 'poids', choix: '82' })?.props).toEqual({ step_name: 'poids' });
     expect(traduirePourPostHog('paywall_ecran_vu', { ecran: '4' })?.props).toEqual({});
   });
