@@ -23278,5 +23278,10 @@
 "Récupère toutes tes séances et tes exercices": "Neem al je sessies en oefeningen mee",
 "Tes séances sont dans YOROI": "Je sessies staan in YOROI",
 "{0} exercice récupéré": "{0} oefening overgenomen",
-"{0} exercices récupérés": "{0} oefeningen overgenomen"
+"{0} exercices récupérés": "{0} oefeningen overgenomen",
+"Autre app (fichier CSV)": "Andere app (CSV-bestand)",
+"Non, je commence avec YOROI": "Nee, ik begin met YOROI",
+"Tu utilises déjà une app pour tes séances ?": "Gebruik je al een app voor je trainingen?",
+"app": "app",
+"Tu récupères tout : séances, exercices, charges.": "Je krijgt alles terug: trainingen, oefeningen, gewichten."
 }
