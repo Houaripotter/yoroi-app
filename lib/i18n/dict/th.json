@@ -23278,5 +23278,10 @@
 "Récupère toutes tes séances et tes exercices": "ย้ายเซสชันและท่าทั้งหมดของคุณมา",
 "Tes séances sont dans YOROI": "เซสชันของคุณอยู่ใน YOROI แล้ว",
 "{0} exercice récupéré": "ได้ {0} ท่ากลับมา",
-"{0} exercices récupérés": "ได้ {0} ท่ากลับมา"
+"{0} exercices récupérés": "ได้ {0} ท่ากลับมา",
+"Autre app (fichier CSV)": "แอปอื่น (ไฟล์ CSV)",
+"Non, je commence avec YOROI": "ไม่ ฉันเริ่มกับ YOROI",
+"Tu utilises déjà une app pour tes séances ?": "ใช้แอปบันทึกการฝึกอยู่แล้วหรือเปล่า?",
+"app": "แอป",
+"Tu récupères tout : séances, exercices, charges.": "ได้ทุกอย่างกลับมา: การฝึก ท่าออกกำลังกาย น้ำหนัก"
 }
