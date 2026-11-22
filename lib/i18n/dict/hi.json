@@ -23278,5 +23278,10 @@
 "Récupère toutes tes séances et tes exercices": "अपने सारे सेशन और एक्सरसाइज़ ले आएं",
 "Tes séances sont dans YOROI": "आपके सेशन YOROI में हैं",
 "{0} exercice récupéré": "{0} एक्सरसाइज़ लाई गई",
-"{0} exercices récupérés": "{0} एक्सरसाइज़ लाई गईं"
+"{0} exercices récupérés": "{0} एक्सरसाइज़ लाई गईं",
+"Autre app (fichier CSV)": "दूसरा ऐप (CSV फ़ाइल)",
+"Non, je commence avec YOROI": "नहीं, मैं YOROI से शुरू कर रहा हूँ",
+"Tu utilises déjà une app pour tes séances ?": "क्या तुम पहले से अपने वर्कआउट के लिए कोई ऐप इस्तेमाल करते हो?",
+"app": "ऐप",
+"Tu récupères tout : séances, exercices, charges.": "सब कुछ वापस मिलेगा: वर्कआउट, एक्सरसाइज़, वज़न।"
 }
