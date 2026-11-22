@@ -12,6 +12,8 @@
  *   onboarding_rappels reponse : accepte ou refuse (PostHog : notifications_answered)
  *   paywall_ecran_vu   ecran : 1, 2 ou 3 (PostHog : paywall_step_viewed)
  *   rattrapage_vue, rattrapage_tap, rattrapage_ok, rattrapage_refus   source (PostHog : winback_*)
+ *   reprise_ouverte    source : la reprise depuis une autre app, ouverte depuis l'entree (PostHog : import_opened)
+ *   reprise_reussie    source, app : hevy, strong, fitnotes ou autre (PostHog : import_completed)
  *   onboarding_termine statut : gratuit, essai ou abonne (PostHog : onboarding_completed)
  *
  * Jamais : le prenom, le poids, la taille, le cap, une date, un texte libre, le nombre exact de jours.
@@ -19,7 +21,7 @@
  * par setProprietes dans choixOnboarding, comme avant).
  */
 
-import { track } from '@/utils/telemetry';
+import { track, type AppReprise } from '@/utils/telemetry';
 import { mesureOnboardingCoupee } from '@/lib/v2/onboarding/events';
 import { ETAPE_MESURE, trancheTemps, type Etape } from './parcours';
 
@@ -31,6 +33,8 @@ export type Mesure = {
   rappels: (accepte: boolean) => void;
   paywall: (ecran: 1 | 2 | 3) => void;
   rattrapage: (quoi: 'vue' | 'tap' | 'ok' | 'refus') => void;
+  /** 22 novembre 2026 : la reprise depuis une autre app, ouverte depuis l'entree, puis reussie (avec l'app reconnue) */
+  reprise: (quoi: 'ouverte' | 'reussie', app?: AppReprise) => void;
   termine: (statut: 'gratuit' | 'essai' | 'abonne') => void;
 };
 
@@ -62,6 +66,11 @@ export function creerMesure(maintenant: () => number = Date.now): Mesure {
       if (coupee()) return;
       const nom = quoi === 'vue' ? 'rattrapage_vue' : quoi === 'tap' ? 'rattrapage_tap' : quoi === 'ok' ? 'rattrapage_ok' : 'rattrapage_refus';
       track(nom, { source: 'onboarding' });
+    },
+    reprise: (quoi, app) => {
+      if (coupee()) return;
+      if (quoi === 'ouverte') track('reprise_ouverte', { source: 'onboarding' });
+      else track('reprise_reussie', { source: 'onboarding', app: app ?? 'autre' });
     },
     termine: (statut) => {
       vider();
