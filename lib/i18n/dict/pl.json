@@ -23922,5 +23922,10 @@
 "{0} exercice récupéré": "Przeniesiono {0} ćwiczenie",
 "{0} exercices récupérés": "Przeniesiono {0} ćwiczeń",
 "{0} exercices récupérés§few": "Przeniesiono {0} ćwiczenia",
-"{0} exercices récupérés§many": "Przeniesiono {0} ćwiczeń"
+"{0} exercices récupérés§many": "Przeniesiono {0} ćwiczeń",
+"Autre app (fichier CSV)": "Inna aplikacja (plik CSV)",
+"Non, je commence avec YOROI": "Nie, zaczynam z YOROI",
+"Tu utilises déjà une app pour tes séances ?": "Używasz już aplikacji do swoich treningów?",
+"app": "aplikacji",
+"Tu récupères tout : séances, exercices, charges.": "Odzyskasz wszystko: treningi, ćwiczenia, ciężary."
 }
