@@ -88,7 +88,9 @@ export type EtapeOnboarding =
   | 'taille' | 'cap' | 'rythme' | 'moment' | 'demo' | 'comparaison' | 'forge' | 'resultat' | 'premium'
   // 21 novembre 2026 : les ecrans du nouvel onboarding (lib/v2/onboarding/interrupteur.ts, ORDRE_MESURE_NEUF)
   | 'entree' | 'interlude' | 'rappels' | 'rappels_refus' | 'sante' | 'filtre' | 'preuve' | 'chargement'
-  | 'paywall_1' | 'paywall_2' | 'paywall_3' | 'rattrapage';
+  | 'paywall_1' | 'paywall_2' | 'paywall_3' | 'rattrapage'
+  // 22 novembre 2026 : « Tu utilises déjà une app pour tes séances ? »
+  | 'ancienne_app';
 
 /** Choix de l'onboarding. Le frein ne part qu'en renseigne ou passe : il peut contenir une blessure. */
 export type ChoixOnboarding =
@@ -98,6 +100,8 @@ export type ChoixOnboarding =
   | 'muscu' | 'cardio' | 'autre'
   | 'regle' | 'sante'
   | 'reveil' | 'douche' | 'midi' | 'soir' | 'heure'
+  // 22 novembre 2026 : l'ancienne app (lib/v2/onboarding/draft.ts, AncienneApp ; « autre » est deja la)
+  | 'hevy' | 'strong' | 'fitnotes' | 'aucune'
   // 31 octobre 2026 : ou tu as entendu parler de YOROI (liste fermee de lib/v2/onboarding/sourceConnu.ts)
   | SourceConnu;
 
@@ -131,7 +135,7 @@ export interface Evenements {
   rattrapage_tap: { source: SourcePaywall };
   rattrapage_ok: { source: SourcePaywall };
   rattrapage_refus: { source: SourcePaywall };
-  /** 22 novembre 2026 : nouvel onboarding, la reprise depuis une autre app ouverte depuis l'entree, puis reussie */
+  /** 22 novembre 2026 : nouvel onboarding, la reprise depuis une autre app ouverte depuis la question de l'ancienne app, puis reussie */
   reprise_ouverte: { source: 'onboarding' };
   reprise_reussie: { source: 'onboarding'; app: AppReprise };
   // paywall
