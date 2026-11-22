@@ -29,7 +29,8 @@ jest.mock('@/components/yoroi/v2/onboarding/ui', () => {
 jest.mock('expo-router', () => ({ useRouter: () => ({}), router: {} }));
 
 import { track } from '@/utils/telemetry';
-import { setApercuOnboarding } from '@/lib/v2/onboarding/events';
+import { choixOnboarding, setApercuOnboarding } from '@/lib/v2/onboarding/events';
+import { EMPTY_DRAFT } from '@/lib/v2/onboarding/draft';
 import {
   DEPART_BARRE,
   ETAPE_MESURE,
@@ -60,7 +61,7 @@ const etat = (p: Partial<EtatParcours> = {}): EtatParcours => ({ ...ETAT_DEPART,
 describe('Nouvel onboarding : le deroule', () => {
   it('un nouvel utilisateur qui veut perdre du poids : toutes les questions, une par ecran, puis la fin comme INRO', () => {
     expect(parcours(etat({ sens: 'baisse' }))).toEqual([
-      'entree', 'prenom', 'genre', 'age', 'source', 'interlude',
+      'entree', 'ancienneApp', 'prenom', 'genre', 'age', 'source', 'interlude',
       'objectif', 'sport', 'poids', 'taille', 'cap', 'jours', 'univers', 'rappels',
       'filtre', 'demo', 'preuve', 'chargement', 'paywall1', 'paywall',
     ]);
@@ -94,11 +95,23 @@ describe('Nouvel onboarding : le deroule', () => {
   });
 
   it('venu d une autre app (reprise) : prenom, poids, chargement, paywall', () => {
-    expect(parcours(etat({ viaReprise: true }))).toEqual(['entree', 'prenom', 'poids', 'chargement', 'paywall1', 'paywall']);
+    expect(parcours(etat({ viaReprise: true }))).toEqual(['entree', 'ancienneApp', 'prenom', 'poids', 'chargement', 'paywall1', 'paywall']);
+  });
+
+  it('22 novembre 2026 : « Tu utilises déjà une app pour tes séances ? » juste apres Commencer, premiere question de la barre', () => {
+    expect(suivante('entree', etat())).toBe('ancienneApp');
+    expect(suivante('ancienneApp', etat())).toBe('prenom');
+    // apres une reprise reussie, le parcours court continue au prenom
+    expect(suivante('ancienneApp', etat({ viaReprise: true }))).toBe('prenom');
+    expect(questions(etat())[0]).toBe('ancienneApp');
+    expect(questions(etat({ viaReprise: true }))[0]).toBe('ancienneApp');
+    expect(position('ancienneApp', etat()).etape).toBe(1);
+    expect(position('ancienneApp', etat()).progres).toBeCloseTo(DEPART_BARRE);
+    expect(etapeDeReprise({ etapeNeuf: 'ancienneApp' })).toBe('ancienneApp');
   });
 
   it('suivante() avance dans le parcours, reprend apres un ecran hors parcours, et reste au dernier', () => {
-    expect(suivante('entree', etat())).toBe('prenom');
+    expect(suivante('prenom', etat())).toBe('genre');
     expect(suivante('taille', etat({ sens: 'stable' }))).toBe('jours');
     expect(suivante('taille', etat({ sens: 'baisse' }))).toBe('cap');
     expect(suivante('rappels', etat({ rappelsRefus: true }))).toBe('rappelsRefus');
@@ -290,6 +303,24 @@ describe('Nouvel onboarding : la mesure de chaque ecran', () => {
     expect(track).toHaveBeenLastCalledWith('reprise_reussie', { source: 'onboarding', app: 'autre' });
   });
 
+  it('22 novembre 2026 : la reponse a l ancienne app part comme les autres questions, en liste fermee', () => {
+    choixOnboarding('ancienne_app', { ...EMPTY_DRAFT, ancienneApp: 'strong' });
+    choixOnboarding('ancienne_app', { ...EMPTY_DRAFT, ancienneApp: 'aucune' });
+    choixOnboarding('ancienne_app', { ...EMPTY_DRAFT, ancienneApp: null });
+    expect(track).toHaveBeenCalledWith('onboarding_choix', { etape: 'ancienne_app', choix: 'strong' });
+    expect(track).toHaveBeenCalledWith('onboarding_choix', { etape: 'ancienne_app', choix: 'aucune' });
+    expect(track).toHaveBeenLastCalledWith('onboarding_choix', { etape: 'ancienne_app', choix: 'passe' });
+  });
+
+  it('22 novembre 2026 : une tuile d app ouvre la reprise sur son guide et envoie toujours reprise_ouverte ; plus rien sur l entree', () => {
+    const src = lire('components/yoroi/v2/onboarding-neuf/index.tsx');
+    expect(src).toMatch(/onOuvrir=\{\(app\) => \{\s*m\.reprise\('ouverte'\);\s*setRepriseOuverte\(app\);/);
+    expect(src).toContain('appDepart={repriseOuverte}');
+    expect(src).toContain("ancienneApp: 'ancienne_app'");
+    const entree = lire('components/yoroi/v2/onboarding-neuf/Entree.tsx');
+    expect(entree).not.toMatch(/onReprise|Ramène tout/);
+  });
+
   it('en apercu du Studio ou en mode createur : rien ne part', () => {
     setApercuOnboarding(true);
     const m = creerMesure(() => 0);
@@ -383,8 +414,10 @@ describe('Branchements et interrupteur', () => {
       const src = fs.readFileSync(path.join(dossier, f), 'utf8');
       expect(src).not.toContain('\u2014');
       expect(src).not.toMatch(/\p{Extended_Pictographic}/u);
-      // 22 novembre 2026, demande de Houari : seule la carte de reprise de l'entree nomme Hevy et Strong
-      expect(f === 'Entree.tsx' ? src.replace(/Tu viens de Hevy ou Strong \?/g, '') : src).not.toMatch(/\bHevy\b|Strava|MyFitnessPal/);
+      // 22 novembre 2026, demande de Houari : seule la question « Tu utilises déjà une app pour tes séances ? »
+      // (AncienneApp.tsx) montre les noms des apps, lus dans lib/v2/import/apps.ts ; aucun autre ecran ne les ecrit
+      if (f !== 'AncienneApp.tsx') expect(src).not.toMatch(/\bHevy\b|\bStrong\b|FitNotes|Strava|MyFitnessPal/);
+      else expect(src).not.toMatch(/Strava|MyFitnessPal|LogoMarque/);
     }
   });
 
