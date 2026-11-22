@@ -23271,5 +23271,12 @@
 "Premier paiement le {0} : {1}": "Eerste betaling op {0}: {1}",
 "Annule quand tu veux dans les réglages de ton compte {0}.": "Zeg op wanneer je wilt in de instellingen van je {0}-account.",
 "Essai gratuit jusqu’au {0}": "Gratis proberen tot {0}",
-"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "In het echte traject openen hier de instellingen van je telefoon."
+"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "In het echte traject openen hier de instellingen van je telefoon.",
+"Tes séances {0} sont déjà dans YOROI": "Je {0}-sessies staan al in YOROI",
+"Tes séances sont déjà dans YOROI": "Je sessies staan al in YOROI",
+"Tu viens de Hevy ou Strong ?": "Kom je van Hevy of Strong?",
+"Récupère toutes tes séances et tes exercices": "Neem al je sessies en oefeningen mee",
+"Tes séances sont dans YOROI": "Je sessies staan in YOROI",
+"{0} exercice récupéré": "{0} oefening overgenomen",
+"{0} exercices récupérés": "{0} oefeningen overgenomen"
 }
