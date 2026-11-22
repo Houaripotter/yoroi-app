@@ -10,6 +10,9 @@
  * la date du premier paiement, comment annuler, la mention legale de YOROI, le bouton, « Continuer gratuitement »
  * et les liens.
  *
+ * 22 novembre 2026 : apres une reprise depuis une autre app, une bulle de plus sur la photo, au-dessus de la note :
+ * « Tes séances {app} sont déjà dans YOROI » (nom de l'app seulement s'il est connu). Achat et prix inchanges.
+ *
  * Prix, essai, economie : toujours lus dans les offres du store (formules.ts). Achat : usePremium().purchase, comme
  * le paywall actuel. En apercu du Studio, la feuille d'achat d'Apple est simulee par une fenetre centree.
  */
@@ -28,6 +31,7 @@ import { jourMois, traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { Alerte, Bouton, ND, Txt, alpha } from './kit';
 import { usePremiumSur, type EtatFormules, type Formule } from './formules';
 import { FONT, ICONE_YOROI, PHOTOS, PHOTO_PAYWALL, useNuit } from './theme';
+import { ligneReprise } from './Paywall3';
 
 const SUR_PHOTO = '#FFFFFF';
 const SUR_PHOTO_DOUX = 'rgba(255,255,255,0.8)';
@@ -43,7 +47,7 @@ export function datePaiement(fin: Date): string {
 
 export type ResultatAchat = { essaiFin: Date | null };
 
-export function PaywallOffre({ formules, apercu, onAchat, onFermer, onAnnule, onConditions, onConfidentialite, onReessayer }: {
+export function PaywallOffre({ formules, apercu, onAchat, onFermer, onAnnule, onConditions, onConfidentialite, onReessayer, reprise }: {
   formules: EtatFormules;
   apercu: boolean;
   /** achat ou essai reussi (ou restaure) */
@@ -55,6 +59,8 @@ export function PaywallOffre({ formules, apercu, onAchat, onFermer, onAnnule, on
   onConditions: () => void;
   onConfidentialite: () => void;
   onReessayer: () => void;
+  /** apres une reprise depuis une autre app : le nom de l'app d'origine s'il est connu */
+  reprise?: { app: string | null } | null;
 }) {
   const T = useNuit();
   const insets = useSafeAreaInsets();
@@ -174,7 +180,13 @@ export function PaywallOffre({ formules, apercu, onAchat, onFermer, onAnnule, on
 
       <Txt style={f.titre}>{traduire('Choisis ta formule')}</Txt>
 
-      <View style={{ position: 'absolute', left: 20, right: 20, top: carteHaut - 190, alignItems: 'center' }} pointerEvents="none">
+      <View style={{ position: 'absolute', left: 20, right: 20, top: carteHaut - 190 - (reprise ? 46 : 0), alignItems: 'center' }} pointerEvents="none">
+        {reprise ? (
+          <View style={[f.reprise, { backgroundColor: alpha(T.acc, 0.85) }]}>
+            <Ionicons name="checkmark-circle" size={17} color={SUR_PHOTO} />
+            <Txt style={f.repriseTxt} numberOfLines={2}>{ligneReprise(reprise.app)}</Txt>
+          </View>
+        ) : null}
         {note ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Txt style={f.note}>{note.note}</Txt>
@@ -310,6 +322,8 @@ const f = StyleSheet.create({
   titre: { fontFamily: FONT.titre, fontSize: 29, lineHeight: 34, letterSpacing: -0.4, color: SUR_PHOTO, textAlign: 'center', marginTop: 6, paddingHorizontal: 24 },
   note: { fontFamily: FONT.titre, fontSize: 22, color: SUR_PHOTO },
   noteSous: { fontFamily: FONT.texteMedium, fontSize: 13, color: SUR_PHOTO },
+  reprise: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 10, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)', maxWidth: '100%' },
+  repriseTxt: { flexShrink: 1, fontFamily: FONT.texteSemi, fontSize: 13.5, lineHeight: 17, color: SUR_PHOTO },
   avisBulle: { marginTop: 8, alignSelf: 'stretch', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 9, backgroundColor: VOILE(0.45) },
   avisTxt: { fontFamily: FONT.texte, fontSize: 13, lineHeight: 18, color: SUR_PHOTO },
   avisNom: { fontFamily: FONT.texteSemi, fontSize: 11.5, color: SUR_PHOTO_DOUX, marginTop: 3 },
