@@ -5,7 +5,8 @@
  * 21 novembre 2026). Branche par app/onboarding.tsx quand l'interrupteur est allume
  * (lib/v2/onboarding/interrupteur.ts, ONBOARDING_NEUF_ACTIF) ; l'ancien parcours reste en place.
  *
- * Deroule (parcours.ts) : entree ; bloc « Toi » (prenom, genre, age, source) ; interlude et mur de photos ;
+ * Deroule (parcours.ts) : entree ; « Tu utilises déjà une app pour tes séances ? » (AncienneApp.tsx, une app ouvre la
+ * reprise sur son guide, 22 novembre 2026) ; bloc « Toi » (prenom, genre, age, source) ; interlude et mur de photos ;
  * bloc « Ton plan » (objectif, sports, poids, taille, cap si tu veux perdre ou prendre, jours, univers, rappels,
  * et Apple Sante ou Health Connect s'il existe et n'est pas relie) ; la pluie de stickers ; la demo ; les avis ;
  * le chargement (qui fait le vrai enregistrement final) ; le paywall en 3 temps ; l'offre de rattrapage a la
@@ -33,7 +34,7 @@ import { brouillonPrerempli } from '@/lib/v2/onboarding/fusion';
 import { importDataFromJSON } from '@/lib/exportService';
 import { ListeSauvegardes } from '@/components/yoroi/v2/sauvegarde/ListeSauvegardes';
 import { RepriseHevy, type FinReprise } from '@/components/yoroi/v2/import/RepriseHevy';
-import { nomAppOrigine } from '@/lib/v2/import/apps';
+import { nomAppOrigine, type IdApp } from '@/lib/v2/import/apps';
 import type { Trouvee } from '@/lib/v2/sauvegarde/retrouver';
 import { markTourSeen, markVisiteDone } from '@/components/yoroi/v2/tour/keys';
 import { markWhatsNewSeen } from '@/components/WhatsNewModal';
@@ -71,6 +72,7 @@ import type { TrancheAge } from '@/lib/v2/onboarding/trancheAge';
 import type { SourceConnu } from '@/lib/v2/onboarding/sourceConnu';
 import { Alerte, ND, Txt } from './kit';
 import { Entree } from './Entree';
+import { AncienneApp } from './AncienneApp';
 import { Age, Genre, Objectif, Prenom, Source, Sports, Univers, type ChoixGenre } from './Questions';
 import { Cap, Jours, Poids, Taille } from './Mesures';
 import { Interlude } from './Interlude';
@@ -107,7 +109,7 @@ const round1 = (v: number) => Math.round(v * 10) / 10;
 
 /** Le nom de l'ancien ecran, pour la mesure des choix (lib/v2/onboarding/events.ts, choixOnboarding) */
 const ANCIEN_NOM: Partial<Record<Etape, string>> = {
-  genre: 'toi', age: 'age', source: 'source', objectif: 'objectif', sport: 'sport', poids: 'poids', taille: 'taille', cap: 'cap', jours: 'rythme', univers: 'univers',
+  ancienneApp: 'ancienne_app', genre: 'toi', age: 'age', source: 'source', objectif: 'objectif', sport: 'sport', poids: 'poids', taille: 'taille', cap: 'cap', jours: 'rythme', univers: 'univers',
 };
 
 /** Le brouillon d'exemple de l'apercu du Studio */
@@ -352,7 +354,8 @@ export function OnboardingNeufEcran({ etapeDemandee }: { etapeDemandee?: string 
   const [alerte, setAlerte] = useState<{ titre: string; texte?: string } | null>(null);
   const [restauration, setRestauration] = useState(false);
   const [listeOuverte, setListeOuverte] = useState(false);
-  const [repriseOuverte, setRepriseOuverte] = useState(false);
+  /** 22 novembre 2026 : la reprise ouverte, sur le guide de l'app choisie a la question AncienneApp */
+  const [repriseOuverte, setRepriseOuverte] = useState<IdApp | null>(null);
   const [offre, setOffre] = useState<Trouvee | null>(null);
   useEffect(() => {
     if (apercu || !regleConnue || sansEcriture || Platform.OS !== 'ios') return;
@@ -429,7 +432,7 @@ export function OnboardingNeufEcran({ etapeDemandee }: { etapeDemandee?: string 
     else void restaurerFichier();
   };
   const apresReprise = async (r: FinReprise) => {
-    setRepriseOuverte(false);
+    setRepriseOuverte(null);
     if (!sansEcriture) await AsyncStorage.setItem(LEGAL_ACCEPTED_KEY, 'true').catch(() => undefined);
     const cur = draftRef.current;
     const jours = r.jours.length ? r.jours : cur.jours;
@@ -693,16 +696,24 @@ export function OnboardingNeufEcran({ etapeDemandee }: { etapeDemandee?: string 
           <Entree
             onStart={() => void commencer()}
             onSauvegarde={() => void ouvrirSauvegardes()}
-            onReprise={() => {
-              m.reprise('ouverte');
-              setRepriseOuverte(true);
-            }}
             onRestaurerAchats={() => void restaurerAchats()}
             onConditions={conditions}
             onConfidentialite={confidentialite}
             onClose={apercu ? fermerApercu : undefined}
             restauration={restauration}
             offre={offre ? { modifiedAt: offre.modifiedAt, onRetrouver: () => void restaurerFichier(offre.chemin), onZero: () => setOffre(null) } : undefined}
+          />
+        );
+      case 'ancienneApp':
+        return (
+          <AncienneApp
+            nav={nav}
+            value={d.ancienneApp ?? null}
+            onChange={(v) => patch({ ancienneApp: v })}
+            onOuvrir={(app) => {
+              m.reprise('ouverte');
+              setRepriseOuverte(app);
+            }}
           />
         );
       case 'prenom':
@@ -928,8 +939,8 @@ export function OnboardingNeufEcran({ etapeDemandee }: { etapeDemandee?: string 
             </Modal>
           ) : null}
           {repriseOuverte ? (
-            <Modal visible animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setRepriseOuverte(false)}>
-              <RepriseHevy depuisOnboarding apercu={sansEcriture} onFermer={() => setRepriseOuverte(false)} onFini={(r) => void apresReprise(r)} />
+            <Modal visible animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setRepriseOuverte(null)}>
+              <RepriseHevy depuisOnboarding appDepart={repriseOuverte} apercu={sansEcriture} onFermer={() => setRepriseOuverte(null)} onFini={(r) => void apresReprise(r)} />
             </Modal>
           ) : null}
         </View>
