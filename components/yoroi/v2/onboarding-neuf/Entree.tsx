@@ -4,9 +4,10 @@
  * L'ecran d'entree, copie d'INRO (components/onboarding-nuit/Entree.tsx) : un fond qui bouge comme une video,
  * fait de 9 plans (photos 1 a 9) de 2 300 ms chacun, fondu de 380 ms, zoom lent et leger glissement en lineaire.
  * Le plan d'avant reste dessous le temps du fondu. Voile noir en haut et en bas pour lire le logo et les boutons.
- * En haut : YOROI en blanc et la phrase. En bas : le bouton blanc « Commencer », puis la carte de la reprise
- * (22 novembre 2026, demande de Houari : « Tu viens de Hevy ou Strong ? », elle ouvre la reprise existante), le lien
- * de la sauvegarde, « Restaurer mes achats » et la ligne des conditions. En haut a gauche, la langue de l'app (code seulement, pas de drapeau emoji).
+ * En haut : YOROI en blanc et la phrase. En bas : le bouton blanc « Commencer », le lien de la sauvegarde,
+ * « Restaurer mes achats » et la ligne des conditions. En haut a gauche, la langue de l'app (code seulement, pas de
+ * drapeau emoji). 22 novembre 2026 : plus rien sur la reprise ici, elle passe par la premiere question du parcours
+ * (AncienneApp.tsx, « Tu utilises déjà une app pour tes séances ? »).
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -63,12 +64,10 @@ function Plan({ index, width, height }: { index: number; width: number; height: 
 
 export type OffreSauvegarde = { modifiedAt: number; onRetrouver: () => void; onZero: () => void };
 
-export function Entree({ onStart, onSauvegarde, onReprise, onRestaurerAchats, onConditions, onConfidentialite, onClose, restauration = false, offre, planDepart = 0 }: {
+export function Entree({ onStart, onSauvegarde, onRestaurerAchats, onConditions, onConfidentialite, onClose, restauration = false, offre, planDepart = 0 }: {
   onStart: () => void;
   /** « J'ai déjà une sauvegarde » : la liste des sauvegardes (ou le selecteur de fichiers) */
   onSauvegarde?: () => void;
-  /** La carte « Tu viens de Hevy ou Strong ? » : ouvre la reprise existante (les apps de lib/v2/import/apps.ts ou un fichier CSV) */
-  onReprise?: () => void;
   onRestaurerAchats: () => void;
   onConditions: () => void;
   onConfidentialite: () => void;
@@ -139,10 +138,6 @@ export function Entree({ onStart, onSauvegarde, onReprise, onRestaurerAchats, on
         lien: { fontFamily: FONT.texteSemi, textDecorationLine: 'underline', color: '#FFFFFF' },
         secondaire: { fontFamily: FONT.texteSemi, fontSize: 13.5, color: '#FFFFFF', textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.4)', textShadowRadius: 8 },
         discret: { fontFamily: FONT.texteMedium, fontSize: 13, color: 'rgba(255,255,255,0.9)', textAlign: 'center' },
-        reprise: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12, minHeight: 64, paddingVertical: 11, paddingLeft: 12, paddingRight: 14, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.16)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.42)' },
-        repriseRond: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
-        repriseTitre: { fontFamily: FONT.titreBold, fontSize: 16, lineHeight: 20, color: '#FFFFFF', textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 8 },
-        repriseSous: { fontFamily: FONT.texteMedium, fontSize: 13, lineHeight: 17, color: 'rgba(255,255,255,0.92)', marginTop: 2, textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 8 },
       }),
     [T],
   );
@@ -225,28 +220,8 @@ export function Entree({ onStart, onSauvegarde, onReprise, onRestaurerAchats, on
 
       <Animated.View style={[e.bas, { paddingBottom: Math.max(insets.bottom, 14) + 6, opacity: entree }]}>
         <Bouton label={traduire('Commencer')} onPress={onStart} fond="#FFFFFF" encre={T.ink} />
-        {onReprise ? (
-          <Pressable
-            onPress={() => {
-              vibre.choix();
-              onReprise();
-            }}
-            style={({ pressed }) => [e.reprise, pressed && { opacity: 0.8 }]}
-            accessibilityRole="button"
-            accessibilityLabel={`${traduire('Tu viens de Hevy ou Strong ?')} ${traduire('Récupère toutes tes séances et tes exercices')}`}
-          >
-            <View style={e.repriseRond}>
-              <Ionicons name="download-outline" size={21} color={T.acc} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Txt style={e.repriseTitre} numberOfLines={2}>{traduire('Tu viens de Hevy ou Strong ?')}</Txt>
-              <Txt style={e.repriseSous} numberOfLines={2}>{traduire('Récupère toutes tes séances et tes exercices')}</Txt>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
-          </Pressable>
-        ) : null}
         {onSauvegarde ? (
-          <Pressable onPress={restauration ? undefined : onSauvegarde} hitSlop={8} style={{ alignSelf: 'center', marginTop: 14, paddingVertical: 2 }} accessibilityRole="button">
+          <Pressable onPress={restauration ? undefined : onSauvegarde} hitSlop={8} style={{ alignSelf: 'center', marginTop: 16, paddingVertical: 2 }} accessibilityRole="button">
             <Txt style={e.secondaire}>{restauration ? traduire('Restauration en cours') : traduire('J’ai déjà une sauvegarde')}</Txt>
           </Pressable>
         ) : null}
