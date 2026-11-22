@@ -24566,5 +24566,10 @@
 "{0} exercices récupérés§few": "{0} تمارين مسترجعة",
 "{0} exercices récupérés§many": "{0} تمرينًا مسترجعًا",
 "{0} exercices récupérés§two": "{0} تمرينان مسترجعان",
-"{0} exercices récupérés§zero": "{0} تمارين مسترجعة"
+"{0} exercices récupérés§zero": "{0} تمارين مسترجعة",
+"Autre app (fichier CSV)": "تطبيق آخر (ملف CSV)",
+"Non, je commence avec YOROI": "لا، أبدأ مع YOROI",
+"Tu utilises déjà une app pour tes séances ?": "هل تستخدم تطبيقًا لحصصك التدريبية؟",
+"app": "تطبيقًا",
+"Tu récupères tout : séances, exercices, charges.": "تستعيد كل شيء: الحصص والتمارين والأوزان."
 }
