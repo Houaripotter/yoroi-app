@@ -26,6 +26,7 @@ import type { SourcePaywall, SourcePremium } from '@/lib/v2/premium/sources';
 import type { SourcePartage } from '@/lib/v2/partage/mesure';
 import type { TrancheAge } from '@/lib/v2/onboarding/trancheAge';
 import type { SourceConnu } from '@/lib/v2/onboarding/sourceConnu';
+import type { TempsEcran } from '@/lib/v2/onboarding/interrupteur';
 
 /** Heure de debut d'execution du bundle JavaScript : sert a first_screen_rendered */
 const T0 = Date.now();
@@ -82,7 +83,10 @@ export type CauseStockage = 'total' | 'cle';
 
 export type EtapeOnboarding =
   | 'accroche' | 'prenom' | 'toi' | 'age' | 'source' | 'univers' | 'objectif' | 'frein' | 'affirmation' | 'sport' | 'poids'
-  | 'taille' | 'cap' | 'rythme' | 'moment' | 'demo' | 'comparaison' | 'forge' | 'resultat' | 'premium';
+  | 'taille' | 'cap' | 'rythme' | 'moment' | 'demo' | 'comparaison' | 'forge' | 'resultat' | 'premium'
+  // 21 novembre 2026 : les ecrans du nouvel onboarding (lib/v2/onboarding/interrupteur.ts, ORDRE_MESURE_NEUF)
+  | 'entree' | 'interlude' | 'rappels' | 'rappels_refus' | 'sante' | 'filtre' | 'preuve' | 'chargement'
+  | 'paywall_1' | 'paywall_2' | 'paywall_3' | 'rattrapage';
 
 /** Choix de l'onboarding. Le frein ne part qu'en renseigne ou passe : il peut contenir une blessure. */
 export type ChoixOnboarding =
@@ -111,10 +115,20 @@ export interface Evenements {
   first_screen_rendered: { duree: Duree };
   screen_view: { ecran: Ecran };
   // onboarding
-  onboarding_etape: { etape: EtapeOnboarding };
+  /** 21 novembre 2026 : temps, la tranche du temps passe sur l'ecran (nouvel onboarding, envoye en le quittant) */
+  onboarding_etape: { etape: EtapeOnboarding; temps?: TempsEcran };
   onboarding_choix: { etape: EtapeOnboarding; choix?: ChoixOnboarding; famille?: Famille; tranche_nombre?: TrancheNombre };
   onboarding_restauration: { resultat: Resultat };
   onboarding_termine: { statut: Statut };
+  /** 21 novembre 2026 : nouvel onboarding, les rappels acceptes ou refuses (aucune autre donnee) */
+  onboarding_rappels: { reponse: 'accepte' | 'refuse' };
+  /** 21 novembre 2026 : nouvel onboarding, l'ecran du paywall en 3 temps */
+  paywall_ecran_vu: { ecran: '1' | '2' | '3' };
+  /** 21 novembre 2026 : l'offre de rattrapage (lib/v2/premium/rattrapage.ts) */
+  rattrapage_vue: { source: SourcePaywall };
+  rattrapage_tap: { source: SourcePaywall };
+  rattrapage_ok: { source: SourcePaywall };
+  rattrapage_refus: { source: SourcePaywall };
   // paywall
   paywall_view: { source: SourcePaywall; statut: Statut };
   paywall_cta_tap: { source: SourcePaywall; plan?: Plan };
