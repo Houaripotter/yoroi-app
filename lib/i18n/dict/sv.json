@@ -23278,5 +23278,10 @@
 "Récupère toutes tes séances et tes exercices": "Hämta alla dina pass och övningar",
 "Tes séances sont dans YOROI": "Dina pass finns i YOROI",
 "{0} exercice récupéré": "{0} övning hämtad",
-"{0} exercices récupérés": "{0} övningar hämtade"
+"{0} exercices récupérés": "{0} övningar hämtade",
+"Autre app (fichier CSV)": "Annan app (CSV-fil)",
+"Non, je commence avec YOROI": "Nej, jag börjar med YOROI",
+"Tu utilises déjà une app pour tes séances ?": "Använder du redan en app för dina pass?",
+"app": "app",
+"Tu récupères tout : séances, exercices, charges.": "Du får tillbaka allt: pass, övningar, vikter."
 }
