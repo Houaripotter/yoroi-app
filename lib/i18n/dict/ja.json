@@ -23271,5 +23271,12 @@
 "Premier paiement le {0} : {1}": "初回のお支払いは {0}：{1}",
 "Annule quand tu veux dans les réglages de ton compte {0}.": "{0} アカウントの設定でいつでも解約できます。",
 "Essai gratuit jusqu’au {0}": "{0} まで無料体験",
-"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "実際の流れでは、ここでスマホの設定が開きます。"
+"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "実際の流れでは、ここでスマホの設定が開きます。",
+"Tes séances {0} sont déjà dans YOROI": "{0}のセッションはもうYOROIに入っています",
+"Tes séances sont déjà dans YOROI": "セッションはもうYOROIに入っています",
+"Tu viens de Hevy ou Strong ?": "HevyやStrongから来ましたか？",
+"Récupère toutes tes séances et tes exercices": "セッションと種目をすべて引き継ごう",
+"Tes séances sont dans YOROI": "セッションはYOROIに入りました",
+"{0} exercice récupéré": "{0}種目を取り込みました",
+"{0} exercices récupérés": "{0}種目を取り込みました"
 }
