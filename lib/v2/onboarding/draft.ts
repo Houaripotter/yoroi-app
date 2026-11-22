@@ -91,6 +91,8 @@ export type Draft = {
   source?: SourceConnu | null;
   /** 18 novembre 2026 : arrive avec ses donnees de Hevy (RepriseHevy) : l'onboarding ne repose que l'essentiel */
   viaHevy?: boolean;
+  /** 21 novembre 2026 : l'ecran du nouvel onboarding (components/yoroi/v2/onboarding-neuf/parcours.ts), pour la reprise */
+  etapeNeuf?: string | null;
 };
 
 export const EMPTY_DRAFT: Draft = {
@@ -181,6 +183,7 @@ export async function loadDraft(): Promise<Draft | null> {
       scene: typeof d.scene === 'string' ? d.scene : null,
       source: isSourceConnu(d.source) ? d.source : null,
       ...(d.viaHevy === true ? { viaHevy: true } : { viaHevy: undefined }),
+      etapeNeuf: typeof d.etapeNeuf === 'string' ? d.etapeNeuf : null,
     };
   } catch {
     return null;
