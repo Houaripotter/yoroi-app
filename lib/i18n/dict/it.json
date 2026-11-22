@@ -23271,5 +23271,12 @@
 "Premier paiement le {0} : {1}": "Primo pagamento il {0}: {1}",
 "Annule quand tu veux dans les réglages de ton compte {0}.": "Annulla quando vuoi nelle impostazioni del tuo account {0}.",
 "Essai gratuit jusqu’au {0}": "Prova gratuita fino al {0}",
-"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "Nel percorso reale, qui si aprono le impostazioni del telefono."
+"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "Nel percorso reale, qui si aprono le impostazioni del telefono.",
+"Tes séances {0} sont déjà dans YOROI": "Le tue sessioni di {0} sono già in YOROI",
+"Tes séances sont déjà dans YOROI": "Le tue sessioni sono già in YOROI",
+"Tu viens de Hevy ou Strong ?": "Arrivi da Hevy o Strong?",
+"Récupère toutes tes séances et tes exercices": "Recupera tutte le tue sessioni e i tuoi esercizi",
+"Tes séances sont dans YOROI": "Le tue sessioni sono in YOROI",
+"{0} exercice récupéré": "{0} esercizio recuperato",
+"{0} exercices récupérés": "{0} esercizi recuperati"
 }
