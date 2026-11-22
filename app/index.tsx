@@ -10,6 +10,7 @@ import logger from '@/lib/security/logger';
 import { NOUVEAUTES_30_KEY, choisirParcours, type Parcours } from '@/lib/v2/onboarding/parcours';
 import { TOUR_DONE_KEY, etatUtilisateur as etatOuverture } from '@/lib/v2/onboarding/etatOuverture';
 import { ONBOARDING_VU_VERSION_KEY, doitRevoirOnboarding } from '@/lib/v2/onboarding/retour';
+import { ONBOARDING_NEUF_ACTIF } from '@/lib/v2/onboarding/interrupteur';
 
 /** 28 octobre 2026 : 'retour', l'onboarding revu une fois par un utilisateur existant (lib/v2/onboarding/retour.ts) */
 type Destination = Parcours | 'retour';
@@ -90,7 +91,9 @@ export default function Index() {
         }
         dest = choisirParcours({ existant: etat.existant, lectureRatee: etat.lectureRatee, nouveautesVues, demo });
         // 28 octobre 2026 : tout utilisateur existant revoit l'onboarding de la 3.0, une seule fois (il remplace les nouveautes)
-        if (dest !== 'onboarding' && doitRevoirOnboarding({ existant: etat.existant, lectureRatee: etat.lectureRatee, demo, versionVue })) dest = 'retour';
+        // 21 novembre 2026 (Houari) : avec le nouvel onboarding, plus de « YOROI fait peau neuve » pour les utilisateurs
+        // existants (lib/v2/onboarding/interrupteur.ts) ; ils vont aux onglets (ou aux nouveautes s'ils ne les ont jamais vues)
+        if (!ONBOARDING_NEUF_ACTIF && dest !== 'onboarding' && doitRevoirOnboarding({ existant: etat.existant, lectureRatee: etat.lectureRatee, demo, versionVue })) dest = 'retour';
         logger.info(`[Index] Ouverture : ${etat.raison}, parcours ${dest}`);
         // 18 octobre 2026 : seulement pour un utilisateur existant reconnu (une lecture ratee ne pose aucune trace)
         if (dest !== 'onboarding' && etat.existant) {
