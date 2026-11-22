@@ -24555,5 +24555,16 @@
 "{0} jours gratuits, puis {1} par an ({2} par mois)§zero": "{0} يوم مجانًا، ثم {1} سنويًا ({2} شهريًا)",
 "{0} jours gratuits, puis {1} par an§zero": "{0} يوم مجانًا، ثم {1} سنويًا",
 "{0} jours pour tout essayer§zero": "{0} يوم لتجربة كل شيء",
-"{0} NOTES SUR LES STORES§zero": "{0} تقييم على المتاجر"
+"{0} NOTES SUR LES STORES§zero": "{0} تقييم على المتاجر",
+"Tes séances {0} sont déjà dans YOROI": "حصصك من {0} موجودة بالفعل في YOROI",
+"Tes séances sont déjà dans YOROI": "حصصك موجودة بالفعل في YOROI",
+"Tu viens de Hevy ou Strong ?": "هل أتيت من Hevy أو Strong؟",
+"Récupère toutes tes séances et tes exercices": "استرجع كل حصصك وتمارينك",
+"Tes séances sont dans YOROI": "حصصك في YOROI",
+"{0} exercice récupéré": "{0} تمرين مسترجع",
+"{0} exercices récupérés": "{0} تمرين مسترجع",
+"{0} exercices récupérés§few": "{0} تمارين مسترجعة",
+"{0} exercices récupérés§many": "{0} تمرينًا مسترجعًا",
+"{0} exercices récupérés§two": "{0} تمرينان مسترجعان",
+"{0} exercices récupérés§zero": "{0} تمارين مسترجعة"
 }
