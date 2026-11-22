@@ -40,7 +40,7 @@ export type NomPostHog =
   | 'winback_tapped'
   | 'winback_purchased'
   | 'winback_dismissed'
-  // 22 novembre 2026 : la reprise depuis une autre app, ouverte depuis l'entree du nouvel onboarding, puis reussie
+  // 22 novembre 2026 : la reprise depuis une autre app, ouverte depuis la question de l'ancienne app du nouvel onboarding, puis reussie
   | 'import_opened'
   | 'import_completed'
   | 'paywall_shown'
@@ -68,7 +68,7 @@ export const ORDRE_ONBOARDING_ANCIEN = [
 ] as const;
 
 /**
- * 21 novembre 2026 : l'ordre du parcours en service. Nouvel onboarding (interrupteur allume) : ses 24 ecrans dans
+ * 21 novembre 2026 : l'ordre du parcours en service. Nouvel onboarding (interrupteur allume) : ses 25 ecrans dans
  * l'ordre (lib/v2/onboarding/interrupteur.ts) ; sinon l'ancien.
  */
 export const ORDRE_ONBOARDING: readonly string[] = ONBOARDING_NEUF_ACTIF ? ORDRE_MESURE_NEUF : ORDRE_ONBOARDING_ANCIEN;
