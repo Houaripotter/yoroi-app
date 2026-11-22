@@ -23278,5 +23278,10 @@
 "Récupère toutes tes séances et tes exercices": "Tuo kaikki treenisi ja liikkeesi",
 "Tes séances sont dans YOROI": "Treenisi ovat YOROIssa",
 "{0} exercice récupéré": "{0} liike haettu",
-"{0} exercices récupérés": "{0} liikettä haettu"
+"{0} exercices récupérés": "{0} liikettä haettu",
+"Autre app (fichier CSV)": "Muu sovellus (CSV-tiedosto)",
+"Non, je commence avec YOROI": "En, aloitan YOROIlla",
+"Tu utilises déjà une app pour tes séances ?": "Käytätkö jo sovellusta treeneihisi?",
+"app": "sovellusta",
+"Tu récupères tout : séances, exercices, charges.": "Saat kaiken mukaan: treenit, liikkeet, painot."
 }
