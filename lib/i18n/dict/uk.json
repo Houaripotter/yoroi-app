@@ -23913,5 +23913,14 @@
 "{0} jours gratuits, puis {1} par an ({2} par mois)§many": "{0} днів безкоштовно, потім {1} на рік ({2} на місяць)",
 "{0} jours gratuits, puis {1} par an§many": "{0} днів безкоштовно, потім {1} на рік",
 "{0} jours pour tout essayer§many": "{0} днів, щоб спробувати все",
-"{0} NOTES SUR LES STORES§many": "{0} ОЦІНОК В МАГАЗИНАХ"
+"{0} NOTES SUR LES STORES§many": "{0} ОЦІНОК В МАГАЗИНАХ",
+"Tes séances {0} sont déjà dans YOROI": "Твої тренування з {0} уже в YOROI",
+"Tes séances sont déjà dans YOROI": "Твої тренування вже в YOROI",
+"Tu viens de Hevy ou Strong ?": "Переходиш із Hevy чи Strong?",
+"Récupère toutes tes séances et tes exercices": "Перенеси всі свої тренування та вправи",
+"Tes séances sont dans YOROI": "Твої тренування в YOROI",
+"{0} exercice récupéré": "Перенесено {0} вправу",
+"{0} exercices récupérés": "Перенесено {0} вправ",
+"{0} exercices récupérés§few": "Перенесено {0} вправи",
+"{0} exercices récupérés§many": "Перенесено {0} вправ"
 }
