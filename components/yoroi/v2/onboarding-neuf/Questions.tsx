@@ -30,9 +30,9 @@ import { Apparait, Bas, Choix, ChoixMultiple, Corps, Ecran, Haut, Pastille, Stic
 import { FONT, useNuit } from './theme';
 
 /** Delai entre le toucher d'un choix unique et l'ecran suivant */
-const AVANCE_MS = 250;
+export const AVANCE_MS = 250;
 
-function useAvance(nav: Nav) {
+export function useAvance(nav: Nav) {
   const t = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => {
     if (t.current) clearTimeout(t.current);
