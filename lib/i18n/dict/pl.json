@@ -23913,5 +23913,14 @@
 "{0} jours gratuits, puis {1} par an ({2} par mois)§many": "{0} dni za darmo, potem {1} rocznie ({2} miesięcznie)",
 "{0} jours gratuits, puis {1} par an§many": "{0} dni za darmo, potem {1} rocznie",
 "{0} jours pour tout essayer§many": "{0} dni, by wypróbować wszystko",
-"{0} NOTES SUR LES STORES§many": "{0} OCEN W SKLEPACH"
+"{0} NOTES SUR LES STORES§many": "{0} OCEN W SKLEPACH",
+"Tes séances {0} sont déjà dans YOROI": "Twoje treningi z {0} są już w YOROI",
+"Tes séances sont déjà dans YOROI": "Twoje treningi są już w YOROI",
+"Tu viens de Hevy ou Strong ?": "Przychodzisz z Hevy albo Strong?",
+"Récupère toutes tes séances et tes exercices": "Przenieś wszystkie treningi i ćwiczenia",
+"Tes séances sont dans YOROI": "Twoje treningi są w YOROI",
+"{0} exercice récupéré": "Przeniesiono {0} ćwiczenie",
+"{0} exercices récupérés": "Przeniesiono {0} ćwiczeń",
+"{0} exercices récupérés§few": "Przeniesiono {0} ćwiczenia",
+"{0} exercices récupérés§many": "Przeniesiono {0} ćwiczeń"
 }
