@@ -12,6 +12,9 @@
  *    ecrans de l'app flottent a droite.
  * 3. A 4 300 les pastilles s'effacent ; a 4 650, quatre vrais ecrans de YOROI arrivent en grille, floutes.
  * 4. A 7 500 « Tout est prêt, Prenom » ; a 8 000 le bouton. Tout du long, un vrai avis a la fois, toutes les 2,6 s.
+ * 5. 22 novembre 2026 : apres une reprise depuis une autre app, une carte au-dessus de l'avis dit ce qui a ete
+ *    recupere, avec les vrais chiffres de la reprise (FinReprise). Un chiffre inconnu ne s'affiche pas : une phrase
+ *    sans chiffre a la place.
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -19,7 +22,7 @@ import { ActivityIndicator, Animated, Easing, Image, StyleSheet, View, type Imag
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { AVIS_STORES } from '@/lib/v2/premium/preuveSociale';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { Alerte, Bouton, Ecran, ND, Txt, alpha } from './kit';
 import { ECRANS_APP, FONT, useNuit, type Palette } from './theme';
 
@@ -153,7 +156,34 @@ function AvisDefilants({ T }: { T: Palette }) {
   );
 }
 
-export function Chargement({ prenom, reponses, etapes, run, onNext }: {
+/** Ce que la reprise a vraiment recupere (null : inconnu, rien d'affiche en chiffre) */
+export type RepriseVue = { seances: number | null; exercices: number | null };
+
+function CarteReprise({ reprise, T }: { reprise: RepriseVue; T: Palette }) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const a = Animated.timing(v, { toValue: 1, duration: 420, delay: 250, easing: Easing.out(Easing.cubic), useNativeDriver: ND });
+    a.start();
+    return () => a.stop();
+  }, [v]);
+  const s = reprise.seances && reprise.seances > 0 ? reprise.seances : null;
+  const x = s && reprise.exercices && reprise.exercices > 0 ? reprise.exercices : null;
+  return (
+    <Animated.View style={[st.reprise, { backgroundColor: alpha(T.acc, 0.07), borderColor: alpha(T.acc, 0.28), opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }]}>
+      <View style={[st.cocheGrande, { backgroundColor: T.acc }]}>
+        <Ionicons name="checkmark" size={16} color={T.accInk} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Txt style={[st.repriseTitre, { color: T.ink }]} numberOfLines={2}>
+          {s ? traduirePluriel(s, s > 1, '{0} séance récupérée', '{0} séances récupérées', s) : traduire('Tes séances sont dans YOROI')}
+        </Txt>
+        {x ? <Txt style={[st.repriseSous, { color: T.sub }]} numberOfLines={1}>{traduirePluriel(x, x > 1, '{0} exercice récupéré', '{0} exercices récupérés', x)}</Txt> : null}
+      </View>
+    </Animated.View>
+  );
+}
+
+export function Chargement({ prenom, reponses, etapes, run, onNext, reprise }: {
   prenom: string;
   reponses: string[];
   /** les trois etapes (reponses.ts, etapesChargement) */
@@ -161,6 +191,8 @@ export function Chargement({ prenom, reponses, etapes, run, onNext }: {
   /** l'enregistrement final (une seule fois ; il se refait sans doublon) */
   run: () => Promise<void>;
   onNext: () => void;
+  /** apres une reprise depuis une autre app : ce qui a ete recupere (absent sinon) */
+  reprise?: RepriseVue | null;
 }) {
   const T = useNuit();
   const insets = useSafeAreaInsets();
@@ -305,6 +337,7 @@ export function Chargement({ prenom, reponses, etapes, run, onNext }: {
       </View>
 
       <View style={{ paddingHorizontal: 20, paddingTop: 6 }}>
+        {reprise ? <CarteReprise reprise={reprise} T={T} /> : null}
         <AvisDefilants T={T} />
       </View>
 
@@ -348,4 +381,7 @@ const st = StyleSheet.create({
   avis: { borderRadius: 14, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10, minHeight: 96 },
   avisTxt: { fontFamily: FONT.texte, fontSize: 13.5, lineHeight: 19 },
   avisNom: { fontFamily: FONT.texteSemi, fontSize: 12, marginTop: 4 },
+  reprise: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 10 },
+  repriseTitre: { fontFamily: FONT.titreBold, fontSize: 17, lineHeight: 22 },
+  repriseSous: { fontFamily: FONT.texteSemi, fontSize: 14, lineHeight: 19, marginTop: 1 },
 });
