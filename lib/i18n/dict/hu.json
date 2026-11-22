@@ -23271,5 +23271,12 @@
 "Premier paiement le {0} : {1}": "Első fizetés: {0}, {1}",
 "Annule quand tu veux dans les réglages de ton compte {0}.": "Mondd le bármikor a(z) {0}-fiókod beállításaiban.",
 "Essai gratuit jusqu’au {0}": "Ingyenes próba eddig: {0}",
-"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "A valódi folyamatban itt nyílnak meg a telefon beállításai."
+"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "A valódi folyamatban itt nyílnak meg a telefon beállításai.",
+"Tes séances {0} sont déjà dans YOROI": "A {0} edzéseid már a YOROI-ban vannak",
+"Tes séances sont déjà dans YOROI": "Az edzéseid már a YOROI-ban vannak",
+"Tu viens de Hevy ou Strong ?": "Hevyből vagy Strongból jössz?",
+"Récupère toutes tes séances et tes exercices": "Hozd át az összes edzésed és gyakorlatod",
+"Tes séances sont dans YOROI": "Az edzéseid a YOROI-ban vannak",
+"{0} exercice récupéré": "{0} gyakorlat áthozva",
+"{0} exercices récupérés": "{0} gyakorlat áthozva"
 }
