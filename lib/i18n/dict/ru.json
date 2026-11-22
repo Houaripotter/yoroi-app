@@ -23922,5 +23922,10 @@
 "{0} exercice récupéré": "Перенесено {0} упражнение",
 "{0} exercices récupérés": "Перенесено {0} упражнений",
 "{0} exercices récupérés§few": "Перенесено {0} упражнения",
-"{0} exercices récupérés§many": "Перенесено {0} упражнений"
+"{0} exercices récupérés§many": "Перенесено {0} упражнений",
+"Autre app (fichier CSV)": "Другое приложение (файл CSV)",
+"Non, je commence avec YOROI": "Нет, начинаю с YOROI",
+"Tu utilises déjà une app pour tes séances ?": "Уже пользуешься приложением для тренировок?",
+"app": "приложением",
+"Tu récupères tout : séances, exercices, charges.": "Вернёшь всё: тренировки, упражнения, веса."
 }
