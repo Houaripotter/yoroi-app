@@ -37,6 +37,8 @@ const ETAPES: Record<string, EtapeOnboarding> = {
   preparation: 'forge',
   plan: 'resultat',
   premium: 'premium',
+  // 22 novembre 2026 : nouvel onboarding, « Tu utilises déjà une app pour tes séances ? »
+  ancienne_app: 'ancienne_app',
 };
 
 const OBJECTIFS: Record<string, 'perdre' | 'prendre' | 'combat' | 'maintenir'> = {
@@ -137,6 +139,9 @@ export function choixOnboarding(nomEcran: string, d: Draft): void {
       return;
     case 'rythme':
       track('onboarding_choix', { etape, tranche_nombre: trancheNombre(d.jours.length) });
+      return;
+    case 'ancienne_app':
+      choix(d.ancienneApp ?? 'passe');
       return;
     case 'moment':
       choix(d.peseeMoment && d.peseeMoment !== 'inconnu' ? d.peseeMoment : 'passe');
