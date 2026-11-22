@@ -24,6 +24,7 @@
  * Testable : creerEnvoiPostHog recoit sa configuration et sa fabrique de client, les tests injectent un faux PostHog.
  */
 import type { NomEvenement } from './telemetry';
+import { ONBOARDING_NEUF_ACTIF, ORDRE_MESURE_NEUF, TRANCHES_TEMPS } from '@/lib/v2/onboarding/interrupteur';
 
 export const POSTHOG_HOTE = 'https://eu.i.posthog.com';
 
@@ -31,6 +32,14 @@ export type NomPostHog =
   | 'app_opened'
   | 'onboarding_step'
   | 'onboarding_completed'
+  // 21 novembre 2026 : le nouvel onboarding et son paywall en 3 temps (components/yoroi/v2/onboarding-neuf/mesure.ts)
+  | 'onboarding_answer'
+  | 'notifications_answered'
+  | 'paywall_step_viewed'
+  | 'winback_shown'
+  | 'winback_tapped'
+  | 'winback_purchased'
+  | 'winback_dismissed'
   | 'paywall_shown'
   | 'trial_started'
   | 'purchase_completed'
@@ -50,10 +59,16 @@ type Params = Record<string, string>;
  * La source (ou tu as entendu parler de YOROI) se place apres le resultat, juste avant Premium.
  * Un ecran saute garde son numero : le numero dit ou l'on est dans le parcours, pas combien d'ecrans on a vus.
  */
-export const ORDRE_ONBOARDING = [
+export const ORDRE_ONBOARDING_ANCIEN = [
   'accroche', 'prenom', 'toi', 'age', 'univers', 'objectif', 'frein', 'affirmation', 'sport', 'poids',
   'taille', 'cap', 'rythme', 'moment', 'demo', 'comparaison', 'forge', 'resultat', 'source', 'premium',
 ] as const;
+
+/**
+ * 21 novembre 2026 : l'ordre du parcours en service. Nouvel onboarding (interrupteur allume) : ses 24 ecrans dans
+ * l'ordre (lib/v2/onboarding/interrupteur.ts) ; sinon l'ancien.
+ */
+export const ORDRE_ONBOARDING: readonly string[] = ONBOARDING_NEUF_ACTIF ? ORDRE_MESURE_NEUF : ORDRE_ONBOARDING_ANCIEN;
 
 /**
  * Correspondance des evenements existants (noms francais, Firebase) vers les noms PostHog.
@@ -64,10 +79,22 @@ export const CORRESPONDANCE_POSTHOG: { readonly [K in NomEvenement]?: (p: Params
   app_boot: (p) => ({ nom: 'app_opened', props: { origine: p.origine } }),
   // lib/v2/onboarding/events.ts
   onboarding_etape: (p) => {
-    const i = (ORDRE_ONBOARDING as readonly string[]).indexOf(p.etape);
-    return i < 0 ? null : { nom: 'onboarding_step', props: { step: i + 1, step_name: p.etape } };
+    const i = ORDRE_ONBOARDING.indexOf(p.etape);
+    if (i < 0) return null;
+    // nouvel onboarding : la tranche du temps passe sur l'ecran (jamais la duree exacte)
+    const props: ProprietesPostHog = { step: i + 1, step_name: p.etape };
+    if (p.temps) props.time_bucket = p.temps;
+    return { nom: 'onboarding_step', props };
   },
   onboarding_termine: (p) => ({ nom: 'onboarding_completed', props: { status: p.statut } }),
+  // 21 novembre 2026 : nouvel onboarding. Le choix (liste fermee) ou la famille de sport, jamais une valeur.
+  onboarding_choix: (p) => ({ nom: 'onboarding_answer', props: { step_name: p.etape, answer: p.choix ?? p.famille } }),
+  onboarding_rappels: (p) => ({ nom: 'notifications_answered', props: { answer: p.reponse } }),
+  paywall_ecran_vu: (p) => ({ nom: 'paywall_step_viewed', props: { screen: Number(p.ecran) } }),
+  rattrapage_vue: (p) => ({ nom: 'winback_shown', props: { source: p.source } }),
+  rattrapage_tap: (p) => ({ nom: 'winback_tapped', props: { source: p.source } }),
+  rattrapage_ok: (p) => ({ nom: 'winback_purchased', props: { source: p.source } }),
+  rattrapage_refus: (p) => ({ nom: 'winback_dismissed', props: { source: p.source } }),
   // lib/v2/premium/events.ts (appele par le paywall, PremiumContext n'est pas touche)
   paywall_view: (p) => ({ nom: 'paywall_shown', props: { source: p.source } }),
   paywall_purchase_ok: (p) => ({ nom: p.essai === 'oui' ? 'trial_started' : 'purchase_completed', props: { source: p.source, plan: p.plan } }),
@@ -94,8 +121,16 @@ export const LISTE_BLANCHE: { readonly [N in NomPostHog]: Readonly<Record<string
   onboarding_step: {
     step: (v) => typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= ORDRE_ONBOARDING.length,
     step_name: dans(ORDRE_ONBOARDING),
+    time_bucket: dans(TRANCHES_TEMPS),
   },
   onboarding_completed: { status: dans(['gratuit', 'essai', 'abonne']) },
+  onboarding_answer: { step_name: dans(ORDRE_ONBOARDING), answer: identifiant },
+  notifications_answered: { answer: dans(['accepte', 'refuse']) },
+  paywall_step_viewed: { screen: (v) => typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 3 },
+  winback_shown: { source: SOURCE },
+  winback_tapped: { source: SOURCE },
+  winback_purchased: { source: SOURCE },
+  winback_dismissed: { source: SOURCE },
   paywall_shown: { source: SOURCE },
   trial_started: { source: SOURCE, plan: PLAN },
   purchase_completed: { source: SOURCE, plan: PLAN },
