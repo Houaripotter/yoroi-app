@@ -23278,5 +23278,10 @@
 "Récupère toutes tes séances et tes exercices": "Bring over all your sessions and exercises",
 "Tes séances sont dans YOROI": "Your sessions are in YOROI",
 "{0} exercice récupéré": "{0} exercise brought over",
-"{0} exercices récupérés": "{0} exercises brought over"
+"{0} exercices récupérés": "{0} exercises brought over",
+"Autre app (fichier CSV)": "Other app (CSV file)",
+"Non, je commence avec YOROI": "No, I’m starting with YOROI",
+"Tu utilises déjà une app pour tes séances ?": "Already using an app for your sessions?",
+"app": "app",
+"Tu récupères tout : séances, exercices, charges.": "You get it all back: sessions, exercises, weights."
 }
