@@ -23278,5 +23278,10 @@
 "Récupère toutes tes séances et tes exercices": "Lấy lại mọi buổi tập và bài tập của bạn",
 "Tes séances sont dans YOROI": "Các buổi tập của bạn đã ở trong YOROI",
 "{0} exercice récupéré": "Đã lấy {0} bài tập",
-"{0} exercices récupérés": "Đã lấy {0} bài tập"
+"{0} exercices récupérés": "Đã lấy {0} bài tập",
+"Autre app (fichier CSV)": "Ứng dụng khác (tệp CSV)",
+"Non, je commence avec YOROI": "Không, mình bắt đầu với YOROI",
+"Tu utilises déjà une app pour tes séances ?": "Bạn đã dùng ứng dụng nào cho buổi tập chưa?",
+"app": "ứng dụng",
+"Tu récupères tout : séances, exercices, charges.": "Lấy lại tất cả: buổi tập, bài tập, mức tạ."
 }
