@@ -23278,5 +23278,10 @@
 "Récupère toutes tes séances et tes exercices": "セッションと種目をすべて引き継ごう",
 "Tes séances sont dans YOROI": "セッションはYOROIに入りました",
 "{0} exercice récupéré": "{0}種目を取り込みました",
-"{0} exercices récupérés": "{0}種目を取り込みました"
+"{0} exercices récupérés": "{0}種目を取り込みました",
+"Autre app (fichier CSV)": "ほかのアプリ（CSVファイル）",
+"Non, je commence avec YOROI": "いいえ、YOROIで始めます",
+"Tu utilises déjà une app pour tes séances ?": "トレーニングにもうアプリを使っていますか？",
+"app": "アプリ",
+"Tu récupères tout : séances, exercices, charges.": "トレーニング、種目、重量をすべて引き継げます。"
 }
