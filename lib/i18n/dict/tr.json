@@ -23271,5 +23271,12 @@
 "Premier paiement le {0} : {1}": "İlk ödeme {0}: {1}",
 "Annule quand tu veux dans les réglages de ton compte {0}.": "{0} hesabının ayarlarından istediğin zaman iptal et.",
 "Essai gratuit jusqu’au {0}": "{0} tarihine kadar ücretsiz deneme",
-"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "Gerçek akışta telefonun ayarları burada açılır."
+"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "Gerçek akışta telefonun ayarları burada açılır.",
+"Tes séances {0} sont déjà dans YOROI": "{0} antrenmanların zaten YOROI'de",
+"Tes séances sont déjà dans YOROI": "Antrenmanların zaten YOROI'de",
+"Tu viens de Hevy ou Strong ?": "Hevy ya da Strong'dan mı geliyorsun?",
+"Récupère toutes tes séances et tes exercices": "Tüm antrenmanlarını ve egzersizlerini aktar",
+"Tes séances sont dans YOROI": "Antrenmanların YOROI'de",
+"{0} exercice récupéré": "{0} egzersiz aktarıldı",
+"{0} exercices récupérés": "{0} egzersiz aktarıldı"
 }
