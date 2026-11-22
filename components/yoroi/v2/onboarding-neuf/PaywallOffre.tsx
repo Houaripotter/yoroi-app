@@ -80,7 +80,9 @@ export function PaywallOffre({ formules, apercu, onAchat, onFermer, onAnnule, on
   const ecart = 12;
   const pas = carteL + ecart;
   const marge = (width - carteL) / 2;
-  const carteH = 172;
+  // 22 novembre 2026 : petit ecran (375x667), une carte un peu moins haute pour laisser la place au bas
+  const petit = height < 740;
+  const carteH = petit ? 152 : 172;
   const [choix, setChoix] = useState(0);
   const defile = useRef<ScrollView>(null);
   const selection: Formule | undefined = liste[Math.min(choix, Math.max(0, liste.length - 1))];
@@ -98,11 +100,15 @@ export function PaywallOffre({ formules, apercu, onAchat, onFermer, onAnnule, on
   };
 
   const [hBas, setHBas] = useState(300 + Math.max(insets.bottom, 12));
-  const carteHaut = Math.max(insets.top + 250, height - hBas - carteH - 10);
+  // 22 novembre 2026 : la carte se pose toujours au-dessus du bas (« Rien à payer aujourd'hui » n'est plus recouvert
+  // sur un petit ecran), et jamais sous le titre « Choisis ta formule »
+  const sousTitre = insets.top + 104;
+  const carteHaut = Math.max(sousTitre + 8, height - hBas - carteH - 10);
   const photoH = carteHaut + carteH * 0.5;
-  // apres une reprise, le bloc des avis (avec la bulle de plus) se pose juste au-dessus des cartes ; sur un petit ecran,
-  // moins d'avis (aucun s'il le faut) pour ne toucher ni le titre ni les cartes. Sans reprise : rien ne change.
-  const nbAvis = reprise ? Math.max(0, Math.min(2, Math.floor((carteHaut - 12 - (insets.top + 104) - 46 - 30) / 76))) : 2;
+  // le bloc des avis se pose au-dessus des cartes ; sur un petit ecran, moins d'avis (aucun s'il le faut) pour ne
+  // toucher ni le titre ni les cartes. Apres une reprise, une bulle de plus.
+  const nbAvis = Math.max(0, Math.min(2, Math.floor((carteHaut - 12 - sousTitre - (reprise ? 46 : 0) - 30) / 76)));
+  const avisEnBas = !!reprise || nbAvis < 2;
 
   const [attente, setAttente] = useState(false);
   const [feuille, setFeuille] = useState(false);
@@ -183,7 +189,7 @@ export function PaywallOffre({ formules, apercu, onAchat, onFermer, onAnnule, on
 
       <Txt style={f.titre}>{traduire('Choisis ta formule')}</Txt>
 
-      <View style={{ position: 'absolute', left: 20, right: 20, ...(reprise ? { bottom: height - carteHaut + 12 } : { top: carteHaut - 190 }), alignItems: 'center' }} pointerEvents="none">
+      <View style={{ position: 'absolute', left: 20, right: 20, ...(avisEnBas ? { bottom: height - carteHaut + 12 } : { top: carteHaut - 190 }), alignItems: 'center' }} pointerEvents="none">
         {reprise ? (
           <View style={[f.reprise, { backgroundColor: alpha(T.acc, 0.85) }]}>
             <Ionicons name="checkmark-circle" size={17} color={SUR_PHOTO} />
