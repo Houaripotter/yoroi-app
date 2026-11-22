@@ -8,11 +8,12 @@
  *   onboarding_etape   etape, temps (tranche 0_3, 3_10, 10_30, 30_plus) : envoye en QUITTANT l'ecran
  *                      (PostHog : onboarding_step, avec le numero d'etape)
  *   onboarding_choix   etape, choix (liste fermee) : les reponses, par lib/v2/onboarding/events.ts (choixOnboarding)
- *                      (PostHog : onboarding_answer)
+ *                      (PostHog : onboarding_answer), dont l'ancienne app : hevy, strong, fitnotes, autre ou aucune
  *   onboarding_rappels reponse : accepte ou refuse (PostHog : notifications_answered)
  *   paywall_ecran_vu   ecran : 1, 2 ou 3 (PostHog : paywall_step_viewed)
  *   rattrapage_vue, rattrapage_tap, rattrapage_ok, rattrapage_refus   source (PostHog : winback_*)
- *   reprise_ouverte    source : la reprise depuis une autre app, ouverte depuis l'entree (PostHog : import_opened)
+ *   reprise_ouverte    source : la reprise depuis une autre app, ouverte par une tuile de la question
+ *                      « Tu utilises déjà une app pour tes séances ? » (PostHog : import_opened)
  *   reprise_reussie    source, app : hevy, strong, fitnotes ou autre (PostHog : import_completed)
  *   onboarding_termine statut : gratuit, essai ou abonne (PostHog : onboarding_completed)
  *
@@ -33,7 +34,7 @@ export type Mesure = {
   rappels: (accepte: boolean) => void;
   paywall: (ecran: 1 | 2 | 3) => void;
   rattrapage: (quoi: 'vue' | 'tap' | 'ok' | 'refus') => void;
-  /** 22 novembre 2026 : la reprise depuis une autre app, ouverte depuis l'entree, puis reussie (avec l'app reconnue) */
+  /** 22 novembre 2026 : la reprise depuis une autre app, ouverte depuis la question de l'ancienne app, puis reussie (avec l'app reconnue) */
   reprise: (quoi: 'ouverte' | 'reussie', app?: AppReprise) => void;
   termine: (statut: 'gratuit' | 'essai' | 'abonne') => void;
 };
