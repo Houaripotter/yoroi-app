@@ -23271,5 +23271,12 @@
 "Premier paiement le {0} : {1}": "Første betaling {0}: {1}",
 "Annule quand tu veux dans les réglages de ton compte {0}.": "Si opp når du vil i innstillingene for {0}-kontoen din.",
 "Essai gratuit jusqu’au {0}": "Gratis prøveperiode til {0}",
-"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "I det ekte forløpet åpnes telefoninnstillingene her."
+"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "I det ekte forløpet åpnes telefoninnstillingene her.",
+"Tes séances {0} sont déjà dans YOROI": "Øktene dine fra {0} er allerede i YOROI",
+"Tes séances sont déjà dans YOROI": "Øktene dine er allerede i YOROI",
+"Tu viens de Hevy ou Strong ?": "Kommer du fra Hevy eller Strong?",
+"Récupère toutes tes séances et tes exercices": "Hent alle øktene og øvelsene dine",
+"Tes séances sont dans YOROI": "Øktene dine er i YOROI",
+"{0} exercice récupéré": "{0} øvelse hentet",
+"{0} exercices récupérés": "{0} øvelser hentet"
 }
