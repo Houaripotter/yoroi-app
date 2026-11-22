@@ -96,6 +96,11 @@ export type Draft = {
    * (hevy, strong, fitnotes, ou null pour un tableur quelconque). Sert a la confirmation chiffree et au paywall.
    */
   reprise?: { seances: number; exercices: number | null; app: 'hevy' | 'strong' | 'fitnotes' | null } | null;
+  /**
+   * 22 novembre 2026 : la reponse a « Tu utilises déjà une app pour tes séances ? » (nouvel onboarding) : l'app
+   * choisie (hevy, strong, fitnotes, autre pour un fichier CSV) ou aucune. Liste fermee, mesuree telle quelle.
+   */
+  ancienneApp?: AncienneApp | null;
   /** 21 novembre 2026 : l'ecran du nouvel onboarding (components/yoroi/v2/onboarding-neuf/parcours.ts), pour la reprise */
   etapeNeuf?: string | null;
 };
@@ -160,6 +165,11 @@ function rappelsValides(r: unknown): ChoixRappels {
 
 /** Un compte lu dans le brouillon : un entier positif, sinon rien (jamais de nombre invente) */
 const compte = (v: unknown): number | null => (typeof v === 'number' && Number.isInteger(v) && v >= 0 ? v : null);
+/** 22 novembre 2026 : les reponses possibles a la question de l'ancienne app */
+export type AncienneApp = 'hevy' | 'strong' | 'fitnotes' | 'autre' | 'aucune';
+export const ANCIENNES_APPS: readonly AncienneApp[] = ['hevy', 'strong', 'fitnotes', 'autre', 'aucune'];
+const ancienneAppValide = (v: unknown): AncienneApp | null => (ANCIENNES_APPS as readonly unknown[]).includes(v) ? (v as AncienneApp) : null;
+
 function repriseValide(r: unknown): Draft['reprise'] {
   if (!r || typeof r !== 'object') return null;
   const x = r as Record<string, unknown>;
@@ -200,6 +210,7 @@ export async function loadDraft(): Promise<Draft | null> {
       source: isSourceConnu(d.source) ? d.source : null,
       ...(d.viaHevy === true ? { viaHevy: true } : { viaHevy: undefined }),
       reprise: repriseValide(d.reprise),
+      ancienneApp: ancienneAppValide(d.ancienneApp),
       etapeNeuf: typeof d.etapeNeuf === 'string' ? d.etapeNeuf : null,
     };
   } catch {
