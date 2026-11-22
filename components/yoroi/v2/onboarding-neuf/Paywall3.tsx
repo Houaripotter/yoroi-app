@@ -8,6 +8,8 @@
  *            Aujourd'hui, jour du rappel, debut de l'abonnement. Le rappel existe vraiment (scheduleTrialReminder,
  *            lib/v2/onboarding/trial.ts, 2 jours avant) ; la duree de l'essai vient du store.
  * Entree : fondu de 360 ms, sans rebond.
+ * 22 novembre 2026 : apres une reprise depuis une autre app, une ligne sous le titre de l'ecran 1 : « Tes séances
+ * {app} sont déjà dans YOROI » (le nom de l'app seulement s'il a ete reconnu). Rien ne change a l'achat ni aux prix.
  */
 
 import React, { useEffect, useRef } from 'react';
@@ -17,7 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Laurier } from '@/components/yoroi/v2/premium/Preuve';
 import { FREE_FOREVER, formatMoney, storeRating } from '@/lib/v2/premium/offer';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
-import { Bouton, ND, PhraseColoree, Txt } from './kit';
+import { Bouton, ND, PhraseColoree, Txt, alpha } from './kit';
 import type { EtatFormules } from './formules';
 import { FONT, useNuit } from './theme';
 
@@ -52,8 +54,20 @@ export function lignePrix(f: EtatFormules): string | null {
   return parMois ? traduire('{0} par an ({1} par mois)', a.info.priceString, parMois) : traduire('{0} par an', a.info.priceString);
 }
 
+/** « Tes séances {app} sont déjà dans YOROI », ou sans nom d'app quand on ne la connait pas */
+export function ligneReprise(app: string | null): string {
+  return app ? traduire('Tes séances {0} sont déjà dans YOROI', app) : traduire('Tes séances sont déjà dans YOROI');
+}
+
 /* ================================================================ ecran 1 */
-export function Promesse({ formules, onNext, onBack, onReessayer }: { formules: EtatFormules; onNext: () => void; onBack: () => void; onReessayer: () => void }) {
+export function Promesse({ formules, onNext, onBack, onReessayer, reprise }: {
+  formules: EtatFormules;
+  onNext: () => void;
+  onBack: () => void;
+  onReessayer: () => void;
+  /** apres une reprise depuis une autre app : le nom de l'app d'origine s'il est connu */
+  reprise?: { app: string | null } | null;
+}) {
   const T = useNuit();
   const insets = useSafeAreaInsets();
   const entree = useEntree();
@@ -76,6 +90,12 @@ export function Promesse({ formules, onNext, onBack, onReessayer }: { formules: 
           <Txt style={{ color: T.acc }}>YOROI</Txt>
           {apres}
         </Txt>
+        {reprise ? (
+          <View style={[st.reprise, { backgroundColor: alpha(T.acc, 0.08), borderColor: alpha(T.acc, 0.25) }]}>
+            <Ionicons name="checkmark-circle" size={18} color={T.acc} />
+            <Txt style={[st.repriseTxt, { color: T.acc }]} numberOfLines={2}>{ligneReprise(reprise.app)}</Txt>
+          </View>
+        ) : null}
         <View style={st.coches}>
           {coches.map((c) => (
             <View key={c.titre} style={st.coche}>
@@ -173,6 +193,8 @@ const st = StyleSheet.create({
   page: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 12 },
   titre: { fontFamily: FONT.titre, fontSize: 27, lineHeight: 32, letterSpacing: -0.4, textAlign: 'center' },
   coches: { marginTop: 22, gap: 14 },
+  reprise: { flexDirection: 'row', alignItems: 'center', alignSelf: 'center', gap: 8, marginTop: 14, borderRadius: 999, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8, maxWidth: '100%' },
+  repriseTxt: { flexShrink: 1, fontFamily: FONT.texteSemi, fontSize: 14, lineHeight: 18, textAlign: 'center' },
   coche: { alignItems: 'center', gap: 4, paddingHorizontal: 6 },
   rond: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
   cocheTitre: { fontFamily: FONT.titreBold, fontSize: 17.5, lineHeight: 22, textAlign: 'center' },
