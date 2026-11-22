@@ -23913,5 +23913,14 @@
 "{0} jours gratuits, puis {1} par an ({2} par mois)§many": "{0} dne zdarma, pak {1} ročně ({2} měsíčně)",
 "{0} jours gratuits, puis {1} par an§many": "{0} dne zdarma, pak {1} ročně",
 "{0} jours pour tout essayer§many": "{0} dne na vyzkoušení všeho",
-"{0} NOTES SUR LES STORES§many": "{0} HODNOCENÍ V OBCHODECH"
+"{0} NOTES SUR LES STORES§many": "{0} HODNOCENÍ V OBCHODECH",
+"Tes séances {0} sont déjà dans YOROI": "Tvoje tréninky z {0} už jsou v YOROI",
+"Tes séances sont déjà dans YOROI": "Tvoje tréninky už jsou v YOROI",
+"Tu viens de Hevy ou Strong ?": "Přecházíš z Hevy nebo Strong?",
+"Récupère toutes tes séances et tes exercices": "Přenes všechny své tréninky a cviky",
+"Tes séances sont dans YOROI": "Tvoje tréninky jsou v YOROI",
+"{0} exercice récupéré": "{0} načtený cvik",
+"{0} exercices récupérés": "{0} načtených cviků",
+"{0} exercices récupérés§few": "{0} načtené cviky",
+"{0} exercices récupérés§many": "{0} načteného cviku"
 }
