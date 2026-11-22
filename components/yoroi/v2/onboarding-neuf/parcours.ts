@@ -14,6 +14,8 @@ import type { EtapeMesureNeuf, TempsEcran } from '@/lib/v2/onboarding/interrupte
 
 export type Etape =
   | 'entree'
+  // 22 novembre 2026 : « Tu utilises déjà une app pour tes séances ? » (AncienneApp.tsx), juste apres l'entree
+  | 'ancienneApp'
   // bloc « Toi »
   | 'prenom' | 'genre' | 'age' | 'source'
   | 'interlude'
@@ -25,14 +27,14 @@ export type Etape =
 
 /** Tous les ecrans, dans l'ordre, pour la barre d'apercu du Studio */
 export const ORDRE: Etape[] = [
-  'entree', 'prenom', 'genre', 'age', 'source', 'interlude',
+  'entree', 'ancienneApp', 'prenom', 'genre', 'age', 'source', 'interlude',
   'objectif', 'sport', 'poids', 'taille', 'cap', 'jours', 'univers', 'rappels', 'rappelsRefus', 'sante',
   'filtre', 'demo', 'preuve', 'chargement', 'paywall1', 'paywall2', 'paywall', 'rattrapage',
 ];
 
 /** Le nom de chaque ecran, pour le Studio (jamais affiche a un utilisateur) */
 export const NOMS_ETAPES: Record<Etape, string> = {
-  entree: 'Entrée', prenom: 'Prénom', genre: 'Genre', age: 'Âge', source: 'Source', interlude: 'Interlude',
+  entree: 'Entrée', ancienneApp: 'Ancienne app', prenom: 'Prénom', genre: 'Genre', age: 'Âge', source: 'Source', interlude: 'Interlude',
   objectif: 'Objectif', sport: 'Sports', poids: 'Poids', taille: 'Taille', cap: 'Cap', jours: 'Jours', univers: 'Univers',
   rappels: 'Rappels', rappelsRefus: 'Rappels refusés', sante: 'Santé', filtre: 'Filtre', demo: 'Démo', preuve: 'Avis',
   chargement: 'Chargement', paywall1: 'Paywall 1 · promesse', paywall2: 'Paywall 2 · rappel', paywall: 'Paywall 3 · offre',
@@ -69,9 +71,9 @@ export function avecCap(sens: SensPoids): boolean {
 
 /** Les questions qui portent la barre, dans l'ordre : bloc « Toi » puis bloc « Ton plan » */
 export function questions(s: EtatParcours): Etape[] {
-  if (s.viaReprise) return ['prenom', 'poids'];
+  if (s.viaReprise) return ['ancienneApp', 'prenom', 'poids'];
   return [
-    'prenom', 'genre', 'age', 'source',
+    'ancienneApp', 'prenom', 'genre', 'age', 'source',
     'objectif', 'sport', 'poids', 'taille', ...(avecCap(s.sens) ? (['cap'] as Etape[]) : []), 'jours', 'univers', 'rappels',
     ...(s.santeOff ? (['sante'] as Etape[]) : []),
   ];
@@ -80,9 +82,9 @@ export function questions(s: EtatParcours): Etape[] {
 /** Le parcours reel, selon les reponses */
 export function parcours(s: EtatParcours): Etape[] {
   if (s.viaReprise) {
-    return ['entree', 'prenom', 'poids', 'chargement', 'paywall1', ...(s.essai ? (['paywall2'] as Etape[]) : []), 'paywall'];
+    return ['entree', 'ancienneApp', 'prenom', 'poids', 'chargement', 'paywall1', ...(s.essai ? (['paywall2'] as Etape[]) : []), 'paywall'];
   }
-  const p: Etape[] = ['entree', 'prenom', 'genre', 'age', 'source', 'interlude', 'objectif', 'sport', 'poids', 'taille'];
+  const p: Etape[] = ['entree', 'ancienneApp', 'prenom', 'genre', 'age', 'source', 'interlude', 'objectif', 'sport', 'poids', 'taille'];
   if (avecCap(s.sens)) p.push('cap');
   p.push('jours', 'univers', 'rappels');
   if (s.rappelsRefus) p.push('rappelsRefus');
@@ -189,7 +191,7 @@ export function trancheTemps(ms: number): TempsEcran {
 
 /** Le nom de chaque ecran dans la mesure (liste fermee de utils/telemetry.ts, EtapeOnboarding) */
 export const ETAPE_MESURE = {
-  entree: 'entree', prenom: 'prenom', genre: 'toi', age: 'age', source: 'source', interlude: 'interlude',
+  entree: 'entree', ancienneApp: 'ancienne_app', prenom: 'prenom', genre: 'toi', age: 'age', source: 'source', interlude: 'interlude',
   objectif: 'objectif', sport: 'sport', poids: 'poids', taille: 'taille', cap: 'cap', jours: 'rythme', univers: 'univers',
   rappels: 'rappels', rappelsRefus: 'rappels_refus', sante: 'sante', filtre: 'filtre', demo: 'demo', preuve: 'preuve',
   chargement: 'chargement', paywall1: 'paywall_1', paywall2: 'paywall_2', paywall: 'paywall_3', rattrapage: 'rattrapage',
