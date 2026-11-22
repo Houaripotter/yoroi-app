@@ -280,6 +280,16 @@ describe('Nouvel onboarding : la mesure de chaque ecran', () => {
     expect(track).toHaveBeenCalledWith('onboarding_termine', { statut: 'essai' });
   });
 
+  it('reprise depuis une autre app : ouverte, puis reussie avec l app reconnue (autre si inconnue)', () => {
+    const m = creerMesure(() => 0);
+    m.reprise('ouverte');
+    m.reprise('reussie', 'hevy');
+    m.reprise('reussie');
+    expect(track).toHaveBeenCalledWith('reprise_ouverte', { source: 'onboarding' });
+    expect(track).toHaveBeenCalledWith('reprise_reussie', { source: 'onboarding', app: 'hevy' });
+    expect(track).toHaveBeenLastCalledWith('reprise_reussie', { source: 'onboarding', app: 'autre' });
+  });
+
   it('en apercu du Studio ou en mode createur : rien ne part', () => {
     setApercuOnboarding(true);
     const m = creerMesure(() => 0);
@@ -288,6 +298,8 @@ describe('Nouvel onboarding : la mesure de chaque ecran', () => {
     m.rappels(true);
     m.paywall(1);
     m.rattrapage('tap');
+    m.reprise('ouverte');
+    m.reprise('reussie', 'strong');
     m.termine('gratuit');
     expect(track).not.toHaveBeenCalled();
   });
@@ -371,7 +383,8 @@ describe('Branchements et interrupteur', () => {
       const src = fs.readFileSync(path.join(dossier, f), 'utf8');
       expect(src).not.toContain('\u2014');
       expect(src).not.toMatch(/\p{Extended_Pictographic}/u);
-      expect(src).not.toMatch(/\bHevy\b|Strava|MyFitnessPal/);
+      // 22 novembre 2026, demande de Houari : seule la carte de reprise de l'entree nomme Hevy et Strong
+      expect(f === 'Entree.tsx' ? src.replace(/Tu viens de Hevy ou Strong \?/g, '') : src).not.toMatch(/\bHevy\b|Strava|MyFitnessPal/);
     }
   });
 
