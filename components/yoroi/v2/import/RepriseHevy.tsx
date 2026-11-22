@@ -51,8 +51,8 @@ import {
 } from '@/lib/v2/import/repriseHevy';
 import { libelleDureeRepos } from '@/lib/v2/seances/reposConseille';
 import type { BilanReprise, Correspondance, NonRepris, Placement, Routine } from '@/lib/v2/import/repriseHevy';
-import { APPS, guideDe, nomDuFormat, nomsVisibles, origineDe } from '@/lib/v2/import/apps';
-import type { IdApp } from '@/lib/v2/import/apps';
+import { APPS, appDuFormat, guideDe, nomDuFormat, nomsVisibles, origineDe } from '@/lib/v2/import/apps';
+import type { AppOrigine, IdApp } from '@/lib/v2/import/apps';
 import { enregistrerCarnet } from '@/lib/v2/import/enregistrerCarnet';
 import { ajouterExosAToi, autreProgrammeEnCours, enregistrerRoutine, muscleBibliotheque, routineHevyExistante } from '@/lib/v2/import/enregistrerReprise';
 import { programmeParId } from '@/lib/v2/programmes/catalogue';
@@ -74,8 +74,12 @@ const reconnaitre = (n: string) => reconnaitreHevy(n, (x) => reconnaitreExo(x, b
 /** texte sur le bleu de l'accent (onPrimary est le bleu nuit du bouton pastel) */
 const BLANC = '#FFFFFF';
 
-/** Ce que l'onboarding garde de l'import : tes jours de seance (0 = lundi) */
-export type FinReprise = { jours: number[]; seances: number };
+/**
+ * Ce que l'onboarding garde de l'import : tes jours de seance (0 = lundi), le nombre de seances lues.
+ * 22 novembre 2026 : aussi le nombre d'exercices differents (les memes chiffres que l'ecran Bienvenue, bilanReprise)
+ * et l'app d'origine reconnue (null pour un tableur quelconque), pour la confirmation et la ligne du paywall.
+ */
+export type FinReprise = { jours: number[]; seances: number; exercices?: number; app?: AppOrigine | null };
 
 /** « lundi » (16 novembre 2026 est un lundi) */
 const nomJour = (d: number) => new Date(2026, 10, 16 + d, 12).toLocaleDateString(LOCALE, { weekday: 'long' });
@@ -312,7 +316,7 @@ export function RepriseHevy({ depuisOnboarding = false, apercu = false, demo, ap
     ]);
   };
 
-  const terminer = () => onFini({ jours: fin?.jours ?? [], seances: fin?.bilan.seances ?? 0 });
+  const terminer = () => onFini({ jours: fin?.jours ?? [], seances: fin?.bilan.seances ?? 0, exercices: fin?.bilan.exercices, app: appDuFormat(lecture?.format) });
   const sticker = (n: NomSticker, t = 44) => <Image source={illus.img(n)} style={{ width: t, height: t }} resizeMode="contain" accessibilityIgnoresInvertColors />;
 
   const phraseRoutine = (): string => {
