@@ -23271,5 +23271,12 @@
 "Premier paiement le {0} : {1}": "Ensimmäinen maksu {0}: {1}",
 "Annule quand tu veux dans les réglages de ton compte {0}.": "Peru milloin tahansa {0}-tilisi asetuksissa.",
 "Essai gratuit jusqu’au {0}": "Ilmainen kokeilu {0} asti",
-"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "Oikeassa kulussa puhelimen asetukset avautuvat tässä."
+"Dans le vrai parcours, les réglages du téléphone s’ouvrent ici.": "Oikeassa kulussa puhelimen asetukset avautuvat tässä.",
+"Tes séances {0} sont déjà dans YOROI": "{0}-treenisi ovat jo YOROIssa",
+"Tes séances sont déjà dans YOROI": "Treenisi ovat jo YOROIssa",
+"Tu viens de Hevy ou Strong ?": "Tuletko Hevystä tai Strongista?",
+"Récupère toutes tes séances et tes exercices": "Tuo kaikki treenisi ja liikkeesi",
+"Tes séances sont dans YOROI": "Treenisi ovat YOROIssa",
+"{0} exercice récupéré": "{0} liike haettu",
+"{0} exercices récupérés": "{0} liikettä haettu"
 }
