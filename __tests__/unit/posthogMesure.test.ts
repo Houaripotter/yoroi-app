@@ -67,6 +67,9 @@ describe('PostHog : correspondance des noms', () => {
     ['rattrapage_tap', { source: 'onboarding' }, 'winback_tapped', { source: 'onboarding' }],
     ['rattrapage_ok', { source: 'onboarding' }, 'winback_purchased', { source: 'onboarding' }],
     ['rattrapage_refus', { source: 'onboarding' }, 'winback_dismissed', { source: 'onboarding' }],
+    // 22 novembre 2026 : la reprise depuis une autre app (entree du nouvel onboarding)
+    ['reprise_ouverte', { source: 'onboarding' }, 'import_opened', { source: 'onboarding' }],
+    ['reprise_reussie', { source: 'onboarding', app: 'strong' }, 'import_completed', { source: 'onboarding', app: 'strong' }],
     ['onboarding_termine', { statut: 'abonne' }, 'onboarding_completed', { status: 'abonne' }],
     ['paywall_view', { source: 'onboarding', statut: 'gratuit' }, 'paywall_shown', { source: 'onboarding' }],
     ['paywall_purchase_ok', { source: 'reglages', plan: 'annuel', essai: 'oui' }, 'trial_started', { source: 'reglages', plan: 'annuel' }],
@@ -88,7 +91,7 @@ describe('PostHog : correspondance des noms', () => {
     const couverts = new Set(Object.keys(CORRESPONDANCE_POSTHOG).flatMap((k) => cas.filter((c) => c[0] === k).map((c) => c[2])));
     for (const n of NOMS_POSTHOG) expect(couverts.has(n)).toBe(true);
     expect(NOMS_POSTHOG.sort()).toEqual([
-      'app_opened', 'coach_program_started', 'measurement_logged', 'notifications_answered', 'onboarding_answer', 'onboarding_completed',
+      'app_opened', 'coach_program_started', 'import_completed', 'import_opened', 'measurement_logged', 'notifications_answered', 'onboarding_answer', 'onboarding_completed',
       'onboarding_step', 'paywall_shown', 'paywall_step_viewed', 'purchase_cancelled', 'purchase_completed', 'rating_prompt_shown',
       'trial_started', 'weigh_in_logged', 'winback_dismissed', 'winback_purchased', 'winback_shown', 'winback_tapped', 'workout_completed',
     ]);
