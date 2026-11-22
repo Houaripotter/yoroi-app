@@ -23922,5 +23922,10 @@
 "{0} exercice récupéré": "{0} načtený cvik",
 "{0} exercices récupérés": "{0} načtených cviků",
 "{0} exercices récupérés§few": "{0} načtené cviky",
-"{0} exercices récupérés§many": "{0} načteného cviku"
+"{0} exercices récupérés§many": "{0} načteného cviku",
+"Autre app (fichier CSV)": "Jiná aplikace (soubor CSV)",
+"Non, je commence avec YOROI": "Ne, začínám s YOROI",
+"Tu utilises déjà une app pour tes séances ?": "Používáš už aplikaci na své tréninky?",
+"app": "aplikaci",
+"Tu récupères tout : séances, exercices, charges.": "Získáš zpět všechno: tréninky, cviky, váhy."
 }
