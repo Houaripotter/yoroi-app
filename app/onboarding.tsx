@@ -130,6 +130,8 @@ import { brouillonRetour, enregistrerRetour, marquerRetourVu, peseeRetourAEcrire
 import { chargerSourcesRetour, portsRetourAppareil } from '@/lib/v2/onboarding/retourAppareil';
 import { getDemandeSante } from '@/lib/v2/sante/demande';
 import { usePremium } from '@/context/PremiumContext';
+import { ONBOARDING_NEUF_ACTIF } from '@/lib/v2/onboarding/interrupteur';
+import { OnboardingNeufEcran } from '@/components/yoroi/v2/onboarding-neuf';
 
 const APPLE_EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 
@@ -172,7 +174,20 @@ const NAMES = ['ouverture', 'prenom', 'toi', 'age', 'univers', 'objectif', 'frei
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
 
+/**
+ * 21 novembre 2026 (Houari) : le nouvel onboarding et son paywall en 3 temps, sur le modele d'INRO
+ * (components/yoroi/v2/onboarding-neuf). L'interrupteur ONBOARDING_NEUF_ACTIF (lib/v2/onboarding/interrupteur.ts)
+ * choisit le parcours ; l'ancien (AncienOnboarding, ci-dessous) reste en place, rien n'est supprime.
+ * Le mode retour des utilisateurs existants (?mode=retour) garde toujours l'ancien parcours.
+ */
 export default function OnboardingScreen() {
+  const params = useLocalSearchParams<{ mode?: string }>();
+  if (ONBOARDING_NEUF_ACTIF && params.mode !== 'retour') return <OnboardingNeufEcran />;
+  return <AncienOnboarding />;
+}
+
+/** L'onboarding d'avant le 21 novembre 2026, garde tel quel derriere l'interrupteur */
+function AncienOnboarding() {
   const { theme } = useYoroiTheme();
   const params = useLocalSearchParams<{ preview?: string; page?: string; mode?: string }>();
   const isPreview = params.preview === 'true';
